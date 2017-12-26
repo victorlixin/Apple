@@ -1,0 +1,3 @@
+DBPluginSetName description
+DBPluginSetType property.project
+DBPluginSetDatatype string

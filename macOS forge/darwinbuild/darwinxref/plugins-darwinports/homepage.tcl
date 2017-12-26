@@ -1,0 +1,3 @@
+DBPluginSetName homepage 
+DBPluginSetType property.project
+DBPluginSetDatatype string

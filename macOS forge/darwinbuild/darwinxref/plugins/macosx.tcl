@@ -1,0 +1,3 @@
+DBPluginSetName macosx
+DBPluginSetType property.build
+DBPluginSetDatatype string

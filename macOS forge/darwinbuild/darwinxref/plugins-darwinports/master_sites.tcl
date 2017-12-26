@@ -1,0 +1,3 @@
+DBPluginSetName master_sites 
+DBPluginSetType property.project
+DBPluginSetDatatype array

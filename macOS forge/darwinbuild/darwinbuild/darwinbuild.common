@@ -1,0 +1,561 @@
+#!/bin/sh
+#
+# Copyright (c) 2005-2010, Apple Computer, Inc. All rights reserved.
+# 
+# @APPLE_BSD_LICENSE_HEADER_START@
+#
+# Redistribution and use in source and binary forms, with or without
+# modification, are permitted provided that the following conditions
+# are met:
+# 1.  Redistributions of source code must retain the above copyright
+#     notice, this list of conditions and the following disclaimer. 
+# 2.  Redistributions in binary form must reproduce the above copyright
+#     notice, this list of conditions and the following disclaimer in the
+#     documentation and/or other materials provided with the distribution. 
+# 3.  Neither the name of Apple Computer, Inc. ("Apple") nor the names of
+#     its contributors may be used to endorse or promote products derived
+#     from this software without specific prior written permission. 
+# 
+# THIS SOFTWARE IS PROVIDED BY APPLE AND ITS CONTRIBUTORS "AS IS" AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED. IN NO EVENT SHALL APPLE OR ITS CONTRIBUTORS BE LIABLE FOR
+# ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
+# STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
+# IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
+# POSSIBILITY OF SUCH DAMAGE.
+#
+# @APPLE_BSD_LICENSE_HEADER_END@
+
+
+###
+### Check that we are properly situated.  Either the
+### DARWIN_BUILDROOT environment variable must be set to an
+### absolute path, or the current working directory must be
+### at the root level of the build environment.
+###
+function CheckDarwinBuildRoot() {
+	if [ "$DARWIN_BUILDROOT" != "" ]; then
+		if [ "${DARWIN_BUILDROOT:0:1}" != "/" ]; then
+			echo "ERROR: DARWIN_BUILDROOT environment variable must contain an absolute path." 1>&2
+			exit 1
+		else
+			cd "$DARWIN_BUILDROOT"
+		fi
+	fi
+	if [ -d Roots -a \
+		-d Sources -a \
+		-d Symbols -a \
+		-d Headers -a \
+		-d Logs ]; then
+		export DARWIN_BUILDROOT="$(pwd -P)"
+	else
+		cat 1>&2 <<- EOB
+			ERROR: please change your working directory to one initialized by:
+			  darwinbuild -init <build>
+			Alternatively, you may set the DARWIN_BUILDROOT environment variable to the
+			absolute path of that directory.
+
+			EOB
+			exit 1
+	fi
+}
+
+###
+### Given a list of filenames, this function will
+### find the largest number after the '~' and return
+### its value. Used to calculate a non-conflicting build number.
+###
+function GetBuildVersion() {
+	local maxbuild="0"
+	if [ $# -eq 0 ]; then
+		echo ""
+		return 0
+	fi
+	for X in $* ; do
+		# Grab the numeric portion after the '~'
+		build=$(echo $X | sed -e 's/^.*~\([0-9]*\)$/\1/')
+		# If the regex fails, it somtimes prints the same line
+		if [ "$build" != "$X" -a "$build" != "" ]; then
+			# [ seems to things on the left of the -a, 
+			# so do this in a different statement to avoid
+			# errors about non-numeric values of $build
+			if [ "$build" -gt "$maxbuild" ]; then
+				maxbuild="$build"
+			fi
+		fi
+	done
+	echo $maxbuild
+}
+
+###
+### Trap calls to ditto since it is only available on Mac OS X
+### Warning: only supports the directory-to-directory form
+function ditto() {
+	local srcdir="$1"
+	local dstdir="$2"
+	if [ -x /usr/bin/ditto ]; then
+		/usr/bin/ditto "$srcdir" "$dstdir"
+	else
+		tar c -C "$srcdir" . | tar xf - -C "$dstdir"
+	fi
+}
+
+CURLARGS=${CURLARGS:-}
+
+###
+### Checkout or update a project from subversion repository
+###
+function CheckoutOrUpdate() {
+	local destination="$1"
+	local branch="$2"
+	local master_sites="$3"
+
+	for master_site in $master_sites ;
+	do
+	    if [ ! -d "$destination/.svn" ]; then
+		echo "Checking out working copy"
+		mkdir -p "$destination"
+		svn co "$master_site/$branch" "$destination" && break
+	    else
+		echo "Updating working copy"
+		svn up "$destination" && break
+	    fi
+	done
+}
+
+###
+### Download a .tar.gz file
+###
+function Download() {
+	local destination="$1"
+	local filename="$2"
+	local master_sites="$3"
+
+	### Skip the .tar.gz download if an extracted version exists
+	extracted=$(basename "$filename" .tar.gz)
+	if [ -d "$destination/$extracted" ]; then
+		echo "Found $extracted in $destination"
+		return
+	fi
+	
+	###
+	### Download the sources,
+	###
+	for master_site in $master_sites ;
+	do
+		if [ ! -f "$destination/$filename" ]; then
+			mkdir -p "$destination"
+			if echo "$master_site" | grep -q "^file://" ; then
+				proj=$(echo "$filename" | sed -e 's,.tar.gz$,,' | sed -e 's,.root$,,')
+				projnam=$(echo "$proj" | sed -e 's,-[0-9.]*$,,')
+				srcdir=$(echo "$master_site/$projnam" | sed -e 's,^file://,,')
+				if [ -d "$srcdir/$proj" ]; then
+					echo "Copying $srcdir/$proj ..."
+					tar czf \
+					    "$destination/.tmp.${filename}" \
+					    -C "$srcdir" \
+					    "$proj"
+				elif [ -d "$srcdir" ]; then
+					echo "Copying $srcdir ..."
+					tar czf \
+					    "$destination/.tmp.${filename}" \
+					    -C "$srcdir" \
+					    .
+				else
+					echo "No such directory: $srcdir"
+					break
+				fi
+			else
+				echo "Downloading $master_site/$filename ..."
+				curl $CURLARGS --fail \
+					--silent \
+					--location \
+					--continue-at - \
+					--output "$destination/.tmp.${filename}" \
+					--url "$master_site/$filename"
+			fi
+			if [ "$?" == "0" ]; then
+				mv "$destination/.tmp.${filename}" "$destination/$filename"
+				echo "Download complete"
+				break
+			fi
+		else
+			echo "Found $filename in $destination"
+			break
+		fi
+	done
+}
+
+###
+### Installs a root into the BuildRoot. Mediates between
+### receipts, pre-built roots, and self-built roots, so that
+### the build root is "up to date"
+### Relies on the DARWIN_BUILDROOT and DARWINXREF
+### and dbfile globals.
+###
+function InstallRoot() {
+	local BuildRoot="$1"
+	local Project="$2"
+	local dbuild="$3"
+
+	local SelfBuiltRoot=""
+	local InstallSelfBuiltRoot=0
+	local InstallPreBuiltRoot=0
+
+	local CACHEDIR="$DARWIN_BUILDROOT/Roots/.DownloadCache"
+
+	###
+	### There will be duplication between the bash dependencies and the
+	### project's dependencies.  Therefore don't install something that
+	### has already been installed.  (Test for the presence of a receipt).
+	###
+	if [ -d "$DARWIN_BUILDROOT/Roots/$Project" ]; then
+	    ProjectAndVersion=$($DARWINXREF $dbfile version "$Project")
+	    bv=$(GetBuildVersion $DARWIN_BUILDROOT/Roots/$Project/$ProjectAndVersion.root*)
+	    if [ -n "$bv" ]; then
+		SelfBuiltRoot="$DARWIN_BUILDROOT/Roots/$Project/$ProjectAndVersion.root~$bv"
+	    fi
+	fi
+
+	CheckForReceipt "$BuildRoot" "$Project" "root"
+	if [ $? -eq 0 ]; then
+	    # receipt is present. But do we have a newer local build?
+	    CheckIfNewerThanReceipt "$BuildRoot" "$Project" "root" "$SelfBuiltRoot"
+	    if [ $? -eq 0 ]; then
+		# we're newer. Load us
+		InstallSelfBuiltRoot=1
+	    fi
+	else
+	    # there wasn't a receipt. but if we have a self-built root, we should use it
+	    if [ -n "$SelfBuiltRoot" ]; then
+		InstallSelfBuiltRoot=1
+	    else
+		InstallPreBuiltRoot=1
+	    fi
+	fi
+
+	# install a self-built root, or a prebuilt root, or nothing
+	if [ $InstallSelfBuiltRoot -eq 1 ]; then
+	    echo "Copying $Project from $SelfBuiltRoot ..."
+	    ditto "$SelfBuiltRoot" "$BuildRoot"
+	    "$DARWINXREF" register "$Project" "$SelfBuiltRoot"  > /dev/null
+	    TouchReceipt "$BuildRoot" "$Project" "root"
+	    return 0
+	elif [ $InstallPreBuiltRoot -eq 1 ]; then
+	    # install a pre-built root, in inheritance order
+		while [ "$dbuild" != "" ]; do
+	    	sites=$($DARWINXREF $dbfile -b $dbuild binary_sites "$Project")
+			Download "$CACHEDIR" \
+				"$Project.root.tar.gz" \
+					"$sites"
+			if [ -f "$CACHEDIR/$Project.root.tar.gz" ]; then
+				cd "$BuildRoot"
+				tar xzf "$CACHEDIR/$Project.root.tar.gz"
+				if [ $? -eq 0 ]; then
+					tar tzf "$CACHEDIR/$Project.root.tar.gz" | \
+						"$DARWINXREF" register -stdin "$Project" "$BuildRoot" \
+						> /dev/null
+					CheckForReceipt "$BuildRoot" "$Project" "root"
+					if [ $? -ne 0 ]; then
+					    echo -n | CreateReceipt "$BuildRoot" "$Project" "root" \
+						"$CACHEDIR/$Project.root.tar.gz"
+					fi
+					return 0
+				fi
+			else
+				dbuild=$($DARWINXREF $dbfile -b $dbuild inherits)
+			fi
+
+		# if we didn't find the root for this build, keep looking in the next build	     
+	    done
+	    # we look through all inherited builds and couldn't actually install anything
+		echo "ERROR: could not find root: $Project" 1>&2
+	    exit 1
+	fi
+
+	# we had a receipt, so no need to install
+	echo "$Project already loaded and no newer roots have been built."
+	return 0
+}
+
+###
+### Installs a header root into the BuildRoot. Mediates between
+### receipts, pre-built roots, and self-built roots, so that
+### the build root is "up to date"
+### Relies on the DARWIN_BUILDROOT and DARWINXREF
+### and dbfile globals.
+###
+function InstallHeader() {
+	local BuildRoot="$1"
+	local Project="$2"
+	local dbuild="$3"
+
+	local SelfBuiltRoot=""
+	local SelfBuiltHeader=""
+	local InstallSelfBuiltRoot=0
+	local InstallSelfBuiltHeader=0
+	local InstallPreBuiltRoot=0
+
+	local CACHEDIR="$DARWIN_BUILDROOT/Roots/.DownloadCache"
+
+	###
+	### There will be duplication between the bash dependencies and the
+	### project's dependencies.  Therefore don't install something that
+	### has already been installed.  (Test for the presence of a receipt).
+	###
+	if [ -d "$DARWIN_BUILDROOT/Roots/$Project" ]; then
+	    ProjectAndVersion=$($DARWINXREF $dbfile version "$Project")
+	    bv=$(GetBuildVersion $DARWIN_BUILDROOT/Roots/$Project/$ProjectAndVersion.root*)
+	    if [ -n "$bv" ]; then
+		SelfBuiltRoot="$DARWIN_BUILDROOT/Roots/$Project/$ProjectAndVersion.root~$bv"
+	    fi
+	fi
+
+	if [ -d "$DARWIN_BUILDROOT/Headers/$Project" ]; then
+	    ProjectAndVersion=$($DARWINXREF $dbfile version "$Project")
+	    bv=$(GetBuildVersion $DARWIN_BUILDROOT/Headers/$Project/$ProjectAndVersion.hdrs*)
+	    if [ -n "$bv" ]; then
+		SelfBuiltHeader="$DARWIN_BUILDROOT/Headers/$Project/$ProjectAndVersion.hdrs~$bv"
+	    fi
+	fi
+
+	# Install self-built headers only if they're newer than anything
+	# else that's been installed (Headers and Roots)
+	if [ -n "$SelfBuiltHeader" ]; then
+	    CheckIfNewerThanReceipt "$BuildRoot" "$Project" "hdrs" "$SelfBuiltHeader"
+	    if [ $? -eq 0 ]; then
+			CheckIfNewerThanReceipt "$BuildRoot" "$Project" "root" "$SelfBuiltHeader"
+			if [ $? -eq 0 ]; then
+				# we're newer Headers. Load us
+				InstallSelfBuiltHeader=1
+			fi
+	    fi
+	fi
+	
+	# If we can't find self-built headers, install a self-built root only
+	# if it's newer than anything else that's been installed (Headers and Roots)
+	if [ $InstallSelfBuiltHeader -eq 0 -a -n "$SelfBuiltRoot" ]; then
+		CheckIfNewerThanReceipt "$BuildRoot" "$Project" "hdrs" "$SelfBuiltRoot"
+		if [ $? -eq 0 ]; then
+			CheckIfNewerThanReceipt "$BuildRoot" "$Project" "root" "$SelfBuiltRoot"
+			if [ $? -eq 0 ]; then
+				# we're newer Headers. Load us
+				InstallSelfBuiltRoot=1
+			fi
+		fi
+	fi
+
+	# If we can't find self-built headers or self-built roots, install a
+	# pre-built root only if nothing's been previously installed.
+	if [ $InstallSelfBuiltHeader -eq 0 -a $InstallSelfBuiltRoot -eq 0 ]; then
+		CheckForReceipt "$BuildRoot" "$Project" "hdrs"
+		if [ $? -eq 1 ]; then
+			CheckForReceipt "$BuildRoot" "$Project" "root"
+			if [ $? -eq 1 ]; then
+				InstallPreBuiltRoot=1
+			fi
+		fi
+	fi
+
+	# install a self-built root, or a prebuilt root, or nothing
+	if [ $InstallSelfBuiltHeader -eq 1 ]; then
+	    echo "Copying $Project from $SelfBuiltHeader ..."
+	    ditto "$SelfBuiltHeader" "$BuildRoot"
+	    "$DARWINXREF" register "$Project" "$SelfBuiltHeader"  > /dev/null
+	    TouchReceipt "$BuildRoot" "$Project" "hdrs"
+	    return 0
+	elif [ $InstallSelfBuiltRoot -eq 1 ]; then
+	    echo "Copying $Project from $SelfBuiltRoot ..."
+	    ditto "$SelfBuiltRoot" "$BuildRoot"
+	    "$DARWINXREF" register "$Project" "$SelfBuiltRoot"  > /dev/null
+	    TouchReceipt "$BuildRoot" "$Project" "root"
+	    return 0
+	elif [ $InstallPreBuiltRoot -eq 1 ]; then
+	    # install a pre-built root, in inheritance order
+		while [ "$dbuild" != "" ]; do
+	    	sites=$($DARWINXREF $dbfile -b $dbuild binary_sites "$Project")
+			Download "$CACHEDIR" \
+				"$Project.hdrs.tar.gz" \
+					"$sites"
+			if [ -f "$CACHEDIR/$Project.hdrs.tar.gz" ]; then
+				cd "$BuildRoot"
+				tar xzf "$CACHEDIR/$Project.hdrs.tar.gz"
+				if [ $? -eq 0 ]; then
+					tar tzf "$CACHEDIR/$Project.hdrs.tar.gz" | \
+						"$DARWINXREF" register -stdin "$Project" "$BuildRoot" \
+						> /dev/null
+					CheckForReceipt "$BuildRoot" "$Project" "hdrs"
+					if [ $? -ne 0 ]; then
+					    echo -n | CreateReceipt "$BuildRoot" "$Project" "hdrs" \
+						"$CACHEDIR/$Project.hdrs.tar.gz"
+					fi
+					return 0
+				fi
+			else
+				# if we couldnt' download a header root for a given build,
+				# try the full root
+				Download "$CACHEDIR" \
+					"$Project.root.tar.gz" \
+						"$sites"
+				if [ -f "$CACHEDIR/$Project.root.tar.gz" ]; then
+					cd "$BuildRoot"
+					tar xzf "$CACHEDIR/$Project.root.tar.gz"
+					if [ $? -eq 0 ]; then
+						tar tzf "$CACHEDIR/$Project.root.tar.gz" | \
+							"$DARWINXREF" register -stdin "$Project" "$BuildRoot" \
+							> /dev/null
+						CheckForReceipt "$BuildRoot" "$Project" "root"
+						if [ $? -ne 0 ]; then
+						    echo -n | CreateReceipt "$BuildRoot" "$Project" "root" \
+							"$CACHEDIR/$Project.root.tar.gz"
+						fi
+						return 0
+					fi
+				else
+					dbuild=$($DARWINXREF $dbfile -b $dbuild inherits)
+				fi
+			fi
+
+		# if we didn't find the root for this build, keep looking in the next build	     
+	    done
+	    # we look through all inherited builds and couldn't actually install anything
+		echo "ERROR: could not find root: $Project" 1>&2
+	    exit 1
+	fi
+
+	# we had a receipt, so nothing was request
+	return 0
+}
+
+RECEIPTDIR=/usr/local/darwinbuild/receipts
+
+###
+# For the given project and root type ("root" or "hdrs"), see if
+# a receipt is present in the build root
+function CheckForReceipt() {
+    local BuildRoot="$1"
+    local Project="$2"
+    local RootType=".$3"
+    local receipts="$BuildRoot/$RECEIPTDIR"
+
+    if [ "$RootType" = ".root" ]; then
+	RootType=""
+    fi
+
+    if [ -e "$receipts/$Project$RootType" ]; then
+	return 0 # success
+    else
+	return 1
+    fi
+}
+
+###
+# For the given project and root type ("root" or "hdrs"), touch the
+# a receipt so that it's timestamp is current
+function TouchReceipt() {
+    local BuildRoot="$1"
+    local Project="$2"
+    local RootType=".$3"
+    local receipts="$BuildRoot/$RECEIPTDIR"
+
+    if [ "$RootType" = ".root" ]; then
+	RootType=""
+    fi
+
+    if [ -e "$receipts/$Project$RootType" ]; then
+	touch "$receipts/$Project$RootType"
+	return 0 # success
+    else
+	return 1
+    fi
+}
+
+###
+# For the given project and root type ("root" or "hdrs"), see if
+# a receipt is present and newer than another filesystem object.
+# By definition, something is newer than a non-existent receipt
+# If CmpDir is "", this will return false (1)
+function CheckIfNewerThanReceipt() {
+    local BuildRoot="$1"
+    local Project="$2"
+    local RootType=".$3"
+    local CmpDir="$4"
+    local receipts="$BuildRoot/$RECEIPTDIR"
+
+    if [ "$RootType" = ".root" ]; then
+	RootType=""
+    fi
+
+    if [ -e "$receipts/$Project$RootType" ]; then
+	if [ "$CmpDir" -nt "$receipts/$Project$RootType" ]; then
+	    return 0
+	else
+	    return 1
+	fi
+    else
+	return 0
+    fi
+}
+
+
+
+###
+# For the given project and root type ("root" or "hdrs"), take
+# a receipt specification on stdin. In order to uniquely identify
+# the receipt, a hash is stored of the receipt contents, or
+# an optional hash source. The latter would be used to
+# hash a pre-built tarball instead of the receipt
+function CreateReceipt() {
+    local BuildRoot="$1"
+    local Project="$2"
+    local RootType=".$3"
+    local HashSource="$4"
+
+    local receipts="$BuildRoot/$RECEIPTDIR"
+    local TmpFile=$(mktemp -t "$Project")
+    local Hash=""
+
+    if [ "$RootType" = ".root" ]; then
+	RootType=""
+    fi
+
+    mkdir -p "$receipts"
+
+    # consume stdin
+    cat > "$TmpFile"
+
+    if [ -n "$HashSource" ]; then
+	if [ ! -r "$HashSource" ]; then
+	    echo "ERROR: Could not access $HashSource" 1>&2
+	    exit 1
+	fi
+	Hash=$($DIGEST < "$HashSource")
+	echo "# Hash of $HashSource" >> "$TmpFile"
+    else
+	Hash=$($DIGEST < "$TmpFile")
+    fi
+
+    cp "$TmpFile" "$receipts/$Hash"
+    ln -sf "$Hash" "$receipts/$Project$RootType"
+    rm "$TmpFile"
+    return 0
+}
+
+# If a directory is empty, return 0 (success)
+function IsDirectoryEmpty() {
+	local Directory="$1"
+
+	local output=$(find "$Directory" -maxdepth 0 \! -empty )
+
+	if [ -n "$output" ]; then
+		# not empty
+		return 1
+	else
+		return 0
+	fi
+}
+

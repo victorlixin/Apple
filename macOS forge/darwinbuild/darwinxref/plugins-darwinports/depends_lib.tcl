@@ -1,0 +1,3 @@
+DBPluginSetName depends_lib
+DBPluginSetType property.project
+DBPluginSetDatatype array

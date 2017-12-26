@@ -1,0 +1,3 @@
+DBPluginSetName maintainers
+DBPluginSetType property.project
+DBPluginSetDatatype array

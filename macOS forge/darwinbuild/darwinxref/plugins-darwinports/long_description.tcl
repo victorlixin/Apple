@@ -1,0 +1,3 @@
+DBPluginSetName long_description
+DBPluginSetType property.project
+DBPluginSetDatatype string

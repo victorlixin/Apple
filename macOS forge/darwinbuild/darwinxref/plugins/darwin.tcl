@@ -1,0 +1,3 @@
+DBPluginSetName darwin
+DBPluginSetType property.build
+DBPluginSetDatatype string
