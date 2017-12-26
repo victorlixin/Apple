@@ -1,0 +1,139 @@
+
+
+idadmin(1Mbnu)                                     idadmin(1Mbnu)
+
+SSyynnooppssiiss
+       idadmin [-S scheme [-l logname]]
+       idadmin -S scheme -a -r g_name -l logname
+       idadmin -S scheme -d [-r g_name] -l logname
+       idadmin -S scheme -I descr
+       idadmin -S scheme [-Duscf]
+
+DDeessccrriippttiioonn
+       The  idadmin  command  displays and updates entries in the
+       system ID mapping database.   All  update  operations  are
+       logged   (whether   successful   or   not)   in  the  file
+       /var/adm/log/idmap.log.
+
+   OOppttiioonnss
+       The options to idadmin are: Specify the  name  of  the  ID
+       mapping scheme.  Specify a local name (logname) into which
+       the remote name maps.  logname must be a valid logname  on
+       the  local  server.   To  be valid, logname must appear in
+       /etc/passwd.  The logname may take  the  form  %n  or  %i,
+       where  %n  is  used  for transparent mapping and %i forces
+       remote names to be rejected.  Add a map entry.  The  local
+       and  remote  names  must be specified.  Specify the remote
+       (global) name.  The format of g_name is  scheme-dependent;
+       generally,  it  includes  a login name and a machine name.
+       Delete a map entry.  The scheme name and  the  local  name
+       must   be   specified.   Specifying  the  remote  name  is
+       optional.  If  only  the  local  name  is  specified,  all
+       entries  mapping  to  that  local  name are deleted.  If a
+       remote name is also specified, only  that  particular  map
+       entry  is  deleted.   Install a new scheme.  A remote name
+       format descriptor (descr) must be specified  for  the  new
+       scheme.   The remote name file descriptor is a string that
+       indicates the format of the remote name; it includes field
+       numbers,  the letter M to indicate the field is mandatory,
+       and field separators.  Delete a scheme.  The  scheme  name
+       must  be  specified.   Enable  user-controlled  ID mapping
+       (USER mode).  The scheme name must be specified.   Disable
+       user-controlled ID mapping (SECURE mode).  The scheme name
+       must be specified.  Check the consistency of a  map  file.
+       The scheme name must be specified.  Map entries containing
+       syntax errors and unknown users are displayed.  Users  are
+       unknown  if  they  do  not  exist  in /etc/passwd.  Fix an
+       inconsistent mapping file.  Entries that are out of  order
+       are  sorted;  mapping entries containing syntax errors and
+       unknown users are displayed, and the system  administrator
+       is  given  the opportunity to change or delete them.  When
+       no options are  specified,  idadmin  lists  all  installed
+       schemes  and  the  mode of each (USER or SECURE).  If only
+       scheme is specified, idadmin displays the contents of  the
+       system  map  file.   When  scheme and logname are entered,
+       idadmin lists all entries in the scheme's system map  file
+       that map into logname.
+
+       Transparent  mapping  may  be  achieved  by specifying the
+
+                                                                1
+
+idadmin(1Mbnu)                                     idadmin(1Mbnu)
+
+       metacharacter * in the remote name and %n  for  the  local
+       logname,  where  n is the number of the field that namemap
+       will extract from the remote name and return as the  local
+       name.   An  asterisk  may appear in any field in g_name to
+       match any string of characters in the corresponding  field
+       of a remote name.  If %i is used for logname, namemap will
+       reject all remote names that match the g_name.
+
+       When namemap searches for a remote name in the system  map
+       file,  it  sequentially  scans  the  file.  Therefore, the
+       ordering of remote names in this file is critical.
+
+       Remote names are sorted  on  the  highest  numbered  field
+       first.   Entries with explicit values in this field appear
+       first in the file.  Entries which include regular  expres-
+       sions  in  this field are sorted from the most specific to
+       the least specific based on the position of metacharacters
+       in  the  pattern.  The more a metacharacter is to the left
+       in the pattern the less  specific  the  pattern  is.   For
+       example, s* is less specific than sf*.
+
+       If  two  or  more  entries have patterns which are equally
+       specific, the specificity of the next lower numbered field
+       is  examined.   Fields are examined from highest to lowest
+       until the remote names can be differentiated.
+
+FFiilleess
+       system map file for scheme scheme_name user map  file  for
+       scheme scheme_name log file password file
+
+UUssaaggee
+       The  system  ID  mapping  database consists of one or more
+       system map files, where each map has  a  different  record
+       descriptor.   Maps  with different record descriptors sup-
+       port different authentication schemes.  idadmin also  pro-
+       vides an administrator with a mechanism to enable and dis-
+       able user-controlled mapping (see
+
+       ID mapping databases are used by to map remote lognames to
+       local  ones.  If an ID mapping scheme is enabled for user-
+       controlled mapping, namemap  looks  at  the  user  ID  map
+       before the system ID map.
+
+       Only a privileged user can execute this command.
+
+EExxaammpplleess
+       The  following  command line installs a new scheme, called
+       myscheme: idadmin -S myscheme -I M2!M1 In the remote  name
+       format  descriptor  M2!M1,  M  indicates that the field is
+       mandatory.  The numbers indicate the order of significance
+       of  the fields, where higher numbered fields are more sig-
+       nificant.  In this example, the first field (M2) is  meant
+       to  contain  a  system  name, and the second field (M1) is
+       meant to contain a user name.   Because  the  first  field
+
+                                                                2
+
+idadmin(1Mbnu)                                     idadmin(1Mbnu)
+
+       indicates  the  entity  of  greater  significance,  it  is
+       assigned the higher field number.  The character ! is used
+       as the field separator.
+
+       Given  the  ID Mapping scheme myscheme, the following com-
+       mand line creates an entry in the database that maps  user
+       foo  on  machine  comunix into user foo on the local host:
+       idadmin -S myscheme -a -r comunix!foo -l foo The following
+       command  line  creates  an entry in the database that pro-
+       vides transparent mapping from any logname on  any  remote
+       machine  to  a  local user identity with the same logname:
+       idadmin -S myscheme -a -r "*!*" -l %1
+
+RReeffeerreenncceess
+
+                                                                3
+

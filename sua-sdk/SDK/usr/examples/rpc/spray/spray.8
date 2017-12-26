@@ -1,0 +1,148 @@
+.TH SPRAY 8 "30 Septmeber 1994" "" ""
+.SH NAME
+spray \- stress-test your network links
+.SH SYNOPSIS
+.IP "\fBspray [-c count] [-l length] [-r retries] [-d delay] [-n] [-v] hostname\fP"
+.SH DESCRIPTION
+.B spray
+is an RPC-based application that sends a number of UDP packets to
+the named host in rapid succession, and reports the packet loss
+that occurred as well as send and receive statistics.
+.P
+.B spray
+is a tool for assessing the actual bandwidth of a network link,
+or the maximum throughput of a host's network interface. For a number
+of reasons, it is slightly better than TCP-based tools that use \fBinetd\fP's
+\fBecho\fP or \fBsink\fP service. The biggest advantage is that it
+uses UDP, which is little more than a user interface to IP.  Second,
+traffic is sent through the link in only one direction during the test
+phase, much unlike TCP, where the remote host's ACKs still have to get
+through to you.  And finally, you have full control over the size of
+the packets sent, which lets you test different situations.  See below
+for an example.
+.SH OPTIONS
+.P
+.IP "\fB\-v\fP"
+Be verbose. This adds some information about RPC round-trip time,
+and the receive time on the server host.  Note that the RPC round-trip
+time is already taken into account when computing the effective
+data rates.
+.IP "\fB\-c\fP \fIcount\fP"
+This parameter controls the number of packets \fBspray\fP transmits.
+.IP "\fB\-l\fP \fIlength\fP"
+This parameter sets the length of packet data sent by \fBspray\fP.
+\fIlength\fP must be less than 8846 Bytes.  Note that this represents
+the total size of the packet sent, including IP, UDP and RPC header.
+\fIlength\fP must therefore be at least 72.
+.IP
+Note that depending on the capacity of the network link tested, you may
+have to send relatively large amounts of data to get realistic values.
+For a SLIP or PPP link through a V32bis modem, a few hundred KB suffice,
+while for ISDN and Ethernet, you should't even start with less than a
+megabyte.
+.IP "\fB\-r\fP \fIretries\fP"
+Quite often, your \fPspray\fP activity may use up all the kernel's network
+buffers, which will cause the RPC \fBsend(2)\fP call to fail. By default,
+\fBspray\fP will not retry sending the packet, but rather count it as
+``dropped locally''. When given the \fB-r\fP option, it will retry the
+\fBsend\fP call up to \fIretries\fP times, sleeping 0.5ms between two
+attempts. This can give you a more realistic picture of your host's
+capacity in sending data. Specifying a negative number of retries tells
+\fBspray\fP to retry the operation indefinitely.
+.IP
+When you give \fBspray\fP the \fB-v\fP option, it will tell you
+exactly how many packets were dropped locally and on the way to the
+remote host.
+.IP "\fB\-d\fP \fIdelay\fP"
+This option tells \fBspray\fP to insert a delay of \fIdelay\fP milliseconds
+between packets. If you omit this, \fBspray\fR will send its packets as fast
+as it can. Note that if you make the delay too high, the figures reported by 
+\fBspray\fP will not make any sense. One can argue whether this option
+makes any sense at all.
+.IP "\fB\-n\fP"
+By default, \fBspray\fP will initialize the packet with zeroes. Over
+dialup IP links, this may give you a false impression of the link's
+true capacity because these packets are very easily compressible by
+the modem's internal compression algorithm. The \fB-n\fP flags tells
+\fBspray\fP to generate hard to compress packet data to avoid this
+effect.
+.IP \fIhostname\fP
+The remote host the packets are sent to. The host must run the
+\fBrpc.sprayd(8)\fP server.
+.P
+By default, \fBspray\fP will send 1162 packets of 86 bytes each to the
+named host. If you specify only one of \fB\-c\fP and \fB\-l\fP, 
+\fBspray\fP will adjust the other parameter so that the total amount of
+data transmitted is approximately 100K bytes.
+.SH EXAMPLE
+The output of \fBspray\fP occasionally requires some interpretation.
+The following real-life example shows the output when spraying a
+machine across an ISDN link. The ISDN routers at each end of the link
+are PCs connected to a 10Mbps Ethernet.
+.P
+.ne 8
+.in +4
+.nf
+$ spray -v -l 1500 -c 800 -r 2 marian
+sending 800 packets of length 1500 to marian...
+        in 19.53 seconds elapsed time,
+        91 packets rcvd by marian in 19.53 seconds,
+        709 packets (88.62%) dropped (0 locally, 709 en route)
+Sent:   40 packets/sec, 61.4 KBytes/sec
+Recvd:  4 packets/sec, 7.0 KBytes/sec
+RPC:    69.45 ms RPC round-trip time
+.fi
+.ti 0
+.P
+While the packet loss rate seems incredibly high in this example, it is
+not really significant. The important number is the receive rate
+reported by the \fBspray\fR server on \fBmarian\fP. With 7 kilobytes
+per second, it is at 88% of a B channel's maximum throughput.
+(We're still trying to figure out where the remaining KBps went:-)
+.P
+The following probe was taken with a CSLIP link, with the two modems
+communicating at 14.4Kbps. The link's MTU was at 296 bytes.
+.P
+.ne 8
+.in +4
+.nf
+$ spray -l 800 -c 200 -vr 3 brewhq
+sending 200 packets of length 800 to brewhq...
+        in 15.77 seconds elapsed time,
+        68 packets rcvd by brewhq in 15.73 seconds
+        132 packets (66.00%) dropped (132 locally, 0 en route).
+Sent:   12 packets/sec, 10.1 KBytes/sec
+Recvd:  4 packets/sec, 3.5 KBytes/sec
+RPC:    399.99 ms RPC round-trip time
+.fi
+.in 0
+.P
+The throughput rate is close to what one would expect for a modem connection
+where compression is in effect. All packets lost were in fact dropped due
+to lack of local buffer space, which may be a consequence of IP fragmentation
+overhead.
+.P
+ISDN test data by courtesy of Christian Balzer.
+.SH BUGS
+.IP *
+\fBspray\fP doesn't attempt to keep anyone from sabotaging your network.
+.IP *
+The \fB-n\fP option may not work as advertised. It used to work with
+my Supra modem, but my new ZyXEL compresses those supposedly
+hard-to-compress packets nevertheless.  If anyone can provide me with
+a nice and fast algorithm of generating ``hard'' data, that would be
+nice.
+.IP *
+When spraying the loopback interface, we have some sort of relativity
+effect where the server receives packets marginally faster than we
+send them. The difference should be insignificant for any other type of
+hardware.
+.SH FILES
+.I /usr/sbin/spray
+.SH SEE ALSO
+.IR ping(8) ,
+.IR tcpspray(8) ,
+.IR sprayd(8) ,
+.IR portmap(8) .
+.SH AUTHOR
+Olaf Kirch, <okir@monad.swb.de>.

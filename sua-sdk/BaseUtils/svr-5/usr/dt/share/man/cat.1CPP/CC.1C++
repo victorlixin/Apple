@@ -1,0 +1,794 @@
+
+
+CC(1C++)                                                 CC(1C++)
+
+SSyynnooppssiiss
+       CC [flags] file . . .
+
+DDeessccrriippttiioonn
+       CC  invokes the C++ compilation system to compile and link
+       C++ programs so that they may be executed.  While the com-
+       mand has many options, it is normally quite simple to use;
+       see the USAGE section below for some basic examples.
+
+       The C++ compilation system implements almost  all  of  the
+       ISO  standard for the language.  See the Standards Compli-
+       ance section below for details.  By option, it can compile
+       with  stricter  checking  against  the  standard.  Also by
+       option, it can compile a dialect  that  corresponds  to  a
+       much older "cfront"-based definition of the language (such
+       as that implemented by &comet; and its predecessors).  See
+       the   -X  option  for  additional  descriptions  of  these
+       dialects.
+
+       The compilation system consists of the  following  concep-
+       tual  phases:  preprocessing, lexical/syntax/semantic ana-
+       lyzing (front end),  code  generating,  optimizing,  basic
+       block  profiling, assembling, template instantiating (pre-
+       linking),  and  linking.   The  CC  command  examines  its
+       options  and  filename  suffixes,  and  then  executes the
+       proper phases with appropriate options and arguments.
+
+       The CC command recognizes the following filename suffixes:
+       A  file  that  contains unprocessed C++ source; all phases
+       are applicable.  This is the most common usage.  In  addi-
+       tion  to  these  two  suffixes, the following suffixes are
+       also recognized as unprocessed C++ source files, for  com-
+       patibility  with  the conventions of other systems:  .cpp,
+       .CPP, .cxx, .CXX, .cc, .CC, .c++, and .C++.  A  file  that
+       contains  preprocessed  C++  source; all phases except for
+       preprocessing are applicable.  A file that contains assem-
+       bly  language  source;  only  the  assembling  and linking
+       phases are applicable.  A file that contains input  appli-
+       cable  only  to the linking phase.  This category commonly
+       includes object files (.o), archive  libraries  (.a),  and
+       shared object libraries (.so).
+
+       If  no options are present, the CC command sends all files
+       through the phases (as appropriate to their suffixes) nec-
+       essary  to  combine  them  into  a dynamically linked exe-
+       cutable with the name a.out in the current directory.   If
+       an  intermediate  result is requested instead, it is simi-
+       larly placed in the current  directory,  with  a  filename
+       derived  by  replacing  the  incoming suffix with a suffix
+       appropriate to the  resultant  file.   If  the  assembling
+       phase  occurs,  the CC command places the object file (.o)
+       in the current directory, but this file will be removed if
+       a  single source file is being compiled through to an exe-
+       cutable.    If   automatic   template   instantiation   is
+
+                                                                1
+
+CC(1C++)                                                 CC(1C++)
+
+       requested,  the compiler will place files with .ii and .ti
+       suffixes next to the corresponding  object  files.   These
+       files persist across compilations.  All other intermediate
+       files are placed in a temporary directory.  (The choice of
+       directory  can be controlled with the environment variable
+       TMPDIR.)  The prefix part of a filename cannot be empty.
+
+       An exception to the filename suffix rule is that any file-
+       name,  regardless  of suffix, will be accepted with the -E
+       option.  This allows the C++ preprocessor to be invoked as
+       a standalone tool for use with non-C++ source files.
+
+       During  the preprocessing phase, certain macros and asser-
+       tions are defined, some of which  are  based  on  the  C++
+       dialect (-X option) being compiled.  These are:
+
+       For  any  -X  option:      #define __USLC__ 1      #define
+       __cplusplus  1       #define  __SCO_VERSION__   VvvYYYYMML
+            #assert     system(unix)         #assert    cpu(i386)
+            #assert  machine(i386)       #assert  model(ilp32)  _
+       _SCO_VERSION_  _   has  a  constructed  long  int value of
+       VvvYYYYMML, where V is the major version of the  compiler,
+       vv  the  minor  version,  YYYY  the  year  of the compiler
+       release, and MM the month of the compiler release.
+
+       For -Xd and -Xo:      #define __STDC__ 0      #define i386
+       1      #define unix 1
+
+       For -Xw and -Xe:      #define __STDC__ 1
+
+   FFllaaggss
+       CC  takes  the following options.  Except where noted, the
+       order in which they  are  specified  is  not  significant.
+       Controls  the  linking phase library name search mechanism
+       for subsequent -l options.  The most common  option  argu-
+       ments  for  str  are  dynamic  (the  initial  setting) and
+       static, but others exist; see The order of the -B, -L, and
+       -l  options is significant; see the -l option.  Causes all
+       C++ comments other than on directive lines to be retained;
+       otherwise,  they  are  removed by the preprocessing phase.
+       Suppresses the linking phase.  No  produced  object  files
+       (.o)  are  removed.  Causes name to be defined to the pre-
+       processor as a macro to be replaced by tokens, or by 1  if
+       =tokens  is  not  present,  as  if by a #define directive.
+       Determines the mode of the executable result of the  link-
+       ing  phase.   If  str  is  y  (the default), a dynamically
+       linked executable is to be produced;  if  str  is  n,  the
+       result  will  be statically linked.  Suppresses all phases
+       but preprocessing, and sends the result  to  the  standard
+       output.   The result will contain lines similar to prepro-
+       cessing directives and can be used for a  subsequent  com-
+       piling  phase.   The  filename being preprocessed may have
+       any suffix.   Causes  extra  code  to  be  generated  that
+       instruments  the  program  to  capture  free  store  usage
+
+                                                                2
+
+CC(1C++)                                                 CC(1C++)
+
+       information, for use with the  Standard  Components  tool.
+       Causes  the  linking  phase  to  produce  a  shared object
+       instead of an executable.  Causes the generation of infor-
+       mation  that  facilitates symbolic debugging.  This option
+       clashes with  -O  but  has  higher  precedence:  debugging
+       information  is  generated  if both are specified.  Causes
+       the preprocessor to print the pathnames  of  all  included
+       files, one per line, on the standard error output.  Causes
+       the preprocessor to search dir for  included  files  whose
+       names do not begin with / before searching the directories
+       INCDIR/CC and INCDIR (in that order).  The directories for
+       multiple  -I  options are searched in the order specified.
+       Files named by #include directives using the "name" syntax
+       are  first  searched  for relative to the directory of the
+       file containing the #include directive, while files  named
+       by #include directives using the <name> syntax are not.
+
+       If  dir  is specified as -, i.e. -I-, the option indicates
+       the point in the list of -I options at  which  the  search
+       for  files  named by the <name> syntax should begin.  That
+       is, the search  for  <name>  files  should  only  consider
+       directories  named  in  -I  options following the -I-, and
+       INCDIR/CC and INCDIR.  For files named by the "name"  syn-
+       tax,  using  -I-  also  removes  from  the search path the
+       directory of the file containing the  #include  directive.
+       Enables  certain  variations in code generation, optimiza-
+       tion or linking, or  a  combination  thereof.   For  those
+       items  in the following list presented in groups of two or
+       more, the first item is the default choice,  and  at  most
+       one  of  each  such  group  will be effective.  The option
+       argument list is a comma-separated list of one or more  of
+       the  following  items: Changes code generation to be posi-
+       tion-independent.  This is necessary  when  compiling  for
+       shared   libraries.   The  option  argument  pic  is  also
+       accepted and has the same effect.  The default is to  gen-
+       erate  code  that  is not position-independent.  Specifies
+       whether the program will use the  multi-threading  facili-
+       ties.  In threaded mode, arranges for the appropriate pre-
+       processor flags to be turned on, for thread-safe code gen-
+       eration  to  be emitted, for thread-safe operations within
+       the C++ support routines and for the threading library  to
+       be  linked  in  the correct order.  -lthread should not be
+       used.  Causes the same effect  as  -Kthread,  except  that
+       libthreadT (tracing) is linked.  If -Kthread and -KthreadT
+       are both specified on the command line, -KthreadT will  be
+       used  and  a warning will be issued.  -lthreadT should not
+       be used.  Causes the same effect as -Kthread, except  that
+       in addition POSIX threads semantics are enabled at runtime
+       for the and calls. -lpthread is an acceptable synonym  for
+       -Kpthread.   Specifies  that the compiler should allow the
+       character $ to be used in identifiers.  Since  this  usage
+       is  an  extension  to  the  ISO  C++ Standard, use of this
+       option with -Xw or -Xe will result in a warning diagnostic
+       or error diagnostic, respectively, on the first usage of $
+
+                                                                3
+
+CC(1C++)                                                 CC(1C++)
+
+       in an identifier.  This option may be needed when  porting
+       code  from other systems.  Causes code generation specifi-
+       cally tuned to the selected Intel microprocessor.  blended
+       (the default) balances the code generation choices to work
+       well on all these processors.  pentium_pro  optimizes  for
+       all  Intel  Pentium Pro based processors, such as the Pen-
+       tium II.  Used only  in  conjunction  with  -O.   Controls
+       whether  the  generated  floating point code strictly con-
+       forms to the IEEE floating point and  C  standards.   ieee
+       (the  default) specifies strict conformance.  no_ieee per-
+       mits more  aggressive  floating  point  optimization.   It
+       assumes  that  the  application  does  not change rounding
+       modes, does not check for exception conditions,  and  does
+       not produce NaNs or infinities.  In this mode, errno might
+       not be set as often and  exceptions  may  not  be  raised.
+       Specifies  whether  the compiler generates calls to inline
+       or not. The default is to inline, unless  -Xw  or  -Xe  is
+       specified,  in  which  case  the default is to not inline.
+       Specifies the stack frame layout strategy the compiler  is
+       permitted to use.  frame uses the %ebp register as a dedi-
+       cated stack frame pointer.  fixed_frame and no_frame  rep-
+       resent  alternate  stack  layouts:  both permit %ebp to be
+       allocated as a general  purpose  register,  which  usually
+       produces  faster  code,  but  in  rare instances may cause
+       debugging  stack  traces  to  fail.   Between   the   two,
+       fixed_frame  saves  instructions  at  the expense of stack
+       space, while no_frame does the  reverse.   fixed_frame  is
+       advantageous for the Intel Pentium Pro processor architec-
+       ture, and is the default when -Kpentium_pro is  specified.
+       Otherwise,  no_frame  is  the  default.   This option only
+       applies when the -O option is specified; unoptimized  code
+       always  uses the frame pointer layout.  Also, code subject
+       to exception handling will often  use  the  frame  pointer
+       layout  regardless  of this option.  Specifies whether the
+       compiler may perform argument passing in registers,  which
+       produces  faster  code.  This is done for certain types of
+       calls within a translation unit, and only when -O is spec-
+       ified.   A  consequence  of  this  option is that function
+       breakpointing in debugging, and  argument  information  in
+       debugging stack traces, may be unreliable.  -Kargs_in_regs
+       clashes with inlining but has lower precedence;  no  argu-
+       ment  passing  in  registers is done if both are specified
+       (whether explicitly or by default).  In hosted  mode  (the
+       default),  the compiler assumes that function names in the
+       C standards are reserved and behave as  described  by  the
+       standard.   The compiler will be free to inline such func-
+       tions.  If no_ieee is also specified, the compiler assumes
+       that  math  functions  do  not  have NaNs or infinities as
+       arguments and do not produce NaNs or  infinities.   Speci-
+       fies the degree of function inlining performed by the com-
+       piler.  With c++_inline  (the  default),  those  functions
+       specified by the user as inline in the C++ source code are
+       considered for inlining,  as  are  all  compiler-generated
+       functions.   Inlining may not be possible for a variety of
+
+                                                                4
+
+CC(1C++)                                                 CC(1C++)
+
+       reasons (for example, if a function  calls  itself  recur-
+       sively).   If  the  -v  option  is in use, remarks will be
+       issued for user-specified inline requests that  cannot  be
+       honored.   With no_inline, the compiler turns all inlining
+       off.  With inline, the  compiler  tries  to  inline  every
+       function  for which inlining can reasonably be expected to
+       improve execution speed.  Inlining may yield better execu-
+       tion  speed at the expense of extra code size.  The inline
+       and c++_inline options (whether explicitly specified or as
+       the  default)  clash  with  the  -ql option and have lower
+       precedence: inlining is disabled.  Specifies  whether  the
+       compiler  performs  loop  unrolling  when  optimization is
+       enabled (-O).  Loop unrolling  (the  default  choice)  may
+       yield  better execution speed at the expense of extra code
+       size.  Specifies whether plain char types  are  considered
+       signed  or  unsigned.   The default is signed.  The system
+       uses certain heuristics in distinguishing between binaries
+       compiled  for  OpenServer using the OpenServer application
+       binary interface and binaries  compiled  for  UnixWare  or
+       &gemini; using the binary interface specified by the "Sys-
+       tem V Application Binary  Interface  Intel386tm  Processor
+       Supplement." These heuristics can fail in rare cases.  The
+       udk option can be used in cases when the  heuristcs  break
+       down.   It instructs the link-editor to add a special mark
+       to a binary object to positively identify it as  a  binary
+       compiled  by the &gemini; compiler and intended to be able
+       to run on &gemini;, OpenServer and UnixWare.  no_udk indi-
+       cates that no special mark should be inserted.  When link-
+       ing on OpenServer and passing the -Wl,-fosr5 option to the
+       -Kno_udk option must be used.
+
+       Multiple  -K  options have the same effect as if the sepa-
+       rate list arguments were merged into one option.  Adds dir
+       to  the  linking  phase list of directories to be searched
+       for subsequent -l options.  The order of the -B,  -L,  and
+       -l  options is significant; see the -l option.  Causes the
+       linking phase to search the library libstr.so or libstr.a.
+       The order of the -B, -L, and -l options is significant.  A
+       -l option causes the linker to check first in the directo-
+       ries specified by preceding -L options (in order) and then
+       in the directories of  the  default  library  search  path
+       (-YP).  If -Bdynamic is set at the point of the -l option,
+       each directory is checked first  for  libstr.so  and  then
+       libstr.a;  otherwise,  only libstr.a is checked.  See also
+       Do not specify -lC; CC will ensure that libC is linked  in
+       the  proper  order.   Linking  libC in the wrong order may
+       cause incorrect execution behavior.  Avoid specifying -lc;
+       CC  will  ensure  that libc is linked in the proper order.
+       Linking libc in the wrong order may cause incorrect execu-
+       tion behavior.  If you do specify -lc, make sure there are
+       no  other  dynamic  libraries  specified  after  it.   Use
+       -Kthread (or -KthreadT) instead of -lthread (or -lthreadT)
+       when linking with the threads library.  Using -lthread (or
+       -lthreadT)   directly   may   cause   incorrect  execution
+
+                                                                5
+
+CC(1C++)                                                 CC(1C++)
+
+       behavior.  Enables the optimization  phase.   This  option
+       clashes with -g but has lower precedence: the optimization
+       phase is disabled if both are specified.  This option also
+       clashes  with  -ql but has lower precedence: the optimiza-
+       tion phase is disabled if both are specified.  Uses str as
+       the  name  of the output file instead of the default name.
+       With no options this renames the a.out  executable.   With
+       -c  this  renames  the  generated .o object file.  With -S
+       this renames the generated .s assembly file.  With -P this
+       renames  the  generated  .i preprocessed source file file.
+       The -o option has no effect in conjunction with the -E  or
+       -Tprelink_objects options.  Suppresses all phases but pre-
+       processing, and places the result in a  .i-suffixed  file.
+       Unlike -E, the result will contain no directives.  Compil-
+       ing this resultant .i file produces  an  executable  whose
+       line  numbers  match  the  .i file instead of the .c file.
+       Causes extra code to be generated that counts  the  number
+       of  calls  to  each  routine.   If  the  linking  phase is
+       enabled, the default library search path (-YP) is  altered
+       to  check  directories  that are intended to contain simi-
+       larly instrumented libraries before the usual directories.
+       Moreover,  different  start-up  object files are used that
+       arrange to record (in the file mon.out) the time spent  in
+       each  routine;  see  This  option may not be used together
+       with -Kthread,  -KthreadT,  or  -Kpthread.   Controls  the
+       inclusion  of  compilation tool identification information
+       (such as an #ident directive) in the output of each phase.
+       If  str  is  y (the default), then the information will be
+       present; if str is n, it will not.  Causes extra code that
+       instruments the program to be generated.  If str is p, the
+       behavior is the same as the -p option.  If str is  l,  the
+       basic  block  profiling  phase  is enabled which generates
+       extra code that counts the number  of  times  each  source
+       line  is  executed; see If str is f, a flow profile log is
+       created; see The -O option clashes with -ql but has  lower
+       precedence:  the optimization phase is not enabled if both
+       are specified.  Inlining also clashes with  -ql  and  also
+       has  lower precedence: inlining is not enabled if both are
+       specified.  The option is overloaded to serve two  differ-
+       ent  purposes.   If the option argument starts with one of
+       the keywords related  to  control  of  precompiled  header
+       files, the whole argument is interpreted for that purpose,
+       as described below.  Otherwise,  if  the  option  argument
+       begins  with  a slash or contains a colon, the whole argu-
+       ment is interpreted as a runpath  and  is  passed  to  the
+       linker -R option.  Otherwise, the option is rejected.
+
+       -R list  controls the precompilation of header files.  The
+       C++ compilation system is able to take an internal  "snap-
+       shot"  of  header files during compilation, save that to a
+       file, and then read back that snapshot  during  subsequent
+       compilations.  Depending upon specific circumstances, this
+       can greatly reduce compilation time (although at the  cost
+       of additional disk space usage).  Precompilation of header
+
+                                                                6
+
+CC(1C++)                                                 CC(1C++)
+
+       files may be done either automatically by the compiler  or
+       under more user control.  By default, no precompilation of
+       header files is done.
+
+       The option argument list is a comma-separated list of  one
+       or  more of the following items: This directs the compiler
+       to automatically look for a qualifying precompiled  header
+       file  to read in and/or create one for use in a subsequent
+       compilation.  Create a precompiled header  file  with  the
+       specified  name.  Use the precompiled header file with the
+       specified name.  Search for and create precompiled  header
+       files  in  the specified directory.  If not specified, the
+       current directory is used.
+
+       If create or use is specified  with  auto,  then  auto  is
+       ignored.  The create and use items are mutually exclusive;
+       if both are specified, the last one is used.
+
+       If the -v option is specified, a message will be generated
+       if  a  precompiled  header file was used or created in the
+       current compilation.
+
+       A more detailed description of how the  compiler  performs
+       precompilation  of header files, of the effect of the dif-
+       ferent -R options, and of how source  files  may  best  be
+       coded  to  take advantage of this feature, may be found in
+       That topic also describes two pragma  directives,  #pragma
+       hdrstop  and  #pragma no_pch, that permit the user to con-
+       trol the precompilation of header files within a  specific
+       source   file.   Suppresses  the  assembling  and  linking
+       phases, and produces an assembly file (.s-suffixed  file).
+       Controls the instantiation of templates.  The C++ compila-
+       tion system is able to perform automatic instantiation  of
+       templates, or control may be fully or partly left with the
+       user.  Automatic instantiation is the default, and is rec-
+       ommended for most uses.
+
+       Items in the following list are presented in groups of two
+       or more; the first item is the default choice, and at most
+       one  of each such group will be allowed.  The option argu-
+       ment list is a comma-separated list of one or more of  the
+       following items: Specifies whether automatic instantiation
+       of templates should be done.  By default, it is done.   In
+       this mode, the compiler and a template prelinker cooperate
+       to determine necessary instantiations, assign them to com-
+       pilation  units, and perform them as needed.  Some of this
+       work is done  at  link  time  rather  than  compile  time.
+       Information about instantiation assignments is kept in .ii
+       and .ti files alongside corresponding .o files.  Specifies
+       whether  the  compiler  will  use  "implicit inclusion" to
+       locate  template  definitions.   Implicit  inclusion  (the
+       default) means that, if the compiler needs a definition to
+       instantiate a template entity declared  in  a  .h-suffixed
+       file,  then  it  may implicitly include (at the end of the
+
+                                                                7
+
+CC(1C++)                                                 CC(1C++)
+
+       main source file) an equivalently named file with a  valid
+       C++  source  file suffix in the same directory, to get the
+       source code for the definition.   With  no_implicit,  tem-
+       plate  definitions  must  be  explicitly coded or included
+       into the compilation source.  These options  specify  what
+       instantiations  are  done  when  a file is compiled.  none
+       specifies that no template entities  should  be  instanti-
+       ated,  unless automatic instantiation is being done.  This
+       is the default, and is also usually the  appropriate  mode
+       when automatic instantiation is done.  used specifies that
+       those template entities that were used in the  compilation
+       unit  should  be  instantiated.   This includes all static
+       data members for which  there  are  template  definitions.
+       all   specifies   to  instantiate  all  template  entities
+       declared or referenced in the compilation unit.  For  each
+       fully instantiated template class, all of its member func-
+       tions and static data members will be instantiated whether
+       or  not they were used.  Nonmember template functions will
+       be instantiated even if the only reference was a  declara-
+       tion.   local is similar to used except that functions are
+       given internal linkage.  This provides a very simple mech-
+       anism  for users getting started with templates.  The com-
+       piler will instantiate the functions that are used in each
+       compilation  unit as local functions, and the program will
+       link and run correctly (barring problems due  to  multiple
+       copies  of local static variables).  However, it is possi-
+       ble to end up with many copies of the  instantiated  func-
+       tions, so this is not suitable for production use.  Speci-
+       fies that the "one instantiation  per  object"  scheme  be
+       used.  This  is  an  advanced  option  that is usually not
+       needed; see for when its use may be  indicated.  It  means
+       that  compilation  of  a  source file produces one or more
+       object files: one primary object file with the usual  name
+       containing  no instantiations, and an object file for each
+       separate instantiation assigned to that source file. These
+       additional  object  files are placed in directory dir; the
+       default directory is Used as part of the  "one  instantia-
+       tion  per  object"  scheme, this finds the complete set of
+       object files, including instantiation objects, for a given
+       set of primary object files and write them to the standard
+       output. It is typically  used  as  a  back-quoted  command
+       within  an  invocation  of  When this option is specified,
+       only object files and no source files may  be  present  on
+       the  command  line.   Specifies  that the prelinking phase
+       will run, but not the linking  phase.   This  is  used  to
+       instantiate  templates  used internally within a set of .o
+       files, before they are put into an archive.  The  prelink-
+       ing phase will not run if -c is present.  If only a single
+       source is specified, the resulting .o is not deleted after
+       the command (as it would be in a full link).  If -Tno_auto
+       and   -Tprelink_objects   are   both   specified,   -Tpre-
+       link_objects is ignored.
+
+       There  are  a  few circumstances in which the defaults are
+
+                                                                8
+
+CC(1C++)                                                 CC(1C++)
+
+       changed.  If the command is a compile and link of a single
+       source file with no extra object files or libraries speci-
+       fied on the command line, then no_auto and used become the
+       default.   (This  allows  for  faster compilation of small
+       examples and test cases.)  If used or all  are  specified,
+       then  no_auto  becomes the default (since manual user con-
+       trol is probably wanted), but auto can be explicitly spec-
+       ified  if  desired.   If  local is specified, then auto is
+       forced off, because local is incompatible  with  automatic
+       instantiation.
+
+       A  more  detailed description of how the compiler performs
+       template instantiation, and of the effect of the different
+       -T  options,  may be found in That document also describes
+       three  pragma  directives,  #pragma  instantiate,  #pragma
+       do_not_instantiate, and #pragma can_instantiate, that per-
+       mit the user to control the instantiation of specific tem-
+       plate  entities or sets of template entities.  Causes name
+       to be undefined by the preprocessor as a macro as if by  a
+       #undef directive, even if name is a predefined macro or is
+       also the subject of a -D option.  (It is necessary to  use
+       -U  first when redefining a predefined macro.)  Causes the
+       CC command and each invoked  tool  to  print  its  version
+       information,  one  per line, on the standard error output.
+       Causes the compiler to issue remarks, which are diagnostic
+       messages milder than warnings, and causes the prelinker to
+       issue informational messages about template instantiation.
+       This  option  is mostly used in compilation system mainte-
+       nance.  It hands the argument(s) specified by  the  comma-
+       separated  list (in order) to the single compilation phase
+       named by phase.  An argument in list can include  a  comma
+       by escaping it by a preceding \.  If more than one concep-
+       tual phase is implemented by a single tool, all the  asso-
+       ciated  argument  lists are passed to the tool.  The phase
+       names are the following: preprocessor front end code  gen-
+       erator  optimizer basic block profiler assembler prelinker
+       linker
+
+       Relative to the regular options and  arguments  passed  to
+       the compilation phase, the location of the arguments spec-
+       ified by list is unspecified and may change.   Causes  the
+       compiler  to  suppress  warning  messages.   See below for
+       information on selective suppression of warning  messages.
+       Controls  the  interpretation  of the C++ source code with
+       respect to language dialect.  The option argument str  can
+       be  one  of  the following: Compile the default dialect of
+       the language.  This implements  almost  all   of  the  ISO
+       standard.   See the Standards Compliance section below for
+       a more detailed description of this dialect.  This  option
+       is the default.  Enable strict ISO conformance mode.  This
+       mode issues warnings when features not in the ISO standard
+       are  used,  and  disables  features that conflict with the
+       standard.  Same as  -Xw  except  that  errors  are  issued
+       instead  of  warnings.  Enable old cfront transition mode.
+
+                                                                9
+
+CC(1C++)                                                 CC(1C++)
+
+       This causes the compiler to accept language constructs and
+       anachronisms that, while not part of the C++ language def-
+       inition, are accepted by the cfront  C++  Language  System
+       (such  as  that  implemented  by &comet; and its predeces-
+       sors).  These are described in detail in Use of these con-
+       structs  and anachronisms is discouraged unless they occur
+       in existing code that is difficult to change.  This option
+       is mostly used in compilation system maintenance.  It uses
+       the directory dir to find the item(s) named by  str.   The
+       option  argument  str  is  one  or  more of the following:
+       Causes the executable for the phase (specified the same as
+       for  the  -W option) to be found in the directory dir.  If
+       more than one conceptual phase is implemented by a  single
+       executable and differing directories are specified for the
+       phases,  it  is  unspecified  which  directory  is   used.
+       Changes the directory in which to find the C++ name deman-
+       gler, which is used to demangle compiler and linker  diag-
+       nostic  messages.   Changes the directory in which to find
+       the C++ post-link editor.  Changes either or both  of  the
+       directories   searched  for  preprocessing  phase  include
+       files.  If dir is a single directory, INCDIR is changed to
+       dir  and  INCDIR/CC  is  changed  to dir/CC.  If it is two
+       directories  separated  by  a   colon,   dir1:dir2,   then
+       INCDIR/CC  is  changed  to  dir1  if dir1 is non-empty and
+       INCDIR is changed to dir2 if dir2 is non-empty.   In  this
+       way  either  or  both directories can be changed.  Changes
+       the linking phase default library search path  to  be  the
+       colon-separated  list  of  one  or  more directories, dir.
+       (More directories can be added to the front  of  the  path
+       due  to other options.)  Changes the directory in which to
+       find the implementation's start-up object files.   Changes
+       the  directory in which to find the Standard Components fs
+       tool preprocessor.  Changes the directory in which to find
+       the C++ post-assembly editor.
+
+       In  addition  to  the  ability to specify the directory in
+       which to find the various compilation phases,  if  the  CC
+       command  is  invoked  as prefixCC, then each tool executed
+       will be similarly prefixed, as will the filenames for  the
+       start-up  object  files.   For  example,  if  the  command
+       ./abcCC is invoked with  -Ya,../xyz,  then  the  assembler
+       would be expected to have the pathname ../xyz/abcas.  As a
+       consequence of this, if the command is  renamed,  it  must
+       end  with  the  suffix CC.  This requirement includes sym-
+       bolic links to the command, but not aliases of the command
+       (which  can  be  named anything).  Controls the packing of
+       full size structure members in the compiling  phase.   Bit
+       field  packing is not affected by this option.  The option
+       argument str is one of the following: Selects at least one
+       byte  alignment for all class or structure members; or, in
+       other words, include no padding.  (This can also be speci-
+       fied  as  -Zp.)   Selects  at least two byte alignment for
+       class or structure members of at least two bytes in  size.
+       Selects  two  byte  alignment  for two byte sized class or
+
+                                                               10
+
+CC(1C++)                                                 CC(1C++)
+
+       structure members and four byte alignment for larger class
+       or structure members.  This is the default.
+
+       The  CC  command  recognizes -e, -h, -u, and -z as linking
+       phase options with arguments.  These, and all other unrec-
+       ognized  option-like  arguments  are  handed  to  (A minor
+       exception is the linking  phase  -s  option.   Instead  of
+       passing  it  to the linker, is run, so as not to interfere
+       with C++ post-link editing.)
+
+       Finally, the CC command also recognizes the option -#.  If
+       one  -#  option is present, the CC command will print each
+       tool with its options  and  argument  just  before  it  is
+       invoked.   With  two -# options, the pathname of each tool
+       is also printed.  With three -# options,  the  information
+       is  printed  but  the  actual invocations of the tools are
+       skipped.  All -# information is written  to  the  standard
+       error output.
+
+   FFiilleess
+       default  name  of resulting executable next-to-last direc-
+       tory to search for include files last directory to  search
+       for  include  files startup code object files preprocessor
+       and front end Standard  Components  fs  tool  preprocessor
+       code  generator  optimizer  basic block profiler assembler
+       post-assembly editor template instantiator linker C++ name
+       demangler  object  file name lister executable file symbol
+       stripper dynamic shared C++ standard library  archive  C++
+       standard  library  archive  C++ complex arithmetic library
+       Standard Components fs tool library dynamic shared C stan-
+       dard  library  archive  C standard library runtime support
+       archive subdirectory of each LIBPATH  entry  in  which  to
+       check  for profiled libraries usually /usr/include usually
+       /usr/ccs/lib      usually       /usr/ccs/bin       usually
+       /usr/ccs/lib:/usr/lib usually /var/tmp but can be overrid-
+       den by the environment variable  TMPDIR  language-specific
+       message  file  [see LANG on runtime objects used to imple-
+       ment the -X option
+
+   EEnnvviirroonnmmeenntt vvaarriiaabblleess
+       location of temporary files used by the  compiler  affects
+       the execution of the C++ program.  If it is defined and an
+       exception is thrown  for  which  no  matching  handler  is
+       found,  the  C++ support runtime will save an image of the
+       process in file  throw.core.process-id,  then  unwind  the
+       stack  fully before calling std::terminate(). However, the
+       saving of the process image is not done on OpenServer.
+
+   EExxiitt ccooddeess
+       CC returns 0 on  success  (including  the  possibility  of
+       warning messages) and non-zero on failure.
+
+EExxaammpplleess
+       To create, compile and link, and execute a simple program:
+
+                                                               11
+
+CC(1C++)                                                 CC(1C++)
+
+       $ cat <<EOF >hello.C #include <iostream.h> int main() {
+          cout << "Hello, C++" << endl; }  EOF  $  CC  hello.C  $
+       a.out  Hello,  C++  To  compile and link a multiple source
+       file program, with report as the resulting  executable:  $
+       CC  -o  report report.c read_in.c write_out.c To compile a
+       source file, specifying some information for  the  prepro-
+       cessor,  with package.o as the resulting object file: $ CC
+       -c -I../include -DTRACE_ON package.C
+
+   WWaarrnniinnggss
+       CC should always be used when linking; ld  should  not  be
+       invoked directly if C++ is involved.
+
+       If  a  mode  choice option (such as -Q or -X) is specified
+       more than once, generally the last is used.
+
+       If a combination of options is specified that is illogical
+       due  to  one  option  suppressing the phase that the other
+       option is applicable to (for  example  -E  and  -g),  both
+       options  will  be  accepted,  but the option for the phase
+       that is suppressed (in this case, -g) will have no effect.
+
+       Using  the  -ql  option  to  basic block profile a program
+       might change the behavior of the program.  This is because
+       use  of the -ql option will suppress inlining of C++ func-
+       tions (which might change the program's  actions,  if  for
+       example  there are incorrect order of evaluation dependen-
+       cies).
+
+       Do not use mv.1 to move .o files after  compilation;  this
+       will lose the association with any accompanying .ti or .ii
+       files.  Instead, use the CC -c -o option to rename  object
+       files during compilation.
+
+       The  code  generated by the C++ compilation system is safe
+       for multithreaded applications; this includes simultaneous
+       execution  of static local variables with dynamic initial-
+       ization expressions.  The C++  Standard  Library  is  also
+       safe  for  multithreaded  applications.   This means that:
+       all internal data structures in the library are  protected
+       against  simultaneous  access; simultaneous access to dis-
+       tinct  containers  is  safe;  and  simultaneous  read-only
+       access to a shared container is safe.  Simultaneous access
+       to a shared container with at least  one  thread  writing,
+       however,  must be protected by the application through the
+       use of mutual exclusion primitives.
+
+       The older non-standard iostreams classes, and the old  C++
+       Standard  Components  classes,  both of which are provided
+       for compatibility  with  existing  applications,  are  not
+       thread-safe.
+
+       This  release of the C++ compilation system  is not binary
+       compatible with the native C++ compiler in any &comet;  or
+
+                                                               12
+
+CC(1C++)                                                 CC(1C++)
+
+       UnixWare  2  releases.  All  sources  must  be recompiled;
+       existing C++ .o, This release is  binary  compatible  with
+       previous  UnixWare  7  releases. However, existing .ii and
+       .ti files should be deleted  before  rebuilding  template-
+       based source code with this release.
+
+RReeffeerreenncceess
+       Stroustrup,  B.,  The C++ Programming Language, Third Edi-
+       tion, Addison-Wesley, 1997.
+
+       International  Standard  ISO/IEC  14882:1998,  Programming
+       Language - C++.
+
+       Manual pages for the C++ Standard Library specified by the
+       ISO standard are found in  the  3C++std  section.   Manual
+       pages for the older, non-standard C++ libraries present in
+       previous releases are found in the 3C++ section.
+
+CCoommppaattiibbiilliittyy
+       A compatibility libc is provided that allows  applications
+       compiled  using this compiler to run with earlier UnixWare
+       7 releases.  See
+
+NNoottiicceess
+   SSeelleeccttiivvee ssuupppprreessssiioonn ooff wwaarrnniinngg mmeessssaaggeess
+       It is possible to selectively  suppress  warning  messages
+       generated  by  the C++ compiler.  If you get a warning you
+       don't like, for example: $ CC -c tr14.C tr14.C",  line  1:
+       warning:  class  "TvDataStoreWorkSpace"  has no accessible
+       constructors class TvDataStoreWorkSpace {
+                   ^ Recompile passing the --display_error_number
+       option   to   the  C++  front  end:  $  CC  -c  -Wf,--dis-
+       play_error_number tr14.C "tr14.C", line 1: warning #402-D:
+       class  "TvDataStoreWorkSpace"  has no accessible construc-
+       tors class TvDataStoreWorkSpace {
+                   ^ You can then pass the --diag_suppress option
+       to   the  front  end  with  the  number  shown:  $  CC  -c
+       -Wf,--diag_suppress -Wf,402  tr14.C and no warning will be
+       issued.   If  you  wish to suppress more than one message,
+       you must use a  -Wf,--diag_suppress  -Wf,number  pair  for
+       each  message.   For  example: $ CC -c -Wf,--diag_suppress
+       -Wf,402 -Wf,--diag_suppress -Wf,414 tr14.C
+
+   SSttaannddaarrddss ccoommpplliiaannccee
+       ISO/IEC 14882 is the international standard  for  the  C++
+       programming  language  and standard library. This includes
+       ANSI and all other member national body standards  organi-
+       zations.
+
+       By  default  (or with the -Xd option), the compiler imple-
+       ments almost all of the language and library  features  of
+       the  ISO  standard. The only features in the standard that
+       are not implemented are: Two-phase name  binding  in  tem-
+       plates,  as  described  in sections 14.6 and 14.6.2 of the
+
+                                                               13
+
+CC(1C++)                                                 CC(1C++)
+
+       standard, is not implemented.  A partial specialization of
+       a  class  member  template  cannot be added outside of the
+       class definition.  The export keyword for templates is not
+       implemented.   Placement delete is not implemented.  Func-
+       tion-try-block (a try block that is the  top-level  state-
+       ment  of  a  function,  constructor, or destructor) is not
+       implemented.  Support for multibyte characters  in  source
+       is  not  implemented  (but support for universal character
+       set escapes such as \u05d0 is implemented).  String liter-
+       als  do  not have const type.  In addition, by default the
+       compiler accepts some non-standard language usages.  These
+       usages  are described in Use of them is discouraged unless
+       they occur in existing code that is difficult  to  change.
+       All such usages can be flagged via the -Xw or -Xe options.
+
+       The compiler also accepts most of  the  preprocessing  and
+       assembly-level  extensions of the SCO UnixWare C compiler.
+       These include  #assert,  #ident,  #pragma  ident,  #pragma
+       weak,  #pragma  pack,  old-style  asms  and enhanced asms.
+       These features are described in
+
+                                                               14
+

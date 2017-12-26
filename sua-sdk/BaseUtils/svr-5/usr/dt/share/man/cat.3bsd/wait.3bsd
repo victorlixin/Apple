@@ -1,0 +1,152 @@
+
+
+wait(3bsd)                                             wait(3bsd)
+
+SSyynnooppssiiss
+       /usr/ucb/cc [flag . . . ] file . . .
+
+       #include   <sys/wait.h>   #include  <sys/time.h>  #include
+       <sys/resource.h>
+
+       int wait3(union wait *statusp, int options, struct  rusage
+       *rusage);
+
+       WIFSTOPPED(union wait status);
+
+       WIFSIGNALED(union wait status);
+
+       WIFEXITED(union wait status);
+
+DDeessccrriippttiioonn
+       wait  delays  its caller until a signal is received or one
+       of its child processes terminates or stops due to tracing.
+       If  any  child has died or stopped due to tracing and this
+       has not been reported using  wait,  return  is  immediate,
+       returning  the  process ID and exit status of one of those
+       children.  If that child had died, it  is  discarded.   If
+       there  are no children, return is immediate with the value
+       -1 returned.  If there are only  running  or  stopped  but
+       reported children, the calling process is blocked.
+
+       If  status  is  not  a NULL pointer, then on return from a
+       successful wait call the status of the child process whose
+       process  ID  is  the return value of wait is stored in the
+       wait union pointed to by status.  The w_status  member  of
+       that  union  is an int; it indicates the cause of termina-
+       tion and other information about the terminated process in
+       the  following manner: If the low-order 8 bits of w_status
+       are equal to 0177, the child process has  stopped;  the  8
+       bits  higher up from the low-order 8 bits of w_status con-
+       tain the number of the signal that caused the  process  to
+       stop.   See  and  If  the low-order 8 bits of w_status are
+       non-zero and are not equal to 0177, the child process ter-
+       minated  due to a signal; the low-order 7 bits of w_status
+       contain the number of the signal that terminated the  pro-
+       cess.  In addition, if the low-order seventh bit of w_sta-
+       tus (that is, bit 0200) is set, a core image of  the  pro-
+       cess was produced; see Otherwise, the child process termi-
+       nated due to an exit call; the 8 bits higher up  from  the
+       low-order  8 bits of w_status contain the low-order 8 bits
+       of the argument that the child process passed to exit; see
+
+       Other  members  of  the  wait union can be used to extract
+       this information more conveniently: If the w_stopval  mem-
+       ber has the value WSTOPPED, the child process has stopped;
+       the value of the  w_stopsig  member  is  the  signal  that
+       stopped the process.  If the w_termsig member is non-zero,
+       the child process terminated due to a signal; the value of
+       the  w_termsig  member  is  the  number of the signal that
+
+                     BSD System Compatibility                   1
+
+wait(3bsd)                                             wait(3bsd)
+
+       terminated the process.  If the w_coredump member is  non-
+       zero, a core dump was produced.  Otherwise, the child pro-
+       cess terminated due to an exit  call;  the  value  of  the
+       w_retcode  member  is the low-order 8 bits of the argument
+       that the child process passed to exit.
+
+       The other members of the  wait  union  merely  provide  an
+       alternate  way  of analyzing the status.  The value stored
+       in the w_status field is compatible with the values stored
+       by other versions of the
+
+       system,  and  an  argument  of  type int * may be provided
+       instead of an argument of type union wait *  for  compati-
+       bility with those versions.
+
+       wait3  is  an alternate interface to that allows both non-
+       blocking status collection and the collection of the  sta-
+       tus  of children stopped by any means.  The status parame-
+       ter is defined as above.  The options parameter is used to
+       indicate  the  call  should not block if there are no pro-
+       cesses that have status to report (WNOHANG),  and/or  that
+       children  of the current process that are stopped due to a
+       SIGTTIN, SIGTTOU, SIGTSTP, or SIGSTOP signal are  eligible
+       to have their status reported as well (WUNTRACED).  A ter-
+       minated child is discarded after it reports status, and  a
+       stopped process will not report its status more than once.
+       If rusage  is  not  a  NULL  pointer,  a  summary  of  the
+       resources used by the terminated process and all its chil-
+       dren is returned.  Only the user time used and the  system
+       time  used  are currently available.  They are returned in
+       rusage.ru_utime and rusage.ru_stime, respectively.
+
+       When the WNOHANG option is specified and no processes have
+       status  to  report, wait3 returns 0.  The WNOHANG and WUN-
+       TRACED options may be combined by an OR of the two values.
+
+       WIFSTOPPED,  WIFSIGNALED,  WIFEXITED, are macros that take
+       an argument status, of type `union wait', as  returned  by
+       wait3.   WIFSTOPPED evaluates to true (1) when the process
+       for which the wait call was made is stopped, or  to  false
+       (0)  otherwise.   WIFSIGNALED  evaluates  to true when the
+       process was terminated with a signal.  WIFEXITED evaluates
+       to true when the process exited by using an call.
+
+RReettuurrnn vvaalluueess
+       wait3  returns  0 if WNOHANG is specified and there are no
+       stopped or exited children, and returns the process ID  of
+       the child process if it returns due to a stopped or termi-
+       nated child process.  Otherwise, wait3 returns a value  of
+       -1 and sets errno to indicate the error.
+
+       wait3  will  fail and return immediately if one or more of
+       the following are true: The calling process has no  exist-
+       ing  unwaited-for  child  processes.  The status or rusage
+
+                     BSD System Compatibility                   2
+
+wait(3bsd)                                             wait(3bsd)
+
+       arguments point to an illegal address.
+
+       wait3 will terminate prematurely, return -1, and set errno
+       to  EINTR  upon the arrival of a signal whose SV_INTERRUPT
+       bit in its flags field is set (see and  in  the  System  V
+       compatibility  library,  sets  this  bit for any signal it
+       catches.
+
+       Since System V Release 4 does not implement this  function
+       directly  as  a system call, an illegal address (status or
+       rusage) argument may result in a core dump as  opposed  to
+       returning EFAULT.
+
+RReeffeerreenncceess
+NNoottiicceess
+       wait  (see  is  found  in  libc, not libucb.  However, its
+       description is provided here to offer a comparison to  the
+       wait3 functionality.
+
+       If  a  parent  process  terminates  without waiting on its
+       children, the initialization  process  (process  ID  =  1)
+       inherits the children.
+
+       wait3 is automatically restarted when a process receives a
+       signal while awaiting  termination  of  a  child  process,
+       unless  the  SV_INTERRUPT bit is set in the flags for that
+       signal.
+
+                     BSD System Compatibility                   3
+

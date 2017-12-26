@@ -1,0 +1,511 @@
+rdist(1)                                                       rdist(1)
+
+  rrddiisstt
+
+  NNAAMMEE
+
+    rdist - remote file distribution client program
+
+  SSYYNNOOPPSSIISS
+
+    rdist [[-DFn]] [[-A num]] [[-a num]] [[-d var=value]]
+          [[-l local_logopts]] [[-L remote_logopts]] [[-f distfile]]
+          [[-M maxproc]] [[-m host]] [[-o distopts]] [[-t timeout]]
+          [[-p rdistd-path]] [[-P rsh-path]] [[name ...]]
+
+    rdist [[-DFn]] [[-c name ...[[user@]]host[[:dest]]
+
+    rdist -V
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The rrddiisstt(1) utility is a program you can use to maintain identical copies
+    of files over multiple hosts. It preserves the owner, group, mode, and
+    mtime of files if possible, and can update programs that are executing.
+    The rrddiisstt(1) utility reads commands from distfile to direct the updating
+    of files and/or directories. If distfile is '-', the standard input is
+    used. If no --ff option is present, the program looks first for 'distfile',
+    then 'Distfile' to use as the input. If no names are specified on the
+    command line, rrddiisstt(1) will update all of the files and directories listed
+    in distfile. Otherwise, the argument is taken to be the name of a file to
+    be updated or the label of a command to execute. If label and file names
+    conflict, it is assumed to be a label. These can be used together to
+    update specific files using specific commands.
+
+    The --cc option forces rrddiisstt(1) to interpret the remaining arguments as a
+    small distfile. The equivalent distfile is as follows.
+
+    ( name ... ) -> [user@]host
+         install   [dest] ;
+
+    The rrddiisstt(1) utility uses the _rr_cc_mm_dd(3) function call or the rrsshh(1) to
+    access each target host.
+
+    With the _rr_cc_mm_dd(3) method, rrddiisstt(1) makes the connection to the target host
+    itself and runs the rrddiissttdd(1) server program as described in this topic.
+
+    On each target host, rrddiisstt(1) will attempt to run the command
+
+    rdistd -S
+
+    or
+
+    "rdistd_path" -S
+
+    if the --pp option was specified. If no --pp option is included, or the
+    rdistd_path is a simple file name, rrddiissttdd(1) or rdistd_path must be
+    somewhere in the PATH of the user running rrddiisstt(1) on the remote (target)
+    host.
+
+  OOPPTTIIOONNSS
+
+    --AA num
+        Set the minimum number of free files (inodes) on a file system that
+        must exist for rrddiisstt(1) to update or install a file.
+    --aa num
+        Set the minimum amount of free space (in bytes) on a file system that
+        must exist for rrddiisstt(1) to update or install a file.
+
+    --DD
+        Enable copious debugging messages.
+    --dd var==value
+        Define var to have value. This option defines or overrides variable
+        definitions in the distfile. Value can be the empty string, one name,
+        or a list of names surrounded by parentheses and separated by tabs,
+        spaces, or both.
+
+    --FF
+        Do not fork any child rrddiisstt(1) processes. All clients are updated
+        sequentially.
+    --ff distfile
+        Set the name of the distfile to use to be distfile. If distfile is
+        specified as "-" (dash), read from standard input (stdin).
+    --ll logopts
+        Set local logging options. See the section MESSAGE LOGGING for details
+        on the syntax for logopts.
+    --LL logopts
+        Set remote logging options. Logopts is the same as for local logging,
+        except the values are passed to the remote server (_rr_dd_ii_ss_tt_dd(1)). See the
+        section MESSAGE LOGGING for details on the syntax for logopts.
+    --MM num
+        Set the maximum number of simultaneously running child rrddiisstt(1)
+        processes to num. The default is 4.
+    --mm machine
+        Limit the computers that are to be updated. Multiple --mm arguments can
+        be given to limit updates to a subset of the hosts listed in the
+        distfile.
+
+    --nn
+        Print the commands without executing them. This option is useful for
+        debugging distfile.
+    --oodistopts
+        Specify the dist options to enable. Distopts is a comma-separated list
+        of options that are listed below. The valid values for distopts are:
+
+        vveerriiffyy
+            Verify that the files are up to date on all the hosts. Any files
+            that are out of date will be displayed but no files will be
+            changed and no mail will be sent.
+
+        wwhhoollee
+            Whole mode. The whole file name is appended to the destination
+            directory name. This will preserve the directory structure of the
+            files being copied instead of flattening the directory structure.
+            For example, running rrddiisstt(1) for a list of files, such as //ddeevv//
+            ffss//CC//ppaatthh//ddiirr11//ff11 and //ddeevv//ffss//CC//ppaatthh//ddiirr22//ff22 to //ddeevv//ffss//CC//ttmmpp//ddiirr,
+            would create files //ddeevv//ffss//CC//ttmmpp//ddiirr//ppaatthh//ddiirr11//ff11 and //ddeevv//ffss//CC//
+            ttmmpp//ddiirr//ppaatthh//ddiirr22//ff22 instead of //ddeevv//ffss//CC//ttmmpp//ddiirr//ddiirr11//ff11 and //
+            ddeevv//ffss//CC//ttmmpp//ddiirr//ddiirr22//ff22.. (Usually, only the last component of a
+            name is used when renaming files.)
+
+        nnooeexxeecc
+            Automatically exclude executable files that are in a.out format
+            from being checked or updated. Currently not supported on Interix.
+
+        yyoouunnggeerr
+            Younger mode. Files are normally updated if their mtime and size
+            (see _ss_tt_aa_tt(2)) disagree. This option causes rrddiisstt(1) not to update
+            files that are younger than the master copy. This can be used to
+            prevent newer copies on other hosts from being replaced. A warning
+            message is printed for files that are newer than the master copy.
+
+        ccoommppaarree
+            Binary comparison. Perform a binary comparison and update files if
+            they differ rather than comparing dates and sizes.
+
+        ffoollllooww
+            Follow symbolic links. Copy the file that the link points to
+            rather than the link itself.
+
+        iiggnnllnnkkss
+            Ignore unresolved links. The rrddiisstt(1) utility will usually try to
+            maintain the link structure of files being transferred and warn
+            the user if all the links cannot be found.
+
+        cchhkknnffss
+            Do not check or update files on target host that reside on NFS
+            file systems.
+
+        cchhkkrreeaaddoonnllyy
+            Enable check on target host to see if a file resides on a read-
+            only file system. If a file does, then no checking or updating of
+            the file is attempted.
+
+        cchhkkssyymm
+            If the target on the remote host is a symbolic link, but is not on
+            the master host, the remote target will be left a symbolic link.
+            This behavior is generally considered a bug in the original
+            version of rrddiisstt(1), but is present to allow compatibility with
+            older versions.
+
+        qquuiieett
+            Quiet mode. Files that are being modified are normally printed on
+            standard output. This option suppresses this.
+
+        rreemmoovvee
+            Remove extraneous files. If a directory is being updated, any
+            files that exist on the remote host that do not exist in the
+            master directory are removed. This is useful for maintaining truly
+            identical copies of directories.
+
+        nnoocchhkkoowwnneerr
+            Do not check user ownership of files that already exist. The file
+            ownership is only set when the file is updated.
+
+        nnoocchhkkggrroouupp
+            Do not check group ownership of files that already exist. The file
+            ownership is only set when the file is updated.
+
+        nnoocchhkkmmooddee
+            Do not check file and directory permission modes. The permission
+            mode is only set when the file is updated.
+
+        nnooddeesscceenndd
+            Do not descend into a directory. Normally, rrddiisstt(1) will
+            recursively check directories. If this option is enabled, any
+            files listed in the file list in the distfile that are directories
+            are not recursively scanned. Only the existence, ownership, and
+            mode of the directory are checked.
+
+        nnuummcchhkkggrroouupp
+            Use the numeric group identifier (GID) to check group ownership
+            instead of the group name. This is useful on Interix when group
+            names might contain white space. This is the recommended default
+            usage. The Interix group ID is essentially the Windows security ID
+            (SID); for groups other than the built-ins, it is unique.
+
+        nnuummcchhkkoowwnneerr
+            Use the numeric user ID (UID) to check user ownership instead of
+            the user name.
+
+        ssaavveettaarrggeettss
+            Save files that are updated instead of removing them. Any target
+            file that is updates is first rename from file to file..oOLLDD.
+
+        ssppaarrssee
+            Enable checking for sparse (also known as wholely) files. Some of
+            the most common types of sparse files are those produced by
+            nnddbbmm(). This option adds some additional processing overhead, so
+            it should only be enabled for targets likely to contain sparse
+            files.
+    --pp rdistd-path
+        Set the path where the rdistd server is searched for on the target
+        host.
+    --PP rsh-path
+        Set the path to the rrsshh(1) command. The rsh-path can be a colon-
+        separated list of possible path names. In this case, the first
+        component of the path to exist is used, as in the following example:
+        //bbiinn//rrsshh:://uussrr//ssbbiinn//rreemmsshh:://uussrr//bbssdd//rrsshh
+    --tt timeout
+        Set the time-out period (in seconds) for waiting for responses from
+        the remote rrddiisstt(1) server. The default is 900 seconds.
+
+    --VV
+        Print version information and exit.
+
+  MMEESSSSAAGGEE LLOOGGGGIINNGG
+
+    The rrddiisstt(1) utility uses a collection of predefined message facilities
+    that each contain a list of message types specifying which types of
+    messages to send to that facility. The local client (_rr_dd_ii_ss_tt(1)) and the
+    remote server (_rr_dd_ii_ss_tt_dd(1)) each maintain their own copy of which types of
+    messages to log to which facilities.
+
+    The --ll logopts option to rrddiisstt(1) tells rrddiisstt(1) which logging options to
+    use locally. The --LL logopts option to rrddiisstt(1) tells rrddiisstt(1) which
+    logging options to pass to the remote rrddiissttdd(1) server.
+
+    The form of logopts should be of form
+
+    facility=types:facility=types...
+
+    The valid facility names are as follows:
+
+    ffiillee
+        Log to a file. To specify the file name, use the format:
+        "ffiillee==filename==types"
+        For example:
+        ""ffiillee==//ttmmpp//rrddiisstt..lloogg==aallll,,ddeebbuugg""
+
+    nnoottiiffyy
+        Use the internal rrddiisstt(1) nnoottiiffyy facility. This facility is used in
+        conjunction with the nnoottiiffyy keyword in a distfile to specify which
+        messages are mailed to the nnoottiiffyy address.
+
+    ssttddoouutt
+        Messages to standard output.
+
+    ssyysslloogg
+        Use the ssyyssllooggdd(1) facility.
+
+    Types should be a comma-separated list of message types. Each message type
+    specified enables that message level. This is unlike the _ss_yy_ss_ll_oo_gg(3) system
+    facility, which uses an ascending order scheme. The following are the
+    valid types:
+
+    wwaarrnniinngg
+        Warnings about errors that are not as serious as nneerrrroorr type messages.
+
+    ddeebbuugg
+        Debugging information.
+
+    aallll
+        All but debug messages.
+
+    The following is a sample command-line option:
+
+    -l stdout=all:syslog=change,notice:file=/tmp/rdist.log=all
+
+    This entry will set local message logging to have all but debug messages
+    sent to standard output, change and notice messages will be sent to
+    _ss_yy_ss_ll_oo_gg(3), and all messages will be written to the file //ttmmpp//rrddiisstt..lloogg.
+
+  DDIISSTTFFIILLEESS
+
+    The distfile contains a sequence of entries that specify the files to be
+    copied, the destination hosts, and which operations to perform to do the
+    updating. Each entry has one of the following formats.
+
+    variable_name == name_list
+    [ label:: ] source_list -->> destination_list command_list
+    [ label:: ] source_list :::: time_stamp_file command_list
+
+    The first format is used for defining variables.
+
+    The second format is used for distributing files to other hosts.
+
+    The third format is used for making lists of files that have been changed
+    since some given date.
+    *     The source_list specifies a list of files, directories, or both on
+          the local host that are to be used as the master copy for
+          distribution.
+    *     The destination_list is the list of hosts to which these files are
+          to be copied. Each file in the source list is added to a list of
+          changes if the file is out of date on the host that is being updated
+          (second format), or the file is newer than the time stamp file
+          (third format).
+    *     Labels are optional. They are used to identify a command for partial
+          updates.
+
+    Newlines, tabs, and blanks are only used as separators and are otherwise
+    ignored. Comments begin with ## and end with a newline.
+
+    Variables to be expanded begin with $$ followed by one character or a name
+    enclosed in {{}} (see the examples at the end).
+
+    The source and destination lists have the following format:
+
+    name
+
+    or
+
+    ( zero or more names separated by white space )
+
+    These simple lists can be modified by using one level of set addition,
+    subtraction, or intersection, as in the following example:
+
+    list '-' list
+
+    or
+
+    list '+' list
+
+    or
+
+    list '&' list
+
+    If additional modifications are needed (for example, "all servers and
+    client computers except for the OSF/1 computers"), the list must be
+    explicitly constructed in steps using "temporary" variables.
+
+    The shell meta-characters '[', ']', '{', '}', '*', and '?' are recognized
+    and expanded (on the local host only) in the same way as ccsshh(1). They can
+    be escaped with a '\'. The '~' character is also expanded in the same way
+    as ccsshh(1), but it is expanded separately on the local and destination
+    hosts. When the --oowwhhoollee option is used with a file name that begins with
+    '~', everything except the home directory is appended to the destination
+    name. File names that do not begin with '/' or '~' use the destination
+    user's home directory as the root directory for the rest of the file name.
+
+    The command list consists of zero or more commands of the following
+    format.
+
+    *     iinnssttaallll options opt_dest_name ;
+    *     nnoottiiffyy name_list ;
+    *     eexxcceepptt name_list ;
+    *     eexxcceepptt__ppaatt pattern_list ;
+    *     ssppeecciiaall name_list string ;
+    *     ccmmddssppeecciiaall name_list string ;
+
+    The iinnssttaallll command is used to copy out of date files, directories, or
+    both. Each source file is copied to each host in the destination list.
+    Directories are recursively copied in the same way. The opt_dest_name
+    parameter is an optional parameter to rename files. If no iinnssttaallll command
+    appears in the command list, or the destination name is not specified, the
+    source file name is used. Directories in the path name will be created if
+    they do not exist on the remote host. The --oo distopts option (previously
+    specified under OPTIONS) has the same semantics as on the command line,
+    except that they only apply to the files in the source list. The user name
+    used on the destination host is the same as the local host unless the
+    destination name is of the format "user@host".
+
+    The nnoottiiffyy command is used to mail the list of files updated (and any
+    errors that might have occurred) to the listed names. If no '@' appears in
+    the name, the destination host is appended to the name (for example,
+    name1@host, name2@host, and so on). This command is not currently
+    supported by Interix.
+
+    The eexxcceepptt command is used to update all of the files in the source list
+    except files listed in name_list. This is usually used to copy everything
+    in a directory except certain files.
+
+    The eexxcceepptt__ppaatt command is like the eexxcceepptt command, except that
+    pattern_list is a list of regular expressions. If one of the patterns
+    matches some string within a file name, that file will be ignored. Because
+    '\' is a quote character, it must be doubled to become part of the regular
+    expression. Variables are expanded in pattern_list, but not shell file
+    pattern matching characters. To include a '$', it must be escaped with
+    '\'.
+
+    The ssppeecciiaall command is used to specify sshh(1) commands that are to be
+    executed on the remote host after the file in name_list is updated or
+    installed. If the name_list is omitted, the shell commands will be
+    executed for every file updated or installed. String starts and ends with
+    '"' and can cross multiple lines in distfile. Multiple commands to the
+    shell should be separated by ';'. Commands are executed in the user's home
+    directory on the host being updated. The ssppeecciiaall command can be used to
+    rebuild private databases and such after a program has been updated. The
+    following environment variables are set for each ssppeecciiaall command:
+
+    FILE
+        The full path name of the local file that was just updated.
+
+    REMFILE
+        The full path name of the remote file that was just updated.
+
+    BASEFILE
+        The base name of the remote file that was just updated.
+
+    The ccmmddssppeecciiaall command is similar to the ssppeecciiaall command, except that it
+    is executed only when the entire command is completed instead of after
+    each file is updated. The list of files is placed in the environment
+    variable FILES. Each file name in FILES is separated by a ':' (colon).
+
+    If a host name ends in a plus sign (++), the '+' is stripped off and NFS
+    checks are disabled. This is equivalent to disabling the --oo cchhkknnffss option
+    just for this one host.
+
+    The following is a small example.
+
+    HOSTS = ( matisse root@arpa)
+
+    FILES = ( /bin /lib /usr/bin /usr/games
+         /usr/include/{*.h,{stand,sys,vax*,pascal,machine}/*.h}
+         /usr/lib /usr/man/man? /svr-5/bin /usr/local/rdist )
+
+    EXLIB = ( Mail.rc aliases aliases.dir aliases.pag crontab dshrc
+         sendmail.cf sendmail.fc sendmail.hf sendmail.st uucp vfont )
+
+    ${FILES} -> ${HOSTS}
+         install -oremove,chknfs,numchkgroup ;
+         except /usr/lib/${EXLIB} ;
+         except /usr/games/lib ;
+         special /usr/lib/sendmail "/usr/lib/sendmail -bz" ;
+
+    srcs:
+    /usr/src/bin -> arpa
+         install -onumchkgroup ;
+         except_pat ( \\.o\$ /SCCS\$ ) ;
+
+    IMAGEN = (ips dviimp catdvi)
+
+    imagen:
+    /usr/local/${IMAGEN} -> arpa
+         install -onumchkgroup /usr/local/lib ;
+         notify ralph ;
+
+    ${FILES} :: stamp.cory
+         install -onumchkgroup ;
+         notify Administrator ;
+
+  EENNVVIIRROONNMMEENNTT
+
+    The rrddiisstt(1) utility makes use of the following environment variables, if
+    set:
+
+    TMPDIR
+        Name of temporary directory to use. Default is //ttmmpp.
+
+    RSH
+        Name of the default remote shell program to use. Default is //bbiinn//rrsshh.
+
+  FFIILLEESS
+
+    ddiissttffiillee
+        Input command file
+
+    $$TTMMPPDDIIRR//rrddiisstt**
+        Temporary file for update lists
+
+  NNOOTTEESS
+
+    If the base name of a file (the last component in the path name) is ".",
+    rrddiisstt assumes the remote (destination) name is a directory. Thus, //ttmmpp//
+    .. means that //ttmmpp should be a directory on the remote host.
+
+    The following options are still recognized for backwards compatibility:
+
+    --vv --NN --OO --qq --bb --rr --RR --ss --ww --yy --hh --ii --xx
+
+  CCAAVVEEAATTSS
+
+    Source files must reside on the local host where rrddiisstt(1) is executed.
+
+    Group names with spaces in them will cause rrddiisstt(1) to fail. The rrddiisstt(1)
+    protocol cannot handle spaces in group names. When the source of the file
+    is on Interix, always use the option nnuummcchhkkggrroouupp.
+
+    Variable expansion only works for name lists; there should be a general
+    macro facility.
+
+    The rrddiisstt(1) utility aborts on files that have a negative mtime (before
+    Jan 1, 1970).
+
+    If a hard-linked file is listed more than once in the same target,
+    rrddiisstt(1) will report missing links. Only one instance of a link should be
+    listed in each target.
+
+  SSEEEE AALLSSOO
+
+    _s_h(1)
+
+    _c_s_h(1)
+
+    _r_s_h(1)
+
+    _s_t_a_t(2)
+
+    _r_c_m_d(3)
+
+    _r_e_g_e_x(2)
+

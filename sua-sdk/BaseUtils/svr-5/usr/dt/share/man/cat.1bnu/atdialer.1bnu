@@ -1,0 +1,217 @@
+
+
+atdialer(1bnu)                                     atdialer(1bnu)
+
+SSyynnooppssiiss
+       /usr/lib/uucp/atdialer [ -f ] ttyname telnumber speed
+       /usr/lib/uucp/atdialer   [   -f   ]   -h   ttyname   speed
+       /etc/uucp/atdialname [ -f ] ttyname telnumber speed
+       /etc/uucp/atdialname [ -f ] -h ttyname speed
+
+DDeessccrriippttiioonn
+       atdialer is a  configurable  dialer  program  for  modems.
+       comes  with a selection of dialers for popular modems, but
+       to get the maximum performance out of some devices you may
+       want  to create a customized dialer. Alternatively, if you
+       are using a non-standard modem you may have  to  create  a
+       dialer for it.
+
+       As  shipped, there exist several atdialname symbolic links
+       to  atdialer  for  which  configuration  files  exist   in
+       /etc/uucp/default.   The  atdialer  binary works out which
+       configuration file to use by checking the  name  that  was
+       used  to  invoke  it.  It then looks for the configuration
+       file  atdialname  in  /etc/uucp/default.   The  path   may
+       include         the        port,        for        example
+       /etc/uucp/default/term/00m/atdialname.  Use or  the  Modem
+       Manager to create a symbolic link to atdialer. The port is
+       set using the -p option to mdmcfg.
+
+       When  or  run  on  a  given  line,  they  read  the   file
+       /etc/uucp/Devices.  This  specifies  the dialer to use for
+       controlling a given modem. Using the configuration strings
+       specified  in  its  current  configuration  file, atdialer
+       attempts to contact the modem on the specified tty at  the
+       specified speed, and dials the specified telephone number.
+       It returns either an error  string  from  the  modem  (for
+       example,  NO  CARRIER or BUSY) or if successful, the speed
+       of the connection (for example, 19200  for  a  19,200-baud
+       connection).
+
+       Note  that  a  proper /etc/ttydefs file for the modem must
+       exist before atdialer will work properly. The  modem  must
+       use RTS/CTS flow control if  is selected; /etc/inittab and
+       /etc/conf/init.d/sio should be set up to permit this.
+
+       The -f option selects call  discrimination  and  selection
+       for modems that support this functionality. This sends the
+       commands MDM_SETUP, MDM_SPEAKER, MDM_DSBLESC,  MDM_DIALIN,
+       and MDM_CDS to the modem.  The atdialer will expect either
+       the response  RTC_DATA  or  RTC_FAX  from  the  modem.  If
+       RTC_FAX  is  received, a FAX connection has been detected,
+       and atdialer will exit with a value  of  RCE_FAXMODE.   If
+       RTC_DATA   is  received,  atdialer  sends  MDM_ONLINE  (if
+       defined) to the modem, and  then  waits  for  RTC_CONNECT.
+       When  it  receives  RTC_CONNECT, atdialer will exit with a
+       value of RCE_DATAMODE.   If  other  strings  are  returned
+       (such  as  ERROR),  atdialer  will  exit  with  a value of
+       RCE_FAIL.
+
+                                                                1
+
+atdialer(1bnu)                                     atdialer(1bnu)
+
+       If the -h option is specified, the  line  is  disconnected
+       when  the last process holding the line open either closes
+       it or terminates.  ttymon calls the  dialer  program  with
+       this  option  whenever  it  starts up on a line enabled in
+       /etc/inittab and listed  in  /etc/uucp/Devices  with  this
+       dialer.
+
+   aattddiiaalleerr ccoonnffiigguurraattiioonn ppaarraammeetteerrss
+       An  atdialer  configuration  file in /etc/uucp/default can
+       contain the parameters listed in the following table:
+       -----------------------------------------------------------
+       Parameter         Default                 Description
+       -----------------------------------------------------------
+       MDM_ATSPEED       0                       Control delay in
+                                                 milliseconds
+                                                 between  sending
+                                                 AT commands
+       MDM_ATTN                                  This   parameter
+                                                 is   no   longer
+                                                 supported and is
+                                                 ignored
+       MDM_CDS           AT+FAA=1;+FCR=1         Select call dis-
+                                                 crimination  and
+                                                 selection
+       MDM_DIALCMD       ATDT                    Dial command
+       MDM_DIALIN        ATS0=1                  Answer  after  1
+                                                 ring
+       MDM_DSBLESC       ATS2=128                Disable    modem
+                                                 escape
+       MDM_ESCAPE        +++                     Escape  to  com-
+                                                 mand mode
+       MDM_FAXBAUD       19200                   Select  speed of
+                                                 19,200bps
+                                                 between  DCE and
+                                                 DTE
+       MDM_HANGUP        ATQ0H0                  Hangup
+       MDM_ONLINE                                Command  to   go
+                                                 online  after  a
+                                                 DATA  connection
+                                                 has  been estab-
+                                                 lished
+       MDM_OPTION                                Commands   which
+                                                 enable      line
+                                                 speed to be var-
+                                                 ied
+       MDM_QUIET         ATQ1                    Inhibit  sending
+                                                 of result  codes
+                                                 to DTE
+       MDM_RESET                                 This   parameter
+                                                 is   no   longer
+                                                 supported and is
+                                                 ignored
+
+                                                                2
+
+atdialer(1bnu)                                     atdialer(1bnu)
+
+       MDM_SETUP         AT&F0                   This   parameter
+                                                 must be supplied
+       MDM_SPEAKER       ATM0                    Speaker  control
+                                                 command
+       RTC_BUSY          BUSY                    Message       to
+                                                 expect for  busy
+                                                 line
+       RTC_CONNECT                               Message       to
+                                                 expect for  con-
+                                                 nection  at  any
+                                                 speed
+       RTC_DATA          DATA                    Message       to
+                                                 expect  for DATA
+                                                 connection
+       RTC_ERROR         ERROR                   Message       to
+                                                 expect  on  com-
+                                                 mand error
+       RTC_FAX           FAX                     Message       to
+                                                 expect  for  FAX
+                                                 connection
+       RTC_NOANS         NO ANSWER               Message       to
+                                                 expect   for  no
+                                                 answer
+       RTC_NOCARR        NO CARRIER              Message       to
+                                                 expect   for  no
+                                                 carrier
+       RTC_NOTONE        NO DIALTONE             Message       to
+                                                 expect   for  no
+                                                 dialtone
+       RTC_OK            OK                      Message       to
+                                                 expect  on  com-
+                                                 mand success
+       STTY              -ortsflow   rts-        stty   settings;
+                         flow ctsflow            default  is   to
+                                                 use     hardware
+                                                 flow control
+
+       MDM_OPTION allows you to set up special registers  on  the
+       modem.  To  enable these settings, put an X or an x at the
+       end of the phone number in a Systems file entry. For exam-
+       ple:  some modems allow you to send a ATSP command to per-
+       form  spoofing some  high-speed  modems  that  communicate
+       with the serial port at a fixed speed, while they vary the
+       connection speed to the remote modem as needed.   Put  the
+       appropriate  commands  in the MDM_OPTION entry, and modify
+       /etc/uucp/Devices, /etc/inittab  and  /etc/conf/init.d/sio
+       to  use the highest available serial line speed.  You must
+       also edit the configuration file  so  that  the  RTC_speed
+       definitions  all  read not used except for the serial line
+       speed chosen The MDM_OPTION feature is only  valid  for  a
+       Systems file entry; it cannot be used with cu.
+
+       Setting any of the RTC_speed parameters is unnecessary for
+       modern  modems  that  can  perform  speed  conversion.  If
+
+                                                                3
+
+atdialer(1bnu)                                     atdialer(1bnu)
+
+       hardware flow control is used between the computer and the
+       modem, the modem can use the fastest  speed  that  it  can
+       negotiate  with  the  remote  modem.  In  this  case,  set
+       RTC_CONNECT to ``CONNECT''.
+
+       MDM_SETUP must be present and defined.
+
+       A * at the start of a line indicates a comment.
+
+FFiilleess
+       atdialer binary atdialer configuration file for modem name
+       symbolic link to atdialer binary
+
+EExxaammpplleess
+       This  is  an  example  of  an atdialer configuration for a
+       V.32bis modem that supports automatic FAX/DATA  selection:
+       *    Enable    FAX/DATA    detection:    *   MDM_MODE=AUTO
+       MDM_SETUP=AT&F+FAA=1 * * NOTE: automatic  FAX/DATA  selec-
+       tion  may  not  be available.  * * Setup commands: * * &D2
+       Computer must raise DTR for modem to accept commands * &C1
+       Modem  raises  CD  while a connection is present * &B1 Use
+       fixed line speed between computer  and  modem  *  &R2  Use
+       hardware flow control for received data * &H1 Use hardware
+       flow     control     for      transmitted      data      *
+       MDM_SETUP=AT&FX4Q0&D2&C1&B1S0=1S2=043M0&R2&H1   *   *  Use
+       fastest connection speed available; *  atdialer  sets  the
+       line speed between computer and modem.  * RTC_CONNECT=CON-
+       NECT * *  Use  bidirectional  hardware  flow  control.   *
+       STTY=-ortsfl rtsflow ctsflow
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoommpplliiaannccee
+       atdialer  is not part of any currently supported standard;
+       it is an extension of AT&T System V provided by The  Santa
+       Cruz Operation, Inc.
+
+                                                                4
+

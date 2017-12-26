@@ -1,0 +1,88 @@
+
+
+filepriv(2)                                           filepriv(2)
+
+SSyynnooppssiiss
+       #include <sys/types.h> #include <priv.h>
+
+       int filepriv(const char *path, int cmd, priv_t *privp, int
+       nentries);
+
+DDeessccrriippttiioonn
+       The filepriv system call is  used  to  set,  retrieve,  or
+       count  the  privileges  associated  with a file.  privp is
+       defined as a pointer to an array of privilege  descriptors
+       each of which contains a privilege set and the identity of
+       the requested privilege.
+
+       The path argument specifies an executable file.   nentries
+       is the number of entries contained in privp.
+
+       When setting privileges, filepriv changes the kernel priv-
+       ilege table, but not the Privilege Data  File  (PDF)  file
+       that  is  used  to initialize privileges at system startup
+       time.  Privileges changed with  filepriv  are  valid  only
+       until  the next reboot, at which time the changes are lost
+       and the privileges are as defined in the PDF.
+
+       The recognized cmds  and  their  functions  are  described
+       below: the fixed and inheritable privilege sets associated
+       with the file indicated by path are set based on the priv-
+       ilege  descriptor(s)  contained  in  privp.  The fixed and
+       inheritable privilege sets resulting  from  the  privilege
+       descriptor(s) contained in privp must be disjoint.  Privi-
+       leges contained in either privilege set that  are  not  in
+       the  maximum  set of the calling process are ignored.  The
+       calling process must have the either the P_SETSPRIV privi-
+       lege  or  the  P_SETUPRIV privilege in its working set; if
+       the privilege is P_SETUPRIV, the process  must  also  have
+       write  access  to the file named by path.  If any argument
+       is invalid, none of the file privileges is  changed.   The
+       setting  is absolute.  the fixed and inheritable privilege
+       sets associated  with  the  file  indicated  by  path  are
+       returned  in  privp  in the form of privilege descriptors.
+       The calling process must have  read  access  to  the  file
+       named  by  path.   None of the file privileges is changed.
+       the return value is set to the number of privileges  asso-
+       ciated  with the named file.  The privp and nentries argu-
+       ments are ignored.  The calling  process  must  have  read
+       access to the file named by path.  None of the file privi-
+       leges is changed.
+
+   RReettuurrnn vvaalluueess
+       On success, filepriv returns the number of privilege  file
+       descriptors.   On  failure,  filepriv  returns -1 and sets
+       errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, filepriv fails and sets errno
+
+                                                                1
+
+filepriv(2)                                           filepriv(2)
+
+       to:  A  component  of path does not exist.  A component of
+       path is not a directory.  The cmd is invalid.  The cmd  is
+       GETPRV and privp is not large enough to hold the number of
+       privileges associated with the named  file.   The  cmd  is
+       PUTPRV  and (1) the file pointed to by path is not a regu-
+       lar executable file, (2) the fixed and inheritable  privi-
+       lege  sets  are not disjoint, (3) nentries is less than 0,
+       or (4) privp includes undefined privileges.   The  cmd  is
+       GETPRV  or CNTPRV and the file pointed to by path is not a
+       regular executable file.  An internal routine to  retrieve
+       file  privileges or copy privileges to the calling process
+       failed.  The cmd is GETPRV or CNTPRV and the calling  pro-
+       cess  does not have read access to the file named by path.
+       The cmd is  SETPRV,  the  calling  process  has  only  the
+       P_SETUPRIV  privilege,  and  write access is denied on the
+       file named by path.  The calling process does not have the
+       P_SETSPRIV or the P_SETUPRIV privilege.  There is insuffi-
+       cient kernel memory to allocate a  privilege  table  entry
+       when setting file privileges.  The filepriv system call is
+       not supported by the installed privilege mechanism.
+
+RReeffeerreenncceess
+
+                                                                2
+

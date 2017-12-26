@@ -1,0 +1,155 @@
+
+
+tsearch(3C)                                           tsearch(3C)
+
+SSyynnooppssiiss
+       #include <search.h>
+
+       void  *tsearch  (const void *key, void **rootp, int (*com-
+       par)
+           (const void *, const void *));
+
+       void *tfind (const void  *key,  void  *const  *rootp,  int
+       (*compar)
+           (const void *, const void *));
+
+       void  *tdelete  (const void *key, void **rootp, int (*com-
+       par)
+           (const void *, const void *));
+
+       void twalk (void  *root,  void(*action)  (void  *,  VISIT,
+       int));
+
+DDeessccrriippttiioonn
+       tsearch, tfind, tdelete, and twalk are routines for manip-
+       ulating binary search trees.  They  are  generalized  from
+       Knuth  (6.2.2)  Algorithms  T  and D.  All comparisons are
+       done with a user-supplied routine.  This routine is called
+       with  two  arguments,  the  pointers to the elements being
+       compared.  It returns an integer less than, equal  to,  or
+       greater than 0, according to whether the first argument is
+       to be considered less than, equal to or greater  than  the
+       second argument.  The comparison function need not compare
+       every byte, so arbitrary data may be contained in the ele-
+       ments in addition to the values being compared.
+
+       In  the following, nodes are internal data structures, the
+       first element of which is a key, that  is,  a  pointer  to
+       data stored at the node.  Pointers to nodes can be used as
+       pointers to pointers to stored data.
+
+       tsearch is used to build and access the tree.   key  is  a
+       pointer to the data to be accessed or stored.  If there is
+       data in the tree equal to *key (the value  pointed  to  by
+       key),  a  pointer  to  the node storing the pointer to the
+       data is returned.  Otherwise, a  new  node  is  allocated,
+       *key  is inserted, and a pointer to the new node returned.
+       Only pointers are copied,  so  the  calling  routine  must
+       store the data.  rootp points to a variable that points to
+       the root of the tree.   A  NULL  value  for  the  variable
+       pointed  to  by rootp denotes an empty tree; in this case,
+       the variable will be set to point  to  a  newly  allocated
+       node,  which  will  store  the  key at the root of the new
+       tree.
+
+       Like tsearch, tfind will search for data equal to *key  in
+       the  tree, returning a pointer to the data if found.  How-
+       ever, if it  is  not  found,  tfind  will  return  a  NULL
+       pointer.   The  arguments  for  tfind  are the same as for
+
+                                                                1
+
+tsearch(3C)                                           tsearch(3C)
+
+       tsearch.
+
+       tdelete deletes a node from a  binary  search  tree.   The
+       arguments  are  the  same  as  for  tsearch.  The variable
+       pointed to by rootp will be changed if  the  deleted  node
+       was  the  root  of the tree.  tdelete returns a pointer to
+       the parent of the deleted node, or a NULL pointer  if  the
+       node is not found.
+
+       twalk traverses a binary search tree.  root is the root of
+       the tree to be traversed.  (Any node in a tree may be used
+       as  the  root  for a walk below that node.)  action is the
+       name of a routine to be invoked at each node.   This  rou-
+       tine  is, in turn, called with three arguments.  The first
+       argument is the address of the node  being  visited.   The
+       second  argument  is a value from an enumeration data type
+       typedef enum { preorder, postorder, endorder, leaf }
+
+       VISIT; (defined in the search.h header file), depending on
+       whether  this  is the first, second or third time that the
+       node has been visited (during a depth-first, left-to-right
+       traversal  of  the  tree),  or whether the node is a leaf.
+       The third argument is the level of the node in  the  tree,
+       with the root being level zero.
+
+   RReettuurrnn vvaalluueess
+       A  NULL  pointer  is  returned  by tsearch if there is not
+       enough space available to create a new node.
+
+       A NULL pointer is returned by tfind and tdelete  if  rootp
+       is NULL on entry.
+
+       If  data  equal  to  *key is found, both tsearch and tfind
+       return a pointer to the node containing a pointer  to  the
+       data.   If  not, tfind returns NULL, and tsearch returns a
+       pointer to the node containing the newly inserted key.
+
+UUssaaggee
+       The following code reads in strings and stores  structures
+       containing  a  pointer  to  each string and a count of its
+       length.  It then walks the tree, printing out  the  stored
+       strings and their lengths in alphabetical order.  #include
+       <string.h> #include <stdio.h> #include <search.h>
+
+       struct node {      char *string;      int length; };  char
+       string_space[10000];  struct node nodes[500]; void *root =
+       NULL;
+
+       int node_compare(const void *node1, const void  *node2)  {
+            return  strcmp(((const struct node *) node1)->string,
+                       ((const struct node *) node2)->string); }
+
+       void print_node(void **node, VISIT  order,  int  level)  {
+            if   (order   ==   preorder   ||  order  ==  leaf)  {
+
+                                                                2
+
+tsearch(3C)                                           tsearch(3C)
+
+                 printf("length=%d,               string=%20s\n",
+                 (*(struct         node         **)node)->length,
+                 (*(struct node **)node)->string);      } }
+
+       main() {      char  *strptr  =  string_space;       struct
+       node *nodeptr = nodes;      int i = 0;
+
+            while   (gets(strptr)   !=  NULL  &&  i++  <  500)  {
+                 nodeptr->string            =             strptr;
+                 nodeptr->length         =        strlen(strptr);
+                 (void)         tsearch((void          *)nodeptr,
+                           &root, node_compare);           strptr
+       +=  nodeptr->length  +  1;             nodeptr++;        }
+            twalk(root, print_node); }
+
+RReeffeerreenncceess
+NNoottiicceess
+       The  root  argument  to  twalk is one level of indirection
+       less than the rootp arguments to tsearch and tdelete.
+       There are two nomenclatures used to refer to the order  in
+       which tree nodes are visited.  tsearch uses preorder, pos-
+       torder and endorder to refer respectively  to  visiting  a
+       node  before any of its children, after its left child and
+       before its right, and after both its children.  The alter-
+       nate  nomenclature uses preorder, inorder and postorder to
+       refer to the same visits, which could result in some  con-
+       fusion over the meaning of postorder.
+
+       If  the  calling  function alters the pointer to the root,
+       results are unpredictable.
+
+                                                                3
+

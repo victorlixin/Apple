@@ -1,0 +1,99 @@
+
+
+ldap_get_option(3ldap)                     ldap_get_option(3ldap)
+
+SSyynnooppssiiss
+       #include <ldap.h>
+
+       int ldap_get_option(LDAP *ld, int option, void *outvalue);
+
+       int ldap_set_option(LDAP *ld, int option, void *invalue);
+
+DDeessccrriippttiioonn
+       The LDAP session handle returned by is a pointer to a data
+       type  representing an LDAP session. This should be treated
+       as an opaque type, in which case  ldap_get_option  can  be
+       used  to  access the current value of various session-wide
+       parameters, and ldap_set_option can be  used  to  set  the
+       value of these parameters.
+
+       Note  that  in  RFC  1823, the LDAP session handle was not
+       opaque, and certain fields were used for the communication
+       of  session  options.  This alternative style may still be
+       used, but it is deprecated, and may not  be  supported  in
+       subsequent releases of the LDAP library. Users are advised
+       to use ldap_get_option and ldap_set_option instead.
+
+       The ld parameter is the session handle. The option parame-
+       ter  identifies  the  option  being  accessed  or set, and
+       should be one of the following constants:  The  underlying
+       socket  descriptor  corresponding to the default LDAP con-
+       nection.  Controls how aliases are handled during  search.
+       It can have one of the following values: aliases are never
+       dereferenced aliases are dereferenced during  the  search,
+       but  not  when  locating  the  base  object  of the search
+       aliases are dereferenced when locating the base object but
+       not  during  the  search  aliases are always dereferenced,
+       both for locating the base object and for the search under
+       the base object A limit on the number of entries to return
+       from a search. A value of 0 means no limit.  The  datatype
+       for  invalue  and outvalue is int *optdata. In addition to
+       the limit requested by the client, the server  may  impose
+       its own limits.  A limit on the number of seconds to spend
+       on a search. A value of 0 means no limit. The datatype for
+       invalue  and  outvalue is int *optdata. In addition to the
+       limit requested by the client, the server may  impose  its
+       own  limits.   Controls whether the LDAP library automati-
+       cally follows referrals returned by LDAP servers  or  not.
+       It  can  be  set  to  one  of the constants LDAP_OPT_ON or
+       LDAP_OPT_OFF.  Controls whether LDAP I/O operations should
+       automatically  be  restarted if they abort prematurely. It
+       should be set to  one  of  the  constants  LDAP_OPT_ON  or
+       LDAP_OPT_OFF.  This option is useful if an LDAP I/O opera-
+       tion may be interrupted  prematurely,  for  example  by  a
+       timer.   Indicates the version of the default LDAP server.
+       Currently, only LDAP_VERSION2 is supported.  Controls  the
+       routine  that  will  be called back to obtain bind creden-
+       tials used when a new server is contacted during the  fol-
+       lowing  of  an  LDAP referral. The use of the following is
+
+                                                                1
+
+ldap_get_option(3ldap)                     ldap_get_option(3ldap)
+
+       the   expected   LDAP    version    3    alternative    to
+       ldap_set_option(LDAP_OPT_REBIND_FN  ...); The following of
+       referrals will only take place  if  LDAP_OPT_REFERRALS  is
+       set   to   LDAP_OPT_ON   (this   is   the   default).   If
+       ldap_set_option is never called to set LDAP_OPT_REBIND_FN,
+       or if it is called with a null invalue parameter, an unau-
+       thenticated simple LDAP bind  will  always  be  done  when
+       chasing  referrals.  The data type for the invalue parame-
+       ter is as follows: int (**invalue)(LDAP *ld, char  **whop,
+       char **credp,
+           int *methodp, int freeit); The LDAP library will first
+       call this rebind procedure to  obtain  the  referral  bind
+       credentials,  and  the  freeit  parameter  will be 0.  The
+       whop, credp, and  methodp  parameters  should  be  set  as
+       appropriate. If the rebind procedure returns LDAP_SUCCESS,
+       referral processing continues, and  the  rebind  procedure
+       will  be called a second time with non-zero freeit to give
+       the application a chance to free any memory  allocated  in
+       the previous call.
+
+       If anything but LDAP_SUCCESS is returned by the first call
+       to the  rebind  procedure,  then  referral  processing  is
+       stopped  and  that error code is returned for the original
+       LDAP operation.   The  outvalue  parameter  specifies  the
+       address  of  a  place  to put the value of the option. The
+       type of this parameter  depends  on  the  setting  of  the
+       option  parameter.  invalue  is a pointer to the value the
+       option is to be given. The type of this parameter  depends
+       on  the  setting  of option. The constants LDAP_OPT_ON and
+       LDAP_OPT_OFF can be given for options that have on or  off
+       settings.
+
+RReeffeerreenncceess
+
+                                                                2
+

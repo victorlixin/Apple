@@ -1,0 +1,91 @@
+
+
+t_rcvdis(3xti)                                     t_rcvdis(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       int t_rcvdis(int fd, struct t_discon *discon);
+
+DDeessccrriippttiioonn
+       This function is a TLI/XTI connection release routine used
+       to identify the cause of a disconnect and to retrieve  any
+       user data sent with the disconnect.
+
+       fd  is  used by the calling transport user to identify the
+       local transport endpoint where the connection existed, and
+       on return discon points to the information associated with
+       the disconnection.
+
+   PPaarraammeetteerrss
+       the file descriptor for the transport endpoint  where  the
+       connection  had  been established.  points to the t_discon
+       structure associated with the disconnect information.
+
+   SSttrruuccttuurree ddeeffiinniittiioonnss
+       The discon argument points to a  t_discon  structure  con-
+       taining the following members: struct netbuf udata;     /*
+       user data    */ int reason;         /* reason code */  int
+       sequence;       /* connect ind.     */ netbuf is described
+       in reason specifies the reason for the disconnect  through
+       a  protocol-dependent  reason  code,  udata identifies any
+       user data that was sent with the disconnect, and  sequence
+       may  identify an outstanding connect indication with which
+       the disconnect is associated.  sequence is only meaningful
+       when  t_rcvdis is issued by a passive transport user which
+       has executed one or more t_listen functions  and  is  pro-
+       cessing the resulting connect indications.
+
+       If a disconnect indication occurs, sequence can be used to
+       identify which of the outstanding connect  indications  is
+       associated with the disconnect.
+
+       If a user does not care if there is incoming data and does
+       not need to know the value of reason or  sequence,  discon
+       may be NULL, and any user data associated with the discon-
+       nect will be discarded.  However, if a user has  retrieved
+       more  than  one outstanding connect indication (via t_lis-
+       ten) and discon is NULL, the user will be unable to  iden-
+       tify which connect indication the disconnect is associated
+       with.
+
+   SSttaattee ttrraannssiittiioonnss
+       t_rcvdis  may  be  issued  from  any  valid  state  except
+       T_UNINIT,  T_UNBND,  or  T_IDLE.  Valid states on exit are
+       T_IDLE (successful) and T_INCON (successful but there  are
+       connect indications outstanding).
+
+                                                                1
+
+t_rcvdis(3xti)                                     t_rcvdis(3xti)
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+RReettuurrnn vvaalluueess
+       t_rcvdis returns 0  on  success  and  -1  on  failure  and
+       t_errno is set to indicate the error.
+
+   EErrrroorrss
+       On  failure,  t_errno  may be set to one of the following:
+       The specified file descriptor does not refer to  a  trans-
+       port  endpoint.  No disconnect indication currently exists
+       on the specified transport endpoint.  The number of  bytes
+       (maxlen)  allocated for incoming data is greater than zero
+       but not sufficient to store the data.  If fd is a  passive
+       endpoint  with ocnt>1, it remains in state T_INCON; other-
+       wise, the endpoint state is set to T_IDLE.  The disconnect
+       indication  information  to  be returned in discon will be
+       discarded.  This function is not supported by the underly-
+       ing  transport provider.  A system error has occurred dur-
+       ing execution of this function.  The function  was  issued
+       in the wrong sequence on the transport endpoint referenced
+       by fd.  A communication problem has been detected with the
+       transport  provider and there is no other value of t_errno
+       to describe the error condition.
+
+RReeffeerreenncceess
+
+                                                                2
+

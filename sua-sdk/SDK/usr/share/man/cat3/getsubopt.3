@@ -1,0 +1,152 @@
+getsubopt(3)                                               getsubopt(3)
+
+  ggeettssuubboopptt(())
+
+  NNAAMMEE
+
+    getsubopt() - get suboptions from a command-line argument list
+
+  SSYYNNOOPPSSIISS
+
+    #include <stdlib.h>
+
+    int getsubopt(char **optionp, char * const *keylistp, char **valuep)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ggeettssuubboopptt(3) function parses suboption arguments in a command-line
+    argument.
+
+    The optionp argument is a pointer to a pointer to a string containing a
+    list of suboption arguments. Typically, this string is obtained by a call
+    to _gg_ee_tt_oo_pp_tt(3). This list is assumed to consist of one or more tokens or
+    token-value pairs, separated by commas. Token-value pairs are assumed to
+    be separated by an equal sign (=), in the form token=value.
+
+    The keylistp argument is a pointer to a null-terminated array of pointers
+    to strings. Because commas and equal signs are used to separate tokens and
+    token-value pairs, the keylistp string should not contain either commas or
+    equal signs.
+
+    The valuep argument is the address of a pointer to a string.
+
+    To retrieve the suboption arguments of a flag-type argument, call
+    ggeettoopptt(2) to set the external optarg variable to a pointer to a string
+    containing the arguments supplied with a specified command-line option.
+    Next, call ggeettssuubboopptt(3) after setting the optionp argument to be a pointer
+    to optarg, setting the keylistp argument to be a pointer to an array of
+    pointers to strings containing possible suboptions, and setting the valuep
+    argument to be a pointer to a pointer to a buffer to receive a suboption
+    value, if present.
+
+    The ggeettssuubboopptt(3) function returns the index of the string in keylistp that
+    exactly matches the first token preceding the first comma in optionp or,
+    if no comma is present in optionp the terminating null character. The
+    comma, if present is replaced with a null character and optionp is updated
+    to point to the first character in the next token or to the terminating
+    null character if no comma is present. In addition, if the first token in
+    optionp matches a string in keylistp and is followed by an equal sign,
+    then valuep is set to point to the first character following the equal
+    sign, but if the equal sign is not present, then valuep is set to a null
+    pointer.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The ggeettssuubboopptt(3) function returns the index of the string matching the
+    first token in optionp. If no match exists, then ggeettssuubboopptt(3) returns -1,
+    and valuep points to the first character in the unrecognized token.
+
+  EEXXAAMMPPLLEE
+
+    #include <stdio.h>
+    #include <stdlib.h>
+
+    const char *tools_dir;
+    int option1;
+    int option2;
+
+    enum
+    {
+        OPTION1 = 0,
+        OPTION2
+    };
+
+    char *tokens[] =
+    {
+        [OPTION1] = "option1",
+        [OPTION2] = "option2",
+        NULL
+    };
+
+    /*  At the command prompt use
+         ./a.out -o option1=100,option2=200 -t c:\\sfu\\tools
+
+         with expected output :
+
+         Option 1 collected with value 100
+         Option 2 collected with value 200
+         The tools directory is c:\sfu\tools
+    */
+    int
+    main(int argc, char *argv[])
+    {
+        char *subopts, *value;
+        int opt;
+
+        while ((opt = getopt(argc, argv, "t:o:")) != -1)
+            switch(opt)
+                {
+                    case 't':
+                        tools_dir = optarg;
+                        printf("The tools directory is %s \n",tools_dir);
+                        break;
+                    case 'o':
+                        subopts = optarg;
+                        while (*subopts != '\0')
+                        switch(getsubopt(&subopts, tokens, &value))
+                        {           //Add similar switch statements to check
+    other suboptions with other options.
+                        case OPTION1:
+                            option1 = 1;
+                            printf("Option 1 collected with");
+                            if(value)
+                                printf(" value %s\n",value);
+                            else
+                                printf(" no value\n");
+                            break;
+                        case OPTION2:
+                            option2 = 0;
+                            printf("Option 2 collected with");
+                            if(value)
+                                printf(" value %s\n",value);
+                            else
+                                printf(" no value\n");
+
+                            break;
+                        default:
+                            /* Unknown suboption. */
+                            printf("Unknown suboption `%s'\n", value);
+                            break;
+                    }
+                break;
+            default:
+                abort();
+            }
+
+        /* Do the real work. */
+
+        return 0;
+    }
+
+  SSEEEE AALLSSOO
+
+    _g_e_t_o_p_t(3
+
+    _s_t_r_s_e_p(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The ggeettssuubboopptt function is thread safe.
+
+    The ggeettssuubboopptt function is not async-signal safe.
+

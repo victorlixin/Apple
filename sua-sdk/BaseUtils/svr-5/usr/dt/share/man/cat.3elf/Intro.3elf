@@ -1,0 +1,235 @@
+
+
+Intro(3elf)                                           Intro(3elf)
+
+SSyynnooppssiiss
+       cc [flag . . . ] file . . . -lelf [library] . . .
+
+       #include <libelf.h>
+
+DDeessccrriippttiioonn
+       Functions  in the ELF access library let a program manipu-
+       late ELF (Executable and  Linking  Format)  object  files,
+       archive  files, and archive members.  The header file pro-
+       vides type and function declarations for all library  ser-
+       vices.
+
+       Programs  communicate  with  many of the higher-level rou-
+       tines using an ELF descriptor.  That is, when the  program
+       starts  working  with  a  file,  elf_begin  creates an ELF
+       descriptor  through  which  the  program  manipulates  the
+       structures   and  information  in  the  file.   These  ELF
+       descriptors can be used both to read and to  write  files.
+       After  the  program  establishes  an  ELF descriptor for a
+       file, it may then obtain section descriptors to manipulate
+       the sections of the file [see Sections hold the bulk of an
+       object file's real information, such as  text,  data,  the
+       symbol table, and so on.  A section descriptor ``belongs''
+       to a particular ELF descriptor, just as a section  belongs
+       to  a  file.   Finally,  data  descriptors  are  available
+       through  section  descriptors,  allowing  the  program  to
+       manipulate  the  information associated with a section.  A
+       data descriptor ``belongs'' to a section descriptor.
+
+       Descriptors provide private handles  to  a  file  and  its
+       pieces.   In  other words, a data descriptor is associated
+       with one section descriptor, which is associated with  one
+       ELF   descriptor,  which  is  associated  with  one  file.
+       Although descriptors are private, they give access to data
+       that  may be shared.  Consider programs that combine input
+       files, using incoming data to  create  or  update  another
+       file.   Such  a  program might get data descriptors for an
+       input and an output section.  It  then  could  update  the
+       output  descriptor  to  reuse the input descriptor's data.
+       That is, the descriptors  are  distinct,  but  they  could
+       share  the associated data bytes.  This sharing avoids the
+       space overhead for duplicate buffers and  the  performance
+       overhead for copying data unnecessarily.
+
+   FFiillee ccllaasssseess
+       ELF  provides  a  framework in which to define a family of
+       object files, supporting multiple processors and architec-
+       tures.  An important distinction among object files is the
+       class, or capacity, of the file.  The  32-bit  class  sup-
+       ports architectures in which a 32-bit object can represent
+       addresses, file sizes, and so  forth.   The  64-bit  class
+       similarly  supports architectures in which a 64-bit object
+       is required to represent addresses, file sizes, etc.
+
+                                                                1
+
+Intro(3elf)                                           Intro(3elf)
+
+       ----------------------------------------------------------------
+       32-bit Data Types   64-bit Data Types   Purpose
+       ------------------+-------------------+-------------------------
+       _EE_ll_ff_33_22____AA_dd_dd_rr        | _EE_ll_ff_66_44____AA_dd_dd_rr        | Unsigned address
+       _EE_ll_ff_33_22____HH_aa_ll_ff        | _EE_ll_ff_66_44____HH_aa_ll_ff        | Unsigned medium integer
+       _EE_ll_ff_33_22____OO_ff_ff         | _EE_ll_ff_66_44____OO_ff_ff         | Unsigned file offset
+       _EE_ll_ff_33_22____SS_ww_oo_rr_dd       | _EE_ll_ff_66_44____SS_ww_oo_rr_dd       | Signed integer
+       _EE_ll_ff_33_22____WW_oo_rr_dd        | _EE_ll_ff____66_44____WW_oo_rr_dd       | Unsigned integer
+       _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr     | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr     | Unsigned small integer
+                         | _EE_ll_ff_66_44____SS_xx_ww_oo_rr_dd      | Signed long integer
+                         | _EE_ll_ff_66_44____XX_ww_oo_rr_dd       | Unsigned long integer
+       ------------------+-------------------+-------------------------
+
+       Other classes will be defined  as  necessary,  to  support
+       larger  (or smaller) machines.  Some library services deal
+       only with data objects for a specific class, while  others
+       are  class-independent.   To  make this distinction clear,
+       library function names reflect their status, as  described
+       below.
+
+   DDaattaa rreepprreesseennttaattiioonnss
+       Conceptually,  two  parallel sets of objects support cross
+       compilation environments.  One  set  corresponds  to  file
+       contents,  while  the  other set corresponds to the native
+       memory image of the program manipulating the  file.   Type
+       definitions  supplied  by  the  header  files  work on the
+       native machine, which may have  different  data  encodings
+       (size,  byte order, and so forth) than the target machine.
+       Although native memory objects should be at least  as  big
+       as  the file objects (to avoid information loss), they may
+       be bigger if that is more natural for the host machine.
+
+       Translation facilities exist to convert between  file  and
+       memory  representations.   Some  library  routines convert
+       data automatically, while others leave conversion  as  the
+       program's  responsibility.  Either way, programs that cre-
+       ate object files must write file-typed  objects  to  those
+       files; programs that read object files must take a similar
+       view.  See and for more information.
+
+       Programs may translate data explicitly, taking  full  con-
+       trol  over  the  object file layout and semantics.  If the
+       program prefers not to have and exercise complete control,
+       the  library  provides a higher-level interface that hides
+       many object file details.  elf_begin and related functions
+       let  a program deal with the native memory types, convert-
+       ing between memory  objects  and  their  file  equivalents
+       automatically when reading or writing an object file.
+
+   EELLFF vveerrssiioonnss
+       Object  file  versions  allow ELF to adapt to new require-
+       ments.  Three--independent--versions can be important to a
+       program.  First, an application program knows about a par-
+       ticular version by virtue of being compiled  with  certain
+
+                                                                2
+
+Intro(3elf)                                           Intro(3elf)
+
+       header  files.   Second,  the  access library similarly is
+       compiled with header files that control what  versions  it
+       understands.   Third,  an  ELF  object  file holds a value
+       identifying its version, determined  by  the  ELF  version
+       known  by the file's creator.  Ideally, all three versions
+       would be the same, but they may differ.   If  a  program's
+       version  is  newer  than  the  access library, the program
+       might use information unknown to the library.  Translation
+       routines  might  not  work  properly, leading to undefined
+       behavior.  This condition merits installing a new library.
+       The  library's  version  might be newer than the program's
+       and the file's.  The  library  understands  old  versions,
+       thus   avoiding   compatibility  problems  in  this  case.
+       Finally, a file's version might be newer than  either  the
+       program  or the library understands.  The program might or
+       might not be able to process the file properly,  depending
+       on whether the file has extra information and whether that
+       information can be safely ignored.  Again, the safe alter-
+       native  is  to  install a new library that understands the
+       file's version.
+
+       To accommodate  these  differences,  a  program  must  use
+       elf_version  to  pass  its  version  to  the library, thus
+       establishing the working version for the  process.   Using
+       this,  the  library accepts data from and presents data to
+       the program  in  the  proper  representations.   When  the
+       library reads object files, it uses each file's version to
+       interpret the data.  When writing files or converting mem-
+       ory  types  to  the file equivalents, the library uses the
+       program's working version for the file data.
+
+   SSyysstteemm sseerrvviicceess
+       As mentioned above, elf_begin and related routines provide
+       a  higher-level  interface  to ELF files, performing input
+       and output on behalf of the  application  program.   These
+       routines assume a program can hold entire files in memory,
+       without explicitly using temporary files.  When reading  a
+       file,  the library routines bring the data into memory and
+       perform subsequent operations on the  memory  copy.   Pro-
+       grams  that  read  or  write  large object files with this
+       model must execute on a machine with a large process  vir-
+       tual  address  space.   If the underlying operating system
+       limits the  number  of  open  files,  a  program  can  use
+       elf_cntl  to  retrieve  all  necessary data from the file,
+       allowing the program to  close  the  file  descriptor  and
+       reuse it.
+
+       Although the elf_begin interfaces are convenient and effi-
+       cient for many programs, they might be  inappropriate  for
+       some.   In  those  cases,  an  application  may invoke the
+       elf_xlate data translation routines directly.  These  rou-
+       tines  perform  no  input  or  output, leaving that as the
+       application's responsibility.  By assuming a larger  share
+       of  the  job, an application controls its input and output
+
+                                                                3
+
+Intro(3elf)                                           Intro(3elf)
+
+       model.
+
+   LLiibbrraarryy nnaammeess
+       Names associated with  the  library  take  several  forms.
+       These  class-independent names perform some service, name,
+       for the program.  Service names with  an  embedded  class,
+       indicate they work only for the designated class of files.
+       Data types can be class-independent as well, distinguished
+       by  Type.   Class-dependent  data  types  have an embedded
+       class name.  here.  Several functions take  commands  that
+       control  their  actions.   These values are members of the
+       Elf_Cmd  enumeration;  they  range   from   zero   through
+       ELF_C_NUM-1.   Several  functions  take flags that control
+       library status and/or actions.  Flags are bits that may be
+       combined.  These constants give the file sizes in bytes of
+       the basic ELF types for the specified class of files.  See
+       elf_fsize  for  more  information.   The function elf_kind
+       identifies  the  KIND  of  file  associated  with  an  ELF
+       descriptor.  These values are members of the Elf_Kind enu-
+       meration; they range from zero through ELF_K_NUM-1.   When
+       a service function, such as elf_xlate, deals with multiple
+       types, names of this form specify the desired TYPE.  Thus,
+       for  example, ELF_T_EHDR is directly related to Elf32_Ehdr
+       or Elf64_Ehdr.  These values are members of  the  Elf_Type
+       enumeration; they range from zero through ELF_T_NUM-1.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Information in the ELF header files is separated into com-
+       mon parts and processor-specific  parts.   A  program  can
+       make  a processor's information available by including the
+       appropriate header file: sys/elf_NAME.h where NAME matches
+       the processor name as used in the ELF file header.
+
+       ----------------------------
+       Symbol   Processor
+       -------+--------------------
+       _33_88_66    | Intel 80386
+       _II_AA____66_44  | IA-64 architecture
+       -------+--------------------
+
+       To  illustrate,  a program could use the following code to
+       ``see'' the processor-specific information for  the  Intel
+       IA-64    architecture:    #include   <libelf.h>   #include
+       <sys/elf_IA_64.h>
+
+       Without the sys/elf_IA_64.h definition,  only  the  common
+       ELF information would be visible.
+
+SSttaannddaarrddss ccoommpplliiaannccee
+       The  elf  library  is conformant with System V Application
+       Binary Interface (ABI).
+
+                                                                4
+

@@ -1,0 +1,118 @@
+syslog.conf(5)                                           syslog.conf(5)
+
+  ssyysslloogg..ccoonnff
+
+  NNAAMMEE
+
+    syslog.conf - syslogd configuration file
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ssyysslloogg..ccoonnff file is the configuration file for the ssyyssllooggdd(1) program.
+    It consists of lines with two fields: the selector field that specifies
+    the types of messages and priorities to which the line applies, and an
+    action field that specifies the action to be taken if a message ssyyssllooggdd(1)
+    receives matches the selection criteria. The selector field is separated
+    from the action field by one or more tab characters.
+
+    The selector function is encoded as a facility, a period ("."), and a
+    level, with no intervening white space. Both the facility and the level
+    are case insensitive:
+
+    facility[[;facility...]].level[[,level...]]
+
+    The facility describes the part of the system generating the message, and
+    is one of the following keywords: aauutthh, aauutthhpprriivv, ccrroonn, ddaaeemmoonn, ffttpp, kkeerrnn,
+    llpprr, mmaaiill,, mmaarrkk, nneewwss, ssyysslloogg, uusseerr, uuuuccpp and llooccaall00 through llooccaall77. These
+    keywords (with the exception of mmaarrkk) correspond to the similar LOG_
+    values specified to the _oo_pp_ee_nn_ll_oo_gg(3) and _ss_yy_ss_ll_oo_gg(3) library routines. An
+    asterisk (**) can be used to represent all facilities.
+
+    The level describes the severity of the message, and is a keyword from the
+    following ordered list (higher to lower): eemmeerrgg, aalleerrtt, ccrriitt, eerrrr,
+    wwaarrnniinngg, nnoottiiccee and ddeebbuugg. These keywords correspond to the similar (LOG_)
+    values specified to the _ss_yy_ss_ll_oo_gg(3) library routine. The special level nnoonnee
+    disables a particular facility; an asterisk specifies all possible levels.
+
+    See _s_y_s_l_o_g(3) for a further descriptions of both the facility and level
+    keywords and their significance.
+
+    If a received message matches the specified facility and is of the
+    specified level (or a higher level), the action specified in the action
+    field will be taken.
+
+    Multiple selectors can be specified for a single action by separating them
+    with semicolon (";") characters. It is important to note, however, that
+    each selector can modify the ones preceding it.
+
+    Multiple facilities can be specified for a single level by separating them
+    with comma (",") characters.
+
+    The special facility "mark" receives a message at priority "info" every 20
+    minutes (see ssyyssllooggdd(1)). This is not enabled by a facility field
+    containing an asterisk.
+
+    The action field of each line specifies the action to be taken when the
+    selector field selects a message. There are four forms:
+
+    *     A path name (beginning with a leading slash). Selected messages are
+          appended to the file.
+    *     A hostname (preceded by an at ("@") sign). Selected messages are
+          forwarded to the ssyyssllooggdd(1) program on the named host.
+    *     A comma-separated list of users. Selected messages are written to
+          those users if they are logged in.
+    *     An asterisk. Selected messages are written to all logged-in users.
+
+    Blank lines and lines whose first non-blank character is a hash ("#")
+    character are ignored.
+
+  EEXXAAMMPPLLEESS
+
+    A configuration file might appear as follows:
+
+    # Log all kernel messages, authentication messages of
+    # level notice or higher and anything of level err or
+    # higher to the console.
+    # Don't log private authentication messages!
+    *.err;kern.*;auth.notice;authpriv.none       /dev/console
+    # Log anything (except mail) of level info or higher.
+    # Don't log private authentication messages!
+    *.info;mail.none;authpriv.none               /var/log/messages
+    # The authpriv file has restricted access.
+    authpriv.*                         /var/log/secure
+    # Log all the mail messages in one place.
+    mail.*                             /var/log/maillog
+    # Everybody gets emergency messages,
+    # plus log them on another machine.
+    *.emerg                            *
+    *.emerg                            @arpa.berkeley.edu
+    # Root and Eric get alert and higher messages.
+    *.alert                            root,eric
+    # Save mail and news errors of level err
+    # and higher in a special file.
+    uucp,news.crit                     /var/log/spoolerr
+
+  FFIILLEESS
+
+    //eettcc//ssyysslloogg..ccoonnff
+        The ssyyssllooggdd(1) configuration file.
+
+  NNOOTTEESS
+
+    The effects of multiple selectors are sometimes not intuitive. For example
+    "mail.crit,*.err" will select "mail" facility messages at the level of
+    "err" or higher, not at the level of "crit" or higher.
+
+    To prevent tampering, if the permissions protecting ssyyssllooggdd..ccoonnff file
+    allow the file to be written by anyone other than the file's owner and
+    group, the file is ignored and an error is logged in the default log file
+    (//vvaarr//lloogg//aaddmm//mmeessssaaggeess), if it exists. If the default log file does not
+    exist, then the only way to determine that the ssyyssllooggdd..ccoonnff file is being
+    ignored is by using ssyyssllooggdd --dd.
+
+  SSEEEE AALLSSOO
+
+    _s_y_s_l_o_g_d(1)
+
+    _s_y_s_l_o_g(3)
+

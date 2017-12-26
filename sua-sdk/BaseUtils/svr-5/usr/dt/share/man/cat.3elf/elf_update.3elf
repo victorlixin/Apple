@@ -1,0 +1,185 @@
+
+
+elf_update(3elf)                                 elf_update(3elf)
+
+SSyynnooppssiiss
+       cc [flag . . . ] file . . . -lelf [library] . . .
+
+       #include <libelf.h>
+
+       off_t elf_update(Elf *elf, Elf_Cmd cmd);
+
+DDeessccrriippttiioonn
+       elf_update  causes  the library to examine the information
+       associated with an ELF descriptor, elf, and to recalculate
+       the structural data needed to generate the file's image.
+
+       cmd  may  have  the  following  values.   This value tells
+       elf_update to recalculate various  values,  updating  only
+       the  ELF  descriptor's  memory  structures.   Any modified
+       structures are flagged with the ELF_F_DIRTY bit.   A  pro-
+       gram  thus  can update the structural information and then
+       reexamine them without changing the file  associated  with
+       the  ELF  descriptor.   Because  this  does not change the
+       file, the ELF descriptor may allow  reading,  writing,  or
+       both  reading  and  writing  [see  If  cmd has this value,
+       elf_update duplicates  its  ELF_C_NULL  actions  and  also
+       writes  any  ``dirty'' information associated with the ELF
+       descriptor to the file.  That is, when a program has  used
+       elf_getdata  or  the elf_flag facilities to supply new (or
+       update existing) information for an ELF descriptor,  those
+       data  will  be examined, coordinated, translated if neces-
+       sary [see and written to the file.  When portions  of  the
+       file are written, any ELF_F_DIRTY bits are reset, indicat-
+       ing those items no longer need to be written to  the  file
+       [see  The  sections' data is written in the order of their
+       section header entries, and the section  header  table  is
+       written to the end of the file.
+
+       When  the  ELF  descriptor  was created with elf_begin, it
+       must  have  allowed  writing  the  file.   That  is,   the
+       elf_begin  command  must  have  been  either ELF_C_RDWR or
+       ELF_C_WRITE.  When cmd is ELF_C_WRITE, elf_update attempts
+       to  write   an  image  of the entire output file in memory
+       either by allocating storage from the heap or  by  mapping
+       an  image  of  the  output file.  This allocation, and the
+       elf_update call, can fail if there is insufficient  memory
+       to  hold  the  entire  file (or even the largest sections'
+       data after translation).  If  ELF_C_IMPURE_WRITE  is  used
+       instead,  elf_update  will,  if  necessary,  perform  ``in
+       place'' the memory-to-file translation in  an  attempt  to
+       use   the   least   amount   of   extra   memory.    Thus,
+       ELF_C_IMPURE_WRITE should only be used when the data  will
+       not be examined after the call to elf_update.
+
+       If  elf_update  succeeds, it returns the total size of the
+       file image (not the memory image), in bytes.  Otherwise an
+       error occurred, and the function returns -1.
+
+                                                                1
+
+elf_update(3elf)                                 elf_update(3elf)
+
+       When  updating  the  internal  structures, elf_update sets
+       some members itself.  Members listed below are the  appli-
+       cation's responsibility and retain the values given by the
+       program.
+
+       ----------------------------------------------------------------------
+                    Member             Notes
+                  -------------------+---------------------------------------
+                    _ee____ii_dd_ee_nn_tt_[[_EE_II____DD_AA_TT_AA_]] | Library controls other e_ident values
+                    _ee____tt_yy_pp_ee           |
+                    _ee____mm_aa_cc_hh_ii_nn_ee        |
+                    _ee____vv_ee_rr_ss_ii_oo_nn        |
+       ELF Header   _ee____ee_nn_tt_rr_yy          |
+                    _ee____pp_hh_oo_ff_ff          | Only when ELF_F_LAYOUT asserted
+                    _ee____ss_hh_oo_ff_ff          | Only when ELF_F_LAYOUT asserted
+                    _ee____ff_ll_aa_gg_ss          |
+                    _ee____ss_hh_ss_tt_rr_nn_dd_xx       |
+                  -------------------+---------------------------------------
+
+       ---------------------------------------------------------
+                        Member     Notes
+                      -----------+------------------------------
+                        _pp____tt_yy_pp_ee   | The application controls all
+                        _pp____oo_ff_ff_ss_ee_tt | program header entries
+                        _pp____vv_aa_dd_dd_rr  |
+       Program Header   _pp____pp_aa_dd_dd_rr  |
+                        _pp____ff_ii_ll_ee_ss_zz |
+                        _pp____mm_ee_mm_ss_zz  |
+                        _pp____ff_ll_aa_gg_ss  |
+                        _pp____aa_ll_ii_gg_nn  |
+                      -----------+------------------------------
+
+       ----------------------------------------------------------------
+                        Member         Notes
+                      ---------------+---------------------------------
+                        _ss_hh____nn_aa_mm_ee      |
+                        _ss_hh____tt_yy_pp_ee      |
+                        _ss_hh____ff_ll_aa_gg_ss     |
+                        _ss_hh____aa_dd_dd_rr      |
+       Section Header   _ss_hh____oo_ff_ff_ss_ee_tt    | Only when ELF_F_LAYOUT asserted
+                        _ss_hh____ss_ii_zz_ee      | Only when ELF_F_LAYOUT asserted
+                        _ss_hh____ll_ii_nn_kk      |
+                        _ss_hh____ii_nn_ff_oo      |
+                        _ss_hh____aa_dd_dd_rr_aa_ll_ii_gg_nn | Only when ELF_F_LAYOUT asserted
+                        _ss_hh____ee_nn_tt_ss_ii_zz_ee   |
+                      ---------------+---------------------------------
+
+       --------------------------------------------------------------
+                         Member      Notes
+                       ------------+---------------------------------
+
+                                                                2
+
+elf_update(3elf)                                 elf_update(3elf)
+
+                                   |
+                         _dd____bb_uu_ff     |
+                         _dd____tt_yy_pp_ee    |
+       Data Descriptor   _dd____ss_ii_zz_ee    |
+                         _dd____oo_ff_ff     | Only when ELF_F_LAYOUT asserted
+                         _dd____aa_ll_ii_gg_nn   |
+                         _dd____vv_ee_rr_ss_ii_oo_nn |
+                       ------------+---------------------------------
+
+       Note the  program  is  responsible  for  two  particularly
+       important  members  (among others) in the ELF header.  The
+       e_version member controls the version of  data  structures
+       written  to  the  file.   If  the  version is EV_NONE, the
+       library   uses   its   own    internal    version.     The
+       e_ident[EI_DATA]  entry controls the data encoding used in
+       the file.  As a special case, the value may be ELFDATANONE
+       to  request the native data encoding for the host machine.
+       An error occurs  in  this  case  if  the  native  encoding
+       doesn't match a file encoding known by the library.
+
+       Further  note  that  the  program  is  responsible for the
+       sh_entsize section header member.   Although  the  library
+       sets  it for sections with known types, it cannot reliably
+       know the correct value for  all  sections.   Consequently,
+       the  library  relies  on the program to provide the values
+       for unknown section type.  If the entry size is unknown or
+       not applicable, the value should be set to zero.
+
+       When  deciding  how  to  build the output file, elf_update
+       obeys the alignments of individual data buffers to  create
+       output  sections.   A section's most strictly aligned data
+       buffer controls the section's alignment.  The library also
+       inserts  padding  between buffers, as necessary, to ensure
+       the proper alignment of each buffer.
+
+RReeffeerreenncceess
+NNoottiicceess
+       As mentioned above, the ELF_C_WRITE and ELF_C_IMPURE_WRITE
+       commands  translate data as necessary, before writing them
+       to the file.  This translation is not  always  transparent
+       to  the  application  program.   If a program has obtained
+       pointers to data associated with a file [for example,  see
+       and  the  program  should  reestablish  the pointers after
+       calling elf_update.
+
+       As describes, a program may ``update'' a COFF file to make
+       the  image  consistent  for ELF.  ( COFF is an object file
+       format that preceded ELF on  some  computer  architectures
+       [Intel, for example].  When a program calls elf_begin on a
+       COFF file, the library translates COFF structures to their
+       ELF  equivalents,  allowing  programs  to read (but not to
+       write) a COFF file as if it  were  ELF.   This  conversion
+       happens  only  to  the  memory  image  and not to the file
+       itself.)  The ELF_C_NULL command updates only  the  memory
+       image;  one  can use the ELF_C_WRITE command to modify the
+
+                                                                3
+
+elf_update(3elf)                                 elf_update(3elf)
+
+       file as well.  Absolute  executable  files  (a.out  files)
+       require  special  alignment, which cannot normally be pre-
+       served between COFF and ELF.  Consequently,  one  may  not
+       update  an  executable COFF file with the ELF_C_WRITE com-
+       mand (though ELF_C_NULL is allowed).
+
+                                                                4
+

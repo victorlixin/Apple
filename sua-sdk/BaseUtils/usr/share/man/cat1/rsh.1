@@ -1,0 +1,112 @@
+rsh(1)                                                           rsh(1)
+
+  rrsshh
+
+  NNAAMMEE
+
+    rsh - remote shell
+
+  SSYYNNOOPPSSIISS
+
+    rsh [[-Ddn]] [[-l username]] host [[command]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The rrsshh(1) utility executes command on host. The host name can be
+    specified in either name or numeric dot notation.
+
+    The rrsshh(1) utility copies its standard input to the remote command, the
+    standard output of the remote command to its standard output, and the
+    standard error of the remote command to its standard error. Interrupt,
+    quit, and terminate signals are propagated to the remote command; rrsshh(1)
+    normally terminates when the remote command does.
+
+    The options are as follows:
+
+    --DD
+        The --DD option prefixes both the remote and local user names with the
+        user's Windows domain name. (By default, both remote and local user
+        names are the user name without the domain.) The argument to the --
+        ll option will always override the remote user name value. This option
+        should only be used when connecting with another Interix system.
+
+    --dd
+        The --dd option turns on socket debugging (using _ss_ee_tt_ss_oo_cc_kk_oo_pp_tt(2)) on the
+        transmission control protocol (TCP) sockets used for communication
+        with the remote host.
+
+    --ll
+        By default, the remote user name is the same as the local user name.
+        The --ll option allows the remote name to be specified. Kerberos
+        authentication is used, and authorization is determined as in
+        rrllooggiinn(1).
+
+    --nn
+        The --nn option redirects input from the special device //ddeevv//nnuullll (see
+        the BUGS section later in this topic).
+
+    If no command is specified, you will be logged in on the remote host using
+    rrllooggiinn(1).
+
+    Shell metacharacters that are not quoted are interpreted on local
+    computer; quoted metacharacters are interpreted on the remote computer.
+    For example, the following command:
+
+    $ rsh otherhost cat remotefile >> localfile
+
+    appends the remote file remotefile to the local file localfile.
+
+    Using the following:
+
+    rsh otherhost cat remotefile ">>" other_remotefile
+
+    appends remotefile to other_remotefile.
+
+  IInntteerriixx aauutthheennttiiccaattiioonn
+
+    On traditional systems, a user can run a command using rrsshh(1) on a system
+    identified in the user's ..rrhhoossttss file without providing a password. This
+    is because on a traditional system, the rrsshhdd(1) program is run as the
+    superuser, and can take any login identity. This might or might not work
+    on an Interix system, because of differences in the user authentication
+    mechanism:
+    *     If the daemon is running as the user SYSTEM, this will work.
+    *     If the daemon is not running as SYSTEM, the password of the user
+          account used to run the daemon must have been previously stored
+          using the rreeggppwwdd(1) utility.
+    *     If the _ii_rr_uu_ss_ee_rr_oo_kk(3) function indicates that the address might have
+          been spoofed, the connection will be refused with the message
+          permission denied.
+
+          (The test is done by converting the host number to a host name and
+          then converting the host name to a host number; if the two host
+          numbers do not match, the address might have been spoofed. A user
+          can get similar results by using nnssllooookkuupp(1) to check both the host
+          name and the host number.)
+
+  FFIILLEESS
+
+    %%WWIINNDDIIRR%%//ssyysstteemm3322//ddrriivveerrss//eettcc//hhoossttss
+        The list of hosts.
+
+  BBUUGGSS
+
+    If you are using ccsshh(1) and put a rrsshh(1) in the background without
+    redirecting its input away from the terminal, it will block even if no
+    read operations are posted by the remote command. If you do not want
+    input, redirect the input of rrsshh(1) to //ddeevv//nnuullll using the --nn option.
+
+    You cannot run an interactive command (like vvii(1)) using rrsshh(1); use
+    rrllooggiinn(1) instead.
+
+    Stop signals stop the local rrsshh(1) process only. Although this is arguably
+    wrong, it is difficult to fix.
+
+  SSEEEE AALLSSOO
+
+    _r_l_o_g_i_n(1)
+
+    _i_r_u_s_e_r_o_k(3)
+
+    _r_c_m_d(3)
+

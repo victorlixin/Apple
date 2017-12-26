@@ -1,0 +1,76 @@
+
+
+vfork(2)                                                 vfork(2)
+
+SSyynnooppssiiss
+       #include <unistd.h>
+
+       pid_t vfork(void);
+
+DDeessccrriippttiioonn
+       vfork  can  be  used to create new processes without fully
+       copying the address space of the old process.  It is  use-
+       ful  when  the purpose of fork would have been to create a
+       new system context for an execve.  vfork differs from fork
+       in  that  the child borrows the parent's memory and thread
+       of control until a call to execve or an exit (either by  a
+       call  to  exit or abnormally.)  The parent process is sus-
+       pended while the child is using its resources.
+
+       vfork returns 0 in the child's  context  and  (later)  the
+       process ID (PID) of the child in the parent's context.
+
+       vfork  can  normally  be used just like fork.  It does not
+       work, however, to return while running in the child's con-
+       text from the procedure which called vfork since the even-
+       tual return from vfork would then return to  a  no  longer
+       existent  stack  frame.   Be  careful, also, to call _exit
+       rather than exit if you cannot  execve,  since  exit  will
+       flush and close standard I/O channels, and thereby mess up
+       the parent processes standard I/O data  structures.   Even
+       with  fork  it  is  wrong to call exit since buffered data
+       would then be flushed twice.
+
+   RReettuurrnn vvaalluueess
+       On success, vfork returns  0  to  the  child  process  and
+       returns  the process ID of the child process to the parent
+       process.  On failure, vfork  returns  -1,  sets  errno  to
+       identify the error, and no child process is created.
+
+   EErrrroorrss
+       In  the  following  conditions, vfork fails and sets errno
+       to: The system-imposed limit on the total number  of  pro-
+       cesses  under  execution would be exceeded.  This limit is
+       determined when the  system  is  generated.   The  system-
+       imposed  limit on the total number of processes under exe-
+       cution by a single user would be exceeded.  This limit  is
+       determined  when the system is generated.  There is insuf-
+       ficient swap space for the new process.
+
+RReeffeerreenncceess
+NNoottiicceess
+       vfork will be eliminated  in  a  future  release.   System
+       implementation  changes  are making the efficiency gain of
+       vfork over fork smaller.  The memory sharing semantics  of
+       vfork can be obtained through other mechanisms.
+
+       To avoid a possible deadlock situation, processes that are
+       children in the middle of a vfork are never  sent  SIGTTOU
+
+                                                                1
+
+vfork(2)                                                 vfork(2)
+
+       or  SIGTTIN  signals; rather, output or ioctls are allowed
+       and input attempts result in an EOF indication.
+
+       On some systems, the implementation of  vfork  causes  the
+       parent  to  inherit  register values from the child.  This
+       can create problems for certain  optimizing  compilers  if
+       unistd.h is not included in the source calling vfork.
+
+   CCoonnssiiddeerraattiioonnss ffoorr lliigghhttwweeiigghhtt pprroocceesssseess
+       vfork will fail if the process has more than one LWP.
+
+                                                                2
+

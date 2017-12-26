@@ -1,0 +1,189 @@
+
+
+t_bind(3xti)                                         t_bind(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       int t_bind(int fd, struct t_bind *req, struct t_bind *ret)
+
+DDeessccrriippttiioonn
+       This function is a TLI/XTI local management  routine  that
+       associates  a protocol address with the transport endpoint
+       specified by fd and activates the endpoint.
+
+       If fd refers to a connection-mode service,  the  transport
+       provider  may then begin listening for connect indications
+       on that endpoint (t_listen), or  the  provider  may  begin
+       sending  connection  requests from that transport endpoint
+       (t_connect).
+
+       If fd refers to a connectionless  service,  the  transport
+       user may then proceed with sending or receiving data units
+       through the transport endpoint (t_snd, t_rcv).
+
+   PPaarraammeetteerrss
+       the file descriptor for the transport endpoint  points  to
+       the t_bind structure used to identify the request.  points
+       to the t_bind structure used to identify the return.
+
+   SSttrruuccttuurree ddeeffiinniittiioonnss
+       The req and ret arguments point to a t_bind structure con-
+       taining  the following members: struct netbuf addr;     /*
+       address               */ unsigned qlen;           /*  con-
+       nect  indications   */ The netbuf addr fields (len, maxlen
+       and buf) are described in  len  specifies  the  number  of
+       bytes  in  the  address, buf points to the address buffer,
+       and maxlen is the maximum size of the address buffer.  The
+       qlen  field,  in connection mode only, is used to indicate
+       the maximum number of outstanding connect indications.
+
+       In req, len and buf  are  used  to  specify  the  protocol
+       address to be bound to the transport endpoint.  maxlen has
+       no meaning for the req argument.
+
+       In ret, the user specifies maxlen (which  is  the  maximum
+       size  of  the address buffer) and buf (which points to the
+       buffer where the address is to be placed).
+
+       On return, ret contains the bound  address.  This  is  the
+       same  as  the  address  specified by the user in req.  len
+       specifies the number of bytes in the bound address and buf
+       points  to  the  bound  address.   If  maxlen is not large
+       enough to hold the returned address, an error will result.
+       If  the  requested  address is not available, t_bind fails
+       with an error and t_errno is set to TADDRBUSY.
+
+       If no address is specified in req (the len field  in  addr
+       is  0  or req is NULL), the transport provider will assign
+
+                                                                1
+
+t_bind(3xti)                                         t_bind(3xti)
+
+       an appropriate address to be bound, and will  return  that
+       address in ret.
+
+       req  may  be NULL if the user does not want to specify the
+       protocol address to be bound.  Here, the value of qlen  is
+       assumed to be zero, and the transport provider must assign
+       an address to the transport endpoint.  Similarly, ret  may
+       be  NULL  if the user does not care what address was bound
+       by the provider and is not interested  in  the  negotiated
+       value of qlen.
+
+       It  is  also valid to set req and ret to NULL for the same
+       call, in which case the provider chooses  the  address  to
+       bind  to  the  transport endpoint and does not return that
+       information to the user.
+
+       The qlen field has meaning only when initializing  a  con-
+       nection-mode service. It specifies the number of outstand-
+       ing connect indications the transport provider should sup-
+       port for the given transport endpoint. An outstanding con-
+       nect indication is one that has been passed to the  trans-
+       port  user  by  the  transport  provider.  A value of qlen
+       greater than 0 is only meaningful when issued by a passive
+       transport  user  that expects other users to call it.  The
+       value of qlen will be negotiated by the transport provider
+       and  may  be changed if the transport provider cannot sup-
+       port the specified number of outstanding  connect  indica-
+       tions.   On return, the qlen field in ret will contain the
+       negotiated value.
+
+   SSttaattee ttrraannssiittiioonnss
+       On entry, T_UNBND; T_IDLE on exit.
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+UUssaaggee
+       The following notes are for connection-mode service.
+
+       This  function  allows more than one transport endpoint to
+       be bound to the same protocol address (however, the trans-
+       port  provider  must support this capability also), but it
+       is not allowable to bind more than one protocol address to
+       the same transport endpoint.
+
+       If  a  user  binds more than one transport endpoint to the
+       same protocol address, only one endpoint can  be  used  to
+       listen for connect indications associated with that proto-
+       col address.  In other words, only one t_bind for a  given
+       protocol  address may specify a value of qlen greater than
+       0.  In this way, the transport provider can identify which
+       transport  endpoint should be notified of an incoming con-
+       nect indication.
+
+                                                                2
+
+t_bind(3xti)                                         t_bind(3xti)
+
+       If a user attempts to bind a protocol address to a  second
+       transport  endpoint  with  a value of qlen greater than 0,
+       t_bind will fail with TADDRBUSY.
+
+       A transport provider may not allow an explicit binding  of
+       more  than  one  endpoint  to  the  same protocol address,
+       although it allows more than one connection to be accepted
+       (see  t_accept)  for the same protocol address.  To ensure
+       portability, it is recommended not to bind transport  end-
+       points  that are used as responding endpoints (resfd) in a
+       call to t_accept, if the responding address is to  be  the
+       same as the called address.
+
+       If  a  user accepts a connection on the transport endpoint
+       that is being used as the listening  endpoint,  the  bound
+       protocol address will be found to be busy for the duration
+       of that connection. No other transport  endpoints  may  be
+       bound  for listening while that initial listening endpoint
+       is in the data transfer phase. This will prevent more than
+       one  transport endpoint bound to the same protocol address
+       from accepting connect indications.
+
+RReettuurrnn vvaalluueess
+       t_bind returns 0 on success and -1 on failure and  t_errno
+       is set to indicate the error.
+
+   EErrrroorrss
+       On  failure,  t_errno  may be set to one of the following:
+       The specified file descriptor does not refer to  a  trans-
+       port  endpoint.   The  function  was  issued  in the wrong
+       sequence.  The specified protocol address was in an incor-
+       rect  format or contained illegal information.  The trans-
+       port provider could not allocate  an  address.   The  user
+       does  not  have  permission  to use the specified address.
+       The number of bytes (maxlen)  allocated  for  an  incoming
+       argument  is greater than zero but not sufficient to store
+       the value of that argument.   The  provider's  state  will
+       change to T_IDLE and the information to be returned in ret
+       will be discarded.  A system  error  has  occurred  during
+       execution  of  this  function.   In  connection  mode, the
+       requested address has already been bound to another trans-
+       port  endpoint.  A communication problem has been detected
+       with the transport provider and there is no other value of
+       t_errno to describe the error condition.
+
+WWaarrnniinnggss
+       Note  that  the behavior of t_bind has changed in order to
+       conform to X/OPEN's TLI/XTI  specifications.   Previously,
+       if  req was specified t_bind returned an alternate address
+       if the one requested was busy.  Now, t_bind will fail  and
+       t_error  will  be  set to TADDRBUSY.  Thus now, in case of
+       failure, applications need to check the value  of  t_errno
+       and  repeat  the  call with a different address if the one
+       requested is busy (or not  request  a  specific  address).
+
+                                                                3
+
+t_bind(3xti)                                         t_bind(3xti)
+
+       Also,  applications  need not verify the address they were
+       bound to if they requested  an  address  and  t_bind  suc-
+       ceeded.
+
+RReeffeerreenncceess
+
+                                                                4
+

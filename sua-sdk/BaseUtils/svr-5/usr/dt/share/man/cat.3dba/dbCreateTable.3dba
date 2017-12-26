@@ -1,0 +1,157 @@
+
+
+dbCreateTable(3dba)                           dbCreateTable(3dba)
+
+SSyynnooppssiiss
+       cc  [flag  ...]  file  ...   -kthread -leels [library] ...
+       #include <eelsdba.h>
+
+       int dbCreateTable(      DBConn *conn,      char *name);
+
+DDeessccrriippttiioonn
+       dbCreateTable creates an Event Table within a database.
+
+       The following SQL command is  used  to  create  the  Event
+       Table   within   the   database:  CREATE  TABLE  events  (
+            UniqEventID              float8 NOT NULL,
+                       INDEX events_UniqEventID ( UniqEventID  ),
+            SequenceNumber           int4,
+            ProcessID           int4,
+            GroupID                  varchar(64),
+            LightWeightProcessID          int4,
+            LogSystemSource               varchar(128),
+            Length                   int4,
+            VersionID           int4,
+            TimeOffset               real,
+            TimeUncertaintyInterval       int4,
+            TimeUncertaintyIndicator int4,
+            TimeSource               varchar(255),
+            TimeZone            varchar(64),
+            EventNumber              int4,
+            EventNumberStr           varchar(255),
+            Outcome                  int4,
+            OriginatorHostName       varchar(255),
+            OriginatorServiceName         varchar(255),
+            OriginatorLocationAddress     varchar(255),
+            OriginatorServiceType         varchar(255),
+            OriginatorAuthAuthority       varchar(255),
+            OriginatorPrincipalName       varchar(255),
+            OriginatorPrincipalID         varchar(255),
+            InitiatorAuthAuthority        varchar(255),
+            InitiatorDomainSpecificName   varchar(255),
+            InitiatorDomainSpecificID     varchar(255),
+            TargetLocationName       varchar(255),
+            TargetLocationAddress         varchar(255),
+            TargetServiceType        varchar(255),
+            TargetAuthAuthority      varchar(255),
+            TargetPrincipalName      varchar(255),
+            TargetPrincipalID        varchar(255),
+            PtrToSourceDomain        varchar(255),
+            SourceSpecificInformation     varchar(255),
+            EventSpecificInformation (see  note  below)  );   The
+       above syntax is compatible with any database that supports
+       standard SQL (ANSI SQL 92).  The size of  the  EventSpeci-
+       ficInformation  field  should  be as large as the database
+       can support.  With some databases it may be of  type  BLOB
+       (Binary  Large  Object)  which  supports large data types.
+       Other databases may restrict the size to be no larger than
+       varchar(255).   The  fields are described in the following
+
+                                                                1
+
+dbCreateTable(3dba)                           dbCreateTable(3dba)
+
+       table:
+       ------------------------------------------------------------------------------------------
+       Field                      Description
+       ------------------------------------------------------------------------------------------
+       UniqEventID                A Database wide Unique ID for this record.  If a single  event
+                                  record  spans multiple database records, then it will have the
+                                  same EventID field
+       SequenceNumber             This field is used when the data in a single event  record  is
+                                  so  large  that  it  must span multiple database records.  The
+                                  SequenceNumber corresponds to the data's position in the orig-
+                                  inal  event  record.   The  SequenceNumber  starts from 0.  If
+                                  there is only one record  for  an  event,  the  SequenceNumber
+                                  should still be set to 0
+       ProcessID                  The Process ID of the originator of the message
+       GroupID                    The group name of the process originating the message
+       LightWeightProcessID       The  Light  Weight  Process  (LWP) ID of the originator of the
+                                  message
+       LogSystemSource            The source of the log message.  For  example,  this  could  be
+                                  syslog, audit, OSM, and so on
+       Length                     The  total  length  of the data portion of the log record.  If
+                                  the log record is split across  multiple  database  records  ,
+                                  this length still reflects the total length of the log record
+       VersionID                  The EELS version Number
+       TimeOffset                 The offset in milliseconds from the beginning of the epoch
+       TimeUncertaintyInterval    The uncertainty interval in milliseconds of the offset
+       TimeUncertaintyIndicator   The uncertainty indicator as a percentage of confidence in the
+                                  uncertainty interval
+       TimeSource                 The signal or source of trusted time.  This is  typically  the
+                                  hostname or network address of the network time server
+       TimeZone                   The timezone in the format specified in the XDAS specification
+       EventNumber                The  number  which  uniquely identifies the event (provided by
+                                  caller)
+       EventNumberStr             The textual description of the event
+       Outcome                    The outcome of the event
+       OriginatorHostName         The host that detects and requests the recording of  an  audit
+                                  event
+       OriginatorServiceName      The  service  that  detects  and  requests the recording of an
+                                  audit event
+       OriginatorLocationAddress  The address of service that detects and requests the recording
+                                  of an audit event
+       OriginatorServiceType      An  optional  list  of the supported functions provided by the
+                                  originator.
+       OriginatorAuthAuthority    The Authentication Authority  that  detected  the  event.   An
+                                  example  of an authentication authority is the hostname of the
+                                  machine that generated the event
+       OriginatorPrincipalName    The username associated with the process  that  generated  the
+                                  event
+       OriginatorPrincipalID      The UID associated with the process that generated the event
+       InitiatorAuthAuthority     The initiator represents the principal that is accountable for
+                                  the initiation of the event.  This field contains the hostname
+                                  that is responsible for the event
+       InitiatorDomainSpecificNameThe  username  that  is  responsible for the generation of the
+                                  event
+
+                                                                2
+
+dbCreateTable(3dba)                           dbCreateTable(3dba)
+
+       InitiatorDomainSpecificID  The UID that is responsible for the generation of the event
+       TargetLocationName         The target represents the object that was the target of activ-
+                                  ity that caused the event to be generated. For example, a file
+                                  or a record within a database
+       TargetLocationAddress      The address of service that was the target  of  activity  that
+                                  caused the event to be generated.
+       TargetServiceType          An  optional  list  of the supported functions provided by the
+                                  target
+       TargetAuthAuthority        The Authentication Authority that was the target of the event
+       TargetPrincipalName        The username associated with the target process
+       TargetPrincipalID          The UID associated with the target process
+       PtrToSourceDomain          For an imported record, the pointer  to  the  original  record
+                                  within the originating domain
+       SourceSpecificInformation  Information  that is specific to the source of the event.  For
+                                  example, if the record originated from syslog, then this field
+                                  would contain the level and facility of the syslog message
+       EventSpecificInformation   The  event  specific information recorded for the record.  The
+                                  size of this field depends on the  maximum  record  size  sup-
+                                  ported by the target database
+
+   AArrgguummeennttss
+       (Input)  A database connection that was returned by a pre-
+       vious call to (Input) The name of the table to be created.
+
+RReettuurrnn vvaalluueess
+       If  successful,  dbCreateTable  returns  0.  Otherwise, it
+       returns -1.
+
+DDiiaaggnnoossttiiccss
+       An application  can  call  to  obtain  the  error  message
+       returned from the database.
+
+RReeffeerreenncceess
+
+                                                                3
+

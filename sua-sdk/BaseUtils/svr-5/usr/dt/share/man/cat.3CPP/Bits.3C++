@@ -1,0 +1,288 @@
+
+
+Bits(3C++)                                             Bits(3C++)
+
+SSyynnooppssiiss
+       #include <Bits.h> namespace SCO_SC {
+
+       typedef
+            implementation_dependent_unsigned_integral_type
+            Bits_chunk;
+
+       class Bits { public:
+
+       //  Constructors, destructor
+
+             Bits( );
+             Bits(Bits_chunk n, unsigned m = 1);
+             ~Bits ( );
+
+       //  Copy and assign
+
+             Bits(const Bits& b);
+             Bits& operator=(const Bits& b);
+
+       //  Length
+
+             unsigned size( )const;
+             unsigned count( )const;
+             unsigned size(unsigned n);
+             unsigned signif()const;
+             unsigned trim( );
+
+        //  Bitwise operators
+
+             friend  Bits  operator&(const  Bits& a, const  Bits&
+       b);
+             friend Bits operator|(const Bits& a, const Bits& b);
+             friend Bits operator^(const Bits& a, const Bits& b);
+             friend Bits operator<<(const Bits& b, int n);
+             friend Bits operator>>(const Bits& b, int n);
+
+             Bits& operator&=(const Bits&b);
+             Bits& operator|=(const Bits& b);
+             Bits& operator^=(const Bits& b);
+             Bits& operator<<=(int n);
+             Bits& operator>>=(int n);
+
+             Bits& complement( );
+             friend Bits operator ~(const Bits& b);
+
+       //  Relations
+
+             friend int operator<(const Bits& a, const  Bits& b);
+             friend int operator>(const Bits& a, const Bits& b);
+             friend  int  operator<=(const  Bits& a, const  Bits&
+       b);
+             friend int operator>=(const Bits& a, const Bits& b);
+             friend int operator==(const Bits& a, const Bits& b);
+
+                                                                1
+
+Bits(3C++)                                             Bits(3C++)
+
+             friend int operator!=(const Bits& a, const Bits& b);
+
+       //  Concatenation
+
+             Bits& concat(const Bits& b);
+             friend Bits concat(const Bits& a, const Bits& b);
+
+       //  Access individual bits
+
+             int operator[](unsigned i)const;
+             Bits& set(unsigned i);
+             Bits& reset(unsigned i);
+             Bits& complement(unsigned i);
+             Bits& set(unsigned i, unsigned long m);
+
+       //  Conversion to integer
+
+             operator Bits_chunk()const;
+
+       //  Stream insertion
+
+             friend  ostream& operator<<(ostream&  os,const Bits&
+       b);
+
+             }; }
+
+DDeessccrriippttiioonn
+       A  Bits  is a variable-length string each  of  whose  ele-
+       ments,  called bits, can take the value zero or one.  Each
+       bit is numbered sequentially; for a Bits of length N,  the
+       rightmost  (or low-order) bit is number 0 and the leftmost
+       (or high-order) bit is number N-1.  Bits behave as if they
+       were   right-justified  under  comparison  and  change  of
+       length.
+
+       The type Bits_chunk denotes the largest unsigned  integral
+       type  acceptable for conversion to and from Bits.  This is
+       ordinarily unsigned long but may be shorter in some imple-
+       mentations.
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Bits();
+
+       The empty string (a Bits of length zero).  Bits(Bits_chunk
+       n, unsigned m = 1);
+
+       A Bits whose elements are the bits of n and  whose  length
+       is at least m.  High-order zero bits will be added as nec-
+       essary to attain the desired length, but significant  bits
+       will  not  be  truncated  if  n cannot be represented in m
+       bits.  Bits(0) is treated as a one-bit string, not a zero-
+       bit string.  ~Bits();
+
+       Destructor.
+
+                                                                2
+
+Bits(3C++)                                             Bits(3C++)
+
+   CCooppyy aanndd aassssiiggnn
+       Bits(const Bits& b); Bits& operator=(const Bits& b);
+
+       Copying or assigning a Bits creates a copy of its value.
+
+   LLeennggtthh
+       unsigned size()const;
+
+       The number of bits.  unsigned count()const;
+
+       The number of 1-bits.  unsigned size(unsigned n);
+
+       Change  the length to n bits by truncating high-order bits
+       or adding high-order zero bits as necessary.   Return  the
+       new length.  unsigned signif()const;
+
+       The  number  of  significant bits.  This number is zero if
+       there are no 1-bits; otherwise it is  one  more  than  the
+       number of the highest order 1-bit.  unsigned trim();
+
+       Eliminate  high-order  zero bits.  Equivalent to size(sig-
+       nif()).
+
+   BBiittwwiissee ooppeerraattoorrss
+       friend Bits  operator&(const  Bits&  a,  const  Bits&  b);
+       friend  Bits  operator|(const  Bits&  a,  const  Bits& b);
+       friend Bits operator^(const Bits& a, const Bits& b);
+
+       Each bit of the result is  the  logical  "and,"  "or,"  or
+       "exclusive  or"  of  the  corresponding  bits  of a and b.
+       Prior to performing the operation, the shorter operand  is
+       considered  to be extended with high-order zero-bits until
+       its length is that of the  longer  operand.   friend  Bits
+       operator<<(const Bits& b, int n);
+
+       The bits of the result are those of b shifted left n bits.
+       That is, bits n,n+1,n+2,... of the  result  are  equal  to
+       bits  0,1,2,...  of b and bits 0 through n-1 of the result
+       are zero.  The length of the result is b.size()+n.   If  n
+       is  negative,  the  result  is  b>>-n.  friend Bits opera-
+       tor>>(const Bits& b, int n);
+
+       The bits of the result are those  of  b  shifted  right  n
+       bits.   That is, bits 0,1,2,... of the result are equal to
+       bits n,n+1,n+2,... of b.  The  length  of  the  result  is
+       b.size()-n.   If  n>=b.size() then the result is the empty
+       string.  If n is negative, the  result  is  b<<-n.   Bits&
+       operator&=(const  Bits&  b);  Bits& operator|=(const Bits&
+       b); Bits& operator^=(const Bits& b); Bits& operator<<=(int
+       n); Bits& operator>>=(int n);
+
+       Assignment versions of the above.  Bits& complement();
+
+       Complements  each bit.  friend Bits operator~ (const Bits&
+
+                                                                3
+
+Bits(3C++)                                             Bits(3C++)
+
+       b);
+
+       Each bit of the result is the logical  complement  of  the
+       corresponding bit of b.
+
+   RReellaattiioonnss
+       friend  int  operator<(const  Bits&  a,  const   Bits& b);
+       friend int  operator>(const  Bits&  a,  const  Bits&   b);
+       friend  int  operator<=(const  Bits&  a,  const  Bits& b);
+       friend int operator>=(const  Bits&  a,  const  Bits&   b);
+       friend  int  operator==(const  Bits&  a,  const Bits&  b);
+       friend int operator!=(const Bits& a, const Bits&  b);
+
+       The usual relational operators, yielding 1 if the relation
+       is true and 0 if it is false.  In each case, comparison is
+       done as if the shorter operand were  extended  with  high-
+       order  zeroes  to  the length of the longer, followed by a
+       lexical comparison.  If, after this extension, the strings
+       would  be  equal,  the  shorter one is considered smaller.
+       Thus the empty string is the smallest of all,  0  is  less
+       than  1, 0 is less than 00, 10 is less than 101 or 010 but
+       greater than 01, and  strings  of  different  lengths  are
+       never equal.
+
+   CCoonnccaatteennaattiioonn
+       Bits& concat(const Bits& b);
+
+       Concatenates the bits of b onto the right-hand (low-order)
+       end of this Bits.   friend   Bits  concat(const  Bits&  a,
+       const Bits&  b);
+
+       The  bits  of the result are those of a (on the left) fol-
+       lowed by those of b (on the right).
+
+   AAcccceessss iinnddiivviidduuaall bbiittss
+       int operator[](unsigned i)const;
+
+       Bit number i.  If i>=size(), the result  is  zero.   Bits&
+       set(unsigned i); Bits& reset(unsigned i);
+
+       Sets  bit   i   to  1,  or  0, respectively.  No effect if
+       i>=size().  Bits& complement(unsigned i);
+
+       Complements  bit   i.   No  effect  if  i>=size().   Bits&
+       compl(unsigned i);
+
+       Same  as  complement(),  but  denigrated because name con-
+       flicts with a new C++ internationalization keyword.   Will
+       be  removed  in  the  next release.  Bits& set(unsigned i,
+       unsigned long m);
+
+       Sets bit  i  to 0 if  m  is zero, otherwise sets it to  1.
+       No effect if  i>=size().
+
+                                                                4
+
+Bits(3C++)                                             Bits(3C++)
+
+   CCoonnvveerrssiioonn ttoo iinntteeggeerr
+       operator Bits_chunk()const;
+
+       Conversion to the unsigned integral type Bits_chunk.  If N
+       is the number of  bits  in  a  Bits_chunk  and  size()  is
+       greater  than  N,  the  high-order  size()-N  bits will be
+       ignored when performing the conversion.
+
+   SSttrreeaamm iinnsseerrttiioonn
+       friend ostream& operator<<(ostream&  os,const Bits& b);
+
+       Inserts a sequence of ASCII '0' and os.  For example, cout
+       << Bits(9) would print 1001.
+
+NNootteess
+       Bits  can be interpreted as integer sets.  For example, to
+       represent the set of Fibonacci numbers less than 1000:
+           int f1 = 1;
+           int f2 = 1;
+
+           Bits fib(0,1000);
+           fib.set(1);
+
+           while(1){
+               int f = f1 + f2;
+               if(f>=1000)break;
+               fib.set(f);
+               f2=f1;
+               f1=f;
+           }
+
+       Under this interpretation, Bits::operator& is  set  inter-
+       section,  Bits::operator| is set union, and so on.  If you
+       need integer sets, Bits are probably more efficient,  both
+       in  time  and space, than Set<int> (see Set(3C++)).  Note,
+       however, that under this interpretation,  Bits::operator>,
+       Bits::operator<,  and  so  on do not correspond to integer
+       superset and subset relations.
+
+EErrrroorrss
+       Any operation that allocates or changes the  length  of  a
+       Bits  may  run out of memory.  If this is not trapped by a
+       handler or a client-supplied  operator new, the length  of
+       the Bits is set to zero.
+
+RReeffeerreenncceess
+
+                                                                5
+

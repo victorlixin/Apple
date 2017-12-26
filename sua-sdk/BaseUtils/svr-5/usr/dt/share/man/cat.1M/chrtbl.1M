@@ -1,0 +1,217 @@
+
+
+chrtbl(1M)                                             chrtbl(1M)
+
+SSyynnooppssiiss
+       chrtbl [file]
+
+DDeessccrriippttiioonn
+       The  chrtbl command creates two tables containing informa-
+       tion on character classification, upper/lowercase  conver-
+       sion,  character-set  width,  and numeric formatting.  One
+       table is an array of (257*2) + 7 bytes that is encoded  so
+       a  table  lookup  can  be  used to determine the character
+       classification of a character, convert  a  character  (see
+       and  find  the byte and screen width of a character in one
+       of the supplementary code sets.  The other table  contains
+       information about the format of non-monetary numeric quan-
+       tities: the first byte specifies  the  decimal  delimiter;
+       the second byte specifies the thousands delimiter; and the
+       remaining bytes comprise a null-terminated string indicat-
+       ing  the  grouping (each element of the string is taken as
+       an integer that indicates the number of digits  that  com-
+       prise  the  current  group  in  a  formatted  non-monetary
+       numeric quantity).
+
+       chrtbl reads the user-defined character classification and
+       conversion  information from file and creates three output
+       files in the current directory.  To  construct  file,  use
+       the  file  supplied  in  /usr/lib/locale/C/chrtbl_C  as  a
+       starting point.  You may add entries, but  do  not  change
+       the  original  values supplied with the system.  For exam-
+       ple, for other locales  you  may  wish  to  add  eight-bit
+       entries to the ASCII definitions provided in this file.
+
+       The  first  257 bytes of the array in ctype.c are used for
+       character classification.  The characters  used  for  ini-
+       tializing  these  bytes  of  the array represent character
+       classifications that are defined in ctype.h; for  example,
+       ``_L''  means a character is lowercase and ``_S|_B'' means
+       the character is both a spacing  character  and  a  blank.
+       The  second  257 bytes of the array are used for character
+       conversion.  These bytes of the array are  initialized  so
+       that  characters  for  which you do not provide conversion
+       information will be converted to themselves.  When you  do
+       provide  conversion  information,  the  first value of the
+       pair is stored where the second one would be  stored  nor-
+       mally,  and  vice versa; for example, if you provide <0x41
+       0x61>, then 0x61 is stored where 0x41 would be stored nor-
+       mally,  and 0x61 is stored where 0x41 would be stored nor-
+       mally.  The last 7 bytes  are  used  for  character  width
+       information for up to three supplementary code sets.
+
+       The  second  output  file  (a data file) contains the same
+       information, but is structured for efficient  use  by  the
+       character  classification and conversion routines (see The
+       name of this output file is the value you  assign  to  the
+       keyword  LC_CTYPE read in from file.  Before this file can
+       be used by the  character  classification  and  conversion
+
+                                                                1
+
+chrtbl(1M)                                             chrtbl(1M)
+
+       routines,     it     must     be    installed    in    the
+       /usr/lib/locale/locale directory with the name LC_CTYPE by
+       someone  who is super-user or a member of group bin.  This
+       file must be readable by user, group, and other; no  other
+       permissions should be set.  To use the character classifi-
+       cation  and  conversion  tables  in  this  file,  set  the
+       LC_CTYPE environment variable appropriately (see or
+
+       The  third  output  file  (a data file) is created only if
+       numeric formatting information is specified in  the  input
+       file.   The  name  of  this  output  file is the value you
+       assign to  the  keyword  LC_NUMERIC  read  in  from  file.
+       Before  this file can be used, it must be installed in the
+       /usr/lib/locale/locale directory with the name  LC_NUMERIC
+       by  someone  who  is  super-user or a member of group bin.
+       This file must be readable by user, group, and  other;  no
+       other  permissions should be set.  To use the numeric for-
+       matting information in this file, set the LC_NUMERIC envi-
+       ronment variable appropriately (see or
+
+       The  name  of  the  locale  where  you  install  the files
+       LC_CTYPE and LC_NUMERIC should correspond to  the  conven-
+       tions defined in file.  For example, if French conventions
+       were defined, and the name for the French locale  on  your
+       system  is  french,  then  you should install the files in
+       /usr/lib/locale/french.
+
+       If no input file is given, or if  the  argument  ``-''  is
+       encountered, chrtbl reads from standard input.
+
+       The  syntax of file allows the user to define the names of
+       the data files created by chrtbl, the assignment of  char-
+       acters  to  character  classifications,  the  relationship
+       between upper  and  lowercase  letters,  byte  and  screen
+       widths  for up to three supplementary code sets, and three
+       items  of  numeric  formatting  information:  the  decimal
+       delimiter, the thousands delimiter, and the grouping.  The
+       keywords recognized by chrtbl are:
+
+       name of the data file created by chrtbl to contain charac-
+       ter  classification,  conversion,  and  width  information
+       character codes to  be  classified  as  uppercase  letters
+       character  codes  to  be  classified  as lowercase letters
+       character codes to  be  classified  as  numeric  character
+       codes  to  be classified as spacing (delimiter) characters
+       character codes to be classified as punctuation characters
+       character  codes  to  be  classified as control characters
+       character code for the blank (space)  character  character
+       codes  to be classified as hexadecimal digits relationship
+       between upper- and lowercase characters  byte  and  screen
+       width information (by default, each is one character wide)
+       name of the data file created by chrtbl to contain numeric
+       formatting  information decimal delimiter thousands delim-
+       iter string in which each element is taken as  an  integer
+
+                                                                2
+
+chrtbl(1M)                                             chrtbl(1M)
+
+       that indicates the number of digits that comprise the cur-
+       rent group in a formatted non-monetary  numeric  quantity.
+       Any lines with the number sign (#) in the first column are
+       treated as comments and are ignored.  Blank lines are also
+       ignored.
+
+       Characters   for   isupper,   islower,  isdigit,  isspace,
+       ispunct, iscntrl, isblank, isxdigit, and ul can be  repre-
+       sented  as  a  hexadecimal or octal constant (for example,
+       the letter a can be represented as 0x61 in hexadecimal  or
+       0141  in  octal).   Hexadecimal and octal constants may be
+       separated by one or more space and/or tab characters.
+
+       The dash character (-) may be used to indicate a range  of
+       consecutive numbers.  Zero or more space characters may be
+       used for separating the dash character from the numbers.
+
+       The backslash character (\) is used for line continuation.
+       Only  a  carriage  return is permitted after the backslash
+       character.
+
+       The relationship between upper- and lowercase letters (ul)
+       is expressed as ordered pairs of octal or hexadecimal con-
+       stants: <uppercase_character lowercase_character>.   These
+       two  constants may be separated by one or more space char-
+       acters.  Zero or more space characters  may  be  used  for
+       separating the angle brackets (< >) from the numbers.
+
+       The  following is the format of an input specification for
+       cswidth: cswidth n1[[:s1][,n2[:s2][,n3[:s3]]]] Here:  byte
+       width  for supplementary code set 1, required screen width
+       for supplementary code set 1 byte width for  supplementary
+       code  set 2 screen width for supplementary code set 2 byte
+       width for supplementary code set 3 screen width  for  sup-
+       plementary  code set 3 decimal_point and thousands_sep are
+       specified by a single character that gives the  delimiter.
+       grouping  is  specified  by  a quoted string in which each
+       member may be in octal or hex representation.   For  exam-
+       ple,  \3 or \x3 could be used to set the value of a member
+       of the string to 3.
+
+       In a C locale, or in a  locale  where  the  decimal  point
+       character  is  not  defined,  the  decimal point character
+       defaults to a period (.).
+
+EExxaammpplleess
+       The following is an example of an input file used to  cre-
+       ate  the  USA-ENGLISH  code set definition table in a file
+       named usa and the non-monetary numeric formatting informa-
+       tion in a file name num-usa.  LC_CTYPE  usa isupper   0x41
+       - 0x5a islower   0x61 - 0x7a isdigit   0x30 - 0x39 isspace
+       0x20 0x9 - 0xd ispunct   0x21 - 0x2f    0x3a - 0x40    \
+                 0x5b  -  0x60    0x7b  -  0x7e  iscntrl    0x0 -
+       0x1f     0x7f isblank   0x20 isxdigit  0x30 - 0x39    0x61
+
+                                                                3
+
+chrtbl(1M)                                             chrtbl(1M)
+
+       - 0x66     \
+                 0x41  -  0x46  ul        <0x41 0x61> <0x42 0x62>
+       <0x43 0x63>  \
+                <0x44 0x64> <0x45 0x65> <0x46 0x66>  \
+                <0x47 0x67> <0x48 0x68> <0x49 0x69>  \
+                <0x4a 0x6a> <0x4b 0x6b> <0x4c 0x6c>  \
+                <0x4d 0x6d> <0x4e 0x6e> <0x4f 0x6f>  \
+                <0x50 0x70> <0x51 0x71> <0x52 0x72>  \
+                <0x53 0x73> <0x54 0x74> <0x55 0x75>  \
+                <0x56 0x76> <0x57 0x77> <0x58 0x78>  \
+                <0x59         0x79>          <0x5a          0x7a>
+       cswidth        1:1,0:0,0:0          LC_NUMERIC     num_usa
+       decimal_point  .  thousands_sep  , grouping  "\3"
+
+FFiilleess
+       data files containing  character  classification,  conver-
+       sion,  and  character-set  width  information  created  by
+       chrtbl data files containing numeric  formatting  informa-
+       tion  created by chrtbl header file containing information
+       used by character classification and  conversion  routines
+       input  file  used  to construct LC_CTYPE and LC_NUMERIC in
+       the default locale.
+
+RReeffeerreenncceess
+DDiiaaggnnoossttiiccss
+       The error messages produced by chrtbl are intended  to  be
+       self-explanatory.   They  indicate  errors  in the command
+       line or syntactic  errors  encountered  within  the  input
+       file.
+
+NNoottiicceess
+       Changing  the  files  in  /usr/lib/locale/C will cause the
+       system to behave unpredictably.
+
+                                                                4
+

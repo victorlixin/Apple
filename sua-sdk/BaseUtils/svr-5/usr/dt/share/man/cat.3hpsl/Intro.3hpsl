@@ -1,0 +1,176 @@
+
+
+Intro(3hpsl)                                         Intro(3hpsl)
+
+DDeessccrriippttiioonn
+       The  Hot  Plug Services Library (HPSL) is a set of utility
+       functions that provide high level support to  a  Hot  Plug
+       Manager  User Interface (HPMUI) client by interacting with
+       the Hot Plug Controller Interface (HPCI).
+
+       All hot plug actions must be initiated by the user using a
+       Hot Plug Manager User Interface Client (HPMUI).  The HPMUI
+       interacts with the HPSL to control system  hot  plug  fea-
+       tures  and to get information to display.  The HPSL serves
+       as the primary interface for the HPMUI and provides isola-
+       tion from the kernel layer.
+
+       The  HPSL processes all user requests and accesses socket-
+       specific state information through  its  interaction  with
+       the  HPCI.   The  HPSL  has  read-only access to the which
+       enables it to  get  device-specific  information  for  the
+       user.
+
+       Applications, such as the HPMUI client, that use the func-
+       tions documented in this section must be compiled with the
+       -libhpsl  option to the command.  The structures used with
+       the HPSL functions are declared  in  the  <hpsl.h>  header
+       file.
+
+   SSttrruuccttuurree ddeeffiinniittiioonnss
+       The  _HpslContInfo  structure  contains the following mem-
+       bers: typedef struct _HpslContInfo {
+               unsigned int      contId;       /*  controller  id
+       */
+               ushort            hpcBusCnt;    /* # of buses con-
+       trolled by this controller */
+               HpslBusInfoPtr_t   hpcBusList;    /*  pointer   to
+       buses   */   }   HpslContInfo_t,   HpslContInfoPtr_t;  The
+       _HpslBusInfo structure  contains  the  following  members:
+       typedef struct _HpslBusInfo {
+               unsigned  int         contId;              /* con-
+       troller id */
+               unsigned int         busId;                /*  bus
+       id */
+               unsigned  char         busType;             /* bus
+       type */
+               ushort               maxBusSpeed;          /*  bus
+       speed (max) */
+               ushort                presentBusSpeed;      /* bus
+       speed (current) */
+               ushort               busSocketCnt;        /* #  of
+       sockets belonging to this bus */
+               HpslSocketInfoPtr_t     busSocketList;          /*
+       pointer to sockets */  }HpslBusInfo_t,  *HpslBusInfoPtr_t;
+       The  _HpslSocketInfo structure contains the following mem-
+       bers: typedef struct _HpslSocketInfo {
+               unsigned int    contId;              /* controller
+       id */
+
+                                                                1
+
+Intro(3hpsl)                                         Intro(3hpsl)
+
+               unsigned int    busId;               /* bus id */
+               char                                     socketLa-
+       bel[HPCI_MAX_SOCKET_LABEL_LEN];
+                                                    /*     socket
+       identifier label */
+               unsigned  char    busType;             /* bus type
+       of this socket */
+               unsigned int    socketMask;          /*  supported
+       state bits */
+               unsigned  int    socketROmask;        /* read only
+       - supported state bits */
+               unsigned int     socketCurrentState;   /*  current
+       state bits */
+               unsigned  int     socketPreviousState; /* previous
+       state bits */
+               union
+               {
+                       PciSocketInfo_t          pcisocket_info_t;
+       /* pci bus specific socket info */
+                       char                  reserveBuf[HPSL_BUF-
+       SIZE];   /* filler */
+               } uSocketInfo;
+               AsyncEvent_e     socketEvent;           /*   async
+       event flag */
+               ushort            devCnt;                /*  #  of
+       devices connected to this socket */
+               DevInfoPtr_t    devList;             /* pointer to
+       devices  */  }  HpslSocketInfo_t, HpslSocketInfoPtr_t; The
+       _PciSocketInfo structure contains the  following  members:
+       typedef struct _PciSocketInfo {
+               ushort                slotNumber;          /*  pci
+       slot number */
+               ushort               cardSpeed;          /*  board
+       running speed */
+               uchar                memType;            /* memory
+       type */ }PciSocketInfo_t, *PciSocketInforPtr_t;
+
+       The _HpslDrvInfo structure contains the following members:
+       typedef struct _HpslDrvInfo_t {
+               char    drvName[RM_MAXPARAMLEN];    /* the name of
+       the driver */
+               int     drvType;                    /* the  driver
+       type  */  }HpslDrvInfo_t; The __DevInfo structure contains
+       the following members: typedef struct _DevInfo {
+               rm_key_t            rmKey;             /*   device
+       resmgr key */
+               HpslDrvInfo_t        drvInfo;           /*  driver
+       information */
+               union
+               {
+                       PciDevInfo_t                   pciDevInfo;
+       /* pci bus specific device info */
+                       char             reserveBuf[HPSL_BUFSIZE];
+       /* filler */
+
+                                                                2
+
+Intro(3hpsl)                                         Intro(3hpsl)
+
+               }  uDevInfo;  }   DevInfo_t,   DevInfoPtr_t;   The
+       __PciDevInfo  structure  contains  the  following members:
+       typedef struct _PciDevInfo {
+               ushort               busId;         /* bus id */
+               ushort               devNumber;     /* device num-
+       ber */
+               uchar                 funcNumber      /*  function
+       number */ }PciDevInfo_t, *PciDevInfoPtr_t; The _Suspended-
+       DrvInfo  structure contains the following members: typedef
+       struct _SuspendedDrvInfo {
+               int                suspId;           /*  suspended
+       instance id */
+               HpslDrvInfo_t       drvInfo;         /* the driver
+       that was bound to the device */
+               HpslSocketInfo_t   socketInfo;      /*  socket  to
+       which  the  device  belongs  */ } SuspendedDrvInfo_t, Sus-
+       pendedDrvInfoPtr_t;
+
+RReettuurrnn vvaalluueess
+       The HPSL functions communicate the results of  user  calls
+       by  returning  the  following values: call was successful.
+       call could not complete successfully, usually  because  of
+       an  invalid  socket.   call encountered an error condition
+       such as not enough memory available.  The HPSL  call  into
+       the  HPCI returned an error.  The specific error is set in
+       the errno variable; see for a list of errno values.
+
+       When the HPSL_FAIL or HPSL_ERROR value  is  returned,  the
+       user process can check the externally visible global vari-
+       able, hpsl_ERR that is set by  the  HPSL.   The  following
+       error  codes  can  be  set in the hpsl_ERR variable: error
+       initializing core  data  structures.   error  opening  the
+       /dev/hpci  device.   error opening a directory required by
+       HPSL, such as  the  directory  that  contains  the  files.
+       error  opening  a  database  such as the resource manager.
+       error opening a file, such as the file.   HPSL  could  not
+       allocate  enough  memory  for  the operation.  failed on a
+       file such as a Drvmap file.  file or resource manager  key
+       does  not  exist.   data  mismatch  between HPSL and HPCI.
+       arguments not compatible, for example the  driver  is  not
+       compatible  with  the  device.   driver is not autoconfig-
+       urable.  no hot plug controllers are configured.   invalid
+       mask.   call tried to alter a read-only mask bit.  invalid
+       flag value.  invalid operation on an empty socket; such as
+       power  on.  invalid operation on a powered off socket such
+       as the bind driver.  invalid operation involving an inter-
+       lock  setting  (if  supported); for example, power on with
+       interlock open.  invalid operation on a busy socket,  such
+       as a power off when driver binding(s) exist.
+
+RReeffeerreenncceess
+
+                                                                3
+

@@ -1,0 +1,78 @@
+
+
+keyctl(2)                                               keyctl(2)
+
+SSyynnooppssiiss
+       #include <sys/keyctl.h>
+
+       int keyctl(int cmd, void *arg, int nskeys);
+
+DDeessccrriippttiioonn
+       The  keyctl system call sets the user and processor limits
+       based on its arguments and the key pair(s) passed to it as
+       input, or retrieves the current processor or user limit.
+
+       The  processor  limit  is the maximum number of processors
+       that can be online at any given time.  The user  limit  is
+       the maximum number of users that can simultaneously log in
+       to a system.
+
+       The keyctl system call is intended for use by the software
+       key mechanism.  It is executed at boot time and when doing
+       a processor or user limit upgrade.  If keyctl is not  exe-
+       cuted  at  boot  time or if no valid strings are passed, a
+       system will run as a limited use  system,  with  a  single
+       processor  enabled.   The  calling  process  must have the
+       P_SYSOPS privilege to use the K_SETLIMIT command.
+
+   IInnppuutt
+       When cmd is K_SETLIMIT, arg is a pointer to  an  array  of
+       nskeys  structures  of type k_skey.  A k_skey structure is
+       defined as: struct k_skey {
+           uchar_t   sernum[STRLEN];   /* Serial Number */
+           uchar_t   serkey[STRLEN];   /* Activation Key */ };
+
+       nskeys is the number of elements in the array  pointed  to
+       by arg.
+
+       When  the cmd is K_GETPROCLIMIT or K_GETUSERLIMIT, the arg
+       and nskeys arguments are ignored.
+
+   PPrroocceessssiinngg
+       When cmd is K_SETLIMIT, keyctl validates each  element  of
+       the  array pointed to by arg against the base key embedded
+       in the kernel.   keyctl  checks  each  serial  number  for
+       uniqueness  with  respect  to  other serial numbers in the
+       array and sets the processor and or user limit to the val-
+       ues indicated.
+
+       When  cmd  is  K_GETPROCLIMIT  or  K_GETUSERLIMIT,  keyctl
+       returns the appropriate limit.  This is the maximum number
+       of  processors  that  can be online simultaneously, or the
+       maximum number of users that can be logged in.
+
+   EErrrroorrss
+       If any of the following conditions occur, a negative value
+       is  returned  and errno is set to the corresponding value:
+       The array contains duplicate serial numbers.  The limit is
+       set  to the number of valid and unique key pairs that were
+
+                                                                1
+
+keyctl(2)                                               keyctl(2)
+
+       found, or to the default if no unique  and  valid  entries
+       were found.  arg is NULL or is an invalid address.  cmd is
+       invalid or the array contains  one  or  more  invalid  key
+       pairs.   There is not enough memory to complete the opera-
+       tion.  The command was K_SETLIMIT, and the caller does not
+       have  the  P_SYSOPS privilege.  cmd is K_SETLIMIT and less
+       than ten seconds has passed since  the  last  unsuccessful
+       call of keyctl with the same cmd.
+
+       Note  that the EEXIST and EINVAL cases do not follow stan-
+       dard function semantics: the function fails, errno is set,
+       but a side effect occurs.
+
+                                                                2
+

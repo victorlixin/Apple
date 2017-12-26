@@ -1,0 +1,163 @@
+
+
+arp(7tcp)                                               arp(7tcp)
+
+SSyynnooppssiiss
+       #include  <sys/sockio.h>  #include <sys/socket.h> #include
+       <net/if.h> #include <net/if_arp.h>
+
+       int s; struct arpreq arpreq;
+
+       s = open(_PATH_ROUTE, O_WRONLY, 0);
+
+       ioctl(s, SIOCSARP, (caddr_t)&arpreq);  ioctl(s,  SIOCGARP,
+       (caddr_t)&arpreq); ioctl(s, SIOCDARP, (caddr_t)&arpreq);
+
+DDeessccrriippttiioonn
+       ARP is a protocol used to dynamically map between Internet
+       version 4 (IPv4) and IEEE MAC addresses.  It  is  used  by
+       Ethernet-style interface drivers running the Internet pro-
+       tocols.
+
+       ARP caches Internet-IEEE address mappings.  When an inter-
+       face  requests  a mapping for an address not in the cache,
+       ARP queues the message  which  requires  the  mapping  and
+       broadcasts  a message on the associated network requesting
+       the address mapping. If a response is  provided,  the  new
+       mapping  is cached and any pending message is transmitted.
+       ARP will queue at most one packet while waiting for a map-
+       ping  request  to  be responded to; only the most recently
+       transmitted packet is kept. The  ARP  protocol  is  imple-
+       mented by a STREAMS driver to do the protocol negotiation.
+
+       To facilitate communications with systems which do not use
+       ARP,  a mechanism is provided for manipulating the entries
+       in the ARP cache.  Since the ARP cache is  stored  in  the
+       routing  table,  this  requires  use of the routing stream
+       driver (see
+
+       An ARP ``route'' consists of an  IPv4  destination  and  a
+       link-level  next  hop address.  To add an ARP entry, issue
+       an RTM_ADD message to the routing stream interface.   Both
+       the  destination  and  gateway address fields must be pre-
+       sent.  The destination address is defined as follows  (see
+       sys/netinet/if_ether.h):     struct    sockaddr_inarp    {
+            u_char  sin_len;          /* length of sockaddr_inarp
+       */         u_char     sin_family;      /*    AF_INET    */
+            u_short sin_port;       /* not  used  */       struct
+       in_addr sin_addr;    /* IP address */      struct  in_addr
+       sin_srcaddr;  /*     not     used     */           u_short
+       sin_tos;         /*     not     used    */         u_short
+       sin_other;       /* set to SIN_PROXY to publish */ #define
+       SIN_PROXY  1 }; The gateway is a link-level address and is
+       defined    using    the    following    structure     (see
+       sys/net/if_dl.h): /*
+        * Structure of a Link-Level sockaddr:
+        */ struct sockaddr_dl {
+               u_char  sdl_len; /* length of sockaddr_dl */
+               u_char  sdl_family;     /* AF_DL */
+
+                                                                1
+
+arp(7tcp)                                               arp(7tcp)
+
+               u_short  sdl_index;       /*  if  !=  0, index for
+       interface */
+               u_char    sdl_type;         /*   if   type    (see
+       net/if_types.h) */
+               u_char   sdl_alen;        /*  link  address length
+       (normally 6) */
+               char    sdl_data[10];   /* address */  };  #define
+       LLADDR(s)  ((caddr_t)((s)->sdl_data))  To retrieve all ARP
+       entries, the preferred method is to use  code  similar  to
+       that  shown  in The gi_arg field of the rt_giarg structure
+       should be set to RTF_LLINFO. This ensures that only routes
+       with  valid  link-level information (that is, ARP entries)
+       are retrieved.  The RTSTR_USELOOPBACK ioctl can be used to
+       indicate that the process does not want to receive routing
+       messages generated as a result of its own operations  (see
+       To  denote  an ARP entry as being permanent, the rt_expire
+       field in the route structure should be  set  to  zero.   A
+       non-zero  value is treated as the time in seconds that the
+       entry should be considered valid.
+
+       Alternatively, the following ioctl requests  are  provided
+       to enter and delete ARP entries: Set an ARP entry.  Get an
+       ARP entry.  Delete an ARP entry.  Each ioctl request takes
+       the arpreq structure as an argument.  These ioctl requests
+       may be applied to any descriptor for the ARP  device,  but
+       only  by a privileged user. The arpreq structure contains:
+       /* ARP ioctl request structure */ struct arpreq {
+               struct sockaddr arp_pa;     /* protocol address */
+               struct sockaddr arp_ha;     /* hardware address */
+               int             arp_flags;  /* flags */
+               };
+
+       /* arp_flags field values */ #define ATF_INUSE        0x01
+       /*  entry  in use */ #define ATF_COM          0x2  /* com-
+       pleted  entry   (arp_ha   valid)   */   #define   ATF_PERM
+       0x4   /*  permanent  entry */ #define ATF_PUBL         0x8
+       /* publish (respond for other host)  */  #define  ATF_USE-
+       TRAILERS   0x10  /*  send  trailer  packets to host */ The
+       address family for the arp_pa sockaddr  must  be  AF_INET;
+       for  the  arp_ha  sockaddr it must be AF_UNSPEC.  The only
+       flag bits that may be written are ATF_PERM,  ATF_PUBL  and
+       ATF_USETRAILERS.   ATF_PERM  makes  the entry permanent if
+       the ioctl request succeeds.  The nature of the ARP entries
+       may  cause the ioctl request to fail if too many permanent
+       IP addresses hash to the same  slot.   ATF_PUBL  specifies
+       that  the  ARP code should respond to ARP requests for the
+       indicated host coming from other machines.  This allows  a
+       host  to  act as an ``ARP server'', which may be useful in
+       convincing an  ARP-only  machine  to  talk  to  a  non-ARP
+       machine.
+
+       ARP is also used to negotiate the use of trailer IP encap-
+       sulations; trailers are an alternate encapsulation used to
+       allow efficient packet alignment for large packets despite
+
+                                                                2
+
+arp(7tcp)                                               arp(7tcp)
+
+       variable-sized headers. Hosts that wish to receive trailer
+       encapsulations  so  indicate  by  sending  gratuitous  ARP
+       translation replies along with  replies  to  IP  requests;
+       they  are  also  sent  in reply to IP translation replies.
+       The negotiation is thus fully symmetrical, in that  either
+       or  both  hosts  may request trailers. The ATF_USETRAILERS
+       flag is used to record the receipt of such  a  reply,  and
+       enables  the transmission of trailer packets to that host.
+
+       An ARP entry may be ``published.'' This will cause ARP  to
+       answer  requests  for  the entry even if its IP address is
+       not one of the local addresses of the system.  An entry is
+       published  by  setting  the  sin_other  field of the sock-
+       addr_inarp structure to the value SIN_PROXY.  ARP  watches
+       passively for hosts impersonating the local host (that is,
+       a host that responds to an ARP  mapping  request  for  the
+       local host's address).
+
+FFiilleess
+       defined as _PATH_ARP in <paths.h>
+
+DDiiaaggnnoossttiiccss
+       The  kernel can report the following messages from the arp
+       driver: ARP received a request or reply  whose  source  or
+       destination  address was an IP broadcast address.  ARP has
+       discovered  another  host  on  the  local  network   which
+       responds to mapping requests for its own Internet address.
+       This usually indicates that two systems are attempting  to
+       use  the  same  IP  address.   ARP  received  a reply that
+       changed the MAC address associated with an  existing  com-
+       pleted  entry.   This  may indicate a hardware change on a
+       remote system.  ARP received an ARP op-code that was not a
+       request or a reply.
+
+RReeffeerreenncceess
+       on the manual page
+
+       RFC 826, RFC 1042
+
+                                                                3
+

@@ -1,0 +1,172 @@
+popper(1)                                                     popper(1)
+
+  ppooppppeerr
+
+  NNAAMMEE
+
+    popper - POP 3 server
+
+  SSYYNNOOPPSSIISS
+
+    /usr/sbin/popper [[-d]] [[-s]] [[-k]] [[-t trace-file]]
+                     [[-T timeout]] [[-b bulldir]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ppooppppeerr(1) utility is an implementation of the Post Office Protocol
+    server that runs on a variety of computers to manage electronic mail for
+    Macintosh and MS-DOS computers. The server was developed at the University
+    of California at Berkeley and conforms fully to the specifications in RFC
+    1939.
+
+    --dd
+        Set the socket to debugging and turn on debugging. All debugging
+        information is saved using _s_y_s_l_o_g_d()(1).
+    --tt trace-file
+        Turn on debugging and save the trace information in trace-file using
+        _f_p_r_i_n_t_f(3).
+
+    --kk
+        Enable Kerberos authentication when ppooppppeerr(1) has been compiled with
+        the KERBEROS define. You must already have libraries that support
+        Kerberos.
+
+    --ss
+        Turn on statistics logging using ssyyssllooggdd(1). At the end of each
+        ppooppppeerr(1) session, the following information is logged: username,
+        number of messages deleted, number of bytes deleted, number of
+        messages left on server, number of bytes left on server.
+    --TT timeout
+        Change the default compiled value POP_TIMEOUT for terminating a
+        session with a POP client. When the server is waiting for a command to
+        arrive from the client, it times out after the specified number of
+        seconds and terminates the session. This prevents ppooppppeerr(1) processes
+        from hanging forever as they wait for command input from clients that
+        have terminated abnormally. A small value is acceptable for small-to-
+        medium networks where the network delay is within a few seconds. In
+        this case, 15-30 seconds is not unreasonable. Networks with large
+        delays in sending packets (such as SLIP links) might require a larger
+        value. In this case, 300 seconds (five minutes) is not unreasonable.
+    --bb bulldir
+        Turn on the bulletin feature and specify the bulletin directory path.
+
+  BBUULLLLEETTIINNSS
+
+    The bulletin feature gives system administrators a way to send important
+    announcements to all POP users without having to do mass mailings.
+
+    The bulletin directory contains one file per bulletin. Each file contains
+    a single mail message with header and body in mailbox format. The first
+    line of each such bulletin must be a "From" line. The easiest way for
+    system administrators to create such bulletins is to mail themselves a
+    copy of the bulletin using the account to which they want replies to be
+    sent, then use their mail program to save the message to a file in the
+    bulletin directory in mailbox format. The bulletin directory must be
+    readable by world.
+
+    The name of each bulletin file begins with the bulletin number and can
+    optionally continue with any other characters. For example, the file name
+    of bulletin number 23 might be "23.pophost_down_sunday".
+
+    The ppooppppeerr(1) utility creates a file named ..ppooppbbuullll in the home directory
+    of each user. This file contains a single line that records the highest
+    numbered bulletin received by the user.
+
+    Each time a POP client connects to the server, any new bulletins the user
+    has not received previously are automatically appended to the user's mail.
+
+    When a bulletin is copied, the "To" header line is replaced by "To:
+    username@thishost", and any "Status:" header lines are deleted. Otherwise,
+    the bulletin is copied as is.
+
+    When a new user checks for mail the first time, ppooppppeerr(1) creates the
+    ..ppooppbbuullll file in the user's home directory and seeds it with the current
+    maximum bulletin number. Thus, new users do not get old bulletins.
+
+  TTHHEE PPOOPP TTRRAANNSSAACCTTIIOONN CCYYCCLLEE
+
+    The Berkeley POP server is a single program (called ppooppppeerr(1)) that is
+    started by iinneettdd(1) when it gets a service request on the POP transmission
+    control protocol (TCP) port. (The official port number specified in RFC
+    1081 for POP version 3 is port 110. Some POP3 clients, however, attempt to
+    contact the server at port 109, the POP version 2 port. Unless you are
+    running both POP2 and POP3 servers, you can simply define both ports for
+    use by the POP3 server.) The ppooppppeerr(1) program initializes and verifies
+    that the peer Internet protocol (IP) address is registered in the local
+    domain, logging a warning message when a connection is made to a client
+    whose IP address does not have a canonical name. For systems using BSD 4.3
+    bind, it also checks to see whether a canonical name lookup for the client
+    returns the same peer IP address, logging a warning message if it does
+    not. The server enters the authorization state, during which the client
+    must correctly identify itself by providing a valid user identifier (ID)
+    and password on the server's host computer. No other exchanges are allowed
+    during this state (other than a request to quit). If authentication fails,
+    a warning message is logged and the session ends. After the user is
+    identified, ppooppppeerr(1) changes its user and group IDs to match that of the
+    user and enters the transaction state. The server makes a temporary copy
+    of the user's maildrop, which is used for all subsequent transactions.
+    These include most POP commands to retrieve mail, delete mail, undelete
+    mail, and so forth. When the client quits, the server enters the final
+    update state during which the network connection is terminated and the
+    user's maildrop is updated with the (possibly) modified temporary
+    maildrop.
+
+  LLOOGGGGIINNGG
+
+    The POP server uses syslog to keep a record of its activities. On systems
+    with BSD 4.3 syslogging, the server logs (by default) to the "local0"
+    facility at priority "notice" for all messages except debugging, which is
+    logged at priority "debug". The default log file is //uussrr//ssppooooll//mmqquueeuuee//
+    PPOOPPlloogg. You can change these, however. On systems with 4.2 syslogging all
+    messages are logged to the local log file, usually //uussrr//ssppooooll//mmqquueeuuee//
+    ssyysslloogg.
+
+  DDEEBBUUGGGGIINNGG
+
+    The ppooppppeerr(1) program will log debugging information when the --dd parameter
+    is specified after its invocation in the iinneettdd..ccoonnff file. Use this option
+    with caution; it generates considerable output in the syslog file.
+    Alternatively, the --tt file-name option will place debugging information
+    into file file-name using _f_p_r_i_n_t_f(3) instead of ssyyssllooggdd(1).
+
+    You can confirm that the POP server is running by using Telnet to connect
+    to port 110 (or 109 if you set it up that way).
+
+  EEXXTTEENNSSIIOONNSS
+
+    The server implements the following two extended commands:
+
+    XXTTNNDD XXMMIITT
+        Sends a mail message using //bbiinn//sseennddmmaaiill.
+    XXTTNNDD XXLLIISSTT header [num]
+        Extracts and returns the specified header line for the specified
+        message number. If the "num" parameter is missing, returns the header
+        line for all the messages that are not currently marked for deletion.
+
+  FFIILLEESS
+
+    The ppooppppeerr(1) daemon makes use of the following files:
+
+    //vvaarr//mmaaiill
+        Mail files
+
+    //eettcc//iinneettdd..ccoonnff
+        POP program invocation
+
+    //eettcc//ssyysslloogg..ccoonnff
+        Logging specifications
+
+    ~~//..ppooppbbuullll
+        Largest bulletin number seen by user
+
+  AACCKKNNOOWWLLEEDDGGMMEENNTTSS
+
+    This product includes software developed by the Victoria University of
+    Wellington, New Zealand and its contributors.
+
+  SSEEEE AALLSSOO
+
+    _i_n_e_t_d(1)
+
+    RFC1081, RFC1082, RFC1939
+

@@ -1,0 +1,142 @@
+show_panel(3)                                             show_panel(3)
+
+  ppaanneell(())
+
+  NNAAMMEE
+
+    bottom_panel(), del_panel(), hide_panel(), move_panel(), new_panel(),
+    panel_above(), panel_below(), panel_hidden(), panel_userptr(),
+    panel_window(), replace_panel(), set_panel_userptr(), show_panel(),
+    top_panel(), update_panels() panel - panel stack extension for curses
+
+  SSYYNNOOPPSSIISS
+
+    #include <panel.h>
+
+    cc [[flags]] sourcefiles -lpanel -lncurses
+
+    PANEL *new_panel(WINDOW *win)
+    int bottom_panel(PANEL *pan)
+    int top_panel(PANEL *pan)
+    int show_panel(PANEL *pan)
+    void update_panels(void);
+    int hide_panel(PANEL *pan)
+    WINDOW *panel_window(PANEL *pan)
+    int replace_panel(PANEL *pan, WINDOW *window)
+    int move_panel(PANEL *pan, int starty, int startx)
+    int panel_hidden(PANEL *pan)
+    PANEL *panel_above(PANEL *pan)
+    PANEL *panel_below(PANEL *pan)
+    int set_panel_userptr(PANEL *pan, char *ptr)
+    char *panel_userptr(PANEL *pan)
+    int del_panel(PANEL *pan)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    Panels are _c_u_r_s_e_s(3) windows with the added feature of depth. Panel
+    functions allow the use of stacked windows and ensure the proper portions
+    of each window and the curses stdscr window are hidden or displayed when
+    panels are added, moved, modified or removed. The set of currently visible
+    panels is the stack of panels. The stdscr window is beneath all panels,
+    and is not considered part of the stack.
+
+    A window is associated with every panel. The panel routines enable you to
+    create, move, hides, and show panels, as well as position a panel at any
+    desired location in the stack.
+
+    Panel routines are a functional layer added to ccuurrsseess make only high-level
+    curses calls, and work anywhere terminfo curses does.
+
+  FFUUNNCCTTIIOONNSS
+
+    The following functions are part of the ppaanneell package.
+    nneeww__ppaanneell((WWIINNDDOOWW **win))
+        allocates a PPAANNEELL structure, associates it with win, places the panel
+        on the top of the stack (causes it to be displayed above any other
+        panel) and returns a pointer to the new panel.
+    vvooiidd uuppddaattee__ppaanneellss((void))
+        refreshes the virtual screen to reflect the relations between the
+        panels in the stack, but does not call _dd_oo_uu_pp_dd_aa_tt_ee(3) to refresh the
+        physical screen. Use this function and not _ww_rr_ee_ff_rr_ee_ss_hh(3) or
+        _ww_nn_oo_uu_tt_rr_ee_ff_rr_ee_ss_hh(3). _uu_pp_dd_aa_tt_ee____pp_aa_nn_ee_ll_ss(3) may be called more than once before
+        a call to _dd_oo_uu_pp_dd_aa_tt_ee(3), but _dd_oo_uu_pp_dd_aa_tt_ee(3) is the function responsible for
+        updating the physical screen.
+    ddeell__ppaanneell((PPAANNEELL **pan))
+        removes the given panel from the stack and deallocates the PPAANNEELL
+        structure (but not its associated window).
+    hhiiddee__ppaanneell((PPAANNEELL **pan))
+        removes the given panel from the panel stack and thus hides it from
+        view. The PPAANNEELL structure is not lost, merely removed from the stack.
+    sshhooww__ppaanneell((PPAANNEELL **pan))
+        makes a hidden panel visible by placing it on top of the panels in the
+        panel stack. See COMPATIBILITY below.
+    ttoopp__ppaanneell((PPAANNEELL **pan))
+        puts the given visible panel on top of all panels in the stack. See
+        COMPATIBILITY below.
+    bboottttoomm__ppaanneell((PPAANNEELL **pan))
+        puts panel at the bottom of all panels.
+    mmoovvee__ppaanneell((PPAANNEELL **pan,, iinntt ssttaarrttyy,, iinntt ssttaarrttxx))
+        moves the given panel window so that its upper-left corner is at
+        starty, startx. It does not change the position of the panel in the
+        stack. Be sure to use this function, not _mm_vv_ww_ii_nn(3), to move a panel
+        window.
+    rreeppllaaccee__ppaanneell((PPAANNEELL **pan,, WWIINNDDOOWW **window))
+        replaces the current window of panel with window (useful, for example
+        if you want to resize a panel; if you're using nnccuurrsseess you can call
+        _rr_ee_pp_ll_aa_cc_ee____pp_aa_nn_ee_ll(3) on the output of _ww_rr_ee_ss_ii_zz_ee(3)). It does not change the
+        position of the panel in the stack.
+    ppaanneell__aabboovvee((PPAANNEELL **pan))
+        returns a pointer to the panel above pan. If the panel argument is
+        ((PPAANNEELL **))00, it returns a pointer to the bottom panel in the stack.
+    ppaanneell__bbeellooww((PPAANNEELL **pan))
+        returns a pointer to the panel just below pan. If the panel argument
+        is ((PPAANNEELL **))00, it returns a pointer to the top panel in the stack.
+    sseett__ppaanneell__uusseerrppttrr(pan,ptr)
+        sets the panel's user pointer.
+    ppaanneell__uusseerrppttrr((PPAANNEELL **pan))
+        returns the user pointer for a given panel.
+    ppaanneell__wwiinnddooww((PPAANNEELL **pan))
+        returns a pointer to the window of the given panel.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    Each routine that returns a pointer returns NULL if an error occurs. Each
+    routine that returns an int value returns OK if it executes successfully
+    and ERR if not.
+
+  CCOOMMPPAATTIIBBIILLIITTYY
+
+    Reasonable care has been taken to ensure compatibility with the native
+    panel facility introduced in SVr3.2 (inspection of the SVr4 manual pages
+    suggests the programming interface is unchanged). The PPAANNEELL data
+    structures are merely similar. The programmer is cautioned not to directly
+    use PPAANNEELL fields.
+
+    The functions _ss_hh_oo_ww____pp_aa_nn_ee_ll(3) and _tt_oo_pp____pp_aa_nn_ee_ll(3) are identical in this
+    implementation, and work equally well with displayed or hidden panels. In
+    the native System V implementation, _ss_hh_oo_ww____pp_aa_nn_ee_ll(3) is intended for making a
+    hidden panel visible (at the top of the stack) and _tt_oo_pp____pp_aa_nn_ee_ll(3) is
+    intended for making an already-visible panel move to the top of the stack.
+    You are cautioned to use the correct function to ensure compatibility with
+    native panel libraries.
+
+  NNOOTTEE
+
+    In your library list, lliibbppaanneell..aa should be before lliibbnnccuurrsseess..aa; that is,
+    you want to say --llppaanneell --llnnccuurrsseess, not the other way around (which would
+    give you a link error using some linkers).
+
+  FFIILLEESS
+
+    The ppaanneell package makes use of the following files:
+
+    ppaanneell..hh
+        interface for the panels library
+
+    lliibbppaanneell..aa
+        the panels library itself
+
+  SSEEEE AALLSSOO
+
+    _c_u_r_s_e_s(3)
+

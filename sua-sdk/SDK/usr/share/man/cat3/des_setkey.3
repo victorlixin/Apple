@@ -1,0 +1,116 @@
+des_setkey(3)                                             des_setkey(3)
+
+  ccrryypptt(())
+
+  NNAAMMEE
+
+    crypt(), setkey(), encrypt(), des_setkey(), des_cipher() - DES encryption
+
+  SSYYNNOOPPSSIISS
+
+    char * crypt (const char *key, const char *setting)
+    int setkey (char *key)
+    int encrypt (char *block, int flag)
+    int des_setkey (const char *key)
+    int des_cipher (const char *in, char *out, long salt, int count)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _cc_rr_yy_pp_tt(3) function performs password encryption. It is derived from the
+    NBS Data Encryption Standard. Additional code has been added to deter key
+    search attempts. The first argument to _cc_rr_yy_pp_tt(3) is a NUL-terminated string
+    (normally a password typed by a user). The second is a character array,
+    nine bytes long, consisting of an underscore ("_") followed by four bytes
+    of iteration count and four bytes of salt. Both the iteration count and
+    the salt are encoded with six bits per character, least significant bits
+    first. The values 0 to 63 are encoded by the characters "./0-9A-Za-z",
+    respectively.
+
+    The salt is used to induce disorder into the DES algorithm in one of
+    16777216 possible ways (specifically, if bit i of the salt is set, bits i
+    and i+24 are swapped in the DES "E" box output). The key is divided into
+    groups of eight characters (a short final group is null-padded) and the
+    low-order seven bits of each character (56 bits per group) are used to
+    form the DES key as follows: the first group of 56 bits becomes the
+    initial DES key. For each additional group, the XOR of the group bits and
+    the encryption of the DES key with itself becomes the next DES key. Then
+    the final DES key is used to perform count cumulative encryptions of a 64-
+    bit constant. The value returned is a NUL-terminated string, 20 bytes in
+    length, consisting of the setting followed by the encoded 64-bit
+    encryption.
+
+    For compatibility with historical versions of _cc_rr_yy_pp_tt(3), the setting may
+    consist of 2 bytes of salt, encoded as above, in which case an iteration
+    count of 25 is used, fewer perturbations of DES are available, at most 8
+    characters of key are used, and the returned value is a NUL-terminated
+    string 13 bytes in length.
+
+    The functions _ee_nn_cc_rr_yy_pp_tt(3), _ss_ee_tt_kk_ee_yy(3), _dd_ee_ss____ss_ee_tt_kk_ee_yy(3), and _dd_ee_ss____cc_ii_pp_hh_ee_rr(3)
+    allow limited access to the DES algorithm itself. The key argument to
+    _ss_ee_tt_kk_ee_yy(3) is a 64 character array of binary values (numeric 0 or 1). A 56-
+    bit key is derived from this array by dividing the array into groups of 8
+    and ignoring the last bit in each group.
+
+    The _ee_nn_cc_rr_yy_pp_tt(3) argument block is also a 64 character array of binary
+    values. If the value of flag is 0, the argument block is encrypted,
+    otherwise it is decrypted. The encryption or decryption is returned in the
+    original array block after using the key specified by _ss_ee_tt_kk_ee_yy(3) to process
+    it.
+
+    The _dd_ee_ss____ss_ee_tt_kk_ee_yy(3) and _dd_ee_ss____cc_ii_pp_hh_ee_rr(3) functions are faster but less portable
+    than _ss_ee_tt_kk_ee_yy(3) and _ee_nn_cc_rr_yy_pp_tt(3). The argument to _dd_ee_ss____ss_ee_tt_kk_ee_yy(3) is a
+    character array of length 8. The least significant bit in each character
+    is ignored and the next 7 bits of each character are concatenated to yield
+    a 56-bit key. The function _dd_ee_ss____cc_ii_pp_hh_ee_rr(3) encrypts (or decrypts if count is
+    negative) the 64-bits stored in the 8 characters at in using _aa_bb_ss(3) of
+    count iterations of DES and stores the 64-bit result in the 8 characters
+    at out. The salt specifies perturbations to DES as described above.
+
+    The function _cc_rr_yy_pp_tt(3) returns a pointer to the encrypted value on success
+    and NULL on failure. The functions _ss_ee_tt_kk_ee_yy(3), _ee_nn_cc_rr_yy_pp_tt(3), _dd_ee_ss____ss_ee_tt_kk_ee_yy(3),
+    and _dd_ee_ss____cc_ii_pp_hh_ee_rr(3) return 0 on success and 1 on failure. Historically, the
+    functions _ss_ee_tt_kk_ee_yy(3) and _ee_nn_cc_rr_yy_pp_tt(3) did not return any value. They have
+    been provided return values primarily to distinguish implementations where
+    hardware support is provided but not available or where the DES encryption
+    is not available due to the usual political silliness.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    On success, _cc_rr_yy_pp_tt(3) returns a pointer to a thread-specific encoded
+    string. On failure, it returns NULL and sets errno.
+
+  EERRRROORRSS
+
+    The _cc_rr_yy_pp_tt(3) and _ss_ee_tt_kk_ee_yy(3) functions can fail for the following reasons:
+
+    [ENOSYS]
+        Not supported on this system.
+
+  NNOOTTEESS
+
+    Dropping the least significant bit in each character of the argument to
+    _dd_ee_ss____ss_ee_tt_kk_ee_yy(3) is ridiculous.
+
+    The _cc_rr_yy_pp_tt(3) function leaves its result in an internal static object and
+    returns a pointer to that object. Subsequent calls to _cc_rr_yy_pp_tt(3) will modify
+    the same object.
+
+    Due to legal restrictions on the export of cryptographic tools outside of
+    the United States and certain other nations, these calls are not part of
+    the base Subsystem for UNIX-based Applications product.
+
+  SSEEEE AALLSSOO
+
+    _l_o_g_i_n(1)
+
+    _p_a_s_s_w_d(1)
+
+    _g_e_t_p_a_s_s(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The following functions are thread safe: ccrryypptt,, sseettkkeeyy,, eennccrryypptt. The
+    following functions are not thread safe: ddeess__sseettkkeeyy,, ddeess__cciipphheerr.
+
+    None of these functions are async-signal safe.
+

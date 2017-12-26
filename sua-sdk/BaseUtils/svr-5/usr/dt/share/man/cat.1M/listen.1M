@@ -1,0 +1,98 @@
+
+
+listen(1M)                                             listen(1M)
+
+SSyynnooppssiiss
+       /usr/lib/saf/listen [-m devstem] net_spec
+
+DDeessccrriippttiioonn
+       The  listen port monitor ``listens'' to a network for ser-
+       vice requests, accepts  requests  when  they  arrive,  and
+       invokes servers in response to those service requests.
+
+FFiilleess
+       service  support  files  grouped according to port monitor
+       tag (as listed by sacadm -l)
+
+UUssaaggee
+       The network listener process may be used with any  connec-
+       tion-oriented  network  (more  precisely, with any connec-
+       tion-oriented transport provider)  that  conforms  to  the
+       Transport Interface (TLI) specification.
+
+       The listener internally generates a pathname for the minor
+       device for each connection; it is this  pathname  that  is
+       used  in  the utmp entry for a service, if one is created.
+       By default, this pathname is the concatenation of the pre-
+       fix  /dev/netspec  with  the decimal representation of the
+       minor device number.  When the -m devstem option is speci-
+       fied,  the listener will use devstem as the prefix for the
+       pathname.  In either case, the representation of the minor
+       device number will be at least two digits (for example, 05
+       or 27), but will be longer when necessary  to  accommodate
+       minor device numbers larger than 99.
+
+   SSeerrvveerr iinnvvooccaattiioonn
+       When  a  connection  indication  is received, the listener
+       creates a new transport endpoint and accepts  the  connec-
+       tion  on that endpoint.  Before giving the file descriptor
+       for this new connection  to  the  server,  any  designated
+       STREAMS modules are pushed and the configuration script is
+       executed, if one exists.  This file descriptor  is  appro-
+       priate  for  use  with  either  TLI (see especially or the
+       sockets interface library.
+
+       By default, a new instance of the server  is  invoked  for
+       each   connection.   When  the  server  is  invoked,  file
+       descriptor 0 refers to the transport endpoint, and is open
+       for  reading  and  writing.   File descriptors 1 and 2 are
+       copies of file descriptor 0; no other file descriptors are
+       open.   The  service  is  invoked  either with the user ID
+       under which the service was registered with  the listener,
+       or  as an authenticated ID if an authentication scheme was
+       specified instead.   If  both  an  ID  and  authentication
+       scheme  are  specified  for  the service in the listener's
+       administrative file, the listener does the authentication,
+       but then runs the service under the specified ID.
+
+       Alternatively,  a  service  may  be registered so that the
+
+                                                                1
+
+listen(1M)                                             listen(1M)
+
+       listener will pass connections to a standing  server  pro-
+       cess through a FIFO or a named stream, instead of invoking
+       the server anew for each connection.  In  this  case,  the
+       connection is passed in the form of a file descriptor that
+       refers to the new transport  endpoint.   Before  the  file
+       descriptor  is sent to the server, the listener interprets
+       any configuration script registered for that service using
+       although doconfig is invoked with both the NORUN and NOAS-
+       SIGN flags.  The server receives the file  descriptor  for
+       the connection in a strrecvfd structure via an I_RECVFD
+
+       For  more  details  about the listener and its administra-
+       tion, see
+
+WWaarrnniinnggss
+       When passing a connection to a standing server,  the  user
+       and group IDs contained in the strrecvfd structure will be
+       those for the listener; the user name under which the ser-
+       vice was registered with the listener or the authenticated
+       ID is not reflected in these IDs.
+
+       When operating multiple instances of  the  listener  on  a
+       single  transport provider, there is a potential race con-
+       dition in the binding of addresses  during  initialization
+       of the listeners if any of their services have dynamically
+       assigned addresses.  This condition  would  appear  as  an
+       inability of the listener to bind a static-address service
+       to its otherwise valid address, and would  result  from  a
+       dynamic-address  service having been bound to that address
+       by a different instance of the listener.
+
+RReeffeerreenncceess
+
+                                                                2
+

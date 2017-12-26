@@ -1,0 +1,159 @@
+/*
+ * Set version numbers before making makefiles.
+ * 
+ * X11r5 only builds using the berkeley libraries and compiler.  Make
+ * sure your path includes /bsd43/bin before /bin/ or /usr/bin.
+ */
+
+#define OSName            Interix
+#define OSMajorVersion    3
+#define OSMinorVersion    0
+
+/*****************************************************************************
+ *			  Platform-specific parameters                       *
+ *****************************************************************************/
+
+#define HasVoidSignalReturn		YES
+#define SetTtyGroup				NO
+#define HasPutenv				YES
+
+/*****************************************************************************
+ *                                                                           *
+ *			DEFINE PARAMETERS FOR BUILDING                       *
+ *                                                                           *
+ *****************************************************************************/
+
+#define BuildServer		NO
+#define UseRgbTxt		NO
+#define StandardDefines 	-D_ALL_SOURCE
+#define BootstrapCFlags		-D_ALL_SOURCE
+#define HasGcc2			YES
+#define ArCmd 			ar cvr
+#define MakeCmd			make 
+#define DoRanlibCmd 		NO
+#define ExtraLibraries		/**/
+#define ConnectionFlags 	-DTCPCONN
+#define ForceNormalLib		YES
+#define HasSharedLibraries	YES
+#define BuildFonts		YES
+#define AvoidNullMakeCommand	YES
+#define Malloc0ReturnsNull	YES
+#define InstallXdmConfig	NO
+
+#ifndef NullMakeCommand
+#define NullMakeCommand 
+#endif
+
+#if defined(LnCmd)
+#	undef LnCmd
+#	define LnCmd ln -s
+#endif /* defined(LnCmd) */
+
+
+#if (OSMajorVersion==2)
+#	undef LnCmd
+#	define LnCmd	cp 
+#endif /* OSMajorVersion */
+
+/* CppCmd - should point to cpp that provides traditional UNIX behaviour */
+/*#define CppCmd       	/bin/cpp*/
+#define CppCmd       	/usr/lib/cpp
+/*#define CppCmd       	/usr/contrib/bin/cpp -traditional*/
+/*#define CppCmd       	/D/users/rodney/bin/cpp*/
+#define BourneShell  	/bin/sh
+
+#define ProjectRoot	$(DESTDIR_ROOT)/usr/X11R6
+
+/* SystemRoot is used in this file and in InterixLib.rules
+ * Normally it has no value. Only for internal builds will it get a value
+ */
+#define SystemRoot   
+
+/*****************************************************************************
+ *                                                                           *
+ *	      OVERRIDE ANY CONFIGURATION PARAMETERS FROM Imake.tmpl          *
+ *                                                                           *
+ *****************************************************************************/
+
+#define SpecialMalloc		NO
+#define HasSockets		YES
+
+
+#define ConstructMFLAGS	NO		/* build MFLAGS from MAKEFLAGS */
+
+#define BUILD_USE_SHLIB 1
+
+#if defined(opennt) && !defined(UseInstalled)
+/*
+ * Softway Systems internal build environment
+ */
+
+/* SystemInclDir is only used for internal builds.
+ * It points to the internal header directory
+ */
+/* INTERIX_CONFIG    --- DO NOT REMOVE THIS LINE */
+/*#define SystemInclDir    to_be_replaced*/
+
+/* don't use any std include directories from this machine,
+ * and use the internal directory where the full set of internal header 
+ * files reside.
+ */
+/*#define StandardIncludes	-N nostdinc -I SystemInclDir*/
+
+/*
+#undef HasGcc
+#undef CcCmd
+*/
+
+#define CcCmd gcc -static
+
+#if (BUILD_USE_SHLIB==1)
+#define UserLdFlags	-N nostdlibdir -L SystemRoot/usr/lib -Bdynamic
+#else
+#define UserLdFlags	-N nostdlibdir -L SystemRoot/usr/lib
+#endif /*BUILD_USE_SHLIB*/
+
+#endif /* UseInstalled */
+
+
+#if (BUILD_USE_SHLIB==1)
+
+#if !defined(UserLdFlags)
+#define UserLdFlags	-shared -symbolic
+#endif /*UserLdFlags*/
+
+#define InstLibFlags	-m 0755
+
+/* shared library support stuff */
+#undef HasSharedLibraries 
+#define HasSharedLibraries YES
+
+/* don't need shared versions of the following (they are small enough) */
+#define SharedLibXau	NO
+#define SharedOldLibX	NO
+#define SharedLibXdmcp  NO
+
+/* 
+ * define VM addresses of where these .so libraries should be loaded 
+ */
+#define SharedLibAddrXm		0x77800000	/* libXm */
+#define SharedLibAddrX		0x77700000	/* libX11 */
+#define SharedLibAddrXt		0x77600000
+#define SharedLibAddrXaw	0x77500000
+/* SharedLibAddrUil  77400000 - 77500000 */
+#define SharedLibAddrXmu	0x77300000
+#define SharedLibAddrXMrm	0x77340000
+#define SharedLibAddrXext	0x77390000
+#define SharedLibAddrXinput	0x773a0000	/* libXi */
+
+/* ?? what about  Xtst ? */
+
+#include <interixLib.rules>
+
+#else /*BUILD_USE_SHLIB*/
+
+#ifndef UserLdFlags
+# define UserLdFlags   -static
+#endif /*UserLdFlags*/
+
+#endif /*BUILD_USE_SHLIB*/

@@ -1,0 +1,110 @@
+
+
+_spin(3synch)                                       _spin(3synch)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <synch.h>
+
+       int _spin_init(spin_t *lock, void *arg);
+
+       void _spin_lock(spin_t *lock);
+
+       int _spin_trylock(spin_t *lock);
+
+       void _spin_unlock(spin_t *lock);
+
+       int _spin_destroy(spin_t *lock);
+
+DDeessccrriippttiioonn
+       Spin  locks,  a type of mutual exclusion lock (mutex), are
+       used to serialize the execution of threads.  They are typ-
+       ically  used  to  ensure  that  only  one thread at a time
+       accesses shared data.  Note that these locks protect  data
+       only  when  the convention of acquiring the lock is faith-
+       fully followed before any access of the data.
+
+       The difference between spin locks and ordinary mutex locks
+       is  in  their  locking  routines.  When a mutex is already
+       locked,  the  locking  routine  (mutex_lock(3synch))  will
+       block the caller until the lock is available.  When a spin
+       lock is already locked, the locking  routine  (_spin_lock)
+       will  busy-wait,  or  spin, in a loop, testing if the lock
+       has become  available.   Such  spinning  wastes  processor
+       cycles  and can slow processors doing useful work, includ-
+       ing the processor holding the lock, by consuming  communi-
+       cation bandwidth.
+
+       The  Threads  Library provides five routines to manipulate
+       spin locks; these are outlined below and described in more
+       detail on individual manual pages.
+
+   PPaarraammeetteerrss
+       pointer  to spin lock to be initialized, locked, unlocked,
+       or destroyed NULL (reserved for future use)
+
+   __ssppiinn__iinniitt((33ssyynncchh))
+       _spin_init initializes the spin lock pointed to by lock to
+       the unlocked state.
+
+   __ssppiinn__lloocckk((33ssyynncchh))
+       _spin_lock  locks  the  spin  lock pointed to by lock.  If
+       lock is locked, the  calling  thread  will  busy-wait,  or
+       spin,  until  lock is available.  When _spin_lock returns,
+       the caller has acquired lock.
+
+   __ssppiinn__ttrryylloocckk((33ssyynncchh))
+       _spin_trylock attempts once to lock the spin lock  pointed
+
+                                                                1
+
+_spin(3synch)                                       _spin(3synch)
+
+       to by lock.
+
+       If  lock  is available, _spin_trylock will return success-
+       fully with  lock  locked.   If  lock  is  already  locked,
+       _spin_trylock  immediately  returns  EBUSY  to  the caller
+       without acquiring lock or spinning.
+
+   __ssppiinn__uunnlloocckk((33ssyynncchh))
+       _spin_unlock unlocks the spin lock pointed to by lock.
+
+       If one or more threads  are  waiting  for  the  lock  when
+       _spin_unlock  is  called,  one of the waiting threads will
+       acquire the lock.
+
+   __ssppiinn__ddeessttrrooyy((33ssyynncchh))
+       _spin_destroy destroys the spin lock pointed to  by  lock.
+       This includes invalidating lock and freeing any associated
+       implementation-allocated dynamic resources.
+
+UUssaaggee
+       Because spin locks waste system resources,  most  applica-
+       tions  should use mutexes instead of spin locks for mutual
+       exclusion.  However, spin locks are useful when: sleep  is
+       not  permitted  the critical section is small, so that the
+       expected spin is less costly than  blocking  and  resuming
+       the thread no other work is available
+
+       Spin  locks  should only be used when there is a guarantee
+       that the thread will not be  preempted  or  blocked  while
+       holding  a  spin  lock.   It is the responsibility of each
+       application to unlock all spin locks before calling  sleep
+       or blocking routines.
+
+WWaarrnniinnggss
+       Spin  locks must not be used on a single processor system.
+       In the best case, a spin lock on a single processor system
+       will  waste resources, slowing down the owner of the lock;
+       in the worst case, it will deadlock the processor.
+
+       Operations on spin locks are not recursive--a  thread  can
+       deadlock  if  it  attempts  to  relock a spin lock that it
+       already has locked.
+
+RReeffeerreenncceess
+
+                                                                2
+

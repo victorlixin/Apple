@@ -1,0 +1,75 @@
+
+
+rc0(1M)                                                   rc0(1M)
+
+SSyynnooppssiiss
+       /sbin/rc0 [firmware | off | reboot]
+       /sbin/rc6 [firmware | off | reboot]
+
+DDeessccrriippttiioonn
+       rc0  is executed at each system state change that needs to
+       have the system in an inactive state.  It  is  responsible
+       for  those  actions  that  bring the system to a quiescent
+       state, traditionally called ``shutdown''.  (For  backwards
+       compatibility, /sbin/rc0 is linked to /sbin/rc6.)
+
+       Three system states require this procedure: state 0, state
+       5, and state 6.  Whenever a change to one of these  states
+       occurs, the rc0 procedure is run.  The options are used as
+       follows: Go to init state 5 (the  firmware  state)  Go  to
+       init  state  0  (the system halt state) Go to init state 6
+       (the reboot state) The entries in /etc/inittab, which  may
+       vary slightly on different machine types, might read some-
+       thing like  this:  r0:0:wait:/sbin/rc0  off  1>/dev/sysmsg
+       2>&1  </dev/console r5:5:wait:/sbin/rc0 firm 1>/dev/sysmsg
+       2>&1     </dev/console     r6:6:wait:/sbin/rc0      reboot
+       1>/dev/sysmsg  2>&1 </dev/console See for complete details
+       on init states.
+
+       Some of the actions performed by rc0 are  carried  out  by
+       files  beginning  with  K  in /etc/rc0.d.  These files are
+       executed in ASCII order terminating some  system  service.
+       The combination of commands in rc0 and files in /etc/rc0.d
+       determines how the system is shut down.
+
+       The recommended sequence for rc0 is: Stop system  services
+       and  daemons.   Various  system  services (such as a Local
+       Area Network or LP  Spooler)  are  gracefully  terminated.
+       New services are sometimes added that should be terminated
+       when the system is shut down or that need  to  do  cleanup
+       before  being  terminated  by  a SIGTERM signal.  For such
+       services  the   appropriate   files   are   installed   in
+       /etc/rc0.d.   Terminate processes SIGTERM signals are sent
+       to all running processes by Most processes stop themselves
+       cleanly  if  sent SIGTERM.  Kill processes SIGKILL signals
+       are sent to all remaining processes; no process can resist
+       SIGKILL.   At this point the only processes left are those
+       associated with rc0 and processes 0 and 1, which are  spe-
+       cial  to  the  operating  system.  Unmount all filesystems
+       Only the root filesystem (/) remains  mounted.   Depending
+       on  which  system state the systems end up in (0, 5 or 6),
+       rc0 determines what happens next: for system state 0, uad-
+       min 2 0 is run; for system state 5, uadmin 2 2 is run; for
+       system state 6, uadmin 2 1 is run.   If  the  /etc/inittab
+       has  not  defined  any other actions to be performed as in
+       the case of system state 0, then the operating system will
+       have  nothing to do.  It should not be possible to get the
+       system's attention.  The only thing that can be done is to
+       turn  off  the  power  or  possibly get the attention of a
+
+                                                                1
+
+rc0(1M)                                                   rc0(1M)
+
+       firmware monitor.  The command can be used only by a priv-
+       ileged user.
+
+FFiilleess
+       The  execution  by  /usr/bin/sh of any files in /etc/rc0.d
+       occurs in ASCII sort-sequence order.  See for more  infor-
+       mation.
+
+RReeffeerreenncceess
+
+                                                                2
+

@@ -1,0 +1,129 @@
+RMD160Transform(3)                                   RMD160Transform(3)
+
+  RRMMDD116600
+
+  NNAAMMEE
+
+    RMD160Init(), RMD160Update(), RMD160Final(), RMD160Transform(),
+    RMD160End(), RMD160File(), RMD160Data() - calculate the "RIPEMD-160"
+    message digest
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/types.h>
+    #include <rmd160.h>
+
+    void RMD160Init (RMD160_CTX *context)
+    void RMD160Update (RMD160_CTX *context, const u_char *data, u_int32_t
+    nbytes)
+    void RMD160Final (u_char digest[20], RMD160_CTX *context)
+    void RMD160Transform (u_int32_t state[5], const u_char block[64])
+    char * RMD160End (RMD160_CTX *context, char *buf)
+    char * RMD160File (char *filename, char *buf)
+    char * RMD160Data (u_char *data, size_t len, char *buf)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The RMD160 functions implement the 160-bit RIPE message digest hash
+    algorithm (RMD-160). RMD-160 is used to generate a condensed
+    representation of a message called a message digest. The algorithm takes a
+    message less than 2^64 bits as input and produces a 160-bit digest
+    suitable for use as a digital signature.
+
+    The RMD160 functions are considered to be more secure than the _MM_DD_44(3) and
+    _MM_DD_55(3) functions and at least as secure as the _SS_HH_AA_11(3) function. All share
+    a similar interface.
+
+    The RRMMDD116600IInniitt function initializes a RMD160_CTX context for use with
+    RRMMDD116600UUppddaattee, and RRMMDD116600FFiinnaall. The RRMMDD116600UUppddaattee function adds data of
+    length nbytes to the RMD160_CTX specified by context. RRMMDD116600FFiinnaall is
+    called when all data has been added via RRMMDD116600UUppddaattee and stores a message
+    digest in the digest parameter. When a null pointer is passed to
+    RRMMDD116600FFiinnaall as first argument only the final padding will be applied and
+    the current context can still be used with RRMMDD116600UUppddaattee.
+
+    The RRMMDD116600TTrraannssffoorrmm function is used by RRMMDD116600UUppddaattee to hash 512-bit
+    blocks and forms the core of the algorithm. Most programs should use the
+    interface provided by RRMMDD116600IInniitt, RRMMDD116600UUppddaattee and RRMMDD116600FFiinnaall instead of
+    calling RRMMDD116600TTrraannssffoorrmm directly.
+
+    The RRMMDD116600EEnndd function is a front end for RRMMDD116600FFiinnaall which converts the
+    digest into an ASCII representation of the 160 bit digest in hexadecimal.
+
+    The RRMMDD116600FFiillee function calculates the digest for a file and returns the
+    result via RRMMDD116600EEnndd. If RRMMDD116600FFiillee is unable to open the file a NULL
+    pointer is returned.
+
+    The RRMMDD116600DDaattaa function calculates the digest of an arbitrary string and
+    returns the result via RRMMDD116600EEnndd.
+
+    For each of the RRMMDD116600EEnndd, RRMMDD116600FFiillee, and RRMMDD116600DDaattaa functions the buf
+    parameter should either be a string of at least 41 characters in size or a
+    NULL pointer. In the latter case, space will be dynamically allocated via
+    _mm_aa_ll_ll_oo_cc(3) and should be freed using _ff_rr_ee_ee(3) when it is no longer needed.
+
+  EEXXAAMMPPLLEESS
+
+    The following code fragment will calculate the digest for the string
+    "abc", which is 0x8eb208f7e05d987a9b044a8e98c6b087f15a0bfc.
+
+    RMD160_CTX rmd;
+    u_char results[20];
+    char *buf;
+    int n;
+
+    buf = "abc";
+    n = strlen(buf);
+    RMD160Init(&rmd);
+    RMD160Update(&rmd, (u_char *)buf, n);
+    RMD160Final(results, &rmd);
+
+    /* Print the digest as one long hex value */
+    printf("0x");
+    for (n = 0; n < 20; n++)
+    	printf("%02x", results[n]);
+    putchar('\en');
+
+    Alternately, the helper functions could be used in the following way:
+
+    RMD160_CTX rmd;
+    u_char output[41];
+    char *buf = "abc";
+
+    printf("0x%s\en", RMD160Data(buf, strlen(buf), output));
+
+  CCAAVVEEAATTSS
+
+    If a message digest is to be copied to a multi-byte type (ie: an array of
+    five 32-bit integers) it will be necessary to perform byte swapping on
+    little endian machines such as the x86, Alpha, and VAX.
+
+  AAUUTTHHOORRSS
+
+    This implementation of RMD-160 was written by Markus Friedl.
+
+    The RMD160End, RMD160File, and RMD160Data helper functions are derived
+    from code written by Poul-Henning Kamp.
+
+  SSEEEE AALLSSOO
+
+    _M_D_4(3)
+
+    _M_D_5(3)
+
+    H. Dobbertin, A. Bosselaers, B. Preneel, RIPEMD-160, a strengthened
+    version of RIPEMD
+
+    Information technology - Security techniques - Hash-functions - Part 3:
+    Dedicated hash-functions (ISO/IEC 10118-3)
+
+    H. Dobbertin, A. Bosselaers, B. Preneel, "The RIPEMD-160 cryptographic
+    hash function," Dr. Dobb's Journal, Vol. 22, No. 1 (January 1997) pp. 24-
+    28
+
+  UUSSAAGGEE NNOOTTEESS
+
+    None of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

@@ -1,0 +1,104 @@
+strunvis(3)                                                 strunvis(3)
+
+  uunnvviiss(())
+
+  NNAAMMEE
+
+    unvis(), strunvis() - decode a visual representation of characters
+
+  SSYYNNOOPPSSIISS
+
+    #include <vis.h>
+
+    int unvis (char *cp, char c, int *astate, int flag)
+    int strunvis (char *dst, char *src)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _uu_nn_vv_ii_ss(3) and _ss_tt_rr_uu_nn_vv_ii_ss(3) functions are used to decode a visual
+    representation of characters, as produced by the _vv_ii_ss(3) function, back
+    into the original form. The _uu_nn_vv_ii_ss(3) function is called with successive
+    characters in c until a valid sequence is recognized, at which time the
+    decoded character is available at the character pointed to by cp. The
+    _ss_tt_rr_uu_nn_vv_ii_ss(3) function decodes the characters pointed to by src into the
+    buffer pointed to by dst.
+
+    The _ss_tt_rr_uu_nn_vv_ii_ss(3) function simply copies src to dst, decoding any escape
+    sequences along the way, and returns the number of characters placed into
+    dst, or -1 if an invalid escape sequence was detected. The size of dst
+    should be equal to the size of src (that is, no expansion takes place
+    during decoding).
+
+    The _uu_nn_vv_ii_ss(3) function implements a state machine that can be used to
+    decode an arbitrary stream of bytes. All state associated with the bytes
+    being decoded is stored outside the _uu_nn_vv_ii_ss(3) function (that is, a pointer
+    to the state is passed in), so calls decoding different streams can be
+    freely intermixed. To start decoding a stream of bytes, first initialize
+    an integer to zero. Call _uu_nn_vv_ii_ss(3) with each successive byte, along with a
+    pointer to this integer, and a pointer to a destination character. The
+    unvis(3) function has several return codes that must be handled properly.
+    They are:
+
+    0 (zero)
+        Another character is necessary; nothing has been recognized yet.
+
+    UNVIS_VALID
+        A valid character has been recognized and is available at the location
+        pointed to by cp.
+
+    UNVIS_VALIDPUSH
+        A valid character has been recognized and is available at the location
+        pointed to by cp; however, the character currently passed in should be
+        passed in again.
+
+    UNVIS_NOCHAR
+        A valid sequence was detected, but no character was produced. This
+        return code is necessary to indicate a logical break between
+        characters.
+
+    UNVIS_SYNBAD
+        An invalid escape sequence was detected, or the decoder is in an
+        unknown state. The decoder is placed into the starting state.
+
+    When all bytes in the stream have been processed, call _uu_nn_vv_ii_ss(3) one more
+    time with flag set to UNVIS_END to extract any remaining character (the
+    character passed in is ignored).
+
+    The following code fragment illustrates a proper use of _uu_nn_vv_ii_ss(3).
+
+    int state = 0;
+    char out;
+    while ((ch = getchar()) != EOF) {
+    again:
+         switch(unvis(&out, ch, &state, 0)) {
+         case 0:
+         case UNVIS_NOCHAR:
+              break;
+         case UNVIS_VALID:
+              (void) putchar(out);
+              break;
+         case UNVIS_VALIDPUSH:
+              (void) putchar(out);
+              goto again;
+         case UNVIS_SYNBAD:
+              (void)fprintf(stderr, "bad sequence!0);
+         exit(1);
+         }
+    }
+    if (unvis(&out, (char)0, &state, UNVIS_END) == UNVIS_VALID)
+         (void) putchar(out);
+
+  SSEEEE AALLSSOO
+
+    _v_i_s(3)
+
+    _v_i_s(1)
+
+    _u_n_v_i_s(1)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

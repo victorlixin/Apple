@@ -1,0 +1,57 @@
+
+
+sigsetjmp(3C)                                       sigsetjmp(3C)
+
+SSyynnooppssiiss
+       #include <setjmp.h>
+
+       int sigsetjmp (sigjmp_buf env, int savemask);
+
+       void siglongjmp (sigjmp_buf env, int val);
+
+DDeessccrriippttiioonn
+       These  functions  are  useful  for dealing with errors and
+       interrupts encountered in a low-level subroutine of a pro-
+       gram.
+
+       sigsetjmp  saves the calling process's registers and stack
+       environment  [see  in  env  (whose  type,  sigjmp_buf,  is
+       defined in the setjmp.h header file) for later use by sig-
+       longjmp.  If savemask is non-zero, the  calling  process's
+       signal  mask  [see and scheduling parameters [see are also
+       saved.  sigsetjmp returns the value 0.
+
+       siglongjmp restores the environment saved by the last call
+       of  sigsetjmp  with the corresponding env argument.  After
+       siglongjmp is completed, program execution continues as if
+       the  corresponding call of sigsetjmp had just returned the
+       value val.  siglongjmp cannot cause  sigsetjmp  to  return
+       the  value  zero.   If siglongjmp is invoked with a second
+       argument of zero, sigsetjmp will return 1.  At the time of
+       the  second return from sigsetjmp, all external and static
+       variables have values as of the time siglongjmp is called.
+       The  values  of register and automatic variables are unde-
+       fined.  Register or automatic variables whose  value  must
+       be relied upon must be declared as volatile.
+
+       If  a  signal-catching function interrupts sleep and calls
+       siglongjmp to restore an environment saved  prior  to  the
+       sleep call, the action associated with SIGALRM and time it
+       is scheduled to be generated are unspecified.  It is  also
+       unspecified  whether the SIGALRM signal is blocked, unless
+       the process's signal mask is restored as part of the envi-
+       ronment.
+
+       The  function siglongjmp restores the saved signal mask if
+       and only if the env argument was initialized by a call  to
+       the  sigsetjmp function with a non-zero savemask argument.
+
+RReeffeerreenncceess
+NNoottiicceess
+       If siglongjmp is called even though env was  never  primed
+       by  a call to sigsetjmp, or when the last such call was in
+       a function that has since returned, the behavior is  unde-
+       fined.
+
+                                                                1
+

@@ -1,0 +1,187 @@
+
+
+rpc_svc_reg(3rpc)                               rpc_svc_reg(3rpc)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <rpc/rpc.h>
+
+       int  svc_auth_reg(int  cred_flavor,  enum  auth_stat *han-
+       dler);
+
+       int  svc_freeargs(const  SVCXPRT  *xprt,  const  xdrproc_t
+       inproc,      char *in);
+
+       int   svc_getargs(const  SVCXPRT  *xprt,  const  xdrproc_t
+       inproc,      caddr_t in);
+
+       struct netbuf *svc_getrpccaller(const SVCXPRT *xprt);
+
+       void svc_run(void);
+
+       int svc_run_parallel(int timeout, int minthreads,      int
+       maxthreads, size_t stacksize);
+
+       int  svc_sendreply(const  SVCXPRT  *xprt,  const xdrproc_t
+       outproc,      const caddr_t out);
+
+       #include <rpc/rpc.h>
+
+       #include <sys/poll.h>
+
+       void svc_getreqset(fd_set *rdfds);
+
+       void svc_getreq_common(int fd)
+
+       void svc_getreq_poll(struct pollfd *pfdp, int retval);
+
+       void  svc_getreq_poll_parallel(struct  pollfd  *pfdp,  int
+       retval);
+
+DDeessccrriippttiioonn
+       These  routines are part of the RPC library which allows C
+       language  programs  to  make  procedure  calls  on   other
+       machines across the network.
+
+       These  routines are associated with the server side of the
+       RPC mechanism.  Some of them are called by the server side
+       dispatch  function,  while  others  (such  as svc_run) are
+       called when the server is initiated.
+
+   RRoouuttiinneess
+       int svc_auth_reg(int  cred_flavor,  enum  auth_stat  *han-
+       dler); This routine allows users to register a new authen-
+       tication type with  a  flavor  specified  by  cred_flavor.
+       When  requests are authenticated, the routine specified by
+       handler is called with the  following  parameters:  (*han-
+       dler)(struct   svc_req   *,   struct   rpc_msg   *);   The
+       svc_auth_reg routine returns 0 if registration is success-
+       ful,  1  if the flavor is already registered, or -1 if the
+
+                                                                1
+
+rpc_svc_reg(3rpc)                               rpc_svc_reg(3rpc)
+
+       call fails.  int svc_freeargs(const SVCXPRT  *xprt,  const
+       xdrproc_t  inproc,  char *in); A function macro that frees
+       data allocated by the RPC/XDR system.   The  system  allo-
+       cates data when it uses svc_getargs to decode arguments to
+       a service  procedure.   This  routine  returns  1  if  the
+       results  were  successfully  freed,  and 0 otherwise.  int
+       svc_getargs(const SVCXPRT *xprt, const  xdrproc_t  inproc,
+       caddr_t  in);  A function macro that decodes the arguments
+       of an RPC request associated with the RPC  service  trans-
+       port  handle  xprt.  The parameter in is the address where
+       the arguments will be placed; inproc is  the  XDR  routine
+       used  to  decode the arguments.  This routine returns 1 if
+       decoding  succeeds,  and  0  otherwise.   void  svc_getre-
+       qset(fd_set *rdfds); This routine is only of interest if a
+       service implementor does not  call  svc_run,  but  instead
+       implements  custom  asynchronous  event processing.  It is
+       called when poll has determined that an  RPC  request  has
+       arrived  on some RPC file descriptors; rdfds is the resul-
+       tant read file descriptor bit mask.  The  routine  returns
+       when  all  file  descriptors  associated with the value of
+       rdfds have been serviced.  void svc_getreq_common(int  fd)
+       This  routine  processes  incoming  RPC requests on a file
+       descriptor specified by  fd.   All  higher  level  service
+       implementations    like    svc_run,   svc_getreqset,   and
+       svc_getreq_poll use this routine to process RPC  requests.
+
+       This  routine  authenticates  incoming RPC requests on the
+       file descriptor fd and calls the appropriate dispatch rou-
+       tine  registered  with rpcbind.  If the transport provider
+       is connection-oriented, the succeeding requests,  if  any,
+       are  processed  repeatedly.  This is called batched Remote
+       Procedure Calls.
+
+       Note that this routine is thread-safe.  However, a differ-
+       ent  file  descriptor must be specified in each concurrent
+       call to  svc_getreq_common.   void  svc_getreq_poll(struct
+       pollfd  *pfdp,  int retval); Like svc_getreqset, this rou-
+       tine is only of interest if a service implementor does not
+       call  svc_run,  but instead implements custom asynchronous
+       event processing.  The svc_run routine provided in the RPC
+       library is currently implemented using this routine.
+
+       It  should  be called when poll has determined that an RPC
+       request has arrived on some RPC file descriptors; pfdp  is
+       the  poll  data used during poll, and retval is the number
+       of file descriptors to service, typically the return value
+       from  poll.  The routine returns when all file descriptors
+       specified by pfdp have been serviced.
+
+       Note that this routine is not thread-safe.  Hence the ser-
+       vice  implementor  must use appropriate synchronization to
+       avoid calls to this routine from multiple threads  at  the
+       same  time.   void  svc_getreq_poll_parallel(struct pollfd
+       *pfdp,  int  retval);  This  routine  is  the  thread-safe
+
+                                                                2
+
+rpc_svc_reg(3rpc)                               rpc_svc_reg(3rpc)
+
+       version  of  svc_getreq_poll and provides exactly the same
+       functionality.  It should be called only if  the  applica-
+       tion  will  be  polling  on more than one file descriptor.
+       struct netbuf * svc_getrpccaller(const SVCXPRT *xprt); The
+       approved  way of getting the network address of the caller
+       of a procedure associated with the RPC  service  transport
+       handle  xprt.   void  svc_run(void);  This  routine  never
+       returns.  It waits for RPC requests to arrive,  and  calls
+       the appropriate service procedure using svc_getreqset when
+       one arrives.  This procedure is usually waiting for a poll
+       library call to return.
+
+       Note  that  this  routine  is not thread-safe.  Concurrent
+       calls to this routine from  multiple  threads  will  cause
+       undetermined  behavior.  int svc_run_parallel(int timeout,
+       int minthreads, int  maxthreads,       size_t  stacksize);
+       This  is  the multithreaded version of svc_run.  This rou-
+       tine waits for RPC  requests  to  arrive,  and  calls  the
+       appropriate    service    procedure    via   a   call   to
+       svc_getreq_poll_parallel.  Depending on the rate of incom-
+       ing  RPC requests, this routine will dynamically create or
+       delete threads from the process.  Each created thread ser-
+       vices  an  RPC  request and then waits for more to arrive.
+       This function should be called only if the application  is
+       polling on more than one file descriptor.
+
+       The  timeout argument specifies the number of milliseconds
+       to wait for and RPC request to arrive.  After waiting  for
+       this  time,  any  thread  created by svc_run_parallel will
+       exit, provided  the  total  number  of  threads  is  above
+       minthreads.  The maximum number of threads created by this
+       routine is always less than maxthreads.
+
+       Note that this routine provides  a  performance  gain  for
+       server  processes which service a sustained rate of incom-
+       ing RPC requests.  Also,  the  service  procedure  may  be
+       called  concurrently  from many server threads, so it must
+       be thread-safe.  Currently, it is only supported for  con-
+       nectionless transports.
+
+       This  routine  returns  -1 if either of minthreads or max-
+       threads is less than or equal to zero.  It also returns -1
+       if maxthreads is less than or equal to minthreads.
+
+       It  returns zero if there are no file server file descrip-
+       tors to wait on.  int svc_sendreply(const  SVCXPRT  *xprt,
+       const  xdrproc_t  outproc,      const caddr_t out); Called
+       by an RPC service's dispatch routine to send  the  results
+       of  a  remote  procedure  call.  The parameter xprt is the
+       request's associated transport handle; outproc is the  XDR
+       routine  which  is  used to encode the results; and out is
+       the address of the results.  This routine returns 1 if  it
+       succeeds, 0 otherwise.
+
+                                                                3
+
+rpc_svc_reg(3rpc)                               rpc_svc_reg(3rpc)
+
+FFiilleess
+       /usr/lib/locale/locale/LC_MESSAGES/uxnsl
+
+RReeffeerreenncceess
+
+                                                                4
+

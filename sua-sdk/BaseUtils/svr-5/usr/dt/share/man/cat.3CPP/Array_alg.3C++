@@ -1,0 +1,216 @@
+
+
+Array_alg(3C++)                                   Array_alg(3C++)
+
+SSyynnooppssiiss
+       #include <Array_alg.h> namespace SCO_SC {
+
+       //  Array Algorithms
+
+       template <class T> const T* bin_loc(
+            const T& val,
+            const T* b,
+            const T* e ); template <class T> const T* bin_loc_r(
+            int (*rel)(const T)* p1,const T)* p2),
+            const T& val,
+            const T* b,
+            const T* e ); template <class T> const T* bin_search(
+            const T& val,
+            const T* b,
+            const  T*  e  );  template   <class   T>   const   T*
+       bin_search_r(
+            int (*rel)(const T)* p1,const T)* p2),
+            const T& val,
+            const T* b,
+            const T* e );
+
+       //  etc. for the remaining functions }
+
+DDeessccrriippttiioonn
+       Array  Algorithms implement nearly 100 common (and not-so-
+       common) algorithms on arrays.  But  because  a  Block  can
+       always  be  used  wherever  an  array  is called for  (see
+       Block(3C++)), Array  Algorithms  can  also  be  used  with
+       Blocks.   In  fact,  these  two  components  were actually
+       designed to be used together.
+
+       All Array Algorithms are  declared  in  one  header  file,
+       Array_alg.h and in namespace SCO_SC.  Array Algorithms are
+       an early ancestor of the C++ Standard Template Library.
+
+   UUsseerr--ddeeffiinneedd ffuunnccttiioonn ttyyppeess
+       int (*relation)(const T* p1,const  T*  p2);   A  so-called
+       relation.  The intended semantics of relations varies from
+       function to function. For example,  some  functions  (like
+       sort_r) require that a relation  "defines a total ordering
+       relation on T;" these expect the relation to return a neg-
+       ative,  zero,  or positive value, depending on whether the
+       first argument is less than, equal to, or greater than the
+       second  argument,   respectively  (the  C library function
+       strcmp(3C)  is an example of a such  a  function).   Other
+       functions  (e.g.,  subs_r())  require only that a relation
+       "defines an equivalence relation on T;" these  expect  the
+       relation to return 0 if its two arguments are equal.
+
+       int  (*predicate)(const  T*  p);   A  so-called predicate.
+       Predicates return non-zero if the object pointed to  by  p
+       passes a test, the nature of which varies from function to
+       function.
+
+                                                                1
+
+Array_alg(3C++)                                   Array_alg(3C++)
+
+       void (*fun1)(T* p);
+
+       void (*fun2)(ptrdiff_t i,T* p);  Used  by  functions  that
+       apply    functions   to   the   elements   of   an   array
+       (for_each(3C++), generate(3C++)).
+
+   AArrrraayy AAllggoorriitthhmmss
+       template <class T> const T* bin_loc(
+           const T& val,
+           const T* b,
+           const T* e ); template <class T> const T* bin_loc_r(
+           int (*rel)(const T)* p1,const T)* p2),
+           const T& val,
+           const T* b,
+           const T* e ); template <class T> const T* bin_search(
+           const T& val,
+           const T* b,
+           const  T*  e  );   template   <class   T>   const   T*
+       bin_search_r(
+           int (*rel)(const T)* p1,const T)* p2),
+           const T& val,
+           const T* b,
+           const T* e );
+
+       etc.
+
+       Function  names are constructed using a system of prefixes
+       and suffixes.  The prefix indicates broadly what the func-
+       tion  does  (e.g., sort, count, remove),  while the suffix
+       denotes one or more versions of the functionality.   There
+       are  32  prefixes.  Since versions are documented together
+       on the same manpage, there are 32 manpages, one  for  each
+       prefix.   Suffixes  consist of an underscore followed by a
+       sequence of between one and three letters.  Suffixes  have
+       the  following  meaning: A function without suffix letters
+       is called a plain version.  A function with the  letter  r
+       in  its  suffix  is called a relational version.   A rela-
+       tional version takes,  as its first argument, a pointer to
+       a  user-defined  relation  function.   A function with the
+       letter p in its suffix is called a predicate version.    A
+       predicate version takes, as its first argument,  a pointer
+       to user-defined predicate function.  Note that a  function
+       may  be  a  predicate version or a relational version, but
+       not both.  A function with the letter s in its  suffix  is
+       called  a stable version.   A stable version maintains the
+       relative  order  of  equal  elements;  stability  may   be
+       required  when an element is actually a structure consist-
+       ing of a key and a value,  for  which  an  equivalence  or
+       ordering relation compares only the keys.  Stable versions
+       should only be used when stability is required, since sta-
+       ble  algorithms are slower than unstable ones.  A function
+       with the letter c in its suffix is called a copy  version.
+       A  copy  version copies its output to a new array, leaving
+       its input array undisturbed.   Copy  versions  require  an
+
+                                                                2
+
+Array_alg(3C++)                                   Array_alg(3C++)
+
+       output  array large enough to hold the result.  The output
+       array is always  specified  by  a  single  pointer,  which
+       points  to  its first cell.  Furthermore, the output array
+       must not overlap the input array.  If arrays must overlap,
+       or  if  a  copy  version  of  a particular function is not
+       available and you want to preserve the  input  array,  use
+       copy followed by an in-place version of the function; copy
+       is the only function that handles overlap correctly.  Copy
+       versions employ clever algorithms to achieve greater effi-
+       ciency than could be obtained by first  calling  copy  and
+       then performing the in-place version of the same function.
+       Not every algorithm has a copy version  because  there  is
+       often  no such clever algorithm.  The functions operate on
+       one, two, or possibly three arrays.  Each array is explic-
+       itly  or  implicitly identified by a pair of pointers that
+       point to the beginning and end of the array, respectively.
+       In  writing the function prototypes, we have used the for-
+       mal parameter names b and e  when there is just one array,
+       b1,e1  and  b2,e2   when  there are two arrays, and so-on.
+       The first pointer of each pair points to the first cell of
+       the array, while the second pointer points just beyond the
+       last cell of the array.  For example, random(3C++) takes a
+       single array and returns a pointer to a random cell:
+           template <class T>
+           const T* random(const T* b,const T* e);
+           //see random(3C++)
+
+       To call random(),
+           Block<int> b(10);      // see Block(3C++)
+           ...
+           const int* p = random(&b[0],b.end());
+
+       rem_dup_c()  takes  an input array and an output array; it
+       copies unique elements to the output  array,  leaving  the
+       input array undisturbed:
+           T rem_dup_c(T* b1,T* e1,T* b2);  // see rem_dup(3C++)
+
+       To call rem_dup_c(),
+           Block<int> input(10);    // see Block(3C++)
+           int output[10];
+           ...
+           int* p = rem_dup_c(&input[0],input.end(),output);
+
+       Note  that  the  second  array  is  identified by a single
+       pointer only (b2); its size must be large enough  to  hold
+       all the unique elements (in the worst case, there would be
+       ten unique elements).  It is the programmer's responsibil-
+       ity to ensure that such assumptions are correct.
+
+       Some   functions   have   parameters  or  return  type  of
+       ptrdiff_t, a machine-dependent type defined  in  stddef.h.
+       A  ptrdiff_t  is  an integral type capable of representing
+       the difference between any two pointers of the same  type.
+
+                                                                3
+
+Array_alg(3C++)                                   Array_alg(3C++)
+
+BBuuggss
+       Several  functions (e.g., random(3C++)  and shuffle(3C++))
+       make calls to the C library pseudo-random  number  genera-
+       tor, drand48(3C).  To insure repeatable results, which may
+       be desirable while programs are still  under  development,
+       the client may initialize drand48(3C) by calling srand48()
+       with a fixed "seed" (or may rely  on  default  initializa-
+       tion).   Doing  this  will  cause drand48(3C)  to yield an
+       identical sequence of random numbers.   Repeatability  may
+       be   difficult  (requiring  multiple  initializations)  or
+       impossible to obtain if random numbers are withdrawn  from
+       the sequence elsewhere in client code.
+
+EExxaammppllee
+       Given  an  array containing at least one even element, the
+       following code displays a random even element:
+           main.c
+
+               #include <Array_alg.h>
+
+               int even(const int* a);
+               const int SIZE = 100;
+               int a[SIZE] = {...};   must contain at least one
+                                       even element
+
+               main(){
+                   cout << *random(a,part_ps(even,a,a+SIZE));
+               }
+               int even(const int* a){
+                   return (*a)%2 == 0;
+               }
+
+RReeffeerreenncceess
+
+                                                                4
+

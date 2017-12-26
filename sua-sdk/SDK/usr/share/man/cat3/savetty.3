@@ -1,0 +1,120 @@
+savetty(3)                                                   savetty(3)
+
+  ccuurrss__kkeerrnneell(())
+
+  NNAAMMEE
+
+    def_prog_mode(), def_shell_mode(), reset_prog_mode(), reset_shell_mode(),
+    resetty(), savetty(), getsyx(), setsyx(), ripoffline(), curs_set(),
+    napms() - low-level xscurses routines
+
+  SSYYNNOOPPSSIISS
+
+    #include <curses.h>
+
+    int def_prog_mode(void);
+    int def_shell_mode(void);
+    int reset_prog_mode(void);
+    int reset_shell_mode(void);
+    int resetty(void);
+    int savetty(void);
+    void getsyx(int y, int x);
+    void setsyx(int y, int x);
+    int ripoffline(int line, int (*init)(WINDOW *, int));
+    int curs_set(int visibility);
+    int napms(unsigned int ms);
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The following routines give low-level access to various ccuurrsseess
+    capabilities. Theses routines typically are used inside library routines.
+
+    The _dd_ee_ff____pp_rr_oo_gg____mm_oo_dd_ee(3) and _dd_ee_ff____ss_hh_ee_ll_ll____mm_oo_dd_ee(3) routines save the current
+    terminal modes as the program (in ccuurrsseess or shell (not in ccuurrsseess state for
+    use by the _rr_ee_ss_ee_tt____pp_rr_oo_gg____mm_oo_dd_ee(3) and _rr_ee_ss_ee_tt____ss_hh_ee_ll_ll____mm_oo_dd_ee(3) routines. This is
+    done automatically by _ii_nn_ii_tt_ss_cc_rr(3). There is one such save area for each
+    screen context allocated by _nn_ee_ww_tt_ee_rr_mm(3).
+
+    The _rr_ee_ss_ee_tt____pp_rr_oo_gg____mm_oo_dd_ee(3) and _rr_ee_ss_ee_tt____ss_hh_ee_ll_ll____mm_oo_dd_ee(3) routines restore the
+    terminal to program or shell state. These are done automatically by
+    _ee_nn_dd_ww_ii_nn(3) and, after an _ee_nn_dd_ww_ii_nn(3), by _dd_oo_uu_pp_dd_aa_tt_ee(3), so they normally are
+    not called.
+
+    The _rr_ee_ss_ee_tt_tt_yy(3) and _ss_aa_vv_ee_tt_tt_yy(3) routines save and restore the state of the
+    terminal modes. _ss_aa_vv_ee_tt_tt_yy(3) saves the current state in a buffer and
+    _rr_ee_ss_ee_tt_tt_yy(3) restores the state to what it was at the last call to savetty.
+
+    The _gg_ee_tt_ss_yy_xx(3) routine returns the current coordinates of the virtual
+    screen cursor in y and x. If _ll_ee_aa_vv_ee_oo_kk(3) is currently TRUE, then -1,-1 is
+    returned. If lines have been removed from the top of the screen, using
+    _rr_ii_pp_oo_ff_ff_ll_ii_nn_ee(3), y and x include these lines; therefore, y and x should be
+    used only as arguments for _ss_ee_tt_ss_yy_xx(3).
+
+    The _ss_ee_tt_ss_yy_xx(3) routine sets the virtual screen cursor to y, If y and x are
+    both -1, then _ll_ee_aa_vv_ee_oo_kk(3) is set. The two routines _gg_ee_tt_ss_yy_xx(3) and are
+    designed to be used by a library routine, which manipulates curses windows
+    but does not want to change the current position of the program's cursor.
+    The library routine would call _gg_ee_tt_ss_yy_xx(3) at the beginning, do its
+    manipulation of its own windows, do a _ww_nn_oo_uu_tt_rr_ee_ff_rr_ee_ss_hh(3) on its windows, call
+    _ss_ee_tt_ss_yy_xx(3), and then call _dd_oo_uu_pp_dd_aa_tt_ee(3).
+
+    The _rr_ii_pp_oo_ff_ff_ll_ii_nn_ee(3) routine provides access to the same facility that
+    _ss_ll_kk____ii_nn_ii_tt(3) (see _c_u_r_s___s_l_k) uses to reduce the size of the screen.
+    _rr_ii_pp_oo_ff_ff_ll_ii_nn_ee(3) must be called before _ii_nn_ii_tt_ss_cc_rr(3) or _nn_ee_ww_tt_ee_rr_mm(3) is called. If
+    line is positive, a line is removed from the top of stdscr if line is
+    negative, a line is removed from the bottom. When this is done inside
+    _ii_nn_ii_tt_ss_cc_rr(3), the routine iinniitt() (supplied by the user) is called with two
+    arguments: a window pointer to the one-line window that has been allocated
+    and an integer with the number of columns in the window. Inside this
+    initialization routine, the integer variables LINES and COLS (defined in
+    <<ccuurrsseess..hh>>) are not guaranteed to be accurate and _ww_rr_ee_ff_rr_ee_ss_hh(3) or
+    _dd_oo_uu_pp_dd_aa_tt_ee(3) must not be called. It is allowable to call _ww_nn_oo_uu_tt_rr_ee_ff_rr_ee_ss_hh(3)
+    during the initialization routine.
+
+    _rr_ii_pp_oo_ff_ff_ll_ii_nn_ee(3) can be called up to five times before calling _ii_nn_ii_tt_ss_cc_rr(3) or
+    _nn_ee_ww_tt_ee_rr_mm(3).
+
+    The _cc_uu_rr_ss____ss_ee_tt(3) routine sets the cursor state is set to invisible, normal,
+    or very visible for visibility equal to 0, 1, or 2 respectively. If the
+    terminal supports the visibility requested, the previous cursor state is
+    returned; otherwise, ERR is returned.
+
+    The _nn_aa_pp_mm_ss(3) routine is used to sleep for ms milliseconds.
+
+  RREETTUURRNN VVAALLUUEE
+
+    Except for _cc_uu_rr_ss____ss_ee_tt(3), these routines always return OK. _cc_uu_rr_ss____ss_ee_tt(3)
+    returns the previous cursor state, or ERR if the requested visibility is
+    not supported.
+
+  NNOOTTEESS
+
+    _gg_ee_tt_ss_yy_xx(3) is a macro, so && is not necessary before the variables y and x.
+
+    The SVr4 man pages warn that the return value of _cc_uu_rr_ss____ss_ee_tt(3) "is currently
+    incorrect". This implementation gets it right, but it may be unwise to
+    count on the correctness of the return value anywhere else.
+
+  PPOORRTTAABBIILLIITTYY
+
+    The functions _ss_ee_tt_ss_yy_xx(3) and _gg_ee_tt_ss_yy_xx(3) are not described in the XSI Curses
+    standard, Issue 4. All other functions are as described in XSI Curses.
+
+    The SVr4 documentation describes _ss_ee_tt_ss_yy_xx(3) and _gg_ee_tt_ss_yy_xx(3) as having return
+    type int. This is misleading, as they are macros with no documented
+    semantics for the return value.
+
+  SSEEEE AALLSSOO
+
+    _c_u_r_s_e_s(3)
+
+    _c_u_r_s___i_n_i_t_s_c_r(3)
+
+    _c_u_r_s___o_u_t_o_p_t_s(3)
+
+    _c_u_r_s___r_e_f_r_e_s_h(3)
+
+    _c_u_r_s___s_c_r___d_u_m_p(3)
+
+    _c_u_r_s___s_l_k(3)
+

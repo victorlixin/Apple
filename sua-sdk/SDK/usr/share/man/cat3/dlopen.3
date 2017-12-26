@@ -1,0 +1,108 @@
+dlopen(3)                                                     dlopen(3)
+
+  ddllooppeenn(())
+
+  NNAAMMEE
+
+    dlopen() - open shared object
+
+  SSYYNNOOPPSSIISS
+
+    #include <dlfcn.h>
+
+    void *dlopen(const char *file, int mode)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _dd_ll_oo_pp_ee_nn(3) call opens a shared object, usually a shared library, and
+    makes it available to the calling process. The file is the pathname to the
+    object file, and the mode describes how the call will operate on the file.
+    A successful call returns a handle; this is an opaque object and shouldn't
+    be interpreted. It can be used in calls to _dd_ll_ss_yy_mm(3) and _dd_ll_cc_ll_oo_ss_ee(3).
+
+    The file is the pathname to the object. If file is 0, _dd_ll_oo_pp_ee_nn(3) provides a
+    handle for a global symbol object. The global symbol object gives access
+    to all global symbols; the symbols included are those in the original
+    program image file, plus those loaded at startup time, plus any symbols
+    loaded as a result of a _dd_ll_oo_pp_ee_nn(3) call that used the RTLD_GLOBAL flag. The
+    contents of the global symbol object can change dynamically as a result of
+    subsequent _dd_ll_oo_pp_ee_nn(3) calls.
+
+    Only a single copy of an object file is loaded into the address space,
+    even if the object is referred to multiple times, and even if different
+    pathnames are used to refer to the same file.
+
+    The mode controls processing of the relocations of the symbols in the
+    file, and the scope of visibility of those symbols. For example, an object
+    may contain references to symbols with addresses that aren't known until
+    the object is loaded; those references must be relocated before the
+    process can access the symbols. The posible values for mode are:
+
+    RTLD_LAZY
+        Lazy evaluation of relocations; a symbol is relocated some time
+        between the invocation of _dd_ll_oo_pp_ee_nn(3) and the first reference to the
+        symbol. Normally, this improves performance since not all symbols and
+        functions in an object need to be bound.
+
+    RTLD_NOW
+        All relocations are performed when the object is loaded. This may
+        reduce performance, especially if many functions in the object aren't
+        actually referenced. However, some applications may need to know that
+        all symbols are available as soon as an object is loaded. Because a
+        process can open the same file multiple times with _dd_ll_oo_pp_ee_nn(3), after an
+        RTLD_NOW call any calls using RTLD_LAZY have no effect because all
+        symbols are already relocated.
+
+    Global symbols may also need to be relocated. One of the following values
+    for mode should be OR'ed with the other value; if neither is specified, it
+    defaults to RTLD_LOCAL.
+
+    RTLD_GLOBAL
+        The object's symbols are available for the relocation processing of
+        any other object. Any global symbol object loaded (with
+        ddllooppeenn(0,mode)) will include the symbols in this object.
+
+    RTLD_LOCAL
+        The object's symbols remain local to this object. Because a process
+        can open the same file multiple times with _dd_ll_oo_pp_ee_nn(3), after an
+        RTLD_GLOBAL call any calls using RTLD_LOCAL have no effect because all
+        symbols are already globally available.
+
+    Symbols may be used in relocation activies; calls to _dd_ll_oo_pp_ee_nn(3) may
+    introduce symbols that duplicate existing symbols. A symbol reference is
+    resolved in either load order or in dependency order, matching the symbol
+    that occurs first in that order.
+
+    Load order is exactly as it sounds: symbols in the main program file (and
+    its dependent files) take precedence over symbols loaded using _dd_ll_oo_pp_ee_nn(3).
+    Load order always starts with the main image file.
+
+    Dependency order starts with a given object file (not necessarily the main
+    program file) and orders breadth first, all of the objuect's dependencies,
+    then those dependencies, iterating until all dependencies are satisfied.
+    Most _dd_ll_ss_yy_mm(3) searches are done in dependency order; the exception is
+    searches on the global symbol object loaded with ddllooppeenn(0,mode), which
+    uses load order.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The _dd_ll_oo_pp_ee_nn(3) call returns a handle on success, or NULL if an error
+    occured. It's an error if the file cannot be found, if it can't be loaded
+    or the symbols can't be processed. Use _dd_ll_ee_rr_rr_oo_rr(3) to get more information.
+
+  SSEEEE AALLSSOO
+
+    _l_d(1)
+
+    _d_l_c_l_o_s_e(3)
+
+    _d_l_e_r_r_o_r(3)
+
+    _d_l_s_y_m(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The ddllooppeenn function is thread safe.
+
+    The ddllooppeenn function is not async-signal safe.
+

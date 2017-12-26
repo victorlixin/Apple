@@ -1,0 +1,346 @@
+
+
+Duration(3C++)                                     Duration(3C++)
+
+SSyynnooppssiiss
+       #include <Time.h> namespace SCO_SC {
+
+       typedef  long  long Duration_t; class Duration{ public: //
+       Duration constants
+           static Duration max(); //  Objections
+           static Objection string_objection;  //   Constructors,
+       destructor
+           Duration();
+           Duration(Duration_t  d,Duration_t h = 0,Duration_t m =
+       0,Duration_t s = 0);
+           ~Duration(); //  Copy and assign
+           Duration(const Duration& d);
+           Duration& operator=(const Duration& d); //   Component
+       extractors
+           Duration_t day_part()const;
+           int hour_part()const;
+           int minute_part()const;
+           int  second_part()const;  //   Conversion  to and from
+       strings
+           String make_string()const;
+           String make_string(const char* fmt)const;
+           friend     Duration     make_duration(const      char*
+       time_of_day); //  Other conversions
+           operator void*()const;
+           friend   Duration_t  seconds(const  Duration&  d);  //
+       Relations
+           friend int operator==(const Duration& d1,
+               const Duration& d2);
+           friend int operator!=(const Duration& d1,
+               const Duration& d2);
+           friend int operator>(const Duration& d1,
+               const Duration& d2);
+           friend int operator>=(const Duration& d1,
+               const Duration& d2);
+           friend int operator<(const Duration& d1,
+               const Duration& d2);
+           friend int operator<=(const Duration& d1,
+               const Duration& d2); //  Fixed-point arithmetic
+           friend Duration operator+(const Duration& d1,
+               const Duration& d2);
+           friend Duration operator-(const Duration& d1,
+               const Duration& d2);
+           friend Duration operator*(const Duration& d,Duration_t
+       n);
+           friend Duration operator*(Duration_t n,const Duration&
+       d);
+           const Duration& operator+=(const Duration& d);
+           const Duration& operator-=(const Duration& d);
+           const Duration& operator*=(Duration_t n);
+           friend Duration operator-(const Duration& d);
+           friend Duration abs(const Duration& d);  //   Approxi-
+       mate arithmetic
+           friend Duration operator/(const Duration& d,Duration_t
+
+                                                                1
+
+Duration(3C++)                                     Duration(3C++)
+
+       n);
+           const Duration& operator/=(Duration_t n);
+           friend double operator/(const Duration& d1,
+               const Duration& d2); //  Functions for  expressing
+       Durations in natural units
+           static Duration days(Duration_t d);
+           static Duration hours(Duration_t h);
+           static Duration minutes(Duration_t m);
+           static  Duration  seconds(Duration_t  s);  //   Stream
+       insertion
+           friend ostream& operator<<(ostream& os,
+               const Duration& d); }; }
+
+DDeessccrriippttiioonn
+       A Duration is a time difference, like "two hours."   Class
+       Duration  provides  positive and negative Durations with a
+       fixed precision of  one  second  and  a  machine-dependent
+       range.  As fixed point quantities, Durations can be added,
+       subtracted, and multiplied by  integers  without  loss  of
+       accuracy,  unlike  floating  point  numbers,  which  yield
+       approximate results for such operations.  Dividing a Dura-
+       tion  by  an integer, on the other hand, yields a Duration
+       guaranteed accurate to the nearest second, while  dividing
+       one  Duration  by  another  yields an approximate floating
+       point ratio.
+
+       A Duration may be  constructed  by  giving  its  component
+       days,  hours,  minutes,  and seconds.  When components are
+       viewed using the component extractors, the resulting  com-
+       ponent  values  may  differ  from the original constructor
+       arguments through the effect of normalization.
+
+       Two  functions  named  make_string  convert  Durations  to
+       String(3C++);  the  parameterless  version can be used for
+       arbitrary  Durations,  while  the  one-parameter  version,
+       which  takes a printf(3s)-like control string, is intended
+       for use with Durations representing times-of-day (nonnega-
+       tive  Durations less than 24h).  For the inverse transfor-
+       mation, strings representing times-of-day in a variety  of
+       styles  can  be  converted  to  Durations  using  function
+       make_duration().  This conversion uses  the  string  table
+       described  in  Time(3C++); the table can be set to reflect
+       local  preferences  by  calling   Time::set_table()   (see
+       Time(3C++)).
+
+   DDuurraattiioonn ccoonnssttaannttss
+       static  Duration  max(); Returns a machine-dependent Dura-
+       tion whose value is the largest positive Duration that can
+       be        computed.        Equivalent       to       Dura-
+       tion(0,0,0,Time::max()-Time::ref()).  The maximum negative
+       Duration  is  -Duration::max()-1.   The  range  of  repre-
+       sentable Durations is therefore [-Duration::maxX()-1,Dura-
+       tion::max()].
+
+                                                                2
+
+Duration(3C++)                                     Duration(3C++)
+
+   OObbjjeeccttiioonnss
+       static  Objection  string_objection; Indicates an error in
+       conversion from string to Duration.  The default action is
+       to abort with an error message.
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Duration(); The zero-length Duration.
+
+       Duration(Duration_t  d,Duration_t  h  =  0,Duration_t  m =
+       0,Duration_t s = 0); A Duration of d days, h hours, m min-
+       utes,  and  s seconds.  Preconditions: the resulting Dura-
+       tion  must  lie  in  the  range  [-Duration::max()-1,Dura-
+       tion::max()].
+
+       ~Duration(); Destructor.
+
+   CCooppyy aanndd aassssiiggnn
+       Duration(const Duration& d);
+
+       Duration& operator=(const Duration& d); Copying or assign-
+       ing a Duration creates a copy of its value.
+
+   CCoommppoonneenntt eexxttrraaccttoorrss
+       Duration_t day_part()const;
+
+       int hour_part()const;
+
+       int minute_part()const;
+
+       int second_part()const; The  normalized  components  of  a
+       Duration.   Normalized  components  satisfy  the following
+       properties:  (1)  hour_part()  lies   in   [-23,+23]   (2)
+       minute_part()  and  second_part() lie in [-59,+59] (3) all
+       components are either (a) all nonnegative or (b) all  non-
+       positive.
+
+   CCoonnvveerrssiioonn ttoo aanndd ffrroomm ssttrriinnggss
+       String make_string()const; Constructs a string representa-
+       tion of the Duration.  The Duration  may  have  any  value
+       (i.e.,  it  need not represent a time-of-day).  The String
+       has the format [-] d..dd hhh mmm sss.
+
+       String make_string(const char* fmt)const; Converts a Dura-
+       tion to a String under control of the printf(3S)-like con-
+       trol string fmt.  If the Duration is not a time-of-day  it
+       will  be converted to one by discarding whole days and, if
+       necessary to  make  the  value  nonnegative,  adding  24h.
+       Fields of the control string have the form %field, where
+
+       %    % character.
+
+       H    24-hour clock hour.
+
+                                                                3
+
+Duration(3C++)                                     Duration(3C++)
+
+       I    12-hour clock hour.
+
+       M    Minutes.
+
+       n    newline character.
+
+       p    Meridian (for example, AM or PM ).
+
+       r    12-hour time as hh : mm : ss meridian.
+
+       R    24-hour time as hh : mm.
+
+       S    Seconds.
+
+       t    tab character.
+
+       T    24-hour time as hh : mm : ss.
+
+       X    Local time style (using index 38 of the string table)
+       that includes the hours and minutes.
+
+       friend Duration  make_duration(const  char*  time_of_day);
+       The  inverse of the above transformation.  Parses a string
+       (which must represent a time-of-day) and returns the  cor-
+       responding Duration.  The string must have one of the fol-
+       lowing forms: hh meridian hh:mm[:ss][meridian]  noon  mid-
+       night morning evening
+
+       where:  meridian is AM or PM, midnight gives a Duration of
+       0h, morning gives a Duration of 6h  (6AM),  noon  gives  a
+       Duration  of  12h,  and  evening  gives  a Duration of 18h
+       (6PM).  make_duration() is case insensitive.  If hh is  12
+       or greater, meridian is ignored.  The tokens recognized by
+       make_duration()    may    be    redefined    by    calling
+       Time::set_table()  (For  a description of the function and
+       the  table  layout,   see   Time(3C++).)    Raises   Dura-
+       tion::string_objection  if the string does not represent a
+       valid time-of-day; recovery action: return  a  zero-length
+       Duration.
+
+   OOtthheerr ccoonnvveerrssiioonnss
+       operator void*()const; Returns zero if and only if this is
+       the zero-length Duration.  Most useful in  contexts  where
+       implicit conversion will take place, e.g., while(d)....
+
+       friend  Duration_t  seconds(const Duration& d); Converts d
+       to seconds.   For  example,  seconds(days(1))  would  give
+       86400.
+
+   RReellaattiioonnss
+       friend  int operator==(const Duration& d1, const Duration&
+       d2);
+
+       friend int operator!=(const Duration& d1, const  Duration&
+
+                                                                4
+
+Duration(3C++)                                     Duration(3C++)
+
+       d2); Equality and inequality relations.
+
+       friend  int  operator>(const Duration& d1, const Duration&
+       d2);
+
+       friend int operator>=(const Duration& d1, const  Duration&
+       d2);
+
+       friend  int  operator<(const Duration& d1, const Duration&
+       d2);
+
+       friend int operator<=(const Duration& d1, const  Duration&
+       d2); The usual total order relations.
+
+   FFiixxeedd--ppooiinntt aarriitthhmmeettiicc
+       These  yield  exact  results wherever possible.  Precondi-
+       tions: the result of all functions must lie in  the  range
+       [-Duration::max()-1, Duration::max()].
+
+       friend Duration operator+(const Duration& d1,
+           const Duration& d2);
+
+       friend Duration operator-(const Duration& d1,
+           const  Duration& d2); Addition and subtraction, yield-
+       ing a Duration.
+
+       friend Duration operator*(const Duration& d,Duration_t n);
+
+       friend Duration operator*(Duration_t n,const Duration& d);
+       Multiplication by an integer.
+
+       const Duration& operator+=(const Duration& d);
+
+       const Duration& operator-=(const Duration& d);
+
+       const Duration& operator*=(Duration_t n); Assignment  ver-
+       sions of the above.
+
+       friend  Duration  operator-(const Duration& d); A Duration
+       with the same magnitude as d but opposite sign.
+
+       friend Duration abs(const Duration& d); A  positive  Dura-
+       tion with the same magnitude as d.
+
+   AApppprrooxxiimmaattee aarriitthhmmeettiicc
+       These  yield results that are accurate to the nearest sec-
+       ond.
+
+       friend Duration operator/(const Duration& d,Duration_t n);
+       Divide a Duration by an integer.  Preconditions: the divi-
+       sor must be non-zero.
+
+       const Duration& operator/=(Duration_t n); Assignment  ver-
+       sion of the above.
+
+                                                                5
+
+Duration(3C++)                                     Duration(3C++)
+
+       friend double operator/(const Duration& d1,
+           const  Duration& d2); The quotient of d1 and d2.  Pre-
+       conditions: the divisor must not be  a  zero-length  Dura-
+       tion.
+
+   SSttrreeaamm iinnsseerrttiioonn
+       friend  ostream&  operator<<(ostream&  os,const  Duration&
+       d);" Displays d in the standard format.  That is, os <<  d
+       is equivalent to os << d.make_string().
+
+   FFuunnccttiioonnss ffoorr eexxpprreessssiinngg DDuurraattiioonnss iinn nnaattuurraall uunniittss
+       The  following  functions  may lead to clearer expressions
+       where constructors might otherwise be used.  For  example,
+       seconds(1)   is   probably   easier  to  read  than  Dura-
+       tion(0,0,0,1).
+
+       static Duration days(Duration_t d);  Duration::days(d)  is
+       equivalent to Duration(d).
+
+       static Duration hours(Duration_t h); Duration::hours(h) is
+       equivalent to Duration(0,h).
+
+       static  Duration  minutes(Duration_t  m);   Duration::min-
+       utes(m) is equivalent to Duration(0,0,m).
+
+       static   Duration  seconds(Duration_t  s);  Duration::sec-
+       onds(s) is equivalent to
+
+       Duration(0,0,0,s).
+
+NNootteess
+       As described above, certain operations have  preconditions
+       requiring  that  their  results lie in the range of repre-
+       sentable Durations.   For example,
+           Duration::max() + seconds(1)
+
+       violates the precondition of the addition operator, while
+           -Duration::max() - seconds(2)
+
+       violates the precondition  of  the  subtraction  operator.
+       Although  preconditions  are  never  checked  for  and the
+       result is technically undefined when preconditions are not
+       satisfied,  the  usual  effect  of such operations is that
+       large positive Durations become large negative  Durations,
+       and vice-versa.
+
+RReeffeerreenncceess
+
+                                                                6
+

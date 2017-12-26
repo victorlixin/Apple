@@ -1,0 +1,120 @@
+
+
+t_alloc(3xti)                                       t_alloc(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       char *t_alloc(int fd, int struct_type, int fields);
+
+DDeessccrriippttiioonn
+       The  t_alloc  function is an TLI/XTI local management rou-
+       tine used to allocate data structures associated with  the
+       endpoint  specified  by fd.  For struct_type T_INFO, fd is
+       ignored, so that T_INFO structures may  be  allocated  for
+       use in calls to t_open.
+
+       t_alloc  dynamically  allocates  memory  for  the  various
+       transport function argument structures as specified below.
+       This  function  will  allocate  memory  for  the specified
+       structure, and will also allocate memory for buffers  ref-
+       erenced by the structure.
+
+       The structure to allocate is specified by struct_type, and
+       can be one of the  following:  T_BIND           /*  struct
+       t_bind          */  T_OPTMGMT        /*  struct  t_optmgmt
+       */  T_CALL           /*  struct  t_call         */   T_DIS
+       /*  struct  t_discon       */  T_UNITDATA       /*  struct
+       t_unitdata     */  T_UDERROR         /*   struct   t_uderr
+       */  T_INFO           /* struct t_info        */ where each
+       of these structures may subsequently be used as  an  argu-
+       ment to one or more transport functions.
+
+   PPaarraammeetteerrss
+       the  file  descriptor for the transport endpoint.  identi-
+       fies the type of structure  for  which  memory  should  be
+       allocated.   indicates  fields for which buffers should be
+       allocated.
+
+   SSttrruuccttuurree ddeeffiinniittiioonnss
+       Each of the above structures, except T_INFO,  contains  at
+       least one field of type struct netbuf. netbuf is described
+       in For each field of this type, the user may specify  that
+       the  buffer  for  that  field should be allocated as well.
+       The length of the buffer allocated will  be  equal  to  or
+       greater  than the appropriate size as returned in the info
+       argument of t_open or t_getinfo.  The relevant  fields  of
+       the  info  argument  are  described in the following list.
+       The fields argument specifies which buffers  to  allocate,
+       where the argument is the bitwise-OR of any of the follow-
+       ing: The addr field of the t_bind, t_call, t_unitdata,  or
+       t_uderr  structures.   The  opt  field  of  the t_optmgmt,
+       t_call, t_unitdata,  or  t_uderr  structures.   The  udata
+       field  of  the t_call, t_discon, or t_unitdata structures.
+       All relevant fields of the given structure.  Fields  which
+       are  not  supported by the transport provider specified by
+       fd will not be allocated.  For  each  field  specified  in
+       fields,  t_alloc will allocate memory for the buffer asso-
+       ciated with the field, initialize the len field to  0  and
+
+                                                                1
+
+t_alloc(3xti)                                       t_alloc(3xti)
+
+       initialize  the  buf pointer and maxlen (see netbuf in for
+       description of buf and  maxlen)  field  accordingly.   The
+       length  of  the buffer allocated will be based on the same
+       size information that is returned to the  user  on  t_open
+       and  t_getinfo.  Thus, fd must refer to the transport end-
+       point through which the newly allocated structure will  be
+       passed,  so  that  the appropriate size information can be
+       accessed.
+
+       If the size value associated with any specified  field  is
+       -1, or -2, t_alloc will be unable to determine the size of
+       the buffer to allocate and will fail with t_errno  set  to
+       TSYSERR,  unless  when  T_ALL  is specified, in which case
+       unsupported fields are ignored silently.
+
+       For any field not specified in fields, buf will be set  to
+       NULL  and maxlen will be set to 0.  If the fields argument
+       is set to T_ALL, fields that  are  not  supported  by  the
+       transport provider specified by fd are not allocated.
+
+   SSttaattee ttrraannssiittiioonnss
+       t_alloc has no effect on state.  Valid states are T_UNBND,
+       T_IDLE,  T_OUTCON,  T_INCON,  T_DATAXFER,   T_OUTREL   and
+       T_INREL on entry.  On exit, they are unchanged.
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+RReettuurrnn vvaalluueess
+       On successful completion, t_alloc returns a pointer to the
+       newly  allocated structure.  On failure, NULL is returned,
+       and t_errno is set to indicate the error.
+
+   EErrrroorrss
+       On failure, t_errno may be set to one  of  the  following:
+       The  specified  file descriptor does not refer to a trans-
+       port endpoint.  A system error has occurred during  execu-
+       tion  of  this  function.   The  argument  that  specifies
+       struct_type is invalid, for example, because the  type  of
+       structure  requested  is  inconsistent  with the transport
+       provider (connection mode or connectionless) indicated  by
+       fd.   A  communication  problem has been detected with the
+       transport provider and there is no other value of  t_errno
+       to describe the error condition.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Use of t_alloc to allocate structures will help ensure the
+       compatibility of user programs with future releases of the
+       transport interface.
+
+       Buffers  and  memory that have been allocated with t_alloc
+       may be freed with t_free.
+
+                                                                2
+

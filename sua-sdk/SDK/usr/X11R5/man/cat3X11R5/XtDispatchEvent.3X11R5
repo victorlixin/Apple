@@ -1,0 +1,106 @@
+XtDispatchEvent(3X11R5)                         XtDispatchEvent(3X11R5)
+
+  XXttAAppppNNeexxttEEvveenntt(())
+
+  NNAAMMEE
+
+    XtAppNextEvent(), XtAppPending(), XtAppPeekEvent(), XtAppProcessEvent(),
+    XtDispatchEvent(), XtAppMainLoop() - query and process events and input
+
+  SSYYNNOOPPSSIISS
+
+    void XtAppNextEvent (XtAppContext app_context, XEvent *event_return)
+    Boolean XtAppPeekEvent (XtAppContext app_context, XEvent *event_return)
+    XtInputMask XtAppPending (XtAppContext app_context)
+    void XtAppProcessEvent (XtAppContext app_context, XtInputMask mask)
+    Boolean XtDispatchEvent (XEvent *event)
+    void XtAppMainLoop (XtAppContext app_context)
+
+  AARRGGUUMMEENNTTSS
+
+    app_context
+        Specifies the application context that identifies the application.
+
+    event
+        Specifies a pointer to the event structure that is to be dispatched to
+        the appropriate event handler.
+
+    event_return
+        Returns the event information to the specified event structure.
+
+    mask
+        Specifies what types of events to process. The mask is the bitwise
+        inclusive OR of any combination of XtIMXEvent, XtIMTimer, and
+        XtIMAlternateInput. As a convenience, the X Toolkit defines the
+        symbolic name XtIMAll to be the bitwise inclusive OR of all event
+        types.
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    If no input is on the X input queue, _XX_tt_AA_pp_pp_NN_ee_xx_tt_EE_vv_ee_nn_tt(3X11R5) flushes the X
+    output buffer and waits for an event while looking at the other input
+    sources and time-out values and calling any callback procedures triggered
+    by them. This wait time can be used for background processing (see Section
+    7.8).
+
+    If there is an event in the queue, _XX_tt_AA_pp_pp_PP_ee_ee_kk_EE_vv_ee_nn_tt(3X11R5) fills in the
+    event and returns a nonzero value. If no X input is on the queue,
+    _XX_tt_AA_pp_pp_PP_ee_ee_kk_EE_vv_ee_nn_tt(3X11R5) flushes the output buffer and blocks until input is
+    available (possibly calling some time-out callbacks in the process). If
+    the input is an event, _XX_tt_AA_pp_pp_PP_ee_ee_kk_EE_vv_ee_nn_tt(3X11R5) fills in the event and
+    returns a nonzero value. Otherwise, the input is for an alternate input
+    source, and _XX_tt_AA_pp_pp_PP_ee_ee_kk_EE_vv_ee_nn_tt(3X11R5) returns zero.
+
+    The _XX_tt_AA_pp_pp_PP_ee_nn_dd_ii_nn_gg(3X11R5) function returns a nonzero value if there are
+    events pending from the X server, timer pending, or other input sources
+    pending. The value returned is a bit mask that is the OR of XtIMXEvent,
+    XtIMTimer, and XtIMAlternateInput (see _XX_tt_AA_pp_pp_PP_rr_oo_cc_ee_ss_ss_EE_vv_ee_nn_tt(3X11R5)). If
+    there are no events pending, _XX_tt_AA_pp_pp_PP_ee_nn_dd_ii_nn_gg(3X11R5) flushes the output
+    buffer and returns zero.
+
+    The _XX_tt_AA_pp_pp_PP_rr_oo_cc_ee_ss_ss_EE_vv_ee_nn_tt(3X11R5) function processes one timer, alternate
+    input, or X event. If there is nothing of the appropriate type to process,
+    _XX_tt_AA_pp_pp_PP_rr_oo_cc_ee_ss_ss_EE_vv_ee_nn_tt(3X11R5) blocks until there is. If there is more than one
+    type of thing available to process, it is undefined which will get
+    processed. Usually, this procedure is not called by client applications
+    (see _XX_tt_AA_pp_pp_MM_aa_ii_nn_LL_oo_oo_pp(3X11R5)). _XX_tt_AA_pp_pp_PP_rr_oo_cc_ee_ss_ss_EE_vv_ee_nn_tt(3X11R5) processes timer
+    events by calling any appropriate timer callbacks, alternate input by
+    calling any appropriate alternate input callbacks, and X events by calling
+    _XX_tt_DD_ii_ss_pp_aa_tt_cc_hh_EE_vv_ee_nn_tt(3X11R5).
+
+    When an X event is received, it is passed to _XX_tt_DD_ii_ss_pp_aa_tt_cc_hh_EE_vv_ee_nn_tt(3X11R5),
+    which calls the appropriate event handlers and passes them the widget, the
+    event, and client-specific data registered with each procedure. If there
+    are no handlers for that event registered, the event is ignored and the
+    dispatcher simply returns. The order in which the handlers are called is
+    undefined.
+
+    The _XX_tt_DD_ii_ss_pp_aa_tt_cc_hh_EE_vv_ee_nn_tt(3X11R5) function sends those events to the event
+    handler functions that have been previously registered with the dispatch
+    routine. _XX_tt_DD_ii_ss_pp_aa_tt_cc_hh_EE_vv_ee_nn_tt(3X11R5) returns True if it dispatched the event
+    to some handler and False if it found no handler to dispatch the event to.
+    The most common use of _XX_tt_DD_ii_ss_pp_aa_tt_cc_hh_EE_vv_ee_nn_tt(3X11R5) is to dispatch events
+    acquired with the _XX_tt_AA_pp_pp_NN_ee_xx_tt_EE_vv_ee_nn_tt(3X11R5) procedure. However, it also can
+    be used to dispatch user-constructed events. _XX_tt_DD_ii_ss_pp_aa_tt_cc_hh_EE_vv_ee_nn_tt(3X11R5) also
+    is responsible for implementing the grab semantics for _XX_tt_AA_dd_dd_GG_rr_aa_bb(3X11R5).
+
+    The _XX_tt_AA_pp_pp_MM_aa_ii_nn_LL_oo_oo_pp(3X11R5) function first reads the next incoming X event
+    by calling _XX_tt_AA_pp_pp_NN_ee_xx_tt_EE_vv_ee_nn_tt(3X11R5) and then it dispatches the event to the
+    appropriate registered procedure by calling _XX_tt_DD_ii_ss_pp_aa_tt_cc_hh_EE_vv_ee_nn_tt(3X11R5). This
+    constitutes the main loop of X Toolkit applications, and, as such, it does
+    not return. Applications are expected to exit in response to some user
+    action. There is nothing special about _XX_tt_AA_pp_pp_MM_aa_ii_nn_LL_oo_oo_pp(3X11R5); it is simply
+    an infinite loop that calls _XX_tt_AA_pp_pp_NN_ee_xx_tt_EE_vv_ee_nn_tt(3X11R5) and then
+    _XX_tt_DD_ii_ss_pp_aa_tt_cc_hh_EE_vv_ee_nn_tt(3X11R5).
+
+    Applications can provide their own version of this loop, which tests some
+    global termination flag or tests that the number of top-level widgets is
+    larger than zero before circling back to the call to
+    _XX_tt_AA_pp_pp_NN_ee_xx_tt_EE_vv_ee_nn_tt(3X11R5).
+
+  SSEEEE AALLSSOO
+
+    X Toolkit Intrinsics - C Language Interface
+
+    Xlib - C Language X Interface
+

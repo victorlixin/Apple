@@ -1,0 +1,304 @@
+
+
+alp(7)                                                     alp(7)
+
+DDeessccrriippttiioonn
+       The  STREAMS module alp maintains a pool of algorithms (in
+       the form of STREAMS-compatible subroutines)  that  may  be
+       used for processing STREAMS data messages.  Interfaces are
+       defined allowing modules to request and initiate  process-
+       ing  by  any of the algorithms maintained in the pool.  It
+       is expected to help centralize and standardize the  inter-
+       faces  to algorithms that now represent a proliferation of
+       similar-but-different STREAMS modules.  Its major  use  is
+       envisioned  as  a  central  registry of available code set
+       conversion algorithms or other types of common data-manip-
+       ulating routines.
+
+       An  algorithm  pool  is  a registry (or pool) of available
+       functions; in this case, routines for performing transfor-
+       mations  on  STREAMS  data messages.  Registered functions
+       may keep information on attached users, which  means  that
+       algorithms  need not be stateless, but may maintain exten-
+       sive state information related  to  each  connection.   An
+       algorithm  from  the  pool  is called by another in-kernel
+       module with arguments that are a STREAMS data message  and
+       a  unique  identifier.  If a message is passed back to the
+       caller, it is the algorithm's output, otherwise the  algo-
+       rithm  may  store partially convertible input until enough
+       input is received to give  back  output  on  a  subsequent
+       call.
+
+       This  pool  is  one  means  for providing a consistent and
+       flexible interface for code set conversion within  STREAMS
+       modules,  especially  kbd, but it may also be used to pro-
+       vide other services that are commonly duplicated  by  sev-
+       eral modules.
+
+       The  alp module contains some subroutines dealing with its
+       (minor) role as a module, a data definition for  an  algo-
+       rithm  list,  connection and disconnection routines, and a
+       search routine for finding registered items.   The  module
+       interface incorporated into alp serves the purpose of pro-
+       viding an ioctl interface, so that users can find out what
+       algorithms are registered (see
+
+       The  programmer  of a function for use with alp provides a
+       simple module with a simple specified interface.  The mod-
+       ule must have an initialization routine (xxxinit) which is
+       called at system startup time to register itself with alp,
+       an  open routine, and an interface routine (which actually
+       implements the algorithm).
+
+       The registry method of dynamically building  the  list  of
+       available functions obviates the need for recompiling mod-
+       ules or otherwise updating a list or  reconfiguring  other
+       parts of the system to accommodate additions or deletions.
+       To install a new function module, one merely links it with
+       the kernel in whatever manner is standard for that system;
+
+                                                                1
+
+alp(7)                                                     alp(7)
+
+       there is no need for updating or re-configuring any  other
+       parts of the kernel (including alp itself).  The remainder
+       of this discussion concerns the  in-kernel  operation  and
+       use of the module.
+
+   CCaalllliinngg sseeqquueennccee
+       An algorithm is called from the pool by first requesting a
+       connection via the alp connection interface.  The alp mod-
+       ule  returns the function address of an interface routine,
+       and fills in a unique identifier (id) for the  connection.
+       The  returned  function address is NULL on failure (and id
+       is undefined).  This is a sample of making a connection to
+       a function managed by alp:
+
+       unsigned  char  *name;    /* algorithm name */ caddr_t id;
+       /* unique id */ mblk_t *(*func)();       /*  func  returns
+       ptr  to  mblk_t  */  mblk_t  *(*alp_con())();  /*  returns
+       pointer  to  mblk_t  */  ...   if  (func  =  alp_con(name,
+       (caddr_t)  &id))       regular processing; else      error
+       processing;
+
+       Once the connection has been made, the  interface  routine
+       can be called directly by the connecting module to process
+       messages: mblk_t *inp, *outp; mblk_t *(*func)(); ...  outp
+       =  (*func)(mp,  id); mp = NULL;   /* mp cannot be re-used!
+       */ if (outp)      regular processing;
+
+       If the interface routine  processed  the  entire  message,
+       then  outp  is  a  valid pointer to the algorithm's output
+       message.  If, however, the routine needs more information,
+       or  is  buffering  something, outp will be a null pointer.
+       In either case, the original message (mp) may not be  sub-
+       sequently  accessed  by the caller.  The interface routine
+       takes charge of the message mp, and may free it or  other-
+       wise  dispose of it (it may even return the same message).
+       The caller may pass a null message pointer to an interface
+       routine  to  cause  a  flush of any data being held by the
+       routine; this is  useful  for  end-of-file  conditions  to
+       insure that all data have been passed through.  (Interface
+       routines must thus recognize a null  message  pointer  and
+       deal with it.)
+
+       Synchronization  between  input and output messages is not
+       guaranteed for all items in the pool.  If one  message  of
+       input  does  not  produce one message of output, this fact
+       should be documented for  that  particular  module.   Many
+       multibyte  code  set  conversion  algorithms,  to cite one
+       instance, buffer partial sequences, so that if a multibyte
+       character  happens  to be spread across more than one mes-
+       sage, it may take two or more output messages to  complete
+       translation; in this case, it is only possible to synchro-
+       nize when input message boundaries coincide with character
+       boundaries.
+
+                                                                2
+
+alp(7)                                                     alp(7)
+
+   BBuuiillddiinngg aann aallggoorriitthhmm ffoorr tthhee ppooooll
+       As  mentioned,  the modules managed by alp are implemented
+       as simple modules--not STREAMS modules--each with an  ini-
+       tialization routine, an open routine, and a user-interface
+       routine.  The initialization routine is  called  when  the
+       system  is booted and prior to nearly everything else that
+       happens at boot-time.  The routine takes no arguments  and
+       its sole purpose is to register the algorithm with the alp
+       module, so that it may subsequently accessed.   Any  other
+       required  initialization  may  also  be  performed at that
+       time.  A  generic  initialization  routine  for  a  module
+       called GEN, with prefix gen is as follows:
+       geninit()  {       mblk_t *genfunc(); /* interface routine
+       */      int rval;          /* return value from  registrar
+       */
+
+            rval  = alp_register(genfunc, "name", "explanation");
+            if (rval) cmn_err(CE_WARN, "warning message"); }
+
+       The registration routine, alp_register takes  three  argu-
+       ments  and  returns zero if successful.  The arguments are
+       (1) a pointer to the  algorithm's  entry  point  (in  this
+       case,  the  function  genfunc), (2) a pointer to its name,
+       and (3) a pointer to a character string containing a brief
+       explanation.   The  name  should  be  limited  to under 16
+       bytes, and the explanation to under 60 bytes, as shown  in
+       the  following example.  Neither the name nor the explana-
+       tion need include a newline.  i  =  alp_register(sjisfunc,
+       "stou",      "Shift-JIS to UJIS converter");
+
+       It is possible for a single module to contain several dif-
+       ferent, related algorithms, which can each  be  registered
+       separately by a single init routine.
+
+       A  module's  open routine is called by alp_con when a con-
+       nection is first requested by a user (that  is,  a  module
+       that  wishes to use it).  The open routine takes two argu-
+       ments.  The first argument is an integer; if  it  is  non-
+       zero, the request is an open request, and the second argu-
+       ment is unused.  The function  should  allocate  a  unique
+       identifier and return it as a generic address pointer.  If
+       the first  argument  is  zero,  the  request  is  a  close
+       request,  and the second argument is the unique identifier
+       that was returned by a previous open  request,  indicating
+       which  of  (potentially  several)  connections  is  to  be
+       closed.  The  routine  does  any  necessary  clean-up  and
+       closes  the  connection;  thereafter, any normal interface
+       requests on that identifier will fail.  This use of unique
+       identifiers allows these modules to keep state information
+       relating to each open connection;  no  format  is  imposed
+       upon  the  unique  identifier, so it may contain any arbi-
+       trary type of information, equivalent in size  to  a  core
+       address;  alp  and  most callers will treat it as being of
+       type caddr_t, in a manner similar to the private data held
+
+                                                                3
+
+alp(7)                                                     alp(7)
+
+       by each instantiation of a STREAMS module.
+
+       A   skeleton   for  the  gen  module's  open  routine  is:
+       genopen(arg, id)      int arg;      caddr_t id; {       if
+       (  arg  )  {            open processing;           return(
+       unique-id  );       }       close   processing   for   id;
+            return(0); }
+
+       Once  a  connection has been made, users may proceed as in
+       the example in the previous section.  When the  connection
+       is  to  be  closed  (for example, the connecting module is
+       being popped), a call is made to alp_discon,  passing  the
+       unique  id  and  the  name: caddr_t id; char *name; mblk_t
+       *alp_discon(), *mp; ...  mp  =  alp_discon(name,  id);  if
+       (mp)      process ``left-over'' data;
+
+       If  the disconnect request returns a valid message pointer
+       (mp) then there was  unprocessed  or  partially  processed
+       data  left  in  an internal buffer, and it should be dealt
+       with by the caller (for example, by flushing it or sending
+       it to the neighboring module).
+
+   TThhee iiooccttll aanndd qquueerryy iinntteerrffaacceess
+       A  kernel-level query interface is provided in addition to
+       the query interface supported by the  alpq  command.   The
+       routine  alp_query takes a single argument, a pointer to a
+       name.   If  the  name  matches  a   registered   function,
+       alp_query  returns a pointer to the function's explanation
+       string, otherwise it returns a null  pointer.   A  calling
+       example  is: unsigned char *alp_query(), *name, *expl; ...
+       if (expl = alp_query(name))      regular processing;  else
+            error processing;
+
+       The ioctl interface provides calls for querying registered
+       functions (for which the explanation  discussed  above  is
+       necessary);  this  is supported by the alpq command, which
+       may be used whenever user-level programs need the  associ-
+       ated information.
+
+UUssaaggee
+       The alp module can be used to replace various kernel-resi-
+       dent code set conversion  functions  in  international  or
+       multi-language  environments.   The  KBD  subsystem (which
+       supplies code set conversion and  keyboard  mapping)  sup-
+       ports the use of alp algorithms as processing elements.
+
+       Since  state  information may be maintained, functions may
+       also implement processing on  larger  or  more  structured
+       data  elements,  such  as  transaction records and network
+       packets.  Currently, STREAMS CPU priority  is  assumed  by
+       alp  or  should  be set individually by interface and open
+       routines.
+
+                                                                4
+
+alp(7)                                                     alp(7)
+
+   EExxaammpplleess
+       /*
+        * This is a SAMPLE module that registers with ALP and
+        * performs a one-message delay.
+        */   #include   <sys/types.h>   #include   <sys/stream.h>
+       #include  <sys/stropts.h>  #include  <sys/kmem.h> #include
+       <sys/alp.h>
+
+       static mblk_t *dely(); caddr_t delyopen();
+
+       /*
+        * Our state structure.   Keeps  its  own  address  and  a
+       pointer.
+        */  struct  dstruct  {      caddr_t d_unique;      mblk_t
+       *d_mp; };
+
+       /*
+        * The name is "Dely".  It has an open routine "delyopen"
+        * and an interface "dely".
+        */ static struct algo delyalgo = {      0, (queue_t *) 0,
+       (queue_t  *)  0,  dely,  delyopen,       (unsigned char *)
+       "Dely",      (unsigned char *) "One Message Delay Buffer",
+            (struct algo *) 0 };
+
+       /*
+        * This is the sysinit routine, called when the system is
+        * being brought up.  It registers "Dely" with ALP.
+        */  delyinit()  {       if  (alp_register(&delyalgo))  /*
+       then register with ALP */           printf("DELY: register
+       failed\n"); } /*
+        * This is the interface routine itself.
+        * Holds onto "mp" and returns whatever it had before.
+        */   static   mblk_t  *  dely(mp,  id)       mblk_t  *mp;
+            caddr_t id; {      register mblk_t *rp;      register
+       struct dstruct *d;
+
+            d  =  (struct dstruct *) id;    /* clarify the situa-
+       tion  */        rp   =   d->d_mp;        d->d_mp   =   mp;
+            return(rp);         /* return the previous message */
+       }
+
+       /*
+        * The open (and close) routine.  Use kmem_alloc() to get
+        * a private structure for saving state info.
+        */ caddr_t delyopen(arg, id)       int  arg;     /*  1  =
+       open,  0  =  close */      caddr_t id; /* ignored on open;
+       unique id on close */ {      register struct  dstruct  *d;
+            register mblk_t *rp;
+
+            if  (!  arg) {   /* close processing */           d =
+       (struct dstruct *) id;           d->d_unique  =  (caddr_t)
+       -1;             rp   =   d->d_mp;             kmem_free(d,
+       sizeof(struct dstruct));            return((caddr_t)  rp);
+            }       /*  otherwise,  open  processing  */      d =
+
+                                                                5
+
+alp(7)                                                     alp(7)
+
+       (struct dstruct *) kmem_zalloc(sizeof(struct dstruct),
+                       KM_NOSLEEP);      d->d_unique =  (caddr_t)
+       &d;      return((caddr_t) d); }
+
+RReeffeerreenncceess
+
+                                                                6
+

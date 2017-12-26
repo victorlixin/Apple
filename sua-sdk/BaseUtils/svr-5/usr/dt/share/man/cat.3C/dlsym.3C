@@ -1,0 +1,92 @@
+
+
+dlsym(3C)                                               dlsym(3C)
+
+SSyynnooppssiiss
+       #include <dlfcn.h>
+
+       void *dlsym(void *handle, const char *name);
+
+DDeessccrriippttiioonn
+       dlsym  allows  a process to obtain the address of a symbol
+       defined  within  a  shared  object  previously  opened  by
+       dlopen.   handle is either the value returned by a call to
+       dlopen or is the special flag RTLD_NEXT.   In  the  former
+       case,  the  corresponding shared object must not have been
+       closed using dlclose.  name is  the  symbol's  name  as  a
+       character string.
+
+       dlsym  searches for the named symbol in all shared objects
+       loaded automatically as a result  of  loading  the  object
+       referenced  by handle [see The symbol resolution algorithm
+       used is described in dlopen.
+
+       If  handle  is  RTLD_NEXT,  the  search  begins  with  the
+       ``next''  object  after  the  object  from which dlsym was
+       invoked.  Objects are searched using a load  order  symbol
+       resolution  algorithm  [see  The  ``next'' object, and all
+       other  objects  searched,  are  either  of  global   scope
+       (because  they  were  loaded  at  startup  or as part of a
+       dlopen operation with the RTLD_GLOBAL flag) or are objects
+       loaded by the same dlopen operation that loaded the caller
+       of dlsym.
+
+   RReettuurrnn vvaalluueess
+       If handle does not refer  to  a  valid  object  opened  by
+       dlopen  or  is  not the special value RTLD_NEXT, or if the
+       named symbol cannot be found within  any  of  the  objects
+       associated with handle, dlsym returns NULL.  More detailed
+       diagnostic information is available through dlerror.
+
+UUssaaggee
+       RTLD_NEXT can be used to navigate an intentionally created
+       hierarchy  of  multiply  defined  symbols  created through
+       interposition.  For example, if a program wished to create
+       an  implementation of malloc that embedded some statistics
+       gathering about memory allocations, such an implementation
+       could  define its own malloc which would gather the neces-
+       sary information, and use dlsym with RTLD_NEXT to find the
+       ``real''  malloc,  which  would  perform the actual memory
+       allocation.  Of course,  this  ``real''  malloc  could  be
+       another  user-defined  interface  that added its own value
+       and then used RTLD_NEXT to find the system malloc.
+
+   EExxaammpplleess
+       The following example shows how one  can  use  dlopen  and
+       dlsym to access either function or data objects.  For sim-
+       plicity, error checking has been omitted.   void  *handle;
+       int i, *iptr; int (*fptr)(int);
+
+                                                                1
+
+dlsym(3C)                                               dlsym(3C)
+
+       /*    open    the    needed    object    */    handle    =
+       dlopen("/usr/mydir/mylib.so", RTLD_LAZY);
+
+       /* find address of function and data  objects  */  fptr  =
+       (int (*)(int))dlsym(handle, "some_function");
+
+       iptr = (int *)dlsym(handle, "int_object");
+
+       /*  invoke function, passing value of integer as a parame-
+       ter */
+
+       i = (*fptr)(*iptr);
+
+       The  next  example  shows  how  one  can  use  dlsym  with
+       RTLD_NEXT  to  add functionality to an existing interface.
+       Again, error  checking  has  been  omitted.   extern  void
+       record_malloc(void *, size_t);
+
+       void     *    malloc(size_t    sz)    {         void *ptr;
+            void *(*real_malloc)(size_t);
+
+            real_malloc =  (void  *  (*)(size_t))dlsym(RTLD_NEXT,
+       "malloc");      ptr = (*real_malloc)(sz);      record_mal-
+       loc(ptr, sz);      return ptr; }
+
+RReeffeerreenncceess
+
+                                                                2
+

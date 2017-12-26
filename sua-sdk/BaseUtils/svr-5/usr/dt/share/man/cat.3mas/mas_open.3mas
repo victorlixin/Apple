@@ -1,0 +1,114 @@
+
+
+mas_open(3mas)                                     mas_open(3mas)
+
+SSyynnooppssiiss
+       cc [options] file -lmas
+
+       #include <mas.h> int mas_open(char *path, uint32 acc);
+
+DDeessccrriippttiioonn
+       The  function  mas_open  opens path and initializes metric
+       access support with an access  method  of  acc.   mas_open
+       returns  a  descriptor  associated  with  path that can be
+       passed to other metric access support functions.
+
+       path must refer to a file that was previously created by a
+       metric  provider  with the mas_init, mas_register_met, and
+       mas_put calls.
+
+       acc can be either MAS_READ_ACCESS or MAS_MMAP_ACCESS.   If
+       acc  is  MAS_READ_ACCESS,  metrics  can be accessed from a
+       snapshot  buffer  with  the  mas_snap  call.   If  acc  is
+       MAS_MMAP_ACCESS,   metrics  are  memory  mapped  into  the
+       caller's address space.  Calling mas_snap when acc is  set
+       to  MAS_MMAP_ACCESS  copies  the  metrics  from the mapped
+       space into the snapshot buffer.
+
+   RReettuurrnn vvaalluueess
+       On  success,  mas_open  returns  a   non-negative   metric
+       descriptor.
+
+       On  failure,  mas_open  returns  -1  and sets mas_errno to
+       identify the error.
+
+   EErrrroorrss
+       There are more than MAX_MET MAS files  open.   MAX_MET  is
+       currently   set  to  20.   An  access  method  other  than
+       MAS_MMAP_ACCESS and MAS_READ_ACCESS was requested in  acc,
+       or  MAS_MMAP_ACCESS  was requested from a system that does
+       not support memory mapping.  A sanity check of the size of
+       path  against the size of the MAS header structure failed.
+       The system providing the metrics does not  support  memory
+       mapping.   The  size  field  within the MAS header in path
+       does not match the size of path.  The  size  field  within
+       the  MAS  header  for the metric registration table header
+       does not match the actual size of the metric  registration
+       table  header.  path does not have any registered metrics.
+       A metric pointer was found to point outside of the address
+       range  of  all  of the metric segments.  The size field in
+       the metric registration table header  for  the  number  of
+       entries in the metric registration table is negative.  The
+       actual size  of  the  metric  registration  table  extends
+       beyond  the  size indicated within the metric registration
+       table header.  The address of an ID number is outside  the
+       bounds  of  the  metadata  table.  The address of an units
+       number is outside the bounds of the metadata  table.   The
+       address  of  a  string is outside the bounds of the string
+       table.  The address of a string is outside the  bounds  of
+
+                                                                1
+
+mas_open(3mas)                                     mas_open(3mas)
+
+       the  string table.  The address of a string is outside the
+       bounds of the string table.  The address of a resource  ID
+       number  is  outside the bounds of the metadata table.  The
+       number of total possible instances for a  metric  is  cor-
+       rupted,  probably as a result of using a non-constant met-
+       ric as a resource.  A resource  was  registered  that  has
+       more  than  one element.  The field for the total possible
+       instances was not initialized.  The field  for  the  total
+       possible  instances  was not initialized.  The offset of a
+       metric segment was not initialized.  The offset of a  met-
+       ric was not initialized.  The offset of a metric fell out-
+       side of the range of valid addresses of all the registered
+       metrics  segments.  A metric was registered with a segment
+       number for which there is no corresponding  segment.   The
+       offset  of  a  metric  fell  outside of the range of valid
+       addresses of the metrics segments.  An invalid  offset  to
+       metadata  was  discovered.   A  static  registration table
+       address fell outside the size of path.  A  metric  segment
+       or  other  registration  table  file name fell outside the
+       size of path.  A metric registration table file  size  did
+       not  match the size contained in the MAS header file.  The
+       open system call failed to open  path.   The  read  system
+       call  failed  while  trying to read path.  The mmap system
+       call failed while trying to map  path.   The  open  system
+       call  failed  to  open  an  associated metric registration
+       table file or a metric  segment.   The  mmap  system  call
+       failed to map an associated metric registration table file
+       or a metric segment.  The lseek system call failed to seek
+       in  an associated metric registration table file or a met-
+       ric segment.  The read system call failed to read an asso-
+       ciated metric registration table file or a metric segment.
+       The malloc library call failed.  The malloc  library  call
+       failed.   The  malloc  library  call  failed.   The malloc
+       library call failed.  The malloc library call failed.
+
+UUssaaggee
+       If memory mapped access is  being  used,  care  should  be
+       taken  to  not  call mas_open more than once with the same
+       path.  Otherwise, the metric registration information  and
+       metric segments are mapped to the same addresses as in the
+       first call, overlaying the previous mapping and destroying
+       it.   This is transparent to the caller until the mappings
+       are subsequently destroyed by calling mas_close, at  which
+       time  the  unmapped  address space is no longer present in
+       the calling process.  After  that,  any  attempted  access
+       generates a segmentation violation.
+
+RReeffeerreenncceess
+
+                                                                2
+

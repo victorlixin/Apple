@@ -1,0 +1,326 @@
+exec(2)                                                         exec(2)
+
+  eexxeecc(())
+
+  NNAAMMEE
+
+    execl(), execle(), execlp(), execv(), execve(), execvp() - execute a file
+
+  SSYYNNOOPPSSIISS
+
+    #include <unistd.h>
+    extern char **environ;
+
+    int execl (const char *path, const char *arg ...)
+    int execle (const char *path, const char *arg ... char *const envp[])
+    int execlp (const char *file, const char *arg ...)
+    int execv (const char *path, char *const argv[])
+    int execve (const char *path, char *const argv[], char *const envp[])
+    int execvp (const char *file, char *const argv[])
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The eexxeecc(2) family of functions replaces the current process image with a
+    new process image. The first argument is the name of the file to be
+    executed; most of the functions require a full path name, but _ee_xx_ee_cc_ll_pp(2)
+    and _ee_xx_ee_cc_vv_pp(2) will search the directories named in the PATH environment
+    variable.
+
+    The second argument to the function is the argument vector (represented in
+    a C mmaaiinn() function by argv The execl functions take a ccoonnsstt cchhaarr **
+    argument, while the execv* functions take a cchhaarr **ccoonnsstt array as the
+    argument. The third argument, where present, is an environment for the new
+    process image. For _ee_xx_ee_cc_ll(2), _ee_xx_ee_cc_vv(2), _ee_xx_ee_cc_ll_pp(2), and _ee_xx_ee_cc_vv_pp(2), the new
+    process image inherits the environment of the calling process image,
+    stored in extern char **environ
+
+    The arguments are:
+    ccoonnsstt cchhaarr **path
+        For the functions _ee_xx_ee_cc_ll(2), _ee_xx_ee_cc_vv(2), _ee_xx_ee_cc_ll_ee(2), and _ee_xx_ee_cc_vv_ee(2), the
+        path is a path name that points to the file to be executed. If the
+        file doesn't exist or has the wrong permissions, the functions return
+        -1 and set errno. The path can also specify a data file for an
+        interpreter program; an interpreter file begins with a line of the
+        form:
+
+    #! interpreter [[arguments]]
+
+    For more information about interpreter files, see Interpreter Files later
+    in this reference page.
+
+    ccoonnsstt cchhaarr **file
+
+    For the functions _ee_xx_ee_cc_ll_pp(2) and _ee_xx_ee_cc_vv_pp(2), the file is the name of the
+    file to be executed; if file doesn't begin with a slash (/) the call
+    constructs the path name by searching the directories named in the PATH
+    environment variable.
+
+    Once the file is found, the exec functions try to execute it as a POSIX
+    process, then as a Win32 process, and last as an interpreter file.
+
+    ccoonnsstt cchhaarr **arg ...
+
+    The arg and subsequent ellipse can be thought of as arg0 arg1 ..., argn a
+    variable-length list of pointers to null-terminated character strings that
+    represent the argument list available to the new program. The first
+    argument should be the file name of the new process; the last argument
+    should be a NULL pointer.
+
+    This argument is treated slightly differently by _ee_xx_ee_cc_ll_ee(2): after the NULL
+    pointer, there is another character pointer which contains the new
+    process's environment, as if it were declared as
+
+    char *const envp[]
+
+    cchhaarr **ccoonnsstt argv[]
+
+    An array of character pointers to null-terminated strings; the last member
+    of the array is a NULL pointer. argv[0] should contain the name of the
+    file being executed.
+
+    cchhaarr **ccoonnsstt envp[]
+
+    An array of character pointers to null-terminated strings that make up the
+    environment array of the new process image.
+
+    The total space available for the combined argument and environment lists
+    of the new process image is {ARG_MAX}.
+
+    When the call succeeds, it creates a new process image; if the new process
+    is a C program, the entry point is main where argc is the number of
+    elements in the argument list (not counting the terminating NULL pointer)
+    and argv is the argument list itself. The functions also set up
+
+    extern char **environ
+
+    which contains the process's environment.
+
+    Once these calls have successfully completed, they mark the st_atime field
+    of path, since it was successfully _oo_pp_ee_nn(2)'ed.
+
+  IInnhheerriitteedd PPrrooppeerrttiieess
+
+    Here are the guidelines as to which attributes and resources are and are
+    not inherited by the new process:
+    CCaalllliinngg PPrroocceessss AAttttrriibbuuttee              BBeehhaavviioorr
+
+    Open file descriptors                  Remain open, unless close-on-exec
+                                           flag FD_CLOEXEC is set
+
+    Directory streams                      Closed
+
+    Signals set to default action          Set to default action
+
+    Signals set to be ignored              Set to be ignored
+
+    Signals set to be caught               Set to default action
+
+    Real user ID                           Inherited
+
+    Real group ID                          Inherited
+
+    Supplementary group ID                 Inherited
+
+    Effective user ID                      Inherited, unless path has set-
+                                           user-ID set. Interix must be
+                                           configured to execute files with
+                                           set-user-ID set; see [ENOSETUID] in
+                                           ERRORS later in this topic.
+
+    Effective group ID                     Inherited, unless path has set-
+                                           group-ID set. Interix must be
+                                           configured to execute files with
+                                           set-group-ID set; see [ENOSETUID]
+                                           in ERRORS later in this topic.
+
+    Process ID                             Inherited
+
+    Parent process ID                      Inherited
+
+    Process group ID                       Inherited
+
+    Session membership                     Inherited
+
+    Time left until alarm clock signal     Inherited
+
+    Current working directory              Inherited
+
+    Root directory                         Inherited
+
+    File mode creation mask                Inherited
+
+    Process signal mask                    Inherited
+
+    Pending signals                        Inherited
+
+    If the saved-set-user-ID mode bit is set on the new process image file,
+    then the effective user ID of the new process image is set to the owner ID
+    of the file.
+
+    If the saved-set-group-ID mode bit is set on the new process image file,
+    then the effective group ID of the new process image is set to the group
+    ID of the file.
+
+    If {_POSIX_SAVED_IDS} is defined, the effective user ID and the effective
+    group ID are saved for use by the _ss_ee_tt_uu_ii_dd(2) function.
+
+  IInntteerrpprreetteerr FFiilleess
+
+    If the file specified by path is a text file and the first line has the
+    form:
+
+    #! interpreter [[arguments]]
+
+    then the exec functions run the program specified by interpreter with the
+    given arguments The maximum length of the line is 255 characters; the
+    interpreter can be invoked with as many arguments as will fit on the
+    command line.
+
+    The interpreter line specifies an interpreter according to the following
+    rules:
+   1.     If the string begins with /, Subsystem for UNIX-based Applications searches in the Subsystem for UNIX-based Applications root
+          directory space.
+   2.     If the file is not found there, the path is assumed to be on the
+          local drive.
+   3.     If the file is still not found, the exec fails.
+
+    The first line can be recursive; that is, interpreter can specify a file
+    that begins with a #! interpreter line, and so on, nested eight levels.
+    For each level, the exec functions first try to create a process image of
+    the file as a POSIX executable, then as a Win32 executable, and last as an
+    interpreter file.
+
+  WWIINN3322 EEXXEECC LLIIMMIITTAATTIIOONNSS
+
+    A POSIX process can exec a Win32 image file, but there are several
+    limitations.
+
+    The POSIX process will remain in the Interix subsystem's process table
+    until the corresponding Win32 process exits. The exit status of this
+    process will always indicate a normal return, as if by a call to _ee_xx_ii_tt(3),
+    with the exit value being the low order 8 bits of the Win32 process's 32
+    bit exit status. There is currently no way to detect the fact that a Win32
+    process was terminated by an exception.
+
+    None of the processes spawned by the Win32 process will show up in the
+    Interix subsystem's process table.
+
+    If the Win32 process is a console application, then the only file
+    descriptors that can be inherited are file descriptors 0, 1 and 2,
+    corresponding to the Win32 standard input, standard output and standard
+    error. The only types of file descriptors that can be inherited are those
+    associated with a regular file, a controlling console tty, a controlling
+    pseudo tty (stdout and stderr only), //ddeevv//nnuullll, or a pipe.
+
+    If the Win32 process is a graphical user interface application, no file
+    descriptors are inherited.
+
+    If the Windows security token (which corresponds to the POSIX real UID) of
+    the Win32 process is that of the interactive user, then any windows
+    created by the process will be visible on the screen. Otherwise, the
+    windows will be invisible and non-interactive. Win32 processes spawned
+    from a tteellnneett(1) session, a POSIX service program, or a process whose real
+    UID was set by a call to exec*_asuser do not have the ability to create
+    interactive windows.
+
+    A POSIX process cannot exec DOS, Win16 or OS/2 image files.
+
+    When running Win32 mixed-mode executables, the system's PATH
+    environment variable must list all directories that contain DLLs
+    required by those executables.  It is not sufficient to list those
+    directories in the
+    HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft\Windows\CurrentVersion\App
+    Paths registry key.  This registry key is consulted only when an
+    executable is launched using the Run option of the Start menu.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    On success, the exec functions don't return. If they fail, they set errno
+    and return -1.
+
+  EERRRROORRSS
+
+    The exec functions can set errno to any of the following values:
+
+    [E2BIG]
+        The argument list was too long.
+
+    [EACCES]
+        Search permission was denied for a directory in the path or the new
+        process image file wasn't executable.
+
+    [EINVAL]
+        The device holding the file does not support the operation.
+
+    [ENAMETOOLONG]
+        Some component of path was greater than {NAME_MAX}, or the entire path
+        name exceeded {PATH_MAX}.
+
+    [ENODEV]
+        When exec'ing a Win32 program, the calls can fail with ENODEV. One of
+        the following has happened:
+
+        a)
+            File descriptor 0, 1, or 2 refers to an object that is not a file,
+            pipe, tty, or //ddeevv//nnuullll. If one of these file descriptors refers
+            to a socket, you may also get this error. The usual workaround is
+            toreplacee file descriptors 0, 1, and 2 with a pipe or //ddeevv//nnuullll,
+            as appropriate.
+
+        b)
+            File descriptors 1 and 2 refer to two different tty devices,
+            neither of which is a controlling tty of the form //ddeevv//ttttyynnXX.
+
+        c)
+            File descriptor 0 refers to a tty that is not the controlling tty.
+            This is commonly the case after calling _ss_ee_tt_ss_ii_dd(2). The usual
+            workaround is to close file descriptor 0, or reopen it as //ddeevv//
+            nnuullll.
+
+    [ENOENT]
+        One or more components of path doesn't exist, or the path or file
+        argument is an empty string.
+
+    [ENOEXEC]
+        For _ee_xx_ee_cc_ll(2), _ee_xx_ee_cc_vv(2), _ee_xx_ee_cc_ll_ee(2), and _ee_xx_ee_cc_vv_ee(2), the new process
+        image file has the appropriate access permission, but is not in the
+        proper format; or, more than eight levels of recursion have been
+        encountered in processing an interpreter file.
+
+    [ENOMEM]
+        Not enough memory to load the new process image.
+
+    [ENOSETUID]
+        An attempt was made to execute a file with the set-user-ID (setuid) or
+        set-group-ID (setgid) mode bit set, and Interix is not configured to
+        execute files with these mode bits set. For security purposes, Interix
+        does not execute these files by default. For more information and and
+        instructions for enabling execution of files with these mode bits set,
+        see _T_h_e_ _s_u_p_e_r_u_s_e_r_ _a_c_c_o_u_n_t_ _a_n_d_ _a_p_p_r_o_p_r_i_a_t_e_ _p_r_i_v_i_l_e_g_e_s in Subsystem for UNIX-based
+        Applications Help.
+
+    [ENOTDIR]
+        Some component of the path prefix of path is not a directory.
+
+  NNOOTTEESS
+
+    The eexxeecc functions will fail if the setuid or setgid bit is set on the
+    file being executed and if the file's mode bits allow it to be written by
+    anyone other than the owner.
+
+  SSEEEE AALLSSOO
+
+    _s_h(1)
+
+    _e_x_i_t(3)
+
+    _f_o_r_k(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    The following functions are async-signal safe: eexxeeccllee,, eexxeeccvvee. The
+    following functions are not async-signal safe: eexxeecc,, eexxeeccll,, eexxeeccllpp,, eexxeeccvv,,
+    eexxeeccvvpp.
+

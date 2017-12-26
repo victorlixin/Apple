@@ -1,0 +1,112 @@
+
+
+signal(2)                                               signal(2)
+
+SSyynnooppssiiss
+       #include <signal.h>
+
+       void (*signal(int sig, void (*disp)(int)))(int);
+
+       void (*sigset(int sig, void (*disp)(int)))(int);
+
+       int sighold(int sig);
+
+       int sigrelse(int sig);
+
+       int sigignore(int sig);
+
+       int sigpause(int sig);
+
+DDeessccrriippttiioonn
+       These  functions  provide simplified signal management for
+       application processes.  See for an explanation of  general
+       signal concepts.
+
+       signal  and sigset are used to modify signal dispositions.
+       sig specifies the signal, which may be any  signal  except
+       SIGKILL and SIGSTOP.  disp specifies the signal's disposi-
+       tion, which may be SIG_DFL, SIG_IGN, or the address  of  a
+       signal handler.  If signal is used, disp is the address of
+       a signal handler, and sig is not SIGILL, SIGTRAP, or  SIG-
+       PWR,  the  system  first  sets the signal's disposition to
+       SIG_DFL before executing the signal handler.  If sigset is
+       used and disp is the address of a signal handler, the sys-
+       tem adds sig to the calling process's signal  mask  before
+       executing  the  signal  handler;  when  the signal handler
+       returns, the system restores the calling process's  signal
+       mask to its state prior to the delivery of the signal.  In
+       addition, if sigset is used and disp is equal to SIG_HOLD,
+       sig  is added to the calling process's signal mask and the
+       signal's  disposition  remains  unchanged.   However,   if
+       sigset is used and disp is not equal to SIG_HOLD, sig will
+       be removed from the calling process's signal mask.
+
+       sighold adds sig to the calling process's signal mask.
+
+       sigrelse removes sig from  the  calling  process's  signal
+       mask.
+
+       sigignore sets the disposition of sig to SIG_IGN.
+
+       sigpause  removes  sig  from  the calling process's signal
+       mask and suspends the calling process until  a  signal  is
+       received.
+
+   RReettuurrnn vvaalluueess
+       On  success, signal returns the signal's previous disposi-
+       tion.  On failure, signal returns SIG_ERR and  sets  errno
+       to identify the error.
+
+                                                                1
+
+signal(2)                                               signal(2)
+
+       On success, sigset returns SIG_HOLD if the signal had been
+       blocked or the signal's previous disposition if it had not
+       been blocked.  On failure, sigset returns SIG_ERR and sets
+       errno to identify the error.
+
+       All other functions return zero on success.   On  failure,
+       they return -1 and set errno to identify the error.
+
+   EErrrroorrss
+       In  the following conditions, these functions fail and set
+       errno to: The value of the sig argument  is  not  a  valid
+       signal  or  is  equal to SIGKILL or SIGSTOP.  A signal was
+       caught during the system call sigpause.
+
+UUssaaggee
+       sighold in conjunction with sigrelse or  sigpause  may  be
+       used  to  establish  critical regions of code that require
+       the delivery of a signal to be temporarily deferred.
+
+       If signal or sigset is used to set  SIGCHLD's  disposition
+       to  a  signal  handler,  SIGCHLD will not be sent when the
+       calling process's children are stopped or continued.
+
+       If any of the above functions are used  to  set  SIGCHLD's
+       disposition  to  SIG_IGN, the calling process's child pro-
+       cesses will not create zombie processes when  they  termi-
+       nate  [see  If  the calling process subsequently waits for
+       its children, it blocks until all of its  children  termi-
+       nate;  it  then  returns  a  value of -1 with errno set to
+       ECHILD.  [see
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Signal dispositions (that is,  default/ignore/handler) are
+       a process attribute and are shared by all threads.  Signal
+       masks, on the other hand, are maintained independently per
+       thread.
+
+       See for further details.
+
+   CCoonnssiiddeerraattiioonnss ffoorr lliigghhttwweeiigghhtt pprroocceesssseess
+       Each  LWP  has a its own signal mask.  The Threads Library
+       maintains a separate signal mask per  thread  and  adjusts
+       (if  necessary) the LWP's mask before a thread begins exe-
+       cuting.
+
+                                                                2
+

@@ -1,0 +1,267 @@
+
+
+tcpio(1)                                                 tcpio(1)
+
+SSyynnooppssiiss
+       tcpio -o[aLvVx] [-C bufsize] [-M message] -O output-file
+            [-X low_level,high_level]
+       tcpio  -i  [bdfkPrsStuvVx]  [-C bufsize] [-E file] -I file
+       [-M message]
+            [-N level] [-nnum] [-R ID] [-T file]
+            [-X low_level,high_level] [pattern . . .]
+
+DDeessccrriippttiioonn
+       The -i and -o options select the action to  be  performed.
+       The  following  list  describes each of the actions (which
+       are mutually exclusive).  (copy out)  reads  the  standard
+       input  to  obtain  a  list  of  pathnames and copies those
+       files, together with pathname and status information, onto
+       the file or device specified with the -O option.  The data
+       is preceded by MAC and  DAC  security-related  information
+       saved  to  enable  validation  of the data when it is read
+       back in.  For executable files, file privileges  (if  any)
+       are also saved.  (copy in) extracts files from the archive
+       file or device  specified  by  the  -I  option,  which  is
+       assumed  to  be  the product of a previous tcpio -o.  Only
+       files with names that match patterns are  selected.   pat-
+       ternss  are regular expressions given in the filename-gen-
+       erating notation of In patterns, meta-characters ?, *, and
+       [ . . . ] match the slash (/) character, and backslash (\)
+       is an escape character.  A  !  meta-character  means  not.
+       (For  example,  the  !abc* pattern would exclude all files
+       that begin with abc.)  Multiple patterns may be  specified
+       and if no patterns are specified, the default for patterns
+       is * (that is, select all files).  When tcpio  is  invoked
+       from  the  shell, each pattern should be quoted; otherwise
+       the pattern may be expanded.
+
+       Extracted files are conditionally created based  upon  the
+       options described below.
+
+       Before  a  file is extracted, the user, group, classifica-
+       tion, category and level identifiers (IDs)  it  references
+       are validated.  If any of the identifiers has been deleted
+       from the system,  or  changed  in  any  way  (and  is  not
+       remapped  to  a  valid  identifier),  the file will not be
+       extracted.
+
+       For users without privileges, the permissions of the files
+       will  be  the  same  as  those at the time of the previous
+       tcpio -o except the bits set in the user's umask  will  be
+       cleared.  The owner and group of these files will be those
+       of the current user.  For users with the appropriate priv-
+       ileges,  the  permissions,  owner,  and group of the files
+       will be the same as those at  the  time  of  the  previous
+       tcpio -o.
+
+       The  modification  time and access time of a restored file
+       is set to the modification time of the file  when  it  was
+
+                                                                1
+
+tcpio(1)                                                 tcpio(1)
+
+       backed  up.   In the case of regular directories and MLDs,
+       modification time and access time are updated to the  cur-
+       rent time as files are restored within the directory.
+
+       Executable  files  which  have  privileges  when they were
+       backed up are restored without privileges.  The privileges
+       associated with the file when it was backed up can be dis-
+       played using the -t or -v options.  It is up to the admin-
+       istrator  to assign appropriate privileges to the restored
+       files.
+
+       If tcpio -i tries to create a file that already exists and
+       the  existing  file  is  the same age or newer, tcpio will
+       output a warning message and not replace the  file.   (The
+       -u  option  can  be  used  to  overwrite the existing file
+       unconditionally.)
+
+       The meanings of the available options are
+
+       Reset access times of input files  after  they  have  been
+       copied.   Reverse the order of the bytes within each word.
+       Input/output is to be blocked bufsize bytes to the record,
+       where  bufsize  is  replaced  by  a positive integer.  The
+       default buffer size is device dependent when  this  option
+       is  not  used.   Directories  are to be created as needed.
+       Specify an input file (file) that contains a list of file-
+       names  to  be extracted from the archive (one filename per
+       line).  Copy in all files except those in patterns.   (See
+       the  paragraph on tcpio -i for a description of patterns.)
+       Read the contents of file as input.  If file is a  charac-
+       ter  special device, when the first medium is full replace
+       the medium and press  to  continue  to  the  next  medium.
+       Attempt to skip corrupted file headers and I/O errors that
+       may be encountered.  If you want  to  copy  files  from  a
+       medium  that  is corrupted or out of sequence, this option
+       lets you read only those files with  good  headers.   (For
+       tcpio  archives  that  contain other tcpio archives, if an
+       error is  encountered  tcpio  may  terminate  prematurely.
+       tcpio will find the next good header, which may be one for
+       a  smaller  archive,  and  terminate  when   the   smaller
+       archive's trailer is encountered.)  Follow symbolic links.
+       The default is not to follow symbolic links.
+
+       When tcpio is used in conjunction with  find,  if  the  -L
+       option  is used with tcpio then the -follow option must be
+       used  with  find.   Otherwise,  undesirable  results  will
+       occur.   Define  a  message  to  use when switching media.
+       When you use the -O or -I options and specify a  character
+       special device, you can use this option to define the mes-
+       sage that is printed when you reach the end of the medium.
+       One %d can be placed in message to print the sequence num-
+       ber of the next medium needed to  continue.   Disable  the
+       validation of one or more identifiers (type or item).  The
+       permissible values  of  num  are:  Disable  comparison  of
+
+                                                                2
+
+tcpio(1)                                                 tcpio(1)
+
+       original  system  name to the current system.  Disable all
+       checks of UIDs.  Disable all checks of GIDs.  Disable  all
+       checks  of LID existence.  Disable all checks of LID state
+       (LIDs must be valid, but can be in the inactive state).
+
+       Any combination of the above is valid.  For  example,  -n2
+       -n3  would  disable  the checks of UIDs and GIDs.  Extract
+       all files and assign them the MAC  level  level.   A  LID,
+       alias or fully qualified level name may be used to specify
+       level.  It must be defined on the system  and  within  the
+       medium  level  range.  Direct the output of tcpio to file.
+       If file is a character  special  device,  when  the  first
+       medium  is  full replace the medium and press  to continue
+       to the next medium.  Print the level range of an  existing
+       archive.   No  files are created.  If -X was not specified
+       when the archive was created, a message is printed stating
+       that the archive range is unbounded.  Interactively rename
+       files.  If the  user  types  a  null  line,  the  file  is
+       skipped.  If the user types a . the original pathname will
+       be copied.  Reassign ownership and group  information  for
+       each  file  to  user  ID  (ID must be a valid user ID from
+       /etc/passwd).  The group ID assigned is the  group  ID  in
+       /etc/passwd  associated  with the user ID, ID.  Swap bytes
+       within each half word.  Swap halfwords within  each  word.
+       Print  a  table  of  contents  of the input, consisting of
+       names and file privileges (if any).  When used with the -v
+       option,  privileges are omitted and other file information
+       is displayed.  No files are created.  Use the contents  of
+       file  to  remap  invalid  identifiers  to valid ones.  The
+       structure of file (called tcpio table of content  transla-
+       tion  table or TTOCTT) is as follows (the fields separated
+       by whitespace): Type Specifier Saved  Numeric/Text  ID
+       New Numeric/Text ID
+
+       The  meanings  of these fields are as follows: Type Speci-
+       fier is one of: User ID Group ID Level ID  Numeric  ID  is
+       the  decimal representation of an ID.  Text ID is the text
+       name of an ID.  Saved designates IDs saved on the  medium.
+       New  designates  IDs  valid  on  the current system.  Copy
+       unconditionally (normally, an older file will not  replace
+       a  newer file with the same name).  Verbose: causes a list
+       of file names to  be  printed.   When  used  with  the  -t
+       option,  the table of contents looks like the output of an
+       ls -l command, with each  file's  level  identifier  (LID)
+       appended to the other file information [see Otherwise, for
+       files which had associated privileges on backup, privilege
+       lists  are  displayed along with file names.  Special Ver-
+       bose: print a dot for each file seen.   Useful  to  assure
+       the  user  that  tcpio is working without printing out all
+       file names.  Quiet mode.  Suppresses the printing  of  all
+       warning  messages.   Extract  only  files  with  MAC level
+       between low_level and high_level,  inclusive.   high_level
+       must  dominate  low_level.  LIDs, aliases, or fully quali-
+       fied level names may be  used  to  specify  low_level  and
+
+                                                                3
+
+tcpio(1)                                                 tcpio(1)
+
+       high_level.   Only  valid  names or aliases may be used; a
+       LID may be used even if it has been deleted.
+
+       tcpio assumes four-byte words.  If tcpio  reaches  end  of
+       medium  (end  of  a diskette for example), when writing to
+       (-o) or reading from (-i) a character special device,  and
+       -O  and  -I  aren't used, tcpio will print the message: If
+       you want to go on, type device/file name when ready.
+
+       To continue, you must replace  the  medium  and  type  the
+       character special device name (/dev/rdiskette for example)
+       and press .  You may want to continue by  directing  tcpio
+       to  use  a different device.  For example, if you have two
+       floppy drives you may want to switch between them so tcpio
+       can  proceed while you are changing the floppies.  (Press-
+       ing  alone causes the tcpio process to exit.)
+
+EExxaammpplleess
+       The following examples show  some  possible  ways  to  use
+       tcpio.
+
+       When  standard  input  is directed through a pipe to tcpio
+       -o, files are grouped so they can be directed to a  single
+       file (../newfile) specified with the -O option.
+       (Instead  of  ls, and also be used to pipe a list of names
+       to tcpio.)  You  could  direct  the  output  to  a  device
+       instead of a file.  ls | tcpio -o -O ../ newfile
+
+       tcpio  -i uses the output file of tcpio -o (specified with
+       the -I option in the example), extracts those  files  that
+       match the patterns (memo/a1, memo/b*), creates directories
+       below the current directory as  needed  (-d  option),  and
+       places  the  files  in the appropriate directories.  If no
+       patterns were given,  all  files  from  newfile  would  be
+       placed  in  the  directory.   tcpio -idI newfile "memo/a1"
+       "memo/b*"
+
+       tcpio -iN Secret extracts all files at level Secret  while
+       the  -X LessSecret,VerySecret directive imposes a limit on
+       the level of the files  extracted.   No  file  with  level
+       lower  than  LessSecret  or higher than VerySecret will be
+       extracted.  The -I option specifies the input  device,  in
+       this  example  /dev/tape1.   The -d options says to create
+       directories as needed.  (It is important to use the -depth
+       option  of  to  generate pathnames for tcpio.  This elimi-
+       nates problems tcpio could have  trying  to  create  files
+       under  read-only  directories.)   tcpio -idI /dev/tape1 -N
+       Secret -X LessSecret,VerySecret When you use tcpio in con-
+       junction  with  find,  if you use the -L option with tcpio
+       then you must use the -follow option with  find  and  vice
+       versa.  Otherwise there will be undesirable results.
+
+FFiilleess
+
+                                                                4
+
+tcpio(1)                                                 tcpio(1)
+
+RReeffeerreenncceess
+NNoottiicceess
+       tcpio and cpio archives are incompatible with one another.
+
+       Pathnames are restricted to 256 characters for the  binary
+       (the default) and -H odc formats; otherwise, pathnames are
+       restricted to 1024 characters.
+
+       Only a privileged user can copy special files.
+
+       Blocks are reported in 512-byte quantities.
+
+       If a file has 000 permissions and  contains  more  than  0
+       characters of data, and the user does not have appropriate
+       privilege, the file will not be saved or restored.
+
+       Prior to Release 4, the default buffer size was 512 bytes.
+       Beginning with Release 4, the default buffer size is opti-
+       mized for the device and using the -C option to specify  a
+       different  block  size may cause cpio to fail.  Therefore,
+       care must be taken when  choosing  the  block  size.   For
+       example, for floppy disks, bufsize must be a multiple of
+       512  (one  floppy  sector).   To  avoid  wasting  space on
+       streaming tape drives, use the -C option with an appropri-
+       ate block size.
+
+                                                                5
+

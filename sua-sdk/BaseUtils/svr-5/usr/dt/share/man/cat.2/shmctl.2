@@ -1,0 +1,162 @@
+
+
+shmctl(2)                                               shmctl(2)
+
+SSyynnooppssiiss
+       #include   <sys/types.h>   #include  <sys/ipc.h>  #include
+       <sys/shm.h>
+
+       int shmctl(int shmid, int cmd, ... /* struct shmid_ds *buf
+       */);
+
+DDeessccrriippttiioonn
+       shmctl  provides a variety of shared memory control opera-
+       tions as specified by cmd.  The following cmds are  avail-
+       able:  Place  the current value of each member of the data
+       structure associated with shmid into the structure pointed
+       to  by buf.  The contents of this structure are defined in
+       {READ} Set the value of the following members of the  data
+       structure associated with shmid to the corresponding value
+       found in the structure pointed  to  by  buf:  shm_perm.uid
+       shm_perm.gid  shm_perm.mode /* only access permission bits
+       */
+
+       This command can be executed only by a process that has an
+       effective  user  ID equal to the value of shm_perm.cuid or
+       shm_perm.uid in the data structure associated with  shmid,
+       or  by  a  process that has the P_OWNER privilege.  Remove
+       the shared memory identifier specified by shmid  from  the
+       system  and  destroy  the  shared  memory segment and data
+       structure associated with it.  This command  can  be  exe-
+       cuted  only  by  a  process  that has an effective user ID
+       equal to the value of shm_perm.cuid or shm_perm.uid in the
+       data structure associated with shmid, or by a process that
+       has the P_OWNER privilege.  Lock the shared memory segment
+       specified  by  shmid  in memory.  This command can be exe-
+       cuted only by a process that has the  P_SYSOPS  privilege.
+       Unlock the shared memory segment specified by shmid.  This
+       command can be executed only by a  process  that  has  the
+       P_SYSOPS privilege.  Set placement information for part or
+       all of the shared memory  segment.   The  calling  process
+       must have the P_OWNER privilege to execute this command.
+
+       Details are provided in the shmid_ds data structure, where
+       the relevant fields are: The offset, in  bytes,  from  the
+       start of the shared memory segment of the portion to which
+       the new policy should apply. It should be  a  multiple  of
+       the page size.  The length of the portion of shared memory
+       segment to which the new policy should apply.  The  system
+       will round up shm_nbytes to a multiple of the page size.
+
+       If shm_off and shm_nbytes are both set to zero, the policy
+       applies to the entire shared memory segment.  Controls the
+       placement of the physical memory used by the shared memory
+       segment. It overrides any previous  placement  policy  set
+       either when the shared memory segment was created (see
+        or by a previous call to shmctl.
+
+       The   following   are   the   possible   values   for  int
+
+                                                                1
+
+shmctl(2)                                               shmctl(2)
+
+       shm_placepolicy: Indicates that the specified  portion  of
+       shared  memory  will  be accessed read/write, or readonly,
+       but that replication at each CPU-group  in  a  partitioned
+       system  is  not  desired.  It is further expected that the
+       portion of shared memory will be accessed from  many  CPU-
+       groups,  so  it is appropriate to allocate physical memory
+       so as to spread it evenly across these CPU-groups.
+
+       The granularity of the balanced allocations  is  given  by
+       shm_granularity.  This  will be rounded up if necessary to
+       an integral multiple of the page size.
+
+       If shm_granularity is 0, the  system  default  granularity
+       should apply
+
+       The  balanced allocation will be for future memory alloca-
+       tions only.  The same as SHM_BALANCED, but existing  allo-
+       cations should be modified to match the new placement pol-
+       icy.  Specifies that the physical memory for the  required
+       portion  of  the shared memory segment should be allocated
+       from the particular CPU-Group specified in shm_cpugroup.
+
+       A value of NOCGID for shm_cpugroup specifies that the CPU-
+       Group  where  the  caller is currently executing should be
+       used for the allocations.
+
+       The CPU-Group allocation will be for future memory alloca-
+       tions  only.  The same as SHM_CPUGROUP, but existing allo-
+       cations should be modified to match the new placement pol-
+       icy.   Specifies that the pages of physical memory for the
+       shared memory segment are to be allocated on the CPU-Group
+       where  the  thread  that  makes  the initial access to the
+       shared memory happens to be executing at  the  time.   The
+       same as SHM_FIRSTUSAGE, but existing allocations should be
+       modified to match the new placement policy.  The  physical
+       memory  pages  should  be allocated anew wherever they are
+       accessed after the shmctl  call.   Specifies  that  system
+       default  policies  apply for new allocations.  The same as
+       SHM_PLC_DEFAULT, but existing allocations should be  modi-
+       fied  to match the new placement policy.  Used if shm_pla-
+       cepolicy indicates that allocation from a particular  CPU-
+       Group  is  required.  It specifies the required CPU-Group.
+       Used if shm_placepolicy indicates that blanced  allocation
+       across  all  CPU-Groups  is  required.  It  specifies  the
+       required allocation granularity.
+
+RReettuurrnn vvaalluueess
+       On success, shmctl returns 0.  On failure, shmctl  returns
+       -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       In  the  following conditions, shmctl fails and sets errno
+       to: cmd is equal to IPC_STAT and {READ} operation  permis-
+       sion  is denied to the calling process (see shmid is not a
+
+                                                                2
+
+shmctl(2)                                               shmctl(2)
+
+       valid shared memory identifier.  cmd is not a  valid  com-
+       mand.   cmd is IPC_SET and shm_perm.uid or shm_perm.gid is
+       not valid.  cmd is SHM_SETPLACE and SHM_SETPLACE  and  one
+       or  more  of  the values in shmid_ds is incorrect.  cmd is
+       IPC_STAT and uid or gid is too large to be stored  in  the
+       structure  pointed to by buf.  cmd is equal to IPC_RMID or
+       IPC_SET and the effective user is not equal to  the  value
+       of  shm_perm.cuid  or  shm_perm.uid  in the data structure
+       associated with shmid and the process does  not  have  the
+       P_OWNER privilege.  cmd is equal to SHM_LOCK or SHM_UNLOCK
+       and the calling process does not have the P_SYSOPS  privi-
+       lege.  cmd is equal to SHM_SETPLACE and the effective user
+       is not equal to the value of shm_perm.cuid or shm_perm.uid
+       in  the  data structure associated with shmid and the pro-
+       cess does not have the P_OWNER privilege.  cmd is SHM_SET-
+       PLACE  and  the  call  failed  due to resource constraints
+       within the kernel.  cmd is  SHM_SETPLACE  and  the  system
+       does  not  support  the requested placement style.  cmd is
+       SHM_SETPLACE and the system cannot honor  the  command  on
+       the  specified shared memory segment because SHM_FINEGRAIN
+       was not specified when the segment was created.  In  other
+       words,  the  system has been allowed to optimize access to
+       the shared memory in such a way that  fine-grained  place-
+       ment  control  via  SHM_SETPLACE  is  not applicable.  buf
+       points to an illegal address.  cmd is  equal  to  SHM_LOCK
+       and there is not enough memory.
+
+       The SHM_SETPLACE command can be executed only by a process
+       that has an effective  user  ID  equal  to  the  value  of
+       shm_perm.cuid  or shm_perm.uid in the data structure asso-
+       ciated with shmid or by a process  that  has  the  P_OWNER
+       privilege.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The  user  must  explicitly  remove shared memory segments
+       after the last reference to them has been removed.
+
+                                                                3
+

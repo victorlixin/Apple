@@ -1,0 +1,225 @@
+
+
+ip(7tcp)                                                 ip(7tcp)
+
+SSyynnooppssiiss
+       Programmer's  interface:  #include  <sys/types.h> #include
+       <sys/socket.h> #include <netinet/in.h>
+
+       s = socket(AF_INET, SOCK_DGRAM, 0);  s  =  socket(AF_INET,
+       SOCK_STREAM, 0); s = socket(AF_INET, SOCK_RAW, 0);
+
+       #include    <paths.h>    #include    <fcntl.h>    #include
+       <netinet/if.h> #include <netinet/ip_var.h>
+
+       fd = open(_PATH_UDP, flags); fd = open(_PATH_TCP,  flags);
+       fd = open(_PATH_RAWIP, flags);
+
+DDeessccrriippttiioonn
+       IPv4 is a network layer protocol used by the Internet pro-
+       tocol family. Options may be set  at  the  IP  level  when
+       using higher-level protocols that are based on IP (such as
+       TCP and UDP). It may also be accessed through a raw socket
+       or device when developing new protocols or special purpose
+       applications.
+
+       Options are set with and examined with at  the  IPPROTO_IP
+       level.   IPv6  options  are  described  in Several generic
+       options are supported at the IP level: Enable the  sending
+       of    broadcast    packets   (with   destination   address
+       255.255.255.255) out of a local interface specified either
+       as  an  address using a struct in_addr, or as an interface
+       name or an address using a struct if_select: /*
+        * Structure used to select the interface
+        */ struct if_select {       struct    in_addr  notused;/*
+       for    compatibility   with                            old
+       IP_BROADCAST_IF  */       int  flags;         /*  type  of
+       matching   performed   */        union   {            char
+       name[IFNAMSIZ];                  struct        in_addr ip;
+                 struct  in6_addr  ipv6;       } matching; }; The
+       flags member specifies one of the following formats  which
+       can  be  used  to specify the interface: The member match-
+       ing.ip specifies the IPv4 address of the  interface.   Not
+       implemented  at  present.  The member matching.name speci-
+       fies the name of the interface (for  example,  net1).   No
+       interface  specified.  The  kernel  will  choose the first
+       interface that it finds that supports broadcasting.   Used
+       to  provide  IP options to be transmitted in the IP header
+       of each outgoing packet.  The format of IP options  to  be
+       sent  is  that specified by the IP protocol specification,
+       with one exception: the list of addresses for Source Route
+       options  must  include the first-hop gateway at the begin-
+       ning of  the  list  of  gateways.  The  first-hop  gateway
+       address  will  be  extracted  from the option list and the
+       size adjusted accordingly before use. IP  options  may  be
+       used with any socket type in the Internet family.  Set the
+       time-to-live in outgoing IP datagrams.  The argument is an
+       unsigned  character  between  1 and 255.  Set the type-of-
+       service in outgoing IP  datagrams.   The  argument  is  an
+
+                                                                1
+
+ip(7tcp)                                                 ip(7tcp)
+
+       unsigned  character.   Legal precedence values are defined
+       in RFC 791.  IP supports multicasting  of  datagrams  (see
+       RFC  1112).   Several options are available to control the
+       behavior of multicasting: Control whether multicast  data-
+       grams  are  looped back to the local system.  Legal values
+       for the character argument  are  0  to  disable  multicast
+       loopback  and  1  to  enable multicast loopback (default).
+       Send  multicast  datagrams  out  of  the  local  interface
+       address specified as a struct in_addr.  By default, multi-
+       cast datagrams are sent  out  of  whichever  interface  is
+       associated   with  a  route  to  the  specified  multicast
+       address.
+
+       Join and leave a multicast group respectively.   A  multi-
+       cast  group is specified as a argument using the following
+       structure: struct ip_mreq {
+          struct in_addr imr_multiaddr;  /* IP multicast  address
+       of group */
+          struct  in_addr  imr_interface;  /* local IP address of
+       interface */ }; On Ethernet and FDDI  networks,  multicast
+       IPv4 addresses are mapped to a range of assigned multicast
+       MAC addresses as specified  in  RFC  1042.  On  Token_ring
+       (IEEE  802.5)  networks, multicast IPv4 addresses are nor-
+       mally mapped to the functional address  specified  in  RFC
+       1469.  Enabling the IFF_LINK0 (see flag before setting the
+       interface address will cause multicast IPv4  addresses  to
+       be mapped to the all-rings broadcast address.
+
+       IP  supports  the ability to retrieve protocol information
+       for use with UDP  using  the  following  boolean  options:
+       Retrieve the destination address of the datagram.  Set the
+       argument to non-zero to  enable;  set  to  0  to  disable.
+       Retrieve  the index of the interface on which the datagram
+       was received (see Set the argument to non-zero to  enable;
+       set to 0 to disable.  Retrieve the IP options in the data-
+       gram.  Set the argument to non-zero to enable; set to 0 to
+       disable.   Retrieve  the  reflected  options  for  use  in
+       replies.  Set the argument to non-zero to enable; set to 0
+       to  disable.   The  retrieved information is stored in the
+       received UDP datagram.  It may be retrieved  using  for  a
+       socket or for an TLI/XTI endpoint.
+
+       By  default,  outgoing  packets  automatically  have an IP
+       header prepended to them (based on the destination address
+       given and the protocol number the socket is created with).
+       This  behavior  can  be  controlled  using  the  following
+       boolean  option:  Set  the  argument to non-zero to enable
+       automatic prepending of headers; set to 0 to disable.   If
+       disabled, the application is responsible for providing the
+       full IP header, including any  desired  protocol  options.
+       Protocol   options  specified  using  IP_OPTIONS  will  be
+       ignored if IP_HDRINCL is set to 0.  Fields  in  the  user-
+       supplied header should be specified in network byte order,
+       except for  ip_len  and  ip_off.   These  fields  will  be
+
+                                                                2
+
+ip(7tcp)                                                 ip(7tcp)
+
+       converted  to  network byte order by IP prior to transmit-
+       ting the packet.  IP will also provide the  header  check-
+       sum.
+
+       Incoming  packets  are received with IP header and options
+       intact.
+
+   RRaaww IIPP ssoocckkeettss
+       Raw IP sockets are connectionless, and are  normally  used
+       with  the  sendto and recvfrom calls; the call may also be
+       used to fix the destination for future packets  (in  which
+       case or and or may be used).
+
+       If  proto  is  0, the default protocol IPPROTO_RAW is used
+       for outgoing packets, and only incoming  packets  destined
+       for that protocol are received. If proto is non-zero, that
+       protocol number will be used on outgoing  packets  and  to
+       filter incoming packets.
+
+   iiooccttll ccoommmmaannddss
+       The  IPv4  driver can also be accessed by opening _PATH_IP
+       directly. Various kinds of networking  statistics  can  be
+       gathered  by  issuing  ioctl directives to the driver. The
+       following   STREAMS   ioctl    directives    defined    in
+       <netinet/ip_var.h> are supported by the IP driver: Extract
+       all the available information pertaining to an  interface,
+       namely,  the  ifnet  entry,  the  interface statistics (if
+       available) and the list of addresses associated  with  the
+       interface.  The  desired  interface  is  specified  by the
+       interface number (sequence  number  in  the  list  of  the
+       interfaces).  The following structures are used to extract
+       information pertaining to an interface: #define  IF_MAXAD-
+       DRS  10  struct  ifreq_all  {       struct ifnet if_entry;
+       #define      if_number    if_entry.if_index            int
+       if_statsavail;        struct  ifstats  if_stats;       int
+       if_outqlen;      int     if_naddr;       struct  all_addrs
+       if_addrs[IF_MAXADDRS];      /* fetches a max. of IF_MAXAD-
+       DRS addrs. */ };
+
+       struct all_addrs {      struct sockaddr  addr;      struct
+       sockaddr     dstaddr;        struct   sockaddr    netmask;
+            u_short  flags; }; Fetch the IP statistics and  other
+       related information.  The following structure is passed as
+       an argument to the I_STR  ioctl  to  extract  the  desired
+       information:   struct   ip_stuff  {       struct    ipstat
+       ip_stat;        /* IP statistics */       struct    rtstat
+       rt_stat;    /* routing statistics */      int  ip_forward-
+       ing;         /*      are      we      forwarding?       */
+            int  ip_default_ttl;            /*    IP    TTL    */
+            int  ipq_ttl;         /*     fragment     TTL      */
+            int  ipq_reasm_reqds;     /*   dgrams   waiting   for
+       reassembly */      int  icmp_answermask;    /*  auth.  for
+       mask  replies  */       int  ip_sendredirects;  /* sending
+       redirects */ }; Manipulate the IP  variables  ipforwarding
+
+                                                                3
+
+ip(7tcp)                                                 ip(7tcp)
+
+       and ip_ttl.  The following structure is passed as an argu-
+       ment to the I_STR ioctl call: struct  ip_misc  {       int
+       arg;            int          ip_forwarding;            int
+       ip_default_ttl; }; The value of the arg  field  (1  or  2)
+       specifies which of the two variables is to be set.  Desig-
+       nate the ip_pcb associated with this end-point to  receive
+       the  link-up/down  messages  from  the driver (used by the
+       SNMP agent to send traps to management stations).
+
+DDiiaaggnnoossttiiccss
+       A socket operation may fail  with  one  of  the  following
+       errors  returned:  when  an  attempt  is  made to create a
+       socket with a network address for which no network  inter-
+       face  exists  when  trying  to establish a connection on a
+       socket which already has one, or when  trying  to  send  a
+       datagram  with  the  destination address specified and the
+       socket is already connected when the system  runs  out  of
+       memory for an internal data structure when the system runs
+       out of STREAMS resources when trying to send  a  datagram,
+       but  no  destination  address is specified, and the socket
+       has not been connected The following errors specific to IP
+       may  occur  when setting or getting IP options: an unknown
+       socket option name was  given  the  IP  option  field  was
+       improperly  formed;  an  option field was shorter than the
+       minimum value or longer than the  option  buffer  provided
+       The  ioctl operation may fail and the errno may be set to:
+       when an invalid argument is passed to the driver, or  when
+       the  arg  in the structure ip_misc is set to a value other
+       than 1 or 2
+
+RReeffeerreenncceess
+       on the manual page
+
+       RFC 791, RFC 919, RFC 922, RFC 950, RFC  1009,  RFC  1042,
+       RFC 1112, RFC 1122
+
+NNoottiicceess
+       The  ifreq_all,  ip_stuff, and ip_misc data structures are
+       not guaranteed to remain stable across different releases.
+       Applications  which  use  these  structures may need to be
+       modified and recompiled in subsequent releases.
+
+                                                                4
+

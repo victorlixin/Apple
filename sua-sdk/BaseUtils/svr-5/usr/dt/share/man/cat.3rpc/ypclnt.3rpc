@@ -1,0 +1,254 @@
+
+
+ypclnt(3rpc)                                         ypclnt(3rpc)
+
+SSyynnooppssiiss
+       cc   [options]   file   -lnsl  #include  <rpcsvc/ypclnt.h>
+       #include <rpcsvc/yp_prot.h>
+
+       int yp_bind (char *indomain);
+
+       void yp_unbind (char *indomain);
+
+       int yp_get_default_domain (char **outdomain);
+
+       int yp_match(char *indomain, char *inmap, char *inkey, int
+       inkeylen,      char **outval, int *outvallen);
+
+       int  yp_first(char  *indomain, char *inmap, char **outkey,
+       int *outkeylen,      char **outval, int *outvallen);
+
+       int yp_next(char *indomain, char *inmap, char *inkey,  int
+       inkeylen,       char **outkey, int *outkeylen, char **out-
+       val, int *outvallen);
+
+       int yp_all(char *indomain, char *inmap, struct ypall_call-
+       back *incallback);
+
+       int yp_order(char *indomain, char *inmap, int *outorder);
+
+       int  yp_master(char  *indomain,  char  *inmap, char **out-
+       name);
+
+       const char *yperr_string(int incode);
+
+       int ypprot_err (unsigned int incode);
+
+DDeessccrriippttiioonn
+       This package of functions provides an interface to the NIS
+       network  lookup  service.   The package can be loaded from
+       the standard library, /usr/lib/libnsl.so.   Refer  to  and
+       for  an  overview  of the NIS name services, including the
+       definitions of ``map'' and ``domain'', and  a  description
+       of  the various servers, databases, and commands that com-
+       prise the NIS name service.
+
+       All input  parameter  names  begin  with  ``in''.   Output
+       parameters  begin with ``out''.  Output parameters of type
+       char** should  be  addresses  of  uninitialized  character
+       pointers.   Memory  is allocated by the NIS client package
+       using and may be freed if the user code has no  continuing
+       need  for it.  For each outkey and outval, two extra bytes
+       of memory are allocated at the end  that  contain  newline
+       and  NULL,  respectively,  but  these  two  bytes  are not
+       reflected in outkeylen or outvallen.  indomain  and  inmap
+       strings  must  be  non-NULL  and  NULL-terminated.  String
+       parameters which are accompanied by a count parameter  may
+       not be NULL, but may point to NULL strings, with the count
+       parameter indicating this.  Counted strings  need  not  be
+
+                                                                1
+
+ypclnt(3rpc)                                         ypclnt(3rpc)
+
+       NULL-terminated.
+
+       All functions in this package of type int return 0 if they
+       succeed, and a failure code (YPERR_xxxx) otherwise.  Func-
+       tions  requiring  a full YP map name cannot use nicknames.
+       For example, hosts.byname must  be  used  instead  of  the
+       nickname  hosts.   Failure  codes  are  described  in  the
+       ``Return values'' section.
+
+   RRoouuttiinneess
+       int yp_bind (char *indomain); To use  the  NIS  name  ser-
+       vices,  the  client  process  must  be  ``bound'' to a NIS
+       server that serves the appropriate domain  using  yp_bind.
+       Binding  need not be done explicitly by user code; this is
+       done automatically  whenever  a  NIS  lookup  function  is
+       called.  yp_bind can be called directly for processes that
+       make use of a backup strategy (for example, a local  file)
+       in  cases  when  NIS  services  are  not  available.  void
+       yp_unbind (char *indomain); Each binding  allocates  (uses
+       up)  one  client  process  socket  descriptor;  each bound
+       domain costs one  socket  descriptor.   However,  multiple
+       requests  to  the  same  domain  use that same descriptor.
+       yp_unbind is available at the client  interface  for  pro-
+       cesses  that  explicitly  manage  their socket descriptors
+       while accessing multiple domains.  The call  to  yp_unbind
+       make  the domain ``unbound'', and free all per-process and
+       per-node resources used to bind it.
+
+       If an RPC failure results upon  use  of  a  binding,  that
+       domain  will be unbound automatically.  At that point, the
+       ypclnt layer will retry forever  or  until  the  operation
+       succeeds,  provided that ypbind is running, and either the
+       client process cannot bind a server for the proper  domain
+       or RPC requests to the server fail.
+
+       If  an  error is not RPC-related, or if ypbind is not run-
+       ning, or if a bound  ypserv  process  returns  any  answer
+       (success or failure), the ypclnt layer will return control
+       to the user code, either with an error code, or a  success
+       code  and  any  results.   int yp_get_default_domain (char
+       **outdomain); The NIS lookup calls require a map name  and
+       a  domain name, at minimum.  It is assumed that the client
+       process knows the name of the  map  of  interest.   Client
+       processes  should fetch the node's default domain by call-
+       ing yp_get_default_domain, and use the returned  outdomain
+       as  the  indomain parameter to successive NIS name service
+       calls.  int yp_match(char  *indomain,  char  *inmap,  char
+       *inkey, int inkeylen,      char **outval, int *outvallen);
+       yp_match returns the value associated with a  passed  key.
+       This  key must be exact; no pattern matching is available.
+       int yp_first(char *indomain, char *inmap,  char  **outkey,
+       int   *outkeylen,       char  **outval,  int  *outvallen);
+       yp_first returns the first key-value pair from  the  named
+       map in the named domain.  int yp_next(char *indomain, char
+
+                                                                2
+
+ypclnt(3rpc)                                         ypclnt(3rpc)
+
+       *inmap, char *inkey, int inkeylen,      char **outkey, int
+       *outkeylen,   char   **outval,  int  *outvallen);  yp_next
+       returns the next key-value pair in a named map.  The inkey
+       parameter  should  be  the outkey returned from an initial
+       call to yp_first (to get the second key-value pair) or the
+       one  returned from the nth call to yp_next (to get the nth
+       + second key-value pair).
+
+       The concept of first (and, for that matter,  of  next)  is
+       particular  to the structure of the NIS map being process-
+       ing; there is no relation in retrieval order to either the
+       lexical  order  within any original (non-NIS name service)
+       data base, or to any obvious numerical  sorting  order  on
+       the  keys,  values, or key-value pairs.  The only ordering
+       guarantee made is that if the yp_first function is  called
+       on  a  particular  map,  and  then the yp_next function is
+       repeatedly called on the same map at the same server until
+       the  call fails with a reason of YPERR_NOMORE, every entry
+       in the data base will be seen exactly once.   Further,  if
+       the  same  sequence of operations is performed on the same
+       map at the same server, the entries will be  seen  in  the
+       same order.
+
+       Under  conditions  of heavy server load or server failure,
+       it is possible for the  domain  to  become  unbound,  then
+       bound  once  again (perhaps to a different server) while a
+       client is running.  This can cause a break in one  of  the
+       enumeration  rules;  specific entries may be seen twice by
+       the client, or not at all.   This  approach  protects  the
+       client   from  error  messages  that  would  otherwise  be
+       returned in the midst of the enumeration.  The next  para-
+       graph  describes  a  better  solution  to  enumerating all
+       entries in a map.  int yp_all(char *indomain, char *inmap,
+       struct  ypall_callback *incallback); yp_all provides a way
+       to transfer an entire map from server to client in a  sin-
+       gle request using TCP (rather than UDP as with other func-
+       tions in this package).  The entire transaction take place
+       as  a single RPC request and response.  yp_all can be used
+       just like any other NIS name service  procedure,  identify
+       the  map  in  the  normal manner, and supply the name of a
+       function which will be called to  process  each  key-value
+       pair within the map.  The call to yp_all returns only when
+       the transaction is completed (successfully  or  unsuccess-
+       fully),  or  the foreach function decides that it does not
+       want to see any more key-value pairs.
+
+       The third parameter to  yp_all  is  struct  ypall_callback
+       *incallback  {  int (*foreach)(); char *data; }; The func-
+       tion foreach is called:  int  foreach(int  instatus,  char
+       *inkey, int inkeylen,      char *inval, int invallen, char
+       *indata); The instatus parameter  will  hold  one  of  the
+       return status values defined in rpcsvc/yp_prot.h -- either
+       YP_TRUE  or  an  error  code.  (See  the  description   of
+       ypprot_err  for  a  function  which  converts  a  NIS name
+
+                                                                3
+
+ypclnt(3rpc)                                         ypclnt(3rpc)
+
+       service protocol error code to a ypclnt layer error code.)
+
+       The  key  and value parameters are somewhat different from
+       those defined in the  ``Synopsis''  section.   First,  the
+       memory  pointed  to  by  the inkey and inval parameters is
+       private to the yp_all function, and  is  overwritten  with
+       the arrival of each new key-value pair.  It is the respon-
+       sibility of the foreach function to  do  something  useful
+       with  the contents of that memory, but it does not own the
+       memory itself.  Key and value  objects  presented  to  the
+       foreach  function  look exactly as they do in the server's
+       map--if they were not  newline-terminated  or  NULL-termi-
+       nated in the map, they will not be here either.
+
+       The  indata  parameter  is  the  contents  of  the incall-
+       back->data element passed to yp_all.  The data element  of
+       the callback structure may be used to share state informa-
+       tion between the foreach function and the  mainline  code.
+       Its use is optional, and no part of the NIS client package
+       inspects its contents--cast it  to  something  useful,  or
+       ignore it.
+
+       The  foreach function is a boolean.  It should return zero
+       to indicate that it wants to be called again  for  further
+       received  key-value pairs, or non-zero to stop the flow of
+       key-value pairs.  If foreach returns a non-zero value,  it
+       is  not  called  again;  the functional value of yp_all is
+       then 0.  int yp_order(char  *indomain,  char  *inmap,  int
+       *outorder);  yp_order  returns the order number for a map.
+       int yp_master(char *indomain,  char  *inmap,  char  **out-
+       name);  yp_master  returns  the machine name of the master
+       NIS  server  for  a  map.   const  char  *yperr_string(int
+       incode);  yperr_string  returns  a  pointer to a read-only
+       error message string that is NULL-terminated but  contains
+       no  period  or  newline.   int  ypprot_err  (unsigned  int
+       incode); ypprot_err takes  a  NIS  name  service  protocol
+       error  code  as  input,  and  returns a ypclnt layer error
+       code,  which  may  be  used  in  turn  as  an   input   to
+       yperr_string.
+
+FFiilleess
+       /usr/lib/libnsl.so
+
+RReettuurrnn vvaalluueess
+       All  integer functions return 0 if the requested operation
+       is successful, or one of the following errors if the oper-
+       ation fails.
+       1    YPERR_BADARGS   Args to function are bad
+       2    YPERR_RPC       RPC failure - domain has been unbound
+       3    YPERR_DOMAIN    Cannot bind to server in this domain
+       4    YPERR_MAP       No such map in server's domain
+       5    YPERR_KEY       No such key in map
+       6    YPERR_YPERR     Internal NIS server or client error
+
+                                                                4
+
+ypclnt(3rpc)                                         ypclnt(3rpc)
+
+       7    YPERR_RESRC     Resource allocation failure
+       8    YPERR_NOMORE    No more records in map database
+       9    YPERR_PMAP      Cannot communicate with RPC binder
+       10   YPERR_YPBIND    Cannot communicate with ypbind
+       11   YPERR_YPSERV    Cannot communicate with ypserv
+       12   YPERR_NODOM     Local domain name not set
+       13   YPERR_BADDB     NIS database is bad
+       14   YPERR_VERS      NIS version mismatch
+       15   YPERR_ACCESS    Access violation
+       16   YPERR_BUSY      Database busy
+
+RReeffeerreenncceess
+
+                                                                5
+

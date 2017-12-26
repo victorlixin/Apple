@@ -1,0 +1,101 @@
+
+
+Tmppath(3C++)                                       Tmppath(3C++)
+
+SSyynnooppssiiss
+       #include  <Path.h> class Tmppath : public Path{ public: //
+       Constructors
+           Tmppath();
+           Tmppath(const char* pfx,const char* ext = ");
+           Tmppath(const Path& dir);
+           Tmppath(const Path& dir,const char* pfx,
+               const char* ext = "); //  Implicit arguments
+           static void use(const char* pfx);
+           static void use(const Path& dir);
+           static void use(const Path& dir,const char* pfx);
+           static void use(); };
+
+DDeessccrriippttiioonn
+       A Tmppath is just like a Path (see Path(3C++)), except  it
+       is  initialized  to  a  Path corresponding to a file which
+       does not currently exist in the  underlying  file  system.
+       Tmppath should replace mktemp(3), tempnam(3) and tmpnam(3)
+       in most C++ applications.
+
+   CCoonnssttrruuccttoorrss
+       Tmppath(); The dirname of  the  constructed  path  is  the
+       first  directory  in  the  following list for which a Path
+       corresponding to a non-existent file can  be  constructed:
+       (1)  the current value of the environment variable TMPDIR,
+       if TMPDIR is set and is other than the empty  string;  (2)
+       "/usr/tmp"; (3) "/tmp".  If a Path corresponding to a non-
+       existent file cannot be  constructed,  then  Path(".")  is
+       constructed.   The  dirname of the constructed Path is not
+       checked for existence.  In particular, if TMPDIR does  not
+       exist  in  the underlying file system, then TMPDIR will be
+       used, and any attempt to open the resulting  Tmppath  will
+       fail.   (Not  checking  the  existence of the directory is
+       done for efficiency reasons when  constructing  many  Tmp-
+       path's.)
+
+       Tmppath(const  char*  pfx,const  char*  ext =   ); Same as
+       above, except the basename of the constructed Path  begins
+       with the prefix pfx, and ends with the suffix ext.
+
+       Tmppath(const Path& dir);
+
+       Tmppath(const Path& dir,const char* pfx,
+           const char* ext =   ); Same as the above two construc-
+       tors respectively, except dir is used as  the  dirname  of
+       the  constructed  Path.  None of the other directories are
+       tried.
+
+   IImmpplliicciitt aarrgguummeennttss
+       These functions make it possible to specify once  and  for
+       all  a  default  directory and/or prefix to be used in all
+       future Tmppath  constructions.   Individual  constructions
+       are  still  free  to  override these defaults by supplying
+       explicit values  for  these  arguments.   These  functions
+
+                                                                1
+
+Tmppath(3C++)                                       Tmppath(3C++)
+
+       should not be called during static initialization.
+
+       static void use(const char* pfx); pfx is an implicit argu-
+       ment to all future constructions  lacking  that  argument.
+       Future  calls  to  other  constructors have their original
+       meanings.
+
+       static void use(const Path& dir); dir is an implicit argu-
+       ment  to  all  future constructions lacking that argument.
+       Future calls to other  constructors  have  their  original
+       meanings.
+
+       static  void use(const Path& dir,const char* pfx); dir and
+       pfx are implicit arguments  to  all  future  constructions
+       lacking either of those arguments.
+
+       static void use(); Future calls to constructors have their
+       original meanings.
+
+WWaarrnniinnggss
+       It is completely up to the programmer to prevent the  race
+       between constructing a Tmppath and opening it for writing.
+       As usual, the easiest way of guaranteeing no  race  is  to
+       use tmpfile(3).
+
+       An  attempt  to open a Tmppath can fail either if the pro-
+       gram has lost the construct/open race,  or  the  directory
+       corresponding to the dirname of the Tmppath does not exist
+       in the underlying file system.
+
+       The Tmppath constructor is subtly overloaded.  Beware.
+
+RReeffeerreenncceess
+       mktemp(3)  tempnam(3)  tmpfile(3)   tmpnam(3)   Path(3C++)
+       Search_path(3C++)
+
+                                                                2
+

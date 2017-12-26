@@ -1,0 +1,113 @@
+
+
+shmget(2)                                               shmget(2)
+
+SSyynnooppssiiss
+       #include   <sys/types.h>   #include  <sys/ipc.h>  #include
+       <sys/shm.h>
+
+       int shmget(key_t key, size_t size, int shmflg);
+
+DDeessccrriippttiioonn
+       shmget returns the  shared  memory  identifier  associated
+       with key.  This identifier is accessible by any process in
+       the system, subject to normal access restrictions and  the
+       permissions set with shmflg.
+
+       Permitted  values for shmflg are: Create the segment if it
+       does not already exist in  the  kernel.   When  used  with
+       IPC_CREAT, fail if segment already exists.
+
+       If IPC_CREAT is used alone, shmget either returns the seg-
+       ment identifier for a newly created  segment,  or  returns
+       the  identifier  for  a segment which exists with the same
+       key value.  If IPC_CREAT is used with IPC_EXCL, a new seg-
+       ment  is created unless the segment exists, in which case,
+       the call fails with -1. IPC_EXCL guarantees that no exist-
+       ing segment is opened for access.  IPC_SPECIAL must be set
+       if any of  SHM_BALANCED,  SHM_CPUGROUP,  SHM_FINEGRAIN  or
+       SHM_FIRSTUSAGE  is set.  The calling process must have the
+       P_PLOCK privilege to use this flag.   Specifies  that  the
+       shared  memory will have read access only.  Specifies that
+       the shared memory will have write access only.   Specifies
+       that  shared  memory will be accessed read/write, or read-
+       only but such that replication at each CPU-group in a par-
+       titioned  system  is  not desired. It is expected that the
+       memory will be accessed from many  CPU-groups,  so  it  is
+       appropriate to allocate physical memory so as to spread it
+       evenly across these CPU-groups.
+
+       SHM_BALANCED may not be specified if  either  of  SHM_CPU-
+       GROUP and SHM_FIRSTUSAGE is specified.  Specifies that the
+       memory for the shared memory should be allocated from  the
+       CPU-Group where the caller is currently executing.
+
+       SHM_CPUGROUP  may  not  be specified if either of SHM_BAL-
+       ANCED and SHM_FIRSTUSAGE is specified.  Advises the system
+       that  may  be  used to control the location of portions of
+       the shared memory segment at a finer degree  of  granular-
+       ity.  If  this  flag  is  not set the system may choose to
+       optimize access to the shared memory segment in such a way
+       that it is not possible to control physical memory alloca-
+       tion on a page granular basis.   Specifies  that  physical
+       pages for the shared memory segment are to be allocated on
+       whichever CPU-Group is executing the thread that makes the
+       initial access to the shared memory.
+
+       SHM_FIRSTUSAGE  may not be specified if either of SHM_BAL-
+       ANCED and SHM_CPUGROUP is specified.
+
+                                                                1
+
+shmget(2)                                               shmget(2)
+
+       A shared memory identifier and associated  data  structure
+       and  shared memory segment of at least size bytes (see are
+       created for key if one of the following are true:  key  is
+       equal  to IPC_PRIVATE.  key does not already have a shared
+       memory  identifier   associated   with   it,   and   (shm-
+       flg&IPC_CREAT) is true.
+
+       On  creation,  the  data structure associated with the new
+       shared  memory  identifier  is  initialized  as   follows:
+       shm_perm.cuid,     shm_perm.uid,     shm_perm.cgid,    and
+       shm_perm.gid are set equal to the effective  user  ID  and
+       effective  group ID, respectively, of the calling process.
+       The access permission bits of shm_perm.mode are set  equal
+       to the access permission bits of shmflg.  shm_segsz is set
+       equal  to  the  value  of  size.   shm_lpid,   shm_nattch,
+       shm_atime, and shm_dtime are set equal to 0.  shm_ctime is
+       set equal to the current time.
+
+RReettuurrnn vvaalluueess
+       On success, shmget returns a non-negative integer,  namely
+       a shared memory identifier.  On failure, shmget returns -1
+       and sets errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, shmget fails and  sets  errno
+       to:  size  is  less  than  the  system-imposed  minimum or
+       greater than the system-imposed maximum.  A shared  memory
+       identifier exists for key but operation permission (see as
+       specified by the low-order 9 bits of shmflg would  not  be
+       granted.   A  shared  memory identifier exists for key but
+       the size of the segment associated with it  is  less  than
+       size and size is not equal to zero.  A shared memory iden-
+       tifier does not exist for key  and  (shmflg&IPC_CREAT)  is
+       false.   A  shared memory identifier and associated shared
+       memory segment are to be created  but  the  system-imposed
+       limit on the maximum number of shared memory segments sys-
+       tem-wide would be exceeded.  A  shared  memory  identifier
+       and associated shared memory segment are to be created but
+       the amount of available memory is not sufficient  to  fill
+       the  request.   A  shared memory identifier exists for key
+       but  both  (shmflg&IPC_CREAT)  and  (shmflg&IPC_EXCL)  are
+       true.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The  user  must  explicitly  remove shared memory segments
+       after the last reference to them has been removed.
+
+                                                                2
+

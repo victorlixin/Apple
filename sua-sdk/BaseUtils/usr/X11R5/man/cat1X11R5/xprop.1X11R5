@@ -1,0 +1,295 @@
+xprop(1X11R5)                                             xprop(1X11R5)
+
+  xxpprroopp
+
+  NNAAMMEE
+
+    xprop - property displayer for X
+
+  SSYYNNOOPPSSIISS
+
+    xprop [[-display display]] [[-f atom format [[dformat]]]]**
+          [[-font font]] [[-frame]] [[-fs file]] [[-grammar]]
+          [[-help]] [[-id id]] [[-len n]] [[-name name]]
+          [[-notype]] [[-remove property-name]] [[-root]] [[-spy]]
+          [[format [[dformat]] atom]]**
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The xxpprroopp(1X11R5) utility is for displaying window and font properties in
+    an X server. One window or font is selected using the command-line
+    arguments or possibly, in the case of a window, by clicking the desired
+    window. A list of properties is then given, possibly with formatting
+    information.
+
+  OOPPTTIIOONNSS
+    --ddiissppllaayy display
+        This argument allows you to specify the server to connect to; see
+        XX(5X11R5).
+    --ff name format [dformat]
+        Specifies that the format for name should be format and that the
+        dformat for name should be dformat. If dformat is missing, " = $0+\n"
+        is assumed.
+    --ffoonntt font
+        This argument allows the user to specify that the properties of font
+        font should be displayed.
+
+    --ffrraammee
+        Specifies that when selecting a window by hand (that is, if --nnaammee, --
+        rroooott, or --iidd are not given), look at the window manager frame (if any)
+        instead of looking for the client window.
+    --ffss file
+        Specifies that file file should be used as a source of more formats
+        for properties.
+
+    --ggrraammmmaarr
+        Print out a detailed grammar for all command-line options.
+
+    --hheellpp
+        Print out a summary of command-line options.
+    --iidd id
+        This argument allows the user to select window id on the command line
+        rather than using the pointer to select the target window. This is
+        very useful in debugging X applications where the target window is not
+        mapped to the screen, or where the use of the pointer might be
+        impossible or interfere with the application.
+    --lleenn n
+        Specifies that at most n bytes of any property should be read or
+        displayed.
+    --nnaammee name
+        This argument allows the user to specify that the window named name is
+        the target window on the command line rather than using the pointer to
+        select the target window.
+
+    --nnoottyyppee
+        Specifies that the type of each property should not be displayed.
+    --rreemmoovvee property-name
+        Specifies the name of a property to be removed from the indicated
+        window.
+
+    --rroooott
+        This argument specifies that X's root window is the target window.
+        This is useful in situations where the root window is completely
+        obscured.
+
+    --ssppyy
+        Examine window properties forever, looking for property change events.
+
+    For each of these properties, a value on the selected window or font is
+    printed using the supplied formatting information if there is any. If no
+    formatting information is supplied, internal defaults are used. If a
+    property is not defined on the selected window or font, "not defined" is
+    printed as the value for that property. If no property list is given, all
+    the properties possessed by the selected window or font are printed.
+
+    A window can be selected in one of four ways. First, if the desired window
+    is the root window, the --rroooott argument can be used. If the desired window
+    is not the root window, it can be selected in two ways on the command
+    line, either by id number, such as might be obtained from
+    xxwwiinniinnffoo(1X11R5), or by name if the window possesses a name. The --iidd
+    argument selects a window by id number in either decimal or hexadecimal
+    (must start with 0x) while the --nnaammee argument selects a window by name.
+
+    The last way to select a window does not involve the command line. If --
+    ffoonntt, --iidd, --nnaammee, or --rroooott are not specified, a cross-hair cursor is
+    displayed and the user can choose any visible window by pressing any
+    pointer button in the desired window. To display properties of a font, as
+    opposed to a window, the --ffoonntt argument must be used.
+
+    Other than the above four arguments and the --hheellpp argument for obtaining
+    help, and the --ggrraammmmaarr argument for listing the full grammar for the
+    command line, all the other command-line arguments are used to specify
+    both the format of the properties to be displayed and how to display them.
+    The --lleenn n argument specifies that at most n bytes of any given property
+    will be read and displayed. This is useful, for example, when displaying
+    the cut buffer on the root window, which could run to several pages if
+    displayed in full.
+
+    Each property name is usually displayed by printing first the property
+    name, then its type (if it has one) in parentheses followed by its value.
+    The --nnoottyyppee argument specifies that property types should not be
+    displayed. The --ffss argument is used to specify a file containing a list of
+    formats for properties; the --ff argument is used to specify the format for
+    one property.
+
+    The formatting information for a property actually consists of two parts:
+    a format and a dformat. The format specifies the actual formatting of the
+    property (that is, whether it is made up of words, bytes, longs?, and so
+    on); the dformat specifies how the property should be displayed.
+
+    The following paragraphs describe how to construct formats and dformats.
+    However, for the most users and uses, this should not be necessary because
+    the built-in defaults contain the formats and dformats necessary to
+    display all the standard properties. It should only be necessary to
+    specify formats and dformats if a new property is being dealt with or the
+    user dislikes the standard display format. New users are encouraged to
+    skip this part.
+
+    A format consists of one of 0, 8, 16, or 32, followed by a sequence of one
+    or more format characters. The 0, 8, 16, or 32 specifies how many bits per
+    field there are in the property. Zero is a special case that means use the
+    field size information associated with the property itself. (This is only
+    needed for special cases like type INTEGER, which is actually three
+    different types, depending on the size of the fields of the property)
+
+    A value of 8 means that the property is a sequence of bytes. A value of 16
+    means that the property is a sequence of words. The difference between
+    these two lies in the fact that the sequence of words will be byte-swapped
+    but the sequence of bytes will not be when read by a computer of the
+    opposite byte order of the computer that originally wrote the property. or
+    more information on how properties are formatted and stored, consult the
+    Xlib manual.
+
+    After you have specified the size of the fields, you must specify the type
+    of each field (for example, an integer, a string, or an atom). This is
+    done using one format character per field. If there are more fields in the
+    property than format characters supplied, the last character will be
+    repeated as many times as necessary for the extra fields. The format
+    characters and their meanings are as follows:
+
+    a
+        The field holds an atom number. A field of this type should be of size
+        32.
+
+    b
+        The field is an boolean. A 0 means false; anything else means true.
+
+    c
+        The field is an unsigned number, a cardinal.
+
+    i
+        The field is a signed integer.
+
+    m
+        The field is a set of bit flags, 1 meaning on.
+
+    s
+        This field and the next ones up to either a 0 or the end of the
+        property represent a sequence of bytes. This format character is only
+        usable with a field size of 8 and is most often used to represent a
+        string.
+
+    x
+        The field is a hexadecimal number (like 'c', but displayed in
+        hex--most useful for displaying window ids and the like).
+
+    An example format is 32ica, which is the format for a property of three
+    fields of 32 bits each, the first holding a signed integer, the second an
+    unsigned integer, and the third an atom.
+
+    The format of a dformat, unlike that of a format, is not so rigid. The
+    only limitation on a dformat is that you cannot start with a letter or a
+    dash. This is so that it can be distinguished from a property name or an
+    argument. A dformat is a text string containing special characters
+    instructing that various fields be printed at various points in a manner
+    similar to the formatting string used by pprriinnttff. For example, the dformat
+    "is ( $0, $1 \)\n" would render the POINT 3, -4, which has a format of
+    32ii as "is ( 3, -4 )\n".
+
+    Any character other than a $$, ??, \\, or a (( in a dformat prints as itself.
+    To print out $$, ??, \\, or ((, precede it with a \\. For example, to print out
+    a $$, use \\$$. Several special backslash sequences are provided as
+    shortcuts. For example, \\nn will cause a newline to be displayed while \\tt
+    will cause a tab to be displayed. \\o, where o is an octal number, will
+    display character number o.
+
+    A $$ followed by a number n causes field number n to be displayed. The
+    format of the displayed field depends on the formatting character used to
+    describe it in the corresponding format. That is, if a cardinal is
+    described by 'c', it will print in decimal; if it is described by an 'x',
+    it is displayed in hex.
+
+    If the field is not present in the property (this is possible with some
+    properties), <field not available> is displayed instead. $$n++ will display
+    field number n, then a comma, then field number n++11, then another comma
+    and keep doing this up to the last field defined. If field n is not
+    defined, nothing is displayed. This is useful for a property that is a
+    list of values.
+
+    A ?? is used to start a conditional expression, a kind of if-then
+    statement. ??exp(text) will display text only if exp evaluates to non-zero.
+    This is useful for two things. First, it allows fields to be displayed
+    only if a flag is set. Second, it allows a value, such as a state number,
+    to be displayed as a name rather than as just a number. The syntax of exp
+    is as follows:
+
+    exp   ::= term | term=exp | !exp
+    term  ::= n | $n | mn
+
+    The !! operator is a logical "not", changing 0 to 1 and any non-zero value
+    to 0. == is an equality operator. Note that, internally, all expressions
+    are evaluated as 32-bit numbers so -1 is not equal to 65535. == returns 1
+    if the two values are equal and returns 0 if they are not. n represents
+    the constant value n, while $$n represents the value of field number n. mmn
+    is 1 if flag number n in the first field having format character 'm' in
+    the corresponding format is 1; 0 otherwise.
+
+    Examples: ?m3(count: $3\n) displays field 3 with a label of count only if
+    flag number 3 (count starts at 0!) is on. ?$2=0(True)?!$2=0(False)
+    displays the inverted value of field 2 as a boolean.
+
+    In order to display a property, xxpprroopprr needs both a format and a dformat.
+    Before xxpprroopprr uses its default values of a format of 32x and a dformat of
+    " = { $0+ }\n", it searches several places in an attempt to find more
+    specific formats. First, a search is made using the name of the property.
+    If this fails, a search is made using the type of the property. This
+    allows type STRING to be defined with one set of formats while allowing
+    property WM_NAME, which is of type STRING, to be defined with a different
+    format. In this way, the display formats for a given type can be
+    overridden for specific properties.
+
+    The locations searched are in the following order:
+    *     The format, if any, specified with the property name (as in 8x
+          WM_NAME).
+    *     The formats defined by --ff options, in last-to-first order.
+    *     The contents of the file specified by the --ffss option, if any.
+    *     The contents of the file specified by the environment variable
+          XPROPFORMATS if any.
+    *     The built-in file of formats for xxpprroopp(1X11R5).
+
+    The format of the files referred to by the --ffss argument and the
+    XPROPFORMATS variable is one or more lines of the following form:
+
+    name format [dformat]
+
+    where name is either the name of a property or the name of a type, format
+    is the format to be used with name, and dformat is the dformat to be used
+    with name. If dformat is not present, " = $0+\n" is assumed.
+
+  EEXXAAMMPPLLEESS
+
+    To display the name of the root window:
+
+    xprop -root WM_NAME
+
+    To display the window manager hints for the clock:
+
+    xprop -name xclock WM_HINTS
+
+    To display the start of the cut buffer:
+
+    xprop -root -len 100 CUT_BUFFER0
+
+    To display the point size of the fixed font:
+
+    xprop -font fixed POINT_SIZE
+
+    To display all the properties of window # 0x200007:
+
+    xprop -id 0x200007
+
+  EENNVVIIRROONNMMEENNTT VVAARRIIAABBLLEESS
+
+    DISPLAY
+        Contains default display.
+
+    XPROPFORMATS
+        Specifies the name of a file from which additional formats are to be
+        obtained.
+
+  SSEEEE AALLSSOO
+
+    _X(5X11R5)
+
+    _x_w_i_n_i_n_f_o(1X11R5)
+

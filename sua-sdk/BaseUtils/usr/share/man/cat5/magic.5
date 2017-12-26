@@ -1,0 +1,150 @@
+magic(5)                                                       magic(5)
+
+  mmaaggiicc
+
+  NNAAMMEE
+
+    magic - file command's magic number file
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ffiillee(1) command identifies the type of a file using a number of tests,
+    including a test for whether the file begins with a certain magic number.
+    The file mmaaggiicc specifies what magic numbers are to be tested for, what
+    message to print if a particular magic number is found, and additional
+    information to extract from the file.
+
+    Each line of the file specifies a test to be performed. A test compares
+    the data starting at a particular offset in the file with a one-byte, two-
+    byte, or four-byte numeric value or a string. If the test succeeds, a
+    message is printed. The line consists of the following fields:
+
+    offset  type  test  message
+
+    The fields are separated by white space; the message filed is the
+    remainder of the line.
+
+    bbyyttee
+        A one-byte value.
+
+    sshhoorrtt
+        A two-byte value (on most systems) in this computer's native byte
+        order.
+
+    lloonngg
+        A four-byte value (on most systems) in this computer's native byte
+        order.
+
+    ssttrriinngg
+        A string of bytes.
+
+    ddaattee
+        A four-byte value interpreted as a POSIX date.
+
+    bbeesshhoorrtt
+        A two-byte value (on most systems) in big-endian byte order.
+
+    bbeelloonngg
+        A four-byte value (on most systems) in big-endian byte order.
+
+    bbeeddaattee
+        A four-byte value (on most systems) in big-endian byte order,
+        interpreted as a POSIX date.
+
+    lleesshhoorrtt
+        A two-byte value (on most systems) in little-endian byte order.
+
+    lleelloonngg
+        A four-byte value (on most systems) in little-endian byte order.
+
+    lleeddaattee
+        A four-byte value (on most systems) in little-endian byte order,
+        interpreted as a POSIX date.
+
+    The numeric types can optionally be followed by && and a numeric value, to
+    specify that the value is to be AND'ed with the numeric value before any
+    comparisons are done.
+
+    test
+
+    The value to be compared with the value from the file. If the type is
+    numeric, this value is specified in C form; if it is a string, it is
+    specified as a C string with the usual escapes permitted (such as \n for
+    newline).
+
+    Numeric values can be preceded by a character indicating the operation to
+    be performed.
+
+    CChhaarraacctteerr     DDeessccrriippttiioonn
+
+    ==             The test succeeds if the value from the file equals the
+                  specified value.
+
+    <<             The test succeeds if the value from the file is less
+                  than the specified value.
+
+    >>             The test succeeds if the value from the file is greater
+                  than the specified value.
+
+    &&             The test succeeds if the value from the file has set all
+                  of the bits that are set in the specified value.
+
+    ^^             The test succeeds if the value from the file has clear
+                  any of the bits that are set in the specified value.
+
+    xx             The test succeeds if there is any value in the file.
+
+    Numeric values are specified in C form; that is, 1133 is decimal, 001133 is
+    octal, and 00xx1133 is hexadecimal. If the character is omitted, it is assumed
+    to be ==.
+
+    For string values, the byte string from the file must match the specified
+    byte string. The operators ==, << and >> (but not &&) can be applied to
+    strings. The length used for matching is that of the string argument in
+    the magic file. This means that a line can match any string, and then
+    presumably print that string, by doing >>\\00 (because all strings are
+    greater than the null string).
+
+    message
+
+    The message to be printed if the comparison succeeds. If the string
+    contains a _pp_rr_ii_nn_tt_ff(3)-format specification, the value from the file (with
+    any specified masking performed) is printed using the message as the
+    format string.
+
+    Some file formats contain additional information that is to be printed
+    along with the file type. A line that begins with the character >>
+    indicates additional tests and messages to be printed. The number of >> on
+    the line indicates the level of the test; a line with no >> at the
+    beginning is considered to be at level 0. Each line at level n+1 is under
+    the control of the line at level n most closely preceding it in the magic
+    file. If the test on a line at level n succeeds, the tests specified in
+    all the subsequent lines at level n+1 are performed, and the messages
+    printed if the tests succeed. The next line at level n terminates this. If
+    the first character following the last >> is a ((, the string after the
+    parenthesis is interpreted as an indirect offset. That means that the
+    number after the parenthesis is used as a offset in the file. The value at
+    that offset is read and used again as an offset in the file. Indirect
+    offsets are of the form:
+
+    ((x[..[bsl]][++|--][y]))
+
+    The value of x is used as an offset in the file. A byte, short or long is
+    read at that offset depending on the [bsl] type specifier. To that number,
+    the value of y is added, and the result is used as an offset in the file.
+    The default type if one is not specified is long.
+
+  BBUUGGSS
+
+    The formats lloonngg, bbeelloonngg, lleelloonngg, sshhoorrtt, bbeesshhoorrtt, lleesshhoorrtt, ddaattee, bbeeddaattee,
+    and lleeddaattee are system-dependent; perhaps they should be specified as a
+    number of bytes (2B, 4B, and so on), because the files being recognized
+    typically come from a system on which the lengths are invariant.
+
+    There is (currently) no support for specified-endian data to be used in
+    indirect offsets.
+
+  SSEEEE AALLSSOO
+
+    _f_i_l_e(1)
+

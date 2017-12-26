@@ -1,0 +1,143 @@
+
+
+connect(3sock)                                     connect(3sock)
+
+SSyynnooppssiiss
+       cc  [options]  file  -lsocket -lnsl #include <sys/types.h>
+       #include <sys/socket.h>
+
+       int connect(int socket, const  struct  sockaddr  *address,
+       size_t address_len);
+
+DDeessccrriippttiioonn
+       connect  requests  that  a connection be made on a socket.
+       If the initiating socket is not connection-oriented,  then
+       connect  sets  the socket's peer address but no connection
+       is made.  For SOCK_DGRAM sockets, the peer address identi-
+       fies where all datagrams are sent on subsequent calls, and
+       limits the remote sender for subsequent calls.  If address
+       is  a  null  address  for  the protocol, the socket's peer
+       address will be reset.
+
+       If the initiating socket is connection-oriented, then con-
+       nect  attempts  to  establish  a connection to the address
+       specified by address.
+
+       If the connection cannot be  established  immediately  and
+       O_NONBLOCK  is  not  set  for  the file descriptor for the
+       socket, connect will block for up to an unspecified  time-
+       out  interval until the connection is established.  If the
+       timeout interval expires before the connection  is  estab-
+       lished,  connect will fail and the connection attempt will
+       be aborted.  If connect is interrupted by a signal that is
+       caught while blocked waiting to connect, connect will fail
+       and set errno to EINTR, but the  connection  request  will
+       not  be  aborted,  and  the connection will be established
+       asynchronously.
+
+       If the connection cannot be  established  immediately  and
+       O_NONBLOCK  is set for the file descriptor for the socket,
+       connect will fail and set errno to  EINPROGRESS,  but  the
+       connection request will not be aborted, and the connection
+       will be established asynchronously.  Subsequent  calls  to
+       connect  for  the  same  socket,  before the connection is
+       established, will fail and set errno to EALREADY.
+
+       When the connection has been  established  asynchronously,
+       and  will indicate that the file descriptor for the socket
+       is ready for writing.  However, this is only  possible  if
+       the  socket  STREAMS  module  is the topmost module on the
+       protocol stack with a write service procedure.  This  will
+       be the normal case.
+
+FFiilleess
+       /usr/lib/locale/locale/LC_MESSAGES/uxns1
+
+RReettuurrnn vvaalluueess
+       If the connection or binding succeeds, then 0 is returned.
+       Otherwise a -1 is returned and a more specific error  code
+
+                                                                1
+
+connect(3sock)                                     connect(3sock)
+
+       is stored in errno.
+
+   EErrrroorrss
+       The  call fails if: The specified address is not available
+       from  the  local  machine.   Addresses  in  the  specified
+       address family cannot be used with this socket.  A connec-
+       tion request is already  in  progress  for  the  specified
+       socket.  socket is not a valid descriptor.  The attempt to
+       connect was refused or the target address was not  listen-
+       ing  for  connections.  The socket is non-blocking and the
+       connection cannot be completed immediately; the connection
+       will   be   established  asynchronously.   The  connection
+       attempt was interrupted before any  data  arrived  by  the
+       delivery  of a signal.  The connection will be established
+       asynchronously.  The socket is connection-oriented, and is
+       already connected.  The network is not reachable from this
+       host.  socket does  not  refer  to  a  socket.   The  file
+       referred  to  by  address is a socket of a type other than
+       the socket bound to the specified peer  address.   Connec-
+       tion  establishment  timed out without establishing a con-
+       nection.  The address is already in use.  The remote  host
+       reset the connection request.  address_len is not the size
+       of a valid address for the specified  address  family,  or
+       invalid  address  family  in sockaddr structure.  Pathname
+       resolution of a symbolic  link  produced  an  intermediate
+       result whose length exceeds PATH_MAX.  The local interface
+       used to reach the destination is down.  No buffer space is
+       available.   There  were  insufficient  STREAMS  resources
+       available to complete the operation.  If the address  fam-
+       ily of the socket is AF_UNIX, connect will fail if: A com-
+       ponent of the path prefix of the pathname  in  address  is
+       not  a  directory.   A  component  of  a pathname exceeded
+       NAME_MAX  characters  or  an  entire   pathname   exceeded
+       PATH_MAX.   Search permission is denied for a component of
+       the path prefix or write access to  the  named  socket  is
+       denied.  An I/O error occurred while reading from or writ-
+       ing to the file system.   Too  many  symbolic  links  were
+       encountered  in  translating  the  pathname in address.  A
+       component of the pathname does not name an  existing  file
+       or the pathname is an empty string.
+
+RReeffeerreenncceess
+       RFC 2133
+
+NNoottiicceess
+       The  behavior  of  non-blocking  connect  for  unix domain
+       (AF_UNIX) sockets  is  determined  by  the  value  of  the
+       ss_connafunixndelay parameter set by
+
+       The type of address structure passed to connect depends on
+       the address family.
+        domain sockets (address family AF_UNIX) require a  socke-
+       taddr_un structure as defined in sys/un.h; Internet domain
+       IPv4  sockets   (address   family   AF_INET)   require   a
+
+                                                                2
+
+connect(3sock)                                     connect(3sock)
+
+       sockaddr_in structure as defined in netinet/in.h; Internet
+       domain IPv6 sockets (address family  AF_INET6)  require  a
+       sockaddr_in6  structure as defined in netinet/in.h.  Other
+       address families may require other  structures.   Use  the
+       structure  appropriate  to  the  address  family; cast the
+       structure address to a generic struct sockaddr  *  in  the
+       call  to connect and pass the size of the structure in the
+       length argument.  If  connect  fails,  the  state  of  the
+       socket is unspecified.  Portable applications should close
+       the  file  descriptor  and  create  a  new  socket  before
+       attempting to reconnect.
+
+       In &geminiREL; the sockaddr structure has been modified to
+       support variable length sockets. The net  result  of  this
+       modification  is that the family member has been shortened
+       to 8 bits and a new 8-bit member inserted before it called
+       len.  For more information on the new sockaddr structures,
+       see: and
+
+                                                                3
+

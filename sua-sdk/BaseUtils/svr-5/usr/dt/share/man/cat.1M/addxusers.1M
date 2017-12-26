@@ -1,0 +1,191 @@
+
+
+addxusers(1M)                                       addxusers(1M)
+
+SSyynnooppssiiss
+       addxusers [ -efsuv ] [ -t type ] [ file ]
+
+DDeessccrriippttiioonn
+       addxusers  reads  the specified password file, and creates
+       the indicated user accounts by making  equivalent  entries
+       in the /etc/passwd file and I&A database.
+
+       file  should  be  in traditional format (as found on  sys-
+       tems).
+
+       If no file is given, addxusers does not attempt to add any
+       new  users and only performs certain consistency checks on
+       the existing user accounts.
+
+       addxusers reads from the standard input if file is  speci-
+       fied as -.
+
+       Login  names  must begin with a lowercase letter (this may
+       be overridden using  the  -f  option),  must  not  already
+       exist,  must  not  contain  a  slash  (/), and must not be
+       longer than 8 characters.
+
+       Numeric user IDs must not be already assigned (this may be
+       overridden  using the -f option), and must be in the range
+       0 to 60000 (inclusive).
+
+       Numeric group IDs must be in the range 0 to 60000  (inclu-
+       sive).  Groups  that  are missing from the file /etc/group
+       generate a warning; membership in groups  associated  with
+       protected subsystems also generate warnings.
+
+       Encrypted  passwords  are preserved; users are able to use
+       their old
+        passwords to log onto the new system.
+
+       Any password aging information that is present  is  trans-
+       lated into the equivalent expiration parameters.
+
+       The  comment field, initial working directory (home direc-
+       tory), and login  shell  are  preserved.  addxusers  warns
+       about  missing or inaccessible directories and shells, and
+       non-absolute pathnames. Users should not share home direc-
+       tories.
+
+       addxusers  takes  the  following  options:  Apply the same
+       checks to existing users as those for  new  users  (except
+       for membership in a protected subsystem group).
+
+       Normally,  only  minimal checks for corruption are carried
+       out on the existing /etc/passwd file before the new  users
+       are  added: checks are only performed for duplicated login
+       names or numeric user IDs, and bad format. These  are  all
+       fatal  errors, and prevent any new users from being added.
+
+                                                                1
+
+addxusers(1M)                                       addxusers(1M)
+
+       Force addxusers to allow multiple accounts with  the  same
+       UID, or accounts with names beginning with a digit or non-
+       alphanumeric character.  addxusers also displays a warning
+       message.   Check  the  existing  users for membership in a
+       protected subsystem group. As with new user accounts,  not
+       all of the problems that may be discovered are fatal (many
+       are only warnings).
+
+       Duplicate group names or numeric group IDs  in  /etc/group
+       generate warnings. However, if a protected subsystem group
+       is corrupted in this way, this is a fatal error (no  users
+       are  added).   Set the type of each created user; if omit-
+       ted, each user is classified as an individual.   type  can
+       be specified as a number, or a name from the I&A database:
+       -----------------------------------------------------------
+       Number    I&A name    Description
+       -----------------------------------------------------------
+       0         root        All-powerful user (UID 0)
+       1         operator    Various   classifications   of
+       2         sso         anonymous  system  administra-
+       3         admin       tion accounts
+       4         pseudo      General-purpose anonymous user
+       5         general     An    individual's    personal
+                             account
+       6         retired     An account that is  no  longer
+                             used
+       Specify  that file contains a list (one per line) of user-
+       names to add to the I&A database. Each user  must  already
+       have  an  entry in  format in /etc/passwd; this is used to
+       make an equivalent entry for the user in the I&A database.
+       This  allows the system administrator to add entries manu-
+       ally to the /etc/passwd file, and then easily correct  the
+       protected  password  database  to reflect these additions.
+       Display a ``being processed'' message (which includes  the
+       username)  for each user that addxusers attempts to add to
+       the system.  addxusers preserves any  Network  Information
+       Service  (NIS)  entries  in  /etc/passwd  and file.  These
+       entries are recognized by lines beginning with + or -.
+
+AAuutthhoorriizzaattiioonn
+       The  auth  subsystem  and  chown  kernel  privileges   are
+       required to run addxusers.
+
+RReeffeerreenncceess
+NNoottiicceess
+       When logging in,  truncates passwords to eight characters;
+       the &geminiRELtm; system does  not.  Therefore,  the  user
+       must not type more than eight characters when the password
+       from the  system is in effect.
+
+       Accounts  without  passwords  and  other  liberties   that
+       allows  are  more  restricted in . To continue to use such
+       poor security practices requires  customizing  the  system
+       defaults or the insecure accounts.
+
+                                                                2
+
+addxusers(1M)                                       addxusers(1M)
+
+       Some  standard  accounts  shipped  with the system provoke
+       warnings when the -e or -s options are specified.
+
+       Some vendors' systems support specifying a  value  in  the
+       comment  field, or doing a to the home directory (called a
+       sublogin).    Both   constructions   are   understood   by
+       addxusers,  and  the  nice  value  is  supported, however,
+       sublogins are not defined in  and cause a warning.
+
+SSttaannddaarrddss ccoommpplliiaannccee
+       addxusers is not part of any currently supported standard;
+       it  is an extension of AT&T System V provided by The Santa
+       Cruz Operation, Inc.
+
+EExxaammpplleess
+       The following steps should be performed when  migrating  a
+       community of users from a  system: Back up the home direc-
+       tories of the users on the  system using a command such as
+       (Do not back up these files using absolute pathnames.  For
+       example, if the accounts are in /usr, run the backup  com-
+       mand  from  that  directory,  not from /.)  Make a copy of
+       /etc/passwd and /etc/group from the   system.   (Again  do
+       not  back  these files up with absolute pathnames.)  After
+       making certain you are in single user  mode,  extract  the
+       backup  of  the user's home directories on the new system.
+       For example, if your user accounts  reside  in  /usr,  the
+       files  should  be  extracted  in  /usr  on the new system.
+       (Note that if you are using a mounted filesystem for  your
+       accounts,  you  must mount it before extracting your back-
+       ups.)  Extract the copy of the passwd and group files in a
+       temporary   directory;   for   example,   /tmp/passwd  and
+       /tmp/group.  Be careful not to overwrite  the  /etc/passwd
+       and  /etc/group  files  on  the new system.  Remove system
+       accounts (such as root and bin)  from  /tmp/passwd.   Also
+       remove  any accounts that already exist on the new system.
+       Separate the remaining accounts in /tmp/passwd (which  are
+       to  be  added  to  the new system) into different files by
+       user type. For example, place all pseudo-users in  a  file
+       called  /tmp/pseudo and all individual users in /tmp/indi-
+       vidual.  In your sorted /tmp  account  files,  you  should
+       change  login  names, numeric user IDs, numeric group IDs,
+       initial working directories, and shell programs as  neces-
+       sary to prevent conflicts with any accounts already on the
+       new system. (If any numeric user or group IDs are changed,
+       it may be desirable to or the appropriate home directories
+       and their contents on the new system.)   Merge  /tmp/group
+       (the saved copy of the
+        system's  /etc/group)  with  the new system's /etc/group;
+       see Make certain you are still  in  single-user  mode;  if
+       /etc/group  is  modified  while in multi-user mode, no-one
+       will be allowed to login.  Run addxusers on each file that
+       you   created   in   step   6:  addxusers  -t  pseudo-user
+       /tmp/pseudo 2>&1 | tee -a /tmp/errors addxusers  -t  indi-
+       vidual  /tmp/individual  2>&1  |  tee -a /tmp/errors It is
+
+                                                                3
+
+addxusers(1M)                                       addxusers(1M)
+
+       recommended that you save the standard  output  and  error
+       output  of  addxusers  (as shown above) for later analysis
+       and correction.  Use the Account Manager or  to  customize
+       the  newly  created accounts as necessary.  The authoriza-
+       tions may need customization. Accounts  that  are  neither
+       individuals nor retired should be assigned ``account which
+       may su''.
+
+                                                                4
+

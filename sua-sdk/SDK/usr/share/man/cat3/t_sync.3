@@ -1,0 +1,118 @@
+t_sync(3)                                                     t_sync(3)
+
+  tt__ssyynncc(())
+
+  NNAAMMEE
+
+    t_sync - synchronise transport library
+
+  SSYYNNOOPPSSIISS
+
+    #include <xti.h>
+
+    int t_sync(
+        int fd)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The tt__ssyynncc(3) function has only one parameter.
+
+    PPaarraammeetteerrss     BBeeffoorree ccaallll     AAfftteerr ccaallll
+
+    fd             x               /
+
+    For the transport endpoint specified by fd, tt__ssyynncc(3) synchronises the
+    data structures managed by the transport library with information from the
+    underlying transport provider. In doing so, it can convert an
+    uninitialised file descriptor (obtained using _oo_pp_ee_nn(2), _dd_uu_pp(2) or as a
+    result of a _ff_oo_rr_kk(2) and _ee_xx_ee_cc(2) ) to an initialised transport endpoint,
+    assuming that the file descriptor referenced a transport endpoint, by
+    updating and allocating the necessary library data structures. This
+    function also allows two cooperating processes to synchronise their
+    interaction with a transport provider.
+
+    For example, if a process forks a new process and issues an _ee_xx_ee_cc(2), the
+    new process must issue a tt__ssyynncc(3) to build the private library data
+    structure associated with a transport endpoint and to synchronise the data
+    structure with the relevant provider information.
+
+    It is important to remember that the transport provider treats all users
+    of a transport endpoint as a single user. If multiple processes are using
+    the same endpoint, they should coordinate their activities so as not to
+    violate the state of the transport endpoint. The function tt__ssyynncc(3)
+    returns the current state of the transport endpoint to the user, thereby
+    enabling the user to verify the state before taking further action. This
+    coordination is only valid among cooperating processes; it is possible
+    that a process or an incoming event could change the endpoint's state
+    after a tt__ssyynncc(3) is issued.
+
+    If the transport endpoint is undergoing a state transition when tt__ssyynncc(3)
+    is called, the function will fail.
+
+  VVAALLIIDD SSTTAATTEESS
+
+    ALL - apart from T_UNINIT
+
+  EERRRROORRSS
+
+    On failure, t_errno is set to one of the following:
+
+    [TBADF]
+        The specified file descriptor does not refer to a transport endpoint.
+        This error may be returned when the fd has been previously closed or
+        an erroneous number may have been passed to the call.
+
+    [TPROTO]
+        This error indicates that a communication problem has been detected
+        between XTI and the transport provider for which there is no other
+        suitable XTI error (t_errno).
+
+    [TSTATECHNG]
+        The transport endpoint is undergoing a state change.
+
+    [TSYSERR]
+        A system error has occurred during execution of this function.
+
+  RREETTUURRNN VVAALLUUEE
+
+    On successful completion, the state of the transport endpoint is returned.
+    Otherwise, a value of -1 is returned and t_errno is set to indicate an
+    error. The state returned is one of the following:
+
+    T_UNBND
+        Unbound.
+
+    T_IDLE
+        Idle.
+
+    T_OUTCON
+        Outgoing connection pending.
+
+    T_INCON
+        Incoming connection pending.
+
+    T_DATAXFER
+        Data transfer.
+
+    T_OUTREL
+        Outgoing orderly release (waiting for an orderly release indication).
+
+    T_INREL
+        Incoming orderly release (waiting for an orderly release request).
+
+  SSEEEE AALLSSOO
+
+    _dd_uu_pp(2)
+
+    _ee_xx_ee_cc(2)
+
+    _ff_oo_rr_kk(2)
+
+    _oo_pp_ee_nn(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The tt__ssyynncc function is not thread safe.
+
+    The tt__ssyynncc function is not async-signal safe.
+

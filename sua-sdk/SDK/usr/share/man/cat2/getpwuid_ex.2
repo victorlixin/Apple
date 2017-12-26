@@ -1,0 +1,159 @@
+getpwuid_ex(2)                                           getpwuid_ex(2)
+
+  ggeettppwwnnaamm(())
+
+  NNAAMMEE
+
+    getpwnam(), getpwnam_r(), getpwuid(), getpwuid_r(), getpwuid_ex() - user
+    accounts database operations
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/types.h>
+    #include <pwd.h>
+
+    struct passwd * getpwnam (const char *login)
+    int getpwnam_r (const char *name, struct passwd *pwd, char *buffer,
+           size_t bufsize, struct passwd **result)
+    struct passwd * getpwuid (uid_t uid)
+    int getpwuid_r (uid_t uid, struct passwd *pwd, char *buffer,
+           size_t bufsize, struct passwd **result)
+    struct passwd * getpwuid_ex (uid_t uid, int flags)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    These functions operate on the user accounts database file. Each function
+    returns information in a ppaasssswwdd structure, which contains the following
+    members (defined in the header file <<ppwwdd..hh>>):
+
+    struct passwd {
+       char * pw_name;   /* user name */
+       uid_t pw_uid;     /* user ID number */
+       gid_t pw_gid;     /* user's group ID number */
+       char * pw_dir;    /* initial working directory */
+       char * pw_shell;  /* initial shell program */
+       char * pw_passwd; /* always * */
+       char * pw_gecos;  /* user information; see text */
+       time_t pw_change; /* time until password must be changed */
+       time_t pw_expire; /* time when user's account expires */
+    };
+
+    The functions ggeettppwwnnaamm(2) and ggeettppwwuuiidd(2) search the user accounts
+    database for the given login name or user uid, respectively. Every Windows
+    system has its own security database, which is identified by its domain
+    name. Every user and group account defined on that system is stored in
+    this database. User and group names are unique with in a database because
+    they share the same name address space.
+
+    The ggeettppwwuuiidd__eexx(2) function is the same as ggeettppwwuuiidd(2) when the flags
+    argument is zero. If PW_FULLNAME is set in flags, all names returned in
+    the resulting ppaasssswwdd structure are fully qualified by their domain. For
+    example, instead of "+Administrator", the result is
+    "computername+Administrator".
+
+    The reentrant ggeettppwwnnaamm__rr(2) and ggeettppwwuuiidd__rr(2) functions update the ppaasssswwdd
+    structure identified by pwd and store a pointer to that structure at the
+    location pointed to by result. The structure contains an entry from the
+    user database with a name or uid matching the name or uid argument,
+    respectively. Storage referenced by the structure is allocated from the
+    memory provided by the buffer argument, which is bufsize bytes in size.
+    The maximum size needed for this buffer can be determined with the
+    {_SC_GETPW_R_SIZE_MAX} _ss_yy_ss_cc_oo_nn_ff(2) parameter. A NULL pointer is returned at
+    the location pointed to by result on error or if the requested entry is
+    not found.
+
+    Fully-qualified user and group names always include this domain name using
+    the following notations:
+
+    *     domain\\logname
+    *     domain++logname
+    *     logname
+
+    With the following meanings:
+    domain\\logname
+        The user logname in the specified domain.
+    domain++logname
+        The user logname in the specified domain. This is the format returned
+        by Interix calls.
+
+    logname
+        The user logname is a member of the principal domain. By default, the
+        principal domain is the domain to which the computer belongs or, in
+        the case of a computer that belongs to a workgroup, the name of the
+        computer itself.
+
+    Some user and group names are well-known in Windows and are always
+    prefixed with a bare +. This is an Interix shorthand notation where + is
+    the same as builtin+. These well-known users can be referred to by either
+    notation; examples include SYSTEM, Everyone and Administrators.
+
+    The value returned in ppaasssswwdd..ppww__nnaammee is a fully-qualified name in the
+    format domain++name. The value returned in ppaasssswwdd..ppww__sshheellll is taken from
+    the USERCOMMENT field; by default it is /bin/sh, but can be changed using
+    the cchhsshh(1) utility or the Win32 net.exe program. The value returned in
+    ppaasssswwdd..ppww__ggeeccooss is the user description string in the user database.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The functions ggeettppwwnnaamm(2) and ggeettppwwuuiidd(2) functions return a valid pointer
+    to a ppaasssswwdd structure on success or a NULL pointer if no matching entry is
+    found (which is not considered an error).
+
+    If an error occurs, the functions return a NULL pointer and set the value
+    of errno.
+
+    The return values may point to static data that is overwritten on each
+    call.
+
+    On success, the ggeettppwwnnaamm__rr(2) and ggeettppwwuuiidd__rr(2) functions return zero;
+    otherwise, an error number is returned to indicate the error.
+
+  EERRRROORRSS
+
+    The ggeettppwwuuiidd(2), ggeettppwwuuiidd__rr(2), ggeettppwwnnaamm(2), and ggeettppwwnnaamm__rr(2) calls may
+    fail for the following reasons:
+
+    [EIO]
+        An I/O error occurred.
+
+    [EINTR]
+        A signal was caught during the call.
+
+    The ggeettppwwuuiidd__rr(2) and ggeettppwwnnaamm__rr(2) calls may fail for the following
+    reason:
+
+    [ERANGE]
+        Insufficient storage was supplied by the buffer and bufsize arguments
+        to contain the data to be referenced by the resulting ppaasssswwdd
+        structure.
+
+  NNOOTTEESS
+
+    There is a long-standing convention that the ppww__ggeeccooss member contains a
+    string of comma-separated fields, traditionally:
+
+    fullname,office#,workphone#,homephone#
+
+    It is not reasonable to assume that Windows administrators will follow
+    this convention. Therefore, code such as this may not return the expected
+    information:
+
+    char *cp = strtok(Sender->pw_gecos,",;");
+
+  SSEEEE AALLSSOO
+
+    _g_e_t_g_r_n_a_m(2)
+
+    _g_e_t_g_r_o_u_p_s(2)
+
+    _g_e_t_l_o_g_i_n(2)
+
+    _s_t_r_i_p_d_o_m_a_i_n_p_r_e_f_i_x(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The following functions are thread safe: ggeettppwwnnaamm__rr,, ggeettppwwuuiidd__rr. The
+    following functions are not thread safe: ggeettppwwnnaamm,, ggeettppwwuuiidd,, ggeettppwwuuiidd__eexx.
+
+    None of these functions are async-signal safe.
+

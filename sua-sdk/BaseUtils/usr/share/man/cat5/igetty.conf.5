@@ -1,0 +1,112 @@
+igetty.conf(5)                                           igetty.conf(5)
+
+  iiggeettttyy..ccoonnff
+
+  NNAAMMEE
+
+    igetty.conf -
+
+  SSYYNNOOPPSSIISS
+
+    //eettcc//iiggeettttyy..ccoonnff
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The iiggeettttyy(1) utility uses the //eettcc//iiggeettttyy..ccoonnff configuration file to
+    determine the serial ports on which it (and its children) will listen, and
+    how the those ports will be configured. If a serial port is not listed in
+    the //eettcc//iiggeettttyy..ccoonnff file, it will be left alone.
+
+    In //eettcc//iiggeettttyy..ccoonnff, each line is treated as a command line to the
+    iiggeettttyy(1) child. The line is parsed as ggeettoopptt(3) would parse it. Lines
+    beginning with the number-sign character (##) in the first column will be
+    treated as comments.
+
+    Arguments on the line are to be separated with white space (blanks or
+    tabs).
+
+    The first argument must be the path to the serial device with which the
+    iiggeettttyy(1) child is to be associated (that is, //ddeevv//ttttyy0011). The remainder
+    of the line will contain, in no particular order, the configuration
+    options for that serial device. The synopsis of the line is as follows:
+
+    path [[-b bits]] [[-I]] [[-p parity]] [[-s speed]] [[-S stopbits]] [[-t termtype]]
+
+    Unknown options will be ignored (for future backward compatibility).
+    Future versions might include additional options.
+    --bb bits
+        Specifies the number of bits per byte. Valid values are 55, 66, 77, and 88
+        (default).
+
+    --II
+        Passed to llooggiinn(1).
+    --pp parity
+        Specifies the parity. Valid values are eevveenn, oodddd, and nnoonnee (default).
+    --ss speed
+        Specifies the speed (baud rate) for the terminal. The default speed is
+        9600. If an unsupported value is specified, the default rate is used.
+    --SS 1|2
+        Specifies the number of stop bits to be used. Valid values are 11
+        (default) and 22.
+    --tt term
+        Specifies the type of terminal expected to be connected to the port.
+        This value is used to set the environment variable TERM. If this
+        option is not specified, the environment variable TERM will be set to
+        dduummbb.
+
+    When the serial device sends a BREAK, iiggeettttyy(1) will reconfigure to use
+    the next configured baud rate.
+
+    For valid options, when an invalid operand is specified, the default
+    operand will be used instead (that is, 8 for --bb). Usually, there will be
+    only one line per serial device. Some serial devices might, at different
+    times, require different settings, however. Therefore, multiple lines
+    defining different configurations per serial device are allowed. At
+    startup, the first entry in the configuration file will be used. When the
+    serial device sends a BREAK, iiggeettttyy(1) will reconfigure to use the next
+    entry for the serial device. When there is only one entry, iiggeettttyy(1) will
+    reconfigure the line with the same settings.
+
+    Autobauding is not currently supported.
+
+    The iiggeettttyy(1) utility runs much like a daemon. It runs in its own session
+    without a controlling terminal. The iiggeettttyy(1) utility (the parent) then
+    forks one child iiggeettttyy(1) per serial device. The child iiggeettttyy(1) has its
+    own session and attempts to open the device and then set it as the
+    controlling terminal for its session. If the child cannot open the
+    terminal, it will sleep for 10 seconds before exiting. If the child can
+    open the terminal but cannot acquire it as the controlling terminal for
+    its session, it will sleep for 30 seconds and continually retry.
+
+    Once fully connected, iiggeettttyy(1) will prompt for login. It is here that the
+    'break' key can be used to "roll" through different serial device
+    configurations. Once a user name has been entered, llooggiinn(1) is invoked,
+    and the 'break' key will not select configurations. If login is terminated
+    (by signal or end-of-file) or times out, the iiggeettttyy(1) parent will notice
+    and start a new child iiggeettttyy(1).
+
+    After llooggiinn(1) completes authentication, the normal login and shell
+    startup takes place. When the session leader exits, the parent iiggeettttyy(1)
+    will notice and start a new child iiggeettttyy(1).
+
+    The file //eettcc//iiggeettttyy..ccoonnff can be examined as a sample configuration file.
+    It is important to be aware that many personal computer systems have a
+    serial mouse attached to //ddeevv//ttttyy0000. Attaching a mouse with a PS/2 or
+    universal serial bus (USB) connection will allow both motherboard serial
+    ports to be used at the same time (//ddeevv//ttttyy0000 ((/dev/tty00 and //ddeevv//ttttyy0011).
+
+    Third-party serial port expanders (cards or SCSI buses) do not all perform
+    the same with respect to a number of factors. Most notable are their
+    device drivers. If a system panic occurs while third-party serial port
+    expanders are being used, contact the vendor of the board.
+
+    Modems can be connected with a "straight serial cable." Terminals must be
+    connected with either a "null modem cable" or a combination of a "null
+    modem" and a "straight serial cable." See the _r_s_-_2_3_2(5) manual page for
+    more details.
+
+  FFIILLEESS
+
+    //uussrr//ssbbiinn//iiggeettttyy
+        Subsystem for UNIX-based Applications "mini-getty" to configure serial ports.
+

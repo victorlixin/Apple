@@ -1,0 +1,268 @@
+
+
+admin(1)                                                 admin(1)
+
+SSyynnooppssiiss
+       admin    [-i[name]]    [-b]    [-n]   [-rrel]   [-t[name]]
+       [-fflag[flag-val]]         [-dflag[flag-val]]    [-alogin]
+       [-elogin] [-m[mrlist]] [-y[comment]]      [-h] [-z] file .
+       . .
+
+DDeessccrriippttiioonn
+       admin is used to create new SCCS files and change  parame-
+       ters  of  existing  ones.   Arguments  to admin, which may
+       appear in any order, consist of keyletter arguments  (that
+       begin  with  -)  and file names (note that SCCS file names
+       (file) must begin with the ASCII characters s.).
+
+       If file does not exist, it is created and  its  parameters
+       are initialized according to the specified keyletter argu-
+       ments.  Parameters not initialized by a keyletter argument
+       are assigned a default value.  If file does exist, parame-
+       ters corresponding to specified  keyletter  arguments  are
+       changed, and other parameters are left unchanged.
+
+       If  file is a directory, admin behaves as though each file
+       in the directory were specified as file, except that  non-
+       SCCS files (last component of the path name does not begin
+       with s.)  and unreadable files are silently ignored.
+
+       If file is -, the standard input is read; each line of the
+       standard  input is taken to be the name of an SCCS file to
+       be processed.  Again, non-SCCS files and unreadable  files
+       are silently ignored.
+
+       admin  recognizes supplementary code set characters in all
+       files, as well as in file names and in arguments given  to
+       the  -i,  -t, -f, and -y options (see below), according to
+       the locale specified in the LC_CTYPE environment  variable
+       (see  LANG  on  As  noted,  file names must begin with the
+       ASCII characters s.
+
+       The keyletter arguments are listed below.   Each  argument
+       is  explained  as  if  only  one file were to be processed
+       because the effect of each argument applies  independently
+       to  each file.  The name of a file from which the contents
+       for a new SCCS file are to be taken.  (If name is a binary
+       file, then you must specify the -b option.)  This contents
+       constitutes the first delta of the file (see -r  keyletter
+       for delta numbering scheme).  If the -i keyletter is used,
+       but name is omitted, the contents are obtained by  reading
+       the  standard  input  until an end-of-file is encountered.
+       If this keyletter is omitted, then the SCCS file  is  cre-
+       ated  so that the result of a will be an empty file.  Only
+       one SCCS file may be created by an admin command on  which
+       the i keyletter is supplied.  Using a single admin to cre-
+       ate two or more SCCS files requires that they  be  created
+       empty  (no  -i  keyletter).   Note  that  the -i keyletter
+       implies  the  -n  keyletter.    Supplementary   code   set
+
+                                                                1
+
+admin(1)                                                 admin(1)
+
+       characters  may  be  used  in name and in the file itself.
+       encode the contents of name, specified to the  -i  option.
+       This keyletter must be used if name is a binary file; oth-
+       erwise, a binary file will not be handled properly by SCCS
+       commands.   This  keyletter indicates that a new SCCS file
+       is to be created (implied by -i).  The release into  which
+       the initial delta is inserted.  This keyletter may be used
+       only if the -i keyletter is also used.  If the -r  keylet-
+       ter  is  not  used,  the  initial  delta  is inserted into
+       release 1.  The level of the initial delta is always 1 (by
+       default initial deltas are named 1.1).  The name of a file
+       from which descriptive text for the SCCS  file  is  to  be
+       taken.   If the -t keyletter is used and admin is creating
+       a new SCCS file (the -n and/or -i keyletters  also  used),
+       the  descriptive text file name must also be supplied.  In
+       the case of existing SCCS files: (1) a -t keyletter  with-
+       out a file name causes removal of the descriptive text (if
+       any) that is currently in the SCCS  file,  and  (2)  a  -t
+       keyletter with a file name causes text (if any) in file to
+       replace the descriptive text (if any) that is currently in
+       the  SCCS  file.  Supplementary code set characters may be
+       used in name and in the file itself.  This keyletter spec-
+       ifies  a  flag, and, possibly, a value for the flag, to be
+       placed in the SCCS file.  Several  -f  keyletters  may  be
+       supplied  on  a  single admin command line.  The allowable
+       flags and their values are: Allows use of the -b keyletter
+       on  a  get  command  to create branch deltas.  The highest
+       release (that is, ceiling): a number greater  than  0  but
+       less  than or equal to 9999 that may be retrieved by a get
+       command for editing.  The default value for an unspecified
+       c  flag  is  9999.  The lowest release (that is, floor): a
+       number greater than 0 but  less  than  9999  that  may  be
+       retrieved by a get command for editing.  The default value
+       for an unspecified f flag is 1.  The default delta  number
+       (SID)  to be used by a get command.  Causes the No id key-
+       words (ge6) message issued by get or delta to  be  treated
+       as  a  fatal error.  In the absence of this flag, the mes-
+       sage is only a warning.  The message is issued if no  SCCS
+       identification   keywords  (see  are  found  in  the  text
+       retrieved or stored in the SCCS file.  If a value is  sup-
+       plied,  the  keywords must exactly match the given string.
+       The string must contain a keyword, and  no  embedded  new-
+       lines.   Allows concurrent get commands for editing on the
+       same SID of an SCCS file.  This flag allows multiple  con-
+       current  updates  to the same version of the SCCS file.  A
+       list of releases to which deltas can  no  longer  be  made
+       (get  -e  against one of these ``locked'' releases fails).
+       list has the following syntax: list ::=  range  |  list  ,
+       range range ::= RELEASE NUMBER | a
+
+       The  character  a  in list is equivalent to specifying all
+       releases for file.  Causes delta to create a null delta in
+       each of those releases (if any) being skipped when a delta
+       is made in a new release (for example, in making delta 5.1
+
+                                                                2
+
+admin(1)                                                 admin(1)
+
+       after  delta  2.7,  releases  3 and 4 are skipped).  These
+       null deltas serve as anchor points so that  branch  deltas
+       may  later be created from them.  The absence of this flag
+       causes skipped releases to be  non-existent  in  the  SCCS
+       file,  preventing  branch  deltas  from being created from
+       them in the future.  User-definable text  substituted  for
+       all  occurrences  of  the  %Q%  keyword  in SCCS file text
+       retrieved by get.  Supplementary code set  characters  may
+       be used in text.  module name of the SCCS file substituted
+       for all occurrences of the %M% keyword in SCCS  file  text
+       retrieved  by  get.   If  the m flag is not specified, the
+       value assigned is the name of the SCCS file with the lead-
+       ing  s. removed.  Supplementary code set characters may be
+       used in the module name mod.  type of module in  the  SCCS
+       file  substituted  for  all  occurrences of %Y% keyword in
+       SCCS file contents retrieved  by  get.   Causes  delta  to
+       prompt for Modification Request (MR) numbers as the reason
+       for creating a delta.  The optional  value  specifies  the
+       name  of  an MR number validity checking program (see This
+       program will receive as arguments  the  module  name,  the
+       value of the type flag (see t type above), and the mrlist.
+       (If this flag is set when creating an  SCCS  file,  the  m
+       keyletter  must  also  be used even if its value is null).
+       Causes get  to  create  files  with  execute  permissions.
+       Causes  removal  (deletion)  of the specified flag from an
+       SCCS file.  The -d keyletter may be  specified  only  when
+       processing existing SCCS files.  Several -d keyletters may
+       be supplied in a single admin command.  See the -f keylet-
+       ter for allowable flag names.
+
+       (l  list  used  with -d indicates a list of releases to be
+       unlocked.  See the -f keyletter for a description of the l
+       flag  and the syntax of a list.)  A login name, or numeri-
+       cal  System group ID, to be added to the list of users who
+       may make deltas (changes) to the SCCS file.  A group ID is
+       equivalent to specifying all login names  common  to  that
+       group  ID.   Several  a keyletters may be used on a single
+       admin command line.  As many logins or numerical group IDs
+       as desired may be on the list simultaneously.  If the list
+       of users is empty, then anyone may add deltas.   If  login
+       or group ID is preceded by a !  they are to be denied per-
+       mission to make deltas.  A login name, or numerical  group
+       ID,  to  be  erased from the list of users allowed to make
+       deltas (changes) to the SCCS file.  Specifying a group  ID
+       is equivalent to specifying all login names common to that
+       group ID.  Several -e keyletters may be used on  a  single
+       admin  command  line.   The  list of Modification Requests
+       (MR) numbers is inserted into the SCCS file as the  reason
+       for  creating  the  initial delta in a manner identical to
+       delta.  The v flag must be set and the MR numbers are val-
+       idated if the v flag has a value (the name of an MR number
+       validation
+       program).  Diagnostics will occur if the v flag is not set
+       or MR validation fails.  The comment text is inserted into
+
+                                                                3
+
+admin(1)                                                 admin(1)
+
+       the SCCS file as a comment for the initial delta in a man-
+       ner  identical  to  that  of  delta.   Omission  of the -y
+       keyletter  results  in  a  default  comment   line   being
+       inserted.
+
+       The -y keyletter is valid only if the -i and/or -n keylet-
+       ters are specified (that is, a new SCCS file is being cre-
+       ated).   Supplementary  code set characters may be used in
+       comment.  Causes admin to check the structure of the  SCCS
+       file  (see  and to compare a newly computed check-sum (the
+       sum of all the characters in the SCCS file except those in
+       the  first  line) with the check-sum that is stored in the
+       first line of the SCCS file.  Appropriate  error  diagnos-
+       tics are produced.  This keyletter inhibits writing to the
+       file, nullifying the effect of any other  keyletters  sup-
+       plied;  therefore,  it  is only meaningful when processing
+       existing files.  The SCCS file check-sum is recomputed and
+       stored in the first line of the SCCS file (see -h, above).
+       Note that use of this keyletter on a truly corrupted  file
+       may prevent future detection of the corruption.
+
+       The  last  component of all SCCS file names must be of the
+       form s.file.  New SCCS files are given mode 444 (see Write
+       permission  in  the  pertinent  directory  is,  of course,
+       required to create a file.  All writing done by  admin  is
+       to a temporary file, called x.file, (see created with mode
+       444 if the admin command is creating a new SCCS  file,  or
+       with  the  same mode as the SCCS file if it exists.  After
+       successful execution of admin, the SCCS  file  is  removed
+       (if it exists), and x.file is renamed with the name of the
+       SCCS file.  This renaming process ensures that changes are
+       made to the SCCS file only if no errors occurred.
+
+       It  is  recommended that directories containing SCCS files
+       have mode 755 and that SCCS  files  themselves  have  mode
+       444.  The mode of the directories allows only the owner to
+       modify SCCS files contained in the directories.  The  mode
+       of  the SCCS files prevents any modification at all except
+       by SCCS commands.
+
+       admin also makes use of  a  transient  lock  file  (called
+       z.file),  which is used to prevent simultaneous updates to
+       the SCCS file by different users.  See for further  infor-
+       mation.
+
+FFiilleess
+       (see  (see  Program  to  compute  differences  between the
+       ``gotten'' file and the g.file (see language-specific mes-
+       sage file (See LANG on
+
+EExxaammpplleess
+       The  following  example  shows how to create an SCCS file,
+       s.prog.c, from the contents of a file containing a C  lan-
+       guage program, prog.c.  admin -iprog.c s.prog.c
+
+                                                                4
+
+admin(1)                                                 admin(1)
+
+       An  example for a file containing a shell program is simi-
+       lar, except that you should use the -fx option ,  so  that
+       will create file.sh to be executable.  admin -ifile.sh -fx
+       s.file.sh
+
+       You should include some SCCS information at the top  of  a
+       file.   In  the  above  shell example, to include the file
+       name, the SCCS version number, and the date  and  time  of
+       the  last  delta, include the following line at the begin-
+       ning of file.sh: #Id: %W%  Last Delta: %G% %U%
+
+       The above line would be translated by a command  as:  #Id:
+       @(#)file.sh        1.8 Last Delta: 4/25/91 17:05:19
+
+RReeffeerreenncceess
+DDiiaaggnnoossttiiccss
+       Use the help command for explanations.
+
+NNoottiicceess
+       If  it  is necessary to patch an SCCS file for any reason,
+       the mode may be changed to 644 by the owner  allowing  use
+       of  a  text  editor.   You must run admin -h on the edited
+       file to check for corruption followed by an  admin  -z  to
+       generate  a  proper check-sum.  Another admin -h is recom-
+       mended to ensure the SCCS file is valid.
+
+                                                                5
+

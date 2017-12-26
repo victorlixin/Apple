@@ -1,0 +1,71 @@
+
+
+maillock(3X)                                         maillock(3X)
+
+SSyynnooppssiiss
+       cc [flag . . . ] file . . . -lmail [library] . . .
+
+       #include <maillock.h>
+
+       int maillock (const char *user, int retrycnt);
+
+       int  maildlock (const char *user, int retrycnt, const char
+       *dir);
+
+       int mailunlock (void);
+
+DDeessccrriippttiioonn
+       The maillock and maildlock functions attempt to  create  a
+       lockfile  for  the user's mailfile.  If a lockfile already
+       exists, maillock and maildlock assume the contents of  the
+       file is the process ID (as a null-terminated ASCII string)
+       of the process that created the lockfile (presumably  with
+       a  call  to  maillock  or maildlock).  If the process that
+       created the lockfile is still alive, maillock  and  maild-
+       lock  will  sleep  and  try  again  retrycnt  times before
+       returning with an error indication.  The  sleep  algorithm
+       is  to sleep for 5 seconds times the attempt number.  That
+       is, the first sleep will be for 5 seconds, the next  sleep
+       will  be for 10 seconds, etc. until the number of attempts
+       reaches retrycnt.  When the lockfile is no longer  needed,
+       it should be removed by calling mailunlock.
+
+       user  is  the login name of the user for whose mailbox the
+       lockfile will be created.  maillock  assumes  that  users'
+       mailfiles  are  in  the  ``standard''  place as defined in
+       maillock.h.  maildlock uses the directory  passed  as  its
+       third argument.
+
+FFiilleess
+       /usr/lib/llib-lmail.ln    /usr/lib/libmail.a   /var/mail/*
+       /var/mail/*.lock
+
+RReettuurrnn vvaalluueess
+       The following return code  definitions  are  contained  in
+       maillock.h.  Only L_SUCCESS is returned for mailunlock.
+
+       ----------------------------------------------------------------
+       #define   L_SUCCESS    0   /* Lockfile created or removed */
+       #define   L_NAMELEN    1   /* Recipient name > 13 chars */
+       #define   L_TMPLOCK    2   /* Can't create tmp file */
+       #define   L_TMPWRITE   3   /* Can't write pid into lockfile */
+       #define   L_MAXTRYS    4   /* Failed after retrycnt attempts */
+       #define   L_ERROR      5   /* Check errno for reason */
+
+NNoottiicceess
+       The  maillock  routines  are obsolete and are provided for
+       compatibility only.
+
+                                                                1
+
+maillock(3X)                                         maillock(3X)
+
+       mailunlock will only remove the lockfile created from  the
+       most previous call to maillock.  Calling maillock for dif-
+       ferent users without intervening calls to mailunlock  will
+       cause  the initially created lockfile(s) to remain, poten-
+       tially blocking subsequent message delivery until the cur-
+       rent process finally terminates.
+
+                                                                2
+

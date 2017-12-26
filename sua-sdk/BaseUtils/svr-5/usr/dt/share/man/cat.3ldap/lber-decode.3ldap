@@ -1,0 +1,244 @@
+
+
+lber-decode(3ldap)                             lber-decode(3ldap)
+
+SSyynnooppssiiss
+       #include <lber.h>
+
+       typedef struct berelement {
+           char             *ber_buf;
+           char             *ber_ptr;
+           char             *ber_end;
+           struct seqorset  *ber_sos;
+           int              ber_tag;
+           int              ber_usertag; } BerElement;
+
+       typedef struct sockbuf {
+           int              sb_sd;
+           BerElement       sb_ber; } Sockbuf;
+
+       typedef struct berval {
+           unsigned long    bv_len;
+           char             *bv_val; };
+
+       ber_get_next(Sockbuf  *sb,  unsigned long *len, BerElement
+       *ber);
+
+       ber_skip_tag(BerElement *ber, unsigned long *len);
+
+       ber_peek_tag(BerElement *ber, unsigned long *len);
+
+       ber_get_int(BerElement *ber, long *num);
+
+       ber_get_stringb(BerElement *ber, char *buf, unsigned  long
+       *len);
+
+       ber_get_stringa(BerElement *ber, char **buf);
+
+       ber_get_stringal(BerElement *ber, struct berval **bv);
+
+       ber_get_null(BerElement *ber);
+
+       ber_get_boolean(BerElement *ber, int *bool);
+
+       ber_get_bitstringa(BerElement  *ber,  char **buf, unsigned
+       long *blen);
+
+       ber_first_element(BerElement  *ber,  unsigned  long  *len,
+       char **cookie);
+
+       ber_next_element(BerElement *ber, unsigned long *len, char
+       *cookie);
+
+       ber_scanf(BerElement *ber, char *fmt [, arg...]);
+
+       void ber_free(BerElement *ber, int freebuf);
+
+       ber_bvfree(struct berval *bv);
+
+                                                                1
+
+lber-decode(3ldap)                             lber-decode(3ldap)
+
+       ber_bvecfree(struct berval **bvec);
+
+DDeessccrriippttiioonn
+       These routines provide a subroutine interface to a simpli-
+       fied  implementation of the Basic Encoding Rules of ASN.1.
+       The version of BER  these  routines  support  is  the  one
+       defined for the LDAP protocol.  The encoding rules are the
+       same as BER, except that only definite  form  lengths  are
+       used,  and bitstrings and octet strings are always encoded
+       in primitive form. In addition, these lightweight BER rou-
+       tines  restrict  tags  and  class to fit in a single octet
+       (this means the actual tag must be less than 31).  When  a
+       tag  is  specified in the descriptions below, it refers to
+       the tag, class, and primitive or constructed  bit  in  the
+       first  octet  of the encoding. This man page describes the
+       decoding routines in the LBER library. See for details  on
+       the corresponding encoding routines.
+
+       Normally,  the  only  routines  that  need be called by an
+       application are ber_get_next to get the next  BER  element
+       and  ber_scanf  to  do the actual decoding. In some cases,
+       ber_peek_tag may also need to be called in  normal  usage.
+       The  other  routines  are  provided for those applications
+       that need more control than ber_scanf  provides.  In  gen-
+       eral,  these  routines  return  the  tag  of  the  element
+       decoded, or -1 if an error occurred.
+
+       The ber_get_next routine is used to read the next BER ele-
+       ment from the given Sockbuf, sb. A Sockbuf consists of the
+       descriptor (usually socket, but a  file  descriptor  works
+       just  as well) from which to read, and a BerElement struc-
+       ture used to maintain a buffer.  On the first call, sb_ber
+       should  be  zeroed.  It strips off and returns the leading
+       tag byte, strips off and returns the length of the  entire
+       element  in  len,  and sets up ber for subsequent calls to
+       ber_scanf (and others) to decode the element.
+
+       The ber_scanf routine is used to decode a BER  element  in
+       much  the  same  way that scanf works (see the manual page
+       for details).  It reads from ber, a pointer to  a  BerEle-
+       ment  such  as  returned  by  ber_get_next, interprets the
+       bytes according to the format string fmt, and  stores  the
+       results  in  its  additional  arguments. The format string
+       contains  conversion  specifications  which  are  used  to
+       direct  the  interpretation of the BER element. The format
+       string can contain the following characters: Octet string.
+       A  char ** should be supplied. Memory is allocated, filled
+       with the contents of the  octet  string,  null-terminated,
+       and  returned  in  the  parameter.  Octet string. A char *
+       buffer should be supplied, followed by  a  pointer  to  an
+       integer  initialized  to  the  size  of  the  buffer. Upon
+       return, the null-terminated octet string is put  into  the
+       buffer,  and  the integer is set to the actual size of the
+       octet string.  Octet string. A struct ber_val ** should be
+
+                                                                2
+
+lber-decode(3ldap)                             lber-decode(3ldap)
+
+       supplied,  which  upon  return points to a malloc'd struct
+       berval  containing  the  octet  string  and  its   length.
+       ber_bvfree  can  be  called  to  free the malloc'd memory.
+       Boolean. A pointer  to  an  integer  should  be  supplied.
+       Integer. A pointer to an integer should be supplied.  Bit-
+       string. A char ** should be supplied which will  point  to
+       the  malloc'd  bits, followed by an unsigned long *, which
+       will point to  the  length  (in  bits)  of  the  bitstring
+       returned.   Null. No parameter is required. The element is
+       simply skipped if it is  recognized.   Sequence  of  octet
+       strings.  A char *** should be supplied, which upon return
+       points to a malloc'd null-terminated  array  of  char  *'s
+       containing  the  octet  strings.  NULL  is returned if the
+       sequence  is  empty.   Sequence  of  octet  strings   with
+       lengths.  A  struct  berval  *** should be supplied, which
+       upon return points to a malloc'd null-terminated array  of
+       struct  berval  *'s containing the octet strings and their
+       lengths. NULL  is  returned  if  the  sequence  is  empty.
+       ber_bvecfree  can  be  called to free the malloc'd memory.
+       Skip  element.  The  next  element  is   skipped.    Begin
+       sequence.  No  parameter is required. The initial sequence
+       tag and length are skipped.  End sequence. No parameter is
+       required  and no action is taken.  Begin set. No parameter
+       is required. The initial set tag and length  are  skipped.
+       End  set. No parameter is required and no action is taken.
+       The ber_get_int routine tries to interpret the  next  ele-
+       ment  as  an integer, returning the result in num. The tag
+       of whatever it finds is returned on success, -1  on  fail-
+       ure.
+
+       The  ber_get_stringb  routine  is  used  to  read an octet
+       string into  a  preallocated  buffer.  The  len  parameter
+       should  be initialized to the size of the buffer, and will
+       contain the length of the octet string read  upon  return.
+       The  buffer  should be big enough to take the octet string
+       value plus a terminating NULL byte.
+
+       The ber_get_stringa routine is used to malloc  space  into
+       which an octet string is read.
+
+       The  ber_get_stringal routine is used to malloc space into
+       which an octet string and its length are read. It takes  a
+       struct  berval  **, and returns the result in this parame-
+       ter.
+
+       The ber_get_null routine is used to read a  NULL  element.
+       It returns the tag of the element it skips over.
+
+       The  ber_get_boolean  routine  is  used  to read a boolean
+       value. It is called  the  same  way  that  ber_get_int  is
+       called.
+
+       The ber_get_bitstringa routine is used to read a bitstring
+       value.  It takes a char ** which will  hold  the  malloc'd
+
+                                                                3
+
+lber-decode(3ldap)                             lber-decode(3ldap)
+
+       bits,  followed by an unsigned long *, which will point to
+       the length (in bits) of the bitstring returned.
+
+       The ber_first_element routine is used to  return  the  tag
+       and  length  of the first element in a set or sequence. It
+       also returns in  cookie  a  magic  cookie  parameter  that
+       should  be passed to subsequent calls to ber_next_element,
+       which returns similar information.
+
+RReettuurrnn vvaalluueess
+       If an error occurs during decoding, generally  these  rou-
+       tines return -1.
+
+WWaarrnniinnggss
+       The  return values for all of these functions are declared
+       in the <lber.h> header file. Some routines may malloc mem-
+       ory.
+
+EExxaammpplleess
+       Assume  the variable ber contains a lightweight BER encod-
+       ing of the following ASN.1 object: AlmostASearchRequest :=
+       SEQUENCE {
+           baseObject      DistinguishedName,
+           scope           ENUMERATED {
+               baseObject    (0),
+               singleLevel   (1),
+               wholeSubtree  (2)
+           },
+           derefAliases    ENUMERATED {
+               neverDerefaliases   (0),
+               derefInSearching    (1),
+               derefFindingBaseObj (2),
+               alwaysDerefAliases   3ldap
+           },
+           sizelimit       INTEGER (0 .. 65535),
+           timelimit       INTEGER (0 .. 65535),
+           attrsOnly       BOOLEAN,
+           attributes       SEQUENCE  OF AttributeType } The ele-
+       ment can be  decoded  using  ber_scanf  as  follows.   int
+       scope, ali, size, time, attrsonly; char   *dn, **attrs;
+
+       if ( ber_scanf( ber, "{aiiiib{v}}", &dn, &scope, &ali,
+           &size, &time, &attrsonly, &attrs ) == -1 )
+               /* error */ else
+               /* success */
+
+RReeffeerreenncceess
+       Yeong,   W.,   Howes,   T.,   and   Hardcastle-Kille,  S.,
+       Lightweight Directory Access  Protocol,  OSI-DS-26,  April
+       1992.
+
+       Information  Processing  -  Open Systems Interconnection -
+       Model and Notation - Service Definition - Specification of
+       Basic  Encoding  Rules  for  Abstract Syntax Notation One,
+
+                                                                4
+
+lber-decode(3ldap)                             lber-decode(3ldap)
+
+       International Organization for  Standardization,  Interna-
+       tional Standard 8825.
+
+                                                                5
+

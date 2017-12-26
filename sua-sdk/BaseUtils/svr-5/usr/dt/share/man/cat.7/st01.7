@@ -1,0 +1,67 @@
+
+
+st01(7)                                                   st01(7)
+
+DDeessccrriippttiioonn
+       The  st01  tape  driver receives command requests from the
+       kernel through the and system calls. The st01 driver  gen-
+       erates  the  appropriate  commands and passes them through
+       the host adapter driver to the tape device.  When  command
+       execution  is  complete,  the host adapter driver notifies
+       st01 through an interrupt. After this  notification,  st01
+       performs any required error recovery, and indicates to the
+       kernel that the input/output (I/O)  request  is  complete.
+       The  st01 driver operates independent of the hardware used
+       to communicate with the HBA bus.
+
+       I/O requests must be in length  a  multiple  of  the  tape
+       block length. The default value is 512 bytes.
+
+       Only  raw  character  interface  files  are provided. When
+       opened, the tape is assumed to be positioned  as  desired.
+       If a retension-on-open special file is opened, the tape is
+       retensioned before any I/O is performed.   When  a  T_RWD,
+       T_RETENSION,  T_LOAD,  or  T_UNLOAD ioctl is requested and
+       the tape has been written,  two  file  marks  are  written
+       before the ioctl is executed.
+
+       The  on  a tape device can fail if a tape is not inserted,
+       resulting in the error report EIO. An can also fail if the
+       tape  controller  associated  with the special file is not
+       detected by the driver. In this case, the  error  reported
+       is ENXIO.
+
+       The following table lists the actions that occur on close,
+       depending on whether the file is designated as  rewind  or
+       no-rewind, and if the tape was written or read:
+       --------------------------------------------------------------------
+       Rewind on   Tape    Tape       Action on
+       Close?      Read?   Written?   Close
+       --------------------------------------------------------------------
+       Yes         Yes     N/A        Rewind tape
+       Yes         N/A     Yes        Write two file marks and rewind tape
+       Yes         No      No         Rewind tape
+       No          No      No         No tape movement
+       No          Yes     N/A        Position tape after next file mark
+       No          N/A     Yes        Write  one  file  mark  and position
+                                      tape after this file mark
+
+       A read occurring when the tape is  positioned  immediately
+       before  a  file  mark  returns zero bytes, and the tape is
+       positioned after the file mark. As with other raw devices,
+       seeks  are ignored. Some tape devices allow both reads and
+       writes to occur between rewinds; the st01 driver  supports
+       these devices.
+
+   iiooccttll ccaallllss
+       The  calls  used  by the st01 driver are documented on the
+       manual page.
+
+                                                                1
+
+st01(7)                                                   st01(7)
+
+RReeffeerreenncceess
+
+                                                                2
+

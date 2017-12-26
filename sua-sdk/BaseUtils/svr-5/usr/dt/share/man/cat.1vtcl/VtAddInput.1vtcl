@@ -1,0 +1,52 @@
+
+
+VtAddInput(1vtcl)                               VtAddInput(1vtcl)
+
+SSyynnooppssiiss
+       VtAddInput fileID cmd
+
+DDeessccrriippttiioonn
+       Register  a  command  or procedure callback that is called
+       when an I/O stream is ready for file  activity.  When  the
+       stream  referenced by fileID becomes readable, writable or
+       in error, the callback command registered is  called  with
+       the  fileID  as its argument.  You can then read and write
+       to the stream without fear of the interpreter blocking.
+
+EExxaammpplleess
+       The  following  code  fragment  illustrates  the  use   of
+       VtAddInput  to  filter the output of a  system command, in
+       this case find.
+       proc dumpFoundCB {fid} {
+
+           set count 1
+           while { $count > 0 } {
+               set count [gets $fid line]  ;# read a line of input
+               puts stdout ">> $line"
+           }
+
+            if { $count == -1 } { ;# end of file
+               echo "\n\nFinished"
+               exit 0
+            }
+
+       }
+
+       set cmd {| /bin/find /usr -name "*" -print}
+
+       # open the pipe
+       if [catch {set f [open  $cmd ] } msg ] {
+           echo "open failed"
+           exit 1
+       }
+
+       #setup read handler on it..
+       VtAddInput $f dumpFoundCB
+
+       VtMainLoop
+
+NNoottiicceess
+       You must execute to allow the callback to be called.
+
+                                                                1
+

@@ -1,0 +1,105 @@
+
+
+getspent(3G)                                         getspent(3G)
+
+SSyynnooppssiiss
+       cc [flag . . . ] file . . . -lgen [library] . . .
+
+       #include <shadow.h>
+
+       struct spwd *getspent (void);
+
+       struct spwd *getspnam (const char *name);
+
+       int lckpwdf (void);
+
+       int ulckpwdf (void);
+
+       void setspent (void);
+
+       void endspent (void);
+
+       struct spwd *fgetspent (FILE *fp);
+
+DDeessccrriippttiioonn
+       The  getspent  and getspnam routines each return a pointer
+       to an object with the following structure  containing  the
+       broken-out fields of a line in the /etc/shadow file.  Each
+       line in the file contains a ``shadow password'' structure,
+       declared   in  the  shadow.h  header  file:  struct  spwd{
+            char *sp_namp;                         char *sp_pwdp;
+            long sp_lstchg;       long sp_min;       long sp_max;
+            long sp_warn;                          long sp_inact;
+            long sp_expire;      unsigned long  sp_flag; };
+
+       The  getspent  routine when first called returns a pointer
+       to the first spwd structure in the  file;  thereafter,  it
+       returns  a pointer to the next spwd structure in the file;
+       so successive calls can be used to search the entire file.
+       The  getspnam  routine  searches from the beginning of the
+       file until a  login  name  matching  name  is  found,  and
+       returns  a pointer to the particular structure in which it
+       was found.  The getspent and  getspnam  routines  populate
+       the  sp_min,  sp_max,  sp_lstchg,  sp_warn,  sp_inact,  or
+       sp_expire field with -1 or the sp_flag field with 0 if the
+       corresponding  field  in /etc/shadow is empty.  If an end-
+       of-file is encountered on reading, these functions  return
+       a  NULL  pointer.  If a read error occurs, these functions
+       return a NULL pointer and errno is  set  to  indicate  the
+       error.   If  there  is  a format error in the file, a NULL
+       pointer is returned and errno is set to EINVAL.
+
+       /etc/security/ia/.pwd.lock is the lock file.  It  is  used
+       to  coordinate  modification  access to the password files
+       /etc/passwd and /etc/shadow.   lckpwdf  and  ulckpwdf  are
+       routines  that are used to gain modification access to the
+       password files, through the lock file.   A  process  first
+       uses lckpwdf to lock the lock file, thereby gaining exclu-
+       sive rights  to  modify  the  /etc/passwd  or  /etc/shadow
+
+                                                                1
+
+getspent(3G)                                         getspent(3G)
+
+       password  file.   Upon completing modifications, a process
+       should release the lock on the  lock  file  via  ulckpwdf.
+       This  mechanism  prevents simultaneous modification of the
+       password files.
+
+       lckpwdf   attempts   to   lock   the    file    /etc/secu-
+       rity/ia/.pwd.lock within 15 seconds.  If unsuccessful, for
+       example, /etc/security/ia/.pwd.lock is already locked,  it
+       returns -1.  If successful, a return code other than -1 is
+       returned.
+
+       ulckpwdf  attempts   to   unlock   the   file   /etc/secu-
+       rity/ia/.pwd.lock.     If   unsuccessful,   for   example,
+       /etc/security/ia/.pwd.lock is already unlocked, it returns
+       -1.  If successful, it returns 0.
+
+       A call to the setspent routine has the effect of rewinding
+       the shadow password file to allow repeated searches.   The
+       endspent  routine  may be called to close the shadow pass-
+       word file when processing is complete.
+
+       The fgetspent routine returns a pointer to the  next  spwd
+       structure  in  the  stream fp, which matches the format of
+       /etc/shadow.
+
+   FFiilleess
+       /etc/shadow, /etc/passwd, /etc/security/ia/.pwd.lock
+
+   RReettuurrnn vvaalluueess
+       getspent,  getspnam,  lckpwdf,  ulckpwdf,  and   fgetspent
+       return a null pointer on EOF or error.
+
+RReeffeerreenncceess
+NNoottiicceess
+       This  routine  is  for internal use only; compatibility is
+       not guaranteed.
+
+       All information is contained in a static area, so it  must
+       be copied if it is to be saved.
+
+                                                                2
+

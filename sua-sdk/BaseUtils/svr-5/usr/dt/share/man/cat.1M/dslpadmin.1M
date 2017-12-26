@@ -1,0 +1,325 @@
+
+
+dslpadmin(1M)                                       dslpadmin(1M)
+
+SSyynnooppssiiss
+       dslpadmin [-C directory-context] [[-q print-queue-name [-D
+       queue-description]  [-n  local-queue-name]  [-o  banner  |
+       nobanner] [-A mail | none] [-F fault-recovery] [[[-P phys-
+       ical-printer-name] |  [-Q  print-queue-dn]]  [-s  network-
+       entity-name]]] [-P physical-printer-name [-T printer-type]
+       [-l location] [-L pdl-list]] [-q print-queue-name -P phys-
+       ical-printer-name  [-v  device-pathname] [-I content-type]
+       [[-i interface-script] | [-m [standard | PS]]] [-o  print-
+       options]]  [-q print-queue-name -Q print-queue-dn [-I con-
+       tent-type]]] [-q print-queue-name  -s  network-entity-name
+       [-a  print-system-DNS-name  |  printer-system-address] [-t
+       BSD | HPNP]]
+
+       dslpadmin [-C directory-context] [-q print-queue-name  [-u
+       physical-printer-name] [-U object-dn]]
+
+       dslpadmin [-C directory-context] [-x print-queue-name] [-X
+       physical-printer-name] [-r network-entity-name]
+
+       dslpadmin [-h]
+
+DDeessccrriippttiioonn
+       The dslpadmin command is used to  configure  a  directory-
+       enabled  print  service,  as follows: add print queues and
+       physical printers to the system modify  print  queues  and
+       physical  printers remove print queues and physical print-
+       ers from the system add and delete network entity  objects
+       for networked printers The dslpadmin utility parallels the
+       functionality supplied by (which is not  directory-aware),
+       and  continues to use the traditional flat file configura-
+       tion system. Note that where both systems are in use,  the
+       printer  subsystem employs information found in the direc-
+       tory first. It is the responsibility of the  administrator
+       to  ensure  that naming conflicts do not arise between the
+       two configuration systems.
+
+       The directory-enabled utilities employ distinguished names
+       (DNs),  relative distinguished names (RDNs), and directory
+       context. For an explanation of these, see
+
+       The user of this utility  must  be  directory-enabled  and
+       have permissions set for write, modify, search and read on
+       the directory, in the directory context in which they  are
+       administrator.
+
+   OOppttiioonnss
+       Note  that  some  of  the  following major options require
+       qualification, using the minor options, and some  combina-
+       tions  are invalid: Create or modify a print queue object.
+       The print-queue-name argument specifies the RDN of a print
+       queue  object.  When  adding a new print queue, the -s and
+       -P, or else -Q, options must always be specified, so  that
+
+                                                                1
+
+dslpadmin(1M)                                       dslpadmin(1M)
+
+       the  command  knows  the network-entity-name and physical-
+       printer-name, or else print-queue-dn, for the print  queue
+       being  added.  If  the  print queue object does not exist,
+       dslpadmin creates it.
+
+       A print queue  can  be  serviced  by:  a  single  physical
+       printer  (-P)  a  single  print  queue (-Q) multiple print
+       queues (-Q), that is, effectively  a  printer  class  (see
+       Create  or modify a physical printer object. The physical-
+       printer-name argument  specifies  the  RDN  of  a  printer
+       object.  If  the  object does not already exist, dslpadmin
+       creates it.
+
+       The -P option is not valid if the -Q option has been spec-
+       ified.   Specifies  the  network entity system object that
+       hosts the print queue. If -a is also given, the object  is
+       created  or  modified.  The  network-entity-name  argument
+       specifies the RDN of an object whose directory context  is
+       specified  by  the  -C option, or by the current directory
+       context. The network entity  object  defines  the  network
+       address  that  remote  clients  need  to use to access the
+       print queue.  Delete the print queue object.   Delete  the
+       physical printer object.  Delete the network entity system
+       object. Care needs to be taken not to delete a non-printer
+       system object. It is the responsibility of the administra-
+       tor to ensure that the correct object is deleted.  A  com-
+       mand  line  can contain any combinations of options -q, -P
+       and -s, or any combination of -x, -X and -r, but only  one
+       of each option. When multiple directory objects are simul-
+       taneously created or modified, appropriate links  are  set
+       up  between the three object types (printers, print queues
+       and network entities).
+
+       Some of the major operations can be enhanced  using  addi-
+       tional  minor  options.   Some  of  these enhancements are
+       mandatory.
+
+       The following minor  options  are  valid  with  all  major
+       options:  Specifies the directory context for the command.
+       If this is not given, the user's current directory context
+       is  used.   Displays  a  brief help screen.  The following
+       minor option is valid in combination with -s: Associates a
+       DNS  name or network address with the system. If the argu-
+       ment given can be interpreted as an IPv4 or IPv6  address,
+       it  is  an address, if not it is assumed to be a DNS name.
+       The option causes the network entity object  specified  by
+       -s  to be modified, or else created if it does not already
+       exist. The administrator should ensure that network entity
+       objects  are  given unique names, so as to avoid modifying
+       existing  system objects instead of adding new print  sys-
+       tem  objects.   The  following  minor options are valid in
+       combination with -q: Instructs the print system to  gener-
+       ate  a mail message if a print request fails.  The mail is
+       sent to the owner of the physical printer, or to the  root
+
+                                                                2
+
+dslpadmin(1M)                                       dslpadmin(1M)
+
+       user of the system hosting the print queue, if the printer
+       has no owner or the user has no mail address. The  default
+       is  none.   Defines  a  description  comment for the print
+       queue (-q) object. This is then displayed whenever a  user
+       asks  for  a  full  description of a print queue using the
+       utility. Strings containing whitespace  should  be  double
+       quoted.   Defines  the  print queue's fault recovery mode.
+       This option specifies the  recovery  to  be  used  if  the
+       printer  on  a  print  queue  fails while printing a print
+       request. The value given to fault-recovery can be  any  of
+       the  following:  Continue  printing on the top of the page
+       where printing stopped. This requires a filter to wait for
+       the fault to clear before automatically continuing.  Start
+       printing the request again from  the  beginning.   Disable
+       printing  on physical-printer-name and wait for the admin-
+       istrator or a user to enable printing again.
+
+       During the wait the administrator or the user who  submit-
+       ted  the  stopped print request can issue a change request
+       that specifies where printing should resume. If no  change
+       request  is  made  before  printing  is  enabled, printing
+       resumes at the top of the page where it  stopped,  if  the
+       filter  allows; otherwise, the request is printed from the
+       beginning.
+
+       The default  value  is  beginning.   Specifies  the  print
+       queue's  content  types.  Allows the print queue to handle
+       print requests with the content types listed in the  list.
+       If  the  list  contains more than one content-type, commas
+       separate them. See the manual page for a full  description
+       of  the  format.  This also requires the -P or -Q options.
+       Defines the local name of a print queue.  This  name  nor-
+       mally  only differs from the queue's RDN when the queue is
+       on  a  non-directory-enabled   host,   for   example,   an
+       OpenServertm system. It is used by incoming remote network
+       connections to identify the print queue on  the  receiving
+       system.  The  default  value  is  the  print  queue's RDN.
+       Defines if a banner page will always be produced  by  this
+       print  queue.  The  default value, banner, forces a banner
+       page to be printed for all print requests, whereas  noban-
+       ner  allows the user to submit a print job specifying that
+       no banner page is to be printed.  Defines a print-queue-dn
+       to  service  the  print  queue  as  specified  with the -q
+       option. It allows a print queue to queue jobs  to  another
+       print  queue;  typically  this is used to allow the use of
+       filters that are available on the system hosting the first
+       queue  (-q),  but not on the system hosting the other (-Q)
+       queue. This option is invalid if -P or -i have been speci-
+       fied.  A  print  queue (-q) can queue to one or more other
+       print queues.  Defines the print  protocol  used  by  this
+       networked  printer  print  queue. Retry and timeout values
+       are set to their default values for a  networked  printer.
+       To  change  these,  the  utility should be used. Note that
+       this option should only be  used  for  networked  printers
+
+                                                                3
+
+dslpadmin(1M)                                       dslpadmin(1M)
+
+       supporting  the  BSD  or HPNP protocol.  Unlinks the named
+       physical printer from the print queue (-q) without  delet-
+       ing  its  object.   Unlinks either the physical printer or
+       the print queue object (specified by object-dn)  from  the
+       print  queue  (-q), without deleting its object.  The fol-
+       lowing minor options are valid when both  -q  and  -P  are
+       specified:  Pathname  for  the  printer's interface-script
+       when accessed through  the  specified  print  queue.  This
+       option  is  not valid if the -Q option has been specified,
+       or if the -P option has not  been  specified.   These  are
+       usually user-supplied scripts. This option cannot be given
+       when -m has also been specified.  Model interface  program
+       for  the printer when accessed through the specified print
+       queue. It selects the model interface script to be used by
+       the  print  queue. When a physical printer object is being
+       created, and neither the -m nor the  -i  option  has  been
+       specified,  the default is standard. This option cannot be
+       given when -i has also been  specified.   See  the  manual
+       page  for  full  details.  Device pathname for the printer
+       when accessed through the specified queue.  It  associates
+       device-pathname  with  the  print  queue  connected to the
+       physical printer. This can be either a serial or a  paral-
+       lel  device, such as /dev/lp.  The following minor options
+       are valid in combination with -P:  Defines  the  printer's
+       location.  This is a string identifying where a printer is
+       physically located, for example Building X, Room 6. It can
+       be  searched  on  by the utility. Once set, this value can
+       only be overwritten, not removed.  Specifies the  list  of
+       Page   Description   Languages  (PDLs)  supported  by  the
+       printer. This is used to advertise  any  PDL  the  printer
+       supports,  and  can be searched on, using the utility. The
+       AUTOSW, PCL, PCLXL, POSTSCRIPT, TEXT, ESCP, PJL and  OTHER
+       PDLs  are  supported.  If  the option is used to modify an
+       existing physical printer object, the  list  replaces  the
+       existing  list.   List of printer types. It identifies the
+       printer as being of one or more printer types, for example
+       hplaserjet. See the manual page for details.
+
+UUssaaggee
+       When configuring a print queue, where the administrator is
+       not on the system that is to host  the  print  queue,  the
+       interface-script  argument  to  -i and the device-pathname
+       argument to -v are not checked. This is because the remote
+       system cannot be accessed in order to do the checks. It is
+       therefore the  administrator's  responsibility  to  ensure
+       that  the  specified  interface-script and device-pathname
+       exist on the remote hosting system. This also  applies  to
+       the printer-type argument to -T.
+
+EExxiitt ccooddeess
+       On success, dslpadmin returns 0, otherwise one of the fol-
+       lowing exit codes  is  returned:  error  in  configuration
+       setup;  error  messages are displayed to qualify the error
+       or failure
+
+                                                                4
+
+dslpadmin(1M)                                       dslpadmin(1M)
+
+EExxaammpplleess
+       The following examples illustrate  use  of  the  dslpadmin
+       command, when the user is logged on to a directory-enabled
+       system.
+
+       The following adds an HP LaserJet  PostScript  printer  on
+       the  parallel  port  (/dev/lp) of the local system, with a
+       print queue RDN of delj5n, and a physical printer  RDN  of
+       deplj5n.   It  gives  the  print queue a description of HP
+       LaserJet (PostScript) and the model  interface  script  as
+       PS.   dslpadmin -q delj5n -P deplj5n -T PS-b -D "HP Laser-
+       Jet (Postscript)" \ -I PS -m PS  -v  /dev/lp  -A  mail  -o
+       nobanner  The  print  system  will allow print requests of
+       content type PS, and disable banner pages  on  this  print
+       queue.  If  a  printer fault occurs, the print system will
+       mail the owner of the printer.
+
+       The following adds an HP LaserJet PCL printer on the  par-
+       allel  port  (/dev/lp)  of  the local system, with a print
+       queue RDN of  delj5n2,  and  a  physical  printer  RDN  of
+       deplj5n2.  It  gives  the  print queue a description of HP
+       LaserJet (PCL), the printer type hplaserjet, and the model
+       interface  script  as  standard.   dslpadmin -q delj5n2 -P
+       deplj5n2 -T hplaserjet -D "HP LaserJet (PCL)" \ -I pcl  -m
+       standard  -v /dev/lp -A mail -o "stty='clocal -onlcr'" The
+       print system will allow print requests of content type PCL
+       for  this print queue, but will reject requests if no ban-
+       ner page is requested.  If a  printer  fault  occurs,  the
+       print system will mail the owner of the printer.
+
+       The  following  adds  an HP  LaserJet network printer that
+       uses the BSD remote print protocol, with a print queue RDN
+       of  denlj5n,  and  a physical printer RDN of denplj5n.  It
+       gives the  print  queue  a  description  of  HP  JetDirect
+       (PostScript),  the printer type PS-b, and the model inter-
+       face script as PS. The printer has a  network  address  of
+       p_hplj.caldera.com.   dslpadmin  -q denlj5n -P denplj5n -T
+       PS-b -D "HP JetDirect (Postscript)" \ -I PS -m PS -A  mail
+       -o  nobanner  -s denslj5n -a p_hplj.caldera.com -t BSD The
+       print system will allow print requests of content type  PS
+       for this print queue, and disables banner pages.
+
+       The  following  adds  an  HP  LaserJet  PostScript network
+       printer, using the HPNP  remote  print  protocol,  with  a
+       print  queue  RDN of dehpnp, and a physical printer RDN of
+       dephpnp.  It gives the print queue a description  of  HPNP
+       (PCL),  the  printer type hplaserjet, and the model inter-
+       face script as standard. The printer has a network address
+       of  p_hplj.caldera.com.  dslpadmin -q dehpnp -P dephpnp -T
+       hplaserjet -D "HPNP (PCL)" -I pcl \ -m standard -A mail -s
+       deshpnp  -a  p_hplj.caldera.com  -t  HPNP The print system
+       will allow print requests of content  type  PCL  for  this
+       print  queue,  and  reject  requests  if no banner page is
+       requested. If a printer fault  occurs,  the  print  system
+
+                                                                5
+
+dslpadmin(1M)                                       dslpadmin(1M)
+
+       will mail the owner of the printer.
+
+       The  following adds an HP LaserJet PCL printer to the par-
+       allel   port   (/dev/lp)   of   the    system   sys=jenny,
+       sys=domainx,  ou=eng,  o=sco,  with  a  print queue RDN of
+       delj5n2, and a physical printer RDN of deplj5n2.  It gives
+       the  print  queue  a description of HP LaserJet (PCL), the
+       printer type hplaserjet, and the model interface script as
+       standard.  dslpadmin -C "sys=domainx,ou=eng,o=sco" -q delj
+       -P deplj -T hplaserjet \ -D "HP LaserJet (PCL)"  -s  jenny
+       -I  pcl  -m  standard  -v /dev/lp -A mail \ -o nobanner -o
+       "stty='clocal -onlcr'" The print system will  allow  print
+       requests  of  content  type  PCL for this print queue, and
+       disables banner pages. If  a  printer  fault  occurs,  the
+       print system will mail the owner of the printer.
+
+       The  following  deletes an HP LaserJet PostScript printer:
+       dslpadmin -x delj5n  -X deplj5n The following  deletes  an
+       HPNP  printer:  dslpadmin -x dehpnp  -X dephpnp -r deshpnp
+       The following deletes an HP LaserJet PostScript printer on
+       server  jenny:  dslpadmin -C "sys=domainx,ou=eng,o=sco" -x
+       delj  -X deplj
+
+RReeffeerreenncceess
+
+                                                                6
+

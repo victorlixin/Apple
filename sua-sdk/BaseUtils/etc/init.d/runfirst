@@ -1,0 +1,66 @@
+#!/bin/sh
+#
+# init.d/runfirst
+#
+
+. /etc/init.d/funcs
+export PATH=/bin:/usr/sbin
+
+# Make sure /dev is up to date.
+#
+# NOTE: This code must be run very early on during bootstrap
+#       because /dev/null must be created before its used anywhere.
+#
+# If /var/adm/.security is trashed, then remake the special files.
+# Without them, there's no hope of the system coming up correctly.  Some
+# installations may have changed the default set of special files (by
+# using mknod).   /var/adm/.security should be maintained only by
+# the subsystem, but if it is discovered to be trashed or absent
+# it must be rebuilt. (Except on first boot, that would have to be
+# caused by user action or hardware failure.)  If we have to rebuild
+# the special files, the Administrator will need to reconfigure them
+# if they were customized.
+
+# If the 3d word of .security is numerically too small, the subsystem
+# either didn't find .security upon startup, or discovered it to be
+# trashed.  In either case, the small number (usually 0) indicates that
+# the special files must be remade.  So do that.
+case $PROCESSOR_ARCHITECTURE in
+	x86)
+	if [ $(hexdump -n4 -s12 -e '"%d\n"' /var/adm/.security) -lt 3 ]
+	then
+		/usr/sbin/makedev -f
+	fi
+	;;
+	AMD64|amd64|IA64|ia64)
+	if [ $(hexdump -n4 -s24 -e '"%d\n"' /var/adm/.security) -lt 3 ]
+	then
+		/usr/sbin/makedev -f
+	fi
+	;;
+esac
+
+# In any case, recreate /dev/null if its not a char special file
+# (If it is damaged, we need it fixed before going on.)
+#
+filename=/dev/null
+devnum=48
+if [ ! -c ${filename} ] ; then
+    /bin/rm -rf ${filename}
+    /usr/sbin/mknod ${filename} c ${devnum} 0
+fi
+unset filename
+unset devnum
+
+#==========================================================
+#
+# Check if '/etc/init.d/postinstall' file exists.
+# If so, then run it and then remove it.
+# This script should only exist directly after an install
+# or an upgrade.
+#
+if [ -f /etc/init.d/postinstall ]; then
+    /bin/sh /etc/init.d/postinstall
+    /bin/rm -f /etc/init.d/postinstall
+fi
+

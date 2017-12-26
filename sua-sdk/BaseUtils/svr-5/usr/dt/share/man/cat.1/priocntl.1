@@ -1,0 +1,452 @@
+
+
+priocntl(1)                                           priocntl(1)
+
+SSyynnooppssiiss
+       priocntl -l
+
+       priocntl -d [-i idtype] [idlist]
+
+       priocntl   -s  [-c  class]  [class-specific  options]  [-i
+       idtype] [idlist]
+
+       priocntl -e [-c class]  [class-specific  options]  command
+       [argument(s)]
+
+       priocntl -r size [-i idtype] [idlist]
+
+       priocntl -t interval [-i idtype] [idlist]
+
+       priocntl -q init min max [-i idtype] [idlist]
+
+       priocntl -g [-i idtype] [idlist]
+
+DDeessccrriippttiioonn
+       The priocntl command displays or sets scheduling and work-
+       ing set aging parameters of the specified process(es).  It
+       can  also  be  used  to  display the current configuration
+       information for the system's process scheduler or  execute
+       a  command  with  specified  scheduling  parameters.   The
+       options that manipulate or display the aging parameters of
+       the  specified  process(es)  are scheduling class indepen-
+       dent.
+
+       Processes fall  into  distinct  classes  with  a  separate
+       scheduling  policy applied to each class.  The two process
+       classes currently supported are the fixed  priority  class
+       and  the time-sharing class.  The characteristics of these
+       two classes and the class-specific options they accept are
+       described  under the headings ``Fixed priority class'' and
+       ``Time-sharing class''.  With appropriate permissions, the
+       priocntl command can change the class and other scheduling
+       parameters associated with a running process.
+
+       In the default configuration, a  runnable  fixed  priority
+       process  runs  before any other process.  Therefore, inap-
+       propriate use of fixed priority processes can have a  dra-
+       matic negative impact on system performance.
+
+       The  command  priocntl  -l displays a list of classes cur-
+       rently configured in the system along with  class-specific
+       information  about  each  class.  The format of the class-
+       specific information  displayed  is  described  under  the
+       appropriate heading below.
+
+       The  -d  and -s options to priocntl allow the user to dis-
+       play or set the scheduling parameters  associated  with  a
+       set of light-weight processes, or LWPs.  The -i option and
+       its associated idtype argument, together with  the  idlist
+
+                                                                1
+
+priocntl(1)                                           priocntl(1)
+
+       arguments  to  priocntl (if any), specify one or more LWPs
+       to which the priocntl command is to apply.  The  interpre-
+       tation  of  idlist  depends  on  the value of idtype.  The
+       valid idtype arguments and  corresponding  interpretations
+       of idlist are as follows: idlist is a list of process IDs.
+       The priocntl command applies to all LWPs currently associ-
+       ated  with  the  specified processes.  idlist is a list of
+       parent process IDs.  The priocntl command applies  to  all
+       LWPs currently associated with processes whose parent pro-
+       cess ID is in the list.  idlist is a list of process group
+       IDs.   The  priocntl command applies to all LWPs currently
+       associated with processes in the specified process groups.
+       idlist  is  a  list  of session IDs.  The priocntl command
+       applies to all LWPs currently associated with processes in
+       the specified sessions.  idlist consists of a single class
+       name (FP for fixed priority or TS for time-sharing).   The
+       priocntl  command  applies  to  all  LWPs currently in the
+       specified scheduling class.  idlist is a list of user IDs.
+       The  priocntl  command  applies to all LWPs that currently
+       have an effective user ID equal to an ID  from  the  list.
+       idlist  is  a  list  of  group  IDs.  The priocntl command
+       applies to all LWPs that currently have an effective group
+       ID  equal  to  an  ID from the list.  The priocntl command
+       applies to all currently existing LWPs.  No idlist  should
+       be  specified  (if  one is it is ignored).  The permission
+       restrictions described below still apply.
+
+       If the -i idtype option is omitted when using the -d or -s
+       options the default idtype of pid is assumed.
+
+       If an idlist is present it must appear last on the command
+       line and the elements of the list  must  be  separated  by
+       white  space.   If no idlist is present an idtype argument
+       of pid, ppid, pgid, sid, class, uid, or gid specifies  the
+       process  ID,  parent process ID, process group ID, session
+       ID, class, user ID, or group ID, respectively, of the pri-
+       ocntl command itself.
+
+       The  command priocntl -d [-i idtype] [idlist] displays the
+       class and class-specific scheduling parameters of the LWPs
+       specified by idtype and idlist.
+
+       The   command   priocntl  -s  [-c  class]  [class-specific
+       options] [-i idtype] [idlist] sets the  class  and  class-
+       specific parameters of the specified processes to the val-
+       ues given on the command line.  The -c class option speci-
+       fies  the class to be set.  (The valid class arguments are
+       FP for fixed priority or TS for time-sharing.)  The class-
+       specific  parameters to be set are specified by the class-
+       specific options as explained under the appropriate  head-
+       ing  below.  If the -c class option is omitted, idtype and
+       idlist must specify a set of LWPs that are all in the same
+       class,  otherwise  an error results.  If no class-specific
+       options  are  specified   the   process's   class-specific
+
+                                                                2
+
+priocntl(1)                                           priocntl(1)
+
+       parameters  are  set  to  the default values for the class
+       specified by -c class (or to the default parameter  values
+       for  the process's current class if the -c class option is
+       also omitted).
+
+       To change the scheduling parameters  of  a  process  using
+       priocntl  the real or effective user ID of the user invok-
+       ing priocntl must match the real or effective user  ID  of
+       the  receiving  LWP  the  user  must be a privileged user.
+       These are the minimum permission requirements enforced for
+       all  classes.   An  individual class can impose additional
+       permissions requirements when setting  processes  to  that
+       class  or  when  setting class-specific scheduling parame-
+       ters.
+
+       When idtype and idlist specify a set of processes,  prioc-
+       ntl acts on the processes in the set in an implementation-
+       specific order.  If priocntl encounters an error  for  one
+       or  more  of  the target processes, it may or may not con-
+       tinue through the  set  of  processes,  depending  on  the
+       error.   If  the error is related to permissions, priocntl
+       prints an error message and  then  continues  through  the
+       process  set, resetting the parameters for all target pro-
+       cesses for which the user has appropriate permissions.  If
+       priocntl  encounters  an  error other than permissions, it
+       does not continue through the process set  but  prints  an
+       error message and exits immediately.
+
+       A  special  sys scheduling class exists for scheduling the
+       execution of certain special system processes (such as the
+       swapper  process).  It is not possible to change the class
+       of any process to sys.  In addition, any processes in  the
+       sys class that are included in the set of processes speci-
+       fied by idtype and idlist  are  disregarded  by  priocntl.
+       For example, if idtype were uid, an idlist consisting of a
+       zero would specify all processes with a UID of zero except
+       processes in the sys class and (if changing the parameters
+       using the -s option) the init process.
+
+       The init process can be assigned to any  class  configured
+       on  the  system; however, the time-sharing class is almost
+       always the appropriate  choice.   (Other  choices  can  be
+       highly  undesirable;  see your system administration docu-
+       mentation for more information.)
+
+       The  command  priocntl  -e  [-c   class]   [class-specific
+       options] command [argument(s)] executes the specified com-
+       mand with the class and scheduling parameters specified on
+       the  command line (arguments are the arguments to the com-
+       mand).  If the -c class option is omitted the  command  is
+       run in the user's current class.
+
+   FFiixxeedd pprriioorriittyy ccllaassss
+       The   fixed  priority  class  provides  a  fixed  priority
+
+                                                                3
+
+priocntl(1)                                           priocntl(1)
+
+       preemptive scheduling policy for those processes requiring
+       fast and deterministic response and absolute user/applica-
+       tion control of scheduling priorities.  If the fixed  pri-
+       ority  class  is  configured  in the system it should have
+       exclusive control of the highest range of scheduling  pri-
+       orities on the system.  This ensures that a runnable fixed
+       priority process is given CPU service before  any  process
+       belonging to any other class.
+
+       The  fixed  priority  class  has a range of fixed priority
+       (fppri) values that can be assigned  to  processes  within
+       the  class.   Fixed priority priorities range from 0 to x,
+       where the value of x is configurable and can be  displayed
+       for  a specific installation by using the command priocntl
+       -l The fixed priority scheduling policy is a fixed  prior-
+       ity  policy.   The scheduling priority of a fixed priority
+       process never changes except as the result of an  explicit
+       request  by the user/application to change the fppri value
+       of the process.
+
+       For processes in the fixed priority class, the fppri value
+       is, for all practical purposes, equivalent to the schedul-
+       ing priority of the process.  The fppri  value  completely
+       determines  the  scheduling  priority  of a fixed priority
+       process relative to  other  processes  within  its  class.
+       Numerically  higher  fppri values represent higher priori-
+       ties.  Since the fixed priority class controls the highest
+       range of scheduling priorities in the system it is guaran-
+       teed that the runnable fixed  priority  process  with  the
+       highest  fppri  value is always selected to run before any
+       other process in the system.
+
+       In addition to providing control over  priority,  priocntl
+       provides  for  control over the length of the time quantum
+       allotted to processes in the fixed  priority  class.   The
+       time  quantum value specifies the maximum amount of time a
+       process can run  if  it  does  not  complete  or  enter  a
+       resource  or  event  wait  state  (sleep).   Note  that if
+       another process becomes runnable at a higher priority  the
+       currently  running process can be preempted before receiv-
+       ing its full time quantum.
+
+       The command priocntl -d [-i idtype] [idlist] displays  the
+       fixed  priority  and  time quantum (in millisecond resolu-
+       tion) for each fixed priority process in the set specified
+       by idtype and idlist.
+
+       The  valid class-specific options for setting fixed prior-
+       ity parameters are: Set the fixed priority of  the  speci-
+       fied  process(es)  to  fppri.  Set the time quantum of the
+       specified process(es) to tqntm.  Optionally you can  spec-
+       ify  a  resolution as explained below.  Any combination of
+       the -p and -t options can be used with priocntl -s or pri-
+       ocntl  -e  for  the fixed priority class.  If an option is
+
+                                                                4
+
+priocntl(1)                                           priocntl(1)
+
+       omitted and the process is currently  fixed  priority  the
+       associated parameter is unaffected.  If an option is omit-
+       ted when changing the class of a process to fixed priority
+       from  some other class, the associated parameter is set to
+       a default value.  The default value for fppri is 0 and the
+       default  for  time  quantum  is  dependent on the value of
+       fppri and on the system configuration [see
+
+       When using the -t tqntm option, optionally you can specify
+       a  resolution  using the -r res option.  (If no resolution
+       is specified, millisecond resolution is assumed.)  If  res
+       is  specified  it must be a positive integer between 1 and
+       1,000,000,000 inclusive and the  resolution  used  is  the
+       reciprocal  of res in seconds.  For example, specifying -t
+       10 -r 100 would set the resolution to hundredths of a sec-
+       ond  and the resulting time quantum length would be 10/100
+       seconds (one tenth  of  a  second).   Although  very  fine
+       (nanosecond) resolution can be specified, the time quantum
+       length is rounded up by the system to  the  next  integral
+       multiple  of  the  system  clock's resolution.  The system
+       clock's resolution is hardware-dependent; this  resolution
+       can  be  calculated from the value of HZ, which is defined
+       in the file /usr/include/sys/param.h.  HZ gives the number
+       of  clock ticks per second of the system clock.  For exam-
+       ple, an HZ of 100 specifies 100 clock ticks per second, or
+       one tick every 10 milliseconds (that is, this system clock
+       has a resolution of 10 milliseconds).  If the  -t  and  -r
+       options are used to specify a time quantum of 34 millisec-
+       onds, it is rounded up to 4 ticks (40 milliseconds)  on  a
+       machine  with an HZ of 100.  Requests for time quantums of
+       zero or quantums greater than the (typically  very  large)
+       implementation-specific   maximum  quantum  result  in  an
+       error.
+
+       To change the class of a process to fixed  priority  (from
+       any  other  class)  the  user  invoking priocntl must have
+       appropriate privilege.  To change the fppri value or  time
+       quantum of a fixed priority process the user invoking pri-
+       ocntl must either be a privileged user, or must  currently
+       be  in  the fixed priority class (shell running as a fixed
+       priority process) with a real or effective user ID  match-
+       ing the real or effective user ID of the target process.
+
+       The  fixed  priority and time quantum are inherited across
+       the and system calls.
+
+   EExxaammpplleess
+       priocntl -s -c FP -t 1 -r 10 -i  idtype  idlist  sets  the
+       class  of  any  non-fixed  priority  processes selected by
+       idtype and idlist to fixed priority and sets  their  fixed
+       priority  to  the  default value of 0.  The fixed priority
+       priorities of any processes currently in the fixed  prior-
+       ity  class  are  unaffected.  The time quantums of all the
+       specified processes are set to 1/10 seconds.  priocntl  -e
+
+                                                                5
+
+priocntl(1)                                           priocntl(1)
+
+       -c  FP  -p  15 -t 20 command executes command in the fixed
+       priority class with a fixed priority  of  15  and  a  time
+       quantum of 20 milliseconds.
+
+   TTiimmee--sshhaarriinngg ccllaassss
+       The time-sharing scheduling policy provides for a fair and
+       effective allocation of the CPU resource  among  processes
+       with  varying CPU consumption characteristics.  The objec-
+       tives of the  time-sharing  policy  are  to  provide  good
+       response time to interactive processes and good throughput
+       to CPU-bound jobs while providing  a  degree  of  user  or
+       application control over scheduling.
+
+       The  time-sharing  class  has a range of time-sharing user
+       priority (tsupri) values that can be assigned to processes
+       within  the  class.   User priorities range from -x to +x,
+       where the value of x is configurable.   The  range  for  a
+       specific  installation  can be displayed by using the com-
+       mand priocntl -l The purpose of the user  priority  is  to
+       provide  some  degree  of user or application control over
+       the scheduling of processes  in  the  time-sharing  class.
+       Raising  or  lowering the tsupri value of a process in the
+       time-sharing class raises or lowers the scheduling  prior-
+       ity of the process.  It is not guaranteed, however, that a
+       time-sharing process with a higher tsupri value  will  run
+       before one with a lower tsupri value.  This is because the
+       tsupri value is just one  factor  used  to  determine  the
+       scheduling priority of a time-sharing process.  The system
+       dynamically adjusts the internal scheduling priority of  a
+       time-sharing process based on other factors such as recent
+       CPU usage.
+
+       In addition to the system-wide  limits  on  user  priority
+       (displayed  with priocntl -l), there is a per process user
+       priority limit (tsuprilim), which  specifies  the  maximum
+       tsupri value that can be set for a given process.
+
+       The  command priocntl -d [-i idtype] [idlist] displays the
+       user priority and user priority limit for each  time-shar-
+       ing process in the set specified by idtype and idlist.
+
+       The  valid class-specific options for setting time-sharing
+       parameters are: Set the user priority limit of the  speci-
+       fied  process(es)  to tsuprilim.  Set the user priority of
+       the specified process(es)  to  tsupri.   Any  time-sharing
+       process  can  lower  its own tsuprilim (or that of another
+       process with the same user ID).  Only a time-sharing  pro-
+       cess  with  appropriate  privilege  can raise a tsuprilim.
+       When changing the class of a process to time-sharing  from
+       some other class, appropriate privilege is required to set
+       the initial tsuprilim to a value greater than zero.
+
+       Any time-sharing process can set its own tsupri  (or  that
+       of  another  process  with  the same user ID) to any value
+
+                                                                6
+
+priocntl(1)                                           priocntl(1)
+
+       less than or equal to the process's  tsuprilim.   Attempts
+       to  set  the  tsupri  above  the tsuprilim (and/or set the
+       tsuprilim below the tsupri) result in the tsupri being set
+       equal to the tsuprilim.
+
+       Any  combination of the -m and -p options can be used with
+       priocntl -s or priocntl -e  for  the  time-sharing  class.
+       When an option is omitted and the process is time-sharing,
+       the associated parameter is usually unaffected.   However,
+       when  the  -p  option  is  omitted and -m is used to set a
+       tsuprilim below the current tsupri, then the tsupri is set
+       equal  to  the tsuprilim which is being set.  If an option
+       is omitted when changing the class of a process  to  time-
+       sharing from some other class, the associated parameter is
+       set to a default value.  The default value  for  tsuprilim
+       is  ``0'' and the default for tsupri is to set it equal to
+       the tsuprilim value that is being set.
+
+       The time-sharing user priority and user priority limit are
+       inherited across the and system calls.
+
+   EExxaammpplleess
+       priocntl  -s  -c TS -i idtype idlist sets the class of any
+       non-time-sharing processes selected by idtype  and  idlist
+       to  time-sharing  and  sets both their user priority limit
+       and user priority to  ``0''.   Processes  already  in  the
+       time-sharing class are unaffected.  priocntl -e -c TS -m 0
+       -p -15 command [arguments] executes command with the argu-
+       ments arguments in the time-sharing class with a user pri-
+       ority limit of 0 and a user priority of -15.
+
+   VVcc ccllaassss
+       This class should only be used by  emulation programs.
+
+   AAggiinngg ppaarraammeetteerrss
+       The following commands display  or  set  the  working  set
+       aging  parameters  for  one or more specified process(es).
+       priocntl -r size [-i idtype]  [idlist]  sets  the  maximum
+       resident  set  size  for the specified process(es) to size
+       pages.  The system uses this value to determine whether  a
+       process is subject to trimming operations.  A fixed number
+       of pages are removed from the address space of the process
+       when  the  process is trimmed.  Only a privileged user can
+       execute this command.  priocntl -t  interval  [-i  idtype]
+       [idlist]  sets  the  elapsed  time  aging interval for the
+       specified process(es).  The interval is specified in  sec-
+       onds.  When this interval has elapsed, the process is sub-
+       ject to an external aging operation.   Only  a  privileged
+       user  can  execute this command.  priocntl -q init min max
+       [-i idtype] [idlist] sets the range of aging quantum  val-
+       ues  for  the specified process(es).  These quantities are
+       specified in Hertz.  Processes are aged after they accumu-
+       late  a specified number of virtual clock ticks.  The ini-
+       tial age quantum is the value assigned to the  process(es)
+
+                                                                7
+
+priocntl(1)                                           priocntl(1)
+
+       at  creation time.  The minimum and maximum values specify
+       the range for the process(es).  Only a privileged user can
+       execute  this  command.   priocntl -g [-i idtype] [idlist]
+       displays the entire working set of aging parameters  asso-
+       ciated with the specified process(es).  The following val-
+       ues are displayed: maximum  resident  set  size  in  pages
+       elapsed  time  for  age  interval in seconds aging quantum
+       values in Hertz.
+
+EExxiitt ccooddeess
+       priocntl prints the following error messages:
+
+       Process(es) not found: None  of  the  specified  processes
+       exists.
+
+       Specified  processes from different classes: The -s option
+       is being used to set parameters, the -c  class  option  is
+       not  present,  and  processes from more than one class are
+       specified.
+
+       Invalid option or argument:  An  unrecognized  or  invalid
+       option or option argument is used.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Because  of  the  relationship  between  a process and its
+       lightweight processes, it is sometimes necessary to  queue
+       scheduling class changes for the target LWPs.  An LWP with
+       scheduling  class  changes  in  its  queue  processes  the
+       requests  at  the earliest safe opportunity.  The LWP con-
+       tinues to reflect the old status until the  request  takes
+       effect.
+
+                                                                8
+

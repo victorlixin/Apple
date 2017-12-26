@@ -1,0 +1,161 @@
+XtRemoveEventTypeHandler(3X11R6)         XtRemoveEventTypeHandler(3X11R6)
+
+  XXttIInnsseerrttEEvveennttTTyyppeeHHaannddlleerr
+
+  NNAAMMEE
+
+    XtInsertEventTypeHandler, XtRemoveEventTypeHandler,
+    XtRegisterExtensionSelector, XtSetEventDispatcher, XtDispatchEventToWidget
+    - extension event handling
+
+  SSYYNNTTAAXX
+
+    void XtInsertEventTypeHandler(widget, event_type, select_data, proc,
+    client_data, position)
+          Widget wdget;
+          int event_type;
+          XtPointer select_data;
+          XtEventHandler proc;
+          XtPointer client_data;
+          XtListPosition position;
+
+    void XtRemoveEventTypeHandler(widget, event_type, select_data, proc,
+    client_data)
+          Widget wdget;
+          int event_type;
+          XtPointer select_data;
+          XtEventHandler proc;
+          XtPointer client_data;
+
+    void XtRegisterExtensionSelector(display, min_event_type, max_event_type,
+    proc, client_data)
+          Display* display;
+          int min_event_type;
+          int max_event_type;
+          XtExtensionSelectProc proc;
+          XtPointer client_data;
+
+    XtEventDispatchProc XtSetEventDispatcher(display, event_type, proc)
+          Widget widget;
+          int event_type;
+          XtEventDispatchProc proc;
+
+    Boolean XtDispatchEventToWidget(widget, event)
+          Widget widget;
+          XEvent* event;
+
+  AARRGGUUMMEENNTTSS
+
+    widget
+        Specifies the widget for this event handler. Must be of class Core or
+        any subclass thereof.
+
+    event_type
+        Specifies the event type.
+
+    select_data
+        Specifies data used to select or deselect events from the server.
+
+    proc
+        Specifies the proc.
+
+    client_data
+        Specifies additional data to be passed to the event handler.
+
+    position
+        Specifies when the event handler is to be called relative to other
+        previously registered handlers.
+
+    display
+        Specifies the display.
+
+    min_event_type, max_event_type
+        Specifies the range of event types for this extension.
+
+    event
+        Specifies a pointer to the event to be dispatched.
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The XXttIInnsseerrttEEvveennttTTyyppeeHHaannddlleerr function registeres a procedure with the
+    dispatch mechanism that is to be called when an event that matches the
+    specified event_type is dispatched to the specified widget.
+
+    If event_type is one of the core X protocol events then select_data must
+    be a pointer to a value of type EventMask, indicating the event mask to be
+    used to select for the desired event. This event mask will be included in
+    the value returned by XXttBBuuiillddEEvveennttMMaasskk. If the widget is realized
+    XXttIInnsseerrttEEvveennttTTyyppeeHHaannddlleerr calls XXSSeelleeccttIInnppuutt if necessary. Specifying NULL
+    for select_data is equivalent to specifying a pointer to an event mask
+    containing 0. This is similar to the XXttIInnsseerrttRRaawwEEvveennttHHaannddlleerr function.
+
+    If event_type specifies an extension event type then the semantics of the
+    data pointed to by select_data are defined by the extension selector
+    registered for the specified event type.
+
+    In either case the Intrinsics are not required to copy the data pointed to
+    by select_data, so the caller must ensure that it remains valid as long as
+    the event handler remains registered with this value of select_data.
+
+    The position argument allows the client to control the order of the
+    invocation of event handlers registered for the same event type. If the
+    client does not care about the order, it should normally specify
+    XtListTail, which registers this event handler after any previously
+    registered handlers for this event type.
+
+    The XXttRReemmoovveeEEvveennttTTyyppeeHHaannddlleerr function unregisters an even handler
+    registered with XXttIInnsseerrttEEvveennttTTyyppeeHHaannddlleerr for the specified event type. The
+    request is ignored if client_data does not match the value given with the
+    handler was registered.
+
+    If event_type specifies on of the core X protocol events, select_data must
+    be a pointer to a value of type EventMask, indicating the mask to be used
+    to deselect for the appropriate event. If the widget is realized,
+    XXttRReemmoovveeEEvveennttTTyyppeeHHaannddlleerr calls XXSSeelleeccttIInnppuutt if necessary. Specifying NULL
+    for select_data is equivalent to specifying a pointer to an event mask
+    containing 0. This is similar to the XXttRReemmoovveeRRaawwEEvveennttHHaannddlleerr function.
+
+    If event_type specifies an extension event type then the semantics of the
+    data pointed to by select_data are defined by the extension selector
+    registered for the specified event type.
+
+    The XXttRReeggiisstteerrEExxtteennssiioonnSSeelleeccttoorr function registers a procedure to arrange
+    for the delivery of extension events to widgets.
+
+    If min_event_type and max_event_type match the parameters to a previous
+    call to XXttRReeggiisstteerrEExxtteennssiioonnSSeelleeccttoorr for the same display, the proc and
+    client_data replace the previously registered values. If the range
+    specified by min_event_type and max_event_type overlaps the range of the
+    parameters to a previous call for the same display in any other way, an
+    error results.
+
+    The XXttSSeettEEvveennttDDiissppaattcchheerr function registes the event dispatcher procedure
+    specified by proc for event swith the type event_type. The previously
+    registered dispatcher (or the default dispatcher if there was no previousl
+    registered dispatcher) is returned. If proc is NULL, the default procedure
+    is restored for the specified type.
+
+    In the future, when XXttDDiissppaattcchhEEvveenntt is called with an event of event_type,
+    the specified proc (or the default dispatcher) will be invoked to
+    determine a widget ot which to dispatch the event.
+
+    The XXttDDiissppaattcchhEEvveennttTTooWWiiddggeett function scans the list of registered event
+    handlers for the specified widget and calls each handler that has been
+    registered for the specified event type, subject to the
+    continue_to_dispatch value returned by each handler. The Intrinsics behave
+    as if event handlers were registered at the head of the list for Expose,
+    NoExpose, GraphicsExpose, and VisibilityNotify events to invoke the
+    widget's expose procedure according to the exposure compression rules and
+    to update the widget's visible field if visible_interest is True. These
+    internal event handlers never set continue_to_dispatch to False.
+
+    XXttDDiissppaattcchhEEvveennttTTooWWiiddggeett returns True if any event handler was called and
+    False otherwise.
+
+  SSEEEE AALLSSOO
+
+    _X_t_G_e_t_K_e_y_b_o_a_r_d_F_o_c_u_s_W_i_d_g_e_t(3X11R6)
+
+    X Toolkit Intrinsics - C Language Interface
+    Xlib - C Language X Interface
+

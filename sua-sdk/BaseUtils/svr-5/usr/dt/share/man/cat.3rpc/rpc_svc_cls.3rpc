@@ -1,0 +1,85 @@
+
+
+rpc_svc_calls(3rpc)                           rpc_svc_calls(3rpc)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <rpc/rpc.h>
+
+       int  rpc_reg(const  u_long  prognum, const u_long versnum,
+            const   u_long   procnum,   const    char    *(*proc-
+       name)(caddr_t),       const  xdrproc_t  inproc, const xdr-
+       proc_t outproc,      const char *nettype);
+
+       int svc_reg(const SVCXPRT  *xprt,  const  u_long  prognum,
+            const   u_long   versnum,        const   void  (*dis-
+       patch)(const  struct  svc_req   *,   const   SVCXPRT   *),
+            const struct netconfig *netconf);
+
+       void  svc_unreg(const  u_long  prognum,  const u_long ver-
+       snum);
+
+       void xprt_register(const SVCXPRT *xprt);
+
+       void xprt_unregister(const SVCXPRT *xprt);
+
+DDeessccrriippttiioonn
+       These routines are a part of the RPC library which  allows
+       the  RPC  servers to register themselves with rpcbind (see
+       and it associates the given  program  and  version  number
+       with the dispatch function.
+
+   RRoouuttiinneess
+       See for the definition of the SVCXPRT data structure.  int
+       rpc_reg(const  u_long  prognum,  const   u_long   versnum,
+            const    u_long    procnum,   const   char   *(*proc-
+       name)(caddr_t),      const xdrproc_t  inproc,  const  xdr-
+       proc_t  outproc,       const char *nettype); Register pro-
+       gram prognum, procedure procname, and version versnum with
+       the RPC service package.  If a request arrives for program
+       prognum, version versnum, and procedure procnum,  procname
+       is  called  with  a  pointer to its parameter(s); procname
+       should return a pointer to its static result(s); inproc is
+       used  to  decode  the  parameters while outproc is used to
+       encode the results.   Procedures  are  registered  on  all
+       available   transports  of  the  class  nettype.   nettype
+       defines a class of transports which can be used for a par-
+       ticular  application.   If nettype is NULL, it defaults to
+       netpath.  This routine returns 0 if the registration  suc-
+       ceeded,  -1  otherwise.   int svc_reg(const SVCXPRT *xprt,
+       const   u_long   prognum,        const   u_long   versnum,
+            const  void (*dispatch)(const struct svc_req *, const
+       SVCXPRT *),      const struct netconfig *netconf); Associ-
+       ates  prognum and versnum with the service dispatch proce-
+       dure, dispatch.  If netconf is NULL, the  service  is  not
+       registered  with  the rpcbind service.  If netconf is non-
+       zero, then a mapping of the triple [prognum, versnum, net-
+       conf->nc_netid] to xprt->xp_ltaddr is established with the
+       local rpcbind service.
+
+                                                                1
+
+rpc_svc_calls(3rpc)                           rpc_svc_calls(3rpc)
+
+       The svc_reg routine returns 1 if it succeeds, and 0 other-
+       wise.   void  svc_unreg(const u_long prognum, const u_long
+       versnum); Remove, from the rpcbind service,  all  mappings
+       of the double [prognum, versnum] to dispatch routines, and
+       of the triple (prognum, versnum, *]  to  network  address.
+       void xprt_register(const SVCXPRT *xprt); After RPC service
+       transport handle xprt is created, it  is  registered  with
+       the RPC service package.  This routine modifies the global
+       variable svc_fds.  Service  implementors  usually  do  not
+       need  this  routine.   void  xprt_unregister(const SVCXPRT
+       *xprt); Before an RPC service  transport  handle  xprt  is
+       destroyed,  it  unregisters  itself  with  the RPC service
+       package.   This  routine  modifies  the  global   variable
+       svc_fds.   Service  implementors  usually do not need this
+       routine.
+
+FFiilleess
+       /usr/lib/locale/locale/LC_MESSAGES/uxnsl
+
+RReeffeerreenncceess
+
+                                                                2
+

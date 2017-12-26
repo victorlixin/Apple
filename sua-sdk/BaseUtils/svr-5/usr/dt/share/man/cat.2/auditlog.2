@@ -1,0 +1,277 @@
+
+
+auditlog(2)                                           auditlog(2)
+
+SSyynnooppssiiss
+       #include   <limits.h>   #include   <sys/types.h>  #include
+       <audit.h>
+
+       int auditlog(int cmd, struct alog *alogp, int size);
+
+DDeessccrriippttiioonn
+       The auditlog system call is used to  get  or  to  set  the
+       audit  log  file  attributes, depending on whether the cmd
+       field is ALOGGET or ALOGSET.  Use of the  auditlog  system
+       call  requires  the  appropriate  privilege(P_AUDIT).  The
+       alogp argument points to a structure  of  type  alog  that
+       contains the following elements: struct alog {
+         int   flags;              /* log file attributes */
+         int   onfull;             /* action on log file full */
+         int   onerr;              /* action on log file error */
+         int   maxsize;            /* maximum log file size */
+         int   seqnum;             /* log  file  sequence  number
+       001-999 */
+         char  mmp[ADT_DATESZ];    /* current month time stamp */
+         char  ddp[ADT_DATESZ];    /* current day time stamp */
+         char  pnodep[ADT_NODESZ]; /* optional primary  log  file
+       node name */
+         char  anodep[ADT_NODESZ]; /* optional alternate log file
+       node name */
+         char  *ppathp;            /* optional primary  log  file
+       pathname */
+         char   *apathp;            /* optional alternate primary
+       log file
+                                      pathname */
+         char  *progp;             /*  optional  program  to  run
+       during log file
+                                      switch */
+         char   *defpathp;           /*  default primary log file
+       pathname */
+         char  *defnodep;          /* default  primary  log  file
+       node name */
+         char  *defpgmp;           /* default program to run dur-
+       ing log file
+                                      switch */
+         int   defonfull;          /* default action on log  file
+       full */ }
+
+       The  following  elements  and  corresponding values of the
+       alog structure may be either modified or retrieved:  flags
+       /* log file attributes */
+           PPATH           /* primary log file pathname */
+           PNODE           /* primary log file nodename */
+           APATH           /* alternate log file pathname */
+           ANODE           /* alternate log file nodename */
+           PSIZE            /*  maximum size for primary log file
+       */
+           PSPECIAL        /* character special primary log  file
+       */
+
+                                                                1
+
+auditlog(2)                                           auditlog(2)
+
+           ASPECIAL         /*  character  special  alternate log
+       file */
+       onfull                /* action taken on log file full */
+           ASHUT           /* shutdown to Firmware Mode */
+           ADISA           /* disable auditing */
+           AALOG           /* switch to alternate log file */
+           APROG            /* run log file switch program
+                               (only valid with AALOG) */
+       onerr                 /* action taken on log file error */
+           ASHUT            /* shutdown to Firmware Mode */
+           ADISA            /* disable auditing */
+       maxsize  integer           /* Zero or >= audit buffer size
+       */
+       pnodep   character[s]        /*  nodename  that   may   be
+       appended */
+       anodep    character[s]         /*  nodename  that  may  be
+       appended */
+       ppathp  /full/pathname     /* directory or DSF <= ADT_MAX-
+       PATHLEN */
+       apathp  /full/pathname     /* directory or DSF <= ADT_MAX-
+       PATHLEN */
+       progp    /full/pathname      /*  executable   program   <=
+       PATH_MAX */
+
+       The  following  elements  and  corresponding values of the
+       alog structure may only be retrieved because they can only
+       be  set  internally:  seqnum  integer     /* log file num-
+       ber[001-999] */
+       mmp        character[s]     /*    current    month    time
+       stamp[01-12] */
+       ddp       character[s]    /* current day time stamp[01-31]
+       */
+
+       The following elements and  corresponding  values  of  the
+       alog  structure  may  only be set because the defaults are
+       read   from   the   /etc/default    directory:    defpathp
+       /full/pathname  /* directory or DSF <= ADT_MAXPATHLEN */
+       defnodep  character[s]    /* nodename that may be appended
+       */
+       defpgmp  /full/pathname  /* executable program <= PATH_MAX
+       */
+       defonfull
+             ASHUT           /* shutdown to Firmware Mode */
+             ADISA           /* disable auditing */
+             AALOG           /* switch to alternate log file */
+             APROG           /* run log file switch program
+                                (valid with AALOG only) */
+
+       When  the  specified  value of cmd is ALOGGET, the current
+       values of the flags, onfull,  onerr,  maxsize,  mmp,  ddp,
+       seqnum, pnodep, anodep, ppathp, apathp, and progp elements
+       are returned in the alog structure.  Note that  the  space
+       required  for  the  ppathp, apathp and progp must be allo-
+       cated  by  the  invoking  process.   The  values  of   the
+
+                                                                2
+
+auditlog(2)                                           auditlog(2)
+
+       defpathp,  defnodep,  defpgmp  and  defonfull elements are
+       ignored since they are only valid for the ALOGSET cmd.
+
+       Note that the pnodep, anodep,  ppathp,  apathp  and  progp
+       fields are not touched if the corresponding values are not
+       set in the kernel.  You  must  check  the  values  of  the
+       PNODE, ANODE, PPATH, and APATH bits in the flag field, and
+       the APROG bit in the onfull field to  see  if  the  corre-
+       sponding fields have been populated.  If a bit is not set,
+       the corresponding field will be untouched.
+
+       When the value of cmd is ALOGSET, the elements of the alog
+       structure determine what actions are to be performed.
+
+       The  PPATH  bit is used to set the pathname to the primary
+       audit log file and is invalid while auditing  is  enabled.
+       An  error  is  returned  if  the  ppathp element cannot be
+       copied into an internal storage area for  further  valida-
+       tion;  if  the  ppathp  element  does not point to a valid
+       directory or character special device; or  if  the  ppathp
+       element exceeds ADT_MAXPATHLEN (1009) characters.
+
+       Setting  ppathp  to  a  character special device cannot be
+       used with the PNODE or PSIZE flags bits, or  maxsize  ele-
+       ment.  If the ppathp element points to a character special
+       device, the PSPECIAL flags bit is set, and  any  log  file
+       restrictions are cleared.  This is done by turning off the
+       internal PSIZE flags bit and setting the  maxsize  element
+       to  ZERO.   A  ZERO setting indicates that the log file is
+       limited by the available file system space or device.   If
+       the  PNODE flags bit was previously set, it must be turned
+       off because node names for character special  devices  are
+       invalid.   Turning off the PNODE bit involves turning off,
+       freeing, and clearing the pnodep element of  its  internal
+       data storage.
+
+       The PSIZE flags bit is used to set the maximum size of the
+       primary audit log file.  If the ppathp element points to a
+       valid  directory,  then the PNODE and PSIZE flags are also
+       valid.  The maxsize element must be either ZERO or greater
+       than  or  equal to the size of an audit buffer(ADT_BSIZE).
+       If maxsize is ZERO, then the PSIZE flags bit is turned off
+       internally to indicate that the log file is limited by the
+       available file system space or device.
+
+       The PNODE flags bit is used to append a  machine  specific
+       node  name  to  the  primary audit log file and is invalid
+       while auditing is enabled.  If the PNODE flags bit is set,
+       the  internal  storage is updated and no validation of the
+       pnodep pointer is done.
+
+       The onfull element is used to set the action to  be  taken
+       on  audit  log  file  full.   If the onfull element is not
+       equal to ASHUT, ADISA, AALOG or the combination  of  AALOG
+
+                                                                3
+
+auditlog(2)                                           auditlog(2)
+
+       and  APROG  an  error  is returned.  If the ASHUT or ADISA
+       values are specified, then any alternate log file criteria
+       is  cleared.  This is done by turning off the AALOG, APROG
+       and ANODE flags and freeing the internal  storage  associ-
+       ated with the corresponding fields.
+
+       The  onerr  element  is used to set the action to be taken
+       when an audit error occurs.  If the onerr element  is  not
+       equal to ASHUT or ADISA, an error is returned.
+
+       The  AALOG  value of the flags element is used to indicate
+       that an alternate log file should be used when the primary
+       log  file  becomes full.  The APROG value is used to indi-
+       cate that an executable program will be executed on  audit
+       log  file  switch.   If  the  AALOG onfull element and the
+       APATH flags bit is set, an error is returned if the apathp
+       element cannot be copied into an internal storage area for
+       further validation; if the apathp element does  not  point
+       to  a  valid  directory or character special device; or if
+       the apathp element exceeds ADT_MAXPATHLEN  (1009)  charac-
+       ters.
+
+       Setting  apathp  to  a character special device can not be
+       used in with the ANODE flags bit element.  If  the  apathp
+       element points to a character special device, the ASPECIAL
+       flags bit is set.  If the ANODE flags bit  was  previously
+       set,  it must be turned off because node names for charac-
+       ter special devices are invalid.  Turning  off  the  ANODE
+       bit involves turning off, freeing, and clearing the anodep
+       element of its internal data storage.
+
+       After the AALOG onfull validation  completes,  the  onfull
+       mask  element  is  checked for APROG.  If set, an error is
+       returned if unable to read in the progp  element  into  an
+       internal  storage  area  or if it is greater than PATH_MAX
+       (1024).
+
+       If the defpathp element is not NULL, an error is  returned
+       if  it  cannot be copied into an internal storage area for
+       further validation; if the defpathp element does not point
+       to  a  valid  directory or character special device; or if
+       the defpathp element exceeds ADT_MAXPATHLEN (1009) charac-
+       ters.
+
+       If  the defnodep element is not NULL, the internal storage
+       area is updated and no validation of the defnodep  pointer
+       is done.
+
+       If  the  defpgmp  element is not NULL and the AALOG onfull
+       bit is set, an error is returned if unable to read in  the
+       defpgmp  element into an internal storage area or if it is
+       greater than PATH_MAX (1024).
+
+       If the defonfull element is invalid, it defaults to ADISA.
+
+                                                                4
+
+auditlog(2)                                           auditlog(2)
+
+       The  size  argument is used to verify the size of the alog
+       structure being passed to determine the version of  audit-
+       ing.
+
+   RReettuurrnn vvaalluueess
+       On  success,  auditlog  returns  0.   On failure, auditlog
+       returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, auditlog fails and sets errno
+       to: The cmd is ALOGSET, and ppathp, apathp, or aprogp can-
+       not be accessed.  It is not possible  to  allocate  memory
+       for the alogp.  The cmd is ALOGSET, and it is not possible
+       to allocate memory for various elements used  to  fill  in
+       the  alog  structure.   The value of alogp ppathp, apathp,
+       progp, defprogp, defnodep, or defpathp  is  invalid.   The
+       size  of  alog  does  not equal size.  The value of cmd is
+       invalid.  The cmd is ALOGSET, and the value of  onfull  is
+       not either ASHUT, AALOG, ADISA or AALOG|APROG.  The cmd is
+       ALOGSET, and the value of onerr is  not  either  ASHUT  or
+       ADISA.  The cmd is ALOGSET and the value of maxsize is not
+       equal to zero and less than the size of the  audit  buffer
+       (ADT_BSIZE).  The cmd is ALOGSET, and the flags field con-
+       tains PPATH or NODE when auditing is enabled.  The cmd  is
+       ALOGSET  and  the pathname to the primary log file, alter-
+       nate log file, or program to be run during  a  log  switch
+       does  not  exist.   The  cmd  is  ALOGSET, and the ppathp,
+       apathp, or defpathp fields are longer than ADT_MAXPATHLEN.
+       The  cmd  is  ALOGSET, the flags field contains PSIZE, and
+       the maxsize value is not zero.  The invoking subject  does
+       not  have  the  appropriate privilege(P_AUDIT).  The audit
+       package is not installed.
+
+RReeffeerreenncceess
+
+                                                                5
+

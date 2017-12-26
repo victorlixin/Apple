@@ -1,0 +1,90 @@
+
+
+sac(1M)                                                   sac(1M)
+
+SSyynnooppssiiss
+       /usr/lib/saf/sac -t sanity_interval
+
+DDeessccrriippttiioonn
+       The Service Access Controller (SAC) is the overseer of the
+       server machine.  sac is started with a sanity_interval  of
+       300  seconds  from  /etc/inittab  when  the server machine
+       enters multiuser mode.  The SAC performs several important
+       functions  as  explained  below.   When sac is invoked, it
+       first  looks  for  the  per-system  configuration   script
+       /etc/saf/_sysconfig.   sac  interprets  _sysconfig to cus-
+       tomize its own environment.  The modifications made to the
+       SAC  environment  by  _sysconfig  are inherited by all the
+       children of the SAC.  This inherited  environment  may  be
+       modified  by  the  children.  After it has interpreted the
+       _sysconfig file, the sac  reads  its  administrative  file
+       /etc/saf/_sactab.   _sactab  specifies which port monitors
+       are to be started.  For each port monitor to  be  started,
+       sac forks a child ( and creates a utmp entry with the type
+       field set to LOGIN_PROCESS.  Each  child  then  interprets
+       its      per-port     monitor     configuration     script
+       /etc/saf/pmtag/_config, if the file exists.  These modifi-
+       cations  to  the  environment  affect the port monitor and
+       will be inherited by all its children.  Finally, the child
+       process execs the port monitor, using the command found in
+       the _sactab entry.  (See sacadm; this is the command given
+       with  the  -c option when the port monitor is added to the
+       system.)  The -t option sets the  frequency  (in  seconds)
+       with  which  sac  polls  the  port monitors on the system.
+       This time may also be thought of as half  of  the  maximum
+       latency  required to detect that a port monitor has failed
+       and that recovery action is necessary.  The Service Access
+       Controller  represents the administrative point of control
+       for port monitors.  Its administrative tasks are explained
+       below.   When  queried  (sacadm with either -l or -L), the
+       Service Access Controller returns the status of  the  port
+       monitors  specified,  which  sacadm prints on the standard
+       output.  A port monitor may be in one of six states:
+
+       The port monitor is currently  running  and  is  accepting
+       connections.  See with the -e option.  The port monitor is
+       currently running and is not accepting  connections.   See
+       sacadm with the -d option, and see NOTRUNNING, below.  The
+       port monitor is in the process of starting  up.   STARTING
+       is  an  intermediate  state  on the way to ENABLED or DIS-
+       ABLED.  The port monitor was unable to  start  and  remain
+       running.   The  port  monitor has been manually terminated
+       but has not completed its shutdown procedure.  STOPPING is
+       an  intermediate state on the way to NOTRUNNING.  The port
+       monitor is not currently running.  (See sacadm  with  -k.)
+       This  is  the  normal  ``not running'' state.  When a port
+       monitor is killed, all ports it was monitoring  are  inac-
+       cessible.  It is not possible for an external user to tell
+       whether a port is not being monitored  or  the  system  is
+
+                                                                1
+
+sac(1M)                                                   sac(1M)
+
+       down.   If  the  port  monitor is not killed but is in the
+       DISABLED state, it may be possible (depending on the  port
+       monitor being used) to write a message on the inaccessible
+       port telling the user who is trying  to  access  the  port
+       that  it  is  disabled.  This is the advantage of having a
+       DISABLED state as well as the NOTRUNNING  state.   When  a
+       port  monitor terminates, the SAC frees the utmp entry for
+       that port monitor.
+
+       The SAC receives all requests to enable,  disable,  start,
+       or stop port monitors and takes the appropriate action.
+
+       The  SAC  is responsible for restarting port monitors that
+       terminate.  Whether or not the SAC will  restart  a  given
+       port  monitor  depends  on  two  things: the restart count
+       specified for the port monitor when the port  monitor  was
+       added.   See  the  number  of  times  the port monitor has
+       already been restarted
+
+FFiilleess
+       /etc/saf/_sactab     /etc/saf/_sysconfig      /etc/inittab
+       /var/adm/utmp /var/saf/_log
+
+RReeffeerreenncceess
+
+                                                                2
+

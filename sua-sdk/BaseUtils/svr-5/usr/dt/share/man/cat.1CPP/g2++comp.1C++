@@ -1,0 +1,254 @@
+
+
+g2++comp(1C++)                                     g2++comp(1C++)
+
+SSyynnooppssiiss
+       g2++comp file ...
+
+DDeessccrriippttiioonn
+       g2++comp(1C++)  reads  G2++ record definitions  and gener-
+       ates declarations and code needed by  client  programs  to
+       perform typed I/O  (see typed_io(3C++)).
+
+       Specifically,  for each file argument of the  form stem.g,
+       g2++comp(1C++) creates two new files,  stem.h  and  stem.c
+       (file  arguments not ending in .g are ignored).   For each
+       record definition in stem.g (there may  be more than one),
+       three declarations are generated in stem.h:
+           typedef type_specifier T;
+
+           istream& operator>>( istream& is, T& t);
+           ostream& operator<<( ostream& os, const T& t);
+
+       where  T  is  the upper-case version of the  corresponding
+       record name in stem.g and type_specifier specifies  a  C++
+       type  that is isomorphic to the record definition (it will
+       be  a structure if the record definition  has  any   inner
+       structure).
+
+   GG22++++ rreeccoorrdd ddeeffiinniittiioonn llaanngguuaaggee
+       Syntactically,  a G2++ record definition is itself  a G2++
+       record (see G2++(4C++) for the  syntax  of  G2++  records;
+       the  terms  given in italics  below refer to metavariables
+       defined there).   It can be viewed as a  template   for  a
+       fully-populated  instance  of the corresponding  G2++ data
+       record in  which   (1)  strings  convey  type  information
+       rather   than   data  and  (2)  arrays  have  exactly  one
+       (index,value) pair that specifies  the  array's  size  and
+       element type, respectively.
+
+       In  a G2++ record definition, strings may take  any of the
+       following forms: CHAR SHORT LONG
+
+       Correspond to types char, short, and long, respectively.
+
+       positive_integer
+
+       A String(3C++) with a given fixed maximum  size  given  by
+       the integer.
+
+       *
+
+       A String(3C++) with an arbitrary size.
+
+       *(positive_integer)
+
+       A  String(3C++) with an arbitrary size whose initial stor-
+       age capacity is defined by the positive integer (this form
+       is provided purely for efficiency reasons).
+
+                                                                1
+
+g2++comp(1C++)                                     g2++comp(1C++)
+
+       previously_defined_type
+
+       The name of any type defined earlier in the same
+
+       An  array  is  specified  by giving a single (index,value)
+       pair, in which value can be any of the  above   forms  and
+       index may be any of the following:
+
+       positive_integer
+
+       A Vblock(G2++(3C++)) with a given fixed maximum size.
+
+       *
+
+       A Vblock(G2++(3C++)) with an arbitrary size.
+
+       *(positive_integer)
+
+       A  Vblock(G2++(3C++)) with an arbitrary size whose initial
+       storage capacity is  defined by the positive integer (this
+       form is provided purely for efficiency reasons).
+
+   UUsseerr--ddeeffiinneedd ttyyppeess
+       Any type V can appear in a G2++ record  definition as long
+       as it has an assignment operator. However, if V occurs  as
+       the type of an array element, it  must also have a parame-
+       terless constructor.  A user-defined type V is defined  in
+       the  G2++  record definition language by writing a special
+       G2++ record definition of the following form:
+               V   USER
+
+       This must precede the first use of V as a  typename  in  a
+       record  definition.  Certain  default  assumptions about V
+       will be made by g2++comp(1C++). These assumptions  can  be
+       overridden  by  means   of attributes (see below). In gen-
+       eral, a USER type definition has the form:
+               V   USER
+                       .header H1
+                           .header H2
+                          ...
+                       .null   N
+                       .isnull I
+                       .put    P
+                       .get    G
+               ...
+
+       The attributes and their defaults are explained below:
+
+       may be zero or more header attributes.   The  value  H  is
+       interpreted  as the name of a header file.  g2++comp(1C++)
+       will  generate  an  #include  "H"   directive   for   each
+       attribute,  in the same order  as the attributes.  As men-
+       tioned above, the default header  filename  is  V.h.   The
+       remaining  attributes  are allowed to assume the existence
+
+                                                                2
+
+g2++comp(1C++)                                     g2++comp(1C++)
+
+       of definitions  exported  by  the  transitive  closure  of
+       header files named by header attributes.
+
+       may  be  zero or one null attributes.   When translated in
+       the context of  the header file closure implied by  header
+       attributes,  N  must  be a valid C++ expression of type V.
+       Its value will be used as  the "null" value  for  type  V.
+       If  the  null  attribute is  omitted, a parameterless con-
+       structor V() will  be assumed to exist, and its value will
+       be used  as the "null" value.
+
+       may  be  zero or one isnull attributes.  I is taken as the
+       name of a function  that  indicates  whether  or  not  its
+       argument   is  "null".    Including  an  isnull  attribute
+       implies a  contract that there exists,  somewhere  in  the
+       header  file closure implied by header attributes,  a dec-
+       laration of the form:
+           int I(const V& t);
+
+       This function is expected to return 1 if its  argument  is
+       null,  and  0 otherwise.  If the isnull attribute is omit-
+       ted, g2++comp(1C++) will generate code to explicitly  test
+       for  equality  with  the  "null" value defined by the null
+       attribute; this means that omitting the  isnull  attribute
+       implies  a  contract  that  there exists, somewhere in the
+       header file closure implied by header attributes, the dec-
+       laration of an equality operator for type V.
+
+       be  zero or one put attributes.  P is taken as the name of
+       a function  that knows how to insert an external represen-
+       tation  of type V into an output stream.   Including a put
+       attribute  implies a contract that  there  exists,   some-
+       where  in  the  header  file  closure  implied  by  header
+       attributes, a declaration of the form
+           ostream& P(ostream& os,const V& t);
+
+       P is expected to insert an external  representation  of  t
+       into  stream  os.    To  preserve  the integrity of the G2
+       record, the  external   representation  must  not  contain
+       tabs,  newlines,  or   nonprintable ASCII characters.   If
+       the put attribute is omitted,  g2++comp(1C++)   will  call
+       V::operator<< to do the insertion.   This means that omit-
+       ting the put  attribute  implies  a  contract  that  there
+       exists,  somewhere  in  the header file closure implied by
+       header  attributes, the declaration of an insertion opera-
+       tor for type V.
+
+       or  one get attributes.  G is taken as the name of a func-
+       tion  that knows how to extract an external representation
+       type  V  from  an input stream.  Including a get attribute
+       implies a contract that there  exists,  somewhere  in  the
+       header file closure implied by header attributes, a decla-
+       ration of the form
+           istream& G(istream& is,V& t);
+
+                                                                3
+
+g2++comp(1C++)                                     g2++comp(1C++)
+
+       G is expected to extract an external  representation  from
+       stream is, construct an object of type V, and assign it to
+       t.  The function must extract only the characters  consti-
+       tuting  the  external  representation and leave the stream
+       positioned so that the first character extracted by a sub-
+       sequent  extraction  operation will be the first character
+       following the external representation of  type  V.   If  G
+       cannot  construct  an object of type V, it should assign a
+       "null"  value  to  t  and  clear  the  error   bits   (see
+       ios(iostream(3C++)).  If  the  get  attribute  is omitted,
+       g2++comp(1C++)  will call V::operator>> to do the  extrac-
+       tion.  This means that omitting the get attribute  implies
+       a contract that there exists, somewhere in the header file
+       closure  implied  by header attributes, the declaration of
+       an extraction operator for type V.
+
+EExxaammppllee
+       The following .g file defines a single record:
+               Time    USER               a user-defined type
+                       .header Time.h
+                       .header Timeio.h
+                       .null   Time::MIN
+               person
+                       id      *          arbitrary size string
+                       age     SHORT
+                       b_day   Time       a Time
+                       hobbies
+                               *       *  arbitrary size array of
+                                          arbitrary size strings
+
+       To  see  what  the header file generated by g2++comp(1C++)
+       looks like, see typed_io(G2++(3C++)).
+
+NNootteess
+       The G2++ record definition language is a  strict  superset
+       of  the  G2  record definition language. This means that a
+       G2++ program and a G2 program that  use  the  same  record
+       definition cannot be told apart by purely external  means.
+       Any other behavior should be interpreted as a bug.
+
+WWaarrnniinnggss
+       Do not mix .c and .h files produced by different  compila-
+       tions (doing so  will cause a link error).
+
+BBuuggss
+       When  compiling  a  G2++ record definition file containing
+       multiple record definitions, certain  legal  G2++  defini-
+       tions  may create conflicting definitions in the generated
+       C++ code.   Here is an example:
+               id        *
+               name      *(20)
+
+       The problem is that both definitions  generate  a  typedef
+       of  the  form  typedef  String X;  because typedefs do not
+
+                                                                4
+
+g2++comp(1C++)                                     g2++comp(1C++)
+
+       create new types in C++ (they merely create new names  for
+       existing  types),  the overloaded insertion and extraction
+       operators generated for these  types  will  be  ambiguous.
+       The solution (which is admittedly inelegant) is to force a
+       structured type to be generated:
+               id
+                       tag     *
+               name
+                       tag     *(20)
+
+RReeffeerreenncceess
+
+                                                                5
+

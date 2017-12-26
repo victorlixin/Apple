@@ -1,0 +1,204 @@
+XDefaultString(3X11R6)                           XDefaultString(3X11R6)
+
+  XXmmbbTTeexxttLLiissttTTooTTeexxttPPrrooppeerrttyy
+
+  NNAAMMEE
+
+    XmbTextListToTextProperty, XwcTextListToTextProperty,
+    XmbTextPropertyToTextList, XwcTextPropertyToTextList, XwcFreeStringList,
+    XDefaultString - convert text lists and text property structures
+
+  SSYYNNTTAAXX
+
+    int XmbTextListToTextProperty(display, list, count, style,
+    text_prop_return)
+          Display *display;
+          char **list;
+          int count;
+          XICCEncodingStyle style;
+          XTextProperty *text_prop_return;
+
+    int XwcTextListToTextProperty(display, list, count, style,
+    text_prop_return)
+          Display *display;
+          wchar_t **list;
+          int count;
+          XICCEncodingStyle style;
+          XTextProperty *text_prop_return;
+
+    int XmbTextPropertyToTextList(display, text_prop, list_return,
+    count_return)
+          Display *display;
+          XTextProperty *text_prop;
+          char ***list_return;
+          int *count_return;
+
+    int XwcTextPropertyToTextList(display, text_prop, list_return,
+    count_return)
+          Display *display;
+          XTextProperty *text_prop;
+          wchar_t ***list_return;
+          int *count_return;
+
+    void XwcFreeStringList(list)
+          wchar_t **list;
+
+    char *XDefaultString()
+
+  AARRGGUUMMEENNTTSS
+
+    display
+        Specifies the connection to the X server.
+
+    list
+        Specifies a list of null-terminated character strings.
+
+    count
+        Specifies the number of strings specified.
+
+    style
+        Specifies the manner in which the property is encoded.
+
+    text_prop_return
+        Returns the XXTTeexxttPPrrooppeerrttyy structure.
+
+    text_prop
+        Specifies the XXTTeexxttPPrrooppeerrttyy structure to be used.
+
+    list_return
+        Returns a list of null-terminated character strings.
+
+    count_return
+        Returns the number of strings.
+
+    list
+        Specifies the list of strings to be freed.
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The XXmmbbTTeexxttLLiissttTTooTTeexxttPPrrooppeerrttyy and XXwwccTTeexxttLLiissttTTooTTeexxttPPrrooppeerrttyy functions set
+    the specified XXTTeexxttPPrrooppeerrttyy value to a set of null-separated elements
+    representing the concatenation of the specified list of null-terminated
+    text strings. A final terminating null is stored at the end of the value
+    field of text_prop_return but is not included in the nitems member.
+
+    The functions set the encoding field of text_prop_return to an Atom for
+    the specified display naming the encoding determined by the specified
+    style and convert the specified text list to this encoding for storage in
+    the text_prop_return value field. If the style XStringStyle or
+    XCompoundTextStyle is specified, this encoding is "STRING" or
+    "COMPOUND_TEXT", respectively. If the style XTextStyle is specified, this
+    encoding is the encoding of the current locale. If the style
+    XStdICCTextStyle is specified, this encoding is "STRING" if the text is
+    fully convertible to STRING, else "COMPOUND_TEXT".
+
+    If insufficient memory is available for the new value string, the
+    functions return XNoMemory. If the current locale is not supported, the
+    functions return XLocaleNotSupported. In both of these error cases, the
+    functions do not set text_prop_return.
+
+    To determine if the functions are guaranteed not to return
+    XLocaleNotSupported, use XXSSuuppppoorrttssLLooccaallee.
+
+    If the supplied text is not fully convertible to the specified encoding,
+    the functions return the number of unconvertible characters. Each
+    unconvertible character is converted to an implementation-defined and
+    encoding-specific default string. Otherwise, the functions return Success.
+    Note that full convertibility to all styles except XStringStyle is
+    guaranteed.
+
+    To free the storage for the value field, use XXFFrreeee.
+
+    The XXmmbbTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt and XXwwccTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt functions
+    return a list of text strings in the current locale representing the null-
+    separated elements of the specified XXTTeexxttPPrrooppeerrttyy structure. The data in
+    text_prop must be format 8.
+
+    Multiple elements of the property (for example, the strings in a disjoint
+    text selection) are separated by a null byte. The contents of the property
+    are not required to be null-terminated; any terminating null should not be
+    included in text_prop.nitems.
+
+    If insufficient memory is available for the list and its elements,
+    XXmmbbTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt and XXwwccTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt return XNoMemory.
+    If the current locale is not supported, the functions return
+    XLocaleNotSupported. Otherwise, if the encoding field of text_prop is not
+    convertible to the encoding of the current locale, the functions return
+    XConverterNotFound. For supported locales, existence of a converter from
+    COMPOUND_TEXT, STRING or the encoding of the current locale is guaranteed
+    if XXSSuuppppoorrttssLLooccaallee returns True for the current locale (but the actual
+    text may contain unconvertible characters). Conversion of other encodings
+    is implementation-dependent. In all of these error cases, the functions do
+    not set any return values.
+
+    Otherwise, XXmmbbTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt and XXwwccTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt return
+    the list of null-terminated text strings to list_return and the number of
+    text strings to count_return.
+
+    If the value field of text_prop is not fully convertible to the encoding
+    of the current locale, the functions return the number of unconvertible
+    characters. Each unconvertible character is converted to a string in the
+    current locale that is specific to the current locale. To obtain the value
+    of this string, use XXDDeeffaauullttSSttrriinngg. Otherwise, XXmmbbTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt
+    and XXwwccTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt return Success.
+
+    To free the storage for the list and its contents returned by
+    XXmmbbTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt, use XXFFrreeeeSSttrriinnggLLiisstt. To free the storage for
+    the list and its contents returned by XXwwccTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt, use
+    XXwwccFFrreeeeSSttrriinnggLLiisstt.
+
+    The XXwwccFFrreeeeSSttrriinnggLLiisstt function frees memory allocated by
+    XXwwccTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt.
+
+    The XXDDeeffaauullttSSttrriinngg function returns the default string used by Xlib for
+    text conversion (for example, in XXmmbbTTeexxttPPrrooppeerrttyyTTooTTeexxttLLiisstt). The default
+    string is the string in the current locale that is output when an
+    unconvertible character is found during text conversion. If the string
+    returned by XXDDeeffaauullttSSttrriinngg is the empty string (""), no character is
+    output in the converted text. XXDDeeffaauullttSSttrriinngg does not return NULL.
+
+    The string returned by XXDDeeffaauullttSSttrriinngg is independent of the default string
+    for text drawing; see XXCCrreeaatteeFFoonnttSSeett to obtain the default string for an
+    XFontSet.
+
+    The behavior when an invalid codepoint is supplied to any Xlib function is
+    undefined.
+
+    The returned string is null-terminated. It is owned by Xlib and should not
+    be modified or freed by the client. It may be freed after the current
+    locale is changed. Until freed, it will not be modified by Xlib.
+
+  SSTTRRUUCCTTUURREESS
+
+    The XXTTeexxttPPrrooppeerrttyy structure contains:
+
+    typedef struct {
+         unsigned char *value;/* property data */
+         Atom encoding;      /* type of property */
+         int format;         /* 8, 16, or 32 */
+         unsigned long nitems;/* number of items in value */
+    } XTextProperty;
+
+    The XICCEncodingStyle structure contains:
+
+    #define     XNoMemory               -1
+
+    #define     XLocaleNotSupported     -2
+
+    #define     XConverterNotFound      -3
+
+    typedef enum {
+         XStringStyle,       /* STRING */
+         XCompoundTextStyle, /* COMPOUND_TEXT */
+         XTextStyle,         /* text in owner's encoding (current locale) */
+         XStdICCTextStyle    /* STRING, else COMPOUND_TEXT */
+    } XICCEncodingStyle;
+
+  SSEEEE AALLSSOO
+
+    _X_S_e_t_T_e_x_t_P_r_o_p_e_r_t_y(3X11R6)
+
+    _X_S_t_r_i_n_g_L_i_s_t_T_o_T_e_x_t_P_r_o_p_e_r_t_y(3X11R6)
+
+    Xlib - C Language X Interface
+

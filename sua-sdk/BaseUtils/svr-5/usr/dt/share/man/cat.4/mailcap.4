@@ -1,0 +1,161 @@
+
+
+mailcap(4)                                             mailcap(4)
+
+DDeessccrriippttiioonn
+       The mailcap file is read by the metamail program to deter-
+       mine how to display non-text at the local site.
+
+       The syntax of a mailcap file is  quite  simple,  at  least
+       compared to termcap files.  Any line that starts with # is
+       a comment.  Blank lines are ignored.  Otherwise, each line
+       defines  a single mailcap entry for a single Content-type.
+       Long lines may be continued by ending them  with  a  back-
+       slash character, (\).
+
+       Each  individual  mailcap entry consists of a Content-type
+       specification, a command to execute, and (possibly) a  set
+       of  optional "flag" values.  For example, a simple mailcap
+       entry (which is actually a built-in default  behavior  for
+       metamail)  would  look  like  this: text/plain; cat %s The
+       optional flags can be used to specify additional  informa-
+       tion   about  the  mail-handling  command.   For  example:
+       text/plain; cat %s; copiousoutput can be used to  indicate
+       that  the  output  of  the  cat command may be voluminous,
+       requiring either a scrolling  window,  a  pager,  or  some
+       other appropriate coping mechanism.
+
+       The  type field (text/plain, in the above example) is sim-
+       ply any legal Content-type name, as defined  by  RFC  822.
+       In  practice, this is almost any string.  It is the string
+       that will be matched against the Content-type  header  (or
+       the  value  passed  in  with  -c) to decide if this is the
+       mailcap entry that matches the current message.  Addition-
+       ally,  the  type field may specify a subtype (for example,
+       text/ISO-8859-1) or a wildcard to match all subtypes  (for
+       example, image/*).
+
+       The  command  field  is  any  command (cat %s in the above
+       example), and is used to specify the interpreter  for  the
+       given type of message.  It will be passed to the shell via
+       the facility.  Semicolons and backslashes within the  com-
+       mand must be quoted with backslashes.  If the command con-
+       tains %s, those two characters will  be  replaced  by  the
+       name  of  a file that contains the body of the message. If
+       it contains %t, those two characters will be  replaced  by
+       the  Content-type  field,  including  the subtype, if any.
+       (That is, if the Content-type  was  image/pbm;  opt1=some-
+       thing-else,  then  %t would be replaced by image/pbm.)  If
+       the command field contains %{ followed by a parameter name
+       and  a  closing  },  then  all  those  characters  will be
+       replaced by the value of the named parameter, if any, from
+       the  Content-type  header.  Thus, in the previous example,
+       %{opt1} will be replaced by something-else.   Finally,  if
+       the  command  contains  ,  those  two  characters  will be
+       replaced by a single % character.  (In fact, the backslash
+       can be used to quote any character, including itself.)
+
+       If  no  %s  appears  in the command field, then instead of
+
+                                                                1
+
+mailcap(4)                                             mailcap(4)
+
+       placing the message body in  a  temporary  file,  metamail
+       will  pass  the body to the command on the standard input.
+       This is helpful in saving /tmp  file  space,  but  can  be
+       problematic  for  window-oriented  applications under some
+       window systems such as MGR.
+
+       Two special codes can appear in the  viewing  command  for
+       objects of type multipart (any subtype).  These are %n and
+       %F.  %n will be replaced by the number of parts within the
+       multipart  object.   %F  will  be  replaced by a series of
+       arguments, two for each part, giving  first  the  Content-
+       type  and  then  the  name of the temporary file where the
+       decoded part has been stored.  In addition, for each  file
+       created  by  %F,  a  second file is created, with the same
+       name followed by H, which contains the header  information
+       for  that body part.  This will not be needed by most mul-
+       tipart handlers, but it is there if you ever need it.
+
+       The notes=xxx field is an  uninterpreted  string  that  is
+       used  to specify the name of the person who installed this
+       entry in the mailcap file.  (The xxx may  be  replaced  by
+       any text string.)
+
+       The test=xxx field is a command that is executed to deter-
+       mine whether or not the  mailcap  line  actually  applies.
+       That  is,  if  the Content-type field matches the Content-
+       type on the message, but a test= field  is  present,  then
+       the  test  must succeed before the mailcap line is consid-
+       ered to match the message being viewed.  The  command  may
+       be  any   command,  using  the  same syntax and the same %
+       escapes as for the viewing command, as described above.  A
+       command is considered to succeed if it exits with a 0 exit
+       status, and to fail otherwise.
+
+       The textualnewlines  field  can  be  used  in  the  rather
+       obscure case where the default metamail rules for treating
+       base64-encoded newlines are unsatisfactory.   By  default,
+       metamail  will translate CRLF to the local newline charac-
+       ter in decoded base64 output if the Content-type  is  text
+       (any  subtype),  but  will not do so otherwise.  A mailcap
+       entry with a field of textualnewlines=1  will  force  such
+       translation for the specified Content-type, while textual-
+       newlines=0 will guarantee that the  translation  does  not
+       take place even for textual Content-types.
+
+       Other  flags  used  in  mailcap  include:  If this flag is
+       given, the named interpreter needs to  interact  with  the
+       user  on a terminal.  In some environments (for example, a
+       window-oriented mail reader under X11) this  will  require
+       the  creation of a new terminal emulation window, while in
+       most environments it will not.  If the mailcap entry spec-
+       ifies  needsterminal and metamail is not running on a ter-
+       minal (as determined by isatty [see the -x option, and the
+       MM_NOTTTY  environment variable) then metamail will try to
+
+                                                                2
+
+mailcap(4)                                             mailcap(4)
+
+       run the command in a new terminal emulation window.   Cur-
+       rently, metamail knows how to create new windows under the
+       X11, SunTools, and WM window systems.  This flag should be
+       given  whenever  the  interpreter  is capable of producing
+       more than a few lines of output on  stdout,  and  does  no
+       interaction with the user.  If the mailcap entry specifies
+       copiousoutput, and pagination has been requested  via  the
+       -p  command, then the output of the command being executed
+       is piped through a pagination program  (more  by  default,
+       but  this  can be overridden with the METAMAIL_PAGER envi-
+       ronment variable).
+
+   BBuuiilltt--iinn ccoonntteenntt--ttyyppee
+       The metamail program has built-in support for  a  few  key
+       Content-types.   In particular, it supports types of text,
+       multipart and multipart/alternative,  and  message/rfc822.
+       This  support is incomplete for many subtypes -- for exam-
+       ple, it only supports US-ASCII text in general.  This kind
+       of  built-in  support can be overridden by an entry in any
+       mailcap file on the user's search path.  metamail also has
+       rudimentary  built-in  support  for types that are totally
+       unrecognized -- for which no  mailcap  entry  or  built-in
+       handler  exists.   For  such  unrecognized types, metamail
+       will write a file with a "clean" copy of  the  data  --  a
+       copy  in  which all mail headers have been removed, and in
+       which any 7-bit transport encoding has been decoded.
+
+FFiilleess
+       The  default  path  for  mailcap  files  is:  $HOME/.mail-
+       cap:/etc/mailcap:/usr/etc/mailcap:/usr/local/etc/mailcap
+
+RReeffeerreenncceess
+NNoottiicceess
+       Author  is  Nathaniel  S.  Borenstein, Bell Communications
+       Research, Inc.  See copyright page  for  further  informa-
+       tion.
+
+                                                                3
+

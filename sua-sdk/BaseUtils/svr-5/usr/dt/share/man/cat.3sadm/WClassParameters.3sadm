@@ -1,0 +1,144 @@
+
+
+WClassParameters(3sadm)                   WClassParameters(3sadm)
+
+SSyynnooppssiiss
+       CC ... -lsysadm -lvtcl -ltclx -ltcl -lsocket -lgen -lm
+
+       #include  <scoadmin/basicIncl.h>  #include <scoadmin/call-
+       Back.h> #include <scoadmin/statusLst.h>  #include  <scoad-
+       min/CAPI.h>
+
+       void   FWSetAccessControl(bmipSubmission_cl   *bmipSubmis-
+       sionPtr,
+                          accessControl_pt   accessControl); void
+       FWUnSetAccessControl(bmipSubmission_cl        *bmipSubmis-
+       sionPtr);
+
+       void FWSetSync(bmipSubmission_cl *bmipSubmissionPtr,
+         syncParameter_pt   sync);
+
+       void FWUnSetSync(bmipSubmission_cl *bmipSubmissionPtr);
+
+       void FWSetScope(bmipSubmission_cl *bmipSubmissionPtr,
+                  scopeParameter_pt  scope);
+
+       void FWUnSetScope(bmipSubmission_cl *bmipSubmissionPtr);
+
+       void FWSetFilter(bmipSubmission_cl  *bmipSubmissionPtr,
+                   filterParameter_pt  filter);
+
+       void FWUnSetFilter(bmipSubmission_cl *bmipSubmissionPtr);
+
+DDeessccrriippttiioonn
+       These routines  allow  the  caller  to  specify  the  four
+       request  parameters access control, sync, scope and filter
+       for future requests applied with the  functions  described
+       in  The  information  stored  within  these  parameters is
+       passed on to request processor associated with the  object
+       class refered to in a previous call to
+
+       Before  calling  any of these functions, applications must
+       first call FWInitObjectSubmission 3sadm and obtain a bmip-
+       SubmissionPtr for the appropriate object class.
+
+       Parameters  can be cleared by calling the FWUnSet co-func-
+       tions.
+
+   AArrgguummeennttss
+       object class specific data pointer obtained from  a  prior
+       call to This parameter provides a means for the specifica-
+       tion of implementation-specific access control information
+       (such as cryptographic keys) which should be sent on to an
+       OSA request processor via subsequent calls  to  the  func-
+       tions  defined  in This parameter provides a means for the
+       specification of  implementation-specific  synchronization
+       information which should be sent on to an OSA request pro-
+       cessor via subsequent calls to the  functions  defined  in
+       This  parameter  should  be  set  to  "1"  for first level
+
+                                                                1
+
+WClassParameters(3sadm)                   WClassParameters(3sadm)
+
+       scoping.  This allows the admin management application  to
+       obtain  information about object classes contained beneath
+       an object class specified in a  call  to  For  example,  a
+       scoping  parameter  for  the  "sco  devices" object class,
+       causes subsequent calls to FWObjectGet to obtain requested
+       information for all devices on the system.  If multi-level
+       scoping is supported by an object class, values other than
+       "1"  may  be  supported.   This is not likely, however, as
+       there is no built-in support for  multi-level  scoping  in
+       the  admin  framework.   This parameter should contain the
+       filter data which shall be applied to future requests sent
+       using  the  FWClassOperations 3sadm functions.  The filter
+       can consist of an algebraic expression composed of one, or
+       more,  of the following: expression     := { expression or
+       expression }           := { expression  and  expression  }
+                 :=  {  not  expression  }           := { present
+       expression  }            :=  {  attribute  filterOperation
+       value }
+
+       filterOperation  := eq      /* equal to */           := le
+       /* less than  or  equal  to  */            :=  ge       /*
+       greater   than   or   equal   to  */            :=  subset
+                 := superset           :=  intersect  The  filter
+       operations  used  in a filter expression must be valid for
+       the attribute on which they are used.  This is  determined
+       individually on a per class basis.
+
+EExxaammpplleess
+       /* Obtain information about all CD-ROM devices on the sys-
+       tem */
+
+       #include <scoadmin/basicIncl.h>  #include  <scoadmin/call-
+       Back.h>  #include  <scoadmin/statusLst.h> #include <scoad-
+       min/CAPI.h>
+
+       main() {
+           frameWorkCClientData_cl   *clientDataPtr;
+           bmipSubmission_cl         *bmipSubmissionPtr1,  *bmip-
+       SubmissionPtr2;
+
+           scopeParameter_pt         scope ="1";
+           filterParameter_pt   filter="type eq cdrom";
+
+           /* Initialize general admin data structure */
+           clientDataPtr=FWInitializeFrameWork();
+
+           /* Initialize class-specific admin data structures */
+
+           /*  Initialize  communications  to  the  "sco devices"
+       class. */
+           bmipSubmissionPtr1=FWInitObjectSubmission(clientDat-
+       aPtr, "sco devices");
+
+           /* Identify this as a scoped request */
+
+                                                                2
+
+WClassParameters(3sadm)                   WClassParameters(3sadm)
+
+           FWSetScope(bmipSubmissionPtr, scope);
+
+           /*  Filter  against the "type" attribute.  Search only
+       for type "cdrom". */
+           FWSetFilter(bmipSubmissionPtr, filter);
+
+           /* Actual object calls go here ... */
+           ...
+
+           /* Unset filter paramters */
+           FWUnSetScope(bmipSubmissionPtr);
+           FWUnSetFilter(bmipSubmissionPtr);
+
+           /* Cleanup */
+           FWShutdownObjectSubmission(bmipSubmissionPtr1);
+           FWShutdownObjectSubmission(bmipSubmissionPtr2);
+           FWShutdownFrameWork(clientDataPtr); }
+
+RReeffeerreenncceess
+
+                                                                3
+

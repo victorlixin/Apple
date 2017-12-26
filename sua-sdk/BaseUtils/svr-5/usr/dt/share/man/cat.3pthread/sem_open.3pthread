@@ -1,0 +1,103 @@
+
+
+sem_open(3pthread)                             sem_open(3pthread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <semaphore.h>
+
+       sem_t *sem_open(const char *name, int oflag, ...);
+
+DDeessccrriippttiioonn
+       The  sem_open  function establishes a connection between a
+       named semaphore  and  a  process.   Following  a  call  to
+       sem_open  with  semaphore  name, the process may reference
+       name using the  address  returned  from  the  call.   This
+       semaphore  may  be  used  in subsequent calls to sem_wait,
+       sem_trywait,  sem_post,  and  sem_close.   The   semaphore
+       remains  usable  by  this  process until it is closed by a
+       successful call to sem_close, _exit, or one  of  the  exec
+       functions.
+
+       The  oflag argument controls whether the semaphore is cre-
+       ated or merely accessed by the call to sem_open.  The fol-
+       lowing flag bits may be set in oflag: This flag is used to
+       create a semaphore if  it  does  not  already  exist.   If
+       O_CREAT  is  set  and  the  semaphore already exists, then
+       O_CREAT has no effect, except as noted under O_EXCL.  Oth-
+       erwise,  sem_open  creates a named semaphore.  The O_CREAT
+       flag requires a third and a fourth argument:  mode,  which
+       is  of  type  mode_t, and value, which is of type unsigned
+       int.  The semaphore is created with an  initial  value  of
+       value.   Valid initial values for semaphores are less than
+       or equal to SEM_VALUE_MAX.  The user ID of  the  semaphore
+       is  set to the effective user ID of the process; the group
+       ID of the semaphore is set to a system default group ID or
+       to  the effective group ID of the process.  The permission
+       bits of the semaphore are set to the  value  of  the  mode
+       argument  except  those set in the file mode creation mask
+       of the process.  When bits in mode  other  than  the  file
+       permission  bits are specified, the effect is unspecified.
+       After name has been created by sem_open with  the  O_CREAT
+       flag,  other  processes  can  connect  to  it  by  calling
+       sem_open with the same  value  of  name.   If  O_EXCL  and
+       O_CREAT  are  set,  sem_open  fails  if the semaphore name
+       exists.  The check for the existence of the semaphore  and
+       the  creation  of  the  semaphore if it does not exist are
+       atomic with respect to other processes executing  sem_open
+       with O_EXCL and O_CREAT set.  If O_EXCL is set and O_CREAT
+       is not set, the effect is  undefined.   Flags  other  than
+       O_CREAT  and  O_EXCL  specified in the oflag parameter are
+       ignored.
+
+       name points to a string naming a semaphore  object.   name
+       conforms  to  the  construction  rules for a pathname.  If
+       name begins with the slash character, then processes call-
+       ing sem_open with the same value of name will refer to the
+       same semaphore object,  as  long  as  name  has  not  been
+
+                                                                1
+
+sem_open(3pthread)                             sem_open(3pthread)
+
+       removed.  If name does not begin with the slash character,
+       the semaphore is opened in the current  working  directory
+       of the process.
+
+       If  a  process makes multiple successful calls to sem_open
+       with the same value for name, the same  semaphore  address
+       is  returned  for each such successful call, provided that
+       there have been no calls to sem_unlink for this semaphore.
+
+RReettuurrnn vvaalluueess
+       Upon  successful  completion,  the  function  returns  the
+       address of the semaphore.  Otherwise, it returns  a  value
+       of  SEM_FAILED  and sets errno to indicate the error.  The
+       symbol SEM_FAILED is defined in the header semaphore.h.
+
+DDiiaaggnnoossttiiccss
+       If any of the following  conditions  occur,  the  sem_open
+       function  will return SEM_FAILED and set errno to the cor-
+       responding value: name exists and the  permissions  speci-
+       fied  by oflag are denied, or name does not exist and per-
+       mission to create the named semaphore is denied.   O_CREAT
+       and  O_EXCL are set and name already exists.  sem_open was
+       interrupted by a signal.  sem_open is  not  supported  for
+       name,  or  O_CREAT  was  specified  in oflag and value was
+       greater than SEM_VALUE_MAX.  Too many  semaphore  descrip-
+       tors or file descriptors are currently in use by this pro-
+       cess.  The length of the name string exceeds PATH_MAX,  or
+       a   pathname  component  is  longer  than  NAME_MAX  while
+       _POSIX_NO_TRUNC is in effect.   Too  many  semaphores  are
+       currently open in the system.  O_CREAT is not set and name
+       does not exist.  There is insufficient space for the  cre-
+       ation of name.
+
+SSttaannddaarrddss ccoommpplliiaannccee
+       The  Single UNIX Specification, Version 2; The Open Group.
+
+RReeffeerreenncceess
+
+                                                                2
+

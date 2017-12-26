@@ -1,0 +1,208 @@
+
+
+elf_getdata(3elf)                               elf_getdata(3elf)
+
+SSyynnooppssiiss
+       cc [flag . . . ] file . . . -lelf [library] . . .
+
+       #include <libelf.h>
+
+       Elf_Data *elf_getdata(Elf_Scn *scn, Elf_Data *data);
+
+       Elf_Data *elf_newdata(Elf_Scn *scn);
+
+       Elf_Data *elf_rawdata(Elf_Scn *scn, Elf_Data *data);
+
+DDeessccrriippttiioonn
+       These  functions access and manipulate the data associated
+       with a section descriptor, scn.  When reading an  existing
+       file,  a section will have a single data buffer associated
+       with it.  A program may build a  new  section  in  pieces,
+       however,   composing  the  new  data  from  multiple  data
+       buffers.  For this reason,  ``the''  data  for  a  section
+       should  be  viewed  as a list of buffers, each of which is
+       available through a data descriptor.
+
+       elf_getdata lets a program step through a  section's  data
+       list.  If the incoming data descriptor, data, is null, the
+       function returns the first buffer associated with the sec-
+       tion.  Otherwise, data should be a data descriptor associ-
+       ated with scn, and the function gives the  program  access
+       to  the next data element for the section.  If scn is null
+       or an error occurs, elf_getdata returns a null pointer.
+
+       elf_getdata translates the data from file  representations
+       into memory representations [see and presents objects with
+       memory data types to the  program,  based  on  the  file's
+       class [see The working library version [see specifies what
+       version  of  the  memory  structures  the  program  wishes
+       elf_getdata to present.
+
+       elf_newdata  creates  a new data descriptor for a section,
+       appending it to any data elements already associated  with
+       the  section.  As described below, the new data descriptor
+       appears empty, indicating the element holds no data.   For
+       convenience,  the  descriptor's type (d_type below) is set
+       to ELF_T_BYTE, and the version (d_version below) is set to
+       the  working version.  The program is responsible for set-
+       ting (or changing) the descriptor members as needed.  This
+       function  implicitly sets the ELF_F_DIRTY bit for the sec-
+       tion's data [see If  scn  is  null  or  an  error  occurs,
+       elf_newdata returns a null pointer.
+
+       elf_rawdata  differs  from  elf_getdata  by returning only
+       uninterpreted bytes, regardless of the section type.  This
+       function  typically should be used only to retrieve a sec-
+       tion image from a file being read, and then  only  when  a
+       program   must   avoid   the  automatic  data  translation
+       described below.  Moreover, a program  may  not  close  or
+
+                                                                1
+
+elf_getdata(3elf)                               elf_getdata(3elf)
+
+       disable  [see  the  file  descriptor  associated  with elf
+       before the  initial  raw  operation,  because  elf_rawdata
+       might  read  the  data  from the file to ensure it doesn't
+       interfere with elf_getdata.  See for  a  related  facility
+       that  applies  to  the entire file.  When elf_getdata pro-
+       vides the right translation, its use is  recommended  over
+       elf_rawdata.   If scn is null or an error occurs, elf_raw-
+       data returns a null pointer.
+
+       The Elf_Data structure  includes  the  following  members.
+            void      *d_buf;                   Elf_Type  d_type;
+            size_t         d_size;          off_t          d_off;
+            size_t         d_align;      unsigned  d_version;
+
+       These members are available for direct manipulation by the
+       program.  Descriptions appear below.   A  pointer  to  the
+       data buffer resides here.  A data element with no data has
+       a null pointer.  This member's value specifies the type of
+       the  data  to which d_buf points.  A section's type deter-
+       mines how to interpret the section contents, as summarized
+       below.  This member holds the total size, in bytes, of the
+       memory occupied by the data.  This  may  differ  from  the
+       size as represented in the file.  The size will be zero if
+       no data exist.  [See the discussion  of  SHT_NOBITS  below
+       for  more  information.]   This  member  gives the offset,
+       within the section, at which  the  buffer  resides.   This
+       offset  is  relative to the file's section, not the memory
+       object's.  This member holds the buffer's required  align-
+       ment,  from  the beginning of the section.  That is, d_off
+       will be a multiple of this member's value.   For  example,
+       if  this  member's  value  is  four,  the beginning of the
+       buffer will  be  four-byte  aligned  within  the  section.
+       Moreover,  the entire section will be aligned to the maxi-
+       mum of its constituents, thus ensuring appropriate  align-
+       ment  for a buffer within the section and within the file.
+       This member holds the version number of the objects in the
+       buffer.   When  the  library originally read the data from
+       the object file, it used the working  version  to  control
+       the translation to memory objects.
+
+   DDaattaa aalliiggnnmmeenntt
+       As  mentioned  above,  data  buffers within a section have
+       explicit alignment  constraints.   Consequently,  adjacent
+       buffers  sometimes will not abut, causing ``holes'' within
+       a section.  Programs that create  output  files  have  two
+       ways of dealing with these holes.
+
+       First,  the  program  can use elf_fill to tell the library
+       how to set the intervening bytes.  When the  library  must
+       generate  gaps  in the file, it uses the fill byte to ini-
+       tialize the data there.  The library's initial fill  value
+       is zero, and elf_fill lets the application change that.
+
+       Second,  the application can generate its own data buffers
+
+                                                                2
+
+elf_getdata(3elf)                               elf_getdata(3elf)
+
+       to occupy the gaps, filling the gaps with values appropri-
+       ate  for  the section being created.  A program might even
+       use different fill values  for  different  sections.   For
+       example, it could set text sections' bytes to no-operation
+       instructions, while filling data section holes with  zero.
+       Using  this technique, the library finds no holes to fill,
+       because the application eliminated them.
+
+   SSeeccttiioonn aanndd mmeemmoorryy ttyyppeess
+       elf_getdata interprets sections'  data  according  to  the
+       section  type,  as  noted  in the section header available
+       through elf_getshdr.  The following table shows  the  sec-
+       tion types and how the library represents them with memory
+       data types for the 32-bit and 64-bit file classes.   Other
+       classes  would  have  similar tables.  By implication, the
+       memory data types control translation by elf_xlate.
+
+       ----------------------------------------------------------
+       Section Type   Elf_Type     32-Bit Type     64-Bit Type
+       -------------+------------+---------------+---------------
+       _SS_HH_TT____DD_YY_NN_AA_MM_II_CC  | _EE_LL_FF____TT____DD_YY_NN  | _EE_ll_ff_33_22____DD_yy_nn     | _EE_ll_ff_66_44____DD_yy_nn
+       _SS_HH_TT____DD_YY_NN_SS_YY_MM   | _EE_LL_FF____TT____SS_YY_MM  | _EE_ll_ff_33_22____SS_yy_mm     | _EE_ll_ff_66_44____SS_yy_mm
+       _SS_HH_TT____HH_AA_SS_HH     | _EE_LL_FF____TT____WW_OO_RR_DD | _EE_ll_ff_33_22____WW_oo_rr_dd    | _EE_ll_ff_66_44____WW_oo_rr_dd
+       _SS_HH_TT____NN_OO_BB_II_TT_SS   | _EE_LL_FF____TT____BB_YY_TT_EE | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr
+       _SS_HH_TT____NN_OO_TT_EE     | _EE_LL_FF____TT____BB_YY_TT_EE | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr
+       _SS_HH_TT____NN_UU_LL_LL     | _nn_oo_nn_ee       | _nn_oo_nn_ee          | _nn_oo_nn_ee
+       _SS_HH_TT____PP_RR_OO_GG_BB_II_TT_SS | _EE_LL_FF____TT____BB_YY_TT_EE | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr
+       _SS_HH_TT____RR_EE_LL      | _EE_LL_FF____TT____RR_EE_LL  | _EE_ll_ff_33_22____RR_ee_ll     | _EE_ll_ff_66_44____RR_ee_ll
+       _SS_HH_TT____RR_EE_LL_AA     | _EE_LL_FF____TT____RR_EE_LL_AA | _EE_ll_ff_33_22____RR_ee_ll_aa    | _EE_ll_ff_66_44____RR_ee_ll_aa
+       _SS_HH_TT____SS_TT_RR_TT_AA_BB   | _EE_LL_FF____TT____BB_YY_TT_EE | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr
+       _SS_HH_TT____SS_YY_MM_TT_AA_BB   | _EE_LL_FF____TT____SS_YY_MM  | _EE_ll_ff_33_22____SS_yy_mm     | _EE_ll_ff_66_44____SS_yy_mm
+       _oo_tt_hh_ee_rr        | _EE_LL_FF____TT____BB_YY_TT_EE | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr
+       -------------+------------+---------------+---------------
+
+       elf_rawdata creates a buffer with type ELF_T_BYTE.
+
+       As mentioned above, the program's working version controls
+       what  structures  the library creates for the application.
+       The library similarly interprets section  types  according
+       to  the versions.  If a section type ``belongs'' to a ver-
+       sion newer than the  application's  working  version,  the
+       library  does not translate the section data.  Because the
+       application cannot know the data format in this case,  the
+       library   presents   an   untranslated   buffer   of  type
+       ELF_T_BYTE, just as it would for an  unrecognized  section
+       type.
+
+       A  section  with  a  special type, SHT_NOBITS, occupies no
+       space in an object file,  even  when  the  section  header
+       indicates  a  non-zero  size.  elf_getdata and elf_rawdata
+       ``work'' on such a section, setting the data structure  to
+       have  a  null buffer pointer and the type indicated above.
+       Although no data is present, the d_size value  is  set  to
+       the  size  from  the  section  header.   When a program is
+
+                                                                3
+
+elf_getdata(3elf)                               elf_getdata(3elf)
+
+       creating a new section of type SHT_NOBITS, it  should  use
+       elf_newdata  to  add  data  buffers to the section.  These
+       ``empty'' data buffers should have the d_size members  set
+       to the desired size and the d_buf members set to null.
+
+EExxaammpplleess
+       The following fragment obtains the string table that holds
+       section names (ignoring error checking).  See for a varia-
+       tion of string table handling.  ehdr = elf32_getehdr(elf);
+       scn = elf_getscn(elf,  (size_t)ehdr->e_shstrndx);  shdr  =
+       elf32_getshdr(scn);  if  (shdr->sh_type  !=  SHT_STRTAB) {
+                   /* not a string table */ } data = 0; if ((data
+       =  elf_getdata(scn,  data))  ==  0 || data->d_size == 0) {
+                   /* error or no data */ }
+
+       The e_shstrndx member in an ELF header holds  the  section
+       table  index of the string table.  The program gets a sec-
+       tion descriptor for that section, verifies it is a  string
+       table,  and  then  retrieves the data.  When this fragment
+       finishes, data->d_buf points at  the  first  byte  of  the
+       string  table,  and  data->d_size holds the string table's
+       size in bytes.
+
+RReeffeerreenncceess
+
+                                                                4
+

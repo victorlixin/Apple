@@ -1,0 +1,124 @@
+pthread_mutex_trylock(2)                       pthread_mutex_trylock(2)
+
+  pptthhrreeaadd__mmuutteexx__lloocckk(())
+
+  NNAAMMEE
+
+    pthread_mutex_lock(), pthread_mutex_trylock(), pthread_mutex_unlock() -
+    lock and unlock a mutex object
+
+  SSYYNNOOPPSSIISS
+
+    #include <pthread.h>
+
+    int pthread_mutex_lock(pthread_mutex_t *mutex);
+    int pthread_mutex_trylock(pthread_mutex_t *mutex);
+    int pthread_mutex_unlock(pthread_mutex_t *mutex);
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The pptthhrreeaadd__mmuutteexx__lloocckk(2) function locks the mutex object referenced by
+    the mutex argument. If the mutex is already locked, the calling thread is
+    blocked until the mutex is unlocked. When pptthhrreeaadd__mmuutteexx__lloocckk() returns,
+    the specified mutex object is locked and owned by the calling thread.
+
+    If the mutex was created with the type attribute set to
+    PTHREAD_MUTEX_NORMAL, pptthhrreeaadd__mmuutteexx__lloocckk does not attempt to detect a
+    deadlock condition caused by an attempt to lock an already locked mutex.
+    If a thread attempts to unlock a thread that is not unlocked or that it
+    did not lock, the results will be unpredictable.
+
+    Error checking is provided if the type attribute is set to
+    PTHREAD_MUTEX_ERRORCHECK, and pptthhrreeaadd__mmuutteexx__lloocckk will return an error if
+    an attempt is made to lock a mutex that is already locked. An error occurs
+    if a thread attempts to unlock a thread that is not unlocked or that it
+    has not locked.
+
+    When the type attribute is set to PTHREAD_MUTEX_RECURSIVE, the mutex
+    maintains a lock count. The first time a thread locks a mutex, the lock
+    count is set to 1 (one). Each time a thread locks the mutex, the lock
+    count is incremented by one, and each time a thread unlocks the mutex, the
+    lock count is decremented by one. When the lock count reaches zero, the
+    mutex becomes available to other threads for use. An error occurs if a
+    thread attempts to unlock a thread that is not unlocked or that it has not
+    locked.
+
+    If the type attribute is set to PTHREAD_MUTEX_DEFAULT, attempting to lock
+    a mutex that is already locked will produce unexpected results.
+
+    The pptthhrreeaadd__mmuutteexx__ttrryylloocckk(2) function is identical to pptthhrreeaadd__mmuutteexx__lloocckk()
+    except that if the mutex is already locked by the calling thread or any
+    other thread, pptthhrreeaadd__mmuutteexx__ttrryylloocckk() returns immediately. If the mutex
+    type attribute is set to PTHREAD_MUTEX_RECURSIVE and the mutex is owned by
+    the calling thread, the lock count is incremented by one and the
+    pptthhrreeaadd__mmuutteexx__ttrryylloocckk() function immediately returns zero, indicating
+    success.
+
+    The pptthhrreeaadd__mmuutteexx__uunnlloocckk(2) function unlocks the mutex referenced by
+    mutex. The manner in which this occurs depends on the type attribute of
+    the mutex. If the type attribute is set to PTHREAD_MUTEX_RECURSIVE, the
+    mutex becomes available when the lock count reaches zero and the calling
+    thread has no more locks on the mutex. If there are threads blocked on the
+    mutex, and the call to pptthhrreeaadd__mmuutteexx__uunnlloocckk() releases the mutex, the
+    scheduling policy determines which thread acquires the mutex.
+
+    If a signal is sent to a thread waiting for a mutex, when the thread
+    returns from the signal handler, it continues to wait on the mutex as
+    though it had not been interrupted.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    On success, the pptthhrreeaadd__mmuutteexx__lloocckk() and pptthhrreeaadd__mmuutteexx__uunnlloocckk() functions
+    return 0; otherwise, an error code is returned.
+
+    The pptthhrreeaadd__mmuutteexx__ttrryylloocckk() function returns 0 if a lock on the mutex is
+    acquired; otherwise, an error code is returned.
+
+  EERRRROORRSS
+
+    The pptthhrreeaadd__mmuutteexx__lloocckk() and pptthhrreeaadd__mmuutteexx__ttrryylloocckk() functions can fail
+    for the following reason:
+
+    [EINVAL]
+        The mutex was created with the protocol attribute set to
+        PTHREAD_PRIO_PROTECT and the calling thread's priority is higher than
+        the mutex's current priority ceiling.
+
+    The pptthhrreeaadd__mmuutteexx__ttrryylloocckk() function can fail for the following reason:
+
+    [EBUSY]
+        The mutex is already locked.
+
+    The pptthhrreeaadd__mmuutteexx__lloocckk() function can fail for the following reason:
+
+    [EDEADLK]
+        The calling thread already owns the mutex.
+
+    The pptthhrreeaadd__mmuutteexx__uunnlloocckk() function can fail for the following reason:
+
+    [EPERM]
+        The calling thread does not own the mutex.
+
+    All three functions can fail for the following reasons:
+
+    [EINVAL]
+        The mutex argument does not refer to an initialized mutex object.
+
+    [EAGAIN]
+        The mutex could not be locked because the maximum number of locks on
+        the mutex has been reached.
+
+    These functions do not return [EINTR].
+
+  SSEEEE AALLSSOO
+
+    _p_t_h_r_e_a_d___m_u_t_e_x___d_e_s_t_r_o_y()
+
+    _p_t_h_r_e_a_d___m_u_t_e_x___t_i_m_e_d_l_o_c_k()
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

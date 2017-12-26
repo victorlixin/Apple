@@ -1,0 +1,235 @@
+
+
+Pool(3C++)                                             Pool(3C++)
+
+SSyynnooppssiiss
+       #include <Pool.h> namespace SCO_SC {
+
+       class Pool{ public: //  Constructors, destructor
+           Pool(size_t n);         // see stddef.h
+           ~Pool(); //  Copy and assign
+           private:
+               Pool(const Pool& p);
+               Pool& operator=(const Pool& p);
+           public: //  Allocate and free elements
+           void* alloc();
+           void free(void* vp);
+           void  purge();  };  struct Vpool_stats { ... }; // see
+       below class Vpool{ public: //  Constructors, destructor
+           Vpool(size_t max, size_t expected);
+           ~Vpool(); //  Copy and assign
+           private:
+               Vpool(const Vpool& p);
+               Vpool& operator=(const Vpool& p);
+           public: //  Allocate, reallocate, and free elements
+           void* alloc();
+           void* realloc(void* vp, size_t n);
+           void* realloc_inplace(void* vp, size_t n);
+           void purge(); //  Performance analysis
+           Vpool_stats stats()const; }; struct Vpool_stats{
+           unsigned count;
+           double mem_util;
+           size_t mem_alloced;
+           size_t mem_inuse;
+           size_t mem_waste;
+           size_t mem_savings;
+           size_t chunk_size; }; }
+
+DDeessccrriippttiioonn
+       Pools and  Vpools  are  special-purpose  storage  managers
+       which  sit  between  the client's program and the built-in
+       operators new and delete.  Pools and Vpools provide  supe-
+       rior  time and space performance for certain kinds of com-
+       mon storage allocation problems.  Pools  provide  superior
+       performance  for those cases when many objects of a common
+       size (e.g., instances of a given class) are allocated  and
+       freed  within  a  program; VPools provide superior perfor-
+       mance for those cases when many objects of a common  maxi-
+       mum size (e.g., Unix path names) are allocated and reallo-
+       cated within a program.
+
+       Every Pool and Vpool (collectively, "pool") consists of  a
+       set  of  currently allocated storage elements, residing in
+       some currently allocated internal memory.  A storage  ele-
+       ment  is a contiguous region of memory aligned on the same
+       boundary as memory returned by malloc(3C) so that  it  may
+       contain an object of any type.  The function alloc is used
+       to allocate a storage element from a pool's internal  mem-
+       ory,  and  (for  Pools) free is used to return the storage
+
+                                                                1
+
+Pool(3C++)                                             Pool(3C++)
+
+       element to the internal memory, thus making  it  available
+       for future allocs.  If insufficient internal memory exists
+       to allocate a storage element, a pool increases its inter-
+       nal  memory by a large chunk by calling operator new.  The
+       function purge can be used  to  return  all  of  a  pool's
+       internal memory to the C++ freestore (simultaneously free-
+       ing all the pool's currently allocated storage  elements).
+       Thus,  the total amount of internal memory held by a given
+       pool is (roughly) equal to the maximum  amount  of  memory
+       ever  required  since  the last purge (or construction, if
+       there were no purges).
+
+PPooooll
+       All elements of the same Pool have the same size, but dif-
+       ferent Pools may have different size elements.
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Pool(size_t n); A Pool whose elements will each be n bytes
+       in size.  The Pool initially has no internal memory.
+
+       ~Pool(); Destructor.  Calls purge().
+
+   CCooppyy aanndd aassssiiggnn
+       Pools cannot be copied or assigned.
+
+   AAllllooccaattee aanndd ffrreeee eelleemmeennttss
+       void* alloc(); Allocates a new element from internal  mem-
+       ory  (enlarging  the  latter  if necessary), and returns a
+       pointer to it.
+
+       void free(void* vp); If vp is a pointer that was  obtained
+       from  alloc(),  the  element  it  points to is returned to
+       internal memory.  Otherwise, the behavior is undefined.
+
+       void purge(); Returns all of this Pool's  internal  memory
+       to  the freestore, simultaneously freeing all the elements
+       in this Pool.
+
+VVppooooll
+       All elements of the same Vpool have the same maximum size.
+       Different  Vpools  may  have different maximum sizes.  The
+       most recently allocated element of a Vpool  may  be  real-
+       loced to a size smaller than the maximum (in order to save
+       space).  Information useful in  tuning  Vpool  performance
+       can  be  obtained  from  function stats() in the form of a
+       Vpool_stats structure (see below).
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Vpool(size_t max, size_t expected); A Vpool whose elements
+       will  each  initially have max bytes, and an expected size
+       (after reallocation) of expected  bytes.   The  Pool  ini-
+       tially  has  no  internal  memory.  The second argument is
+       used to optimize memory utilization (see Complexity).
+
+                                                                2
+
+Pool(3C++)                                             Pool(3C++)
+
+       ~Vpool(); Destructor.  Calls purge().
+
+   CCooppyy aanndd aassssiiggnn
+       Vpools cannot be copied or assigned.
+
+   AAllllooccaattee,, rreeaallllooccaattee,, aanndd ffrreeee eelleemmeennttss
+       void* alloc(); Allocates a new element from internal  mem-
+       ory  (enlarging  the  latter  if necessary), and returns a
+       pointer to it.
+
+       void* realloc(void* vp, size_t n); If vp is a  pointer  to
+       the most recently allocated element obtained from alloc(),
+       and vp has not already been reallocated,  then  moves  the
+       element  to  a new (or possibly the same) location, giving
+       it a size of n bytes, and returns a  pointer  to  the  new
+       location.   Otherwise  returns  0  without  affecting  the
+       Vpool.
+
+       void* realloc_inplace(void* vp, size_t n);  Like  realloc,
+       except  that  it  never  moves the element.  When possible
+       (i.e., when the memory pointed to by vp  is  not  pinned),
+       realloc  should  be used instead of realloc_inplace, since
+       the former leads to greater memory utilization.  (See Com-
+       plexity.)
+
+       void  purge(); Returns all of this Vpool's internal memory
+       to the freestore, simultaneously freeing all the  elements
+       in  this Vpool.  (Notice that although individual elements
+       in a Vpool cannot be freed, all the elements can be  freed
+       by calling purge.)
+
+   PPeerrffoorrmmaannccee aannaallyyssiiss
+       Vpool_stats  stats()const;  Returns a structure containing
+       statistics about this Vpool.
+
+ssttrruucctt VVppooooll__ssttaattss
+       Vpool statistics.
+
+       count; The number of elements currently in the Vpool.
+
+       mem_util;  The  current  memory  utilization.   Equal   to
+       mem_inuse/(mem_inuse+mem_waste).
+
+       mem_alloced; The total internal memory currently allocated
+       to the Vpool.
+
+       mem_inuse; The number of bytes currently holding elements.
+
+       mem_waste;  The  number  of  bytes currently wasted due to
+       fragmentation.
+
+       mem_savings; The number of bytes which have been saved  as
+       a result of reallocing in this Vpool.
+
+                                                                3
+
+Pool(3C++)                                             Pool(3C++)
+
+       chunk_size; The underlying memory chunk size.
+
+CCoommpplleexxiittyy
+       For  Pools,  memory is internally allocated in chunks that
+       are typically about 1000 bytes each,  and  utilization  is
+       100%.   For  Vpools, memory is internally allocated in the
+       smallest sized chunks of between  1000  and  10,000  bytes
+       which  will  guarantee memory utilization of at least 80%.
+       The guarantee of 80% is  for  the  case  when  only  real-
+       loc_inplace  is  used; if realloc is used, memory utiliza-
+       tion will be much better.   It  is  important  when  using
+       realloc_inplace  (and not so important when using realloc)
+       that the user specify an  accurate  expected  reallocation
+       size; in general it is better to underestimate rather than
+       overestimate the expected size.  For both kinds of  pools,
+       once  a  memory  chunk  is allocated to a particular pool,
+       that chunk is only released when  purge()  is  called,  or
+       when the pool is destroyed.
+
+       Constructing  either  kind  of  pool  takes constant time.
+       Allocating an element takes constant  time,  and  is  done
+       inline  except when a new chunk must be added to the pool.
+       Freeing an element within a Pool is done  inline  in  con-
+       stant  time.   Purging  either  kind  of  pool  (and hence
+       destroying either kind of pool) takes time proportional to
+       the  number  of  memory  chunks currently allocated by the
+       pool.  In a Vpool, realloc takes time proportional to  the
+       new  size  of  the element, and realloc_inplace takes con-
+       stant time.
+
+NNootteess
+       Individual Vpool  elements  cannot  be  freed.   This  was
+       traded-off for the ability to reallocate elements.
+
+EExxaammppllee
+       If  a program is spending lots of time newing and deleting
+       instances of some class T (e.g., nodes of a linked  list),
+       then the following will usually significantly speed up the
+       program:
+           #include <Pool.h>
+           class T{
+               ...
+               static Pool mypool;
+               void* operator new(size_t){
+                   return mypool.alloc();
+               }
+               void operator delete(void* vp){
+                   mypool.free(vp);
+               }
+           };
+           Pool T::mypool(sizeof(T));
+
+RReeffeerreenncceess
+
+                                                                4
+

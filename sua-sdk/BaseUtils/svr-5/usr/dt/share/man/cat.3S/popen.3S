@@ -1,0 +1,81 @@
+
+
+popen(3S)                                               popen(3S)
+
+SSyynnooppssiiss
+       #include <stdio.h>
+
+       FILE *popen(const char *command, const char *type);
+
+       int pclose(FILE *stream);
+
+DDeessccrriippttiioonn
+       popen  creates  a pipe between the calling program and the
+       command to be executed.  The arguments to popen are point-
+       ers  to  null-terminated  strings.   command consists of a
+       shell command line.  type is an I/O  mode,  either  r  for
+       reading  or w for writing.  The value returned is a stream
+       pointer such that one can write to the standard  input  of
+       the  command, if the I/O mode is w, by writing to the file
+       stream [see and one can read from the standard  output  of
+       the  command,  if  the  I/O mode is r, by reading from the
+       file stream.
+
+       popen forks to create a child process that runs  the  com-
+       mand  interpreter specified by the SHELL environment vari-
+       able in the caller's environment.  If SHELL  is  not  set,
+       then /bin/sh is used.  This shell executes command.
+
+       A stream opened by popen should be closed by pclose, which
+       waits for the associated process to terminate and  returns
+       the exit status of the command.
+
+       Because  open  files  are  shared, a type r command may be
+       used as an input filter and a type w as an output  filter.
+
+   EErrrroorrss
+       popen  returns a null pointer if files or processes cannot
+       be created.
+
+       pclose returns -1 if  stream  is  not  associated  with  a
+       popened command.
+
+UUssaaggee
+       Here  is  an example of a typical call: #include <stdio.h>
+       #include <stdlib.h>
+
+       main() {      char *cmd  =  "/usr/bin/ls  *.c";       char
+       buf[BUFSIZ];      FILE *ptr;
+
+            if  ((ptr = popen(cmd, "r")) != NULL)           while
+       (fgets(buf, BUFSIZ, ptr)  !=  NULL)                 (void)
+       printf("%s", buf);      return 0; }
+
+       This  program  will  print on the standard output [see all
+       the file names in the current directory  that  have  a  .c
+       suffix.
+
+                                                                1
+
+popen(3S)                                               popen(3S)
+
+RReeffeerreenncceess
+NNoottiicceess
+       If the original and popened processes concurrently read or
+       write a common file,  neither  should  use  buffered  I/O.
+       Problems with an output filter may be forestalled by care-
+       ful buffer flushing, for example, with fflush [see
+
+       A security hole exists through the IFS and  PATH  environ-
+       ment  variables.   Full  pathnames should be used (or PATH
+       reset) and IFS should be set to space and tab
+       (" \t").
+
+CCoommppaattiibbiilliittyy
+       Previous versions of &gemini; and  &everest;  always  used
+       /bin/sh as the shell in which command is executed.  Appli-
+       cations built for previous  system  versions  may  require
+       that  SHELL be set to /bin/sh in the caller's environment.
+
+                                                                2
+

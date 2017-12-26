@@ -1,0 +1,102 @@
+pthread_cond_wait(2)                               pthread_cond_wait(2)
+
+  pptthhrreeaadd__ccoonndd__ttiimmeeddwwaaiitt(())
+
+  NNAAMMEE
+
+    pthread_cond_timedwait(), pthread_cond_wait() - wait on a condition
+    variable
+
+  SSYYNNOOPPSSIISS
+
+    #include <pthread.h>
+
+    int pthread_cond_timedwait(pthread_cond_t *cond, pthread_mutex_t *mutex,
+          const pthread_timespec *abstime);
+    int pthread_cond_wait(pthread_cond_t *cond, pthread_mutex_t *mutex);
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The pptthhrreeaadd__ccoonndd__wwaaiitt(2) function unlocks the mutex referenced by mutex
+    and blocks the calling thread on the condition variable referenced by
+    cond. The pptthhrreeaadd__ccoonndd__ttiimmeeddwwaaiitt(2) unlocks mutex and blocks the calling
+    thread on cond or until the system clock reaches or passes the absolute
+    time referenced by abstime. The calling thread must have locked mutex
+    before calling these functions; when the functions return (regardless of
+    the reason or error condition), mutex is locked again and owned by the
+    calling thread. The cond variable must have been initialized dynamically
+    by a call to _pp_tt_hh_rr_ee_aa_dd____cc_oo_nn_dd____ii_nn_ii_tt(2) or statically using the
+    PTHREAD_COND_INITIALIZER macro.
+
+    The release of mutex and the conditional block occur atomically. That is,
+    it is possible for another thread to acquire the mutex after it has been
+    released, in which case a subsequent call in that thread to
+    pptthhrreeaadd__ccoonndd__wwaaiitt() or pptthhrreeaadd__ccoonndd__ttiimmeeddwwaaiitt() behaves as though the call
+    were issued after the thread that released the mutex had blocked.
+
+    With condition variables, a predicate is associated with the condition
+    wait. The thread should continue only when this predicate is true.
+    Spurious wakeups can occur when waiting on a condition variable because
+    pptthhrreeaadd__ccoonndd__wwaaiitt() and pptthhrreeaadd__ccoonndd__ttiimmeeddwwaaiitt() can return even when the
+    predicate is false. Consequently, each time these functions return, the
+    calling thread should evaluate the predicate to determine whether or not
+    it should, in fact, continue. Typically, these functions are called inside
+    a loop that exits only when the predicate is true.
+
+    Whether timed or not, a condition wait is a cancellation point. When the
+    calling thread's cancelability type is set to PTHREAD_CANCEL_DEFERRED, a
+    requested cancellation will be acted upon, and the mutex is reacquired
+    before the first cancellation cleanup handler is called. The result is the
+    same as though the thread were unblocked, allowed to execute up to the
+    point of returning from the call to pptthhrreeaadd__ccoonndd__wwaaiitt() or
+    pptthhrreeaadd__ccoonndd__ttiimmeeddwwaaiitt, notices the cancellation request and immediately
+    starts the thread cancellation activities, including calling cancellation
+    cleanup handlers. The cleanup handlers should release the mutex to prevent
+    application deadlock. A thread that is unblocked because it has been
+    cancelled should not consume a condition signal it receives for cond in
+    case another thread is also blocked on the same condition variable.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    On success, both functions returns 0; otherwise, an error code is
+    returned.
+
+    With the exception of [ETIMEDOUT], the error checks behave as though they
+    were performed immediately at the beginning of the function call and so
+    cause the functions to return without modifying the state of mutex or
+    cond.
+
+  EERRRROORRSS
+
+    The pptthhrreeaadd__ccoonndd__ttiimmeeddwwaaiitt() function can fail for the following reason:
+
+    [ETIMEDOUT]
+        The time specified by abstime has passed.
+
+    Both functions can fail for the following reasons:
+
+    [EINVAL]
+        The value of cond, mutex, or abstime is invalid, or cond has been used
+        for concurrent calls to pptthhrreeaadd__ccoonndd__wwaaiitt() or
+        pptthhrreeaadd__ccoonndd__ttiimmeeddwwaaiitt() using different mutexes.
+
+    [EPERM]
+        The current thread did not own the mutex referenced by mutex when the
+        function was called.
+
+    Neither function returns [EINTR].
+
+  SSEEEE AALLSSOO
+
+    _p_t_h_r_e_a_d___c_o_n_d___d_e_s_t_r_o_y(2)
+
+    _p_t_h_r_e_a_d___c_o_n_d___b_r_o_a_d_c_a_s_t(2)
+
+    _t_i_m_e(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

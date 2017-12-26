@@ -1,0 +1,551 @@
+
+
+crash(1M)                                               crash(1M)
+
+SSyynnooppssiiss
+       /usr/sbin/crash [-a analysisfile] [-b batchfile] [-d dump-
+       file] [-m moduledir] [-n namelist] [-w outputfile]
+
+DDeessccrriippttiioonn
+       The crash command is used to  examine  the  system  memory
+       image  of  a running or a crashed system by formatting and
+       printing control structures, tables,  and  other  informa-
+       tion.
+
+       The amount and type of information stored in a system mem-
+       ory dump can be altered using the  kernel  parameter  SYS-
+       DUMP_SELECTIVE.  Set this parameter to to dump both kernel
+       and user mapped memory.  to dump only kernel  mapped  mem-
+       ory.  This is the default.  to dump only a portion of ker-
+       nel mapped memory.
+
+       If you change the value of SYSDUMP_SELECTIVE you must  run
+       to rebuild the kernel, and reboot the system.
+
+       When  the  dump is saved, you are prompted whether to save
+       it in compressed format -- compression  reduces  transmis-
+       sion  time if you are forwarding the dump to a remote site
+       for analysis.
+
+       If the Encryption Utilities package is installed  on  your
+       system, you are also presented with a prompt asking if you
+       want to encrypt the dump.  If you choose  to  encrypt  the
+       dump,  you  must  supply  an  encryption  key  [see ].  To
+       decrypt the dump: cat dumpfile | crypt key  >  newdumpfile
+       where  dumpfile  is  the encrypted dump file, crypt key is
+       the encryption key that was specified when  the  dump  was
+       encrypted,  and  newdumpfile is the resulting, unencrypted
+       dump file.
+
+       If the PANICBOOT parameter in /etc/default/init is set  to
+       YES,  the  system  automatically saves the memory dump and
+       reboots if a system panic occurs.  In this case,  you  are
+       not prompted to compress or encrypt the dump.
+
+   UUssiinngg  ccrraasshh ttoo eexxaammiinnee kkeerrnneell mmeemmoorryy ssttaattiissttiiccss,, hhiissttoorryy,, aanndd
+       SSTTRREEAAMMSS ppeerrffoorrmmaannccee
+       The kmdt and perf modules allow you to examine kernel mem-
+       ory   statistics  and  history,  and  streams  performance
+       statistics, respectively.  These two modules are  mutually
+       exclusive.
+
+       Before  obtaining  the  dump, configure either module into
+       the kernel as follows: Execute the  following  command  to
+       configure  either  the kmdt module or the perf module into
+       your kernel.  Note that kmdt or perf  must  be  the  first
+       argument  to  idtype, and processor type is second (mp for
+       multi-processor, atup for uni-processor).
+          /etc/conf/bin/idtype {kmdt|perf} {mp|atup}
+
+                                                                1
+
+crash(1M)                                               crash(1M)
+
+       Here, the debug module (either kmdt or perf)  is  required
+       to  be  the first argument.  The second argument specifies
+       the processor type (mp for multi-processor,  or  atup  for
+       uni-processor).  Rebuild the kernel and reboot.
+
+       Configuring  the  kmdt  module into the kernel makes these
+       additional functions available to crash (described in  the
+       "Usage" section): kmastats kmahist kmapools
+
+       Configuring  the  perf  module into the kernel makes these
+       additional functions available to crash (described in  the
+       "Usage"  section):  strleaklist  strleakcnt strperf If you
+       try to use a function which is  not  configured  into  the
+       kernel  with one of the debug modules, you will get a mes-
+       sage telling you it is available only with a debug kernel.
+
+       To remove the debug module from the kernel, execute idtype
+       atup or idtype mp, rebuild the kernel, and reboot.
+
+OOppttiioonnss
+       crash takes the following options: Use the  -a  option  to
+       have  the  crash  utility perform an analysis of the dump,
+       and save the analysis in plain text format to  the  direc-
+       tory  specified by analysisfile.  The default analysisfile
+       is /tmp/analysis.  Use the text file batchfile, which con-
+       tains a list of crash commands to be executed on the dump.
+       Use dumpfile for the file  containing  the  system  memory
+       image.  The default dumpfile is /dev/swap.  If you enter a
+       value other than /dev/swap, it is assumed that the  system
+       has crashed.
+
+       If  a  system dump is directed to a dump device other than
+       the default swap device, the dump  will  not  be  detected
+       when  the system boots up.  To enable the system to detect
+       a dump that is not in the swap area when the system boots,
+       add   the   following  entry  to  the  file  /etc/dumptab.
+       /dev/dump   0       - Use the text  file  namelist,  which
+       contains  the symbol table information needed for symbolic
+       access to the system memory image  to  be  examined.   The
+       default  namelist  is /stand/unix.  If a system image from
+       another machine is to be examined, the corresponding  text
+       file  must  be  copied from that machine.  For active sys-
+       tems, crash uses system calls to the running kernel to get
+       symbol  table  information.   For that reason, only global
+       symbols are available.  Use the specified directory,  mod-
+       uledir to look for modules.  When working on a dump, crash
+       looks for the modules that were loaded at the time of  the
+       dump,  and adds those symbols to its symbol table informa-
+       tion.  By default, crash tries to find the modules in  the
+       directories  from  which  they were loaded.  The -m option
+       specifies a directory where crash should look for the mod-
+       ules  instead.  If you use the -m option, crash only looks
+       in the specified directory.  You can  only  use  a  single
+       instance  of the -m option on the command line, and if you
+
+                                                                2
+
+crash(1M)                                               crash(1M)
+
+       attempt to use the -m option more than once, only the last
+       one  is  valid; the others are ignored.  The output from a
+       crash session is directed to outputfile.  The default out-
+       putfile is the standard output.
+
+   IInnppuutt
+       When  you  execute  the crash command, a session is initi-
+       ated.  If you enter the ? character at the command prompt,
+       crash provides a help menu of the available commands.
+
+       Input  during  a  crash  session  is of the form: function
+       [argument...]  where function is one of  the  crash  func-
+       tions  described  in  ``Usage'', and argument is a list of
+       qualifying data that indicate which items  of  the  system
+       image are to be printed.
+
+       The  default for process-related items is the current pro-
+       cess for a running system, or the process that was running
+       at  the  time  of  the crash for a crashed system.  If the
+       contents of a table are being dumped, the default  is  all
+       active table entries.
+
+       The  following  function  options  are  available to crash
+       functions wherever they are semantically  valid.   Display
+       every entry in a table.  Display the full structure.  Dis-
+       play privilege names symbolically.  Default is to  display
+       in  hexadecimal.   Interpret  all address arguments in the
+       command line as physical addresses.  If they are not phys-
+       ical  addresses, results are inconsistent.  Specify a pro-
+       cess slot other than the default.  Redirect the  command's
+       output to a file.
+
+       The  functions  mode,  defproc, and redirect correspond to
+       the function options -p, -s, and -w.   The  mode  function
+       may  be used to set the address translation mode to physi-
+       cal or virtual for  all  subsequently  entered  functions;
+       defproc  sets  the  value of the process slot argument for
+       subsequent functions; and redirect  redirects  all  subse-
+       quent output.
+
+   OOuuttppuutt
+       Output  from  crash functions may be piped to another pro-
+       gram as follows: function [argument . . .] ! shell_command
+       For  example,  mount  !  grep  rw  writes  all mount table
+       entries with an rw flag to the standard output.  The redi-
+       rection option (-w) cannot be used with this feature.
+
+       An  argument can be either a symbol or a numeric argument.
+       Numeric arguments are assumed to be  decimal  unless  pre-
+       ceded  by 0x or 0b prefixes for hexadecimal or binary num-
+       bers.  Any argument that is not either a symbol or a  num-
+       ber  will  be  reported  as an error.  Each function, when
+       executed, determines  whether  the  argument  specified  a
+       valid slot or address.
+
+                                                                3
+
+crash(1M)                                               crash(1M)
+
+       Default  bases  on all arguments may be overridden.  The C
+       conventions for designating the bases of numbers are  rec-
+       ognized.
+
+       Aliases  for  functions  may  be any uniquely identifiable
+       initial  substring  of  the  function  name.   Traditional
+       aliases of one letter, such as p for proc, remain valid.
+
+       Many  functions  accept  different  forms of entry for the
+       same argument.  Requests for table information will accept
+       a  table entry number or a range.  A range of slot numbers
+       may be specified in the form a-b where a and b are decimal
+       numbers.   An  expression  consists of two operands and an
+       operator.  An operand may be an address, a  symbol,  or  a
+       number;  the  operator  may  be  +,  -, *, /, &, or |.  An
+       operand that is a number should be  preceded  by  a  radix
+       prefix  if it is not a decimal number (0 for octal, 0x for
+       hexadecimal, 0b  for  binary).   The  expression  must  be
+       enclosed  in  parentheses.   Other functions accept any of
+       these argument forms that are meaningful.
+
+       Two abbreviated arguments  to  crash  functions  are  used
+       throughout.   Both  accept  data entered in several forms.
+       They may be expanded into  the  following:  table_entry  =
+       address | slot | range
+
+       start_addr = address | symbol | expression
+
+UUssaaggee
+       Following  are  the  available  functions  in  crash: List
+       available functions.  Escape to the shell and execute com-
+       mand.   Print  audit  buffer data in mode format.  mode is
+       one of long (-l), short (-t), or byte (-b).   The  default
+       mode  for character and ASCII formats is byte; the default
+       mode for decimal, hexadecimal, and octal formats is  long.
+       When  mode is omitted, the previous value is used.  At the
+       start of a crash session, the mode is long.  adds a struc-
+       ture  to  the list shown by size or size -f, to the struc-
+       tures and their field names (its particularly  useful  for
+       od).   For  example,  addstruct stat sys/stat.h parses the
+       declaration of struct stat in /usr/include/sys/stat.h, and
+       creates a /usr/lib/crash/statoffs.so used thereafter (even
+       when you reinvoke crash).  If the header file turns out to
+       need  other header files included before it can be parsed,
+       then you can add those dependent header files.  If it does
+       not parse correctly, you can edit /usr/lib/crash/addstruct
+       to correct its parsing.  Print address  space  information
+       on process segments.  Print number in binary, octal, deci-
+       mal, and hexadecimal.  A number in a radix other than dec-
+       imal  should  be  preceded  by a prefix that indicates its
+       radix as follows:  0x,  hexadecimal;  0,  octal;  and  0b,
+       binary.  Alias: b
+       Print  the  contents of a buffer in the designated format.
+       The following  format  designations  are  recognized:  -b,
+
+                                                                4
+
+crash(1M)                                               crash(1M)
+
+       byte:  -c,  character;  -d,  decimal; -x, hexadecimal; -o,
+       octal; and, -i, inode.  If no format is given, the  previ-
+       ous  format  is used.  The default format at the beginning
+       of a crash session is hexadecimal.  Alias: buf
+       Print system buffer headers.  The -f option produces  dif-
+       ferent  output depending on whether the buffer is local or
+       remote.  Print the callout table for a CPU group.  Set the
+       current  CPU  group  to  cgnum.  If cgnum is not specified
+       then the current CPU group is displayed.  Print the  local
+       information  for  the  current  CPU  group, or for the CPU
+       specified by eng.  If  -e  is  specified,  information  is
+       printed  for all CPU groups.  Print information about pro-
+       cess scheduler classes.  Set the value of the lwp slot for
+       the  current  process.  If slot is not specified, the cur-
+       rent slot is displayed.  The default  lwp  slot  for  each
+       process  is  0.   If -c is specified, a reset is performed
+       which gets context for the current slot number.   Set  the
+       value  of  the default process slot argument.  The default
+       process slot argument may be set to the current slot  num-
+       ber (-c) or the slot number may be specified.  If no argu-
+       ment is entered, the value of the previously set slot num-
+       ber is printed.  At the start of a crash session, the pro-
+       cess slot is set  to  the  current  process.   Disassemble
+       count  instructions  starting  at start_addr.  The default
+       count is 1.  The absolute option (-a) specifies a non-sym-
+       bolic  disassembly.  The -c option can be used in place of
+       start_addr to continue disassembly at the address at which
+       a   previous  disassembly  ended.   Print  the  dispatcher
+       (scheduler) queues.  The -l option prints only  the  local
+       dispatcher  queues.   The -g option prints only the global
+       dispatcher queue.  Print the data symbol whose address  is
+       closest  to,  but  not  greater than, the address entered.
+       Set the current engine to eng_num.  If no eng_num is spec-
+       ified,  then  the current engine number is displayed.  The
+       -b option acts as a toggle to bind or  unbind  an  engine.
+       Alias: f
+       Print the file table.  Alias: fprv
+       Print  the  kernel  privilege table.  Print the filesystem
+       information table.  Print  the  global  descriptor  table.
+       Print  a  description  of  function,  including syntax and
+       aliases.  Use -e to print a help list for  all  functions.
+       If  hexmode  is  ON, commands expect hexadecimal input and
+       display hexadecimal output.  If hexmode is OFF, input  and
+       output are decimal.  Print the interrupt descriptor table.
+       Alias: i
+       Print the inode table, including filesystem switch  infor-
+       mation.   Use -r to print free inodes.  Print the Internet
+       protocol  control   block   (inpcb)   at   the   specified
+       address(es).   The  -n  (next) and -p options allow you to
+       walk a chain of inpcb structures.  The -h option makes the
+       -n  and  -p options follow ``head'' (that is, normal) next
+       or previous links. This is the default behavior.   The  -x
+       option  switches  the command's behavior so that -n and -p
+       follow next or previous links in the  hash  queue.   Print
+
+                                                                5
+
+crash(1M)                                               crash(1M)
+
+       information about the Internet protocol control block hash
+       (inpcbhash) tables.  The -s option prints only  statistics
+       (default behavior), the -h option prints hash entries, the
+       -c option causes the chains attached to  an  entry  to  be
+       walked,  and  the -e option will cause empty entries to be
+       included.  The -t and -u options display the TCP  and  UDP
+       hash tables respectively.  If neither -t nor -u are speci-
+       fied, both are assumed.  Display kernel memory  allocation
+       history.   This displays time, lwp, address, size, and the
+       function doing the  allocation  or  free  of  the  memory.
+       Options  can  be given in upper or lower case.  The option
+       characters a and l can be preceeded  by!  to  reverse  the
+       sense  of  the comparison.  The -a option argument address
+       is the address of a memory buffer.  The -l option argument
+       lwp_address  is  the address of the lwp (light weight pro-
+       cess) you are interested in.  The -n option argument  num-
+       ber specifies that only number most recent history entries
+       will be displayed.  the lwp (light weight process) you are
+       interested  in.   Display  kernel memory pools statistics.
+       Display kernel memory allocator statistics: kernel metrics
+       for  allocation  and  freeing of memory, failures, and the
+       invocations table (the number of  allocations,  frees  and
+       failures, by function).  Print record locking information.
+       If file lock address arguments are given, the record  lock
+       list  is printed.  If no argument is given, information on
+       locks relative to inodes  is  printed.   Print  the  local
+       descriptor  table for the specified process.  The table is
+       printed for the current process if process is  not  speci-
+       fied.   Print  out  the level identifier (LID) translation
+       cache.  The LID cache is supported only  if  the  Enhanced
+       Security  Utilities  are installed and running.  Print the
+       linkblk table.  Print the map structure of the given  map-
+       name.   Print  the memory buffers (mbufs) at the specified
+       address(es).  The -m option causes the m_next  pointer  to
+       be  followed and each mbuf encountered to be printed.  The
+       -k option causes the m_nextpkt  pointer  to  be  followed.
+       Using -k and -m together will perform both operations, but
+       first follows m_next.  The -l option prints a long listing
+       of all fields in the m_hdr. The -b option includes details
+       of the M_dat union.  Alias: m, vfs
+       Print information about mounted filesystems.  Alias:  sym-
+       val, ts
+       Print value and type for the given symbol.  Alias: rd
+       Print  count  values  starting at start_addr in one of the
+       following formats: character (-c), decimal (-d), hexadeci-
+       mal (-x), octal (-o), ASCII (-a), or hexadecimal/character
+       (-h), and one of the following  modes:  long  (-l),  short
+       (-t),  or  byte  (-b).  The default mode for character and
+       ASCII formats is byte; the default mode for decimal,  hex-
+       adecimal, and octal formats is long.  The format -h prints
+       both hexadecimal  and  character  representations  of  the
+       addresses  dumped;  no  mode  needs to be specified.  When
+       format or mode is omitted, the previous value is used.  At
+       the  start  of  a crash session, the format is hexadecimal
+
+                                                                6
+
+crash(1M)                                               crash(1M)
+
+       and the mode is long.   If  no  count  is  entered,  1  is
+       assumed.  Print information about pages.  Print the latest
+       system notices, warnings, and panic messages from the lim-
+       ited  circular  buffer  kept in memory.  Print the process
+       control block (TSS).   If  no  arguments  are  given,  the
+       active  TSS  for the current process is printed.  If argu-
+       ments are given, only one of -k, -u, or -i can  be  speci-
+       fied.   Print  the  processor  local  data for the current
+       engine.  Use the -e option to print data for all  engines,
+       or use eng to specify the engine number.  Alias: p
+       Print the process table.  Process table information may be
+       specified in  two  ways.   First,  any  mixture  of  table
+       entries  and  process IDs may be entered.  Each process ID
+       must be preceded by a #.  The  full  option  (-f)  details
+       most  of  the  information in the process table as well as
+       the region for that process.  Print  information  on  page
+       descriptor  tables.   Print the pseudo ttys presently con-
+       figured.  The -l, -h and -h options give information about
+       the  STREAMS  modules ldterm, ptem and pckt, respectively.
+       Print the list of scheduled STREAMS queues.  Print STREAMS
+       queues.   Up  to  three -s arguments can be specified: the
+       first for the write side, the second for  the  read  side,
+       and  a  third for read/write.  However, only one -s can be
+       specified if other arguments  are  to  be  used.   The  -s
+       option   displays   the  symbolic  STREAMS  configuration.
+       Alias: q
+       Terminate the crash session.  Used with a file name, redi-
+       rects  output  of a crash session to newfile.  If no argu-
+       ment is given, the file name  to  which  output  is  being
+       redirected  is  printed.   Alternatively, the close option
+       (-c) closes the previously set file and  redirects  output
+       to  the  standard  output.   Print  the  resource  manager
+       database.  Print the real-time scheduler parameter  table.
+       See  Print  information  about  processes in the real-time
+       scheduler class.  Print the  long  words  in  memory  that
+       match pattern, beginning at the start_addr for length long
+       words.  The mask is ANDed (&) with each  memory  word  and
+       the   result  compared  against  the  pattern.   The  mask
+       defaults to 0xffffffff.  Print out the  socket  associated
+       with  each  socknode  in turn starting at the socknodelist
+       anchor point in sockfs.  If one or more  socket  addresses
+       are  specified,  they are printed out in detail instead of
+       as summaries.  The -b  option  prints  a  listing  of  the
+       embedded  sockbuf structures.  The -l option prints a full
+       listing of all fields except the embedded  sockbuf  struc-
+       tures.  Print details of each socknode in turn starting at
+       the socknodelist anchor point in sockfs  If  one  or  more
+       socknode  addresses are specified, they are printed out in
+       detail instead of as summaries.  The -f option  adds  sin-
+       gle-line  details  for  the  embedded vnode and associated
+       socket structure.
+
+        Options
+               f
+
+                                                                7
+
+crash(1M)                                               crash(1M)
+
+                 Include a single line description of the associ-
+       ated socket
+               w
+                 redirect to file
+
+       Alias: si
+       Print  the  inode table for ufs or sfs filesystems.  Since
+       the ufs/sfs incore inode contains the  icommon  inode  and
+       the  alternate  inode, this function displays, in addition
+       to the icommon inode information, all security data stored
+       in  the  alternate inode.  This includes the level identi-
+       fier, the Access Control List (ACL)  count,  the  extended
+       ACL  disk  block  pointer,  and  any  inode  resident  ACL
+       entries.  Print the size of the designated structure.  The
+       (-x)  option  prints the size in hexadecimal.  If no argu-
+       ment is given, a list of the  structure  names  for  which
+       sizes  are  available is printed.  Print information about
+       open special files.   Along  with  other  information,  it
+       prints  the  security  attributes of a device: mode, stat,
+       high level range, low level range, release flag, and other
+       security flags; these attributes are supported only if the
+       Enhanced Security Utilities  are  installed  and  running.
+       Alias: s
+       Dump  the  stack.  If no arguments are entered, the kernel
+       stack for the current process is printed.  If -t is  used,
+       it expects a hexadecimal value for the stack pointer.  The
+       interrupt stack and the stack for the current process  are
+       not  available  on a running system.  Print system statis-
+       tics.  Print the STREAMS table.  Print all streams  in-use
+       messages  (a list of message blocks allocated by functions
+       in the kernel).  Print table of callers of streams  in-use
+       messages  (adress,  count,  size, and usage of the message
+       blocks).  Print  streams  performance  statistics.   Print
+       STREAMS  statistics.  Displays or changes the debug level.
+       Alias: t
+       Print  stack  trace.   Print  the  time-sharing  scheduler
+       parameter table.  See Alias: tsproc
+       Print  information  about light-weight processes (LWPs) in
+       the time-sharing scheduler class.
+       Valid types:  console, sr, sx, sc.
+       Print the tty table.  If no arguments are given,  the  tty
+       table  for both tty types is printed.  If the -t option is
+       used, the table for  the  single  tty  type  specified  is
+       printed.   If  no  argument  follows  the type option, all
+       entries in the table are printed.  A single tty entry  may
+       be  specified  using start_addr.  The -l option prints the
+       line discipline information.  Alias: u
+       Print the ublock for the designated process.  Alias: v
+       Print the tunable system parameters.  Alias: mount, m
+       Print information about mounted filesystems.  Alias: fs
+       Print  information  about  configured  filesystem   types.
+       Print   information  about  vnodes.   Print  the  physical
+       address translation of  the  virtual  address  start_addr.
+
+                                                                8
+
+crash(1M)                                               crash(1M)
+
+       Alias: vi, vinode
+       Print  the  VxFS filesystem (vxfs) inode table; valid only
+       for vxfs type filesystems.  -l prints the contents of  all
+       the  icache lists (these hold the vx_inodes) together with
+       information for each inode indicating if it is a  free  or
+       attribute  (or  both)  inode.   -r  prints  all  the  free
+       vx_inodes.  vx_inodeaddr prints the  vx_inode  located  at
+       address vx_inodeaddr.
+
+   EExxtteennssiibbllee ffuunnccttiioonnss
+       It  is  possible  to add functions to crash without having
+       access to the source code.  This  is  useful  for  writing
+       platform  specific functions or to obtain more information
+       than is available in the default command set.
+
+       Adding new functions is accomplished with shared  objects.
+       The shared object is created from a file consisting of the
+       functions that are to be added  to  the  existing  command
+       set.  When crash is started, these shared objects are read
+       and the additional functions are incorporated in the  com-
+       mand set.
+
+       To create a shared object: Create a file that contains the
+       new  commands.   This  file  should  define  the  variable
+       functab,  which should be an array type struct func.  This
+       array points to the new commands that need  to  be  added.
+       Compile  the  file  with  the  same  options as the kernel
+       build. For example, if crash is going to be run on top  of
+       a  uniprocessor  kernel,  then the file should be compiled
+       with the appropriate definitions for a  uniprocessor  ker-
+       nel.   Use  the  -G  option  to the compiler to create the
+       shared object.  crash reads the shared objects from direc-
+       tory  /usr/lib/crash  and also from files defined by envi-
+       ronment variable CRASH_LIBS.
+
+   EExxtteennssiioonn eexxaammppllee
+       An example of a file containing a new command  (lbolt)  is
+       given  below:  #include  <stdio.h>  #include <sys/types.h>
+       #include <syms.h>
+
+       extern int get_lbolt();
+
+       /* function definition */ struct func {
+               char *name;
+               char *syntax;
+               int (*call)();
+               char *description; };
+
+       struct func functab[] = {
+               "lbolt", " ", get_lbolt, "lbolt",
+               0,0,0,0 };
+
+       static struct syment  *lbolt_sym  =  NULL;  extern  struct
+       syment *symsrch(char *); extern FILE *fp;
+
+                                                                9
+
+crash(1M)                                               crash(1M)
+
+       get_lbolt(void) {
+               time_t lbolt;
+
+               if   (lbolt_sym  ==  NULL  &&  (lbolt_sym  =  sym-
+       srch("lbolt")) == NULL)
+                       return 0;
+               readmem((void   *)(lbolt_sym->n_value),   1,   -1,
+       &lbolt, sizeof(lbolt),
+                        "lbolt");
+               fprintf(fp, "%lx\n",lbolt); }
+
+NNoottiicceess
+       This  command has been updated to handle Intel Pentium III
+       Streaming SIMD instructions;  see for more information.
+
+                                                               10
+

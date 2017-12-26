@@ -1,0 +1,260 @@
+
+
+rpc(3rpc)                                               rpc(3rpc)
+
+DDeessccrriippttiioonn
+       RPC  routines  allow C language programs to make procedure
+       calls on other machines  across  a  network.   First,  the
+       client  calls  a  procedure  to  send a data packet to the
+       server.  On receipt of the packet, the server calls a dis-
+       patch  routine  to perform the requested service, and then
+       sends back a reply.
+
+       The following sections describe data objects  use  by  the
+       RPC package.
+
+   NNeettttyyppee
+       Some  of the high-level RPC interface routines take a net-
+       type  string  as  one  of  the  parameters  (for  example,
+       clnt_create,  svc_create, rpc_reg, rpc_call).  This string
+       defines a class of transports which can be used for a par-
+       ticular  application.  The transports are tried in left to
+       right order in the NETPATH variable  or  in  top  to  down
+       order in the /etc/netconfig file.
+
+       nettype  can  be  one  of  the  following: Choose from the
+       transports which have been indicated by their token  names
+       in  the NETPATH variable.  If NETPATH is unset or NULL, it
+       defaults to visible.   netpath  is  the  default  nettype.
+       Choose  the  transports  which have the visible flag ``v''
+       set in the /etc/netconfig file.  This is same  as  visible
+       except that it chooses only the connection oriented trans-
+       ports from the entries in /etc/netconfig  file.   This  is
+       same  as  visible  except that it chooses only the connec-
+       tionless datagram transports from the entries in /etc/net-
+       config  file.   This  is  same  as  netpath except that it
+       chooses only the connection oriented  datagram  transports
+       This  is  same  as netpath except that it chooses only the
+       connectionless datagram transports.  It refers to Internet
+       UDP  (for backwards compatibility).  It refers to Internet
+       TCP (for backwards compatibility).  This  is  for  memory-
+       based  RPC, mainly for performance evaluation.  If nettype
+       is NULL, it defaults to netpath.
+
+   DDaattaa ssttrruuccttuurreess
+       Some of the data structures used by the  RPC  package  are
+       shown below.
+
+   TThhee AAUUTTHH ssttrruuccttuurree
+       union des_block {
+           struct {
+               u_int32 high;
+               u_int32 low;
+           } key;
+           char  c[8];  };  typedef  union  des_block  des_block;
+       extern bool_t xdr_des_block();
+
+       /*
+        * Authentication info. Opaque to client.
+
+                                                                1
+
+rpc(3rpc)                                               rpc(3rpc)
+
+        */ struct opaque_auth {
+           enum_t  oa_flavor;  /* flavor of auth */
+           caddr_t oa_base;    /* address of more auth stuff */
+           u_int   oa_length;  /* not to exceed MAX_AUTH_BYTES */
+       };
+
+       /*
+        * Auth handle, interface to client side authenticators.
+        */ typedef struct {
+           struct  opaque_auth  ah_cred;
+           struct  opaque_auth  ah_verf;
+           union   des_block    ah_key;
+           struct auth_ops {
+               void   (*ah_nextverf)();
+               int    (*ah_marshal)();   /*  nextverf & serialize
+       */
+               int    (*ah_validate)(); /* validate varifier */
+               int    (*ah_refresh)();  /* refresh credentials */
+               void   (*ah_destroy)();  /* destroy this structure
+       */
+           } *ah_ops;
+           caddr_t ah_private; } AUTH;
+
+   TThhee CCLLIIEENNTT ssttrruuccttuurree
+       /*
+        * Client rpc handle.
+        * Created by individual implementations
+        * Client is responsible for initializing auth,  see  e.g.
+       auth_none.c.
+        */ typedef struct {
+           AUTH            *cl_auth;             /* authenticator
+       */
+           struct clnt_ops {
+               enum clnt_stat  (*cl_call)();     /*  call  remote
+       procedure */
+               void             (*cl_abort)();    /* abort a call
+       */
+               void            (*cl_geterr)();  /*  get  specific
+       error code */
+               bool_t           (*cl_freeres)(); /* frees results
+       */
+               void            (*cl_destroy)(); /*  destroy  this
+       structure */
+               bool_t          (*cl_control)(); /* the ioctl() of
+       rpc */
+           } *cl_ops;
+           caddr_t         cl_private;          /* private  stuff
+       */
+           char             *cl_netid;           /* network token
+       */
+           char            *cl_tp;              /* device name */
+       } CLIENT;
+
+                                                                2
+
+rpc(3rpc)                                               rpc(3rpc)
+
+   TThhee SSVVCCXXPPRRTT ssttrruuccttuurree
+       enum xprt_stat {
+           XPRT_DIED,
+           XPRT_MOREREQS,
+           XPRT_IDLE };
+
+       /*
+        * Server side transport handle
+        */ typedef struct {
+           int                     xp_fd;     #define     xp_sock
+       xp_fd #endif
+           ushort_t              xp_port;          /*  associated
+       port number.
+                                                 *  Obsolete, but
+       still used to
+                                                 *        specify
+       whether rendezvouser
+                                                 * or normal con-
+       nection
+                                                 */
+
+           struct xp_ops {
+               bool_t         (*xp_recv)();     /* receive incom-
+       ing requests */
+               enum  xprt_stat (*xp_stat)();     /* get transport
+       status */
+               bool_t         (*xp_getargs)();  /* get  arguments
+       */
+               bool_t         (*xp_reply)();    /* send reply */
+               bool_t         (*xp_freeargs)(); /* free mem allo-
+       cated for args */
+               void           (*xp_destroy)();  /*  destroy  this
+       struct */
+           } *xp_ops;
+           int           xp_addrlen;               /*  length  of
+       remote addr. Obsolete */
+           char         *xp_tp;                    /*   transport
+       provider device name */
+           char         *xp_netid;               /* network token
+       */
+           struct netbuf       xp_ltaddr;       /*  local  trans-
+       port address */
+           struct  netbuf       xp_rtaddr;       /* remote trans-
+       port address */
+           char                  xp_raddr[16];       /*    remote
+       address. Obsolete */
+           struct  opaque_auth  xp_verf;          /* raw response
+       verifier */
+           caddr_t             xp_p1;           /*  private:  for
+       use by svc ops */
+           caddr_t              xp_p2;            /* private: for
+       use by svc ops */
+           caddr_t             xp_p3;           /*  private:  for
+       use by svc lib */ } SVCXPRT;
+
+                                                                3
+
+rpc(3rpc)                                               rpc(3rpc)
+
+   TThhee XXDDRR ssttrruuccttuurree
+       /*
+        *  Xdr  operations.   XDR_ENCODE  causes  the  type to be
+       encoded into the
+        * stream.  XDR_DECODE causes the  type  to  be  extracted
+       from the stream.
+        *  XDR_FREE can be used to release the space allocated by
+       an XDR_DECODE
+        * request.
+        */ enum xdr_op {
+           XDR_ENCODE=0,
+           XDR_DECODE=1,
+           XDR_FREE=2 };
+
+       /*
+        * This is the number of bytes per unit of external  data.
+        */  #define  BYTES_PER_XDR_UNIT    (4)  #define  RNDUP(x)
+       ((((x) + BYTES_PER_XDR_UNIT - 1) / BYTES_PER_XDR_UNIT) \
+                   * BYTES_PER_XDR_UNIT)
+
+       /*
+        * A xdrproc_t exists for each data type which  is  to  be
+       encoded or decoded.
+        *
+        * The second argument to the xdrproc_t is a pointer to an
+       opaque pointer.
+        * The opaque pointer generally points to a  structure  of
+       the data type
+        *  to  be  decoded.   If this pointer is 0, then the type
+       routines should
+        * allocate dynamic storage of the  appropriate  size  and
+       return it.
+        * bool_t (*xdrproc_t)(XDR *, caddr_t *);
+        */ typedef   bool_t (*xdrproc_t)();
+
+       /*
+        * The XDR handle.
+        *  Contains  operation  which  is  being  applied  to the
+       stream,
+        * an operations vector for the particular  implementation
+       (for example,
+        *  see  xdr_mem.c), and two private fields for the use of
+       the
+        * particular implementation.
+        */ typedef struct {
+           enum xdr_op x_op;            /* operation; fast  addi-
+       tional param */
+           struct xdr_ops {
+               bool_t  (*x_getlong)();  /* get a long from under-
+       lying stream */
+               bool_t  (*x_putlong)();  /* put a long to " */
+               bool_t  (*x_getbytes)(); /* get some bytes from  "
+       */
+               bool_t  (*x_putbytes)(); /* put some bytes to " */
+
+                                                                4
+
+rpc(3rpc)                                               rpc(3rpc)
+
+               u_int   (*x_getpostn)(); /* returns bytes off from
+       beginning */
+               bool_t   (*x_setpostn)();  /*  lets you reposition
+       the stream */
+               long *   (*x_inline)();    /*  buf  quick  ptr  to
+       buffered data */
+               void     (*x_destroy)();  /* free privates of this
+       xdr_stream */
+           } *x_ops;
+           caddr_t     x_public;        /* users' data */
+           caddr_t     x_private;        /*  pointer  to  private
+       data */
+           caddr_t     x_base;          /* private used for posi-
+       tion info */
+           int         x_handy;         /* extra private word  */
+       } XDR;
+
+FFiilleess
+RReeffeerreenncceess
+
+                                                                5
+

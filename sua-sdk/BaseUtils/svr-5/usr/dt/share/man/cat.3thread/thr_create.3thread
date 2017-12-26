@@ -1,0 +1,249 @@
+
+
+thr_create(3thread)                           thr_create(3thread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <thread.h>
+
+       int thr_create(void *stack_address, size_t stack_size,
+            void *(*start_routine)(void *), void *arg,
+            long flags, thread_t *new_thread);
+
+DDeessccrriippttiioonn
+       thr_create  creates  a  new thread in the current process.
+       The new thread will  execute  the  function  specified  by
+       start_routine with the argument specified by arg.  The new
+       thread will be immediately runnable, unless it is  created
+       with  the  THR_SUSPENDED  flag (see the description of the
+       flags parameter).
+
+   PPaarraammeetteerrss
+       pointer to the base address for  the  new  thread's  stack
+       size of the new thread's stack pointer to the function the
+       new thread will  execute  the  argument  to  start_routine
+       attributes  for  the  new thread pointer to the identifier
+       for the new thread, set by thr_create
+
+   ssttaacckk__aaddddrreessss aanndd ssttaacckk__ssiizzee ppaarraammeetteerrss
+       The  new  thread  will  run  on  the  stack  described  by
+       stack_address and stack_size.  The stack can be explicitly
+       allocated by the user or allocated automatically.
+
+       For an explicitly allocated stack:  Set  stack_address  to
+       point  to  the user-allocated stack.  stack_address is the
+       base, or lowest, address.  Set stack_size to the  size  in
+       bytes  of  the  user-allocated  stack.  stack_size must be
+       larger than the value returned by
+
+       For an automatically allocated stack: Set stack_address to
+       NULL.   To  get  a  default  size stack, set stack_size to
+       zero.  In this implementation, the default stack  size  is
+       either  twice  the  page  size  or 16K bytes, whichever is
+       greater.  To  get  a  stack  of  a  particular  size,  set
+       stack_size  to  the  number of bytes you want.  stack_size
+       must be larger than the value returned by
+
+       Note that the stack can be silently shrunken  so  the  low
+       and high addresses are properly aligned.
+
+       This  implementation  provides basic stack overflow detec-
+       tion for stacks allocated by the  library.   If  a  thread
+       overflows its stack a SIGSEGV signal will be generated.
+
+   ssttaarrtt__rroouuttiinnee ppaarraammeetteerr
+       start_routine  points  to the function that the new thread
+       will execute.  A return from start_routine  has  the  same
+       effect  as an explicit by the new thread with status equal
+
+                                                                1
+
+thr_create(3thread)                           thr_create(3thread)
+
+       to the function return value.  The status or return  value
+       of a thread can be retrieved with
+
+   aarrgg ppaarraammeetteerr
+       arg is the argument to start_routine.
+
+   ffllaaggss ppaarraammeetteerr
+       flags  specifies attributes for the new thread.  It can be
+       0 or constructed from the bitwise inclusive OR of  any  of
+       the  following:  Create  the  new  thread in the suspended
+       state.  This permits modification of scheduling parameters
+       and  other  attributes  before  the  new  thread  executes
+       start_routine.  The creating thread or another thread must
+       call  thr_continue  for the new thread to begin executing.
+       Bind the new thread to a  new  lightweight  process  (LWP)
+       created  for  the purpose, regardless of other flags.  The
+       thread will not be scheduled on other LWPs even though the
+       implementation  supports  multiplexing  of  threads across
+       LWPs.  Create the new thread in the detached  state.   The
+       new thread cannot be awaited with This gives a hint to the
+       implementation that immediate reuse of  the  new  thread's
+       resources on thr_exit is acceptable to the user.  The exit
+       status of a detached thread cannot be retrieved.  Increase
+       the   concurrency  level  as  returned  by  thr_getconcur-
+       rency(3thread) by creating a new LWP in the pool,  regard-
+       less  of  other  flags.  Create the new thread as a daemon
+       thread.  The new thread will not be counted when determin-
+       ing  if  the last thread has terminated.  The process will
+       terminate when  the  last  non-daemon  thread  terminates.
+       Such  ``helper  threads''  can be created for asynchronous
+       I/O or other activities, but do not prolong  the  life  of
+       the  process  when  there  are no real application threads
+       remaining.  If both THR_BOUND and THR_INCR_CONC  are  set,
+       two new LWPs are created: one to which the new thread will
+       be bound and one to increase the pool.
+
+   nneeww__tthhrreeaadd ppaarraammeetteerr
+       If new_thread is not NULL, thr_create  sets  the  location
+       pointed to by new_thread to the identifier for the created
+       thread.  The thread ID is valid only  within  the  calling
+       process.
+
+   SSiiggnnaall mmaasskk aanndd sscchheedduulliinngg cchhaarraacctteerriissttiiccss
+       The  newly  created  thread inherits the creating thread's
+       signal mask, as established by  but  without  any  pending
+       signals.
+
+       The  following  table  shows  how  priority and scheduling
+       class of a new thread are determined in  this  implementa-
+       tion.   Note that there are two levels of scheduling, each
+       with its own set of scheduling characteristics: scheduling
+       of LWPs on processors scheduling of threads on LWPs
+
+       Bound threads are influenced exclusively by LWP scheduling
+
+                                                                2
+
+thr_create(3thread)                           thr_create(3thread)
+
+       (system  scheduling).   The  scheduling   of   multiplexed
+       threads  is  primarily influenced by thread-level schedul-
+       ing, although it is affected by both levels.
+
+       ------------+------------------------------------+------------------------------------
+                   | New Bound Thread                   | New Multiplexed Thread
+                   |                                    |
+       ------------+------------------------------------+------------------------------------
+                   |                                    |
+                   | LWP sched class:      from creator | LWP sched class:      from pool
+       BBoouunndd       | LWP priority:         from creator | LWP priority:         from pool
+       CCrreeaattoorr     | Thread sched class:   not used     | Thread sched class:   SCHED_TS
+                   | Thread priority:      not used     | Thread priority:      default (63)
+                   |                                    |
+       ------------+------------------------------------+------------------------------------
+                   |                                    |
+                   | LWP sched class:      from creator | LWP sched class:      from pool
+       MMuullttiipplleexxeedd | LWP priority:         from creator | LWP priority:         from pool
+       CCrreeaattoorr     | Thread sched class:   not used     | Thread sched class:   SCHED_TS
+                   | Thread priority:      not used     | Thread priority:      from creator
+                   |                                    |
+       ------------+------------------------------------+------------------------------------
+
+       In this implementation, a  multiplexed  thread  is  always
+       created  with the default scheduling class (SCHED_TS), but
+       its priority depends on whether  the  creating  thread  is
+       bound  or  multiplexed.   If the creating thread is multi-
+       plexed, then a multiplexed thread inherits the priority of
+       the  creating  thread.   If  the creating thread is bound,
+       then a multiplexed thread is given the default priority of
+       63.  The Threads Library maintains a pool of LWPs for mul-
+       tiplexing threads to run on.  The LWPs  in  the  pool  all
+       have the same scheduling characteristics.
+
+       A  bound thread inherits its scheduling class and priority
+       from the creating thread.  A bound thread is scheduled  by
+       the system, therefore the scheduling class and priority it
+       inherits are those of the creating thread's LWP.
+
+   SSeeccuurriittyy rreessttrriiccttiioonnss
+       thr_create requires no special permissions or privilege.
+
+RReettuurrnn vvaalluueess
+       thr_create returns zero for success and  an  error  number
+       for failure, as described below.
+
+   EErrrroorrss
+       If  any  of  the  following  conditions occurs, thr_create
+       returns the corresponding value:  Insufficient  memory  to
+       complete thr_create.  stack_size is zero and stack_address
+       is not NULL.  stack_size, after shrinking to aligned  off-
+       sets,  is  smaller  than  an  implementation-defined lower
+       bound as returned by thr_minstack.  start_routine is NULL.
+
+                                                                3
+
+thr_create(3thread)                           thr_create(3thread)
+
+       If  any of the following conditions are detected, thr_cre-
+       ate returns the  corresponding  value:  A  resource  limit
+       would be exceeded if the call succeeded.  Note that EAGAIN
+       cannot always be detected.  The process  is  being  traced
+       using ptrace.
+
+UUssaaggee
+   EExxaammpplleess
+       The  following  example  creates a multiplexed thread that
+       will use a library-allocated stack.  Note that using 0  as
+       the  flags  argument  will  create a thread that is multi-
+       plexed (not bound) and can be awaited with thr_join.   The
+       library   will  allocate  a  default  size  stack  because
+       stack_address  is  NULL  and  stack_size  is  0.   void  *
+       t_main(void  *arg)  {                                  ...
+       } int error; void *t_arg = NULL; thread_t t1_id;
+
+       error  =  thr_create((void*)NULL,  0,  t_main,  t_arg,  0,
+       &t1_id);
+
+       The  following  example  creates a multiplexed thread that
+       will use a user-allocated stack.  void * t_main(void *arg)
+       {                                   ...  } int error; void
+       *t1_stack; void *t_arg  =  NULL;  size_t  t_size  =  8192;
+       thread_t t1_id;
+
+       t1_stack  =  malloc(t_size);  error = thr_create(t1_stack,
+       t_size, t_main, t_arg, 0, &t1_id);
+
+       The following example creates a daemon  thread  that  will
+       use a minimally-sized stack allocated by the library: void
+       * t_main(void *arg) {                                  ...
+       }  int error; void *t1_stack; void *t_arg = NULL; thread_t
+       t1_id;
+
+       error  =  thr_create((void*)NULL,  (size_t)thr_minstack(),
+       t_main,
+                                                       t_arg,
+       THR_DAEMON, &t1_id);
+
+       The  following  example creates a suspended, bound thread,
+       then modifies its scheduling parameters before continuing.
+       See  for  more  details  about modifying thread scheduling
+       parameters.  The library  will  allocate  a  default  size
+       stack  because  stack_address is NULL and stack_size is 0.
+       void         *         t_main(void         *arg)         {
+                                        ...   }  int  error; void
+       *t1_stack;   void   *t_arg   =   NULL;   thread_t   t1_id;
+       sched_param_t sched_param;
+
+       error   =   thr_create((void*)NULL,   0,   t_main,  t_arg,
+                                                       THR_SUS-
+       PENDED|THR_BOUND, &t1_id);
+
+                                                                4
+
+thr_create(3thread)                           thr_create(3thread)
+
+       /*  initialize  sched_param  to the SCHED_FIFO policy with
+       priority 62 */ sched_param.policy =  SCHED_FIFO;  ((struct
+       fifo_param *) sched_param.policy_params)->prio = 62;
+
+       error  =  thr_setscheduler(t1_id,  &sched_param);  error =
+       thr_continue(t1_id);
+
+RReeffeerreenncceess
+
+                                                                5
+

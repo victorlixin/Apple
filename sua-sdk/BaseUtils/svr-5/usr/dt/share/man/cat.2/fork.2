@@ -1,0 +1,156 @@
+
+
+fork(2)                                                   fork(2)
+
+SSyynnooppssiiss
+       #include <sys/types.h>
+       #include <unistd.h>
+
+       pid_t fork(void);
+
+       pid_t fork1(void);
+
+       pid_t forkall(void);
+
+DDeessccrriippttiioonn
+       fork  causes  creation  of a new process.  The new process
+       (child process) is an exact copy of  the  calling  process
+       (parent  process).   This means the child process inherits
+       the following attributes from the parent process:
+
+       real user ID, real group ID, effective user ID,  effective
+       group  ID  environment close-on-exec flag [see signal han-
+       dling settings (that is, SIG_DFL, SIG_IGN, SIG_HOLD, func-
+       tion address) supplementary group IDs set-user-ID mode bit
+       set-group-ID mode bit profiling on/off status  nice  value
+       [see  scheduler class [see all attached shared memory seg-
+       ments [see shmop] process group ID session ID  [see  exit]
+       current  working  directory  root directory file mode cre-
+       ation mask [see resource limits [see  getrlimit]  control-
+       ling terminal working and maximum privilege sets
+
+       Scheduling priority and any per-process scheduling parame-
+       ters that are specific to a given scheduling class may  or
+       may  not be inherited according to the policy of that par-
+       ticular class (see
+
+       Multithreaded processes should call: to create  a  single-
+       thread  child  process.   (This  is  the standard call for
+       X/Open- and POSIX-conformant applications.)  if they  will
+       exec  immediately.   to  duplicate all threads and LWPs in
+       the child.
+
+       By default, for multi-threaded  applications,  a  call  to
+       fork  is  equivalent  to a call to forkall.  A new process
+       created by forkall duplicates the calling process, includ-
+       ing the set of threads (and underlying LWPs) that exist at
+       the time of the call.  (See ``Compatibility and  standards
+       conformance,'' below.)
+
+       The  fork1  system  call  will create a new process with a
+       single LWP.  The parent process is not changed.  The fork1
+       system call should be used only by multithreaded processes
+       that intend to have the new process immediately  call  the
+       exec  system  call.  Since exec will terminate all but one
+       thread, there is no need to  duplicate  all  threads  with
+       forkall.
+
+       If  the  creation  of  the  new process would use the last
+
+                                                                1
+
+fork(2)                                                   fork(2)
+
+       process table slot, the  calling  process  must  have  the
+       P_SYSOPS privilege.
+
+       The  child  process differs from the parent process in the
+       following ways: The child process has a unique process  ID
+       which  does  not  match  any active process group ID.  The
+       child process has a different parent process ID (that  is,
+       the  process ID of the parent process).  The child process
+       has its own copy of  the  parent's  file  descriptors  and
+       directory  streams.   Each of the child's file descriptors
+       shares a common file pointer with the  corresponding  file
+       descriptor  of  the parent.  All semadj values are cleared
+       [see semop].  Process locks, text locks and data locks are
+       not  inherited  by  the child [see plock].  The child pro-
+       cess's tms structure is cleared: tms_utime, stime, cutime,
+       and  cstime are set to 0 [see times].  The time left until
+       an alarm clock signal is reset to 0.  The set  of  signals
+       pending  for the child process is initialized to the empty
+       set.  Record locks set  by  the  parent  process  are  not
+       inherited  by  the child process [see The following state-
+       ment applies only to forkall: LWPs waiting on  a  synchro-
+       nization  queue  may not be in the same order in the child
+       process, but the order of release of LWPs from a  synchro-
+       nization  object  is  scheduling policy-specific.  If FIFO
+       ordering on a synchronization object is  required,  it  is
+       called out in the specification of that object.
+
+   RReettuurrnn vvaalluueess
+       On success, fork, fork1, and forkall return 0 to the child
+       process and return the process ID of the child process  to
+       the  parent process.  On failure, fork, fork1, and forkall
+       return a value of (pid_t)-1 to  the  parent  process,  set
+       errno  to  identify  the  error, and do not create a child
+       process.
+
+   EErrrroorrss
+       In the following conditions, fork fails and sets errno to:
+       The  system limit on number of LWPs per real user-id would
+       be exceeded if the call succeeds, and the calling  process
+       does  not  have the P_SYSOPS privilege.  The system lacked
+       the necessary resources to create another process.   Total
+       amount of system memory available when reading via raw I/O
+       is temporarily insufficient.  A forkall  has  been  inter-
+       rupted by a forkall executed by another thread in the pro-
+       cess.
+
+RReeffeerreenncceess
+   CCoommppaattiibbiilliittyy aanndd ssttaannddaarrddss ccoonnffoorrmmaannccee
+       By default, fork is synonymous with forkall.
+
+       The X/Open and POSIX  specifications,  however,  equate  a
+       call  to  fork  with a call to fork1.  To enable the POSIX
+       behavior for an application, the application must  include
+       the  following  global  definition  in  its  source  code:
+
+                                                                2
+
+fork(2)                                                   fork(2)
+
+       int  __thread_sys_behavior = 1;
+
+       When a multi-threaded process calls fork, and the  process
+       defines  __thread_sys_behavior  as  above, the new process
+       contains a replica of the calling thread  and  its  entire
+       address  space,  possibly  including the states of mutexes
+       and other resources.  Consequently, to avoid  errors,  the
+       child  process  may  only execute async-signal safe opera-
+       tions until such time as one  of  the  exec  functions  is
+       called.   Fork handlers may be established by means of the
+       pthread_atfork function in order to  maintain  application
+       invariants across fork calls.
+
+       Note  that  the  method an application uses to specify the
+       X/Open behavior is expected to change in a future release.
+
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Threads  in  the  creating process are unaffected by these
+       system calls except  possibly  for  the  error  indication
+       EINTR in the creating process.
+
+       It  is expected that processes created via fork1 (only the
+       calling thread replicated) will soon call to redefine  the
+       address  space.   The  single remaining thread should take
+       care when requesting resources (for example,  locks)  that
+       were  duplicated  from  the parent.  The fork1 system call
+       does duplicate the lock (part of the  address  space)  but
+       not the thread that may have been holding that lock at the
+       time of the system call.  The surviving thread would block
+       forever  since there is no thread to release the resource.
+
+                                                                3
+

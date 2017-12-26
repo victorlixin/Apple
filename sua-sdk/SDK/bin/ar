@@ -1,0 +1,623 @@
+#!/bin/ksh
+
+# Copyright (c) Microsoft Corporation.  All rights reserved.
+# 
+# This Software Source is the unpublished, valuable, confidential property
+# of Microsoft Corporation.  Use is authorised only under the terms and
+# conditions set out in the source code licence agreement protecting this
+# Software Source.  Any unauthorised use or disclosure of this Software 
+# Source is prohibited.
+#
+# THIS SOFTWARE IS PROVIDED ``AS IS'' BY MICROSOFT CORPORATION AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL MICROSOFT CORPORATION BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+
+#
+# shell script to emulate the 'ar' command
+#
+#    ar [-m machine name] -d [v] archive file...
+#    ar [-m machine name] -r [cv] archive file...
+#    ar [-m machine name] -t [v] archive 
+#    ar [-m machine name] -x [v] archive  [ file...]
+#
+#
+
+progname=${0##*/}
+
+unset ARGS
+set -A ARGS -- "${@}"
+
+# make sure that we have the proper PATH. We should only need /bin.
+#
+export PATH="${OPENNT_ROOT}/bin:$PATH"
+
+FILE=file
+FLIP=flip
+GREP=grep
+AWK=awk
+RM=rm
+
+LIBopts="/nologo"
+
+filenames=""
+doOp=""
+
+index=0
+replace=0
+delete=0
+extract=0
+debug=0
+
+error=0
+
+function warn {
+	echo "$progname: $@" 1>&2
+}
+
+
+######################################################
+# Setup variables
+#
+# Check LIBRARIAN environment variable. If not set, use LIB.EXE as default
+#
+
+# if it is set, make sure its in Interix pathname format.
+#
+if [ "${AR_LIBRARIAN}" != "" ]; then
+    	AR_LIBRARIAN=$(ntpath2posix -c "${AR_LIBRARIAN}")
+fi
+
+lib=${AR_LIBRARIAN:-lib.exe}
+librarian="`whence "$lib"`"
+if [ $? != 0 ]; then
+    	warn "Either the AR_LIBRARIAN environment variable must be set"
+	warn "or you must include the directory containing '$lib' in PATH"
+	${RM} -f $tmp/ar$$
+    	exit 127
+fi
+
+TARGET_MACHINE="AMD64"
+createmsg=1
+
+
+#
+# getchar STRING index
+#   - return characater (in $ch) at 'index' of STRING
+#      (e.g:    ch = STRING[index])
+#
+function getchar {
+	ch=`${AWK} -v str=$1 -v indx=$2 'BEGIN { 
+		     if (indx > length(str) )  exit;
+		     x = substr(str, indx, 1);
+		     printf("%s", x);
+		     exit
+		    }' `
+
+	if [ "$ch" == "" ] ; then
+		return 1
+	fi
+	return 0
+}
+
+
+function verboseIndex {
+#
+#
+	if [ "${AR_LINKER}" != "" ]; then
+    		AR_LINKER=$(ntpath2posix -c "${AR_LINKER}")
+	fi
+
+        link=${AR_LINKER:-link.exe}
+    	linker="`whence "$link"`"
+    	if [ $? != 0 ]; then
+		warn "Either the AR_LINKER environment variable must be set"
+		warn "or you must include the directory that contains '$link' in PATH"
+		${RM} -f $tmp/ar$$
+		exit 127
+    	fi
+
+        "$linker" /DUMP /MACHINE:$TARGET_MACHINE ${w32_archiveName} /archivemembers > $tmp/ar$$.V
+	error=$?
+     	flip  -M $tmp/ar$$.V
+
+    	${AWK} < $tmp/ar$$.V '\
+	#
+       # Begin awk script
+	#
+	# This awk program rips apart 'dumpbin' output and prints out
+	# 1 line entry for each archive member
+	#
+
+	# function rwx(digit)
+	#input: an octal digit
+	#output: a mode string corresponding to the digit
+	#         (e.g 7 = "rwx",   4 = "r--"
+	#
+	function rwx(digit, str)	# str is local variable
+	{
+                if (digit >=4 ) { str="r"; digit -= 4 }
+                else            { str="-" }
+
+                if (digit >=2 ) { str = str "w" ; digit -= 2 }
+                else            { str = str "-" }
+
+                if (digit >=1 ) { str = str "x" }
+                else            { str = str "-" }
+
+		return(str)
+	}
+
+	# function modetostr(num)
+	#   input: an octal number (e.g 755)
+	#   output: a mode string corresponding to the octal number
+	#         (e.g 777 = "rwxrwxrwx")
+	#
+	function modetostr(num, str, len) # str and len are local variable
+	{
+		str = ""
+		len = length(num)
+		if (len > 3) {
+			num = substr(num, len-2, 3)
+		}
+		str = str rwx(substr(num, 1, 1))
+		str = str rwx(substr(num, 2, 1))
+		str = str rwx(substr(num, 3, 1))
+		return(str)
+	}
+
+	# ascii hex numeric string to integer 
+	#
+	function atoi (str, ans, mult, ch)  # ans, and mult are LOCAL variables
+	{
+		ans=0;
+		mult=1;
+		len = length(str)
+		for (i=len; i>0; i--) {
+			ch = substr(str, i, 1)
+			if (ch ~ /[0-9A-F]/) {
+				if (ch ~ /A/) ch = 10
+				if (ch ~ /B/) ch = 11
+				if (ch ~ /C/) ch = 12
+				if (ch ~ /D/) ch = 13
+				if (ch ~ /E/) ch = 14
+				if (ch ~ /F/) ch = 15
+				ans = ans + (mult*ch)
+			}
+			mult *= 16
+		}
+		return(ans)
+	}
+
+	#
+	# zero variables
+	#
+	function clear () {
+		name=""; date=""; uid=""; gid=""; mode=""; size=""
+	}
+
+	BEGIN { foundArchive=0; clear() }
+
+	# NOTE: this match must be looked for FIRST
+	#
+	/Archive member/ { foundArchive=1; name=$(NF);
+					  # remove and trailing slashes
+					  gsub("\/$", "", name)
+					  next }
+	/uid$/ { if (NF == 2) uid=$1;     else  uid="?"; next ; }  # postponing printing uid and gid currently it is printing ? as link.exe deosnot o/p it.
+
+	/gid$/ { if (NF == 2) gid=$1;    else  gid="?";  next  ; } # 
+
+	/mode$/ { if (NF==2) mode=modetostr($1); else mode="---------"; next ;}
+
+	/size$/ { if (NF==2) size=atoi($1); else size = "?";  next }
+
+	/time\/date/ { gsub(".*time/date", "", $0); date=$0; next; }
+
+	/header end/ {
+		if (foundArchive)
+			 printf("%-10s %s/%s %9s %-26s %s\n", mode, uid,gid,size, date, name);
+		       clear()
+		next
+	}
+
+	/Summary/ { exit }  #  END of awk script '
+
+	${RM} -f $tmp/ar$$.V
+
+
+} # END verboseIndex()
+
+
+function checkop {
+	if [ "$doOp" != "" ]; then
+		warn "Only one of -x, -r, -t, -d can be specified"
+		usage
+	fi
+	doOp=$1
+}
+
+function usage {
+    echo "usage:"
+    echo "    ar [-m x86 | amd64 | ia64 ]-d|r[u]|t|x  -[cv] archive file..."
+    ${RM} -f $tmp/ar$$
+    exit 2
+}
+
+# verifyOption opt
+#   - check that 'opt' is valid
+#
+#  $1  - is the option letter
+#
+function verifyOption {
+    	case "$1" in
+        c)    # modifier
+                createmsg=0
+                ;;
+        d)
+                delete=1
+                checkop "delete"
+                ;;
+        r)
+                replace=1
+                checkop "replace"
+                ;;
+        t)
+                index=1
+                checkop "index"
+                ;;
+        u)              # modifier
+                warn "-u option not supported. Ignored."
+                ;;
+        v)              # modifier
+#
+# DEBUG: jan30, 2002 - mjf: ignore -v option
+#                     so I don't have to worry about dumpbin.exe
+#    (which is in mstools/win64/dumpbin.exe on NT5 IDW
+#
+		  verbose=1
+                ;;
+        x)
+                extract=1
+                checkop "extract"
+                ;;
+#        X) #not in sco man page
+#               debug=1
+#                set -x
+#               ;;
+
+        m) 
+        	;;
+        *)
+                warn "invalid option '$1'"
+                usage
+                ;;
+    esac
+}
+
+#
+# Make sure we have a safe place to put temporary files
+#
+tmp=${TMPDIR:-$(getconf CS_TMPDIR)}
+tmp=$(ntpath2posix -c $tmp)		# make sure its in posix path format
+${RM} -f $tmp/ar$$		# make sure old tmp file is removed
+
+> $tmp/ar$$            # try to create and/or zero the tmp file
+if [ $? != 0 ]; then
+	warn "Cannot create temporary file '$tmp/ar$$'"
+	exit 127
+fi
+
+#
+# Option parsing
+#
+while getopts ":cdrtuvxm:" opt; do
+    case "$opt" in
+        c)     # modifier
+                createmsg=0
+                ;;
+        d)
+                delete=1
+                if [ "$doOp" != "" ]; then
+                        warn "Only one of -x, -r, -t, -d can be specified"
+                        usage
+                fi
+                doOp="delete"
+                ;;
+
+        r)      replace=1
+                if [ "$doOp" != "" ]; then
+                        warn "Only one of -x, -r, -t, -d can be specified"
+                        usage
+                fi
+                doOp="replace"
+                ;;
+        t)
+                index=1
+                if [ "$doOp" != "" ]; then
+                        warn "Only one of -x, -r, -t, -d can be specified"
+                        usage
+                fi
+                doOp="index"
+                ;;
+        u)              # modifier
+                warn "-u option is ignored."
+                ;;
+        v)              # modifier
+                verbose=1
+                ;;
+        x)
+                extract=1
+                if [ "$doOp" != "" ]; then
+                        warn "Only one of -x, -r, -t, -d can be specified"
+                        usage
+                fi
+                doOp="extract"
+                ;;
+       # X) # not in sco
+       #        debug=1
+       #         set -x
+       #        ;;
+        m) 
+                case "$OPTARG" in
+                x86)
+		    TARGET_MACHINE="X86"
+                    ;;
+                amd64)
+                	TARGET_MACHINE="AMD64"
+                   ;;
+ 		ia64)
+                	TARGET_MACHINE="IA64"
+                   ;;
+   		   *)
+                    warn "unrecognized specifier '$OPTARG' after -m"
+                    usage
+                    ;;
+            esac
+            ;;
+        [?])
+                warn "invalid option '$OPTARG'"
+                usage
+                ;;
+    esac
+done
+
+shift $OPTIND-1
+
+ 
+if [ $# -ge 1 -a "$doOp" = "" ]; then
+	# no operator options given.
+	# Assume old format  (e.g  ar tv archivename ...)
+	index=1
+	while getchar $1 $index ; do
+
+	    # result from getchar() is returned in $ch
+
+	    verifyOption $ch
+
+	    let "index = index + 1"
+	done
+
+	shift
+fi
+
+if [ $debug = 1 ] ; then
+	set -x
+fi
+#######################################################
+if [ "$doOp" = "" ]; then
+	warn "no operation specified"
+	usage
+fi
+
+# 
+# --- get archive name
+#
+if [ $# -ge 1 ]; then
+	archiveName=$1
+
+	if [ "$doOp" != "replace" ]; then
+		#check for existance of archive 
+		# if doing a 'replace', then this may be really a 'create'
+		# and the archive won't exist yet
+		#
+		if [ ! -f "$archiveName" ] ;then
+			warn "$archiveName: file not found"
+			${RM} -f $tmp/ar$$
+			exit 1
+		fi
+	fi
+	shift
+else
+	warn "missing archive name"
+	usage
+fi
+
+
+# --- gather up the file names
+#
+if [ "$#" != 0 ]; then
+	filenames="$@"
+fi
+
+if [ -f $archiveName ]; then
+    #
+    # If 'archiveName' exists, then check
+    # to make sure its really an archive
+    #
+    ${FILE} $archiveName | ${GREP} "ar archive" >/dev/null 2>&1
+    if [ $? = 1 ]; then
+       warn "$archiveName: is not a valid archive file"
+       ${RM} -f $tmp/ar$$
+    fi
+fi
+
+export TMP="`posixpath2nt $tmp`"
+export TEMP="`posixpath2nt $tmp`"
+
+# convert archive name to Win32 format 
+w32_archiveName=$(posixpath2nt $archiveName)
+
+case "$doOp" in
+   delete)
+
+   	for i in $filenames; 
+   	do
+   		file=`posixpath2nt $i`
+		"$librarian" /MACHINE:$TARGET_MACHINE /OUT:${w32_archiveName} $LIBopts \
+			${w32_archiveName} /REMOVE:$file > $tmp/ar$$
+			error=$?
+
+		if [ -s $tmp/ar$$ ]; then
+			echo "Cannot delete file $i from archive"
+			error=1
+		else
+		   	if [ "$verbose" = 1 ]; then
+				echo "d - $i"
+			fi
+		fi
+		${RM} -f $tmp/ar$$
+	done
+	chown `id -un` "$archiveName"
+	chmod 644 "$archiveName"
+	${RM} -f $tmp/ar$$
+	exit $error
+   	;;
+
+
+index)
+	
+	if [ "$verbose" -eq 1 ]; then
+		verboseIndex > $tmp/ar$$
+	else
+		"$librarian" /MACHINE:$TARGET_MACHINE  $LIBopts ${w32_archiveName} /LIST > $tmp/ar$$
+		error=$?
+	fi
+	flip -uq $tmp/ar$$
+	if [ -z "$filenames" ] ; then 
+		# remianign to do NTPATH2posix
+		cat $tmp/ar$$
+	else
+		for i in $filenames
+		do
+                        j="$(posixpath2nt $i)"
+                        p=$(grep -E "^$j$|[ ]+$j$" $tmp/ar$$)
+			if [ -n "$p" ] ; then
+                                echo "$p"
+			else
+				echo "no entry  $i in archive"
+				error=1
+			fi
+		done
+	fi
+	${RM} -f $tmp/ar$$
+	exit $error
+	;;
+
+
+extract)
+
+	if [ "$filenames" == "" ]; then
+		#want all the files in the achieve
+		"$librarian" /MACHINE:$TARGET_MACHINE  $LIBopts ${w32_archiveName} /LIST > $tmp/ar$$
+		error=$?
+		flip -M $tmp/ar$$
+		filenames=$(cat $tmp/ar$$)
+	fi
+	for i in $filenames; 
+   	do
+   		file=`posixpath2nt $i`
+		"$librarian" /MACHINE:$TARGET_MACHINE $LIBopts ${w32_archiveName} /EXTRACT:$file > $tmp/ar$$
+		error=$?
+
+		if [ -s $tmp/ar$$ ]; then
+			error=1
+			if [ "$verbose" == 1 ]; then
+				echo "no entry " $i " in archive"
+			fi
+		else
+			if [ "$verbose" == 1 ]; then
+				echo "x -" $i
+			fi
+			chown `id -un` "$i"
+			chmod 644 "$i"
+		fi
+
+		${RM} -f $tmp/ar$$
+	done
+	chown `id -un` "$archiveName"
+	chmod 644 "$archiveName"
+	${RM} -f $tmp/ar$$
+	exit $error
+   	;;
+
+replace)
+
+	if [ "$filenames" = "" ]; then
+		warn "no filenames specified"
+		usage
+	fi
+
+        if [ -f "$archiveName" ]; then
+		archName="$w32_archiveName"
+	else
+		archName=""
+	fi
+
+	createFlag="0"
+	for i in $filenames; do
+	if [ -e "$i" ]; then
+		file=`posixpath2nt	$i`
+		"$librarian" /MACHINE:$TARGET_MACHINE /OUT:${w32_archiveName} $LIBopts $archName $file > $tmp/ar$$
+		error=$?
+	    	result=$(cat $tmp/ar$$)
+	    	${RM} -f $tmp/ar$$
+	   	if [ "$result" = "" ]; then
+			if [ "$archName" = "" ]; then
+				createFlag="1"
+			fi
+			if [ "$verbose" == 1 ] ; then
+				echo "a - $i"
+			fi
+			archName="${w32_archiveName}"
+		else
+			case "$result" in
+			    	Replacing* | Warning* | *:\ warning\ *:*)
+					if [ "$verbose" = 1 ]; then
+			    			echo "r - $i"
+					fi
+					archName="${w32_archiveName}"
+					;;
+				 *)# otherwise an error occured
+					echo "cannot add $i to archive"
+					error=1
+					;;
+			esac
+		fi
+	else
+		warn "File $i does not exist";
+		error=1
+	fi
+	done
+
+	if [ "$createFlag" == "1" ] ; then
+		if [ "$createmsg" = 1 ]; then
+   		# NO -c option and new file creation
+                        echo "Creating ${archiveName}"
+		fi
+                chmod 644 ${archiveName} >/dev/null 2>/dev/null
+   	fi
+	chown `id -un` "$archiveName"
+	chmod 644 "$archiveName"
+	${RM} -f $tmp/ar$$
+	exit $error
+;;   	
+esac

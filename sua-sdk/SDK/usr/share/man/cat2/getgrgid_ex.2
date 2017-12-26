@@ -1,0 +1,157 @@
+getgrgid_ex(2)                                           getgrgid_ex(2)
+
+  ggeettggrrnnaamm(())
+
+  NNAAMMEE
+
+    getgrnam(), getgrnam_r(), getgrgid(), getgrgid_r(), getgrgid_ex(),
+    getgrgid_ex_r(), getgrent(), getgrnam_nomembers(), getgrnam_nomembers_r(),
+    getgrgid_nomembers(), getgrgid_nomembers_r(), getgrent_nomembers() - user
+    account database operations
+
+  SSYYNNOOPPSSIISS
+
+    #include <grp.h>
+
+    struct group * getgrnam (const char *groupname)
+    int getgrnam_r (const char *name, struct group *grp, char *buffer,
+           size_t bufsize, struct group **result);
+    struct group * getgrgid (gid_t gid)
+    int getgrgid_r (gid_t gid, struct group *grp, char *buffer,
+           size_t bufsize, struct group **result)
+    struct group * getgrgid_ex (gid_t gid, int flags)
+    int getgrgid_ex_r (gid_t gid, int flags,
+           struct group *grp, char *buffer,
+           size_t bufsize, struct group **result)
+    struct group * getgrent (void)
+    struct group * getgrnam_nomembers (const char *groupname)
+    int getgrnam_nomembers_r (const char *groupname,
+           struct group *grp, char *buffer,
+           size_t bufsize, struct group **result)
+    struct group * getgrgid_nomembers (gid_t gid)
+    int getgrgid_nomembers_r (gid_t gid, struct group *grp,
+           char *buffer, size_t bufsize, struct group **result)
+    struct group * getgrent_nomembers (void)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    These functions operate on the user account database file. They return
+    information in a ssttrruucctt ggrroouupp structure, defined in the include file
+    <<ggrrpp..hh>>:
+
+    struct group {
+    	char * gr_name; group name (null-terminated string)
+    	gid_t gr_gid; 	group ID
+    	char ** gr_mem; group members (null-terminated array of pointers)
+    };
+
+    The functions ggeettggrrnnaamm(2) and ggeettggrrggiidd(2) search the group database for
+    the given group name pointed to by groupname or the group ID pointed to by
+    gid. The ggeettggrreenntt(2) function sequentially reads the database and is
+    intended for programs that would step through the complete list of groups.
+
+    The reentrant ggeettggrrnnaamm__rr(2) function updates the group structure
+    identified by grp and stores a pointer to that structure at the location
+    identified by result. The structure contains an entry from the group
+    database with a name that matches the name argument. Storage referenced by
+    the group structure is allocated from the memory provided by the buffer
+    argument, which is bufsize bytes in size. The maximum size needed for this
+    buffer can be determined with the {_SC_GETGR_R_SIZE_MAX} _ss_yy_ss_cc_oo_nn_ff(2)
+    parameter. A null pointer is returned at the location identified by result
+    on error or if the requested entry is not found.
+
+    The reetnrant ggeettggrrggiidd__rr(2) function updates the group structure
+    identified by the grp argument and stores a pointer to that structure at
+    the location identified by result. The structure contains an entry from
+    the group database with a gid that matches gid. Storage referenced by the
+    group structure is allocated from the memory provided with the buffer
+    argument, which is bufsize bytes in size. The maximum size needed for this
+    buffer can be determined with the {_SC_GETGR_R_SIZE_MAX} _ss_yy_ss_cc_oo_nn_ff(2)
+    parameter. A null pointer IS returned at the location pointed to by result
+    on error or if the requested entry is not found.
+
+    The ggeettggrrggiidd__eexx(2) function is the same as ggeettggrrggiidd(2) when the flags
+    argument is zero. If GR_FULLNAME is set in flags, all names returned in
+    the resulting ssttrruucctt ggrroouupp are fully qualified by their domain. For
+    example, instead of "+Administrators", the result is
+    "computername+Administrators". If GR_NOMEMBERS is set, it has the same
+    effect as ggeettggrrggiidd__nnoommeemmbbeerrss(). Both flags may be set.
+
+    The reentrant ggeettggrrggiidd__eexx__rr(2) function is the same as ggeettggrrggiidd__rr(2) when
+    the flags argument is zero. If GR_FULLNAME is set in flags, all names
+    returned in the resulting ggrroouupp structure are fully qualified by their
+    domain. For example, instead of "+Administrators", the result is
+    "computername+Administrators". If GR_NOMEMBERS is set, it has the same
+    effect as ggeettggrrggiidd__nnoommeemmbbeerrss__rr(2). Both flags may be set.
+
+    The ggrr__nnaammee member is a null-terminated string. The ggrr__mmeemm member is a
+    null-terminated array of pointers to null-terminated strings. The
+    ggrr__ppaasssswwdd member is always "*". These strings identify all the user and
+    group members in this group.
+
+    Refer to the _gg_ee_tt_pp_ww_nn_aa_mm(2) reference page for a description of the domain
+    scheme in Windows networking.
+
+    The return value points to an area that is reused on subsequent calls. The
+    information must be copied elsewhere before the next call to these
+    functions. The names returned in ggrr__nnaammee and ggrr__mmeemm are in the form
+    domain+name.
+
+    The **__nnoommeemmbbeerrss and **__nnoommeemmbbeerrss__rr versions of these functions are
+    identical, but do not fill in the ggrr__mmeemm member, which can result in much
+    faster performance, depending upon the system and the location of the user
+    database.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The functions ggeettggrrnnaamm(2), ggeettggrrggiidd(2), return a pointer to the group
+    entry if successful, or a null pointer if no matching entry is found
+    (which is not considered an error).
+
+    If an error occurs, the functions return a null pointer and set the value
+    of errno.
+
+  EERRRROORRSS
+
+    The ggeettggrrggiidd(2), ggeettggrrggiidd__rr(2), ggeettggrrnnaamm(2), and ggeettggrrnnaamm__rr(2) calls may
+    fail for the following reasons:
+
+    [EIO]
+        An I/O error occurred.
+
+    [EINTR]
+        A signal was caught during the call.
+
+    The reentrant **__rr(2) calls may fail for the following reason:
+
+    [ERANGE]
+        The buffer and bufsize arguments specify insufficient storage to
+        contain the data to be referenced by the resulting group structure.
+
+  NNOOTTEESS
+
+    Some built-in groups always report 0 members, even though the iidd(1)
+    command will report a given user as a member. These groups (with gid
+    values in the 0x10xxx hexadecimal range) do not keep member lists
+    internally, probably because almost all users are members. (the anonymous
+    user is sometimes excluded).
+
+  SSEEEE AALLSSOO
+
+    _g_e_t_g_r_o_u_p_s(2)
+
+    _g_e_t_l_o_g_i_n(2)
+
+    _g_e_t_p_w_n_a_m(2)
+
+    _g_e_t_p_w_u_i_d(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The following functions are thread safe: ggeettggrrnnaamm__rr,, ggeettggrrggiidd__rr,,
+    ggeettggrrggiidd__eexx__rr,, ggeettggrrnnaamm__nnoommeemmbbeerrss__rr,, ggeettggrrggiidd__nnoommeemmbbeerrss__rr. The following
+    functions are not thread safe: ggeettggrrnnaamm,, ggeettggrrggiidd,, ggeettggrrggiidd__eexx,, ggeettggrreenntt,,
+    ggeettggrrnnaamm__nnoommeemmbbeerrss,, ggeettggrrggiidd__nnoommeemmbbeerrss,, ggeettggrreenntt__nnoommeemmbbeerrss.
+
+    None of these functions are async-signal safe.
+

@@ -1,0 +1,261 @@
+
+
+Intro(3thread)                                     Intro(3thread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <thread.h>
+
+DDeessccrriippttiioonn
+   TThhrreeaaddss
+       The  Threads  Library supplies routines for thread manage-
+       ment that allow a programmer to implement  parallel  algo-
+       rithms conveniently.  In addition, user-level synchroniza-
+       tion routines [see are provided that allow coordination of
+       threads either within a process or across processes.
+
+       The  (3thread)  and  (3synch)  man pages describe the UNIX
+       International Threads APIs.  The POSIX  Threads  APIs  are
+       described  in  the (3pthread) man pages.  It is good prac-
+       tice to use either one or the other set consistently in an
+       application.
+
+   WWhhaatt iiss aa tthhrreeaadd??
+       A thread-of-control, or thread for short, is a sequence of
+       instructions and associated data  that  is  scheduled  and
+       executed  as an independent entity.  Every  process linked
+       with the Threads Library contains at least one, and possi-
+       bly  many,  threads.   Threads  within a process share the
+       address space of the process.
+
+       Processes also contain one or more  lightweight  processes
+       (LWPs), which are independently scheduled by the operating
+       system kernel, and which share  address  space  and  other
+       resources.   [see  LWPs  are  the  execution  entities for
+       threads.  When a thread executes, it is bound to  an  LWP.
+       We also say that an LWP picks up a thread for execution.
+
+   BBoouunndd aanndd mmuullttiipplleexxeedd tthhrreeaaddss
+       By  default,  the Threads Library multiplexes threads onto
+       LWPs.  That is, when a thread runs, it will be temporarily
+       bound  to  any  LWP in a pool of available LWPs within the
+       process.  The number of LWPs  available  in  the  pool  is
+       called  the degree or the level of concurrency.  Users can
+       request a change in the  level  of  concurrency  with  the
+       THR_INCR_CONC flag to or with
+
+       A thread can also be bound to an LWP for its lifetime [see
+       Bound threads have the properties of the  underlying  LWP,
+       therefore,  a  bound thread uses operating system schedul-
+       ing.  The Threads Library  schedules  multiplexed  threads
+       (see ``Thread Scheduling,'' below).
+
+       When a program is linked with the Threads Library, an ini-
+       tial thread is created to execute the main function.  This
+       initial thread is a multiplexed thread.
+
+       In   certain   cases,   such   as   when   competing   for
+
+                                                                1
+
+Intro(3thread)                                     Intro(3thread)
+
+       synchronization  objects  [see  bound  threads  are  given
+       scheduling  priority over multiplexed threads to make bet-
+       ter use of system resources.
+
+   TThhrreeaadd ccrreeaattiioonn
+       creates new threads.  Both multiplexed and  bound  threads
+       can  be  created.   The  caller can supply a stack for the
+       thread to run on, or the library  will  supply  one.   The
+       library  does not check for stack overflow for stacks sup-
+       plied by the user, but a SIGSEGV signal can  be  generated
+       if a thread overflows a library-allocated stack.
+
+       Every  thread  has  an ID, which is recognized only within
+       the current  process.   returns  the  ID  of  the  calling
+       thread.
+
+   SSiibblliinngg tthhrreeaaddss
+       Threads  within a process are siblings.  Unlike processes,
+       where a parent process creates a child process  for  which
+       it must threads create siblings for which they do not have
+       to wait.  Sibling threads can be awaited with (see below),
+       but this is optional.
+
+   DDaaeemmoonn tthhrreeaaddss
+       An  application  creates daemon threads to provide ongoing
+       services, for example asynchronous I/O, for other threads.
+       Daemon  threads  do  not need to exit explicitly; when the
+       last non-daemon thread terminates, the process will  exit,
+       terminating any daemon threads.
+
+   TThhrreeaadd eexxiitt aanndd pprroocceessss eexxiitt
+       causes the calling thread to terminate its execution.
+
+       A  process containing threads will terminate in any of the
+       following four circumstances:  When  the  last  non-daemon
+       thread terminates, the process exits.  If any thread calls
+       directly, the process and all its threads  and  LWPs  will
+       exit  immediately.  If the initial thread terminates with-
+       out calling thr_exit,  exit  will  be  called  implicitly,
+       causing  the  entire  process  to  exit.   If  the  thread
+       receives a signal whose disposition is  to  terminate  the
+       process, the process will exit.
+
+   JJooiinniinngg oorr wwaaiittiinngg ffoorr aa tthhrreeaadd
+       A  thread  uses  to wait for another thread to exit and to
+       retrieve its exit value.  The  term  join  emphasizes  the
+       sibling  relationship  between  threads.   When one thread
+       waits for another, in  effect  they  join  control  paths.
+       Threads  are  joinable by default, but if they are created
+       with the THR_DETACHED flag [see they cannot be joined.  If
+       a thread will not be joined, it should be created with the
+       THR_DETACHED flag to allow resources associated  with  the
+       thread to be reused after the thread terminates.
+
+                                                                2
+
+Intro(3thread)                                     Intro(3thread)
+
+   TThhrreeaadd sscchheedduulliinngg
+       The  Threads  Library  supports three scheduling policies:
+       time-sharing   (SCHED_TS   or   SCHED_OTHER)   round-robin
+       (SCHED_RR) first-in-first-out (SCHED_FIFO)
+
+       Multiplexed  threads  must run under the time-sharing pol-
+       icy.  Bound threads can run under  any  of  the  policies.
+       See  for  details.  SCHED_TS does not alter the scheduling
+       priority within the process of a multiplexed thread.
+
+       A thread can set its scheduling policy and  priority  with
+       and  its priority only with It can retrieve its scheduling
+       policy and priority with and its priority only with causes
+       a  thread  to  stop  executing  to  allow another eligible
+       thread to run.
+
+       The Threads Library  does  not  protect  against  priority
+       inversion.   That  is,  it  is possible for a thread to be
+       blocked waiting for a lower priority thread to  release  a
+       resource.
+
+   EErrrroorr hhaannddlliinngg
+       None  of  the  Threads  Library  routines  set errno; most
+       return an error number if an error is  encountered.   This
+       discourages use of errno, which is non-reentrant and inef-
+       ficient  in  a  multithreaded  environment.   The  Threads
+       Library does not guarantee to preserve errno across calls.
+
+   SSiiggnnaall hhaannddlliinngg
+        System signals were designed for inter-process communica-
+       tion.   They have been enhanced to work with multithreaded
+       programs, but their use here  should  be  restricted.   We
+       recommend  that  only a limited number of threads within a
+       process access and receive  signals.   These  threads  can
+       convert the notification provided by signals into internal
+       communication between threads.
+
+       Each thread in a process has its own signal mask, which is
+       inherited  from  its  creator  thread.  Threads can use to
+       modify their signal masks.
+
+       When a multithreaded process receives a signal, the signal
+       is  delivered  to  one  thread  interested  in the signal.
+       Threads express interest in a  signal  by  calling  or  by
+       using  sigset [see or to establish a handler for a signal.
+
+       Threads use to send a signal to a sibling thread.
+
+   TThhrreeaadd--SSppeecciiffiicc ddaattaa
+       Thread-specific data routines provide a thread-safe alter-
+       native  to static or external data.  That is, they provide
+       a way for threads to create and access private  data  that
+       persist  across  function calls.  The thread-specific data
+       routines are: and
+
+                                                                3
+
+Intro(3thread)                                     Intro(3thread)
+
+   TTrraacciinngg mmeecchhaanniissmm
+       The Threads Library provides a mechanism for tracing  sig-
+       nificant  library  events.   Calls  to all Threads Library
+       interfaces [including the user synchronization interfaces,
+       see can be traced.  Significant information, such as argu-
+       ments, return values, lock  contention,  and  duration  of
+       execution are recorded.
+
+       To  avoid  a performance penalty on the Threads Library, a
+       separate library, libthreadT.so, contains the tracing rou-
+       tines.   To  obtain  trace  data,  the application must be
+       linked to libthreadT.so.
+
+       See for a description of trace data files.
+
+AAddddiittiioonnaall ssoouurrcceess ooff iinnffoorrmmaattiioonn
+       These  books  discuss  the  use  of  the  Threads  library
+       (3thread)   and   (3synch)   and   the   Pthreads  library
+       (3pthread), and provide code  examples.   As  always,  the
+       &uw;  manual pages give the definitive information on syn-
+       tax and return values for these interfaces should there be
+       differences.   THREADtime  - The Multithreaded Programming
+       Guide, Scott J. Norton and Mark D.  DiPasquale; 538 pages;
+       Prentice Hall PTR; 1997; ISBN 0-13-190067-6
+
+       A  complete  guide to programming with POSIX threads, this
+       book describes various thread and process  models,  POSIX,
+       threads  programming  and  debugging,  and includes a good
+       introduction to threads, a chapter on debugging,  chapters
+       on  thread  programming  models  and  guidelines,  and the
+       pthread manual pages.   Programming  with  POSIX  Threads,
+       David  R. Butenhof; 381 pages; Addison-Wesley professional
+       computing series; 1997; ISBN 0-201-63392-2
+
+       A complete guide to programming with POSIX  threads,  this
+       book  introduces threads programming, describes how to use
+       the interfaces, discusses the routines that can be  called
+       safely in a signal handler, and explains what features are
+       standard and what features may vary from  one  implementa-
+       tion  to another.  Code examples include some which imple-
+       ment barriers and read/write locks (features in the  &gem-
+       ini; threads library but not currently provided in POSIX).
+       Programming with Threads, Steve Kleiman, Devang Shah,  and
+       Bart  Smaalders;  534  pages;  SunSoft  Press,  1996; ISBN
+       0-13-172389-8
+
+       A complete reference for POSIX threads, from  introduction
+       to  advanced  programming, this book may be most useful to
+       someone already familiar  with  multithreaded  programming
+       because  the  introductory topics are brief and it concen-
+       trates on advanced topics.  UNIX International threads are
+       listed in an appendix.  Threads Primer - A Guide to Multi-
+       threaded Programming,  Bil  Lewis  and  Daniel  Berg;  319
+       pages; SunSoft Press, 1996; ISBN 0-13-443698-9
+
+                                                                4
+
+Intro(3thread)                                     Intro(3thread)
+
+       A  good  introductory  text  for  someone  unfamiliar with
+       threads programming, this book has code examples that  use
+       the  UNIX  International  threads  (3thread)  and (3synch)
+       interfaces.  These are the only  interfaces  available  in
+       &uw; prior to the introduction of POSIX threads (3pthread)
+       interfaces in &uw701;.  POSIX thread interfaces are listed
+       in an appendix.
+
+WWaarrnniinnggss
+       The  Threads  Library does not guarantee to preserve errno
+       across calls.
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoommpplliiaannccee
+       The threads library is not part of any currently supported
+       standard.
+
+       It was developed by  System Laboratories, Inc. and is used
+       by permission.
+
+                                                                5
+

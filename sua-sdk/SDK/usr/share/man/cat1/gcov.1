@@ -1,0 +1,167 @@
+gcov(1)                                                         gcov(1)
+
+  ggccoovv
+
+  NNAAMMEE
+
+    gcov - GNU C coverage tool
+
+  SSYYNNOOPPSSIISS
+
+    gcov [[-bflnv]] [[-o dir]] srcfile ...
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ggccoovv(1) utility produces profiling information about code coverage. It
+    works on programs compiled with the ggcccc options --ffpprrooffiillee--aarrccss and --fftteesstt--
+    ccoovveerraaggee. With these options, the compiler generates additional files with
+    the extensions ..bbbband ..bbbbgg in the source directory. Before running
+    ggccoovv(1), run the program to be tested, in the source directory. Running
+    the program creates files with the extension ..ddaa; these files are needed
+    by ggccoovv(1). (Execution counts in the ..ddaa data files is cumulative; if the
+    program is executed while there is an existing ..ddaa file in the directory,
+    the new execution counts are added to the existing ones.)
+
+    While running, ggccoovv(1) creates a logfile (unless the --nn option is given)
+    which contains the results of the analysis. A description of the logfile
+    format is given later.
+
+  OOPPTTIIOONNSS
+
+    --bb
+        Branches. Writes branch frequencies into the output file and write a
+        summary of branch information to standard output. This often enlarges
+        the size of the output file.
+
+    --ff
+        Functions. Writes summaries for each function, as well as for the
+        entire file.
+
+    --ll
+        Long file names. This is useful if header files containing code and
+        are included in multiple files. Normally, for each object module
+        ssrrccffiillee ggccoovv(1) creates a file named ssrrccffiillee.gcov. With this option,
+        files are named pprrooggrraamm.ssrrccffiillee.gcov.
+
+    --nn
+        No output. Does not create the output file ssrrccffiillee.gcov.
+    --oo dir
+        Looks for the object files and the ..bbbb, ..bbbbgg, and ..ddaa files in dir.
+
+    --vv
+        Version. Displays the version number on standard error and then exits.
+
+    Results are less reliable if the code is compiled with the optimization
+    flag. The ggccoovv(1) program matches code on a line-by-line basis; by
+    combining operations, the optimizer weakens the relationship between the
+    code and the executable.
+
+  LLOOGGFFIILLEE FFOORRMMAATT
+
+    The logfile is a copy of the source file. Each line is prefixed by a
+    frequency count, ############ if it was never executed, or two tab characters.
+    For example, after running this program four times:
+
+          #include <stdio.h>
+
+              main()
+              {
+               4       int i, odd, even;
+               4       odd = even = 0;
+
+             404        for (i=0; i<100; i++)
+                   {
+             400           if (i%2)
+             200             odd++;
+                         else
+             200             even++;
+             400           if (i==100)
+          ######              printf("Impossible!0);
+             400        }
+               4       if (i==100)
+               4          printf("Certain!0);
+               4       printf("there are %d odd numbers0, odd);
+               4       printf("there are %d even numbers0, even);
+               4       return(0);
+               4    }
+
+    The --bb option changes this output:
+
+          #include <stdio.h>
+
+              main()
+              {
+               4       int i, odd, even;
+               4       odd = even = 0;
+
+             404       for (i=0; i<100; i++)
+    branch 0 taken = 99%
+    branch 1 taken = 100%
+    branch 2 taken = 100%
+
+             {
+             400          if (i%2)
+    branch 0 taken = 50%
+             200             odd++;
+    branch 0 taken = 100%
+                    else
+             200             even++;
+             400          if (i==100)
+    branch 0 taken = 100%
+          ######             printf("Impossible!0);
+    call 0 never executed
+             400       }
+               4       if (i==100)
+    branch 0 taken = 0%
+               4            printf("Impossible!0);
+    call 0 returns = 100%
+               4       printf("there are %d odd numbers0, odd);
+    call 0 returns = 100%
+               4       printf("there are %d even numbers0, even);
+    call 0 returns = 100%
+               4       return(0);
+    branch 0 taken = 100%
+               4    }
+    call 0 returns = 0%
+    call 1 returns = 100%
+
+    A line is output after each basic block of code. If more than one block of
+    code ends on a line of code, that line of code will have more than one
+    output line after it.
+
+    Each branch is numbered. In general, the left-most branch on a line gets
+    numbered first, but there is no simple way to map the numbers to the
+    source. If a branch is executed, the --bb option causes ggccoovv(1) to print the
+    number of times it was taken divided by the number of times the branch was
+    executed (as a percentage). In four executions of the program, the ffoorr
+    line was executed 404 times and the branch was taken 400 times, or 99%.
+
+    The percentage for function calls is calculated in a similar way: the
+    number of times the call returned divide by the number of times the call
+    was executed. (Usually only calls such as _ee_xx_ii_tt(3) or _ll_oo_nn_gg_jj_mm_pp(3) show a
+    value other than 100%.)
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    The ggccoovv(1) utility exits with status 0 for success, and >0 if an error
+    occurred.
+
+  FFIILLEESS
+
+    The ggccoovv(1) command makes use of the following files:
+    srcfile..bbbb
+        A list of source files, header files, functions and line numbers.
+        Generated by the GNU C compiler (ggcccc) with the --ffpprrooffiillee--aarrccss option.
+    srcfile..bbbbgg
+        A list of program flow arcs use to construct the program flow.
+        Generated by ggcccc with the --ffpprrooffiillee--aarrccss option.
+    srcfile..ddaa
+        Execution counts (data) generated by a program whose modules were
+        compiled with the --fftteesstt--ccoovveerraaggee option.
+    srcfile..ggccoovv
+        A log of execution results, created by ggccoovv(1).
+
+  SSEEEE AALLSSOO
+
+    _g_c_c(1)
+

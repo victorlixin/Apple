@@ -1,0 +1,117 @@
+wait(2)                                                         wait(2)
+
+  wwaaiitt(())
+
+  NNAAMMEE
+
+    wait(), waitpid() - wait for process termination
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/wait.h>
+
+    pid_t wait (int *status)
+    pid_t waitpid (pid_t wpid, int *status, int options)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _ww_aa_ii_tt(2) function suspends execution of its calling process until
+    status information is available for any terminated child process, or a
+    signal is received. On return from a successful _ww_aa_ii_tt(2) call, the
+    notification area contains termination information about the process that
+    exited as defined below. _ww_aa_ii_tt_pp_ii_dd(2) is a more general interface that
+    allows you more control over the behavior.
+
+    The status parameter is a pointer to an integer description of the status
+    of the child process, which can be interpreted using macros:
+
+    The following macros may be used to test the manner of exit of the
+    process. One of the first three macros will evaluate to a non-zero (true)
+    value:
+    WWIIFFEEXXIITTEEDD(status)
+        True if the process terminated normally by a call to ____ee_xx_ii_tt(2) or
+        _ee_xx_ii_tt(3).
+    WWIIFFSSIIGGNNAALLEEDD(status)
+        True if the process terminated due to receipt of a signal.
+    WWIIFFSSTTOOPPPPEEDD(status)
+        True if the process has not terminated, but has stopped and can be
+        restarted. This macro can be true only if the wait call specified the
+        WUNTRACED option.
+
+    Depending on the values of those macros, the following macros produce the
+    remaining status information about the child process:
+    WWEEXXIITTSSTTAATTUUSS(status)
+        If WWIIFFEEXXIITTEEDD() is true, evaluates to the low-order 8 bits of the
+        argument passed to ____ee_xx_ii_tt(2) or _ee_xx_ii_tt(3) by the child.
+    WWTTEERRMMSSIIGG(status)
+        If WWIIFFSSIIGGNNAALLEEDD() is true, evaluates to the number of the signal that
+        caused the termination of the process.
+    WWCCOORREEDDUUMMPP(status)
+        If WWIIFFSSIIGGNNAALLEEDD() is true, evaluates as true if the termination of the
+        process was accompanied by the creation of a core file containing an
+        image of the process when the signal was received.
+    WWSSTTOOPPSSIIGG(status)
+        If WWIIFFSSTTOOPPPPEEDD() is true, evaluates to the number of the signal that
+        caused the process to stop.
+
+    The _ww_aa_ii_tt_pp_ii_dd(2) call also takes the pid argument, specifying which child
+    processes will be waited for, and the options argument, a bitwise OR of
+    flags controlling _ww_aa_ii_tt_pp_ii_dd(2)'s behavior.
+
+    Values for pid can be:
+    pid=-1:
+        Status is requested for any child process (this is identical to
+        _ww_aa_ii_tt(2)).
+    pid>0:
+        Status is requested for the child process with process ID pid.
+    pid=0:
+        Status is requested for any child process whose process group ID is
+        equal to that of the calling process.
+    pid<-1:
+        Status is requested for any child process whose process group ID is
+        equal to the absolute value of pid.
+
+    The options parameter contains the bitwise OR of any of the following
+    options, defined in <<ssyyss//wwaaiitt..hh>>:
+
+    WNOHANG
+        the call should not block if there are no processes that want to
+        report status.
+
+    WUNTRACED
+        children of the current process that are stopped due to a SIGTTIN,
+        SIGTTOU, SIGTSTP, or SIGSTOP signal also have their status reported.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    If _ww_aa_ii_tt(2) returns due to a stopped or terminated child process, the
+    process ID of the child is returned to the calling process. Otherwise, a
+    value of -1 is returned and errno is set to indicate the error.
+
+    If _ww_aa_ii_tt_pp_ii_dd(2) returns due to a stopped or terminated child process, the
+    process ID of the child is returned to the calling process. If there are
+    no children not previously awaited, -1 is returned with errno set to
+    [ECHILD]. Otherwise, if WNOHANG is specified and there are no stopped or
+    exited children, 0 is returned. If an error is detected or a caught signal
+    aborts the call, a value of -1 is returned and errno is set to indicate
+    the error.
+
+  EERRRROORRSS
+
+    The _ww_aa_ii_tt(2) call will fail and return immediately if:
+
+    [ECHILD]
+        The calling process has no existing unwaited-for child processes.
+
+    [EINTR]
+        The call was interrupted by a caught signal.
+
+    [EINVAL]
+        The options argument was invalid.
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    All of these functions are async-signal safe.
+

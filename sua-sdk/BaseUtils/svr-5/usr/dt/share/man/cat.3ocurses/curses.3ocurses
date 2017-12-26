@@ -1,0 +1,593 @@
+
+
+curses(3ocurses)                                 curses(3ocurses)
+
+SSyynnooppssiiss
+       cc [flag . . .] file -locurses [library . . .]
+
+       #include <ocurses.h>
+
+DDeessccrriippttiioonn
+       The curses library routines give the user a terminal-inde-
+       pendent method of updating character screens with  reason-
+       able optimization.  A program using these routines must be
+       compiled with the -locurses option of cc.
+
+       The curses package allows:  overall screen, window and pad
+       manipulation; output to windows and pads; reading terminal
+       input; control over terminal and curses input  and  output
+       options;  environment  query routines; color manipulation;
+       use of soft label keys; terminfo  access;  and  access  to
+       low-level curses routines.
+
+       To initialize the routines, the routine initscr or newterm
+       must be called before any of the other routines that  deal
+       with  windows  and  screens  are used.  The routine endwin
+       must be called before exiting.  To get character-at-a-time
+       input  without  echoing (most interactive, screen-oriented
+       programs want this),  the  following  sequence  should  be
+       used: initscr(); cbreak(); noecho();
+
+       Most programs would additionally use the sequence: nonl();
+       intrflush(stdscr,FALSE); keypad(stdscr,TRUE);
+
+       Before a curses program is run, the tab stops of the  ter-
+       minal  should  be  set  and its initialization strings, if
+       defined, must be output.  This can be  done  by  executing
+       the tput init command after the shell environment variable
+       TERM has been exported.  [See for further details.]
+
+       The curses library permits  manipulation  of  data  struc-
+       tures,  called  windows,  which  can be thought of as two-
+       dimensional arrays of characters.  A default window called
+       stdscr,  which is the size of the terminal screen, is sup-
+       plied.  Others may be created with newwin().
+
+       Windows are referred to by variables declared as WINDOW *.
+       These   data  structures  are  manipulated  with  routines
+       described on 3ocurses pages (whose names begin ``curs_'').
+       Among  the  most  basic routines are move and addch.  More
+       general versions of these routines are included that allow
+       the user to specify a window.
+
+       After  using  routines  to manipulate a window, refresh is
+       called, telling curses to make the user's CRT screen  look
+       like  stdscr.   The characters in a window are actually of
+       type chtype (character and attribute data) so  that  other
+       information  about  the  character may also be stored with
+       each character.
+
+                                                                1
+
+curses(3ocurses)                                 curses(3ocurses)
+
+       Special windows  called  pads  may  also  be  manipulated.
+       These are windows that are not necessarily associated with
+       a viewable part of the screen.  See for more  information.
+
+       In  addition  to  drawing  characters on the screen, video
+       attributes and colors may be included, causing the charac-
+       ters to show up in such modes as underlined, reverse video
+       or color on terminals that support such  display  enhance-
+       ments.   Line  drawing  characters  may be specified to be
+       output.  On input, curses is also able to translate  arrow
+       and function keys that transmit escape sequences into sin-
+       gle values.  The video attributes, line drawing characters
+       and  input values use names, defined in ocurses.h, such as
+       A_REVERSE, ACS_HLINE, and KEY_LEFT.
+
+       If the environment variables LINES and COLUMNS are set, or
+       if  the program is executing in a window environment, line
+       and column information in the  environment  will  override
+       information read by terminfo.  This would affect a program
+       running in a window environment, for  example,  where  the
+       size of a screen is changeable.
+
+       If  the environment variable TERMINFO is defined, any pro-
+       gram using curses checks for a local  terminal  definition
+       before  checking  in  the standard place.  For example, if
+       TERM is set to wyse150, then the compiled terminal defini-
+       tion is found in /usr/share/lib/terminfo/w/wyse150
+
+       (The w is copied from the first letter of wyse150 to avoid
+       creation of huge directories.)  However,  if  TERMINFO  is
+       set     to     $HOME/myterms,    curses    first    checks
+       $HOME/myterms/w/wyse150
+
+       and if that  fails,  it  then  checks  /usr/share/lib/ter-
+       minfo/w/wyse150
+
+       This  is useful for developing experimental definitions or
+       when write permission in  /usr/share/lib/terminfo  is  not
+       available.
+
+       The  integer  variables  LINES  and  COLS  are  defined in
+       ocurses.h and will be filled in by initscr with  the  size
+       of the screen.  The constants TRUE and FALSE have the val-
+       ues 1 and 0, respectively.
+
+       curses routines also define the WINDOW *  variable  curscr
+       which is used for certain low-level operations like clear-
+       ing and redrawing a screen containing garbage.  curscr can
+       be used in only a few routines.
+
+   IInntteerrnnaattiioonnaall ffuunnccttiioonnss
+       The  number  of  bytes and the number of columns to hold a
+       character from the supplementary character set is  locale-
+       specific  (locale  category LC_CTYPE) and can be specified
+
+                                                                2
+
+curses(3ocurses)                                 curses(3ocurses)
+
+       in the character class table.
+
+       For editing, operating at the character level is  entirely
+       appropriate.  For screen formatting, arbitrary movement of
+       characters on screen is not desirable.
+
+       Overwriting characters (addch, for example) operates on  a
+       screen level.  Overwriting a character by a character that
+       requires  a  different  number  of  columns  may   produce
+       orphaned  columns.  These orphaned columns are filled with
+       background characters.
+
+       Inserting characters (insch, for example)  operates  on  a
+       character  level  (that  is, at the character boundaries).
+       The specified character is inserted right before the char-
+       acter,  regardless of which column of a character the cur-
+       sor points to.  Before insertion, the cursor  position  is
+       adjusted to the first column of the character.
+
+       As  with inserting characters, deleting characters (delch,
+       for example) operates on a character level  (that  is,  at
+       the character boundaries).  The character at the cursor is
+       deleted whichever  column  of  the  character  the  cursor
+       points  to.   Before  deletion,  the  cursor  position  is
+       adjusted to the first column of the character.
+
+       A multi-column character cannot be put on the last  column
+       of  a  line.  When such attempts are made, the last column
+       is set to the background  character.   In  addition,  when
+       such  an  operation creates orphaned columns, the orphaned
+       columns are filled with background characters.
+
+       Overlapping and overwriting a window follows the operation
+       of  overwriting  characters around its edge.  The orphaned
+       columns, if any, are handled as in  the  character  opera-
+       tions.
+
+       The  cursor  is allowed to be placed anywhere in a window.
+       If the insertion or  deletion  is  made  when  the  cursor
+       points to the second or later column position of a charac-
+       ter that holds multiple columns, the cursor is adjusted to
+       the  first column of the character before the insertion or
+       deletion.
+
+   RRoouuttiinnee aanndd aarrgguummeenntt nnaammeess
+       Many curses routines have two or more versions.   Routines
+       prefixed  with  p  require a pad argument.  Routines whose
+       names contain a w generally require either a window  argu-
+       ment  or a wide-character argument.  If w appears twice in
+       a routine name, the routine usually requires both a window
+       and  a  wide-character  argument.   Routines  that  do not
+       require a pad or window argument generally use stdscr.
+
+       The  routines  prefixed  with  mv  require  an  x  and   y
+
+                                                                3
+
+curses(3ocurses)                                 curses(3ocurses)
+
+       coordinate  to  move  to before performing the appropriate
+       action.  The mv routines imply a call to move  before  the
+       call to the other routine.  The coordinate y always refers
+       to the row (of the window), and x  always  refers  to  the
+       column.   The  upper left-hand corner is always (0,0), not
+       (1,1).
+
+       The routines prefixed with mvw take both a window argument
+       and  x  and  y coordinates.  The window argument is always
+       specified before the coordinates.
+
+       In each case, win is the window affected, and pad  is  the
+       pad affected; win and pad are always pointers to type WIN-
+       DOW.
+
+       Option setting routines require a Boolean flag bf with the
+       value TRUE or FALSE; bf is always of type bool.  The vari-
+       ables ch and attrs are always of type chtype.   The  types
+       WINDOW, SCREEN, bool, and chtype are defined in ocurses.h.
+       The type TERMINAL is defined in oterm.h.  All other  argu-
+       ments are integers.
+
+   RRoouuttiinnee nnaammee iinnddeexx
+       The following table lists each curses routine and the name
+       of the manual page on which it is described.
+       ------------------------------------------------
+       curses Routine Name    Manual Page Name
+
+              ------------------------------------------------
+              _aa_dd_dd_cc_hh                  _cc_uu_rr_ss____aa_dd_dd_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_dd_dd_cc_hh_nn_ss_tt_rr              _cc_uu_rr_ss____aa_dd_dd_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_dd_dd_cc_hh_ss_tt_rr               _cc_uu_rr_ss____aa_dd_dd_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_dd_dd_nn_ss_tt_rr                _cc_uu_rr_ss____aa_dd_dd_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_dd_dd_nn_ww_ss_tt_rr               _cc_uu_rr_ss____aa_dd_dd_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_dd_dd_ss_tt_rr                 _cc_uu_rr_ss____aa_dd_dd_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_dd_dd_ww_cc_hh                 _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_dd_dd_ww_cc_hh_nn_ss_tt_rr             _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_dd_dd_ww_cc_hh_ss_tt_rr              _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_dd_dd_ww_ss_tt_rr                _cc_uu_rr_ss____aa_dd_dd_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_tt_tt_rr_oo_ff_ff                _cc_uu_rr_ss____aa_tt_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_tt_tt_rr_oo_nn                 _cc_uu_rr_ss____aa_tt_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _aa_tt_tt_rr_ss_ee_tt                _cc_uu_rr_ss____aa_tt_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _bb_aa_uu_dd_rr_aa_tt_ee               _cc_uu_rr_ss____tt_ee_rr_mm_aa_tt_tt_rr_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _bb_ee_ee_pp                   _cc_uu_rr_ss____bb_ee_ee_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _bb_kk_gg_dd                   _cc_uu_rr_ss____bb_kk_gg_dd_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _bb_kk_gg_dd_ss_ee_tt                _cc_uu_rr_ss____bb_kk_gg_dd_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _bb_oo_rr_dd_ee_rr                 _cc_uu_rr_ss____bb_oo_rr_dd_ee_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _bb_oo_xx                    _cc_uu_rr_ss____bb_oo_rr_dd_ee_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _cc_aa_nn____cc_hh_aa_nn_gg_ee____cc_oo_ll_oo_rr       _cc_uu_rr_ss____cc_oo_ll_oo_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _cc_bb_rr_ee_aa_kk                 _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _cc_ll_ee_aa_rr                  _cc_uu_rr_ss____cc_ll_ee_aa_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _cc_ll_ee_aa_rr_oo_kk                _cc_uu_rr_ss____oo_uu_tt_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _cc_ll_rr_tt_oo_bb_oo_tt               _cc_uu_rr_ss____cc_ll_ee_aa_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+
+                                                                4
+
+()                                                             ()
+
+       _cc_ll_rr_tt_oo_ee_oo_ll               _cc_uu_rr_ss____cc_ll_ee_aa_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _cc_oo_ll_oo_rr____cc_oo_nn_tt_ee_nn_tt          _cc_uu_rr_ss____cc_oo_ll_oo_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _cc_oo_pp_yy_ww_ii_nn                _cc_uu_rr_ss____oo_vv_ee_rr_ll_aa_yy_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _cc_uu_rr_ss____ss_ee_tt               _cc_uu_rr_ss____kk_ee_rr_nn_ee_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_ee_ff____pp_rr_oo_gg____mm_oo_dd_ee          _cc_uu_rr_ss____kk_ee_rr_nn_ee_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_ee_ff____ss_hh_ee_ll_ll____mm_oo_dd_ee         _cc_uu_rr_ss____kk_ee_rr_nn_ee_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_ee_ll____cc_uu_rr_tt_ee_rr_mm            _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_ee_ll_aa_yy____oo_uu_tt_pp_uu_tt           _cc_uu_rr_ss____uu_tt_ii_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_ee_ll_cc_hh                  _cc_uu_rr_ss____dd_ee_ll_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_ee_ll_ee_tt_ee_ll_nn               _cc_uu_rr_ss____dd_ee_ll_ee_tt_ee_ll_nn_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_ee_ll_ss_cc_rr_ee_ee_nn              _cc_uu_rr_ss____ii_nn_ii_tt_ss_cc_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_ee_ll_ww_ii_nn                 _cc_uu_rr_ss____ww_ii_nn_dd_oo_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_ee_rr_ww_ii_nn                 _cc_uu_rr_ss____ww_ii_nn_dd_oo_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_oo_uu_pp_dd_aa_tt_ee               _cc_uu_rr_ss____rr_ee_ff_rr_ee_ss_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_rr_aa_ii_nn_oo                 _cc_uu_rr_ss____uu_tt_ii_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _dd_uu_pp_ww_ii_nn                 _cc_uu_rr_ss____ww_ii_nn_dd_oo_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ee_cc_hh_oo                   _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ee_cc_hh_oo_cc_hh_aa_rr               _cc_uu_rr_ss____aa_dd_dd_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ee_cc_hh_oo_ww_cc_hh_aa_rr              _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ee_nn_dd_ww_ii_nn                 _cc_uu_rr_ss____ii_nn_ii_tt_ss_cc_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ee_rr_aa_ss_ee                  _cc_uu_rr_ss____cc_ll_ee_aa_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ee_rr_aa_ss_ee_cc_hh_aa_rr              _cc_uu_rr_ss____tt_ee_rr_mm_aa_tt_tt_rr_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ff_ii_ll_tt_ee_rr                 _cc_uu_rr_ss____uu_tt_ii_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ff_ll_aa_ss_hh                  _cc_uu_rr_ss____bb_ee_ee_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ff_ll_uu_ss_hh_ii_nn_pp               _cc_uu_rr_ss____uu_tt_ii_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _gg_ee_tt_bb_ee_gg_yy_xx               _cc_uu_rr_ss____gg_ee_tt_yy_xx_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _gg_ee_tt_cc_hh                  _cc_uu_rr_ss____gg_ee_tt_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _gg_ee_tt_mm_aa_xx_yy_xx               _cc_uu_rr_ss____gg_ee_tt_yy_xx_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _gg_ee_tt_nn_ww_ss_tt_rr               _cc_uu_rr_ss____gg_ee_tt_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _gg_ee_tt_pp_aa_rr_yy_xx               _cc_uu_rr_ss____gg_ee_tt_yy_xx_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _gg_ee_tt_ss_tt_rr                 _cc_uu_rr_ss____gg_ee_tt_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _gg_ee_tt_ss_yy_xx                 _cc_uu_rr_ss____kk_ee_rr_nn_ee_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _gg_ee_tt_ww_cc_hh                 _cc_uu_rr_ss____gg_ee_tt_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _gg_ee_tt_ww_ii_nn                 _cc_uu_rr_ss____uu_tt_ii_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _gg_ee_tt_ww_ss_tt_rr                _cc_uu_rr_ss____gg_ee_tt_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _gg_ee_tt_yy_xx                  _cc_uu_rr_ss____gg_ee_tt_yy_xx_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _hh_aa_ll_ff_dd_ee_ll_aa_yy              _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _hh_aa_ss____cc_oo_ll_oo_rr_ss             _cc_uu_rr_ss____cc_oo_ll_oo_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _hh_aa_ss____ii_cc                 _cc_uu_rr_ss____tt_ee_rr_mm_aa_tt_tt_rr_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _hh_aa_ss____ii_ll                 _cc_uu_rr_ss____tt_ee_rr_mm_aa_tt_tt_rr_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _hh_ll_ii_nn_ee                  _cc_uu_rr_ss____bb_oo_rr_dd_ee_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_dd_cc_oo_kk                  _cc_uu_rr_ss____oo_uu_tt_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_dd_ll_oo_kk                  _cc_uu_rr_ss____oo_uu_tt_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_mm_mm_ee_dd_oo_kk                _cc_uu_rr_ss____oo_uu_tt_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_cc_hh                   _cc_uu_rr_ss____ii_nn_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_cc_hh_nn_ss_tt_rr               _cc_uu_rr_ss____ii_nn_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_cc_hh_ss_tt_rr                _cc_uu_rr_ss____ii_nn_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ii_tt____cc_oo_ll_oo_rr             _cc_uu_rr_ss____cc_oo_ll_oo_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ii_tt____pp_aa_ii_rr              _cc_uu_rr_ss____cc_oo_ll_oo_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ii_tt_ss_cc_rr                _cc_uu_rr_ss____ii_nn_ii_tt_ss_cc_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_nn_ss_tt_rr                 _cc_uu_rr_ss____ii_nn_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_nn_ww_ss_tt_rr                _cc_uu_rr_ss____ii_nn_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ss_cc_hh                  _cc_uu_rr_ss____ii_nn_ss_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+
+                                                                5
+
+()                                                             ()
+
+       _ii_nn_ss_dd_ee_ll_ll_nn               _cc_uu_rr_ss____dd_ee_ll_ee_tt_ee_ll_nn_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ss_ee_rr_tt_ll_nn               _cc_uu_rr_ss____dd_ee_ll_ee_tt_ee_ll_nn_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ss_nn_ss_tt_rr                _cc_uu_rr_ss____ii_nn_ss_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ss_nn_ww_ss_tt_rr               _cc_uu_rr_ss____ii_nn_ss_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ss_ss_tt_rr                 _cc_uu_rr_ss____ii_nn_ss_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ss_tt_rr                  _cc_uu_rr_ss____ii_nn_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ss_ww_cc_hh                 _cc_uu_rr_ss____ii_nn_ss_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ss_ww_ss_tt_rr                _cc_uu_rr_ss____ii_nn_ss_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_tt_rr_ff_ll_uu_ss_hh              _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ww_cc_hh                  _cc_uu_rr_ss____ii_nn_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ww_cc_hh_nn_ss_tt_rr              _cc_uu_rr_ss____ii_nn_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ww_cc_hh_ss_tt_rr               _cc_uu_rr_ss____ii_nn_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_nn_ww_ss_tt_rr                 _cc_uu_rr_ss____ii_nn_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_ss____ll_ii_nn_ee_tt_oo_uu_cc_hh_ee_dd         _cc_uu_rr_ss____tt_oo_uu_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_ss____ww_ii_nn_tt_oo_uu_cc_hh_ee_dd          _cc_uu_rr_ss____tt_oo_uu_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ii_ss_ee_nn_dd_ww_ii_nn               _cc_uu_rr_ss____ii_nn_ii_tt_ss_cc_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _kk_ee_yy_nn_aa_mm_ee                _cc_uu_rr_ss____uu_tt_ii_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _kk_ee_yy_pp_aa_dd                 _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _kk_ii_ll_ll_cc_hh_aa_rr               _cc_uu_rr_ss____tt_ee_rr_mm_aa_tt_tt_rr_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ll_ee_aa_vv_ee_oo_kk                _cc_uu_rr_ss____oo_uu_tt_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ll_oo_nn_gg_nn_aa_mm_ee               _cc_uu_rr_ss____tt_ee_rr_mm_aa_tt_tt_rr_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_ee_tt_aa                   _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_oo_vv_ee                   _cc_uu_rr_ss____mm_oo_vv_ee_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_aa_dd_dd_cc_hh                _cc_uu_rr_ss____aa_dd_dd_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_aa_dd_dd_cc_hh_nn_ss_tt_rr            _cc_uu_rr_ss____aa_dd_dd_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_aa_dd_dd_cc_hh_ss_tt_rr             _cc_uu_rr_ss____aa_dd_dd_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_aa_dd_dd_nn_ss_tt_rr              _cc_uu_rr_ss____aa_dd_dd_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_aa_dd_dd_nn_ww_ss_tt_rr             _cc_uu_rr_ss____aa_dd_dd_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_aa_dd_dd_ss_tt_rr               _cc_uu_rr_ss____aa_dd_dd_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_aa_dd_dd_ww_cc_hh               _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_aa_dd_dd_ww_cc_hh_nn_ss_tt_rr           _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_aa_dd_dd_ww_cc_hh_ss_tt_rr            _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_aa_dd_dd_ww_ss_tt_rr              _cc_uu_rr_ss____aa_dd_dd_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_cc_uu_rr                  _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_dd_ee_ll_cc_hh                _cc_uu_rr_ss____dd_ee_ll_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_dd_ee_rr_ww_ii_nn               _cc_uu_rr_ss____ww_ii_nn_dd_oo_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_gg_ee_tt_cc_hh                _cc_uu_rr_ss____gg_ee_tt_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_gg_ee_tt_nn_ww_ss_tt_rr             _cc_uu_rr_ss____gg_ee_tt_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_gg_ee_tt_ss_tt_rr               _cc_uu_rr_ss____gg_ee_tt_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_gg_ee_tt_ww_cc_hh               _cc_uu_rr_ss____gg_ee_tt_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_gg_ee_tt_ww_ss_tt_rr              _cc_uu_rr_ss____gg_ee_tt_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_cc_hh                 _cc_uu_rr_ss____ii_nn_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_cc_hh_nn_ss_tt_rr             _cc_uu_rr_ss____ii_nn_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_cc_hh_ss_tt_rr              _cc_uu_rr_ss____ii_nn_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_nn_ss_tt_rr               _cc_uu_rr_ss____ii_nn_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_nn_ww_ss_tt_rr              _cc_uu_rr_ss____ii_nn_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_ss_cc_hh                _cc_uu_rr_ss____ii_nn_ss_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_ss_nn_ss_tt_rr              _cc_uu_rr_ss____ii_nn_ss_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_ss_nn_ww_ss_tt_rr             _cc_uu_rr_ss____ii_nn_ss_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_ss_ss_tt_rr               _cc_uu_rr_ss____ii_nn_ss_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_ss_tt_rr                _cc_uu_rr_ss____ii_nn_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_ss_ww_cc_hh               _cc_uu_rr_ss____ii_nn_ss_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_ss_ww_ss_tt_rr              _cc_uu_rr_ss____ii_nn_ss_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+
+                                                                6
+
+()                                                             ()
+
+       _mm_vv_ii_nn_ww_cc_hh                _cc_uu_rr_ss____ii_nn_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_ww_cc_hh_nn_ss_tt_rr            _cc_uu_rr_ss____ii_nn_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_ww_cc_hh_ss_tt_rr             _cc_uu_rr_ss____ii_nn_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ii_nn_ww_ss_tt_rr               _cc_uu_rr_ss____ii_nn_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_pp_rr_ii_nn_tt_ww               _cc_uu_rr_ss____pp_rr_ii_nn_tt_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ss_cc_aa_nn_ww                _cc_uu_rr_ss____ss_cc_aa_nn_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_aa_dd_dd_cc_hh               _cc_uu_rr_ss____aa_dd_dd_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_aa_dd_dd_cc_hh_nn_ss_tt_rr           _cc_uu_rr_ss____aa_dd_dd_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_aa_dd_dd_cc_hh_ss_tt_rr            _cc_uu_rr_ss____aa_dd_dd_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_aa_dd_dd_nn_ss_tt_rr             _cc_uu_rr_ss____aa_dd_dd_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_aa_dd_dd_nn_ww_ss_tt_rr            _cc_uu_rr_ss____aa_dd_dd_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_aa_dd_dd_ss_tt_rr              _cc_uu_rr_ss____aa_dd_dd_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_aa_dd_dd_ww_cc_hh              _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_aa_dd_dd_ww_cc_hh_nn_ss_tt_rr          _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_aa_dd_dd_ww_cc_hh_ss_tt_rr           _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_aa_dd_dd_ww_ss_tt_rr             _cc_uu_rr_ss____aa_dd_dd_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_dd_ee_ll_cc_hh               _cc_uu_rr_ss____dd_ee_ll_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_gg_ee_tt_cc_hh               _cc_uu_rr_ss____gg_ee_tt_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_gg_ee_tt_nn_ww_ss_tt_rr            _cc_uu_rr_ss____gg_ee_tt_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_gg_ee_tt_ss_tt_rr              _cc_uu_rr_ss____gg_ee_tt_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_gg_ee_tt_ww_cc_hh              _cc_uu_rr_ss____gg_ee_tt_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_gg_ee_tt_ww_ss_tt_rr             _cc_uu_rr_ss____gg_ee_tt_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn                  _cc_uu_rr_ss____ww_ii_nn_dd_oo_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_cc_hh                _cc_uu_rr_ss____ii_nn_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_cc_hh_nn_ss_tt_rr            _cc_uu_rr_ss____ii_nn_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_cc_hh_ss_tt_rr             _cc_uu_rr_ss____ii_nn_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_nn_ss_tt_rr              _cc_uu_rr_ss____ii_nn_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_nn_ww_ss_tt_rr             _cc_uu_rr_ss____ii_nn_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_ss_cc_hh               _cc_uu_rr_ss____ii_nn_ss_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_ss_nn_ss_tt_rr             _cc_uu_rr_ss____ii_nn_ss_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_ss_ss_tt_rr              _cc_uu_rr_ss____ii_nn_ss_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_ss_tt_rr               _cc_uu_rr_ss____ii_nn_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_ss_ww_cc_hh              _cc_uu_rr_ss____ii_nn_ss_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_ss_ww_ss_tt_rr             _cc_uu_rr_ss____ii_nn_ss_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_ww_cc_hh               _cc_uu_rr_ss____ii_nn_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_ww_cc_hh_nn_ss_tt_rr           _cc_uu_rr_ss____ii_nn_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_ww_cc_hh_ss_tt_rr            _cc_uu_rr_ss____ii_nn_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ii_nn_ww_ss_tt_rr              _cc_uu_rr_ss____ii_nn_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_pp_rr_ii_nn_tt_ww              _cc_uu_rr_ss____pp_rr_ii_nn_tt_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _mm_vv_ww_ss_cc_aa_nn_ww               _cc_uu_rr_ss____ss_cc_aa_nn_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_aa_pp_mm_ss                  _cc_uu_rr_ss____kk_ee_rr_nn_ee_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_ee_ww_pp_aa_dd                 _cc_uu_rr_ss____pp_aa_dd_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_ee_ww_tt_ee_rr_mm                _cc_uu_rr_ss____ii_nn_ii_tt_ss_cc_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_ee_ww_ww_ii_nn                 _cc_uu_rr_ss____ww_ii_nn_dd_oo_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_ll                     _cc_uu_rr_ss____oo_uu_tt_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_oo_cc_bb_rr_ee_aa_kk               _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_oo_dd_ee_ll_aa_yy                _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_oo_ee_cc_hh_oo                 _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_oo_nn_ll                   _cc_uu_rr_ss____oo_uu_tt_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_oo_qq_ii_ff_ll_uu_ss_hh              _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_oo_rr_aa_ww                  _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _nn_oo_tt_ii_mm_ee_oo_uu_tt              _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _oo_vv_ee_rr_ll_aa_yy                _cc_uu_rr_ss____oo_vv_ee_rr_ll_aa_yy_((_33_oo_cc_uu_rr_ss_ee_ss_))
+
+                                                                7
+
+()                                                             ()
+
+       _oo_vv_ee_rr_ww_rr_ii_tt_ee              _cc_uu_rr_ss____oo_vv_ee_rr_ll_aa_yy_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _pp_aa_ii_rr____cc_oo_nn_tt_ee_nn_tt           _cc_uu_rr_ss____cc_oo_ll_oo_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _pp_ee_cc_hh_oo_cc_hh_aa_rr              _cc_uu_rr_ss____pp_aa_dd_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _pp_ee_cc_hh_oo_ww_cc_hh_aa_rr             _cc_uu_rr_ss____pp_aa_dd_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _pp_nn_oo_uu_tt_rr_ee_ff_rr_ee_ss_hh           _cc_uu_rr_ss____pp_aa_dd_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _pp_rr_ee_ff_rr_ee_ss_hh               _cc_uu_rr_ss____pp_aa_dd_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _pp_rr_ii_nn_tt_ww                 _cc_uu_rr_ss____pp_rr_ii_nn_tt_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _pp_uu_tt_pp                   _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _pp_uu_tt_ww_ii_nn                 _cc_uu_rr_ss____uu_tt_ii_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _qq_ii_ff_ll_uu_ss_hh                _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _rr_aa_ww                    _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _rr_ee_dd_rr_aa_ww_ww_ii_nn              _cc_uu_rr_ss____rr_ee_ff_rr_ee_ss_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _rr_ee_ff_rr_ee_ss_hh                _cc_uu_rr_ss____rr_ee_ff_rr_ee_ss_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _rr_ee_ss_ee_tt____pp_rr_oo_gg____mm_oo_dd_ee        _cc_uu_rr_ss____kk_ee_rr_nn_ee_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _rr_ee_ss_ee_tt____ss_hh_ee_ll_ll____mm_oo_dd_ee       _cc_uu_rr_ss____kk_ee_rr_nn_ee_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _rr_ee_ss_ee_tt_tt_yy                _cc_uu_rr_ss____kk_ee_rr_nn_ee_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _rr_ee_ss_tt_aa_rr_tt_tt_ee_rr_mm            _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _rr_ii_pp_oo_ff_ff_ll_ii_nn_ee             _cc_uu_rr_ss____kk_ee_rr_nn_ee_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_aa_vv_ee_tt_tt_yy                _cc_uu_rr_ss____kk_ee_rr_nn_ee_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_cc_aa_nn_ww                  _cc_uu_rr_ss____ss_cc_aa_nn_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_cc_rr____dd_uu_mm_pp               _cc_uu_rr_ss____ss_cc_rr____dd_uu_mm_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_cc_rr____ii_nn_ii_tt               _cc_uu_rr_ss____ss_cc_rr____dd_uu_mm_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_cc_rr____rr_ee_ss_tt_oo_rr_ee            _cc_uu_rr_ss____ss_cc_rr____dd_uu_mm_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_cc_rr____ss_ee_tt                _cc_uu_rr_ss____ss_cc_rr____dd_uu_mm_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_cc_rr_ll                   _cc_uu_rr_ss____ss_cc_rr_oo_ll_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_cc_rr_oo_ll_ll                 _cc_uu_rr_ss____ss_cc_rr_oo_ll_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_cc_rr_oo_ll_ll_oo_kk               _cc_uu_rr_ss____oo_uu_tt_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ee_tt____cc_uu_rr_tt_ee_rr_mm            _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ee_tt____tt_ee_rr_mm               _cc_uu_rr_ss____ii_nn_ii_tt_ss_cc_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ee_tt_ss_cc_rr_rr_ee_gg              _cc_uu_rr_ss____oo_uu_tt_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ee_tt_ss_yy_xx                 _cc_uu_rr_ss____kk_ee_rr_nn_ee_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ee_tt_tt_ee_rr_mm                _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ee_tt_uu_pp_tt_ee_rr_mm              _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ll_kk____aa_tt_tt_rr_oo_ff_ff            _cc_uu_rr_ss____ss_ll_kk_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ll_kk____aa_tt_tt_rr_oo_nn             _cc_uu_rr_ss____ss_ll_kk_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ll_kk____aa_tt_tt_rr_ss_ee_tt            _cc_uu_rr_ss____ss_ll_kk_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ll_kk____cc_ll_ee_aa_rr              _cc_uu_rr_ss____ss_ll_kk_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ll_kk____ii_nn_ii_tt               _cc_uu_rr_ss____ss_ll_kk_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ll_kk____ll_aa_bb_ee_ll              _cc_uu_rr_ss____ss_ll_kk_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ll_kk____nn_oo_uu_tt_rr_ee_ff_rr_ee_ss_hh        _cc_uu_rr_ss____ss_ll_kk_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ll_kk____rr_ee_ff_rr_ee_ss_hh            _cc_uu_rr_ss____ss_ll_kk_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ll_kk____rr_ee_ss_tt_oo_rr_ee            _cc_uu_rr_ss____ss_ll_kk_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ll_kk____ss_ee_tt                _cc_uu_rr_ss____ss_ll_kk_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_ll_kk____tt_oo_uu_cc_hh              _cc_uu_rr_ss____ss_ll_kk_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_tt_aa_nn_dd_ee_nn_dd               _cc_uu_rr_ss____aa_tt_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_tt_aa_nn_dd_oo_uu_tt               _cc_uu_rr_ss____aa_tt_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_tt_aa_rr_tt____cc_oo_ll_oo_rr            _cc_uu_rr_ss____cc_oo_ll_oo_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_uu_bb_pp_aa_dd                 _cc_uu_rr_ss____pp_aa_dd_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_uu_bb_ww_ii_nn                 _cc_uu_rr_ss____ww_ii_nn_dd_oo_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ss_yy_nn_cc_oo_kk                 _cc_uu_rr_ss____ww_ii_nn_dd_oo_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_ee_rr_mm_aa_tt_tt_rr_ss              _cc_uu_rr_ss____tt_ee_rr_mm_aa_tt_tt_rr_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_ee_rr_mm_nn_aa_mm_ee               _cc_uu_rr_ss____tt_ee_rr_mm_aa_tt_tt_rr_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_gg_ee_tt_ee_nn_tt                _cc_uu_rr_ss____tt_ee_rr_mm_cc_aa_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+
+                                                                8
+
+()                                                             ()
+
+       _tt_gg_ee_tt_ff_ll_aa_gg               _cc_uu_rr_ss____tt_ee_rr_mm_cc_aa_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_gg_ee_tt_nn_uu_mm                _cc_uu_rr_ss____tt_ee_rr_mm_cc_aa_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_gg_ee_tt_ss_tt_rr                _cc_uu_rr_ss____tt_ee_rr_mm_cc_aa_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_gg_oo_tt_oo                  _cc_uu_rr_ss____tt_ee_rr_mm_cc_aa_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_ii_gg_ee_tt_ff_ll_aa_gg              _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_ii_gg_ee_tt_nn_uu_mm               _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_ii_gg_ee_tt_ss_tt_rr               _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_ii_mm_ee_oo_uu_tt                _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_oo_uu_cc_hh_ll_ii_nn_ee              _cc_uu_rr_ss____tt_oo_uu_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_oo_uu_cc_hh_ww_ii_nn               _cc_uu_rr_ss____tt_oo_uu_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_pp_aa_rr_mm                  _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_pp_uu_tt_ss                  _cc_uu_rr_ss____tt_ee_rr_mm_cc_aa_pp_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_pp_uu_tt_ss                  _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _tt_yy_pp_ee_aa_hh_ee_aa_dd              _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _uu_nn_cc_tt_rr_ll                 _cc_uu_rr_ss____uu_tt_ii_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _uu_nn_gg_ee_tt_cc_hh                _cc_uu_rr_ss____gg_ee_tt_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _uu_nn_gg_ee_tt_ww_cc_hh               _cc_uu_rr_ss____gg_ee_tt_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _uu_nn_tt_oo_uu_cc_hh_ww_ii_nn             _cc_uu_rr_ss____tt_oo_uu_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _uu_ss_ee____ee_nn_vv                _cc_uu_rr_ss____uu_tt_ii_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _vv_ii_dd_aa_tt_tt_rr                _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _vv_ii_dd_pp_uu_tt_ss                _cc_uu_rr_ss____tt_ee_rr_mm_ii_nn_ff_oo_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _vv_ll_ii_nn_ee                  _cc_uu_rr_ss____bb_oo_rr_dd_ee_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _vv_ww_pp_rr_ii_nn_tt_ww               _cc_uu_rr_ss____pp_rr_ii_nn_tt_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _vv_ww_ss_cc_aa_nn_ww                _cc_uu_rr_ss____ss_cc_aa_nn_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_dd_dd_cc_hh                 _cc_uu_rr_ss____aa_dd_dd_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_dd_dd_cc_hh_nn_ss_tt_rr             _cc_uu_rr_ss____aa_dd_dd_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_dd_dd_cc_hh_ss_tt_rr              _cc_uu_rr_ss____aa_dd_dd_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_dd_dd_nn_ss_tt_rr               _cc_uu_rr_ss____aa_dd_dd_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_dd_dd_nn_ww_ss_tt_rr              _cc_uu_rr_ss____aa_dd_dd_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_dd_dd_ss_tt_rr                _cc_uu_rr_ss____aa_dd_dd_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_dd_dd_ww_cc_hh                _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_dd_dd_ww_cc_hh_nn_ss_tt_rr            _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_dd_dd_ww_cc_hh_ss_tt_rr             _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_dd_dd_ww_ss_tt_rr               _cc_uu_rr_ss____aa_dd_dd_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_tt_tt_rr_oo_ff_ff               _cc_uu_rr_ss____aa_tt_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_tt_tt_rr_oo_nn                _cc_uu_rr_ss____aa_tt_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_aa_tt_tt_rr_ss_ee_tt               _cc_uu_rr_ss____aa_tt_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_bb_kk_gg_dd                  _cc_uu_rr_ss____bb_kk_gg_dd_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_bb_kk_gg_dd_ss_ee_tt               _cc_uu_rr_ss____bb_kk_gg_dd_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_bb_oo_rr_dd_ee_rr                _cc_uu_rr_ss____bb_oo_rr_dd_ee_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_cc_ll_ee_aa_rr                 _cc_uu_rr_ss____cc_ll_ee_aa_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_cc_ll_rr_tt_oo_bb_oo_tt              _cc_uu_rr_ss____cc_ll_ee_aa_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_cc_ll_rr_tt_oo_ee_oo_ll              _cc_uu_rr_ss____cc_ll_ee_aa_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_cc_uu_rr_ss_yy_nn_cc_uu_pp             _cc_uu_rr_ss____ww_ii_nn_dd_oo_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_dd_ee_ll_cc_hh                 _cc_uu_rr_ss____dd_ee_ll_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_dd_ee_ll_ee_tt_ee_ll_nn              _cc_uu_rr_ss____dd_ee_ll_ee_tt_ee_ll_nn_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ee_cc_hh_oo_cc_hh_aa_rr              _cc_uu_rr_ss____aa_dd_dd_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ee_cc_hh_oo_ww_cc_hh_aa_rr             _cc_uu_rr_ss____aa_dd_dd_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ee_rr_aa_ss_ee                 _cc_uu_rr_ss____cc_ll_ee_aa_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_gg_ee_tt_cc_hh                 _cc_uu_rr_ss____gg_ee_tt_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_gg_ee_tt_nn_ss_tt_rr               _cc_uu_rr_ss____gg_ee_tt_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_gg_ee_tt_nn_ww_ss_tt_rr              _cc_uu_rr_ss____gg_ee_tt_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_gg_ee_tt_ss_tt_rr                _cc_uu_rr_ss____gg_ee_tt_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+
+                                                                9
+
+()                                                             ()
+
+       _ww_gg_ee_tt_ww_cc_hh                _cc_uu_rr_ss____gg_ee_tt_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_gg_ee_tt_ww_ss_tt_rr               _cc_uu_rr_ss____gg_ee_tt_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_hh_ll_ii_nn_ee                 _cc_uu_rr_ss____bb_oo_rr_dd_ee_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_cc_hh                  _cc_uu_rr_ss____ii_nn_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_cc_hh_nn_ss_tt_rr              _cc_uu_rr_ss____ii_nn_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_cc_hh_ss_tt_rr               _cc_uu_rr_ss____ii_nn_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_nn_ss_tt_rr                _cc_uu_rr_ss____ii_nn_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_nn_ww_ss_tt_rr               _cc_uu_rr_ss____ii_nn_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ss_cc_hh                 _cc_uu_rr_ss____ii_nn_ss_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ss_dd_ee_ll_ll_nn              _cc_uu_rr_ss____dd_ee_ll_ee_tt_ee_ll_nn_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ss_ee_rr_tt_ll_nn              _cc_uu_rr_ss____dd_ee_ll_ee_tt_ee_ll_nn_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ss_nn_ss_tt_rr               _cc_uu_rr_ss____ii_nn_ss_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ss_nn_ww_ss_tt_rr              _cc_uu_rr_ss____ii_nn_ss_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ss_ss_tt_rr                _cc_uu_rr_ss____ii_nn_ss_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ss_tt_rr                 _cc_uu_rr_ss____ii_nn_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ss_ww_cc_hh                _cc_uu_rr_ss____ii_nn_ss_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ss_ww_ss_tt_rr               _cc_uu_rr_ss____ii_nn_ss_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ww_cc_hh                 _cc_uu_rr_ss____ii_nn_ww_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ww_cc_hh_nn_ss_tt_rr             _cc_uu_rr_ss____ii_nn_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ww_cc_hh_ss_tt_rr              _cc_uu_rr_ss____ii_nn_ww_cc_hh_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ii_nn_ww_ss_tt_rr                _cc_uu_rr_ss____ii_nn_ww_ss_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_mm_oo_vv_ee                  _cc_uu_rr_ss____mm_oo_vv_ee_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_nn_oo_uu_tt_rr_ee_ff_rr_ee_ss_hh           _cc_uu_rr_ss____rr_ee_ff_rr_ee_ss_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_pp_rr_ii_nn_tt_ww                _cc_uu_rr_ss____pp_rr_ii_nn_tt_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_rr_ee_dd_rr_aa_ww_ll_nn              _cc_uu_rr_ss____rr_ee_ff_rr_ee_ss_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_rr_ee_ff_rr_ee_ss_hh               _cc_uu_rr_ss____rr_ee_ff_rr_ee_ss_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ss_cc_aa_nn_ww                 _cc_uu_rr_ss____ss_cc_aa_nn_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ss_cc_rr_ll                  _cc_uu_rr_ss____ss_cc_rr_oo_ll_ll_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ss_ee_tt_ss_cc_rr_rr_ee_gg             _cc_uu_rr_ss____oo_uu_tt_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ss_tt_aa_nn_dd_ee_nn_dd              _cc_uu_rr_ss____aa_tt_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ss_tt_aa_nn_dd_oo_uu_tt              _cc_uu_rr_ss____aa_tt_tt_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ss_yy_nn_cc_dd_oo_ww_nn              _cc_uu_rr_ss____ww_ii_nn_dd_oo_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_ss_yy_nn_cc_uu_pp                _cc_uu_rr_ss____ww_ii_nn_dd_oo_ww_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_tt_ii_mm_ee_oo_uu_tt               _cc_uu_rr_ss____ii_nn_oo_pp_tt_ss_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_tt_oo_uu_cc_hh_ll_nn               _cc_uu_rr_ss____tt_oo_uu_cc_hh_((_33_oo_cc_uu_rr_ss_ee_ss_))
+       _ww_vv_ll_ii_nn_ee                 _cc_uu_rr_ss____bb_oo_rr_dd_ee_rr_((_33_oo_cc_uu_rr_ss_ee_ss_))
+
+ vvaalluuee
+       Routines that return an integer return  ERR  upon  failure
+       and  an  integer value other than ERR upon successful com-
+       pletion, unless otherwise noted in  the  routine  descrip-
+       tions.
+
+       All  macros return the value of the window version, except
+       setscrreg, wsetscrreg, getyx, getbegyx and getmaxyx.   The
+       return  values  of  setscrreg, wsetscrreg, getyx, getbegyx
+       and getmaxyx are undefined (that is, these should  not  be
+       used as the right-hand side of assignment statements).
+
+       Routines that return pointers return NULL on error.
+
+NNoottiicceess
+       The  header  file  ocurses.h  automatically  includes  the
+       header files stdio.h and unctrl.h.
+
+                                                               10
+
+()                                                             ()
+
+RReeffeerreenncceess
+       detailed routine descriptions
+
+                                                               11
+

@@ -1,0 +1,100 @@
+
+
+sysi86(2)                                               sysi86(2)
+
+SSyynnooppssiiss
+       #include <sys/sysi86.h>
+
+       int sysi86(int cmd, . . .);
+
+DDeessccrriippttiioonn
+       The  sysi86  system call implements machine-specific func-
+       tions.  The cmd argument determines  the  function  to  be
+       performed.   The types of the arguments expected depend on
+       the function.
+
+   CCoommmmaanndd SSII8866FFPPHHWW
+       This command expects the address  of  an  integer  as  its
+       argument.   After  successful return from the system call,
+       the integer specifies how  floating-point  computation  is
+       supported.
+
+       The  low-order  byte  of the integer contains the value of
+       ``fpkind,'' a variable that specifies whether an 80287  or
+       80387  floating-point  coprocessor is present, emulated in
+       software, or not supported.  The values are defined in the
+       header file sys/fp.h.
+       -----------------------------------------------------
+           FP_NO    no fp chip, no emulator (no fp support)
+           FP_SW    no fp chip, using software emulator
+           FP_HW    chip present bit
+           FP_287   80287 chip present
+           FP_387   80387 chip present
+
+   CCoommmmaanndd SSTTIIMMEE
+       When  cmd  is STIME, an argument of type long is expected.
+       This function sets the system time and date (not the hard-
+       ware  clock).   The argument contains the time as measured
+       in seconds from 00:00:00 GMT January 1, 1970.  The calling
+       process  must have the P_SYSOPS privilege to use this com-
+       mand.
+
+   CCoommmmaanndd SSII8866DDSSCCRR
+       This command sets a segment descriptor in the kernel.   It
+       accepts  as  a  descriptor executable and data segments in
+       the LDT at DPL 3.
+
+       The argument is a pointer to a request structure that con-
+       tains  the  values  to  be  placed in the descriptor.  The
+       request structure is declared in the  sys/sysi86.h  header
+       file.
+
+   CCoommmmaanndd SSII8866IIOOPPLL
+       This  command  changes  the  I/O  privilege  level for the
+       invoking  LWP.   Setting  the  IOPL  to   3   allows   the
+       lightweight process (LWP) to directly perform input/output
+       instructions to access all  hardware  device  ports.   The
+       calling  process  must  have the P_SYSOPS privilege to use
+       this command.
+
+                                                                1
+
+sysi86(2)                                               sysi86(2)
+
+       The argument is an integer which is the new I/O  privilege
+       level (0-3).
+
+   CCoommmmaanndd SSII8866NNUULLLLPPTTRR
+       This  command  controls  the system behavior when applica-
+       tions dereference through  a  NULL  pointer.   To  support
+       existing applications the default behavior as delivered is
+       to enable null-pointer dereferences.  The default behavior
+       can  be  changed by changing the nullptr to enable parame-
+       ter.
+
+       When null-pointer dereferences are enabled, any user  pro-
+       gram  attempt  to read memory in the first page (addresses
+       0-4095) will successfully  return  zero.   When  disabled,
+       these memory reads behave like any other bad memory refer-
+       ence and cause a SIGSEGV signal to be sent to  the  refer-
+       encing  LWP.   Memory  writes  to  page  0 always generate
+       SIGSEGV.
+
+       The argument for SI86NULLPTR is an integer.   A  value  of
+       zero  disables  null-pointer  dereferences for the current
+       user ID.  A value of one enables null-pointer dereferences
+       for  the current user ID.  A value of two returns the cur-
+       rent setting.
+
+   RReettuurrnn vvaalluueess
+       If sysi86 succeeds,  it  returns  zero  or  a  value  that
+       depends  on  cmd  as described above.  If sysi86 fails, it
+       returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       When the cmd is invalid, errno is set to EINVAL.
+
+RReeffeerreenncceess
+
+                                                                2
+

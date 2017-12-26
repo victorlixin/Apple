@@ -1,0 +1,188 @@
+
+
+Node(4dsp)                                             Node(4dsp)
+
+DDeessccrriippttiioonn
+       One  of  the  Installable driver/Tunable Parameters kernel
+       configuration files, a  Node  file,  contains  definitions
+       used  by the command to create the device nodes (block and
+       character special files) associated with a  device  driver
+       module.   When  the  Node  component  of a module's Driver
+       Software Package (DSP) is installed, stores  the  driver's
+       Node  file  information  in  /etc/conf/node.d/module-name,
+       where  module-name  is  the  name  of  the  driver   being
+       installed.     Package   scripts   should   never   access
+       /etc/conf/node.d files  directly;  the  idinstall  command
+       should be used instead.
+
+       Beginning  with  DDI  8, the first non-comment line should
+       be: $maxchan x This specifies the maximum supported  chan-
+       nel  number  for a DDI driver of version 8 or greater, and
+       should be set to the number of  device  nodes  needed  per
+       instance  of a device, minus 1.  This value must match the
+       value passed to the function in the drv_maxchan member  of
+       the structure.
+
+       For  example,  an  8-port serial board usually requires at
+       least 16 nodes, two for each port to   indicate  modem  or
+       non-modem control, so $maxchan would be set to 15.
+
+       Drivers  that use open redirection (cloning) should create
+       one channel for the initial open plus one for  each  clone
+       channel.  See for more information about open redirection.
+
+       For drivers that use only one  channel,  set  $maxchan  0;
+       channel numbers begin at 0.  Use a non-zero value only for
+       drivers that support  multiple  device  files  per  device
+       instance,  such as drivers that support multiple operating
+       modes (such as with or without flow control), or  multiple
+       sub-parts (such as slices on a disk).
+
+       $maxchan must be specified in the Node file as well as for
+       the function because the system must compute the number of
+       channels  the driver uses before it can create its special
+       defice node files.   The  device  files  must  be  created
+       before the driver can be opened, and the driver may not be
+       loaded until an call causes an automatic load, so may  not
+       be called until after the occurs.
+
+       Following  the  $maxchan line, if any, must be one or more
+       lines in the following format: module-name node-name  type
+       channel user group permissions level
+
+       All  fields  are positional and must be separated by white
+       space.  The first four fields are required; the last  four
+       fields are optional.  Blank lines and lines beginning with
+       ``#'' or ``*'' are considered comments and are ignored.
+
+       The node file fields are: Identifies the device  to  which
+
+                                                                1
+
+Node(4dsp)                                             Node(4dsp)
+
+       this node applies.  The name must match the name specified
+       for the device in the module-name field of the file, which
+       is also the MODNAME discussed on the manual page.
+
+       The  device  must  be  defined as a block and/or character
+       device (Master file characteristics flag set to b  or  c).
+       When  the  device node is created, the Master file bmaj or
+       cmaj field values will be used as the major number for the
+       created  node.   Specifies the name of the node file to be
+       created, relative to /dev.   If  this  field  specifies  a
+       pathname   containing   subdirectories,  (or,  for  DDI  8
+       drivers) will automatically create these subdirectories.
+
+       Beginning with DDI 8, if the name contains  %i,  one  such
+       node  file  will  be  created  for  each  instance of this
+       driver's device, with a unique instance number  (in  vari-
+       able-width   decimal)  substituted  for  the  %i.   %i  is
+       required for DDI 8 drivers prior to  &vgerlong;.   Identi-
+       fies  the  type  of  node  to be created.  The character b
+       indicates that the node is a block device; the character c
+       indicates character device.  The value for this field must
+       match one of the flags specified for  the  device  in  the
+       mdevice file characteristics field.
+
+       Drivers  using  a  DDI  version prior to version 8 may use
+       multiple major numbers.  To do this, you specify  a  value
+       of the form: type:offset where type is the type of node (b
+       or c) and offset  gives  the  offset  to  this  particular
+       device  within  the  range  of major numbers specified for
+       this device type in the Master  file.   For  example,  the
+       value ``c:2'' refers to a character major offset 2, which,
+       given a major  device  type  specification  of  ``15-18'',
+       would translate to a character major number of 17.  Speci-
+       fies the channel number (for DDI 8 or  newer  drivers)  or
+       the  minor  device number (for older drivers).  For entry-
+       type 0 drivers, this field can be coded in  one  of  three
+       ways:  If  this field specifies a (decimal) numeric value,
+       the value is used as the minor device number for the  cre-
+       ated  node.   If this field specifies a non-numeric value,
+       the value is assumed to be a request for a clone node, and
+       the  minor  number  will be set to the major number of the
+       device whose module-name is the value of  the  field.   If
+       this field specifies a non-numeric value and the Node file
+       type field specifies an offset value, the offset  will  be
+       applied  to  the  minor number instead of the major number
+       when the node is created.  This  field  is  optional.   If
+       used,  it  specifies the user ID of the user that will own
+       the node to be created.  The user ID must be specified  as
+       a  decimal integer value.  If user is specified, group and
+       permissions must be specified.  This  field  is  optional.
+       If  used, it specifies the group ID of the group that will
+       own the node to be created.  The group ID must  be  speci-
+       fied  as  a decimal integer value.  If group is specified,
+       user and permissions must be  specified.   This  field  is
+
+                                                                2
+
+Node(4dsp)                                             Node(4dsp)
+
+       optional.   If used, it specifies, in octal form, the per-
+       missions for the node to be created, as given to the  com-
+       mand  (for  example,  0777).  If permissions is specified,
+       user and group must be specified.  This field is optional.
+       If used, it specifies the level of security to be assigned
+       to the node to be created.  The  security  level  must  be
+       specified  as  a  decimal  integer value.  If the Enhanced
+       Security Utilities are not installed, or if the file  sys-
+       tem  containing  /dev is a non-MAC file system, this field
+       is ignored.
+
+RReeffeerreenncceess
+       in the HDK documentation set.
+
+       in the HDK documentation set.
+
+EExxaammpplleess
+       The following sample Node file  entries  are  provided  as
+       coding examples.
+
+       Make   character   device  files  /dev/tty0s,  /dev/tty0h,
+       /dev/tty1s, /dev/tty1h, and so forth for a DDI  8  driver,
+       foo: $maxchan 1 foo  tty%is  c  0 foo  tty%ih  c  1
+
+       Make pre-DDI 8 character device iasy using minor device 0:
+       iasy  tty00  c  0
+
+       Make pre-DDI 8  /dev/net/nau/clone  for  character  device
+       clone.  The minor device number is set to the major device
+       number of device nau: clone  net/nau/clone  c  nau
+
+       For a pre-DDI 8 driver, make /dev/imx586_1  for  character
+       device clone.  The minor device number is set to the major
+       device number of device imx586 plus 1: clone imx586_1  c:1
+       imx586
+
+       For  a  DDI  8  or  later  driver  that  supports 8 device
+       instances per board, there must be 8 device files for each
+       board.  The following Node file causes these devices to be
+       created: $maxchan 7  mymodname  mydev%i/0  c  0  mymodname
+       mydev%i/1  c 1 mymodname mydev%i/2 c 2 mymodname mydev%i/3
+       c 3 mymodname mydev%i/4 c 4 mymodname mydev%i/5 c 5 mymod-
+       name  mydev%i/6  c  6 mymodname mydev%i/7 c 7 A user-level
+       process  can  then  open  the  /dev/mydev<N>/<session_num-
+       ber>file,  which  calls  the driver associated with mymod-
+       name.  The  driver  is  called  with  the  idata  for  the
+       selected  board  and the channel number set to the session
+       number.  N is a unique number assigned by  the  system  to
+       each  new  board;  no assumptions should be made about the
+       order in which these numbers will be  assigned,  but  once
+       assigned, they will stay the same at least until a reboot.
+       The system will try to keep  board  instance  numbers  the
+       same  across  reboots  as well, but if the hardware and/or
+       hardware configuration changes significantly,  the  system
+
+                                                                3
+
+Node(4dsp)                                             Node(4dsp)
+
+       may not be able to preserve the numbers.
+
+       The  idata  is  returned by the CFG_ADD subfunction of the
+       entry point routine.
+
+                                                                4
+

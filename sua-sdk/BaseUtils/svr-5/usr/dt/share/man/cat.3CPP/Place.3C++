@@ -1,0 +1,200 @@
+
+
+Place(3C++)                                           Place(3C++)
+
+SSyynnooppssiiss
+       #include <Time.h> namespace SCO_SC {
+
+       class   Time;                  //   see  Time(3C++)  class
+       ostream;             // see  iostream(3C++)  class  Place{
+       public: //  Constructors, destructor
+           Place();
+           Place(const char* tz,int observes_dst = 1);
+           ~Place(); //  Copy and assign
+           Place(const Place& p);
+           Place&  operator=(const Place& p); //  Operations that
+       return information about a Place
+           String standard_zone()const;
+           int west()const;
+           int observes()const;
+           String daylight_zone()const;
+           int dst()const;
+           Time spring_ahead(unsigned y)const;
+           Time fall_back(unsigned  y)const;  //   Conversion  to
+       String(3C++)
+           String make_string()const; //  Standard Places
+           static Place greenwich();
+           static Place eastern();
+           static Place central();
+           static Place mountain();
+           static Place pacific();
+           static Place yukon();
+           static Place hawaii();
+           static Place here(); //  Stream insertion
+           friend  ostream&  operator<<(ostream&  os,const Place&
+       p); }; }
+
+DDeessccrriippttiioonn
+       A Place contains six items of timezone information  for  a
+       given location: the name of the standard timezone the time
+       difference to be added to Greenwich  Mean  Time  (GMT)  to
+       obtain  standard  time  whether  daylight  savings time is
+       observed the name of the  daylight  savings  timezone  the
+       time difference to be added to GMT to obtain daylight sav-
+       ings time the interval during which daylight savings  time
+       is in effect.  Several US Places are pre-defined as a con-
+       venience to the user.  The Place Place::here() is  a  spe-
+       cial  case:  it contains information about the local time-
+       zone.  Information about the local  timezone  is  obtained
+       automatically   from  the  environment  variable  TZ  (see
+       Time(3C++) for the complete syntax of the TZ variable  and
+       how to set it).  For example, in New Jersey you might set
+           TZ="EST5EDT4;117/2:00:00,299/2:00:00"
+
+       Then  Place::here()  would  contain the following informa-
+       tion: the name of the standard timezone is EST  the  stan-
+       dard timezone is 5h earlier than GMT daylight savings time
+       is observed the name of the daylight savings  timezone  is
+       EDT  the  daylight savings timezone is 4h earlier than GMT
+
+                                                                1
+
+Place(3C++)                                           Place(3C++)
+
+       daylight savings time starts in Julian day number 117 at 2
+       AM  and  ends  on  day  number 299 at 2 AM (both Times are
+       assumed to be daylight savings times).   [Note  that  this
+       example  is valid for the year 1986, when daylight savings
+       time began on April 27 (Julian day 117) and ended on Octo-
+       ber  26  (Julian day 299).  Different values for the start
+       and end days for daylight savings time would be  necessary
+       for  different years if this format of specifying the time
+       zone is used.  See the Bugs section for more information.]
+
+       If  start  and  end times are omitted, as in the following
+       example,
+           TZ=EST5EDT
+
+       then the statutory start and  end  times  for  the  United
+       States  will  be  used  by  functions  spring_ahead()  and
+       fall_back() (these functions encapsulate the United States
+       rules for daylight savings time, including the irregulari-
+       ties in 1974, 1975, and 1987).  If the start and  end  day
+       numbers  are  provided  but  the times-of-day are not pro-
+       vided, the times-of-day will default to midnight.
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Place(); A Place with the  same  value  as  Place::here().
+       Raises Time::environment_objection (see Time(3C++)) if the
+       TZ environment variable is not set.  The  recovery  action
+       is to behave as if TZ=GMT0 had been specified.
+
+       Place(const  char* tz,int observes_dst = 1); A Place whose
+       timezone information is described in tz, which should have
+       the  same  format  as  the  TZ  environment  variable,  as
+       described in Time(3C++).  If observes_dst is 0, then  day-
+       light  savings  time  will  not be observed at this place,
+       even if tz defines a daylight  savings  timezone  (may  be
+       useful at certain airports which elect not to observe day-
+       light savings time even though located in  an  area  which
+       does observe).  Preconditions:tz must be nonzero.
+
+       ~Place(); Destructor.
+
+   CCooppyy aanndd aassssiiggnn
+       Place(const Place& p);
+
+       Place&  operator=(const  Place& p); Copying or assigning a
+       Place creates a copy of its value.
+
+   OOppeerraattiioonnss tthhaatt rreettuurrnn iinnffoorrmmaattiioonn aabboouutt aa PPllaaccee
+       String standard_zone()const;  The  name  of  the  standard
+       zone.
+
+       int  west()const;  The  number of seconds to be subtracted
+       from GMT to obtain standard time.
+
+       int  observes()const;  Returns  non-zero  if  this   Place
+
+                                                                2
+
+Place(3C++)                                           Place(3C++)
+
+       observes daylight savings time.  A Place observes daylight
+       savings time if and only if (1) a daylight  savings  time-
+       zone  name  was present in the "tz" string from which this
+       Place was constructed and (2) if  the  two-parameter  con-
+       structor  was  used  to  construct  this Place, the second
+       argument was not zero.
+
+       String daylight_zone()const; The name of the daylight sav-
+       ings  timezone.   Preconditions:  this  Place must observe
+       daylight savings time.
+
+       int dst()const; The number of  seconds  to  be  subtracted
+       from  GMT to obtain daylight savings time.  Preconditions:
+       this Place must observe daylight savings time.
+
+       Time spring_ahead(unsigned y)const; Returns the Time  (see
+       Time(3C++))  at which clocks are set ahead to begin obser-
+       vance of daylight savings time in year y.   Preconditions:
+       this Place must observe daylight savings time.
+
+       Time  fall_back(unsigned  y)const;  Returns  the Time (see
+       Time(3C++)) at which clocks are set back to end observance
+       of  daylight  savings time in year y.  Preconditions: this
+       Place must observe daylight savings time.
+
+   CCoonnvveerrssiioonn ttoo SSttrriinngg((33CC++++))
+       String make_string()const; Returns a  String(3C++)  having
+       the same format as the TZ environment variable.
+
+   SSttrreeaamm iinnsseerrttiioonn
+       friend  ostream&  operator<<(ostream& os,const Place& p);"
+       os << p is equivalent to os << p.make_string().
+
+   SSttaannddaarrdd PPllaacceess
+       static Place greenwich();
+
+       static Place eastern()
+
+       static Place central()
+
+       static Place mountain()
+
+       static Place pacific()
+
+       static Place yukon()
+
+       static Place hawaii() Pre-defined US Places.
+
+       static Place  here();  The  Place  of  the  host  machine.
+       Raises   the  objection  Time::environment_objection  (see
+       Time(3C++)) if the TZ environment  variable  is  not  set.
+       The  recovery  action  is to behave as if TZ=GMT0 had been
+       specified.
+
+                                                                3
+
+Place(3C++)                                           Place(3C++)
+
+BBuuggss
+       Note that the two New Jersey examples are not  equivalent.
+       The  long example only yields correct results for years in
+       which (1) daylight savings time begins on the fourth  Sun-
+       day  of  April  (2)  the  fourth Sunday happens to fall on
+       Julian day number 117 (3) daylight savings  time  ends  on
+       the last Sunday in October and (4) the last Sunday happens
+       to fall on Julian day number 299  (1986  is  probably  the
+       only such year).  The short example yields correct results
+       in all years, with  the  following  exception.   Prior  to
+       1970,  the default daylight savings time period is assumed
+       to start on the first Sunday in April and end on the  last
+       Sunday  in  October  (i.e., the post-1987 rules are used).
+       This is incorrect, but consistent with the SVR3 version of
+       ctime(3), on which this class is based.
+
+RReeffeerreenncceess
+
+                                                                4
+

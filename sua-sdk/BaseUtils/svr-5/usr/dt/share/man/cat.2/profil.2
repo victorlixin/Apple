@@ -1,0 +1,92 @@
+
+
+profil(2)                                               profil(2)
+
+SSyynnooppssiiss
+       #include <unistd.h>
+
+       void  profil(unsigned  short  *buff,  unsigned int bufsiz,
+            unsigned int offset, unsigned int scale);
+
+DDeessccrriippttiioonn
+       profil provides CPU-use statistics by profiling the amount
+       of  CPU  time expended by a program.  profil generates the
+       statistics by creating an execution histogram for  a  cur-
+       rent  process.   The  histogram  is defined for a specific
+       region of program code to be profiled, and the  identified
+       region  is  logically  broken  up into a set of equal size
+       subdivisions, each of which corresponds to a count in  the
+       histogram.   With each clock tick, the current subdivision
+       is identified and its  corresponding  histogram  count  is
+       incremented.  These counts establish a relative measure of
+       how much time is being spent  in  each  code  subdivision.
+       The  resulting  histogram counts for a profiled region can
+       be used to identify those functions that consume a dispro-
+       portionately high percentage of CPU time.
+
+       buff  is  a  buffer of bufsiz bytes in which the histogram
+       counts are stored in an array of unsigned short int.
+
+       offset, scale, and bufsiz specify the region  to  be  pro-
+       filed.
+
+       offset  is  effectively the start address of the region to
+       be profiled.
+
+       scale, broadly speaking,  is  a  contraction  factor  that
+       indicates  how  much  smaller the histogram buffer is than
+       the region to  be  profiled.   More  precisely,  scale  is
+       interpreted  as  an  unsigned  16-bit fixed-point fraction
+       with the binary point implied on the left.  Its  value  is
+       the  reciprocal  of  the number of bytes in a subdivision,
+       per byte of histogram buffer.  Since there are  two  bytes
+       per  histogram counter, the effective ratio of subdivision
+       bytes per counter is one half the scale.
+
+       Several observations can be made:  The  maximal  value  of
+       scale, 0xffff (approximately 1), maps subdivisions 2 bytes
+       long to each counter.  The minimum  value  of  scale  (for
+       which  profiling  is  performed),  0x0002 (1/32,768), maps
+       subdivision  65,536  bytes  long  to  each  counter.   The
+       default value of scale (currently used by cc -qp), 0x4000,
+       maps subdivisions 8 bytes long to each counter.
+
+       The values are used within the kernel as follows: when the
+       process is interrupted for a clock tick, the value of off-
+       set is subtracted from the current value  of  the  program
+       counter  (pc), and the remainder is multiplied by scale to
+       derive a result.  That result is used as an index into the
+
+                                                                1
+
+profil(2)                                               profil(2)
+
+       histogram  array  to  locate  the  cell to be incremented.
+       Therefore, the cell count represents the number  of  times
+       that  the  process  was  executing code in the subdivision
+       associated with that cell  when  the  process  was  inter-
+       rupted.
+
+       scale  can  be computed as (RATIO * 0200000L), where RATIO
+       is the desired ratio of bufsiz to  profiled  region  size,
+       and  has a value between 0 and 1.  Qualitatively speaking,
+       the closer RATIO is to 1, the higher the resolution of the
+       profile information.
+
+       bufsiz can be computed as (size_of_region_to_be_profiled *
+       RATIO).
+
+RReeffeerreenncceess
+NNoottiicceess
+       Profiling is turned off by giving a scale of 0 or  1,  and
+       is  rendered ineffective by giving a bufsiz of 0.  Profil-
+       ing is turned off when an is executed, but remains  on  in
+       both  child  and  parent  processes  after  a Profiling is
+       turned off if a buff update would cause a memory fault.
+
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Statistics are gathered at the process level and represent
+       the combined usage of all contained threads.
+
+                                                                2
+

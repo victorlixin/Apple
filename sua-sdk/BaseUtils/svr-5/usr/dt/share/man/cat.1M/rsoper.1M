@@ -1,0 +1,157 @@
+
+
+rsoper(1M)                                             rsoper(1M)
+
+SSyynnooppssiiss
+       rsoper  -d ddev [-j jobids] [-u user] [-m method] [-n] [-s
+       | -v] [-t]
+            [-o oname[:odevice]]
+       rsoper -r jobid
+       rsoper -c jobid
+
+DDeessccrriippttiioonn
+       rsoper -d identifies media containing backup  archives  of
+       filesystems and data partitions, and allows an operator to
+       complete pending and requests.  rsoper  takes  information
+       about  the archive entered on the command line and matches
+       it against pending restore or  urestore  requests  in  the
+       restore  status  table.   rsoper  then  invokes the proper
+       archiving method to read the archive and extract requested
+       files,  directories,  and  data partitions.  As subsequent
+       archive volumes are needed, the operator is  requested  to
+       insert or mount the appropriate archive volumes.  See
+
+       Depending  on  the information available in bkhist.tab and
+       the volume labeling technique (internal or external),  all
+       options  and  arguments  listed below may not be required.
+       If required fields are omitted,  rsoper  issues  an  error
+       message  indicating  the  information that is needed.  The
+       command can then be reissued with the  appropriate  fields
+       specified.
+
+       rsoper may be executed only by a privileged user.
+
+       rsoper  -r  removes a pending restore job from the restore
+       status table and notifies the requesting user that the job
+       has been marked complete.
+
+       rsoper  -c  removes a pending restore job from the restore
+       status table and notifies the requesting user that the job
+       has been canceled.
+
+   OOppttiioonnss
+       Cancels  a pending restore request and notifies the origi-
+       nating user that the request has been canceled.  Describes
+       the  device that will be used to read the archive contain-
+       ing the required filesystem or data partition.  ddev is of
+       the  form:  ddevice[:[dchar][:[dmnames]]]  ddevice  is the
+       device name for the device.  dchar describes  characteris-
+       tics  associated  with  the device.  dchar is of the form:
+       [density=density] [blk_fac=blockingfactor] [mntpt=dir]  If
+       mntpt=dir  is  specified,  ddevice  is  assumed  to  be  a
+       filesystem partition and dir is the place in  the   direc-
+       tory  structure  where  ddevice  will be mounted.  This is
+       valid only for fimage archives.  dmnames is a list of vol-
+       ume  labels, separated by either commas or blanks.  If the
+       list is blank separated, the entire ddev argument must  be
+       surrounded  by quotes.  Limits the scope of the request to
+       the jobs specified.  jobids is a list of restore  job  IDs
+
+                                                                1
+
+rsoper(1M)                                             rsoper(1M)
+
+       (either  comma separated or blank separated and surrounded
+       by quotes).  Assumes the archive on the  first  volume  in
+       the destination device was created by the method archiving
+       operation.  Valid methods  are:  incfile,  ffile,  fimage,
+       fdp,   fdisk,   and   any   customized   methods   in  the
+       /etc/bkup/method directory.  This option  is  required  if
+       the  backup  history log is not available, if the log does
+       not include information about the specified archive or  if
+       rsoper  cannot  determine the format of the archive.  Dis-
+       plays attributes of the specified destination  device  but
+       does  not  attempt  to  service  pending restore requests.
+       Specifies the multiple filesystem partitions or data  par-
+       titions  to  be restored.  oname is the name of the origi-
+       nating filesystem.  It may be null.  odevice is the device
+       name  of  the  originating  file system or data partition.
+       This option is required if the backup history log  is  not
+       available or does not include information about the speci-
+       fied archive.  Removes the restore request for the  speci-
+       fied  job.   While  a restore operation is occurring, this
+       option displays a period  (.)   for  each  100  (512-byte)
+       blocks  transferred  from the destination device.  Assumes
+       that the volume inserted in the  destination  device  con-
+       tains  a table of contents for an archive.  This option is
+       required if the backup history log is  not  available,  if
+       the  log  does not include information about the specified
+       archive, or if rsoper cannot determine the format  of  the
+       volume.  Restricts restores to those requested by the user
+       specified.  Displays the name of  each  object  as  it  is
+       restored.  Only those archiving methods that restore named
+       directories and files (incfile  and  ffile)  support  this
+       option.
+
+DDiiaaggnnoossttiiccss
+       The exit codes for rsoper are the following: The task com-
+       pleted successfully.  One or more parameters to rsoper are
+       invalid.  An error has occurred, causing rsoper to fail to
+       complete all portions of its task.  If  a  method  reports
+       that  no  part  of a restore request was completed, rsoper
+       reports this fact to the user.
+
+EExxaammpplleess
+       Example 1: rsoper -d  /dev/tape/c4d0s2  asks  the  restore
+       service  to read the archive volume that has been inserted
+       into  the  device  /dev/tape/c4d0s2.   The  service   will
+       attempt to resolve any restore requests that can be satis-
+       fied by the archive volume.
+
+       Example 2:
+
+       The following example  assumes  that  the  backup  history
+       table  contains a record of backups performed and that the
+       restore status table contains  a  record  of  the  restore
+       requests.   The  command  line  rsoper  -d /dev/ctape:den-
+       sity=1600:USRLBL1  -v  -u  clerk1  instructs  the  restore
+
+                                                                2
+
+rsoper(1M)                                             rsoper(1M)
+
+       service  to perform only pending restore requests from the
+       rsstatus.tab table issued by clerk1.  The  restore  proce-
+       dures  are  to  be  done  from  the cartridge tape labeled
+       USRLBL1, with a density of 1600 bps.  The restore  service
+       will  display  on  the  operator terminal the names of the
+       files and directories as they are successfully restored.
+
+       Example 3:
+
+       The following example  assumes  that  the  backup  history
+       table  no  longer  contains  a log of the requested backup
+       operations.    With    that    assumption:    rsoper    -d
+       /dev/diskette2:blk_fac=2400:arc.dec79  -m incfile -o /usr2
+       instructs the restore service to perform a restore of  the
+       /usr2  filesystem  using  the  incremental restore method.
+       The /usr2 filesystem  is  to  be  restored  from  archived
+       diskettes  with  a blocking factor of 2400.  The diskettes
+       containing   the   archive   are   labeled    arc.dec79.a,
+       arc.dec79.b, and arc.dec79.c.
+
+       Example 4: rsoper -c rest-737b cancels the restore request
+       with the job ID rest-737b.
+
+FFiilleess
+       lists the labels of all volumes that have  been  used  for
+       backup operations lists the status of all restore requests
+       from users lists the electronic mail address of the opera-
+       tor to be notified whenever restore requests require oper-
+       ator intervention a directory that contains  the  programs
+       used for various backup methods
+
+RReeffeerreenncceess
+
+                                                                3
+

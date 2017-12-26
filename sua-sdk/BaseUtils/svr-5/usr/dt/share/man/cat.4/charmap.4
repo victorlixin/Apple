@@ -1,0 +1,202 @@
+
+
+charmap(4)                                             charmap(4)
+
+DDeessccrriippttiioonn
+       This  manual  page  describes the format of a charmap file
+       used as input to the -f option of the command.
+
+       A character set description file  defines  characteristics
+       for the coded character set and the encoding for the char-
+       acters specified in and may define encoding for additional
+       characters  supported by the implementation.  Other infor-
+       mation about the coded character set may also  be  in  the
+       file.   Coded  character  set character values are defined
+       using  symbolic  character  names  followed  by  character
+       encoding values.
+
+       The  character set description file provides: The capabil-
+       ity to describe character set attributes (such  as  colla-
+       tion  order or character classes) independent of character
+       set  encoding,  and  using  only  the  characters  in  the
+       portable  character set.  This makes it possible to create
+       generic localedef source files for all codesets that share
+       the portable character set (such as the ISO 8859 family or
+       IBM Extended ASCII).  Standardised symbolic names for  all
+       characters in the portable character set, making it possi-
+       ble to refer to any such character regardless of encoding.
+
+       The  charmap  file was introduced to resolve problems with
+       the portability of, especially,  localedef  sources.   The
+       charmap  provides the capability to define a common locale
+       definition  for  multiple  codesets  (the  same  localedef
+       source  can  be  used for codesets with different extended
+       characters; the ability in the  charmap  to  define  empty
+       names  allows for characters missing in certain codesets).
+
+       Each symbolic name specified in the portable character set
+       is included in the file and is mapped to a unique encoding
+       value (except for those symbolic names that are shown with
+       identical  glyphs).   If  the  control characters commonly
+       associated with the symbolic names in the following  table
+       are  supported  by  the implementation, the symbolic names
+       and their corresponding encoding values  are  included  in
+       the  file.  Some of the encodings associated with the sym-
+       bolic names in this table may be the same as characters in
+       the portable character set table.
+
+                                                                1
+
+charmap(4)                                             charmap(4)
+
+       +------------------------------+
+       |    Control Character Set     |
+       +------+-------+-------+-------+
+       |<ACK> | <DC2> | <ENQ> | <FS>  |
+       +------+-------+-------+-------+
+       |<IS4> | <SOH> | <BEL> | <DC3> |
+       +------+-------+-------+-------+
+       |<EOT> | <GS>  | <LF>  | <STX> |
+       +------+-------+-------+-------+
+       |<BS>  | <DC4> | <ESC> | <HT>  |
+       +------+-------+-------+-------+
+       |<NAK> | <SUB> | <CAN> | <DEL> |
+       +------+-------+-------+-------+
+       |<ETB> | <IS1> | <RS>  | <SYN> |
+       +------+-------+-------+-------+
+       |<CR>  | <DLE> | <ETX> | <IS2> |
+       +------+-------+-------+-------+
+       |<SI>  | <US>  | <DC1> | <EM>  |
+       +------+-------+-------+-------+
+       |<FF>  | <IS3> | <SO>  | <VT>  |
+       +------+-------+-------+-------+
+       The following declarations can precede the character defi-
+       nitions.  Each must consist of the  symbol  shown  in  the
+       following  list,  starting in column 1, including the sur-
+       rounding brackets, followed by one or more  blank  charac-
+       ters,  followed by the value to be assigned to the symbol.
+       The name of the coded character set for which the  charac-
+       ter  set  description  file is defined.  The characters of
+       the name must be taken from the  set  of  characters  with
+       visible glyphs defined in the portable character set.  The
+       maximum number of bytes in a multi-byte  character.   This
+       defaults  to  1.   An unsigned positive integer value that
+       defines the minimum number of bytes in a character for the
+       encoded   character   set.    On  XSI-conformant  systems,
+       <mb_cur_min> is always 1.  The escape  character  used  to
+       indicate that the characters following will be interpreted
+       in a special way.  This defaults to backslash  (\),  which
+       is  the character glyph used in all the following text and
+       examples, unless otherwise noted.  The character that when
+       placed  in column 1 of a charmap line, is used to indicate
+       that the line is to be ignored.  The default character  is
+       the number sign (#).
+
+       The  character  set  mapping  definitions  will be all the
+       lines immediately following an identifier line  containing
+       the  string  CHARMAP starting in column 1, and preceding a
+       trailer line containing the string END CHARMAP starting in
+       column  1.   Empty  lines  and  lines  containing  a <com-
+       ment_char> in the first column will be ignored.  Each non-
+       comment line of the character set mapping definition (that
+       is, between the CHARMAP and END CHARMAP lines of the file)
+       must  be  in either of two forms: "%s %s %s\n", <symbolic-
+       name>, <encoding>, <comments> or: "%s. . .%s %s\n",  <sym-
+       bolic-name>, <symbolic-name>, <encoding>, <comments>
+
+                                                                2
+
+charmap(4)                                             charmap(4)
+
+       In the first format, the line in the character set mapping
+       definition defines a single symbolic  name  and  a  corre-
+       sponding encoding.  A symbolic name is one or more charac-
+       ters from the set shown with visible glyphs in the potable
+       character set, enclosed between angle brackets.  A charac-
+       ter  following  an  escape  character  is  interpreted  as
+       itself;  for example, the sequence "<\\\>>" represents the
+       symbolic name "\>" enclosed between angle brackets.
+
+       In the second format, the line in the character  set  map-
+       ping  definition  defines  a range of one or more symbolic
+       names.  In this form, the symbolic names must  consist  of
+       zero  or  more  non-numeric  characters from the set shown
+       with visible glyphs in the portable  character  set,  fol-
+       lowed  by an integer formed by one or more decimal digits.
+       The characters preceding the integer must be identical  in
+       the two symbolic names, and the integer formed by the dig-
+       its in the second  symbolic  name  must  be  equal  to  or
+       greater than the integer formed by the digits in the first
+       name.  This is interpreted as a series of  symbolic  names
+       formed  from  the  common  part  and  each of the integers
+       between the first and the second integer,  inclusive.   As
+       an example, "<j0101>...<j0104>" is interpreted as the sym-
+       bolic names "<j0101>", "<j0102>", "<j0103>" and "<j0104>",
+       in that order.
+
+       A character set mapping definition line must exist for all
+       symbolic names specified in the  portable  character  set,
+       and must define the coded character value that corresponds
+       to the character glyph indicated  in  the  table,  or  the
+       coded  character  value  that corresponds with the control
+       character symbolic name.  The symbolic  names  of  control
+       characters  and  the corresponding encoding values must be
+       included in the file.  Additional  unique  symbolic  names
+       may  be  included.   A coded character value can be repre-
+       sented by more than one symbolic name.
+
+       The encoding part is expressed  as  one  (for  single-byte
+       character  values)  or more concatenated decimal, octal or
+       hexadecimal constants in the following  formats:  "%cd%d",
+       <escape_char>,     <decimal     byte    value>    "%cx%x",
+       <escape_char>,   <hexadecimal    byte    value>    "%c%o",
+       <escape_char>, <octal byte value>
+
+       Decimal constants must be represented by two or three dec-
+       imal digits, preceded by  the  escape  character  and  the
+       lower-case  letter  d;  for  example, \d05, \d97 or \d143.
+       Hexadecimal constants must be represented by two hexadeci-
+       mal  digits,  preceded  by  the  escape  character and the
+       lower-case letter x; for  example,  \x05,  \x61  or  \x8f.
+       Octal  constants must be represented by two or three octal
+       digits, preceded by the  escape  character;  for  example,
+       \05,  \141 or \217.  In a portable charmap file, each con-
+       stant  must  represent  an  8-bit  byte.   Implementations
+
+                                                                3
+
+charmap(4)                                             charmap(4)
+
+       supporting  other byte sizes may allow constants to repre-
+       sent values larger than those that can be  represented  in
+       8-bit  bytes, and to allow additional digits in constants.
+       When constants are concatenated for  multi-byte  character
+       values,  they must be of the same type, and interpreted in
+       byte order from first to last with the  least  significant
+       byte  of  the  multi-byte  character specified by the last
+       constant.  The manner in which these constants are  repre-
+       sented  in the character stored in the system is implemen-
+       tation-dependent.  (This big endian  notation  was  chosen
+       for  reasons of portability.  There is no requirement that
+       the internal representation in the computer memory  be  in
+       this  same order.)  Omitting bytes from a multi-byte char-
+       acter definition produces undefined results.
+
+       In lines defining ranges of symbolic  names,  the  encoded
+       value  is  the  value  for  the first symbolic name in the
+       range (the symbolic name preceding the ellipsis).   Subse-
+       quent symbolic names defined by the range will have encod-
+       ing values in increasing order.  For  example,  the  line:
+       <j0101>...<j0104>   \d129\d254  will  be  interpreted  as:
+       <j0101>     \d129\d254   <j0102>     \d129\d255    <j0103>
+       \d130\d0 <j0104>         \d130\d1 Note that this line will
+       be interpreted as the example even on systems  with  bytes
+       larger than 8 bits.  The comment is optional.
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoonnffoorrmmaannccee
+       is conformant with X/Open Interface Definitions, Version 4
+       Issue 2.
+
+                                                                4
+

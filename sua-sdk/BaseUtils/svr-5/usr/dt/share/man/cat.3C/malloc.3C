@@ -1,0 +1,541 @@
+
+
+malloc(3C)                                             malloc(3C)
+
+SSyynnooppssiiss
+       #include <stdlib.h>
+
+       void  *calloc(size_t nelem, size_t elsize); void free(void
+       *ptr); void *malloc(size_t size); void *realloc(void *ptr,
+       size_t size);
+
+       void  *memalign(size_t alignment, size_t size); void *val-
+       loc(size_t size);
+
+       struct mallinfo mallinfo(void);
+
+DDeessccrriippttiioonn
+       These functions provide a  simple  general-purpose  memory
+       allocation  package.   An  allocation request is made by a
+       call to one of the  functions  that  return  void  *;  the
+       pointer   values  returned  are  the  start  (lowest  byte
+       address) of disjoint objects, suitably aligned to serve as
+       an  array  of  one or more objects totalling the requested
+       size.  Except for calloc, the initial  contents  of  these
+       objects  are  indeterminate.   The  ptr argument (free and
+       realloc) must be either a null pointer or a pointer  value
+       returned  by  a  previous allocation request which has not
+       been deallocated by an intervening call to free  or  real-
+       loc.
+
+       calloc allocates space for an array of nelem elements each
+       of elsize bytes.  All bytes of this space are  initialized
+       to zero.
+
+       free  deallocates (makes available for further allocation)
+       the space pointed to by ptr.  If ptr is a null pointer, no
+       action occurs.
+
+       malloc allocates space for an object of size bytes.
+
+       realloc  changes  the size of the object pointed to by ptr
+       to size bytes.  Note that the object may have been  moved,
+       in  which  case  the  old  version  of the object has been
+       freed.  The object's contents  are  unchanged  up  to  the
+       lesser  of the old and new sizes.  realloc(NULL,size) is a
+       convenient equivalent to malloc(size).
+
+       memalign allocates space for an object of size bytes  with
+       the  specified  alignment,  which  must be a power of two.
+       (The address returned is a multiple of alignment.)
+
+       valloc(size) is equivalent  to  memalign(sysconf(_SC_PAGE-
+       SIZE),size).
+
+       mallinfo  returns  a  structure that describes the current
+       status of the allocation  arena.   The  structure  has  at
+       least  the  following  members:       size_t  arena;    /*
+       total arena size in  bytes  */       size_t  ordblks;   /*
+
+                                                                1
+
+malloc(3C)                                             malloc(3C)
+
+       number  of  full-sized  allocations */      size_t smblks;
+       /* number of small-sized allocations */      size_t hblks;
+       /*   number   of   small-sized  allocation  containers  */
+            size_t hblkhd;   /* overhead for these containers, in
+       bytes  */       size_t  usmblks;  /* total bytes of in-use
+       small-sized allocations */      size_t fsmblks;  /*  total
+       bytes  of available small-sized allocations */      size_t
+       uordblks; /* total bytes of in-use full-sized  allocations
+       */      size_t fordblks; /* total bytes of available full-
+       sized allocations */
+
+   EErrrroorrss
+       If an allocation  request  cannot  be  satisfied,  a  null
+       pointer  is  returned  and  errno  is  set.   When realloc
+       returns a null pointer,  the  object  pointed  to  by  ptr
+       remains  intact.   Note  that  zero-sized requests are not
+       taken to be errors; an attempt will be made  to  return  a
+       pointer to a distinct zero-sized object.
+
+       Besides  a  lack  of available space from the system, both
+       realloc and memalign also can return null pointers due  to
+       invalid arguments.
+
+UUssaaggee
+       This  memory  allocation package is built to include valu-
+       able application checking support.  This support comes  in
+       three  parts:  usage  information/statistics,  application
+       diagnostic checking, and internal assertions.  Two of  the
+       three are present in the shared C library; only the asser-
+       tions are not included.  The primary effect of  all  three
+       is  to  emit  single-line  messages to standard error or a
+       specified file  descriptor.   Inclusion  of  the  internal
+       assertions  is  completely  independent  of  the other two
+       parts, but  the  diagnostic  checking  code  requires  the
+       inclusion of the usage statistics code.
+
+       If  the  environment  variable MALLOC_FILENO exists with a
+       decimal integer value, messages are written to  that  file
+       descriptor  instead of standard error (or 2).  This allows
+       these messages to be separated from any  of  the  applica-
+       tion's error messages, for example.
+
+       The usage statistics and checking code, when included, are
+       enabled  only  through  separate  environment   variables,
+       respectively,  MALLOC_STATS and MALLOC_CHECKS.  Both vari-
+       ables are expected minimally to  be  decimal  integers;  a
+       zero  value disables, a positive value enables, and gener-
+       ally a larger value enables more detail.  In the  case  of
+       MALLOC_CHECKS,  a  negative  value  enables  the  ``memory
+       fault'' feature.  Both variables also  accept,  after  the
+       initial  decimal value, a comma-separated sequence of key-
+       words used to specify other features.  See
+
+                                                                2
+
+malloc(3C)                                             malloc(3C)
+
+   DDeeffiinniittiioonnss
+       The allocation arena is a set of  blocks,  each  of  which
+       consists  of  a data area (whose addresses are returned by
+       the allocation functions) immediately preceded by a header
+       which  describes  the  block's  size  and status.  In this
+       implementation, a block's size is the  distance  in  bytes
+       from  its header to the next block's header, and each size
+       is normalized to be  a  multiple  of  a  minimum  internal
+       alignment.   This  can  easily result in blocks with spare
+       bytes at the end of the data area, from  an  application's
+       viewpoint.
+
+       Another  cause of spare bytes is an enforced minimum block
+       size.  To implement a quick  best-fit  allocation  policy,
+       the  initial  portion  of  the data area in free blocks is
+       used for internal data structures.  The  amount  of  space
+       this  requires  determines  the size of the smallest full-
+       sized block.  But, since a minimum block size can cause  a
+       disproportionally  large  amount of space to be wasted for
+       small allocation requests, the  implementation  also  pro-
+       vides  for small-sized blocks with some restrictions, such
+       as no coalescing with neighboring free blocks.
+
+       A limited view of the allocation  arena's  current  status
+       with  respect to full- and small-sized blocks is available
+       from mallinfo.
+
+   AAsssseerrttiioonnss
+       When included, the internal assertions are always enabled.
+       If an assertion fails, a line of the form
+            alloc assert failure: line num: expr
+       is  emitted, where expr is the source test expression that
+       failed which occurred on the source line num.  These diag-
+       nostics  should  only  happen  after some allocation arena
+       corruption, and are not generally very useful in  tracking
+       down any application error(s).
+
+       After  an  assertion failure is reported, the package usu-
+       ally continues processing as if  the  internal  assertions
+       had  not  been included (no corrective action takes place)
+       but, if either (or both) of  the  statistics  or  checking
+       code  has  been  enabled, it will attempt to terminate the
+       process through a call to abort.
+
+       As mentioned above, note that assertions are  not  enabled
+       in the product.
+
+   SSttaattiissttiiccss
+       When MALLOC_STATS is set to a positive value, lines of the
+       general form
+            function(args)@caller{fact}->return
+       are printed, where function is one of calloc,  free,  mal-
+       loc,  memalign, or realloc and the presence of some of the
+       other parts varys.  When one of these functions calls  one
+
+                                                                3
+
+malloc(3C)                                             malloc(3C)
+
+       of  the  others  (such  as calloc using malloc), the first
+       function's information occurs as a label:
+            function1(args)@caller:function2(args)...
+       where some redundant args to function1 may not be present.
+
+       Numeric  values  are  printed in hexadecimal (base 16) for
+       pointers, while sizes are printed in decimal.  Also,  size
+       arguments are presented in a before and after form:
+            incoming=>normalized-header
+       where normalized is the incoming value after including the
+       block header overhead  and  rounding  up  to  the  minimum
+       internal alignment.
+
+       ``@caller'' represents the ``return address'' that will be
+       jumped to when the function returns.   With  help  from  a
+       debugger, for example, this address can be associated with
+       a calling function.  It is present when MALLOC_STATS is at
+       least  two.   The return address will instead be displayed
+       in a potentially more usable form when the  symbolic  key-
+       word is specified.  See
+
+       Except  for  free,  a  ``->return''  pointer value will be
+       shown.
+
+       Each  ``{fact}''  gives   some   implementation   internal
+       detail--they are not intended to be generally useful--none
+       of which will be present unless MALLOC_STATS is  at  least
+       three.   However,  one  typically  useful exception is the
+       true block size:
+            {max=size-header}
+       which displays the block's actual size  less  its  header.
+       The  true block size is printed just after both the return
+       value and an incoming ptr argument.
+
+   CChheecckkiinngg
+       When MALLOC_CHECKS is set to a positive value, the package
+       enables  runtime  checking of calls to these functions and
+       the whole allocation arena.  If  a  problem  is  found,  a
+       diagnostic line of the form
+            alloc error (ptr/owner @addr): problem description
+       is  printed, where ptr is the address of the data area for
+       the block (the same as would be returned by an  allocation
+       function),  and  ``/owner  @addr'' is present only if MAL-
+       LOC_CHECKS is at least three and ptr is a valid block with
+       a recorded last-allocated owner (see ``@caller'' above).
+
+       There  are  three  checking levels: basic-fill, safe-copy,
+       and added-space, which correspond to MALLOC_CHECKS  values
+       of at least one, three, and five, respectively.  Fundamen-
+       tal to this package's approach to checking is that it  can
+       be  fully  enabled without affecting the allocation behav-
+       ior, at least until a diagnostic line  is  printed.   This
+       means  that  whatever presumed allocation arena corruption
+       is occurring within an application with checking  disabled
+
+                                                                4
+
+malloc(3C)                                             malloc(3C)
+
+       should be reproduced after enabling checking.  Only at the
+       added-space checking level will the allocation behavior be
+       changed, which is its purpose.
+
+       When  checking  is  enabled,  a call to mallinfo will also
+       cause an examination of the whole allocation  arena.   For
+       each of the checking levels, the next higher MALLOC_CHECKS
+       value (2, 4, and 6, respectively)  also  cause  a  similar
+       walk  of the entire arena at the start of each of the main
+       functions.
+
+       At the basic-fill checking level, shape checks on the  ptr
+       argument  to  free and realloc are performed -- it must be
+       correctly aligned, fall somewhere  within  the  allocation
+       arena,  and  it  should  be  an  allocated (in-use) block.
+       These checks produce the  following  problem  descriptions
+       for   free  and  realloc:       free()  of  invalid  block
+            block multiply free()d
+
+            realloc() of invalid block      realloc() of  free()d
+       block      realloc() of just free()d block The distinction
+       between the last two reflects the implementation's  ``tem-
+       porary holding slot'' behavior in which an attempt is made
+       not to immediately modify a block's data area when deallo-
+       cated.   (This  is  primarily  a hold-over from much older
+       implementations  which  guaranteed  this  behavior!)    An
+       attempt  to  realloc  a deallocated block will fail unless
+       the block happens to be found in the holding slot.
+
+       Also at the basic-fill level, all available  (deallocated)
+       or  freshly  allocated  data  area bytes are filled with a
+       ``noise'' value of 0xCA.  When an available block is  han-
+       dled  by  the  implementation  (such  as just before it is
+       allocated), its data area is examined for bytes other than
+       0xCA.   If  one is found, a diagnostic is printed with the
+       problem description free()d block was modified.
+
+       At the safe-copy level, the  implementation  also  creates
+       and manages a separate and parallel section of memory (via
+       mmap) into which safe copies  of  the  allocation  arena's
+       block  headers  are  maintained  along with a record of at
+       least the block's last-allocation owner  (see  ``@caller''
+       and  ``/owner  @addr''  above)  and  usually the number of
+       spare bytes present in the block's  data  area.   At  this
+       level,  when  a  block  is  handled, its header is checked
+       against the corresponding copy -- which can  result  in  a
+       problem  description of invalid block address if the block
+       is not aligned, or not an allocated block if there  is  no
+       corresponding  copy,  or  block header was modified if the
+       copy differs -- and any spare data area bytes (for  blocks
+       passed  to  free  and  realloc or other in-use blocks) are
+       examined for bytes other than 0xCA -- which can result  in
+       a problem description of spare block space was modified
+
+                                                                5
+
+malloc(3C)                                             malloc(3C)
+
+       At   the   added-space   level,  the  implementation  also
+       increases each allocation request by an additional minimum
+       alignment  to  force  the presence of spare bytes in every
+       in-use block.  These spare bytes  provide  a  little  more
+       protection  from  typical  one-too-many  misuse as well as
+       better tracking of the corruption owner.
+
+       Negative values for MALLOC_CHECKS cause  these  allocation
+       routines  to  employ an entirely different implementation.
+       The heart of this alternate approach is that every alloca-
+       tion  gets  at  least  one  complete page of memory.  This
+       means that a lot of memory can be allocated very  quickly,
+       even  for  otherwise  small programs.  The benefit of this
+       approach is that programs are much more likely to generate
+       an early memory fault when an allocation is misused.  Lev-
+       els -1 through -8 are provided.
+
+       At the -1 level, the last byte of an allocation request is
+       the  last  byte  of the (last) page allocated and released
+       allocations are kept as inaccessible as long as  possible.
+       The  -3 level differs from -1 in that the first byte of an
+       allocation request is the first byte of the (initial) page
+       allocated.   Levels  -5  and -7 differ, respectively, from
+       levels -1 and -3 in that released allocations are returned
+       to  the  system  for  reuse immediately.  Bytes are filled
+       with the same 0xCA noise value as is  used  with  positive
+       MALLOC_CHECKS values.
+
+       Also,  just as with the positive MALLOC_CHECKS values, the
+       corresponding even level (-4 for -3, for example) is  just
+       the  same,  except that a walk of the entire arena is per-
+       formed each time one of these functions is  called.   This
+       can add noticeably to the runtime of programs making heavy
+       use of dynamic memory allocation functions.
+
+       When MALLOC_CHECKS is negative, MALLOC_STATS will not pro-
+       vide higher than level 2 information, and even that infor-
+       mation is somewhat  misleading  given  that  there  is  no
+       longer  a  header that comes just in front of each alloca-
+       tion.
+
+       It is common to enable these diagnostic checks while  run-
+       ning an application under the control of a symbolic debug-
+       ger.  With this in mind, the implementation calls a  local
+       (internal  linkage)  function,  modified,  just before the
+       three ``... was modified'' diagnostics so that  the  modi-
+       fied contents can be examined with the debugger before the
+       corrupted header or  data  area  is  reset.   modified  is
+       called  with  three arguments, a void * that points to the
+       start of the detected corruption, a size_t that  specifies
+       the  number  of  bytes (remaining) to be checked including
+       the one pointed to, and a const char * that  points  to  a
+       short  string  that denotes which kind of modification was
+       found: spare, header, or free()d.
+
+                                                                6
+
+malloc(3C)                                             malloc(3C)
+
+       Two other local functions are useful when debugging: allo-
+       cassert,  which  is  called with the assertion expr string
+       and num, and checkmsg, which is called with a block's data
+       area pointer and the problem description string.  Finally,
+       two local integers, announcing and checking hold,  respec-
+       tively,  the  value  of the MALLOC_STATS and MALLOC_CHECKS
+       variables, so modifying these two can permit finer-grained
+       control  over these facilities.  Check with your preferred
+       symbolic debugger about how one refers  to  local  identi-
+       fiers.
+
+       If  you  are using the best way to run a program prog with
+       checking enabled is first to enter  debug  without  naming
+       prog.   Then  before  starting  prog, set and export $MAL-
+       LOC_CHECKS as desired.  Then start prog.  You  can  set  a
+       breakpoint  on  modified,  for example, by specifying stop
+       malloc.c@modified.
+
+   KKeeyywwoorrdd ffeeaattuurreess
+       Beyond the  statistics  and  checking  features  described
+       above,  the  implementation  provides  additional features
+       enabled by comma-separated keywords that follow the  deci-
+       mal  value  for either MALLOC_CHECKS or MALLOC_STATS.  The
+       additional features are: display list of live blocks  when
+       out  of  allocation  space  display list of live blocks at
+       normal process exit make ``page zero'' unreadable add  the
+       process  ID  to  the  end of output lines display ``text''
+       addresses in symbolic form add the thread ID to the end of
+       output  lines  take  malloc(0)  and free(0) to be mistakes
+       These keywords can be abbreviated.
+
+       The pid and tid keywords cause insertion of, respectively,
+       a process or thread ID (or both) at the end of any emitted
+       diagnotic or statistics line.  The process ID is a decimal
+       number  immediately  preceded  by a #.  The thread ID is a
+       decimal number between angle brackets <>.
+
+       The nullptr keyword causes most attempts at  dereferencing
+       a  null  pointer to cause the generation of a memory fault
+       (a SIGSEGV will be sent to  the  process).   This  differs
+       from the command in that it is controlled through an envi-
+       ronment variable (and thus can be enabled  separately  for
+       different  processes)  and that it does not go into effect
+       until the first call to one of these functions.   Particu-
+       larly  note  that  because touching page zero is necessary
+       before it can be made unreadable, if nullptr has been used
+       to make page zero unreadable generally, use of the nullptr
+       keyword will cause an immediate memory fault.
+
+       The zero keyword causes calls to  malloc  requesting  zero
+       bytes and calls to free with a null pointer to be reported
+       as mistakes if MALLOC_CHECKS has been enabled.   Neverthe-
+       less,  malloc(0)  will  continue  to return a pointer to a
+       unique zero-sized block, so this keyword  does  not  cause
+
+                                                                7
+
+malloc(3C)                                             malloc(3C)
+
+       any change in the runtime behavior of these functions.
+
+       The  symbolic  keyword  causes  the  display  of  ``text''
+       addresses (see ``@caller'' and ``@addr'' above) to instead
+       be  shown  as      by module@function+offset or as      by
+       module@address
+
+       when no function can be found.  An example of  each  would
+       be      by libc.so.1@_strdup+18      by ls@0x8301b87
+
+       The  offset  is  a  decimal  number giving the distance in
+       bytes from the start of the named function.  This symbolic
+       information is determined by use of and thus is restricted
+       to functions in runtime symbol tables.  Since, by default,
+       only a minimal set of functions are exported from executa-
+       bles, often addresses in the executable will  not  find  a
+       function,  or  (worse)  will  report a function that comes
+       earlier in the address space, but isn't the  actual  func-
+       tion.   One  can cause all functions with external linkage
+       to be exported by  passing  the  -Bexport  option  to  the
+       linker  when  creating  the  executable.  With the or com-
+       mands, one does this by specifying -Wl,-Bexport.
+
+       Both the full and leak keywords cause one-per-line listing
+       of  the  currently-allocated  blocks,  they differ in when
+       they are triggered:  The full keyword will cause the  list
+       to  be printed just before an allocation request that will
+       result in the return of a null pointer due to insufficient
+       space.  The leak keyword will cause the list to be printed
+       just before the process goes away  for  a  normal  process
+       exit,  not  when  a  process  dies  because it received an
+       unhandled signal, for example.  Note that the full keyword
+       can  generate many lines of output.  Also, it isn't neces-
+       sarily a bug for a block still to be allocated at  process
+       exit.
+
+       Each  line  output  by  these  keywords  is  of  the  form
+            allocated block addr (n bytes + m) owner  where  addr
+       is  the returned block address, n is the size of the block
+       (or if + m is present, n is the number of bytes  requested
+       and  m  is  the  spare  bytes  -- this information is only
+       available when MALLOC_CHECKS is negative or at  least  3),
+       and  owner is the ``return address'' whose display depends
+       on the whether the symbolic keyword is specified.
+
+       For example, to see what blocks are live after the end  of
+       a  simple  invocation,  try  the  following:       $  MAL-
+       LOC_CHECKS=3,leak,sym  grep  x  /dev/null        allocated
+       block  0x8303078  (8  bytes  +  4) by libc.so.1@_strdup+32
+            allocated  block  0x8303090  (8   bytes   +   4)   by
+       grep@_rt_pre_init+160       allocated  block 0x83030a0 (12
+       bytes)  by  libc.so.1@posnfoll+316       allocated   block
+       0x83030b0    (12   bytes)   by   libc.so.1@_regdfacomp+244
+            allocated   block    0x83030c0    (12    bytes)    by
+
+                                                                8
+
+malloc(3C)                                             malloc(3C)
+
+       libc.so.1@_regdfacomp+314       allocated  block 0x8303358
+       (8524 bytes)  by  libc.so.1@_regdfacomp+98       allocated
+       block  0x83054a8  (51  bytes  +  1)  by libc.so.1@_regdfa-
+       comp+169      allocated block 0x8305860 (9215 bytes  +  5)
+       by grep@_rt_pre_init+160
+
+       This  shows that there are eight blocks still allocated at
+       process exit, two of which were  allocated  by  grep,  the
+       rest  by  the  C  library on behalf of grep.  The function
+       that actually allocated space in
+        grep is not _rt_pre_init, that just  happens  to  be  the
+       nearest  function  exported  by  grep.   None of the above
+       allocations actually represents a memory leak.
+
+IImmpplleemmeennttaattiioonn aapppprrooaacchh
+       Note that the following assumes the reader has  access  to
+       the  source code.  It freely uses terms and names that are
+       likely to be meaningless out of this context.
+
+       The C library internal header inc/mallint.h describes  the
+       tunable  constants  and  data structures for gen/malloc.c.
+       The main data structure Tree declares just enough informa-
+       tion  for  blocks  in the top-down splay tree that is used
+       for the free blocks.  This structure for IA32 is 20  bytes
+       big, but the smallest full-sized block is 24 bytes because
+       sizes are rounded up to multiples of  eight.   For  small-
+       blocks,  only  the  block  header  and  next  pointers are
+       assumed to be present.
+
+       Unlike earlier implementations,  this  approach  does  not
+       force  the same base alignment requirements on block head-
+       ers as it does for the  user  pointers.   A  block  header
+       occurs  in  the HEADERSIZE bytes that come just before the
+       aligned user pointer.  Also, the basic alignment is eight,
+       not  four,  so that three low-order bits are available for
+       block status.  Note that this means that  the  block  size
+       cannot  be  the  number  of data area bytes since the size
+       must be a multiple of eight -- HEADERSIZE need  not  be  a
+       multiple of eight; this code uses a block size that is the
+       distance from this block's header to the next.
+
+       The third status bit signifies whether a freed block is in
+       the  free  tree or on a quick list.  It is the quick lists
+       that give this implementation its speed  since,  in  prac-
+       tice, by far the greatest number of calls are for smallish
+       allocations.  These  lists  cover  the  small-sized  block
+       pools  without  needing  (much) special case code.  Gener-
+       ally, the implementation tries to keep blocks at or  below
+       the MAXQUICKSIZE line on these lists; only when the imple-
+       mentation would otherwise have to request more space  from
+       the  system  does  it  flush the quick lists into the free
+       tree.
+
+       This implementation also differs from older ones  in  that
+
+                                                                9
+
+malloc(3C)                                             malloc(3C)
+
+       it  can return memory to the system.  This turns out to be
+       quite important for long-lived processes, such as daemons,
+       that have allocation peaks, but do not need nearly as much
+       memory while waiting for requests.
+
+RReeffeerreenncceess
+
+                                                               10
+

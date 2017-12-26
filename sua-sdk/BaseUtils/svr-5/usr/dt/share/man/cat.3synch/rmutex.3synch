@@ -1,0 +1,139 @@
+
+
+rmutex(3synch)                                     rmutex(3synch)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <synch.h>
+
+       int rmutex_init(rmutex_t *rmutex, int type, void *arg);
+
+       int rmutex_lock(rmutex_t *rmutex);
+
+       int rmutex_trylock(rmutex_t *rmutex);
+
+       int rmutex_unlock(rmutex_t *rmutex);
+
+       int rmutex_destroy(rmutex_t *rmutex);
+
+DDeessccrriippttiioonn
+       Mutual  exclusion locks, or mutexes, are used to serialize
+       the execution of threads.   They  are  typically  used  to
+       ensure  that  only  one  thread  at a time accesses shared
+       data.  Recursive mutual exclusion locks, or rmutexes,  are
+       mutexes that can be locked recursively.  That is, a thread
+       that has locked  an  rmutex  can  lock  it  again  without
+       releasing  it;  the  thread  that  has locked an rmutex is
+       referred to as the owner of the rmutex.  Only the owner of
+       an  rmutex  can  lock it again while the rmutex is locked;
+       other threads are denied access as with ordinary  mutexes.
+       Each  rmutex_lock(3synch)  or  rmutex_trylock(3synch) call
+       must be matched by a  corresponding  rmutex_unlock  before
+       the  rmutex  is  made  available to threads other than the
+       owner.
+
+       Note that rmutexes, like mutexes, protect data  only  when
+       the  convention of acquiring the rmutex is faithfully fol-
+       lowed before any access of the data.
+
+       The Threads Library provides five routines  to  manipulate
+       rmutexes;  these  are outlined below and described in more
+       detail on individual manual pages.
+
+   PPaarraammeetteerrss
+       pointer to rmutex to be initialized, locked, unlocked,  or
+       destroyed USYNC_THREAD or USYNC_PROCESS NULL (reserved for
+       future use)
+
+   rrmmuutteexx__iinniitt((33ssyynncchh))
+       rmutex_init initializes an rmutex to be of type  type  and
+       in the unlocked state.
+
+   rrmmuutteexx__lloocckk((33ssyynncchh))
+       rmutex_lock  locks  the  rmutex  pointed to by rmutex.  If
+       rmutex is locked by another thread, the calling thread  is
+       blocked  until rmutex becomes available.  When rmutex_lock
+       returns successfully, the caller has locked rmutex.
+
+                                                                1
+
+rmutex(3synch)                                     rmutex(3synch)
+
+       If rmutex is already locked by  the  calling  thread,  the
+       recursive  depth is incremented and control is returned to
+       the caller, as if the lock had just been acquired.
+
+   rrmmuutteexx__ttrryylloocckk((33ssyynncchh))
+       rmutex_trylock attempts once to acquire the rmutex pointed
+       to by rmutex.
+
+       If  rmutex  is  available, rmutex_trylock will return suc-
+       cessfully with rmutex locked.  If rmutex is already locked
+       by  another  thread,  rmutex_trylock  immediately  returns
+       EBUSY to the caller without acquiring rmutex or  blocking.
+       If  rmutex  is  already  held  by  the calling thread, the
+       recursive depth is incremented and control is returned  to
+       the caller, as if the lock had just been acquired.
+
+   rrmmuutteexx__uunnlloocckk((33ssyynncchh))
+       rmutex_unlock  unlocks  the  rmutex  pointed to by rmutex.
+       rmutex_unlock checks the identity of the  caller  and,  if
+       the  caller  is the current owner of rmutex, it checks the
+       depth count.  If the depth count is  greater  than  0,  it
+       decrements  the  count  and  returns to the caller without
+       unlocking the rmutex.  If the depth count is 0, the rmutex
+       is unlocked.
+
+       If the caller is not the current owner of rmutex, that is,
+       the caller does not hold the lock, rmutex_unlock will fail
+       and return EACCES.
+
+       If  there  are one or more threads waiting for rmutex when
+       it is unlocked, at least one waiting thread is allowed  to
+       try again to lock rmutex.
+
+   rrmmuutteexx__ddeessttrrooyy
+       rmutex_destroy  destroys  the rmutex pointed to by rmutex.
+       This includes invalidating rmutex and freeing any  associ-
+       ated implementation-allocated dynamic resources.
+
+   UUSSYYNNCC__TTHHRREEAADD aanndd UUSSYYNNCC__PPRROOCCEESSSS rreeccuurrssiivvee mmuutteexxeess
+       Recursive  mutexes are initialized to be one of two types:
+       USYNC_THREAD or USYNC_PROCESS.  USYNC_THREAD rmutexes  are
+       available  only  to  threads  within  the current process.
+       USYNC_PROCESS rmutexes can be used by threads in different
+       processes.
+
+   GGeenneerraall iinnffoorrmmaattiioonn
+       Recursive   mutexes   must   be   initialized   (see  rmu-
+       tex_init(3synch)), before being passed to any of the other
+       rmutex routines.
+
+       Locks  acquired with rmutex_lock or rmutex_trylock must be
+       released with rmutex_unlock.
+
+       From the point of  view  of  the  caller,  rmutex_lock  is
+
+                                                                2
+
+rmutex(3synch)                                     rmutex(3synch)
+
+       atomic:  even  if  interrupted by a signal or forkall (see
+       rmutex_lock will not return until it holds the locked rmu-
+       tex.   As a consequence, if rmutex_lock is interrupted, an
+       error indication such as EINTR is never  returned  to  the
+       caller.
+
+WWaarrnniinnggss
+       If a thread exits while holding an rmutex, the rmutex will
+       not be unlocked, and other threads waiting for the  rmutex
+       will  wait  forever.   Similarly, if a process exits while
+       holding a USYNC_PROCESS rmutex, the  rmutex  will  not  be
+       unlocked,  and  other processes or threads waiting for the
+       rmutex will wait forever.
+
+RReeffeerreenncceess
+
+                                                                3
+

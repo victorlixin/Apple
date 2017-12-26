@@ -1,0 +1,198 @@
+
+
+ttymon(1M)                                             ttymon(1M)
+
+SSyynnooppssiiss
+       /usr/lib/saf/ttymon
+       /usr/lib/saf/ttymon  -g [-h] [-d device] [-l ttylabel] [-t
+       timeout]
+            [-p prompt] [-m modules]
+
+DDeessccrriippttiioonn
+       ttymon is a STREAMS-based TTY port monitor.  Its  function
+       is  to  monitor  ports, to set terminal modes, baud rates,
+       and line  disciplines  for  the  ports,  to  identify  and
+       authenticate  users,  if required, and to connect users or
+       applications to services associated with the ports.   Nor-
+       mally,  ttymon  is  configured  to  run  under the Service
+       Access Controller (SAC), as part  of  the  Service  Access
+       Facility  (SAF).   This  is commonly referred to as Daemon
+       Mode.  It is configured using the command.  Each  instance
+       of ttymon can monitor multiple ports.  The ports monitored
+       by an instance of ttymon are specified in the  port  moni-
+       tor's  administrative  file.   The  administrative file is
+       configured using the and commands.  When  an  instance  of
+       ttymon is invoked by the sac command, it starts to monitor
+       its ports.  If ttymon is disabled, all  ports  under  that
+       instance  of ttymon will also be disabled.  For each port,
+       ttymon first initializes  the  line  discipline,  and  the
+       speed and terminal settings.  The values used for initial-
+       ization are taken from the appropriate entry  in  the  TTY
+       settings  file.   This  file is maintained by the command.
+       An alternative method of invoking ttymon  is  the  Express
+       Mode that is used to monitor a single port.
+
+       ttymon  writes  the  information  from  the file, then the
+       login prompt, and waits for user input.  If the user shows
+       that the speed is inappropriate by pressing the BREAK key,
+       ttymon hunts to the  next  ttylabel  in  the  /etc/ttydefs
+       file,  adjusts  values, and writes the prompt again.  When
+       valid input is received, that is, one  or  more  non-break
+       keys followed by a newline, ttymon interprets the per-ser-
+       vice configuration file  for  the  port,  if  one  exists,
+       invokes  the  identification and authentication scheme, if
+       one is specified, creates a utmp entry if required, estab-
+       lishes  the service environment, and then invokes the ser-
+       vice associated with the port.  Valid input consists of  a
+       string  of  at least one non-newline character, terminated
+       by a carriage return.  After the service terminates,  tty-
+       mon  cleans  up the utmp entry, if one exists, and returns
+       the port to its initial state.
+
+       If autobaud is enabled for a  port,  ttymon  will  try  to
+       determine  the baud rate on the port automatically.  Users
+       must enter a carriage return before ttymon  can  recognize
+       the  baud  rate and print the prompt.  Currently, the baud
+       rates that can be determined by autobaud are  1200,  2400,
+       4800, 9600, 19200, 38400 and 115200.
+
+                                                                1
+
+ttymon(1M)                                             ttymon(1M)
+
+       If  a  port  is configured as a bidirectional port, ttymon
+       will allow users to connect to a service, and, if the port
+       is free, will allow uucico, cu or ct to use it for dialing
+       out.  If a port is bidirectional, ttymon will wait to read
+       a  character before it prints a prompt.  The bidirectional
+       port option is supported only in Daemon Mode;  it  is  not
+       supported in Express Mode.
+
+       If  the  connect-on-carrier flag is set for a port, ttymon
+       will immediately invoke the port's associated service when
+       a connection request is received.  The prompt message will
+       not be sent.
+
+       If a port is disabled, ttymon will not start  any  service
+       on  that port.  If a disabled message is specified, ttymon
+       will send out  the  disabled  message  when  a  connection
+       request is received.
+
+   SSeerrvviiccee iinnvvooccaattiioonn
+       The  service ttymon invokes for a port is specified in the
+       ttymon administrative file.  ttymon  scans  the  character
+       string  that  gives the service to be invoked, looking for
+       one of the two-character sequences %d and %%.   If  %d  is
+       found,  ttymon modifies the service command to be executed
+       by replacing these two characters with the  full  pathname
+       of  the  port  (the  device name).  If %% is found, ttymon
+       replaces the two characters with a  single  %.   When  the
+       service  is  invoked,  file  descriptors  0,  1, and 2 are
+       opened to the port device for reading and writing.
+
+       If an authentication scheme is  specified  in  the  ttymon
+       administrative  file and there is no entry in the ID field
+       (this is the default case), the service  is  invoked  with
+       the  user  ID,  group  ID, and current home directory set,
+       through set_id, to the user name that  is  identified  and
+       authenticated  by  the  authentication  scheme.  If both a
+       user ID and an authentication scheme are specified in  the
+       ttymon  administrative  file, the authentication scheme is
+       executed first, then the user ID is set, using  the  value
+       in  the  administrative  file,  not the value given by the
+       authentication scheme.  The login authentication scheme is
+       the scheme most commonly associated with ttymon.  (See
+
+       ttymon adds two environment variables, HOME and TTYPROMPT,
+       to the service's environment.  HOME is  set  to  the  home
+       directory  of  the  user  name  under which the service is
+       invoked.  TTYPROMPT is set to the prompt string configured
+       for  the  service on the port.  This is provided so that a
+       service invoked by ttymon has a means of determining if  a
+       prompt was actually issued by ttymon and, if so, what that
+       prompt actually was.
+
+   OOppttiioonnss
+       In Express Mode (or standalone) ttymon takes the following
+
+                                                                2
+
+ttymon(1M)                                             ttymon(1M)
+
+       options:  On  startup,  ttymon  will list all open virtual
+       terminals (vts) associated with the device specified (typ-
+       ically  /dev/console).  On exit, the user will be prompted
+       to close all open vts either  manually  or  automatically.
+       Choosing manual places the user in the highest numbered vt
+       at which point the user must manually exit from  each  vt.
+       Choosing  automatic  will  cause  the  signals  SIGHUP and
+       SIGTERM to each open vt, then after 3 seconds SIGTERM will
+       be sent to each open vt to ensure termination.
+
+       A  special  invocation  of  ttymon is provided with the -g
+       option.  This option is used for the ttymon Express  Mode.
+       This form of the command should only be called by applica-
+       tions that need to set the correct baud rate and  terminal
+       settings  on  a  port  to  invoke the LOGIN authentication
+       scheme and then connect to a service, but that  cannot  be
+       pre-configured  under the SAC.  The following combinations
+       of options can be used with -g: device is the  full  path-
+       name  of  the  port to which ttymon is to attach.  If this
+       option is not specified, file descriptor 0 must be set  up
+       by  the invoking process to a TTY port.  If the -h flag is
+       not set, ttymon will force a hangup on the line by setting
+       the  speed to zero before setting the speed to the default
+       or specified speed.  Specifies that ttymon should exit  if
+       no  one types anything in timeout seconds after the prompt
+       is sent.  ttylabel is a link to a speed and TTY definition
+       in the ttydefs file.  This definition tells ttymon at what
+       speed to run initially, what the initial TTY settings are,
+       and  what  speed  to  try  next if the user shows that the
+       speed is inappropriate by pressing  the  BREAK  key.   The
+       default  speed is 9600 baud.  Allows the user to specify a
+       prompt string.  The default prompt is login: modules is  a
+       comma-separated list of pushable modules.  When initializ-
+       ing the port, ttymon will pop all modules on the port  and
+       then push modules in the order specified.  The line disci-
+       pline module ldterm is commonly used for terminal ports.
+
+   FFiilleess
+       language-specific message file (see LANG on
+
+RReeffeerreenncceess
+NNoottiicceess
+       If a port is monitored by more than one ttymon, it is pos-
+       sible  for the ttymons to send out prompt messages in such
+       a way that they compete for input.
+
+       ``Smart modems'' are ones that can communicate at  differ-
+       ent  speeds  between the line and the serial port.  Do not
+       use the autobaud feature for smart modems for incoming  or
+       bidirectional  lines.   A  good choice for smart modems is
+       the highest baud rate that the modem can support.  Use the
+       same speed for outgoing cu connections that ttymon uses to
+       monitor incoming connections or the modem will continue to
+       use the speed specified by the cu.
+
+                                                                3
+
+ttymon(1M)                                             ttymon(1M)
+
+       Smart modems that send result codes can result in a prema-
+       ture runtime connection indication.  This behavior can  be
+       handled  by the appropriate modem commands or by using the
+       -r option for ttyadm, and enabling the Daemon  Mode.   See
+       for more information.
+
+       It  is  recommended  that you use default settings on your
+       modems.  However, when you want to have the DTR held  high
+       on  exit  for  a  longer  time, in the Daemon Mode add the
+       line:     'assign     DTR_DELAY=delay     '     to     the
+       /etc/saf/pmtag/_config file.
+
+       In  the  Express  Mode, add: sh -c 'DTR_DELAY=delay ttymon
+       -g...' to the /etc/inttab file.  In both cases,  delay  is
+       in milliseconds.
+
+                                                                4
+

@@ -1,0 +1,172 @@
+
+
+sigaction(2)                                         sigaction(2)
+
+SSyynnooppssiiss
+       #include <signal.h>
+
+       int   sigaction(int  sig,  const  struct  sigaction  *act,
+            struct sigaction *oact);
+
+DDeessccrriippttiioonn
+       sigaction allows the calling  process  to  examine  and/or
+       specify  the  action to be taken on delivery of a specific
+       signal.  [See for an explanation of  general  signal  con-
+       cepts.]
+
+       sig  specifies  the  signal and can be assigned any of the
+       signals specified in except SIGKILL and SIGSTOP.
+
+       If the argument act is not NULL, it points to a  structure
+       specifying the new action to be taken when delivering sig.
+       If the argument oact is not NULL, it points to a structure
+       where  the  action previously associated with sig is to be
+       stored on return from sigaction.
+
+       The sigaction structure is defined in sys/signal.h: struct
+       sigaction {
+               int             sa_flags;
+               union {
+                       void    (*sa__handler)(int);
+                       void    (*sa__sigaction)(int, siginfo_t *,
+       void *);
+               } sa_u;
+               sigset_t        sa_mask;
+               int             sa_resv[2]; };
+
+       #define sa_handler      sa_u.sa__handler #define sa_sigac-
+       tion    sa_u.sa__sigaction
+
+       sa_handler specifies the disposition of the signal and may
+       be SIG_DFL, SIG_IGN (see or a pointer to a signal catching
+       (handling) function.
+
+       sa_mask specifies a set of signals to be blocked while the
+       signal handler is active.  On entry to the signal handler,
+       that set of signals is added to the set of signals already
+       being blocked when the signal is delivered.  In  addition,
+       the  signal  that  caused  the handler to be executed will
+       also be blocked, unless the SA_NODEFER flag has been spec-
+       ified.   SIGSTOP and SIGKILL cannot be blocked (the system
+       silently enforces this restriction).
+
+       sa_flags specifies a set  of  flags  used  to  modify  the
+       delivery  of  the signal.  It is formed by a logical OR of
+       any of the following values:
+
+       sa_sigaction points to a signal catching function (see the
+
+                                                                1
+
+sigaction(2)                                         sigaction(2)
+
+       description  of SA_SIGINFO, below).  If set and the signal
+       is caught and an alternate signal stack has been  declared
+       by  the  receiving  LWP  the  signal  is delivered on that
+       stack.  Otherwise, the signal should be delivered  on  the
+       current stack of the receiving LWP.
+
+       The  SA_ONSTACK  flag  specifies that whenever the process
+       receives the signal type sig the response is handled on an
+       alternative  stack.  The location and size of the alterna-
+       tive stack is specified per LWP.
+
+       Alternate signal handling stacks can be  defined  via  the
+       system  call.  If set and the signal is caught, the dispo-
+       sition of the signal is reset to SIG_DFL (SIGILL, SIGTRAP,
+       and  SIGPWR  cannot be automatically reset when delivered;
+       the system silently enforces this  restriction).   If  set
+       and the signal is caught, the signal will not be automati-
+       cally blocked by the kernel while it is being caught.   If
+       set  and  the signal is caught, a call that is interrupted
+       by the execution of this signal's handler is transparently
+       restarted  by the system.  Otherwise, that call returns an
+       EINTR error.  Some system calls cannot be  restarted  when
+       they  are  interrupted,  even when SA_RESTART is set.  For
+       example, cannot be restarted.  If this flag is not set and
+       the signal is caught, the signal catching function will be
+       entered as: void func(int signo); where signo is the  only
+       argument  to  the  signal catching function.  In this case
+       the sa_handler member must be used to describe the  signal
+       catching  function and the application must not modify the
+       sa_sigaction member.
+
+       If SA_SIGINFO is set and the signal is caught, the signal-
+       catching function will be entered as: void func(int signo,
+       siginfo_t *info, void *context  );  where  two  additional
+       arguments  are passed to the signal catching function.  If
+       the second argument is not a null pointer, it  will  point
+       to  an  object of type siginfo_t explaining the reason why
+       the signal was generated [see The third  argument  can  be
+       cast to a pointer to an object of type ucontext_t to refer
+       to the context of receiving process that  was  interrupted
+       when the signal was delivered [see
+
+       In  this  latter case the sa_sigaction member must be used
+       to describe the signal catching function and the  applica-
+       tion  must not modify the sa_handler member.  The si_signo
+       member contains the system-generated signal  number.   The
+       si_errno  member,  if  non-zero,  contains an error number
+       identifying the condition that caused  the  signal  to  be
+       generated.  The si_code member contains a code identifying
+       the cause of the signal.  If the value of si_code is  less
+       than  or  equal  to  0, then the signal was generated by a
+       process and si_pid and si_uid  respectively  indicate  the
+       process ID and the real user ID of the sender.  The values
+       of si_pid and si_uid are otherwise  meaningless.   If  set
+
+                                                                2
+
+sigaction(2)                                         sigaction(2)
+
+       and  sig equals SIGCHLD, the system will not create zombie
+       processes when children of the calling process  exit.   If
+       the  calling process subsequently issues a it blocks until
+       all of the calling process's  child  processes  terminate,
+       and  then  returns a value of -1 with errno set to ECHILD.
+       If set and sig equals SIGCHLD, sig will not be sent to the
+       calling process when its child processes stop or continue.
+       When sig is SIGWAITING [see this flag requests the genera-
+       tion  of  the  SIGWAITING signal type when all LWPs of the
+       process are blocked at an interruptible priority.
+
+       The SA_WAITSIG signal type might be  used  by  user  level
+       threads  libraries trigger the creation of additional LWPs
+       for the process.
+
+   RReettuurrnn vvaalluueess
+       On success, sigaction returns 0.   On  failure,  sigaction
+       returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       In  the  following  conditions,  sigaction  fails and sets
+       errno to: The value of the sig argument is an  invalid  or
+       unsupported  signal  number;  or,  an  attempt was made to
+       catch a signal that cannot be caught or to ignore a signal
+       that  cannot  be  ignored.  act or oact points outside the
+       process's allocated address space.
+
+RReeffeerreenncceess
+NNoottiicceess
+       If the system call is reading from or writing to a  termi-
+       nal  and the terminal's NOFLSH bit is cleared, data may be
+       flushed [see
+
+       The storage occupied by sa_handler  and  sa_sigaction  may
+       overlap, and a portable program must not use both simulta-
+       neously.
+
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       The handler defined by act is common to all threads  in  a
+       process.
+
+       The Threads Library does not support alternate signal han-
+       dling stacks for threads.
+
+       The SA_WAITSIG flag (see description above) can be used in
+       support of threads libraries.
+
+       Further details can be found in
+
+                                                                3
+

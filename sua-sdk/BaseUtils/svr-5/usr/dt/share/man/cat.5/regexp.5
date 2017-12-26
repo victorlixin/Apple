@@ -1,0 +1,233 @@
+
+
+regexp(5)                                               regexp(5)
+
+SSyynnooppssiiss
+       #define  INIT  declarations  #define  GETC(void) getc code
+       #define PEEKC(void) peekc code #define UNGETC(void) ungetc
+       code  #define  (ptr)  return code #define ERROR(val) error
+       code
+
+       #include <regexp.h>
+
+       char *compile(char *instring,  char  *expbuf,  const  char
+       *endbuf, int eof);
+
+       int step(const char *string, const char *expbuf);
+
+       int advance(const char *string, const char *expbuf);
+
+       extern char *loc1, *loc2, *locs;
+
+DDeessccrriippttiioonn
+       These  functions  are  general  purpose regular expression
+       matching routines to be used in programs that perform reg-
+       ular  expression matching.  These functions are defined by
+       the regexp.h header file.
+
+       The functions step and advance do pattern matching given a
+       character  string  and  a  compiled  regular expression as
+       input.
+
+       The function compile takes as input a  regular  expression
+       as  defined  below and produces a compiled expression that
+       can be used with step or advance.
+
+       A regular expression specifies a set of character strings.
+       A  member  of this set of strings is said to be matched by
+       the regular  expression.   Some  characters  have  special
+       meaning  when  used in a regular expression; other charac-
+       ters stand for themselves.
+
+       The regular expressions available for use with the  regexp
+       functions  are constructed as follows: Meaning the charac-
+       ter c where c is not a special character.  the character c
+       where c is any character, except a digit in the range 1-9.
+       the beginning of the line being compared.  the end of  the
+       line  being  compared.   any  character in the input.  any
+       character in the set s, where s is a sequence  of  charac-
+       ters  and/or  a  range  of characters, for example, [c-c].
+       any character not in the set s,  where  s  is  defined  as
+       above.  zero or more successive occurrences of the regular
+       expression r.  The longest leftmost match is chosen.   the
+       occurrence  of regular expression r followed by the occur-
+       rence of regular expression x.  (Concatenation) any number
+       of  m  through  n  successive  occurrences  of the regular
+       expression  r.   The  regular  expression  r\{m\}  matches
+       exactly  m  occurrences; r\{m,\} matches at least m occur-
+       rences.  the regular expression r.  When \n (where n is  a
+
+                                                                1
+
+regexp(5)                                               regexp(5)
+
+       number greater than zero) appears in a constructed regular
+       expression, it stands for the regular expression x where x
+       is  the  nth regular expression enclosed in \( and \) that
+       appeared earlier in the  constructed  regular  expression.
+       For  example, \(r\)x\(y\)z\2 is the concatenation of regu-
+       lar expressions rxyzy.
+
+       Characters that have  special  meaning  except  when  they
+       appear  within  square  brackets ([]) or are preceded by \
+       are: ., *, [, \.  Other special characters, such as $ have
+       special meaning in more restricted contexts.
+
+       The  character ^ at the beginning of an expression permits
+       a successful match only immediately after a  newline,  and
+       the  character  $  at  the end of an expression requires a
+       trailing newline.
+
+       Two characters have special meaning only when used  within
+       square  brackets.  The character - denotes a range, [c-c],
+       unless it is just after the open  bracket  or  before  the
+       closing bracket, [-c] or [c-] in which case it has no spe-
+       cial meaning.  When used within brackets, the character  ^
+       has  the  meaning  complement of if it immediately follows
+       the open bracket (example: [^c]); elsewhere between brack-
+       ets  (example:  [c^]) it stands for the ordinary character
+       ^.
+
+       The special meaning of the \ operator can be escaped  only
+       by preceding it with another \, for example, \\.
+
+       Programs  must  have  the  following  five macros declared
+       before the #include regexp.h statement.  These macros  are
+       used  by the compile routine.  The macros GETC, PEEKC, and
+       UNGETC operate on the regular expression given as input to
+       compile.  This macro returns the value of the next charac-
+       ter (byte) in the regular expression pattern.   Successive
+       calls  to  GETC should return successive characters of the
+       regular expression.  This macro returns the next character
+       (byte)  in the regular expression.  Immediately successive
+       calls to PEEKC should return  the  same  character,  which
+       should  also be the next character returned by GETC.  This
+       macro causes the argument c to be  returned  by  the  next
+       call  to  GETC  and  PEEKC.  No more than one character of
+       pushback is ever needed and this character  is  guaranteed
+       to  be  the last character read by GETC.  The return value
+       of the macro UNGETC(c) is always ignored.  This  macro  is
+       used  on normal exit of the compile routine.  The value of
+       the argument ptr is a pointer to the character  after  the
+       last  character  of the compiled regular expression.  This
+       is useful to programs which have memory allocation to man-
+       age.   This  macro is the abnormal return from the compile
+       routine.  The argument val is an error number [see  ERRORS
+       below for meanings].  This call should never return.
+
+                                                                2
+
+regexp(5)                                               regexp(5)
+
+       The  syntax  of  the  compile  routine is as follows: com-
+       pile(instring, expbuf, endbuf, eof)
+
+       The first parameter, instring, is never used explicitly by
+       the  compile  routine but is useful for programs that pass
+       down different pointers to input characters.  It is  some-
+       times  used in the INIT declaration (see below).  Programs
+       which call functions to input characters or  have  charac-
+       ters  in  an external array can pass down a value of (char
+       *)0 for this parameter.
+
+       The next parameter, expbuf, is a  character  pointer.   It
+       points  to the place where the compiled regular expression
+       will be placed.
+
+       The parameter endbuf is one more than the highest  address
+       where  the  compiled regular expression may be placed.  If
+       the compiled  expression  cannot  fit  in  (endbuf-expbuf)
+       bytes, a call to ERROR(50) is made.
+
+       The  parameter eof is the character which marks the end of
+       the regular expression.  This character is usually a /.
+
+       Each program that includes the regexp.h header  file  must
+       have  a #define statement for INIT.  It is used for depen-
+       dent declarations and initializations.  Most often  it  is
+       used  to set a register variable to point to the beginning
+       of the regular expression so that this  register  variable
+       can  be  used  in  the  declarations  for GETC, PEEKC, and
+       UNGETC.  Otherwise it can  be  used  to  declare  external
+       variables  that  might  be used by GETC, PEEKC and UNGETC.
+       [See EXAMPLE below.]
+
+       The first parameter to the step and advance functions is a
+       pointer  to  a  string  of  characters to be checked for a
+       match.  This string should be null terminated.
+
+       The second parameter,  expbuf,  is  the  compiled  regular
+       expression  which  was  obtained by a call to the function
+       compile.
+
+       The function step returns non-zero if  some  substring  of
+       string  matches  the regular expression in expbuf and zero
+       if there is no match.  If there is a match,  two  external
+       character pointers are set as a side effect to the call to
+       step.  The variable loc1 points  to  the  first  character
+       that  matched  the  regular  expression; the variable loc2
+       points to the character  after  the  last  character  that
+       matches  the  regular  expression.   Thus  if  the regular
+       expression matches the  entire  input  string,  loc1  will
+       point to the first character of string and loc2 will point
+       to the null at the end of string.
+
+       The function  advance  returns  non-zero  if  the  initial
+
+                                                                3
+
+regexp(5)                                               regexp(5)
+
+       substring of string matches the regular expression in exp-
+       buf.  If there is a match, an external character  pointer,
+       loc2,  is  set as a side effect.  The variable loc2 points
+       to the next character in string after the  last  character
+       that matched.
+
+       When advance encounters a * or \{ \} sequence in the regu-
+       lar expression, it will advance its pointer to the  string
+       to be matched as far as possible and will recursively call
+       itself trying to match the rest of the string to the  rest
+       of  the regular expression.  As long as there is no match,
+       advance will back up along the string  until  it  finds  a
+       match  or  reaches  the point in the string that initially
+       matched the  * or \{ \}.  It  is  sometimes  desirable  to
+       stop  this  backing  up  before  the  initial point in the
+       string is reached.  If the external character pointer locs
+       is equal to the point in the string at sometime during the
+       backing up process, advance will break  out  of  the  loop
+       that backs up and will return zero.
+
+       The  external variables circf, sed, and nbra are reserved.
+
+ vvaalluueess
+       The function compile uses the macro RETURN on success  and
+       the  macro  ERROR  on  failure (see above).  The functions
+       step and advance return non-zero on a successful match and
+       zero if there is no match.  Errors are: range endpoint too
+       large.  bad number.  \ digit out  of  range.   invalid  or
+       missing  delimiter.   no  remembered search string.  \( \)
+       imbalance.  too many \(.  more than 2 numbers given in  \{
+       \}.   }  expected after \.  first number exceeds second in
+       \{ \}.  [ ] imbalance.  regular expression overflow.
+
+EExxaammpplleess
+       The following is an example of how the regular  expression
+       macros  and  calls might be defined by an application pro-
+       gram: #define INIT       register  char  *sp  =  instring;
+       #define   GETC         (*sp++)  #define  PEEKC       (*sp)
+       #define UNGETC(c)   (--sp)  #define  (c)  return;  #define
+       ERROR(c)   regerr
+
+       #include <regexp.h>
+
+        . . .
+             (void) compile(*argv, expbuf, &expbuf[ESIZE],'\0');
+        . . .
+             if (step(linebuf, expbuf))
+                               succeed;
+
+RReeffeerreenncceess
+
+                                                                4
+

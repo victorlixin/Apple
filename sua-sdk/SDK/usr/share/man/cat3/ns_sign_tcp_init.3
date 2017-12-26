@@ -1,0 +1,239 @@
+ns_sign_tcp_init(3)                                 ns_sign_tcp_init(3)
+
+  ttssiigg
+
+  NNAAMMEE
+
+    ns_sign, ns_sign_tcp, ns_sign_tcp_init, ns_verify, ns_verify_tcp,
+    ns_verify_tcp_init, ns_find_tsig - TSIG system
+
+  SSYYNNOOPPSSIISS
+
+    int ns_sign(u_char *msg, int *msglen, int msgsize,
+                int error, void *k,const u_char *querysig,
+                int querysiglen, u_char *sig, int *siglen,
+                time_t in_timesigned);
+
+    int ns_sign_tcp(u_char *msg,
+                    int *msglen, int msgsize,
+                    int error, ns_tcp_tsig_state *state, int done);
+
+    int ns_sign_tcp_init(void *k, const u_char *querysig,
+                         int querysiglen, ns_tcp_tsig_state *state);
+
+    int ns_verify(u_char *msg, int *msglen, void *k,
+                  const u_char *querysig, int querysiglen, u_char *sig,
+                  int *siglen, time_t in_timesigned, int nostrip);
+
+    int ns_verify_tcp(u_char *msg, int *msglen, ns_tcp_tsig_state *state,
+                      int required);
+
+    int ns_verify_tcp_init(void *k, const u_char *querysig, int querysiglen,
+                           ns_tcp_tsig_state *state);
+
+    u_char *ns_find_tsig(u_char *msg, u_char *eom);
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The TSIG routines are used to implement transaction/request security of
+    DNS messages.
+
+    The nnss__ssiiggnn() and nnss__vveerriiffyy() functions are the basic routines.
+    nnss__ssiiggnn__ttccpp() and nnss__vveerriiffyy__ttccpp() are used to sign/verify TCP messages
+    that may be split into multiple packets, such as zone transfers, and
+    nnss__ssiiggnn__ttccpp__iinniitt(), nnss__vveerriiffyy__ttccpp__iinniitt() initialize the state structure
+    necessary for TCP operations. nnss__ffiinndd__ttssiigg() locates the TSIG record in a
+    message, if one is present.
+
+  nnss__ssiiggnn
+
+    msg
+        the incoming DNS message, which will be modified
+
+    msglen
+        the length of the DNS message, on input and output
+
+    msgsize
+        the size of the buffer containing the DNS message on input
+
+    error
+        the value to be placed in the TSIG error field
+
+    key
+        the (DST_KEY *) to sign the data
+
+    querysig
+        for a response, the signature contained in the query
+
+    querysiglen
+        the length of the query signature
+
+    sig
+        a buffer to be filled with the generated signature
+
+    siglen
+        the length of the signature buffer on input, the signature length on
+        output
+
+  nnss__ssiiggnn__ttccpp
+
+    msg
+        the incoming DNS message, which will be modified
+
+    msglen
+        the length of the DNS message, on input and output
+
+    msgsize
+        the size of the buffer containing the DNS message on input
+
+    error
+        the value to be placed in the TSIG error field
+
+    state
+        the state of the operation
+
+    done
+        non-zero value signifies that this is the last packet
+
+  nnss__ssiiggnn__ttccpp__iinniitt
+
+    k
+        the (DST_KEY *) to sign the data
+
+    querysig
+        for a response, the signature contained in the query
+
+    querysiglen
+        the length of the query signature
+
+    state
+        the state of the operation, which this initializes
+
+  nnss__vveerriiffyy
+
+    msg
+        the incoming DNS message, which will be modified
+
+    msglen
+        the length of the DNS message, on input and output
+
+    key
+        the (DST_KEY *) to sign the data
+
+    querysig
+        for a response, the signature contained in the query
+
+    querysiglen
+        the length of the query signature
+
+    sig
+        a buffer to be filled with the signature contained
+
+    siglen
+        the length of the signature buffer on input, the signature length on
+        output
+
+    nostrip
+        non-zero value means that the TSIG is left intact
+
+  nnss__vveerriiffyy__ttccpp
+
+    msg
+        the incoming DNS message, which will be modified
+
+    msglen
+        the length of the DNS message, on input and output
+
+    state
+        the state of the operation
+
+    required
+        non-zero value signifies that a TSIG record must be present at this
+        step
+
+  nnss__vveerriiffyy__ttccpp__iinniitt
+
+    k
+        the (DST_KEY *) to verify the data
+
+    querysig
+        for a response, the signature contained in the query
+
+    querysiglen
+        the length of the query signature
+
+    state
+        the state of the operation, which this initializes
+
+  nnss__ffiinndd__ttssiigg
+
+    msg
+        the incoming DNS message
+
+    msglen
+        the length of the DNS message
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The nnss__ffiinndd__ttssiigg() routine returns a pointer to the TSIG record if one is
+    found, and NULL otherwise.
+
+    All other routines return 0 on success, modifying arguments when
+    necessary.
+
+    The nnss__ssiiggnn() and nnss__ssiiggnn__ttccpp() routines return the following errors:
+
+    (-ns_r_badkey)
+        the key was invalid, or the signing failed
+
+    NS_TSIG_ERROR_NO_SPACE
+        the message buffer is too small
+
+    The nnss__vveerriiffyy() and nnss__vveerriiffyy__ttccpp() routines return the following errors:
+
+    (-1)
+        bad input data
+
+    NS_TSIG_ERROR_FORMERR
+        The message is malformed
+
+    NS_TSIG_ERROR_NO_TSIG
+        The message does not contain a TSIG record
+
+    NS_TSIG_ERROR_ID_MISMATCH
+        The TSIG original ID field does not match the message ID
+
+    (-ns_r_badkey)
+        Verification failed due to an invalid key
+
+    (-ns_r_badsig)
+        Verification failed due to an invalid signature
+
+    (-ns_r_badtime)
+        Verification failed due to an invalid timestamp
+
+    ns_r_badkey
+        Verification succeeded but the message had an error of BADKEY
+
+    ns_r_badsig
+        Verification succeeded but the message had an error of BADSIG
+
+    ns_r_badtime
+        Verification succeeded but the message had an error of BADTIME
+
+  SSEEEE AALLSSOO
+
+    _r_e_s_o_l_v_e_r(3)
+
+  AAUUTTHHOORRSS
+
+    Brian Wellington, TISLabs at Network Associates
+
+    4th Berkeley Distribution January 1, 1996 4th Berkeley Distribution
+
+  UUSSAAGGEE NNOOTTEESS
+
+    None of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

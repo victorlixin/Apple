@@ -1,0 +1,290 @@
+
+
+Intro(3via)                                           Intro(3via)
+
+DDeessccrriippttiioonn
+       The routines described in this section constitute the Vir-
+       tual Interface Architecture (VIA) API, as defined  in  the
+       <vipl.h>  header  file.  The aim of the VIA system and its
+       supplied Virtual Interface Provider Library (VIPL)  is  to
+       greatly  improve the performance of cluster-based applica-
+       tions. It does this by removing the overheads  imposed  by
+       the  need  for  traditional networking stacks to cater for
+       message-passing between heterogeneous endpoints.
+
+       The basis of the VIA is the  provision  of  an  apparently
+       (virtual)  dedicated network interface for multiple appli-
+       cations. This is achieved using a simple queuing model and
+       fully  protected  and direct user-level access to the net-
+       work by way of the virtual memory (VM) subsystem.
+
+       Each service consumer accesses the network via a  pair  of
+       send  and  receive queues (collectively, the work queues),
+       which together constitute a VI instance or VI.   The  work
+       queues  are  used  to  pass  packet descriptors across the
+       interface. Interference between processes sharing the net-
+       work  is  prevented  by the VM subsystem's page protection
+       mechanisms.
+
+       The VI endpoint states supported by the VI system  are  as
+       follows: Idle Connected Pending Connect Error The state of
+       any VI instance can be determined by a call  to  the  rou-
+       tine.
+
+       For  full  details  of the data structures used by the VIA
+       routines, refer to the <vipl.h> header file. A quick  ref-
+       erence to the attributes defined there is provided in
+
+   HHaarrddwwaarree ccoonnnneeccttiioonn
+       -----------------------------------------------------------
+       Routine      Usage
+       -----------------------------------------------------------
+                    associates a process with a VI NIC
+                    closes  the association between a process and
+                    a VI NIC
+
+   EEnnddppooiinntt ccrreeaattiioonn aanndd ddeessttrruuccttiioonn
+       -----------------------------------------------------------
+       Routine                   Usage
+       -----------------------------------------------------------
+                                 creates a VI instance for an NIC
+                                 destroys a VI
+
+   CCoonnnneeccttiioonn mmaannaaggeemmeenntt
+       -----------------------------------------------------------
+       Routine           Usage
+
+                                                                1
+
+()                                                             ()
+
+       -----------------------------------------------------------
+                         looks for incoming connection requests
+                         accepts a connection request
+                         rejects a connection request
+                         requests a connection
+                         terminates a connection
+                         requests a connection  between  VI  end-
+                         points
+                         checks  the result of a previous connec-
+                         tion request between VI endpoints, with-
+                         out blocking the calling process
+                         checks  the result of a previous connec-
+                         tion request between VI endpoints, while
+                         blocking the calling process
+
+   MMeemmoorryy pprrootteeccttiioonn aanndd rreeggiissttrraattiioonn
+       -----------------------------------------------------------
+       Routine         Usage
+       -----------------------------------------------------------
+                       creates  a  protection  tag  for a calling
+                       process
+                       destroys a protection tag
+                       registers a memory region with a VI NIC
+                       de-registers memory
+
+   DDaattaa ttrraannssffeerr aanndd ccoommpplleettiioonn
+       -----------------------------------------------------------
+       Routine      Usage
+       -----------------------------------------------------------
+                    adds a descriptor to a send queue
+                    checks for the completion of a descriptor  in
+                    a send queue
+                    blocks the calling process until a send queue
+                    descriptor is complete
+                    adds a descriptor to a receive queue
+                    checks for the completion of a descriptor  in
+                    a receive queue
+                    blocks  the  calling  process until a receive
+                    queue descriptor is complete
+                    checks a completion queue  for  a  completion
+                    entry
+                    blocks the calling process until a completion
+                    entry is detected
+                    requests a handler routine upon completion of
+                    a send queue descriptor
+                    requests a handler routine upon completion of
+                    a receive queue descriptor
+                    requests a handler routine upon completion of
+                    a  work  queue  descriptor  associated with a
+                    completion queue
+
+   CCoommpplleettiioonn qquueeuuee mmaannaaggeemmeenntt
+       -----------------------------------------------------------
+       Routine             Usage
+
+                                                                2
+
+()                                                             ()
+
+       -----------------------------------------------------------
+                           creates a new completion queue
+                           destroys a completion queue
+                           changes the size of a completion queue
+
+   QQuueerryyiinngg iinnffoorrmmaattiioonn
+       -----------------------------------------------------------
+       Routine                          Usage
+       -----------------------------------------------------------
+                                        returns information for a
+                                        specified NIC instance
+                                        modifies  a VI instance's
+                                        attributes
+                                        returns information for a
+                                        specified VI instance
+                                        modifies   a   registered
+                                        memory           region's
+                                        attributes
+                                        returns   the  attributes
+                                        for a  registered  memory
+                                        region
+                                        returns system management
+                                        information for a NIC
+
+   NNaammee sseerrvviiccee mmaannaaggeemmeenntt
+       -----------------------------------------------------------
+       Routine             Usage
+       -----------------------------------------------------------
+                           initializes the name service
+                           maps string names to network addresses
+                           maps network addresses to host names
+                           stops querying the name service
+
+   EErrrroorr hhaannddlliinngg
+       -----------------------------------------------------------
+       Routine      Usage
+       -----------------------------------------------------------
+                    registers an error handling function with the
+                    VI provider
+
+   VVIIPPLL aattttrriibbuutteess
+       The  <vipl.h>  header file defines a number of data struc-
+       tures for the management of system  attributes.  For  full
+       details of these structures, refer to the header file. For
+       easy reference, the defined fields are described here.
+
+       The NIC attributes, as returned by  the  routine,  are  as
+       follows:
+       ------------------------------------------------------------------
+       Field                  Description
+       ------------------------------------------------------------------
+       Name                   The symbolic name of the NIC device.
+       HardwareVersion        The version of the VI hardware.
+
+                                                                3
+
+()                                                             ()
+
+       ProviderVersion        The version of the VI provider.
+       NicAddressLen          The  length,  in  bytes,  of the local NIC
+                              address.
+       LocalNicAddress        Pointer to a constant array of bytes  con-
+                              taining the NIC address.
+       ThreadSafe             Synchronization   model   (thread-safe/not
+                              thread-safe).
+       MaxDisciminatorLen     The maximum number of bytes  that  the  VI
+                              provider allows for a connection discrimi-
+                              nator. VI providers are required to handle
+                              discriminators  of  at  least  16 bytes in
+                              length: the  value  returned  must  be  at
+                              least this length.
+       MaxRegisterBytes       The  maximum  number  of bytes that can be
+                              registered.
+       MaxRegisterRegions     The maximum number of memory regions  that
+                              can be registered.
+       MaxRegisterBlockBytes  The  largest  contiguous  block  of memory
+                              that can be registered, in bytes.
+       MaxVI                  The maximum number of  VI  instances  that
+                              can be supported by the VI NIC.
+       MaxDescriptorsPerQueue The  maximum  number of descriptors per VI
+                              work queue supported by the VI provider.
+       MaxSegmentsPerDesc     The maximum number of  data  segments  per
+                              descriptor that this VI provider supports.
+                              The address segment is  included  in  this
+                              count.
+       MaxCQ                  The  maximum  number  of completion queues
+                              supported.
+       MaxCQEntries           The maximum  number  of  completion  queue
+                              entries  supported by this VI NIC per com-
+                              pletion queue.
+       MaxTransferSize        The maximum transfer  size,  specified  in
+                              bytes, supported by this VI NIC. The maxi-
+                              mum transfer size is the  amount  of  data
+                              that  can  be  described  by  a  single VI
+                              descriptor.
+       NativeMTU              The native MTU (Maximum Transmission Unit)
+                              size,  specified in bytes, of the underly-
+                              ing network.
+       MaxPTags               The maximum number of protection tags sup-
+                              ported by this VI NIC. It is required that
+                              all VI providers support at least one pro-
+                              tection tag for each VI supported.
+       ReliabilityLevelSupportIndicates the reliability levels supported
+                              by this VI NIC.
+       RDMAReadSupport        Indicates the reliability levels that sup-
+                              port  Remote  Direct  Memory Access (RDMA)
+                              read operations. Zero or more bits may  be
+                              set.
+       The  VI  attributes are set when the VI is created by They
+       may be modified using and queried using
+
+                                                                4
+
+()                                                             ()
+
+       --------------------------------------------------------------
+       Field           Description
+       --------------------------------------------------------------
+       ReliabilityLevelThe reliability level of the  VI  (unreliable
+                       service,  reliable  delivery, reliable recep-
+                       tion). As an attribute of the VI, it  is  the
+                       requested  class of service for the requested
+                       connection.
+       MaxTransferSize The requested maximum transfer size  for  the
+                       connection.  The  transfer size specifies the
+                       amount of payload data  that  can  be  trans-
+                       ferred in a single VI packet.
+       QoS             The requested quality of service for the con-
+                       nection.
+       Ptag            The protection tag to be associated with  the
+                       VI.
+       EnableRdmaWrite If   VIP_TRUE,   RDMA  write  operations  are
+                       accepted from the remote endpoint on this VI.
+       EnableRdmaRead  If   VIP_TRUE,   RDMA   read  operations  are
+                       accepted from the remote endpoint on this VI.
+       Registered  memory region attributes are set with They may
+       be modified using and queried with
+       -------------------------------------------------------------
+       Field          Description
+       -------------------------------------------------------------
+       Ptag           The protection tag to be associated with  the
+                      registered memory region.
+       EnableRdmaWriteIf   VIP_TRUE,   RDMA  write  operations  are
+                      accepted in this registered memory region.
+       EnableRdmaRead If  VIP_TRUE,  RDMA   read   operations   are
+                      accepted in this registered memory region.
+
+   VVII nneettwwoorrkk aaddddrreesssseess
+       VI network addresses hold the network-specific address for
+       a endpoint. Each address has the following  components  in
+       memory:
+       --------------------------------------------------------------
+       Field           Description
+       --------------------------------------------------------------
+       HostAddressLen  The number of bytes in the host address.
+       DiscriminatorLenThe number of bytes in the discriminator.
+       HostAddress     This  consists  of  a host address portion of
+                       constant width (defined by the  NicAddressLen
+                       NIC  attribute),  and a discriminator portion
+                       of variable width (from 0 to  the  number  of
+                       bytes   defined  by  the  MaxDiscriminatorLen
+                       attribute).
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoommpplliiaannccee
+       These routines are not a part of any  currently  supported
+       standard;  they are an extension of AT&T System V provided
+       by The Santa Cruz Operation, Inc.
+
+                                                                5
+

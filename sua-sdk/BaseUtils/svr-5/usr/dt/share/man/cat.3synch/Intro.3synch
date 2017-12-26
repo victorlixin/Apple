@@ -1,0 +1,202 @@
+
+
+Intro(3synch)                                       Intro(3synch)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <synch.h>
+
+DDeessccrriippttiioonn
+       The  Threads  Library supplies routines for thread manage-
+       ment that allow a programmer to implement  parallel  algo-
+       rithms  conveniently.   In  addition,  the Threads Library
+       supplies user-level synchronization  routines  that  allow
+       coordination  of  threads  within a process or across pro-
+       cesses.  The synchronization interfaces allow coordination
+       of  threads  within  a  process as well as coordination of
+       threads in different processes.   The  following  synchro-
+       nization mechanisms are specified:
+       mutual  exclusion  locks (mutex locks) condition variables
+       semaphores reader-writer locks barriers spin locks  recur-
+       sive mutual exclusion locks (rmutex locks)
+
+       Most  of  these mechanisms can be initialized to be of one
+       of two types: USYNC_THREAD or USYNC_PROCESS.  USYNC_THREAD
+       mechanisms  should be used only by threads within the cur-
+       rent process, whether or not the  synchronization  objects
+       are  in  shared  memory.   USYNC_PROCESS mechanisms can be
+       used by threads in different processes.
+
+       In all cases, data is protected by  convention;  a  thread
+       not  following  the  order  of acquiring a lock/semaphore,
+       modifying  or  using  the  resource,  then  releasing  the
+       lock/semaphore  is not prevented from modifying the shared
+       data.
+
+   EErrrroorr hhaannddlliinngg
+       None of the Threads Library user synchronization  routines
+       set  errno;  most  return  an  error number if an error is
+       encountered.  This discourages use of errno, which is non-
+       reentrant.  The Threads Library does not guarantee to pre-
+       serve errno across calls.
+
+   MMuuttuuaall eexxcclluussiioonn lloocckkss
+       A mutual exclusion lock, or mutex,  is  a  synchronization
+       mechanism  used  to  serialize  the  execution of threads.
+       They are typically used to ensure that only one thread  at
+       a  time  is operating on a shared datum.  When mutexes are
+       locked before and unlocked after every  access  to  shared
+       data,  the  integrity  of that data is assured.  Note that
+       mutexes protect data only when the convention of acquiring
+       and  releasing the mutex is faithfully followed before and
+       after any access of the data.
+
+       See and
+
+       Spin locks and recursive mutex locks are variations of the
+       mutex lock.
+
+                                                                1
+
+Intro(3synch)                                       Intro(3synch)
+
+   CCoonnddiittiioonn vvaarriiaabblleess
+       A condition variable is a user-level synchronization mech-
+       anism used to communicate information between  cooperating
+       threads,  making  it  possible for a thread to suspend its
+       execution while waiting for an event  or  condition.   For
+       example,  the  consumer  in  a producer-consumer algorithm
+       might need to wait for the producer  by  waiting  for  the
+       condition buffer is not empty.
+
+       See and
+
+   RReeaaddeerr--wwrriitteerr lloocckkss
+       Reader-writer  locks allow many threads to have simultane-
+       ous read-only access to  data,  while  allowing  only  one
+       thread  to  have write access at any time.  They are typi-
+       cally used to protect data that  is  searched  more  often
+       than it is changed.
+
+       See and
+
+   SSeemmaapphhoorreess
+       Conceptually, a semaphore is a non-negative integer count.
+       Semaphores are typically  used  to  coordinate  access  to
+       resources.    The  semaphore  count  is  initialized  with
+       sema_init to the number of free resources.   Threads  then
+       atomically   increment   the  count  with  sema_post  when
+       resources are released and atomically decrement the  count
+       with  sema_wait  when  resources  are  acquired.  When the
+       semaphore count becomes  zero,  indicating  that  no  more
+       resources  are  present,  threads  trying to decrement the
+       semaphore  with  sema_wait  will  block  until  the  count
+       becomes greater than zero.
+
+       See and
+
+   BBaarrrriieerrss
+       Barriers  provide  a  simple  coordination  mechanism  for
+       threads.  Threads wait at a barrier until a specified num-
+       ber  of  threads  have  reached the barrier, then they all
+       resume execution.
+
+       There are two types of barriers:  blocking  and  spinning.
+       Threads waiting at a blocking barrier are put to sleep, or
+       blocked,  until  the  specified  number  of  threads  have
+       reached  the  barrier.  Threads waiting at a spinning bar-
+       rier busy-wait, or spin, until  the  specified  number  of
+       threads have reached the barrier.
+
+       When  a  thread calls barrier_wait(3synch) (for a blocking
+       barrier) or _barrier_spin (for a spinning barrier), it  is
+       said to have reached the barrier.
+
+       Because  spinning  barriers waste resources, most applica-
+       tions should use blocking  barriers  instead  of  spinning
+
+                                                                2
+
+Intro(3synch)                                       Intro(3synch)
+
+       barriers.   Spinning barriers should only be used when all
+       participating threads will reach the barrier  at  approxi-
+       mately the same time.
+
+       Spinning barriers should never be used on a single proces-
+       sor system.
+
+       See and
+
+   SSppiinn lloocckkss
+       Spin locks are a type of mutex.   The  difference  between
+       spin  locks  and  ordinary mutex locks is in their locking
+       routines.  When a mutex is  already  locked,  the  locking
+       routine  (mutex_lock(3synch))  will block the caller until
+       the lock is  available.   When  a  spin  lock  is  already
+       locked,  the  locking  routine  (_spin_lock(3synch))  will
+       busy-wait, or spin, in a loop, testing  if  the  lock  has
+       become  available.   Such spinning wastes processor cycles
+       and can slow processors doing useful work,  including  the
+       processor  holding  the  lock,  by consuming communication
+       bandwidth.
+
+       Because spin locks waste system resources,  most  applica-
+       tions  should use mutexes instead of spin locks for mutual
+       exclusion.  However, spin locks are useful when: sleep  is
+       not  permitted  the critical section is small, so that the
+       expected spin is less costly than  blocking  and  resuming
+       the thread no other work is available
+
+       Spin  locks  should only be used when there is a guarantee
+       that the thread will not be  preempted  or  blocked  while
+       holding  a  spin  lock.   It is the responsibility of each
+       application to unlock all spin locks before calling  sleep
+       or blocking routines.
+
+       Spin  locks must not be used on a single processor system.
+       In the best case, a spin lock on a single processor system
+       will  waste resources, slowing down the owner of the lock;
+       in the worst case, it will deadlock the processor.
+
+       See and
+
+   RReeccuurrssiivvee mmuutteexx lloocckkss
+       Recursive mutual exclusion locks, or rmutexes, are mutexes
+       that  can  be  locked recursively.  That is, a thread that
+       has locked an rmutex can lock it again  without  releasing
+       it.   The  thread that has locked an rmutex is referred to
+       as the owner of the rmutex.  Only the owner of  an  rmutex
+       can  lock  it  again  while  the  rmutex  is locked; other
+       threads are denied access as with ordinary mutexes.   Each
+       rmutex_lock(3synch) or rmutex_trylock(3synch) call must be
+       matched by a corresponding rmutex_unlock before the rmutex
+       is made available to threads other than the owner.
+
+                                                                3
+
+Intro(3synch)                                       Intro(3synch)
+
+       Note  that  rmutexes, like mutexes, protect data only when
+       the convention of acquiring the rmutex is faithfully  fol-
+       lowed before any access of the data.
+
+       See and
+
+   TTrraacciinngg mmeecchhaanniissmm
+       The  Threads Library provides a mechanism for tracing sig-
+       nificant library events.  Calls  to  all  Threads  Library
+       interfaces can be traced.  See
+
+WWaarrnniinnggss
+       The  Threads  Library does not guarantee to preserve errno
+       across calls.
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoommpplliiaannccee
+       The synch library is not part of any  currently  supported
+       standard.
+
+                                                                4
+

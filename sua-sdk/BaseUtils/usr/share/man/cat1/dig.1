@@ -1,0 +1,394 @@
+dig(1)                                                          dig(1)
+
+NNAAMMEE
+       dig - DNS lookup utility
+
+SSYYNNOOPPSSIISS
+       ddiigg [@server] [--bb _a_d_d_r_e_s_s] [--cc _c_l_a_s_s] [--ff _f_i_l_e_n_a_m_e]
+           [--kk _f_i_l_e_n_a_m_e] [--pp _p_o_r_t_#] [--tt _t_y_p_e] [--xx _a_d_d_r]
+           [--yy _n_a_m_e_:_k_e_y] [--44] [--66] [name] [type] [class]
+           [queryopt...]
+
+       ddiigg [--hh]
+
+       ddiigg [global-queryopt...] [query...]
+
+DDEESSCCRRIIPPTTIIOONN
+       ddiigg (domain information groper) is a flexible tool for
+       interrogating DNS name servers. It performs DNS lookups
+       and displays the answers that are returned from the name
+       server(s) that were queried. Most DNS administrators use
+       ddiigg to troubleshoot DNS problems because of its
+       flexibility, ease of use and clarity of output. Other
+       lookup tools tend to have less functionality than ddiigg.
+
+       Although ddiigg is normally used with command-line arguments,
+       it also has a batch mode of operation for reading lookup
+       requests from a file. A brief summary of its command-line
+       arguments and options is printed when the --hh option is
+       given. Unlike earlier versions, this implementation
+       of ddiigg allows multiple lookups to be issued from the
+       command line.
+
+       Unless it is told to query a specific name server, ddiigg
+       will try each of the servers listed in _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f.
+
+       When no command line arguments or options are given, will
+       perform an NS query for "." (the root).
+
+       It is possible to set per-user defaults for ddiigg via
+       _$_{_H_O_M_E_}_/_._d_i_g_r_c. This file is read and any options in it
+       are applied before the command line arguments.
+
+SSIIMMPPLLEE UUSSAAGGEE
+       A typical invocation of ddiigg looks like:
+
+        dig @server name type
+
+       where:
+
+       sseerrvveerr is the name or IP address of the name server to
+              query. This can be an IPv4 address in
+              dotted-decimal notation or an IPv6 address in
+              colon-delimited notation. When the supplied _s_e_r_v_e_r
+              argument is a hostname, ddiigg resolves that name
+              before querying that name server. If no _s_e_r_v_e_r
+              argument is provided, ddiigg consults _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f
+              and queries the name servers listed there. The
+              reply from the name server that responds is
+              displayed.
+
+       nnaammee   is the name of the resource record that is to be
+              looked up.
+
+       ttyyppee   indicates what type of query is required -- ANY, A,
+              MX, SIG, etc.  _t_y_p_e can be any valid query type. If
+              no _t_y_p_e argument is supplied, ddiigg will perform a
+              lookup for an A record.
+
+OOPPTTIIOONNSS
+       The --bb option sets the source IP address of the query to
+       _a_d_d_r_e_s_s. This must be a valid address on one of the host's
+       network interfaces or "0.0.0.0" or "::". An optional port
+       may be specified by appending "#<port>"
+
+       The default query class (IN for internet) is overridden by
+       the --cc option.  _c_l_a_s_s is any valid class, such as HS for
+       Hesiod records or CH for CHAOSNET records.
+
+       The --ff option makes ddiigg operate in batch mode by reading a
+       list of lookup requests to process from the file _f_i_l_e_n_a_m_e.
+       The file contains a number of queries, one per line. Each
+       entry in the file should be organised in the same way they
+       would be presented as queries to ddiigg using the
+       command-line interface.
+
+       If a non-standard port number is to be queried, the --pp
+       option is used.  _p_o_r_t_# is the port number that ddiigg will
+       send its queries instead of the standard DNS port number
+       53. This option would be used to test a name server that
+       has been configured to listen for queries on a
+       non-standard port number.
+
+       The --44 option forces ddiigg to only use IPv4 query transport.
+       The --66 option forces ddiigg to only use IPv6 query transport.
+
+       The --tt option sets the query type to _t_y_p_e. It can be any
+       valid query type which is supported in this version. The default
+       query type "A", unless the --xx option is supplied to
+       indicate a reverse lookup. A zone transfer can be
+       requested by specifying a type of AXFR. When an
+       incremental zone transfer (IXFR) is required, _t_y_p_e is set
+       to ixfr=N. The incremental zone transfer will contain the
+       changes made to the zone since the serial number in the
+       zone's SOA record was _N.
+
+       Reverse lookups - mapping addresses to names - are
+       simplified by the --xx option.  _a_d_d_r is an IPv4 address in
+       dotted-decimal notation, or a colon-delimited IPv6
+       address. When this option is used, there is no need to
+       provide the _n_a_m_e, _c_l_a_s_s and _t_y_p_e arguments.  ddiigg
+       automatically performs a lookup for a name like
+       11.12.13.10.in-addr.arpa and sets the query type and class
+       to PTR and IN respectively. By default, IPv6 addresses are
+       looked up using nibble format under the IP6.ARPA domain.
+       To use the older RFC1886 method using the IP6.INT domain
+       specify the --ii option. Bit string labels (RFC2874) are now
+       experimental and are not attempted.
+
+       To sign the DNS queries sent by ddiigg and their responses
+       using transaction signatures (TSIG), specify a TSIG key
+       file using the --kk option. You can also specify the TSIG
+       key itself on the command line using the --yy option; _n_a_m_e
+       is the name of the TSIG key and _k_e_y is the actual key. The
+       key is a base-64 encoded string, typically generated by
+       ddnnsssseecc--kkeeyyggeenn(8). Caution should be taken when using the
+       --yy option on multi-user systems as the key can be visible
+       in the output from ppss(1 ) or in the shell's history file.
+       When using TSIG authentication with ddiigg, the name server
+       that is queried needs to know the key and algorithm that
+       is being used. In dig, this is done by providing
+       appropriate kkeeyy and sseerrvveerr statements in _n_a_m_e_d_._c_o_n_f.
+
+QQUUEERRYY OOPPTTIIOONNSS
+       ddiigg provides a number of query options which affect the
+       way in which lookups are made and the results displayed.
+       Some of these set or reset flag bits in the query header,
+       some determine which sections of the answer get printed,
+       and others determine the timeout and retry strategies.
+
+       Each query option is identified by a keyword preceded by a
+       plus sign (+). Some keywords set or reset an option. These
+       may be preceded by the string no to negate the meaning of
+       that keyword. Other keywords assign values to options like
+       the timeout interval. They have the form ++kkeeyywwoorrdd==vvaalluuee.
+       The query options are:
+
+       ++[[nnoo]]ttccpp
+              Use [do not use] TCP when querying name servers.
+              The default behaviour is to use UDP unless an AXFR
+              or IXFR query is requested, in which case a TCP
+              connection is used.
+
+       ++[[nnoo]]vvcc
+              Use [do not use] TCP when querying name servers.
+              This alternate syntax to _+_[_n_o_]_t_c_p is provided for
+              backwards compatibility. The "vc" stands for
+              "virtual circuit".
+
+       ++[[nnoo]]iiggnnoorree
+              Ignore truncation in UDP responses instead of
+              retrying with TCP. By default, TCP retries are
+              performed.
+
+       ++ddoommaaiinn==ssoommeennaammee
+              Set the search list to contain the single domain
+              _s_o_m_e_n_a_m_e, as if specified in a ddoommaaiinn directive in
+              _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f, and enable search list processing
+              as if the _+_s_e_a_r_c_h option were given.
+
+       ++[[nnoo]]sseeaarrcchh
+              Use [do not use] the search list defined by the
+              searchlist or domain directive in _r_e_s_o_l_v_._c_o_n_f (if
+              any). The search list is not used by default.
+
+       ++[[nnoo]]ddeeffnnaammee
+              Deprecated, treated as a synonym for _+_[_n_o_]_s_e_a_r_c_h
+
+       ++[[nnoo]]aaaaoonnllyy
+              Sets the "aa" flag in the query.
+
+       ++[[nnoo]]aaaaffllaagg
+              A synonym for _+_[_n_o_]_a_a_o_n_l_y.
+
+       ++[[nnoo]]aaddffllaagg
+              Set [do not set] the AD (authentic data) bit in the
+              query. The AD bit currently has a standard meaning
+              only in responses, not in queries, but the ability
+              to set the bit in the query is provided for
+              completeness.
+
+       ++[[nnoo]]ccddffllaagg
+              Set [do not set] the CD (checking disabled) bit in
+              the query. This requests the server to not perform
+              DNSSEC validation of responses.
+
+       ++[[nnoo]]ccll
+              Display [do not display] the CLASS when printing
+              the record.
+
+       ++[[nnoo]]ttttlliidd
+              Display [do not display] the TTL when printing the
+              record.
+
+       ++[[nnoo]]rreeccuurrssee
+              Toggle the setting of the RD (recursion desired)
+              bit in the query. This bit is set by default, which
+              means ddiigg normally sends recursive queries.
+              Recursion is automatically disabled when the
+              _+_n_s_s_e_a_r_c_h or _+_t_r_a_c_e query options are used.
+
+       ++[[nnoo]]nnsssseeaarrcchh
+              When this option is set, ddiigg attempts to find the
+              authoritative name servers for the zone containing
+              the name being looked up and display the SOA record
+              that each name server has for the zone.
+
+       ++[[nnoo]]ttrraaccee
+              Toggle tracing of the delegation path from the root
+              name servers for the name being looked up. Tracing
+              is disabled by default. When tracing is enabled,
+              ddiigg makes iterative queries to resolve the name
+              being looked up. It will follow referrals from the
+              root servers, showing the answer from each server
+              that was used to resolve the lookup.
+
+       ++[[nnoo]]ccmmdd
+              toggles the printing of the initial comment in the
+              output identifying the version of ddiigg and the query
+              options that have been applied. This comment is
+              printed by default.
+
+       ++[[nnoo]]sshhoorrtt
+              Provide a terse answer. The default is to print the
+              answer in a verbose form.
+
+       ++[[nnoo]]iiddeennttiiffyy
+              Show [or do not show] the IP address and port
+              number that supplied the answer when the _+_s_h_o_r_t
+              option is enabled. If short form answers are
+              requested, the default is not to show the source
+              address and port number of the server that provided
+              the answer.
+
+       ++[[nnoo]]ccoommmmeennttss
+              Toggle the display of comment lines in the output.
+              The default is to print comments.
+
+       ++[[nnoo]]ssttaattss
+              This query option toggles the printing of
+              statistics: when the query was made, the size of
+              the reply and so on. The default behaviour is to
+              print the query statistics.
+
+       ++[[nnoo]]qqrr
+              Print [do not print] the query as it is sent. By
+              default, the query is not printed.
+
+       ++[[nnoo]]qquueessttiioonn
+              Print [do not print] the question section of a
+              query when an answer is returned. The default is to
+              print the question section as a comment.
+
+       ++[[nnoo]]aannsswweerr
+              Display [do not display] the answer section of a
+              reply. The default is to display it.
+
+       ++[[nnoo]]aauutthhoorriittyy
+              Display [do not display] the authority section of a
+              reply. The default is to display it.
+
+       ++[[nnoo]]aaddddiittiioonnaall
+              Display [do not display] the additional section of
+              a reply. The default is to display it.
+
+       ++[[nnoo]]aallll
+              Set or clear all display flags.
+
+       ++ttiimmee==TT
+              Sets the timeout for a query to _T seconds. The
+              default time out is 5 seconds. An attempt to set _T
+              to less than 1 will result in a query timeout of 1
+              second being applied.
+
+       ++ttrriieess==TT
+              Sets the number of times to try UDP queries to
+              server to _T instead of the default, 3. If _T is less
+              than or equal to zero, the number of tries is
+              silently rounded up to 1.
+
+       ++rreettrryy==TT
+              Sets the number of times to retry UDP queries to
+              server to _T instead of the default, 2. Unlike
+              _+_t_r_i_e_s, this does not include the initial query.
+
+       ++nnddoottss==DD
+              Set the number of dots that have to appear in _n_a_m_e
+              to _D for it to be considered absolute. The default
+              value is that defined using the ndots statement in
+              _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f, or 1 if no ndots statement is
+              present. Names with fewer dots are interpreted as
+              relative names and will be searched for in the
+              domains listed in the sseeaarrcchh or ddoommaaiinn directive in
+              _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f.
+
+       ++bbuuffssiizzee==BB
+              Set the UDP message buffer size advertised using
+              EDNS0 to _B bytes. The maximum and minimum sizes of
+              this buffer are 65535 and 0 respectively. Values
+              outside this range are rounded up or down
+              appropriately.
+
+       ++[[nnoo]]mmuullttiilliinnee
+              Print records like the SOA records in a verbose
+              multi-line format with human-readable comments. The
+              default is to print each record on a single line,
+              to facilitate machine parsing of the ddiigg output.
+
+       ++[[nnoo]]ffaaiill
+              Do not try the next server if you receive a
+              SERVFAIL. The default is to not try the next server
+              which is the reverse of normal stub resolver
+              behaviour.
+
+       ++[[nnoo]]bbeesstteeffffoorrtt
+              Attempt to display the contents of messages which
+              are malformed. The default is to not display
+              malformed answers.
+
+       ++[[nnoo]]ddnnsssseecc
+              Requests DNSSEC records be sent by setting the
+              DNSSEC OK bit (DO) in the OPT record in the
+              additional section of the query.
+
+       ++[[nnoo]]ssiiggcchhaassee
+              Chase DNSSEC signature chains. Requires dig be
+              compiled with -DDIG_SIGCHASE.
+
+       ++ttrruusstteedd--kkeeyy==########
+              Specifies a file containing trusted keys to be used
+              with ++ssiiggcchhaassee. Each DNSKEY record must be on its
+              own line.
+
+              If not specified ddiigg will look for
+              _/_e_t_c_/_t_r_u_s_t_e_d_-_k_e_y_._k_e_y then _t_r_u_s_t_e_d_-_k_e_y_._k_e_y in the
+              current directory.
+
+              Requires dig be compiled with -DDIG_SIGCHASE.
+
+       ++[[nnoo]]ttooppddoowwnn
+              When chasing DNSSEC signature chains perform a top
+              down validation. Requires dig be compiled with
+              -DDIG_SIGCHASE.
+
+MMUULLTTIIPPLLEE QQUUEERRIIEESS
+       This implementation of ddiigg supports specifying
+       multiple queries on the command line (in addition to
+       supporting the --ff batch file option). Each of those
+       queries can be supplied with its own set of flags, options
+       and query options.
+
+       In this case, each _q_u_e_r_y argument represent an individual
+       query in the command-line syntax described above. Each
+       consists of any of the standard options and flags, the
+       name to be looked up, an optional query type and class and
+       any query options that should be applied to that query.
+
+       A global set of query options, which should be applied to
+       all queries, can also be supplied. These global query
+       options must precede the first tuple of name, class, type,
+       options, flags, and query options supplied on the command
+       line. Any global query options (except the ++[[nnoo]]ccmmdd
+       option) can be overridden by a query-specific set of query
+       options. For example:
+
+       dig +qr www.isc.org any -x 127.0.0.1 isc.org ns +noqr
+
+       shows how ddiigg could be used from the command line to make
+       three lookups: an ANY query for www.isc.org, a reverse
+       lookup of 127.0.0.1 and a query for the NS records of
+       isc.org. A global query option of _+_q_r is applied, so that
+       ddiigg shows the initial query it made for each lookup. The
+       final query has a local query option of _+_n_o_q_r which means
+       that ddiigg will not print the initial query when it looks up
+       the NS records for isc.org.
+
+FFIILLEESS
+       _/_e_t_c_/_r_e_s_o_l_v_._c_o_n_f
+
+       _$_{_H_O_M_E_}_/_._d_i_g_r_c
+
+SSEEEE AALLSSOO
+       hhoosstt(1), nnssllooookkuupp(1), RFC1035.
+
+

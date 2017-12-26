@@ -1,0 +1,224 @@
+xmodmap(1X11R5)                                         xmodmap(1X11R5)
+
+  xxmmooddmmaapp
+
+  NNAAMMEE
+
+    xmodmap - utility for modifying keymaps in X
+
+  SSYYNNOOPPSSIISS
+
+    xmodmap [[-options ...]] [[filename]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The xxmmooddmmaapp(1X11R5) program is used to edit and display the keyboard
+    modifier map and keymap table that are used by client applications to
+    convert event keycodes into keysyms. It is usually run from the user's
+    session startup script to configure the keyboard according to personal
+    tastes.
+
+  OOPPTTIIOONNSS
+
+    The following options can be used with xxmmooddmmaapp(1X11R5):
+    --ddiissppllaayy display
+        Use the specified host and display.
+    --ee expression
+        This option specifies an expression to be executed. Any number of
+        expressions can be specified from the command line.
+
+    --ggrraammmmaarr
+        Print on the standard error a help message describing the expression
+        grammar used in files and with expressions.
+
+    --hheellpp
+        Print on the standard error a brief description of the command-line
+        arguments. This description is printed whenever you give
+        xxmmooddmmaapp(1X11R5) an unhandled argument.
+
+    --nn
+        Do not change the mappings but display what would happen, like mmaakkee(1)
+        does when given this option.
+
+    --qquuiieett
+        Turn off the verbose logging. This is the default.
+
+    --ppmm
+        Print the current modifier map on the standard output.
+
+    --ppkk
+        Print the current keymap table on the standard output.
+
+    --ppkkee
+        Print on standard output the current keymap table, in the form of
+        expressions that can be fed back to xxmmooddmmaapp(1X11R5).
+
+    --pppp
+        Print on the standard output the current pointer map.
+
+    --vveerrbboossee
+        Print logging information as it parses its input.
+
+    --
+        A single dash means that the standard input should be used as the
+        input file.
+
+    The filename specifies a file containing xxmmooddmmaapp(1X11R5) expressions to be
+    executed. This file is usually kept in the user's home directory with a
+    name like ..xxmmooddmmaapprrcc.
+
+  EEXXPPRREESSSSIIOONN GGRRAAMMMMAARR
+
+    The xxmmooddmmaapp(1X11R5) program reads a list of expressions and parses them
+    all before attempting to execute any of them. This makes it possible to
+    refer to keysyms that are being redefined in a natural way without having
+    to worry as much about name conflicts.
+    kkeeyyccooddee NUMBER==KEYSYMNAME ......
+        The list of keysyms is assigned to the indicated keycode (which can be
+        specified in decimal, hexadecimal, or octal, and can be determined by
+        running the xxeevv(1X11R5) program in the examples directory).
+    kkeeyyssyymm KEYSYMNAME==KEYSYMNAME ......
+        The KEYSYMNAME on the left hand side is translated into matching
+        keycodes used to perform the corresponding set of kkeeyyccooddee expressions.
+        The list of keysym names can be found in the header file XX1111//
+        kkeeyyssyymmddeeff..hh (without the XK_ prefix) or the keysym database //uussrr//lliibb//
+        XX1111//XXKKeeyyssyymmDDBB. Note that if the same keysym is bound to multiple keys,
+        the expression is executed for each matching keycode.
+    cclleeaarr MODIFIERNAME
+        This removes all entries in the modifier map for the given modifier,
+        where valid name are: SShhiifftt, LLoocckk, CCoonnttrrooll, MMoodd11, MMoodd22, MMoodd33, MMoodd44,
+        and MMoodd55 (case does not matter in modifier names; however, it does
+        matter for all other names). For example, "clear Lock" will remove all
+        any keys that were bound to the shift lock modifier.
+    aadddd MODIFIERNAME==KEYSYMNAME ......
+        This adds all keys containing the given keysyms to the indicated
+        modifier map. The keysym names are evaluated after all input
+        expressions are read to make it easy to write expressions to swap keys
+        (see the EXAMPLES section).
+    rreemmoovvee MODIFIERNAME==KEYSYMNAME ......
+        This removes all keys containing the given keysyms from the indicated
+        modifier map. Unlike aadddd,, the keysym names are evaluated as the line
+        is read in. This allows you to remove keys from a modifier without
+        having to worry about whether or not they have been reassigned.
+
+    ppooiinntteerr == ddeeffaauulltt
+        This sets the pointer map back to its default settings (button 1
+        generates a code of 1, button 2 generates a 2, and so on).
+    ppooiinntteerr == NUMBER......
+        This sets to pointer map to contain the indicated button codes. The
+        list always starts with the first physical button.
+
+    Lines that begin with an exclamation point (!!) are taken as comments.
+
+    If you want to change the binding of a modifier key, you must also remove
+    it from the appropriate modifier map.
+
+  EEXXAAMMPPLLEESS
+
+    Many pointers are designed so that the first button is pressed using the
+    index finger of the right hand. People who are left handed frequently find
+    that it is more comfortable to reverse the button codes that get generated
+    so that the primary button is pressed using the index finger of the left
+    hand. This could be done on a three-button pointer as follows:
+
+    $$  xmodmap -e "pointer = 3 2 1"
+
+    Many editor applications support the notion of Meta keys (similar to
+    Control keys except that Meta is held down instead of Control). Some
+    servers do not have a Meta keysym in the default keymap table, however, so
+    one must be added manually. The following command will attach Meta to the
+    Multi-language key (sometimes labeled Compose Character). It also takes
+    advantage of the fact that applications that need a Meta key simply need
+    to get the keycode and do not require the keysym to be in the first column
+    of the keymap table. This means that applications that are looking for a
+    Multi_key (including the default modifier map) will not notice any change.
+
+    $$  xmodmap -e "keysym Multi_key = Multi_key Meta_L"
+
+    One of the simpler, more convenient uses of xxmmooddmmaapp(1X11R5) is to set the
+    keyboard's "rubout" key to generate an alternate keysym. This frequently
+    involves exchanging Backspace with Delete to be more comfortable to the
+    user. If the ttyModes resource in xxtteerrmm(1X11R5) is set as well, all
+    terminal emulator windows will use the same key for erasing characters:
+
+    $$  xmodmap -e "keysym BackSpace = Delete"
+    $$  echo "XTerm*ttyModes:  erase ^?" | xrdb -merge
+
+    Some keyboards do not automatically generate less than and greater than
+    characters when the comma and period keys are shifted. This can be
+    remedied with xxmmooddmmaapp(1X11R5) by resetting the bindings for the comma and
+    period with the following scripts:
+
+    !
+    ! make shift-, be < and shift-. be >
+    !
+    keysym comma = comma less
+    keysym period = period greater
+
+    One of the more irritating differences between keyboards is the location
+    of the Control and Shift Lock keys. A common use of xxmmooddmmaapp(1X11R5) is to
+    swap these two keys as follows:
+
+    !
+    ! Swap Caps_Lock and Control_L
+    !
+    remove Lock = Caps_Lock
+    remove Control = Control_L
+    keysym Control_L = Caps_Lock
+    keysym Caps_Lock = Control_L
+    add Lock = Caps_Lock
+    add Control = Control_L
+
+    The keycode command is useful for assigning the same keysym to multiple
+    keycodes. Although it is not portable, it does make it possible to write
+    scripts that can reset the keyboard to a known state. The following script
+    sets the Backspace key to generate Delete (as shown above), flushes all
+    existing caps lock bindings, makes the CapsLock key a control key, makes
+    F5 generate Escape, and makes Break/Reset into a shift lock.
+
+    !
+    ! On the HP, the following keycodes have key caps as listed:
+    !
+    !     101  Backspace
+    !      55  Caps
+    !      14  Ctrl
+    !      15  Break/Reset
+    !      86  Stop
+    !      89  F5
+    !
+    keycode 101 = Delete
+    keycode 55 = Control_R
+    clear Lock
+    add Control = Control_R
+    keycode 89 = Escape
+    keycode 15 = Caps_Lock
+    add Lock = Caps_Lock
+
+  EENNVVIIRROONNMMEENNTT VVAARRIIAABBLLEESS
+
+    DISPLAY
+        Contains default host and display number.
+
+  BBUUGGSS
+
+    Each time a kkeeyyccooddee expression is evaluated, the server generates a
+    MappingNotify event on every client. This can cause some thrashing. All of
+    the changes should be batched together and done at once. Clients that
+    receive keyboard input and ignore MappingNotify events will not notice any
+    changes made to keyboard mappings.
+
+    The xxmmooddmmaapp(1X11R5) utility should generate "add" and "remove" expressions
+    automatically whenever a keycode that is already bound to a modifier is
+    changed.
+
+    There should be a way to have the remove expression accept keycodes as
+    well as keysyms for those times when you really mess up your mappings.
+
+  SSEEEE AALLSSOO
+
+    _X(5X11R5)
+
+    _x_e_v(1X11R5)
+
+    Xlib documentation on key and pointer events
+

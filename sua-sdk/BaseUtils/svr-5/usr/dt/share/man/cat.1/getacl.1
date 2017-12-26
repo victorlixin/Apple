@@ -1,0 +1,136 @@
+
+
+getacl(1)                                               getacl(1)
+
+SSyynnooppssiiss
+       getacl [-ad] file . . .
+
+DDeessccrriippttiioonn
+       For each argument that is a regular file, special file, or
+       named pipe, getacl displays  the  owner,  group,  and  the
+       Access  Control  List  (ACL).   getacl displays the owner,
+       group, and the ACL and/or the default ACL.  Only  directo-
+       ries contain default ACLs.
+
+       With  the -a option specified, the filename, owner, group,
+       and the ACL of the file will be displayed.   With  the  -d
+       option  specified,  the  filename,  owner,  group, and the
+       default ACL of the file, if it exists, will be  displayed.
+       With  options  not  specified, the filename, owner, group,
+       and both the ACL, and the default ACL, if it exists,  will
+       be displayed.
+
+       This  command  may  be executed on a file system that does
+       not support ACLs.  It will report the  ACL  consisting  of
+       only  the  owning  user,  owning  group,  class  and other
+       entries, based on the permission bits.
+
+       When multiple files are specified on the command  line,  a
+       blank  line will separate the ACL for each file.  The for-
+       mat of an ACL is: # file: filename # owner: uid  #  group:
+       gid  user::perm  user:uid:perm  group::perm group:gid:perm
+       class:perm          other:perm          default:user::perm
+       default:user:uid:perm                  default:group::perm
+       default:group:gid:perm                  default:class:perm
+       default:other:perm  The  first  three lines show the file-
+       name, the file owner, and the  file  owning  group.   Note
+       that  when  only  the -d option is specified, and the file
+       has no default ACL, only these three lines  will  be  dis-
+       played.
+
+       The user entry without a user ID indicates the permissions
+       that will be granted to the owner of  the  file.   One  or
+       more additional user entries indicate the permissions that
+       will be granted to the specified users.  The  group  entry
+       without  a group identifier indicates the permissions that
+       will be granted to the owning group of the file.   One  or
+       more  additional  group  entries  indicate the permissions
+       that will be granted to the specified groups.   The  other
+       entry  indicates  the  permissions that will be granted to
+       others.
+
+       The  default  entries  (default:user,  default:group,  and
+       default:other)  may  only exist for directories, and indi-
+       cate the default user, group, and other entries that  will
+       be added to a file created within the directory.
+
+       The uid is a login name, or a user ID if there is no entry
+       for the uid in the system's password file; gid is a  group
+
+                                                                1
+
+getacl(1)                                               getacl(1)
+
+       name,  or  a  group ID if there is no entry for the gid in
+       the system's group file; and perm  is  a  three  character
+       string  composed  of the letters representing the separate
+       discretionary access rights: r (read), w (write), x  (exe-
+       cute/search),  or  the  placeholder character -.  The perm
+       will be displayed in the following order: rwx.  If a  per-
+       mission  is  not  granted by an ACL entry, the placeholder
+       character will appear.
+
+       The ACL entries will be displayed in the  order  in  which
+       they  will be evaluated when an access check is performed.
+       The default ACL entries which may  exist  on  a  directory
+       have no effect on access checks.
+
+       The  file  owner permission bits represent the access that
+       the owning user ACL entry has.  The file group class  per-
+       mission bits represent the most access that any additional
+       user entry, additional group entry, or  the  owning  group
+       entry may grant.  The file other permission bits represent
+       the access that the  other  ACL  entry  has.   If  a  user
+       invokes the chmod command and changes the file group class
+       permission bits, the access granted by the additional  ACL
+       entries may be restricted.
+
+       In  order to indicate that the file group class permission
+       bits restrict an ACL entry,  getacl  will  display,  after
+       each  affected  entry,  text  in the form #effective:perm,
+       where  perm  will  show  only  the  permissions   actually
+       granted.
+
+FFiilleess
+       for user IDs for group IDs
+
+EExxaammpplleess
+       Given  file filea, with an ACL five entries long, the com-
+       mand $ getacl filea would print: # file:  filea  #  owner:
+       fletcher    #    group:    us    user::rwx    user:spy:---
+       user:archer:rw- group::r-- class:rw- other:---
+
+       Given file filea, with an ACL five entries long, after the
+       command  chmod  700 filea was issued, the command $ getacl
+       filea would print: #  file:  filea  #  owner:  fletcher  #
+       group:          us          user::rwx         user:spy:---
+       user:archer:rw-          #effective:---
+       group::r--          #effective:--- class:--- other:---
+
+       Given  directory  fileb,  with  an  ACL containing default
+       entries, the command $ getacl  -d  fileb  would  print:  #
+       file:    fileb    #    owner:   fletcher   #   group:   us
+       default:user::rwx default:user:spy:---  default:group::r--
+       default:other:---
+
+       Given  directory  fileb,  the command $ getacl fileb would
+       print: #  file:  fileb  #  owner:  fletcher  #  group:  us
+
+                                                                2
+
+getacl(1)                                               getacl(1)
+
+       user::rwx      user:spy:---      user:archer:rw-
+       group::r--                other:---      default:user::rwx
+       default:user:spy:--- default:group::r-- default:other:---
+
+RReeffeerreenncceess
+NNoottiicceess
+       The  output  from getacl will be in the correct format for
+       input to the setacl command.  If the output from getacl is
+       redirected  to  a  file,  the file may be used as input to
+       setacl.  In this way, a user may easily assign one  file's
+       ACL to another file.
+
+                                                                3
+

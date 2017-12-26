@@ -1,0 +1,136 @@
+
+
+pt_open(3X)                                           pt_open(3X)
+
+SSyynnooppssiiss
+       cc [options] file -lsdi #include <libsdi.h>
+
+       int  pt_open(pt_address_type_t type, void *address, uint_t
+       flag, pt_handle_t *handle)
+
+DDeessccrriippttiioonn
+       The address type of the storage device to open.  One value
+       for  type  is  currently supported: PASSTHRU_SCSI_ADDRESS.
+       The address argument defines which  device  of  Peripheral
+       Device  Type  type is opened.  It points to a structure of
+       type   pt_scsi_address_t,   whose   elements   are:    int
+       psa_controller;  int      psa_bus; int     psa_target; int
+       psa_lun; The I/O path used to send the command; used  only
+       in  a multi-path I/O (MPIO) configuration.  In such a con-
+       figuration, setting path to -1 instructs SDI to choose any
+       active path to the device in question.  Setting path to an
+       integer from 0 to n will choose the nth path to the device
+       in  question.  In the absence of a multi-path I/O configu-
+       ration, the value of path is  ignored.   The  identity  of
+       path  n  is  not guaranteed to persist from system boot to
+       system boot.  By default, pt_open  allows  other  applica-
+       tions pass-through access to the device instance while the
+       current application has the device open  for  pass-through
+       operations.   The  following  values  for flag modify this
+       behavior as described;  one or both of these flags may  be
+       used: No other application may have pass-through access to
+       this device while this application has the device open for
+       pass-through.   This  type of open fails if the device has
+       already been opened by another application using  pt_open.
+       Specifies that I/O operations initiated by other agents in
+       the system besides pass-through applications  are  blocked
+       during  this pass-through session.  Extreme care should be
+       exercised using PT_SUSPEND_IO.  Any kernel function  need-
+       ing  access  to  the  device open for pass-through will be
+       blocked when this flag is used, including  page  swapping.
+       Applications  that  use  this combination must assure that
+       any memory they need is locked in core using  before  this
+       type  of open is attempted.  A pointer to an opaque handle
+       that the application must use for all subsequent calls  to
+       pt_send and pt_close.  This handle supplies SDI with iden-
+       tity and state information for the SDI device  referenced.
+       Note  that  handle  is not a file descriptor and cannot be
+       treated like one.  See ``Compatibility''.
+
+RReettuurrnn vvaalluueess
+       On success, pt_open returns 0, and a handle  to  the  open
+       device to be used in subsequent pass-through operations.
+
+EErrrroorrss
+       On failure, pt_open returns an errno to reflect the reason
+       for the failure.
+
+                                                                1
+
+pt_open(3X)                                           pt_open(3X)
+
+UUssaaggee
+       Applications initiate pass-through  access  to  a  storage
+       device  by  a  call  to  pt_open.   The handle returned by
+       pt_open is used in subsequent calls to pt_send, which uses
+       a  SCSI command block to send SCSI commands to the device.
+       The application then closes the storage device with a call
+       to pt_close.
+
+CCoommppaattiibbiilliittyy
+       Application use of the open/close/ioctl pass-through mech-
+       anism is supported for compatibility with existing  appli-
+       cations.   Starting  with &uw710;, applications should use
+       the SCSI pass-through interface documented on and to  send
+       commands to SCSI Device Interface Host Bus Adapters (HBA)s
+       that support the SDI pass-through interface.
+
+       In prior releases, an application used the system call  to
+       open  the character special file for the device.  Then, it
+       called with the B_GETDEV command (new applications  should
+       use
+
+       The  device  value returned (a file descriptor) would then
+       be used to create a character  special  file  which,  when
+       opened,  could  be used by the application to send a pass-
+       through (SDI_SEND) ioctl command (new applications  should
+       use
+
+       After completing the pass-through operations, the applica-
+       tion would then close the device using  (new  applications
+       should use
+
+       One  exception  to  directly  translating open/ioctl/close
+       sequences to the pass-through library routines is when  an
+       application  uses  and the parent and child manipulate the
+       SCSI device independently.  The open/ioctl/close functions
+       use  file  descriptors to the SCSI device.  In this model,
+       when a process forks a child, the child receives  its  own
+       file  descriptor  to  the device, so there's no problem if
+       the parent closes its file descriptor to the device.
+
+       The pass-through library interface does not behave in this
+       manner.   That is, the handle returned by pt_open and used
+       by pt_send and pt_close is not a file  descriptor  and  is
+       part of the name space of the parent and all its children.
+
+       This can present a problem when porting code that uses the
+       ioctl interface to the library interface.  For example, an
+       application uses open to  open  a  SCSI  device  and  then
+       forks.   The  parent then calls close and the child does a
+       subsequent ioctl  on  the  same  device;   which  succeeds
+       because the child has its own file descriptor.
+
+       If  you  simply  replace  the open/ioctl/close sequence in
+       this application with calls  to  pt_open/pt_send/pt_close,
+
+                                                                2
+
+pt_open(3X)                                           pt_open(3X)
+
+       then  the  pt_send  attempted  by the child will fail with
+       errno set to EBADF.
+
+       The solution in this particular case would  be  to  either
+       move  the  parent's  pt_close  below the point in the code
+       where the child returns, or just remove the pt_close  from
+       the  parent  (and  the  child).  The device will be closed
+       during the exit processing of the parent.
+
+SSttaannddaarrddss ccoonnffoorrmmaannccee
+       This routine is not part of any industry standard.
+
+RReeffeerreenncceess
+
+                                                                3
+

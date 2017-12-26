@@ -1,0 +1,74 @@
+
+
+rw_wrlock(3synch)                               rw_wrlock(3synch)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <synch.h>
+
+       int rw_wrlock(rwlock_t *lock);
+
+DDeessccrriippttiioonn
+       rw_wrlock  acquires  the  reader-writer lock pointed to by
+       lock in write mode.
+
+       Only one writer at a time can hold a  reader-writer  lock,
+       although  any  number  of readers can hold the lock at any
+       time.   Once  a  writer  has  requested  the   lock   with
+       rw_wrlock,  all subsequent requests for the lock in either
+       read or write mode are blocked.
+
+       When no other readers or writers hold the lock,  rw_wrlock
+       will  acquire  the lock, and the caller will proceed.  Any
+       other write and read requests  for  the  lock  will  block
+       until the caller unlocks the lock with
+
+       If  the  lock  is  held  by  any readers when rw_wrlock is
+       called, and no writer is waiting for the lock, the  caller
+       blocks  until  all  the  current readers have released the
+       lock.  If the lock is held by another writer, or if  there
+       are  any  other  writers already waiting for the lock, the
+       caller blocks to wait for the lock.
+
+       lock  must   previously   have   been   initialized   (see
+       rwlock_init(3synch)).
+
+       From  the  point of view of the application, this function
+       is atomic: even if interrupted by  a  signal  or  forkall,
+       rw_wrlock  will  not return until it holds the lock.  As a
+       consequence, if rw_wrlock is interrupted, an error indica-
+       tion such as EINTR is never returned to the user.
+
+   PPaarraammeetteerrss
+       pointer to the reader-writer lock to be acquired
+
+UUssaaggee
+       For  consistency,  locks acquired with rw_wrlock should be
+       released with rw_unlock.
+
+RReettuurrnn vvaalluueess
+       rw_wrlock returns zero for success and an error number for
+       failure.
+
+   EErrrroorrss
+       If  any of the following conditions is detected, rw_wrlock
+       returns the corresponding value: invalid  argument  speci-
+       fied Insufficient memory
+
+                                                                1
+
+rw_wrlock(3synch)                               rw_wrlock(3synch)
+
+WWaarrnniinnggss
+       If  a thread exits while holding a reader-writer lock, the
+       lock will not be unlocked, and other threads  waiting  for
+       the lock will wait forever.  Similarly, if a process exits
+       while holding a USYNC_PROCESS reader-writer lock, the lock
+       will  not be unlocked, and other processes waiting for the
+       reader-writer lock will wait forever.
+
+RReeffeerreenncceess
+
+                                                                2
+

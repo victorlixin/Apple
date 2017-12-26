@@ -1,0 +1,365 @@
+
+
+eels_config(4eels)                             eels_config(4eels)
+
+SSyynnooppssiiss
+       /etc/default/eels
+
+DDeessccrriippttiioonn
+       The configuration file for the Enhanced Event Logging Sys-
+       tem (EELS) is /etc/default/eels. It contains multiple Con-
+       figuration  Parameter  blocks that describe the configura-
+       tion of EELS.
+
+       Currently, there are nine types of parameter  blocks  that
+       specify  various  aspects  of the EELS environment. Two of
+       these parameter blocks are themselves  referenced  by  the
+       other blocks in some way.  These two parameter blocks are,
+       log-destination and filter; they are used to  specify  the
+       database  and table name and filter criteria respectively.
+       The table below shows  which  parameter  blocks  reference
+       log-destination and filter.
+       -----------------------------------------------------------
+                                 log-destination           filter
+       -----------------------------------------------------------
+       real-time-import          Yes                       Yes
+       dynamic-import            No                        No
+       log-destination           N/A                       N/A
+       filter                    N/A                       N/A
+       accept-remote             Yes                       No
+       auto-archive              Yes                       No
+       database-info             No                        No
+       execute-script            No                        Yes
+       send-trap                 No                        Yes
+       Each of these configuration blocks are described below:
+
+   rreeaall--ttiimmee--iimmppoorrtt
+       The  syntax  of  the  real-time-import parameter block is:
+       real-time-import  tag   {                   syslog   sink;
+                       audit sink;                 EELSUser sink;
+                       EELSKernel   sink;                    XDAS
+       sink;                  filter filter_tag; } This parameter
+       block specifies the log sources that can  be  imported  in
+       real-time.  Multiple real-time-import parameter blocks are
+       allowed, but each parameter block can only have  one  type
+       of  log import source, that is, syslog, audit, XDAS and so
+       on.  An arbitrary string  that  uniquely  identifies  this
+       parameter block.  Import log entries in real-time from and
+       messages from into the destination specified by  the  log-
+       destination  parameter  block  called  sink.   Import  log
+       entries in real-time from the  audit  subsystem  into  the
+       destination  specified  by  the  log-destination parameter
+       block called sink. For  more  information  on  audit,  see
+       Before  you can use auditing with EELS you must first con-
+       figure auditing so that it sends its messages to the  EELS
+       driver.  You  can  do this by adding the following line to
+       /etc/default/audit: AUDIT_DEFPATH=/dev/elsa Import records
+       in  real-time  from and the EELS generic logging APIs into
+       the destination specified by the log-destination parameter
+
+                                                                1
+
+eels_config(4eels)                             eels_config(4eels)
+
+       block  called  sink.  For more information on EELS generic
+       logging APIs, see Import records  in  real-time  from  the
+       EELS kernel logging APIs into the destination specified by
+       the log-destination parameter block called sink. For  more
+       information  on  EELS  kernel  logging  APIs,  see  Import
+       records in real-time from the XDAS generic and kernel log-
+       ging APIs into the destination specified by the log-desti-
+       nation parameter block called sink.  For more  information
+       on these APIs, see and Specify that the filter called fil-
+       ter_tag is applied to the log  source  being  imported  in
+       real-time.  You must specify a filter if the log source is
+       syslog. If the log source  is  audit  the  filter  tag  is
+       ignored. Filters are optional for all other log sources.
+
+   ddyynnaammiicc--iimmppoorrtt
+       The  syntax  of  the  dynamic-import  parameter  block is:
+       dynamic-import tag  {                  filename  log_file;
+                       filter  file_name;                  growth
+       size; } This parameter block specifies when  records  from
+       an external log file should be automatically imported into
+       an EELS database.  An arbitrary string that uniquely iden-
+       tifies  this  parameter block.  The filename of the log to
+       monitor.  The name of the script or  program  that  trans-
+       lates  the contents of the log file into a format that can
+       be accepted by As well as translating the contents of  the
+       log   file,   the   script   or  program  must  also  call
+       eels_log_import to insert the  resulting  records  into  a
+       specified  database.   The  size the specified log file is
+       allowed  to  grow  to  before  records  are  automatically
+       imported by filter.
+
+       Sizes can be specified in bytes, kilobytes or megabytes by
+       appending a B, K or M to a numeric value. For example, 16K
+
+   lloogg--ddeessttiinnaattiioonn
+       The syntax of the log-destination parameter block is: log-
+       destination tag {                 database  database_name;
+                       table table_name;                 hostname
+       remote_host;                  port  remote_port;  }   This
+       parameter block specifies the destination (also known as a
+       sink) for log messages. If the messages are to  be  logged
+       locally  on  the  same  machine, this block identifies the
+       destination database and table names. If the messages  are
+       to  be  logged on a remote EELS server, this block identi-
+       fies the remote machine name (or IP address) and the  des-
+       tination TCP port number.
+
+       Log messages are directed to a sink by specifying the sink
+       parameter in real-time-import and accept-remote  parameter
+       blocks.
+
+       The  parameters  that  can  be  used  in this block are: A
+       string  that  uniquely  identifies  this   log-destination
+       parameter  block.  This  name is the sink name used in the
+
+                                                                2
+
+eels_config(4eels)                             eels_config(4eels)
+
+       real-time-import and accept-remote parameter  blocks.   If
+       the log messages are to be logged locally, use this param-
+       eter to specify the name  of  an  existing  database  into
+       which  they  can  be written.  The database must have been
+       created using  If  the  log  messages  are  to  be  logged
+       locally,  use  this  parameter  to  specify the name of an
+       existing database table into which they  can  be  written.
+       The database table must have been created using If the log
+       messages are to be logged remotely, use this parameter  to
+       specify  the  name of the remote EELS log server. The name
+       can be specified either as an IP address or a fully quali-
+       fied  domain  name.   If the log messages are to be logged
+       remotely, use this parameter to specify  the  port  number
+       the  remote  EELS  server listens on for incoming log mes-
+       sages. This parameter is optional, if you do not  use  it,
+       the default of 2020 is used.
+
+   ffiilltteerr
+       The  syntax  of the filter parameter block is: filter fil-
+       ter_tag {                 include rule;                  .
+                       .                                        .
+                       exclude      rule;                       .
+                       .                   .   }  This  parameter
+       block specifies filtering rules to apply to log  messages.
+       It  can  be referenced by a filter parameter in any of the
+       real-time-import, send-trap  or  execute-script  parameter
+       blocks.
+
+       The  parameters  that  can be used in the filter parameter
+       block are: A string that uniquely identifies  this  filter
+       parameter  block. This name is the filter_tag name used in
+       the real-time-import, send-trap or execute-script  parame-
+       ter  blocks.   Include  log  messages  that match rule. To
+       include all log messages, use the  reserved  word  all  in
+       place  of the rule.  Exclude log messages that match rule.
+       To exclude all log messages, use the reserved word all  in
+       place of the rule.  The filter parameter block consists of
+       one or more rules. The individual rules are applied to the
+       log messages one at a time. If a message matches the rules
+       selection criteria, it  is  dropped  if  the  rule  is  an
+       exclude  rule,  or logged if it is an include rule. Once a
+       rule is matched, no other rules are  used.  If  a  message
+       does not match any of the rules, it is dropped. To include
+       all messages by default, append an include all rule to the
+       end of the filter specification.
+
+       The  syntax  of  a  filter  rule is shown below: include |
+       exclude "field_name operation value  '[bool_op  field_name
+       operation  value]'"  Where:  The name of the column within
+       the log message on which to apply the rule.  Use  to  list
+       all  the  columns  within  the EELS database.  The type of
+       operation to apply to field_name. Possible operations are:
+       Equals Not equals Contains The value to use in conjunction
+       with the operation in determining  the  rule.   A  boolean
+
+                                                                3
+
+eels_config(4eels)                             eels_config(4eels)
+
+       operator   for  joining  together  two  or  more  sets  of
+       field_name operation value. Possible operators are: And Or
+       For example, to exclude all messages that contain the word
+       mount in their EventSpecificInformation  column,  use  the
+       following   rule:   "exclude   EventSpecificInformation  ~
+       'mount'"
+
+   aacccceepptt--rreemmoottee
+       The  syntax  of  the  accept-remote  parameter  block  is:
+       accept-remote  tag {                 hostname remote_host;
+                       destination sink; } This  parameter  block
+       specifies  which client machines are allowed to send their
+       log  records  to  this  machine.   Multiple  accept-remote
+       parameter blocks can be specified.
+
+       The  parameters  that  can be used in this parameter block
+       are: An arbitrary string  that  uniquely  identifies  this
+       parameter  block.   Use this parameter to specify the name
+       of a remote machine that is allowed to send  log  messages
+       to  this  host  for  logging.   The  name can be specified
+       either as an IP address or a fully qualified domain  name.
+       Import  records  from the remote host into the destination
+       database table specified by the log-destination  parameter
+       block identified by sink.
+
+   aauuttoo--aarrcchhiivvee
+       The  syntax  of the auto-archive parameter block is: auto-
+       archive      tag(                       source       sink;
+                       query  SQL_query;                 filename
+       archive_name;                        trigger         size;
+                       frequency  time;  );  This parameter block
+       specifies when records should be  automatically  archived,
+       and then deleted from the database.  The archiving is per-
+       formed whenever the database reaches a  pre-defined  size.
+       An  arbitrary string that uniquely identifies this parame-
+       ter block.  The name of the sink  to  use  as  source  for
+       records  to  archive.  The  sink name must correspond to a
+       valid log-destination parameter block.  The SQL query that
+       selects  the  records  from  the  source  database  to  be
+       archived.  A  typical  example  might  be:  query  "select
+       UniqEventID,LogSystemsSource,EventSpecificInformation from
+       events" The name of the file where  the  archived  records
+       are  written.   A timestamp is appended to the filename so
+       that archive files are not over-written if  multiple  auto
+       archives are triggered.
+
+       Archives  can  be  restored  using  The  size  the  source
+       database is allowed to grow to before records are automat-
+       ically archived to filename.
+
+       Sizes can be specified in bytes, kilobytes or megabytes by
+       appending a B, K or M to a numeric  value.   For  example,
+       20M  How often to check the database size to see if it has
+       exceeded the size specified by trigger.
+
+                                                                4
+
+eels_config(4eels)                             eels_config(4eels)
+
+       Times can be specified in hours,  minutes  or  seconds  by
+       appending  an  H, M or S to a numeric value.  For example,
+       4H.  Checking the size of the database requires a database
+       query,  so avoid checking the database too frequently. Try
+       initially setting the frequency to something like 5M.
+
+   ddaattaabbaassee--iinnffoo
+       The  syntax  of  the  database-info  parameter  block  is:
+       database-info  tag {                 database-name dbname;
+                       database-start-cmd        db_start_command
+                       database-log-file   db_log_file   }   This
+       parameter block specifies some system  wide  defaults  for
+       the  EELS database environment. Do not change any of these
+       parameter values unless you have very specific reasons for
+       doing so and know exactly what the results of your actions
+       will be.  An arbitrary  string  that  uniquely  identifies
+       this parameter block.  The name of the EELS administrative
+       database. Do not use  this  database  to  store  your  own
+       records.  Instead, create your own database using The com-
+       mand used to start the EELS database.  The destination log
+       file  to  which  the  output  from  STDOUT  and  STDERR is
+       directed from database-start-cmd.
+
+   sseenndd--ttrraapp
+       The syntax of the send-trap parameter block is:  send-trap
+       tag  {                 count num;                 interval
+       num;                       trap-type       trap_type_name;
+                       community                  community_name;
+                       hostname                     host_address;
+                       filter  filter_tag; } This parameter block
+       uses the EELS filter system (as described  in  the  filter
+       parameter  block).  Incoming log messages are filtered and
+       on a filter match, one or more SNMP traps are sent to  the
+       specified host.  An arbitrary string that uniquely identi-
+       fies this parameter block.  The number of  SNMP  traps  to
+       send.  If count is not specified in the parameter block, a
+       default of 1 is assumed.  The time  in  seconds  to  pause
+       between  sending SNMP traps.  If interval is not specified
+       in this parameter block, a default of 3 is  assumed.   The
+       type  of SNMP trap to be sent. This parameter is specified
+       in the same way as the trap_type option of The SNMP commu-
+       nity  name. This parameter is specified in the same way as
+       the community_string option of the trap_send command.  The
+       name  of  the  host  that will receive the SNMP trap. This
+       parameter is specified in the same way as the  entity_addr
+       option  of the trap_send command.  This name of the filter
+       parameter block that will filter the log messages as  they
+       pass  through. Any matches that are detected by the filter
+       mechanism will  trigger  the  sending  of  SNMP  traps  as
+       defined by the other parameters in this block.  If EELS is
+       still busy sending a  trap  when  the  same  event  occurs
+       again,  EELS  will  not send a trap for that second event.
+       For information on SNMP, see
+
+                                                                5
+
+eels_config(4eels)                             eels_config(4eels)
+
+   eexxeeccuuttee--ssccrriipptt
+       The syntax of the execute-script parameter block is:  exe-
+       cute-script   tag  {                  script  script_name;
+                       user   user_name;                   filter
+       value;  } This parameter block uses the EELS filter system
+       (as described in the filter parameter block). Incoming log
+       messages  are  filtered  and on a filter match a specified
+       command or script is executed.  An arbitrary  string  that
+       uniquely  identifies  this parameter block.  The script to
+       execute when a match is detected by the  filter  parameter
+       block filter.  The username that the script should be exe-
+       cuted as. Currently all scripts are run as root. To run  a
+       script  as  any  other  user,  use This name of the filter
+       parameter block that will filter the log messages as  they
+       pass  through. Any matches that are detected by the filter
+       mechanism will trigger the execution of the script or com-
+       mand named in script.
+
+EExxaammpplleess
+       An  example  of  a  /etc/default/eels file is shown below:
+       real-time-import  syslog  {                  syslog   sys-
+       log_sink;                 filter  syslog_filter; }
+
+       filter  syslog_filter  {                  exclude "LogSys-
+       temsSource == 'in.telnetd'";                 include  all;
+       }
+
+       log-destination   syslog_sink  {                  database
+       defaultdb;                 table    events; }
+
+       real-time-import     audit     {                     audit
+       audit_sink; }
+
+       log-destination   audit_sink   {                  database
+       auditdb;                 table    events; }
+
+       real-time-import eels_user {
+               EELSUser  httpd-80_sink;
+               filter  http_filter; }
+
+       dynamic-import errors_log {
+                filename /usr/ns-home/httpd-80/logs/errors;
+                filter /etc/eels/bin/process_errors_file;
+                growth 20B; }
+
+       filter http_filter {
+               exclude  "EventSpecificInformation  ~  'successful
+       server startup'";
+               include all; }
+
+       log-destination httpd-80_sink {
+               database httpd_db;
+               table    events; }
+
+                                                                6
+
+eels_config(4eels)                             eels_config(4eels)
+
+       database-info   dbinfo   {                   database-name
+       EELS_Admin;                             database-start-cmd
+       /etc/eels/mysql/bin/safe_mysqld;                 database-
+       log-file  /etc/eels/logs/mysql.log; }
+
+RReeffeerreenncceess
+
+                                                                7
+

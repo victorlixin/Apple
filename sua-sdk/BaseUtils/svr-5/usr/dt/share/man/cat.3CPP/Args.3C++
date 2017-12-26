@@ -1,0 +1,352 @@
+
+
+Args(3C++)                                             Args(3C++)
+
+SSyynnooppssiiss
+       #include <Args.h> namespace SCO_SC {
+
+       class Args { public:
+
+       //  Constructor
+            enum { intermix = ..., plusoptions = ... };
+            Args(int argc, const char*const* argv,
+                 const char* optstr, int bits = 0,
+                 const char*const* keyword_options = 0);
+
+       //  Test options and get values
+
+            int isoptset(char opt) const;
+            int isoptset(const char* key) const;
+            char flag(char opt) const;
+            char flag(const char* key) const;
+            const char* value(char opt) const;
+            const char* value(const char* key) const;
+            const char* subvalue(char opt,
+                 const char* name) const;
+            const char* subvalue(const char* key,
+                 const char* name) const;
+            const char*arg(int i) const;
+            const char* progname() const;
+            int nargs() const;
+            int error() const;
+
+       //  Objections
+
+            static Objection unexpected_opt;
+            static Objection missing_opt;
+            static Objection missing_val;
+            static Objection opt_as_val;
+        };
+
+       class Opt { public:
+            char flag() const;
+            char chr() const;
+            const char* keyword() const;
+            const char* value() const; };
+
+       class Subopt { public:
+            const char* name() const;
+            const char* value() const;
+         };
+
+       class Optsiter { public:
+            Optsiter(const Args& args);
+            int next(const Opt*& opt);
+            const Args* the_args() const; };
+
+       class Suboptsiter { public:
+            Suboptsiter(const Opt& opt);
+
+                                                                1
+
+Args(3C++)                                             Args(3C++)
+
+            int next(const Subopt*& subopt);
+            const Opt* the_opt() const; };
+
+       class Argsiter { public:
+            Argsiter(const Args& args);
+            int next(const char*&arg);
+            const Args* the_args() const; }; }
+
+DDeessccrriippttiioonn
+       A  UNIX  command  is  invoked with a series of options and
+       non-option arguments.  An option is a letter (or  keyword;
+       see below) preceded by a "-" (and optionally by a "+"; see
+       below).   The "-" (and optionally "+") character is called
+       the option's flag.  An option may be followed by a charac-
+       ter string, called its  value.   White  space  between  an
+       option and its value is optional.
+
+       A collection of options, none of which have values, may be
+       specified in an option block, for example, "-abc".  Alter-
+       natively, they may be specified individually; for example,
+       "-a -b -c".  The two forms are equivalent.    (Of  course,
+       if  "+"  is  specified as an option flag, then "+" and "-"
+       options must be specified separately.)
+
+       Some option values are further broken up  into  suboptions
+       (see below).
+
+       The  leftmost  command  line  argument  that is neither an
+       option, option block, nor option  value  is  an  argument.
+       All  command  line  arguments to the right of the leftmost
+       argument are also arguments, regardless  of  whether  they
+       start with a flag.  However, if intermixing of options and
+       arguments is desired, this can  be  optionally  specified.
+       In  either  case,  the  special option "--" can be used to
+       indicate that all command line arguments to the right  are
+       to  be  treated  as  arguments, regardless of whether they
+       start with a flag.
+
+       The Args class scans the command line and finds all of the
+       options,  values,  suboptions,  and arguments.   These are
+       saved in the Args object and can be subsequently  examined
+       (but not modified).
+
+   KKeeyywwoorrdd ooppttiioonnss
+       Options  consisting  of  more  than a single character are
+       called keyword options.  For example, on some machines, in
+           cc -dryrun -c foo.c
+
+       "dryrun"  is  a keyword option.   Specifying a string as a
+       keyword option to Args causes any  command  line  argument
+       which  matches  that  string  (prefixed  by  a flag) to be
+       treated as that keyword option, even if it consists  of  a
+       sequence of legal single-character options.
+
+                                                                2
+
+Args(3C++)                                             Args(3C++)
+
+   SSuubbooppttiioonnss
+       The  value  of an option specified as having suboptions is
+       assumed to be a series of one or more strings separated by
+       ","s  with  no  intervening spaces.  Each suboption can be
+       either a simple string name of the suboption), or  a  name
+       followed  by  an "=" followed by another string (the value
+       of the suboption).
+
+       For example, suppose a program was invoked as follows:
+           foo -O alpha=tom,beta,gamma=harry
+
+       Assuming that option "O" was specified  as  having  subop-
+       tions,  the  first  suboption  has  name "alpha" and value
+       "tom", the second suboption has name "beta"  and  value  "
+       (the  null  string),  and  the  third  suboption  has name
+       "gamma" and value "harry".
+
+AArrggss
+   CCoonnssttrruuccttoorrss
+       enum { intermix = ..., plusoptions = ... }; Args(int argc,
+       const char*const* argv,
+           const char* optstr, int bits = 0,
+           const char*const* keyword_options = 0);
+
+       The  first  two  arguments are the argc and argv arguments
+       with which  main  is  invoked.   Each  non-keyword  option
+       acceptable  to the program must be contained in the string
+       pointed to by optstr.  If the option is to have  a  value,
+       the letter must be followed by a ":".  If the option is to
+       have suboptions, the letter must be followed by a ";".  If
+       bits&intermix  is  true,  then  intermixing of options and
+       arguments is allowed.  If bits&plusoptions is  true,  then
+       "+" is treated as an option flag
+
+       The optional keyword_options is a pointer to a NULL-termi-
+       nated list of allowed keyword options.  If  a  keyword  in
+       this  list  is to have a value, its final character should
+       be a ":".  If a keyword in this list  is  to  have  subop-
+       tions,  its  final  character should be a ";".  (The final
+       ":" or ";" is not considered part of the keyword.)
+
+       Copy construction and assignment are not defined.
+
+   TTeesstt ooppttiioonnss aanndd ggeett vvaalluueess
+       int  isoptset(char  opt)const;  int  isoptset(const  char*
+       key)const;
+
+       Returns  nonzero  if  the (keyword) option appeared on the
+       command line.  char flag(char opt)const;  char  flag(const
+       char* key)const;
+
+       Returns  the  flag  with which the rightmost occurrence of
+       the (keyword) option on the command line was set.  If  the
+       option was not set, the character "\0" is returned.  const
+
+                                                                3
+
+Args(3C++)                                             Args(3C++)
+
+       char* value(char opt)const; const char* value(const  char*
+       key)const;
+
+       Returns  a  pointer to the value specified with the right-
+       most occurrence of the (keyword)  option  on  the  command
+       line.   If  the  option was not set or no value was speci-
+       fied,  the  0  pointer  is  returned.   const  char*  sub-
+       value(char  opt,  const char* name)const; const char* sub-
+       value(const char* key,
+           const char* name)const;
+
+       Returns a pointer to the string that was specified as  the
+       value  of  the  rightmost occurrence of the suboption with
+       the given  name  for the rightmost occurrence of (keyword)
+       option on the command line.  If the name  was given but no
+       value provided, the return value will be a pointer to  the
+       null string.  If the option was not specified, or the name
+       was not specified in  the  rightmost  occurrence  of  this
+       option,  then  the  0  pointer  is  returned.  const char*
+       arg(int i)const;
+
+       Returns the i'th (non-option) argument, or 0 if there  was
+       no  such argument.  The arguments are numbered starting at
+       zero.  Note that argv[0], conventionally the program name,
+       is  not  accessible  via  this  function.  (See progname.)
+       const char* progname()const;
+
+       Returns a pointer  to  the  program  name,  argv[0].   int
+       nargs()const;
+
+       Returns  the  number of (non-option) arguments.  Note that
+       argv[0], conventionally the program name, is not  included
+       in this count.  int error()const;
+
+       Returns  nonzero  if any of the Objections unexpected_opt,
+       missing_opt, or missing_val  were  raised.   Programs  can
+       use  this  if  they  wish  to  exit  in response to option
+       errors.
+
+   OObbjjeeccttiioonnss
+       static Objection unexpected_opt;
+
+       Raised when an option not  specified  in  the   legal_opts
+       list  is encountered in the input.  The default and recov-
+       ery action is to print a message and ignore the unexpected
+       option.  static Objection missing_opt;
+
+       Raised  when  "-" appears by itself, without any following
+       option letters.  The default and  recovery  action  is  to
+       print  a  message  and  ignore the  "-".  static Objection
+       missing_val;
+
+       Raised when an option specified in the  legal_opts list as
+       requiring a value (i.e., followed by a ":") is encountered
+
+                                                                4
+
+Args(3C++)                                             Args(3C++)
+
+       in the input without a  value.   This  can  occur  if  the
+       option  requiring a value is in an option block, or is the
+       last field on the command line.
+
+       Note that  getopt(3C)   does  not  currently  enforce  the
+       requirement  that  options  taking  values cannot be mixed
+       with options that do not take values.   However,  it  does
+       state the requirement and warns that it may be enforced in
+       a future release.  We enforce it now since failure  to  do
+       so would conceal important errors.
+
+       The  default and recovery action is to print a message and
+       ignore the option.  static Objection opt_as_val;
+
+       Raised when the value for an option  begins  with  a  flag
+       character.   This  usually  means  that  the value for the
+       option was omitted.  However, in order  to  be  consistent
+       with  UNIX handling of this case, the default and recovery
+       actions are to ignore the (probable) error and  treat  the
+       string  beginning  with the flag character as the value of
+       the preceding option.
+
+       An application can catch this Objection to handle the case
+       differently.   The  argument  passed to the user-appointed
+       handler will be the option whose value appears to be miss-
+       ing.   If  the  user handler returns, the suspicious value
+       will be assigned to this option.
+
+   IItteerraattoorrss
+       Options, suboptions, and arguments  are  returned  in  the
+       order in which they appeared on the command line.
+
+OOpptt
+       Value  returned  by  Optsiter  (see  below).   char flag()
+       const;
+
+       Returns the flag associated with this option.  char  chr()
+       const;
+
+       If  this  option  is  a  non-keyword  option,  returns the
+       option, otherwise returns  "\0".   const  char*  keyword()
+       const;
+
+       If  this  option is a keyword option, returns a pointer to
+       the keyword, otherwise returns  0.   const  char*  value()
+       const;
+
+       Returns  a  pointer  to  the  value  associated  with this
+       option, or 0 if no value was specified.
+
+       Copy construction and assignment are not defined.
+
+SSuubboopptt
+       Value returned by Suboptsiter (see  below).   const  char*
+
+                                                                5
+
+Args(3C++)                                             Args(3C++)
+
+       name() const;
+
+       Returns  a  pointer  to the name of this suboption.  const
+       char* value() const;
+
+       Returns a pointer to the value of this suboption.   If  no
+       value  was provided, the return value will be a pointer to
+       the null string.
+
+       Copy construction and assignment are not defined.
+
+OOppttssiitteerr
+       Optsiter(const Args& args);
+
+       Iterates over all the options.  int next(const Opt*& opt);
+
+       Sets   opt   to  a pointer to an Opt object describing the
+       next option, or 0 if there are no more  options.   Returns
+       nonzero   if   there  was  another  option.   const  Args*
+       the_args()const;
+
+       Returns a pointer to  the   Args   object  being  iterated
+       over.
+
+SSuubbooppttssiitteerr
+       Suboptsiter(const Opt& opt);
+
+       Iterates  over  all of the suboptions of the given option.
+       int next(const Subopt*& subopt);
+
+       Sets  subopt  to a pointer to a Subopt  object  describing
+       the  next suboption, or 0 if there are no more suboptions.
+       Returns nonzero if there  was  another  suboption.   const
+       Opt* the_opt()const;
+
+       Returns a pointer to the  Opt  object being iterated over.
+
+AArrggssiitteerr
+       Argsiter(const Args& args);
+
+       Iterates  over  all  the  (non-option)   arguments.    int
+       next(const char*&arg);
+
+       Sets  arg  to a pointer to the next (non-option) argument.
+       Returns nonzero if  there  was  another  argument.   const
+       Args* the_args()const;
+
+       Returns  a  pointer  to  the   Args  object being iterated
+       over.
+
+RReeffeerreenncceess
+
+                                                                6
+

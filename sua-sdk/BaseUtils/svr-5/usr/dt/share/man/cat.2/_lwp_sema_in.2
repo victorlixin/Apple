@@ -1,0 +1,92 @@
+
+
+_lwp_sema_init(2)                               _lwp_sema_init(2)
+
+SSyynnooppssiiss
+       #include <synch.h>
+
+       int _lwp_sema_init(_lwp_sema_t *sema, int count);
+
+   PPaarraammeetteerrss
+       pointer  to semaphore to initialize number of resources to
+       be protected by the semaphore
+
+DDeessccrriippttiioonn
+       _lwp_sema_init initializes the semaphore sema to  a  known
+       state.   Once  initialized,  the semaphore can be used any
+       number of times without being re-initialized.  A semaphore
+       should  not  be re-initialized while lightweight processes
+       (LWPs) are waiting at the semaphore.
+
+   ccoouunntt ppaarraammeetteerr
+       count, which must  be  greater  than  or  equal  to  zero,
+       defines  the  initial  count of resources protected by the
+       semaphore.  If count is 1, the semaphore will be a  binary
+       semaphore.  If count is greater than 1, the semaphore will
+       be a counting, or general, semaphore.
+
+   sseemmaa ppaarraammeetteerr
+       sema points to the semaphore to be initialized.
+
+   RReettuurrnn vvaalluueess
+       On success sema is initialized and the  operation  returns
+       zero.
+
+   EErrrroorrss
+       If   any   of   the   following  conditions  is  detected,
+       _lwp_sema_init fails and returns the corresponding  value:
+       Invalid argument specified.
+
+UUssaaggee
+       Conceptually, a semaphore is a non-negative integer count.
+       Semaphores are typically  used  to  coordinate  access  to
+       resources.    The  semaphore  count  is  initialized  with
+       _lwp_sema_init to the number of free resources.  LWPs then
+       atomically  increment  the  count with _lwp_sema_post when
+       resources are added and  atomically  decrement  the  count
+       with  _lwp_sema_wait when resources are removed.  When the
+       semaphore count becomes  zero,  indicating  that  no  more
+       resources  are  present,  LWPs  trying  to  decrement  the
+       semaphore with _lwp_sema_wait will block until  the  count
+       becomes greater than zero.
+
+       Semaphores  are  classified as one of two types: binary or
+       counting.
+
+       Binary semaphores (those that take on only values of 1 and
+       0)  are  similar  in  use and purpose to mutex locks: they
+
+                                                                1
+
+_lwp_sema_init(2)                               _lwp_sema_init(2)
+
+       typically are used to ensure that only one LWP at  a  time
+       executes  a  critical  section  of code.  When used before
+       access to shared data, they guarantee the integrity of the
+       data.
+
+       Counting or general semaphores (those with a count greater
+       than 1) are typically used to protect a pool of resources.
+
+       Note that semaphores protect data only when the convention
+       of calling _lwp_sema_wait and _lwp_sema_post is faithfully
+       followed before and after any access of the data.
+
+   WWaarrnniinnggss
+       _lwp_sema_init  does  not examine the sema argument before
+       initializing it.  If _lwp_sema_init is  called  more  than
+       once  for the same semaphore, it will overwrite its state.
+       It  is  the   user's   responsibility   to   ensure   that
+       _lwp_sema_init is only called once for each semaphore.
+
+       Operations  on  semaphores initialized with _lwp_sema_init
+       are not recursive; an LWP can block itself if it  attempts
+       to reacquire a semaphore that it has already acquired.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Lightweight  processes  (LWPs) are internal interfaces and
+       are subject to change.  Their use should be avoided.
+
+                                                                2
+

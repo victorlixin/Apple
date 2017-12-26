@@ -1,0 +1,87 @@
+
+
+putc(3S)                                                 putc(3S)
+
+SSyynnooppssiiss
+       #include <stdio.h>
+
+       int putc(int c, FILE *stream);
+
+       int putc_unlocked(int c, FILE *stream);
+
+       int putchar(int c);
+
+       int putchar_unlocked(int c);
+
+       int fputc(int c, FILE *stream);
+
+       int putw(int w, FILE *stream);
+
+DDeessccrriippttiioonn
+       putc  and  putc_unlocked write c (converted to an unsigned
+       char) onto the output stream (see at  the  position  where
+       the  file  pointer  (if defined) is pointing, and advances
+       the file pointer appropriately.  If the file  cannot  sup-
+       port  positioning  requests,  or  stream  was  opened with
+       append mode, the  character  is  appended  to  the  output
+       stream.  putchar(c) is defined as putc(c, stdout).
+
+       putc_unlocked  and putchar_unlocked provide unsynchronized
+       character I/O that require explicit synchronization around
+       their use when multiple threads are performing I/O.  These
+       two are defined as  macros  when  -REENTRANT  is  defined.
+       putchar_unlocked  is  defined as putc_unlocked(c, stdout).
+       They may be used safely in a multi-threaded application if
+       and  only  if they are called while the calling thread has
+       exclusive access to stream for  putc_unlocked  and  stdout
+       for  putchar_unlocked.   Exclusive access is granted using
+       the lockfile or ftrylockfile functions.
+
+       fputc behaves like putc, but is a function rather  than  a
+       macro.   fputc  runs  more  slowly than putc, but it takes
+       less space per invocation and its name can be passed as an
+       argument to a function.
+
+       putw  writes  the  word (that is, integer) w to the output
+       stream (where the file pointer, if defined, is  pointing).
+       The  size  of  a word is the size of an integer and varies
+       from machine to machine.  putw neither assumes nor  causes
+       special alignment in the file.
+
+   EErrrroorrss
+       On  success,  these functions (with the exception of putw)
+       each return the value they  have  written.   putw  returns
+       ferror  (stream).   Otherwise,  these functions return the
+       constant EOF and set errno to indicate the  error.   If  a
+       write  error occurs, the error indicator for the stream is
+       also set.  This result will occur,  for  example,  if  the
+       file  stream is not open for writing or if the output file
+
+                                                                1
+
+putc(3S)                                                 putc(3S)
+
+       cannot grow.
+
+       If either the stream is unbuffered or the stream's  buffer
+       needed  to be flushed, and an attempt was made to write at
+       or beyond the offset maximum, the functions putc, putchar,
+       fputc, and putw fail.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Because  it  is  implemented  as a macro, putc evaluates a
+       stream argument more than once.   In  particular,  putc(c,
+       *f++);  doesn't  work  sensibly.   fputc  should  be  used
+       instead.
+
+       Because of possible differences in word  length  and  byte
+       ordering,  files written using putw are machine-dependent,
+       and may not be read using getw on a different processor.
+
+       Functions exist for all the above defined macros.  To  get
+       the  function  form, the macro name must be undefined (for
+       example, #undef putc).
+
+                                                                2
+

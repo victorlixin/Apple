@@ -1,0 +1,220 @@
+
+
+modadmin(1M)                                         modadmin(1M)
+
+SSyynnooppssiiss
+       modadmin -l modname . . . | pathname . . .
+
+       modadmin -u modid . . .
+
+       modadmin -U modname . . .
+
+       modadmin -q modid . . .
+
+       modadmin -Q modname . . .
+
+       modadmin -s | S
+
+       modadmin -d dirname | D
+
+DDeessccrriippttiioonn
+       modadmin is the administrative command for loadable kernel
+       modules.  It performs  the  following  functions:  load  a
+       loadable  module  into  a running system unload a loadable
+       module from a running system display the status of a load-
+       able  module(s)  that is currently loaded modify the load-
+       able modules search path
+
+       The loadable modules feature lets you add a  module  to  a
+       running  system without rebooting the system or rebuilding
+       the kernel.  When the module is  no  longer  needed,  this
+       feature  also  lets  you  dynamically  remove  the module,
+       thereby freeing system resources for other use.
+
+       Types of modules that can be dynamically  loaded  include:
+       device drivers (block, character, STREAMS and pseudo) Host
+       Bus Adapter (HBA) drivers  STREAMS  modules  TCP/IP  stack
+       modules  file  systems exec modules system calls miscella-
+       neous modules, such as modules containing code for support
+       routines  shared among multiple loadable modules which are
+       not needed in the statically configured kernel
+
+       Loadable modules are maintained in individual object files
+       (.o  files)  in  the  same manner as statically configured
+       modules.  Unlike static modules, loadable modules: are not
+       linked to the kernel until they are needed must be config-
+       ured into the system and registered with the running  ker-
+       nel  using  the command with the -M option before they can
+       be loaded must be configured in  loadable  form  (requires
+       writing  additional  module  initialization or ``wrapper''
+       code) can be loaded and unloaded by the user, as required,
+       using  the  modadmin  command,  or  by during every system
+       reboot, using the command (called  a  demand  load/unload)
+       can be loaded and unloaded by the kernel itself (called an
+       auto load/unload--see ``Notices'' section)
+
+       The modadmin options have the following meanings: Load the
+       named  module(s)  modname  using  the current value of the
+       loadable modules search path to locate the module's object
+
+                                                                1
+
+modadmin(1M)                                         modadmin(1M)
+
+       file on disk.
+
+       This  option  searches for a matching file in all directo-
+       ries specified in the loadable modules  search  path.   By
+       default, the search pathname is /etc/conf/mod.d.
+
+       The load operation performs all tasks associated with link
+       editing the module to the kernel  and  making  the  module
+       accessible  to the system.  If the module depends on other
+       loadable modules (as defined in /etc/conf/mdevice.d),  and
+       these  modules  are  not  currently  loaded, modadmin will
+       automatically load the dependent modules during  the  load
+       operation.
+
+       When  loading  completes,  an  integer modid prints on the
+       standard output to identify the module(s) that was loaded.
+       Same  as -l modname, except the absolute pathname pathname
+       is used to locate the module's object  file.   Unload  the
+       module(s) identified by the integer value modid.
+
+       If  modid  specifies 0 (zero), modadmin attempts to unload
+       all loadable modules.
+
+       The unload operation performs all  tasks  associated  with
+       disconnecting the module from the kernel and releasing any
+       memory acquired by the module.  When unloading  completes,
+       an integer modid prints on the standard output to identify
+       the module(s) that was unloaded.
+
+       If the module(s) to be unloaded are currently in-use,  are
+       dependents  of a loadable module that is currently loaded,
+       or are currently being  loaded  or  unloaded,  the  unload
+       request will fail.  Same as -u modid, except the module(s)
+       to be unloaded is specified by name  modname.   Print  the
+       status  of  the loaded module(s) identified by the integer
+       value modid.
+
+       Information returned by this option includes: module iden-
+       tifier  (modid) the module's pathname the module's virtual
+       load address amount of memory the module occupies the mod-
+       ule's  reference  count  the  module's dependent count the
+       module's unload delay value the module's descriptive  name
+       the type of module depending on the type of module, either
+       the module's character major number, block  major  number,
+       file  system  switch number, or STREAMS switch number Same
+       as -q modid, except the module(s) for which status  infor-
+       mation  is  to  be  reported is specified by name modname.
+       Print an abbreviated  status  for  all  modules  currently
+       loaded.
+
+       This  option  returns a listing of module names and module
+       identifiers only.  Print the full status for  all  modules
+       currently loaded.
+
+                                                                2
+
+modadmin(1M)                                         modadmin(1M)
+
+       This   option  returns  status  information  of  the  form
+       returned by the -q option.  Prepend the pathname  pathname
+       to  the  current loadable modules search path, where path-
+       name specifies directories that should  be  searched:  for
+       all  subsequent  demand loads initiated by a modadmin com-
+       mand with the option -l and a named modname for all subse-
+       quent  loads performed by the kernel's auto-load mechanism
+       (see ``Notices'' section) prior to searching any  directo-
+       ries  already  prepended  to  the  search  path by a prior
+       modadmin command with the option -d prior to searching the
+       default  search  path  /etc/conf/mod.d,  which  is  always
+       searched, and is always searched last
+
+       pathname must specify an absolute pathname or  a  list  of
+       absolute  pathnames  delimited by colons.  The directories
+       identified by pathname do not have to exist on the  system
+       at  the  time  the request to modify the search path using
+       modadmin is made.  If these directories do  not  exist  at
+       the  time  a  load takes place, the load operation ignores
+       them.
+
+       All modifications to  the  search  path  made  using  this
+       option  take  effect immediately and affect all subsequent
+       loads (demand and auto-load) and all users on the  system.
+       Reset  the  loadable  modules  search  path to its default
+       value, /etc/conf/mod.d.  The reset  takes  effect  immedi-
+       ately  and  affects all subsequent loads (demand and auto-
+       load) and all users on the system.
+
+   EErrrroorrss
+       In the following conditions, modadmin fails and sets errno
+       to: failure in loading a loadable exec module Command line
+       input contained one or more syntax errors.  See the SYNOP-
+       SIS  section  for  the  correct usage.  Unable to load the
+       module modid because the module does not exist.  Unable to
+       load  a  module  because  the  module is currently in-use.
+       Unable to unload or obtain status for a module because the
+       module id string specified a non-numeric value.  Unable to
+       unload or obtain status for module modid because the  mod-
+       ule  does  not  exist.  Unable to obtain status for module
+       modid because the module is currently unloaded.
+
+FFiilleess
+NNoottiicceess
+   AAuuttoo llooaaddiinngg
+       Auto-load occurs when  the  kernel  detects  a  particular
+       loadable  module  is required to accomplish some task, but
+       is not currently loaded.  For example, if the task were  a
+       mount  of a file system, and the loadable module that sup-
+       ports the file system was not  loaded,  the  kernel  would
+       automatically  load the file system module.  Once the mod-
+       ule was loaded, the mount would take place.
+
+       Auto-unload occurs when the kernel detects that the amount
+
+                                                                3
+
+modadmin(1M)                                         modadmin(1M)
+
+       of  available  memory  is  low.   At this time, the kernel
+       begins unloading all modules that are  not  currently  in-
+       use--and  that  have  not been used for some predetermined
+       amount of time--to reclaim the memory allocated  to  these
+       modules.   Unloading  continues until the amount of avail-
+       able memory reaches a predetermined high  water  mark,  or
+       the  list  of modules that are candidates for unloading is
+       exhausted.  The amount of time  that  must  elapse  before
+       unused  modules are considered candidates for unloading is
+       controlled by the value of the  global  tunable  parameter
+       DEF_UNLOAD_DELAY in /etc/conf/mtune.d.  Individual modules
+       can override the value of the global auto-unload delay  by
+       specifying  their  own  auto-unload  delay  value in their
+       Mtune files.
+
+       Modules that are demand loaded using the modadmin  command
+       cannot be auto unloaded by the kernel.  If a demand-loaded
+       module is no longer needed  in  the  system,  it  must  be
+       demand-unloaded.   If  a demand unload for a loaded module
+       fails (because the module  is  in-use,  for  example)  the
+       unload  mechanism will add the module to a list of modules
+       that are candidates for the next auto-unload.
+
+   LLooaaddaabbllee HHBBAA ddrriivveerr ccoonnssiiddeerraattiioonnss
+       Loadable HBA drivers: must be demand loaded  by  the  user
+       via the modadmin command, or (during system reboot) demand
+       loaded by init via the idmodload command can not  be  auto
+       loaded can not be unloaded (demand or auto)
+
+   SSyysstteemm pprrooffiilleerr
+       When  the  system profiler prf is turned on, loadable mod-
+       ules are locked into memory and cannot be unloaded.   Mod-
+       ules can continue to be loaded with profiling enabled, but
+       these modules will also become locked.  When profiling  is
+       disabled,  the locks for all loadable modules are removed.
+
+RReeffeerreenncceess
+
+                                                                4
+

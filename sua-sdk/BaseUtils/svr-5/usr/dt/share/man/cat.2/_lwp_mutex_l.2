@@ -1,0 +1,68 @@
+
+
+_lwp_mutex_lock(2)                             _lwp_mutex_lock(2)
+
+SSyynnooppssiiss
+       #include <synch.h>
+
+       int _lwp_mutex_lock(lwp_mutex_t *mutex);
+
+   PPaarraammeetteerrss
+       pointer to mutex to be locked
+
+DDeessccrriippttiioonn
+       _lwp_mutex_lock is used to apply the mutual exclusion lock
+       on a mutex on behalf of the  calling  lightweight  process
+       (LWP).   The  parameter mutex points to the mutex on which
+       the lock is to be applied.
+
+       The  mutex  must  previously  have  been  initialized.   A
+       lwp_mutex_t  object  filled  with  zeros  (for example, by
+       static initialization) is a valid  unlocked  setting.   If
+       the mutex is already locked upon entry, the operation sus-
+       pends the calling LWP until the mutex becomes available.
+
+       From the point of view of the caller,  _lwp_mutex_lock  is
+       atomic:  even  if interrupted by a signal or a fork opera-
+       tion, _lwp_mutex_lock will not return until it  holds  the
+       locked  mutex.   As  a  consequence, if _lwp_mutex_lock is
+       interrupted, an error indication such as  EINTR  is  never
+       returned to the caller.
+
+       If an LWP waiting on a mutex lock is interrupted by a sig-
+       nal, the signal handler will run, but  _lwp_mutex_lock  is
+       always restarted so the lock is held on return.
+
+   RReettuurrnn vvaalluueess
+       _lwp_mutex_lock  leaves  the mutex in the locked state and
+       returns zero to the caller on success, or an error  number
+       for failure, as described below.
+
+   EErrrroorrss
+       If   any   of   the   following  conditions  is  detected,
+       _lwp_mutex_lock fails and returns the corresponding value:
+       The  mutual  exclusion  variable  pointed  to  by mutex is
+       invalid.   The  mutex  parameter  points  to  an   illegal
+       address.   (This error may not be detected; a SIGSEGV sig-
+       nal may be posted  to  the  faulting  LWP  if  an  illegal
+       address is used.)
+
+UUssaaggee
+       The locks acquired with _lwp_mutex_lock should be released
+       with _lwp_mutex_unlock.
+
+       Note that this primitive is used at the  LWP  level  only,
+       and should not be used by threads.
+
+RReeffeerreenncceess
+
+                                                                1
+
+_lwp_mutex_lock(2)                             _lwp_mutex_lock(2)
+
+NNoottiicceess
+       Lightweight  processes  (LWPs) are internal interfaces and
+       are subject to change.  Their use should be avoided.
+
+                                                                2
+

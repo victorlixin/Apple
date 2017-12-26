@@ -1,0 +1,208 @@
+
+
+lber-encode(3ldap)                             lber-encode(3ldap)
+
+SSyynnooppssiiss
+       #include <lber.h>
+
+       typedef struct berelement {
+           char             *ber_buf;
+           char             *ber_ptr;
+           char             *ber_end;
+           struct seqorset  *ber_sos;
+           int              ber_tag;
+           int              ber_usertag; } BerElement;
+
+       typedef struct sockbuf {
+           int              sb_sd;
+           BerElement       sb_ber; } Sockbuf;
+
+       BerElement *ber_alloc();
+
+       ber_flush(Sockbuf *sb, BerElement *ber, int freeit);
+
+       ber_printf(BerElement *ber, char *fmt [, arg... ] );
+
+       ber_put_int(BerElement *ber, long num, char tag);
+
+       ber_put_ostring(BerElement  *ber, char *str, unsigned long
+       len, char tag);
+
+       ber_put_string(BerElement *ber, char *str, char tag);
+
+       ber_put_null(BerElement *ber, char tag);
+
+       ber_put_boolean(BerElement *ber, int bool, char tag);
+
+       ber_put_bitstring(BerElement *ber, char  *str,  int  blen,
+       char tag);
+
+       ber_start_seq(BerElement *ber, char tag);
+
+       ber_start_set(BerElement *ber, char tag);
+
+       ber_put_seq(BerElement *ber);
+
+       ber_put_set(BerElement *ber);
+
+DDeessccrriippttiioonn
+       These routines provide a subroutine interface to a simpli-
+       fied implementation of the Basic Encoding Rules of  ASN.1.
+       The  version  of  BER  these  routines  support is the one
+       defined for the LDAP protocol.  The encoding rules are the
+       same  as  BER,  except that only definite form lengths are
+       used, and bitstrings and octet strings are always  encoded
+       in primitive form. In addition, these lightweight BER rou-
+       tines restrict tags and class to fit  in  a  single  octet
+       (this  means  the actual tag must be less than 31). When a
+       tag is  specified,  it  refers  to  the  tag,  class,  and
+
+                                                                1
+
+lber-encode(3ldap)                             lber-encode(3ldap)
+
+       primitive  or  constructed  bit  in the first octet of the
+       encoding. This manual page describes the encoding routines
+       in  the LBER library. See for details on the corresponding
+       decoding routines.
+
+       Normally, the only routines that  need  be  called  by  an
+       application  are  ber_alloc  to allocate a BER element for
+       encoding,  ber_printf  to  do  the  actual  encoding,  and
+       ber_flush  to  actually  write the element. The other rou-
+       tines are provided for those applications that  need  more
+       control  than  ber_printf provides. In general, these rou-
+       tines return the length of the element encoded, or  -1  if
+       an error occurred.
+
+       The  ber_alloc  routine is used to allocate a new BER ele-
+       ment. The ber_flush routine is used to actually write  the
+       element to a socket (or file) descriptor, once it has been
+       fully encoded (using ber_printf). The  sb  structure  con-
+       tains  the  descriptor  and  a  BerElement  used for input
+       buffering.  Only  the  sb_sd  field  is  relevant  to  the
+       ber_flush routine.
+
+       The  ber_printf routine is used to encode a BER element in
+       much the same way that the sprintf routine works (see  the
+       manual  page).  One  important difference, though, is that
+       some state information is kept with the ber  parameter  so
+       that  multiple  calls  can be made to ber_printf to append
+       things to the end of the BER element. ber_printf writes to
+       ber,  a  pointer  to  a  BerElement  such  as  returned by
+       ber_alloc.   It  interprets  and  formats  its   arguments
+       according  to the format string fmt. The format string can
+       contain the  following  characters:  Boolean.  An  integer
+       parameter should be supplied. A boolean element is output.
+       Integer. An integer parameter should be supplied. An inte-
+       ger element is output.  Bitstring. A char * pointer to the
+       start of the bitstring is supplied, followed by the number
+       of  bits  in the bitstring. A bitstring element is output.
+       Null. No parameter is required. A null element is  output.
+       Octet string. A char * is supplied, followed by the length
+       of the string pointed to. An octet string element is  out-
+       put.   Octet string. A null-terminated string is supplied.
+       An octet string  element  is  output,  not  including  the
+       trailing  NULL  octet.   Tag. An int specifying the tag to
+       give the next  element  is  provided.  This  works  across
+       calls.   Several octet strings. A null-terminated array of
+       char *'s is supplied. Note that a construct like '{v}'  is
+       required  to  get  an  actual  sequence of  octet strings.
+       Begin sequence. No parameter is required.   End  sequence.
+       No  parameter  is  required.   Begin  set. No parameter is
+       required.   End  set.  No  parameter  is  required.    The
+       ber_put_int  routine writes the integer element num to the
+       BER element ber.
+
+       The ber_put_boolean routine writes the boolean value given
+
+                                                                2
+
+lber-encode(3ldap)                             lber-encode(3ldap)
+
+       by bool to the BER element.
+
+       The ber_put_bitstring routine writes blen bits starting at
+       str as a bitstring value to the given BER  element.   Note
+       that blen is the length in bits of the bitstring.
+
+       The  ber_put_ostring  routine writes len bytes starting at
+       str to the BER element as an octet string.
+
+       The  ber_put_string  routine  writes  the  null-terminated
+       string  (minus the terminating '\0') to the BER element as
+       an octet string.
+
+       The ber_put_null routine writes a NULL element to the  BER
+       element.
+
+       The  ber_start_seq  routine is used to start a sequence in
+       the BER element. The  ber_start_set  routine  works  simi-
+       larly.   The  end  of the sequence or set is marked by the
+       nearest  matching  call  to  ber_put_seq  or  ber_put_set,
+       respectively.
+
+       The  ber_first_element  routine  is used to return the tag
+       and length of the first element in a set or  sequence.  It
+       also  returns  in  cookie  a  magic  cookie parameter that
+       should be passed to subsequent calls to  ber_next_element,
+       which returns similar information.
+
+RReettuurrnn vvaalluueess
+       If  an  error occurs during encoding, generally these rou-
+       tines return -1.
+
+       The return values for all of these functions are  declared
+       in the <lber.h> header file.
+
+EExxaammpplleess
+       Assuming the following variable declarations, and that the
+       variables have been assigned appropriately, an LBER encod-
+       ing of the following ASN.1 object: AlmostASearchRequest :=
+       SEQUENCE {
+           baseObject      DistinguishedName,
+           scope           ENUMERATED {
+               baseObject    (0),
+               singleLevel   (1),
+               wholeSubtree  (2)
+           },
+           derefAliases    ENUMERATED {
+               neverDerefaliases   (0),
+               derefInSearching    (1),
+               derefFindingBaseObj (2),
+               alwaysDerefAliases   3ldap
+           },
+           sizelimit       INTEGER (0 .. 65535),
+           timelimit       INTEGER (0 .. 65535),
+
+                                                                3
+
+lber-encode(3ldap)                             lber-encode(3ldap)
+
+           attrsOnly       BOOLEAN,
+           attributes      SEQUENCE OF  AttributeType  }  can  be
+       achieved  like  so:  int     scope, ali, size, time, attr-
+       sonly; char   *dn, **attrs;
+
+       /* ... fill in values ... */ if ( (ber =  ber_alloc())  ==
+       NULLBER )
+               /* error */
+
+       if ( ber_printf( ber, "{siiiib{v}}", dn, scope, ali,
+           size, time, attrsonly, attrs ) == -1 )
+               /* error */ else
+               /* success */
+
+RReeffeerreenncceess
+       Yeong,   W.,   Howes,   T.,   and   Hardcastle-Kille,  S.,
+       Lightweight Directory Access  Protocol,  OSI-DS-26,  April
+       1992.
+
+       Information  Processing  -  Open Systems Interconnection -
+       Model and Notation - Service Definition - Specification of
+       Basic  Encoding  Rules  for  Abstract Syntax Notation One,
+       International Organization for  Standardization,  Interna-
+       tional Standard 8825.
+
+                                                                4
+

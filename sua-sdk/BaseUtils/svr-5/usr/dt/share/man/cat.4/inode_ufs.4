@@ -1,0 +1,85 @@
+
+
+inode_ufs(4)                                         inode_ufs(4)
+
+SSyynnooppssiiss
+       #include  <sys/param.h>  #include  <sys/types.h>  #include
+       <sys/vnode.h> #include <sys/fs/ufs_inode.h>
+
+DDeessccrriippttiioonn
+       The inode is the focus of all local  file  activity  in  .
+       There  is  a  unique inode allocated for each active file,
+       each current directory, each mounted-on  file,  each  map-
+       ping,  and the root.  An inode is `named' by its dev/inum-
+       ber pair.  Data in icommon is read in from permanent inode
+       on  the actual volume.  struct inode { /* Filesystem inde-
+       pendent   view   of    this    inode.    */         struct
+       inode   *i_forw;  /*  hash  chain,  forward */      struct
+       inode   *i_back;  /*  hash  chain,  back  */        struct
+       inode   *i_freef; /*  free  chain,  forward */      struct
+       inode   *i_freeb; /*  free  chain,  back  */        struct
+       vnode   *i_vp;         /*  ptr  to  vnode  */       struct
+       idata   *i_data;  /* pointer to the pool data */
+
+       /* Filesystem dependent view of this inode. */       union
+       i_secure     *i_secp;  /*  extra  memory for security data
+       */      struct    vnode  i_vnode;     /*  vnode  for  this
+       inode */
+
+            struct    vnode   *i_devvp;    /* vnode for block I/O
+       */       ushort_t  i_flag;        /*  inode   flags   (see
+       below)  */       dev_t     i_dev;         /*  device where
+       inode resides  */       ino_t     i_number; /*  i  number,
+       1-to-1  with device address */      off_t     i_diroff; /*
+       offset in dir, where we found last                   entry
+       */       struct    fs  *i_fs; /*  file sys associated with
+       this inode */      struct    dquot *i_dquot;     /*  quota
+       structure       controlling       this       file       */
+            short     i_owner;  /* proc index of process  locking
+       inode */      short     i_count;  /* number of inode locks
+       for i_owner */      daddr_t   i_nextr;  /* next byte  read
+       offset (read-ahead) */      ulong     i_vcode;  /* version
+       code attribute */      long i_mapcnt; /* mappings to  file
+       pages  */       int  *i_map;        /*  block list for the
+       corresponding file */      int  i_opencnt;     /* count of
+       opens  for  this inode */      lid_t     i_dirofflid;   /*
+       last proc  changing  i_diroff  w/o  write
+       access  */      clock_t   i_stamp;  /* time when inode was
+       modified but not                   copied  to  the  buffer
+       cache */      struct    icommon i_ic;   };
+
+       struct  icommon {      o_mode_t  ic_smode; /*  0: mode and
+       type of file */      short     ic_nlink; /*  2: number  of
+       links  to  file */      o_uid_t   ic_suid;  /*  4: owner's
+       user id */      o_gid_t   ic_sgid;  /*  6:  owner's  group
+       id  */       quad ic_size;  /*  8: number of bytes in file
+       */
+       #ifdef _KERNEL      struct timeval  ic_atime;/*  16:  time
+       last  accessed */      struct timeval ic_mtime;/* 24: time
+
+                                                                1
+
+inode_ufs(4)                                         inode_ufs(4)
+
+       last modified */      nstruct timeval ic_ctime;/* 32: last
+       time  inode  changed  */ #else      time_t    ic_atime; /*
+       16:   time   last   accessed   */         long ic_atspare;
+            time_t    ic_mtime; /*  24:  time  last  modified  */
+            long ic_mtspare;      time_t    ic_ctime; /* 32: last
+       time   inode   changed   */       long ic_ctspare;  #endif
+            daddr_t   ic_db[NDADDR]; /* 40: disk block  addresses
+       */      daddr_t   ic_ib[NIADDR]; /* 88: indirect blocks */
+            long ic_flags; /* 100: status,  currently  unused  */
+            long ic_blocks;     /*  104:  blocks actually held */
+            long ic_gen;        /*  108:  generation  number   */
+            mode_t    ic_mode;  /*  112:  EFT  version  of mode*/
+            uid_t     ic_uid;        /* 116: EFT version  of  uid
+       */       gid_t     ic_gid;        /*  120:  EFT version of
+       gid */      ulong     ic_eftflag;    /* 124: indicate  EFT
+       version*/ };
+
+RReeffeerreenncceess
+       ufs-specific
+
+                                                                2
+

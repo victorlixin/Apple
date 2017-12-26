@@ -1,0 +1,102 @@
+mail.local(1)                                             mail.local(1)
+
+  mmaaiill..llooccaall
+
+  NNAAMMEE
+
+    mail.local - store mail in a mailbox
+
+  SSYYNNOOPPSSIISS
+
+    /usr/sbin/mail.local [[-[f|r] sender]] user...
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    MMaaiill..llooccaall reads the standard input up to an end-of-file and appends it to
+    each user's mail file. The user must be a valid user name.
+
+    The only option is as follows:
+    --ff sender
+        Specify the sender's name.
+    --rr sender
+        Same as --ff.
+
+    Individual mail messages in the mailbox are delimited by an empty line
+    followed by a line beginning with the string "From ". A line containing
+    the string "From ", the sender's name and a time stamp is prepended to
+    each delivered mail message. A blank line is appended to each message. A
+    greater-than character (">") is prepended to any line in the message which
+    could be mistaken for a "From " delimiter line.
+
+    Significant efforts have been made to ensure that mmaaiill..llooccaall acts as
+    securely as possible if the spool directory is mode 1777 or 755. The
+    default of mode 755 is more secure, but it prevents mail clients from
+    using username.lock style locking. The use of 1777 is more flexible in an
+    NFS shared-spool environment, so many sites use it. However, it does carry
+    some risks, such as attackers filling the spool disk. Some of these
+    problems may be alleviated by making the spool a separate filesystem, and
+    placing quotas on it. The use of any mode other than 1777 and 755 for the
+    spool directory is recommended against but may work properly.
+
+    The mailbox is always locked using fflloocckk(2) while mail is appended. Unless
+    the --LL flag is specified, a username.lock file is also used.
+
+    If the "biff" service is returned by ggeettsseerrvvbbyynnaammee(2), the biff server is
+    notified of delivered mail.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    The mmaaiill..llooccaall utility exits 0 on success, and >0 if an error occurs.
+
+  EENNVVIIRROONNMMEENNTT
+
+    TZ
+        Used to set the appropriate time zone on the timestamp.
+
+  FFIILLEESS
+    //ttmmpp//llooccaall..name
+        Temporary files
+    //vvaarr//mmaaiill//user
+        The mailbox directory for user
+
+  HHIISSTTOORRYY
+
+    A superset of mmaaiill..llooccaall (handling mailbox reading as well as mail
+    delivery) appeared in Version 7 AT&T UNIX as the program mmaaiill (no relation
+    to the Interix mmaaiillxx(1) or mmaaiill(1).
+
+  BBUUGGSS
+
+    Since sseennddmmaaiill(1) bases its idea of whether a message has been delivered
+    or not on the return value from mmaaiill..llooccaall, using quotas in /var/mail can
+    be problematic. By default, sseennddmmaaiill(1) will ask mmaaiill..llooccaall to deliver a
+    message to multiple recipients if possible. This causes problems in a
+    quota environment since a message may be delivered to some users but not
+    others due to disk quotas. Even though the message was delivered to some
+    of the recipients, mmaaiill..llooccaall will exit with an exit code >0, causing
+    sseennddmmaaiill(1) to attempt redelivery later. That means that some users will
+    keep getting the same message every time sseennddmmaaiill(1) runs its queue.
+
+    If you are running with disk quotas on //vvaarr//mmaaiill it is imperative that you
+    unset the "m" mailer flag for the 'local' mailer. To do this, locate the
+    line beginning with "Mlocal" in //eettcc//sseennddmmaaiill..ccff and remove the "m" from
+    the flags section, denoted by "F=". Alternately, you can override the
+    default mailer flags by adding the line:
+
+    define('LOCAL_MAILER_FLAGS', 'rn9')dnl
+
+    to your .mc file (this is the source file that is used to generate //eettcc//
+    sseennddmmaaiill..ccff).
+
+  SSEEEE AALLSSOO
+
+    _m_a_i_l(1)
+
+    _m_a_i_l_x(1)
+
+    _s_e_n_d_m_a_i_l(1)
+
+    _f_l_o_c_k(2)
+
+    _g_e_t_s_e_r_v_b_y_n_a_m_e(2)
+

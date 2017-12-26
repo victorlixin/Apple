@@ -1,0 +1,83 @@
+
+
+aio_cancel(3aio)                                 aio_cancel(3aio)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <aio.h>
+
+       struct   aiocb   *aio_cancel(int   fildes,   struct  aiocb
+       *aiocbp);
+
+       struct aiocb64 *aio_cancel64(int  fildes,  struct  aiocb64
+       *aiocbp);
+
+DDeessccrriippttiioonn
+       aio_cancel  allows  you  to cancel one or more outstanding
+       asynchronous I/O requests.  fildes and  key  are  used  to
+       identify the asynchronous I/O requests that should be can-
+       celed.
+
+       The aio_cancel function attempts to  cancel  one  or  more
+       asynchronous  I/O  requests  currently outstanding against
+       file descriptor fildes.  The aiocbp argument points to the
+       asynchronous I/O control block for a particular request to
+       be canceled.  If aiocbp is NULL,  all  outstanding  cance-
+       lable  asynchronous  I/O  requests  agains fildes are can-
+       celed.
+
+       Normal notification occurs for asynchronous I/O operations
+       that  are  successfully  canceled.   If there are requests
+       which cannot be canceled,  then  the  normal  asynchronous
+       completion  process  shall  take  place for those requests
+       when they are completed.
+
+       For requested operations that are  successfully  canceled,
+       the  associated  error  status is set to ECANCELED and the
+       return status is -1.  For requested  operations  that  are
+       not  successfully  canceled, the aiocbp is not modified by
+       aio_cancel.
+
+       If aiocbp is not NULL, and fildes does not have  the  same
+       value  as  the file descriptor with which the asynchronous
+       operation was initiated, unspecified results occur.
+
+RReettuurrnn vvaalluueess
+       The aio_cancel and aio_cancel64 functions return the value
+       AIO_CANCELED to the calling process if the requested oper-
+       ation(s) were  canceled.   The  value  AIO_NOTCANCELED  is
+       returned  if  at  least  one of the requested operation(s)
+       cannot be canceled because it is  in  progress.   In  this
+       case,  the  state  of the other operations, if any, refer-
+       enced in a call to aio_cancel or aio_cancel64 is not indi-
+       cated  by  the return value of aio_cancel or aio_cancel64.
+       The application may determine the  state  of  affairs  for
+       these  operations  by using aio_error or aio_error64.  The
+       value AIO_ALLDONE is returned if  all  of  the  operations
+       have  already  completed.  Otherwise, the functions return
+
+                                                                1
+
+aio_cancel(3aio)                                 aio_cancel(3aio)
+
+       -1, and set errno to indicate the error.
+
+   EErrrroorrss
+       Under the following conditions,  aio_cancel  and  aio_can-
+       cel64  fail  and  set errno to: fildes is not a valid file
+       descriptor.  No asynchronous I/O has ever  been  requested
+       for  fildes.   There  were  no internal kernal aio control
+       blocks available to service the request (number of  kernel
+       aio control blocks is tunable via the NUMAIO kernel param-
+       eter; see aio_cancel called on SVR4.2.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       aio_cancel64 supports large files, but is otherwise  iden-
+       tical to aio_cancel.  For details on programming for large
+       file capable applications, see on intro(2).
+
+                                                                2
+

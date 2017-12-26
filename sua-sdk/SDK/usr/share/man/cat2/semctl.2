@@ -1,0 +1,167 @@
+semctl(2)                                                     semctl(2)
+
+  sseemmccttll(())
+
+  NNAAMMEE
+
+    semctl() - semaphore control operations
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/sem.h>
+
+    int semctl(int semid, int semnum, int cmd, ...)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _ss_ee_mm_cc_tt_ll(2) function provides control operations over semaphores in the
+    semaphore set identified by semid. The control operation is defined by the
+    cmd argument. (Values for cmd are defined in <<ssyyss//sseemm..hh>>.) Some control
+    operations act on a single semaphore in the set, others act on the entire
+    set identified by semid.
+
+    Semaphore identifiers are obtained with the _ss_ee_mm_gg_ee_tt(2) call; semaphore
+    operations are performed with the _ss_ee_mm_oo_pp(2) call.
+
+  OOppeerraattiioonnss oonn aa SSiinnggllee SSeemmaapphhoorree
+
+    The following values for cmd act on the semaphore identified by both semid
+    and semnum.
+    ccmmdd          CCoommmmaanndd
+
+    GETPID       Returns value of sempid. Requires read permission.
+
+    GETNCNT      Returns value of semncnt. Requires read permission.
+
+    GETZCNT      Returns value of semzcnt. Requires read permission.
+
+    GETVAL       Returns value of semval member. Requires read permission.
+
+    SETVAL       Sets value of semval member. Requires alter permission.
+
+    IPC_RMID     Removes semid from the system and destroy all associated
+                 structures and semaphores. Requires permission to be same as
+                 the value of sem_perm.cuid or sem_perm.uid in the sseemmiidd__ddss
+                 structure associated with semid.
+
+    See the _ss_ee_mm_gg_ee_tt(2) reference page for a description of the structure
+    members. The IPC_RMID macro is defined in <<ssyyss//iippcc..hh>>, which is included
+    by <<ssyyss//sseemm..hh>>.
+
+  OOppeerraattiioonnss oonn aa SSeemmaapphhoorree SSeett
+
+    These values of cmd operate on each semaphore in the set. They require a
+    fourth argument to the _ss_ee_mm_cc_tt_ll(2) function. The fourth argument contains an
+    array which is used to hold values for the semaphores; it's described in
+    more detail under The Fourth Argument.
+    ccmmdd        CCoommmmaanndd
+
+    GETALL     For each semaphore in the set, place the value of semval in
+               the array pointed to by arg.array. Requires read permission.
+
+    SETALL     For each semaphore in the set, set the value of semval to the
+               corresponding value in the array pointed to by arg.array.
+               When successful, this operation clears the semadj values
+               corresponding to each semaphore. Requires alter permission.
+
+  SSeettttiinngg,, RReeaaddiinngg,, aanndd RReemmoovviinngg SSeemmaapphhoorreess
+
+    The following values of cmd deal with stat setting, and removing
+    semaphores:
+    ccmmdd          CCoommmmaanndd
+
+    IPC_STAT     Copy current value of each member in the data structure
+                 associated with semid into the data structure pointed
+                 at by arg.buf, where arg is the fourth argument to
+                 sseemmccttll(). Requires read permission.
+
+    IPC_SET      Set the value of UID, GID, and mode permission members
+                 in the sseemmiidd__ddss data structure associated with semid to
+                 the corresponding value in the data structure point at
+                 by arg.buf, where arg is the fourth argument to
+                 sseemmccttll(). The calling process needs an effective UID
+                 that matches the semaphore's sem_perm.cuid or
+                 sem_perm.uid values.
+
+    IPC_RMID     Remove the semaphore specified by semid from the system
+                 and destroy the set of semaphores and datastructure
+                 associated. The calling process needs an effective UID
+                 that matches the semaphore's sem_perm.cuid or
+                 sem_perm.uid values.
+
+  TThhee FFoouurrtthh AArrgguummeenntt
+
+    For the following values of cmd, a fourth argument, arg, is required:
+
+    *     SETVAL
+    *     GETALL
+    *     SETALL
+    *     IPC_STAT
+    *     IPC_SET
+    *     IPC_RMID
+
+    The arg argument is a uunniioonn sseemmuunn structure, which is defined as follows:
+
+    union semun {
+    	int            val;            /* value for SETVAL */
+    	struct         semid_ds *buf;  /* buffer for IPC_STAT & IPC_SET */
+    	unsigned short *array;         /* array for GETALL & SETALL */
+    };
+
+  RREETTUURRNN VVAALLUUEE
+
+    The return value for a successful call to _ss_ee_mm_cc_tt_ll(2) depends upon the cmd:
+
+    GETVAL
+        The value of semval
+
+    GETPID
+        The value of sempid
+
+    GETNCNT
+        The value of semncnt
+
+    GETZCNT
+        The value of semnzcnt
+
+    All others
+        The value 0.
+
+    On failure, _ss_ee_mm_cc_tt_ll(2) returns -1 and sets errno to indicate the error.
+
+  EERRRROORRSS
+
+    The _ss_ee_mm_cc_tt_ll(2) function can fail for the following reasons:
+
+    [EACCES]
+        The calling process does not have permission to perform the operation.
+
+    [EINVAL]
+        Semid is not a valid semaphore identifier, or semnum is outside of the
+        range 0-(semnum or cmd is not a valid command.
+
+    [EPERM]
+        Cmd was IPC_RMID or IPC_SET but either calling process did not have
+        the appropriate privileges or the effective user ID of the calling
+        process wasn't equal to the user ID of the semaphore.
+
+    [ERANGE]
+        Cmd is SETVAL or SETALL but the value given for semval is greater than
+        the system maximum.
+
+    [ERANGE]
+        Cmd is SETVAL or SETALL, but the intended value for semval is greater
+        than the system maximum.
+
+  SSEEEE AALLSSOO
+
+    _s_e_m_g_e_t(2)
+
+    _s_e_m_o_p(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The sseemmccttll function is thread safe.
+
+    The sseemmccttll function is not async-signal safe.
+

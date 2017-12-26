@@ -1,0 +1,154 @@
+mmap(2)                                                         mmap(2)
+
+  mmmmaapp(())
+
+  NNAAMMEE
+
+    mmap() - map a file into memory
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/mman.h>
+
+    void *mmap(void *addr, size_t len, int prot,
+               int flags, int fd, off_t off);
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _mm_mm_aa_pp(2) function maps a file on disk into a buffer in memory so that
+    when bytes are retrieved from the buffer, they're read from the file. The
+    file has the open file descriptor fd and the function maps len bytes of
+    the file. The portion of the file to be mapped to the buffer is off bytes
+    from the beginning of the file. The function returns a pointer (pa such
+    that the range [pa pa+ len) is the same as the range [fd fd+ len).
+
+    addr
+        The point in the address space where the mapping should be placed.
+        Normally this is set to zero, which indicates that the system may
+        place the mapping anywhere. If it's a positive non-zero value, then it
+        is considered a hint to the system for placing the buffer. This can be
+        changed by setting MAP_FIXED in the flags argument; if set, the
+        function must return the value of addr as the address of the buffer.
+        If it cannot, the function fails. The value of addr should be a
+        multiple of the system's virtual memory page size, returned by
+        _ss_yy_ss_cc_oo_nn_ff(2) with the argument _SC_PAGESIZE (or _SC_PAGE_SIZE).
+
+    len
+        The length of the mapped space, in bytes. It's rounded up to the
+        nearest multiple of ssyyssccoonnff(_SC_PAGE_SIZE).
+
+    prot
+        The set of accesses permitted to the pages being mapped. Traditionally
+        these should be the same as the open mode of the file (that is, you
+        can't write to the memory if the file was opened read-only). These
+        access values are defined in <<ssyyss//mmmmaann..hh>>:
+
+        PROT_READ
+            Read permission.
+
+        PROT_WRITE
+            Write permission.
+
+        PROT_EXEC
+            Execute permission.
+
+        PROT_NONE
+            No access allowed.
+
+    flags
+        Other information about how the mapped file is to be handled. Possible
+        values are:
+
+        MAP_SHARED
+            Changes can be shared; cannot be specified with MAP_PRIVATE. When
+            the calling process writes to the memory region, the file may be
+            changed. These changes are visible in all MAP_SHARED mappings of
+            the same portion of the file, by any process.
+
+        MAP_PRIVATE
+            Changes are private; cannot be specified with MAP_SHARED. When the
+            calling process writes to the memory region, the file isn't
+            changed, they affect a copy of the file. No other process mapping
+            the same portion of the file can see these changes.
+
+        MAP_FIXED
+            The pointer returned by the function must be equal to addr.
+            Normally, the returned pointer is derived from the addr but
+            doesn't have to be identical. This is the least portable way of
+            coding with the function.
+        This information is retained across a _ff_oo_rr_kk(2), but not across an
+        _ee_xx_ee_cc(2).
+
+    fd
+        The file descriptor of the file to be mapped. The file should have
+        already been opened.
+
+    off
+        The offset to the part of the file where mapping should start. The
+        value of off should be a multiple of the system's virtual memory page
+        size, returned by ssyyssccoonnff(_SC_PAGESIZE).
+
+    When the process terminates, the mapped region is unmapped. It does not
+    unmap when fd is closed.
+
+    You can also explicitly unmap the region by calling the _mm_uu_nn_mm_aa_pp(2)
+    function.
+
+  RREETTUURRNN VVAALLUUEE
+
+    On success, _mm_mm_aa_pp(2) returns the address where the mapping was placed. On
+    failure, it returns MAP_FAILED and sets errno to indicate the error.
+
+  EERRRROORRSS
+
+    The _mm_mm_aa_pp(2) function can fail if:
+
+    [EBADF]
+        The file descriptor fd was not valid.
+
+    [EACCES]
+        The file indicated by fd wasn't open to be read; or fd wasn't open for
+        writing and PROT_WRITE was specified for a MAP_SHARED mapping.
+
+    [ENXIO]
+        The addresses [off, off+len) were invalid for fd.
+
+    [EINVAL]
+        The off (or the addr argument, if MAP_FIXED was specified), was not a
+        multiple of the page size (as returned by _ss_yy_ss_cc_oo_nn_ff(2)) or was otherwise
+        invalid; or flags was invalid (neither MAP_PRIVATE nor MAP_SHARED was
+        set).
+
+    [EMFILE]
+        Fulfilling the request would exceed the system limit on the number of
+        mapped regions.
+
+    [ENODEV]
+        The fd refers to a file of an unsupported type.
+
+    [ENOMEM]
+        If MAP_FIXED was specified, then the range [addr, addr+len) is greater
+        than allowed for a process' address space; if MAP_FIXED was not
+        specified, there is insufficient room in the address space to perform
+        the mapping.
+
+  SSEEEE AALLSSOO
+
+    _e_x_e_c(2)
+
+    _f_c_n_t_l(2)
+
+    _f_o_r_k(2)
+
+    _m_u_n_m_a_p(2)
+
+    _s_h_m_a_t(2)
+
+    _s_y_s_c_o_n_f(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The mmmmaapp function is thread safe.
+
+    The mmmmaapp function is not async-signal safe.
+

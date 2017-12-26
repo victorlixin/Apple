@@ -1,0 +1,117 @@
+t_rcvuderr(3)                                             t_rcvuderr(3)
+
+  tt__rrccvvuuddeerrrr(())
+
+  NNAAMMEE
+
+    t_rcvuderr - receive a unit data error indication
+
+  SSYYNNOOPPSSIISS
+
+    #include <xti.h>
+
+    int t_rcvuderr(
+        int fd,
+        struct t_uderr *uderr)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The tt__rrccvvuuddeerrrr(3) function is used in connectionless-mode to receive
+    information concerning an error on a previously sent data unit, and should
+    only be issued following a unit data error indication. It informs the
+    transport user that a data unit with a specific destination address and
+    protocol options produced an error.
+
+    PPaarraammeetteerrss     BBeeffoorree ccaallll     AAfftteerr ccaallll
+
+    fd             x               /
+
+    uderr->        addr.maxlen     x
+
+    uderr->        addr.len        /
+
+    uderr->        addr.buf        ?
+
+    uderr->        opt.maxlen      x
+
+    uderr->        opt.len         /
+
+    uderr->        opt.buf         ?
+
+    uderr->        error           /
+
+    The argument fd identifies the local transport endpoint through which the
+    error report will be received, and uderr points to a t_uderr structure
+    containing the following members:
+
+    struct netbuf addr;
+    struct netbuf opt;
+    t_scalar_t error;
+
+    The maxlen field of addr and opt must be set before calling this function
+    to indicate the maximum size of the buffer for each. If this field is set
+    to zero for addr or opt, no information is returned in the buf field of
+    this parameter.
+
+    On return from this call, the addr structure specifies the destination
+    protocol address of the erroneous data unit, the opt structure identifies
+    options that were associated with the data unit, and error specifies a
+    protocol-dependent error code.
+
+    If the user does not care to identify the data unit that produced an
+    error, uderr may be set to a null pointer, and tt__rrccvvuuddeerrrr() will simply
+    clear the error indication without reporting any information to the user.
+
+  VVAALLIIDD SSTTAATTEESS
+
+    T_IDLE
+
+  EERRRROORRSS
+
+    On failure, t_errno is set to one of the following:
+
+    [TBADF]
+        The specified file descriptor does not refer to a transport endpoint.
+
+    [TBUFOVFLW]
+        The number of bytes allocated for the incoming protocol address or
+        options (maxlen) is greater than 0 but not sufficient to store the
+        information. The unit data error information to be returned in uderr
+        will be discarded.
+
+    [TNOTSUPPORT]
+        This function is not supported by the underlying transport provider.
+
+    [TNOUDERR]
+        No unit data error indication currently exists on the specified
+        transport endpoint.
+
+    [TOUTSTATE]
+        The communications endpoint referenced by fd is not in one of the
+        states in which a call to this function is valid.
+
+    [TPROTO]
+        This error indicates that a communication problem has been detected
+        between XTI and the transport provider for which there is no other
+        suitable XTI error (t_errno).
+
+    [TSYSERR]
+        A system error has occurred during execution of this function.
+
+  RREETTUURRNN VVAALLUUEE
+
+    Upon successful completion, a value of 0 is returned. Otherwise, a value
+    of -1 is returned and t_errno is set to indicate an error.
+
+  SSEEEE AALLSSOO
+
+    _tt____rr_cc_vv_uu_dd_aa_tt_aa(3)
+
+    _tt____ss_nn_dd_uu_dd_aa_tt_aa(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The tt__rrccvvuuddeerrrr function is not thread safe.
+
+    The tt__rrccvvuuddeerrrr function is not async-signal safe.
+

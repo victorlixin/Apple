@@ -1,0 +1,191 @@
+
+
+rpc_clnt_calls(3rpc)                         rpc_clnt_calls(3rpc)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <rpc/rcp.h>
+
+       enum  clnt_stat clnt_call(CLIENT *clnt, const u_long proc-
+       num,      const xdrproc_t inproc, caddr_t in,  const  xdr-
+       proc_t  outproc,       caddr_t  out,  const struct timeval
+       tout);
+
+       int clnt_freeres(CLIENT *clnt,  const  xdrproc_t  outproc,
+       caddr_t out);
+
+       void   clnt_geterr(const   CLIENT  *clnt,  struct  rpc_err
+       *errp);
+
+       void clnt_perrno(const enum clnt_stat stat);
+
+       void clnt_perror(const CLIENT *clnt, const char *s);
+
+       const char *clnt_sperrno(const enum clnt_stat stat);
+
+       char *clnt_sperror(const CLIENT *clnt, const char *s);
+
+       enum   clnt_stat   rpc_broadcast(const   u_long   prognum,
+            const   u_long   versnum,   const   u_long   procnum,
+            const xdrproc_t inproc, caddr_t in,  const  xdrproc_t
+       outproc,       caddr_t out, const resultproc_t eachresult,
+       const char *nettype);
+
+       enum  clnt_stat  rpc_broadcast_exp(const  u_long  prognum,
+            const   u_long   versnum,   const   u_long   procnum,
+            const xdrproc_t inproc, caddr_t in,  const  xdrproc_t
+       outproc,       caddr_t out, const resultproc_t eachresult,
+            int inittime, int waittime, const char *nettype);
+
+       enum clnt_stat rpc_call(const  char  *host,  const  u_long
+       prognum,       const u_long versnum, const u_long procnum,
+            const xdrproc_t inproc, const  char  *in,       const
+       xdrproc_t outproc, char *out,      const char *nettype);
+
+DDeessccrriippttiioonn
+       RPC  library  routines  allow  C language programs to make
+       procedure calls on  other  machines  across  the  network.
+       First,  the client calls a procedure to send a data packet
+       to the server.  Upon receipt of  the  packet,  the  server
+       calls a dispatch routine to perform the requested service,
+       and then sends back a reply.
+
+       The clnt_call,  rpc_call,  rpc_broadcast,  and  rpc_broad-
+       cast_exp  routines handle the client side of the procedure
+       call.  The remaining routines deal with error handling  in
+       the case of errors.
+
+   RRoouuttiinneess
+       See for the definition of the CLIENT data structure.  enum
+
+                                                                1
+
+rpc_clnt_calls(3rpc)                         rpc_clnt_calls(3rpc)
+
+       clnt_stat clnt_call(CLIENT *clnt,  const  u_long  procnum,
+       const  xdrproc_t  inproc,      caddr_t in, const xdrproc_t
+       outproc, caddr_t out,      const struct timeval  tout);  A
+       function  macro  that  calls  the remote procedure procnum
+       associated with the client handle, clnt, which is obtained
+       with  an  RPC  client creation routine such as clnt_create
+       (see The parameter in is the address  of  the  procedure's
+       argument(s),  and out is the address of where to place the
+       result(s); inproc is used to encode the procedure's param-
+       eters,  and  outproc  is  used  to  decode the procedure's
+       results; tout is  the  time  allowed  for  results  to  be
+       returned.
+
+       If  the  remote  call  succeeds, the status is returned in
+       RPC_SUCCESS, otherwise an appropriate status is  returned.
+       int  clnt_freeres(CLIENT  *clnt,  const xdrproc_t outproc,
+       caddr_t out); A function macro that frees any  data  allo-
+       cated by the RPC/XDR system when it decoded the results of
+       an RPC call.  The parameter out  is  the  address  of  the
+       results,  and  outproc  is  the XDR routine describing the
+       results.  This routine returns 1 if the results were  suc-
+       cessfully  freed, and 0 otherwise.  void clnt_geterr(const
+       CLIENT *clnt, struct rpc_err *errp); A function macro that
+       copies the error structure out of the client handle to the
+       structure at address errp.   void  clnt_perrno(const  enum
+       clnt_stat  stat); Print a message to standard error corre-
+       sponding to the condition indicated by stat.  A newline is
+       appended at the end of the message.  Normally used after a
+       procedure  call  fails,  for  instance   rpc_call.    void
+       clnt_perror(const  CLIENT  *clnt,  const char *s); Print a
+       message to standard  error  indicating  why  an  RPC  call
+       failed;  clnt is the handle used to do the call.  The mes-
+       sage is prepended with string s and a colon.  A newline is
+       appended at the end of the message.  Normally used after a
+       procedure call fails, for instance clnt_call.  const  char
+       *  clnt_sperrno(const  enum clnt_stat stat); Take the same
+       arguments as clnt_perrno, but instead of sending a message
+       to  the  standard error indicating why an RPC call failed,
+       return a pointer to a read-only string which contains  the
+       message.
+
+       clnt_sperrno  is normally used instead of clnt_perrno when
+       the program does not have a standard error (as  a  program
+       running as a server quite likely does not), or if the pro-
+       grammer does not want the message to be output with printf
+       (see  or if a message format different than that supported
+       by clnt_perrno is to be used.  Note:  unlike  clnt_sperror
+       and  clnt_spcreaterror  (see  clnt_sperrno does not return
+       pointer to static data so the result will  not  get  over-
+       written on each call, and the string is read-only.  char *
+       clnt_sperror(const CLIENT  *clnt,  const  char  *s);  Like
+       clnt_perror,  except that (like clnt_sperrno) it returns a
+       string instead of printing to  standard  error.   However,
+       clnt_sperror  does  not append a newline at the end of the
+
+                                                                2
+
+rpc_clnt_calls(3rpc)                         rpc_clnt_calls(3rpc)
+
+       message.
+
+       Note: returns pointer to static data that  is  overwritten
+       on  each  call.  enum clnt_stat rpc_broadcast(const u_long
+       prognum, const u_long versnum,      const u_long  procnum,
+       const  xdrproc_t  inproc, caddr_t in,      const xdrproc_t
+       outproc, caddr_t out,      const resultproc_t  eachresult,
+       const char *nettype);
+
+       enum  clnt_stat  rpc_broadcast_exp(const  u_long  prognum,
+       const u_long versnum,       const  u_long  procnum,  const
+       xdrproc_t  inproc,  caddr_t  in,      const xdrproc_t out-
+       proc, caddr_t out,      const resultproc_t eachresult, int
+       inittime       int  waittime,  const char *nettype); These
+       calls are like rpc_call, except the call message is broad-
+       cast  to  the connectionless network specified by nettype.
+       If nettype is NULL, it defaults to netpath.  rpc_broadcast
+       simply  calls  rpc_broadcast_exp with inittime set to 4000
+       milliseconds and waittime set to 8000 milliseconds.   Each
+       time  rpc_broadcast_exp  receives  a  response,  it  calls
+       eachresult, whose form is: bool_t eachresult(const caddr_t
+       out,  const  struct  netbuf  *addr,       struct netconfig
+       *netconf);  where  out  is  the  same  as  out  passed  to
+       rpc_broadcast and rpc_broadcast_exp except that the remote
+       procedure's output is decoded in  rpc_broadcast_exp;  addr
+       points  to  the  address  of  the  machine  that  sent the
+       results, and netconf is the  netconfig  structure  of  the
+       transport  on  which  the  remote  server  responded.   If
+       eachresult  returns  0,  rpc_broadcast_exp  and  therefore
+       rpc_broadcast wait for more replies; otherwise they return
+       with appropriate status.
+
+       Note: broadcast file descriptors are limited  in  size  to
+       the  maximum  transfer size of that transport.  For Ether-
+       net,  this  value   is   1500   bytes.    enum   clnt_stat
+       rpc_call(const   char   *host,   const   u_long   prognum,
+            const   u_long   versnum,   const   u_long   procnum,
+            const  xdrproc_t  inproc,  const char *in,      const
+       xdrproc_t outproc, char *out,      const  char  *nettype);
+       Call  the  remote  procedure associated with prognum, ver-
+       snum, and procnum on the machine, host.  The parameter  in
+       is  the address of the procedure's argument(s), and out is
+       the address of where to place  the  result(s);  inproc  is
+       used  to encode the procedure's parameters, and outproc is
+       used to decode the procedure's results.   nettype  can  be
+       any  of  the  values  listed  on  If  nettype  is NULL, it
+       defaults to netpath.  This routine returns 0  if  it  suc-
+       ceeds,  or  the value of enum clnt_stat cast to an integer
+       if it fails.  Use the  clnt_perrno  routine  to  translate
+       failure statuses into messages.
+
+       Note:  rpc_call uses the first available transport belong-
+       ing to the class nettype, on which it can create a connec-
+       tion.    You   do   not   have   control  of  timeouts  or
+
+                                                                3
+
+rpc_clnt_calls(3rpc)                         rpc_clnt_calls(3rpc)
+
+       authentication using this routine.  There is also  no  way
+       to destroy the client handle.
+
+FFiilleess
+       /usr/lib/locale/locale/LC_MESSAGES/uxnsl
+
+RReeffeerreenncceess
+
+                                                                4
+

@@ -1,0 +1,147 @@
+
+
+fp_dptbl(4)                                           fp_dptbl(4)
+
+DDeessccrriippttiioonn
+       The  process  scheduler  (or dispatcher) is the portion of
+       the kernel that controls allocation of  the  CPU  to  pro-
+       cesses.   The  scheduler supports the notion of scheduling
+       classes where each class defines a scheduling policy, used
+       to  schedule processes within that class.  Associated with
+       each scheduling class is a set of priority queues on which
+       ready  to run processes are linked.  These priority queues
+       are mapped by the  system  configuration  into  a  set  of
+       global  scheduling  priorities  that are available to pro-
+       cesses within the class.  (The dispatcher  always  selects
+       for execution the process with the highest global schedul-
+       ing priority in the system.)  The priority queues  associ-
+       ated with a given class are viewed by that class as a con-
+       tiguous set of priority levels  numbered  from  0  (lowest
+       priority)  to  n (highest priority--a configuration depen-
+       dent value).  The set of global scheduling priorities that
+       the  queues  for  a  given class are mapped into might not
+       start at zero and might not be  contiguous  (depending  on
+       the configuration).
+
+       The  fixed priority class maintains an in-core table, with
+       an entry for each priority level, giving the properties of
+       that  level.  This table is called the fixed priority dis-
+       patcher parameter table (fp_dptbl).  The fp_dptbl consists
+       of an array of parameter structures (struct fp_dpent), one
+       for each of the n priority levels.  The  properties  of  a
+       given  priority level i are specified by the ith parameter
+       structure in this array (fp_dptbli).
+
+       A parameter structure consists of the  following  members.
+       These  are  also  described  in  the /usr/include/sys/fp.h
+       header file.  The global  scheduling  priority  associated
+       with  this priority level.  The mapping between fixed pri-
+       ority levels and global scheduling  priorities  is  deter-
+       mined  at  boot  time  by  the  system configuration.  The
+       fp_globpri values cannot be changed with The length of the
+       time quantum allocated to processes at this level in ticks
+       (HZ).  The time quantum value is only a default or  start-
+       ing  value for processes at a particular level as the time
+       quantum of a fixed priority process can be changed by  the
+       user  with  the  priocntl  command  or the priocntl system
+       call.
+
+       An administrator can affect the behavior of the fixed pri-
+       ority  portion  of  the  scheduler  by  reconfiguring  the
+       fp_dptbl.  There are two methods available for doing this.
+
+DDiissppaaddmmiinn ccoonnffiigguurraattiioonn
+       The  fp_quantum values in the fp_dptbl can be examined and
+       modified on a running system using the command.   Invoking
+       dispadmin for the fixed priority class allows the adminis-
+       trator to retrieve the current fp_dptbl configuration from
+       the kernel's in-core table, or overwrite the in-core table
+
+                                                                1
+
+fp_dptbl(4)                                           fp_dptbl(4)
+
+       with values from a configuration file.  The  configuration
+       file  used for input to dispadmin must conform to the spe-
+       cific format described below.
+
+       Blank lines are ignored and any part  of  a  line  to  the
+       right  of  a  # symbol is treated as a comment.  The first
+       non-blank, non-comment line must indicate  the  resolution
+       to  be used for interpreting the time quantum values.  The
+       resolution is specified as RES=res where res is a positive
+       integer between 1 and 1,000,000,000 inclusive and the res-
+       olution used is the reciprocal of res  in  seconds.   (For
+       example,   RES=1000   specifies  millisecond  resolution.)
+       Although very fine (nanosecond) resolution may  be  speci-
+       fied,  the time quantum lengths are rounded up to the next
+       integral multiple of the system clock's  resolution.   The
+       system clock's resolution is hardware-dependent; this res-
+       olution can be calculated from the value of HZ,  which  is
+       defined  in  the  file /usr/include/sys/param.h.  HZ gives
+       the number of clock ticks per second of the system  clock.
+       For  example,  an  HZ of 100 specifies 100 clock ticks per
+       second, or one tick every 10 milliseconds (that  is,  this
+       system clock has a resolution of 10 milliseconds).  If the
+       -t and -r options are used to specify a time quantum of 34
+       milliseconds,  it  is  rounded up to 4 ticks (40 millisec-
+       onds) on a machine with an HZ of 100.
+
+       The remaining lines in the file are used  to  specify  the
+       fp_quantum  values  for each of the fixed priority levels.
+       The first line specifies the quantum  for  fixed  priority
+       level  0,  the second line specifies the quantum for fixed
+       priority level 1, and so on.  There must  be  exactly  one
+       line  for  each  configured  fixed  priority  level.  Each
+       fp_quantum entry must be either a positive integer  speci-
+       fying the desired time quantum (in the resolution given by
+       res), or the symbol RT_TQINF indicating an  infinite  time
+       quantum for that level.
+
+EExxaammppllee
+       The  following excerpt from a dispadmin configuration file
+       illustrates the format.  Note that for each line  specify-
+       ing  a time quantum there is a comment indicating the cor-
+       responding priority level.  These level  numbers  indicate
+       priority  within the fixed priority class, and the mapping
+       between  these  fixed  priorities  and  the  corresponding
+       global scheduling priorities is determined by the configu-
+       ration specified in the fp master file.  The level numbers
+       are  strictly  for  the  convenience  of the administrator
+       reading the file  and,  as  with  any  comment,  they  are
+       ignored by dispadmin on input.  dispadmin assumes that the
+       lines in the file are ordered by  consecutive,  increasing
+       priority  level  (from  0  to the maximum configured fixed
+       priority).  The level numbers in the comments should  nor-
+       mally  agree  with  this ordering; if for some reason they
+       don't, however, dispadmin is unaffected.
+
+                                                                2
+
+fp_dptbl(4)                                           fp_dptbl(4)
+
+       # Real-Time Dispatcher Configuration File RES=1000
+
+       #    TIME QUANTUM                 PRIORITY  #    (fp_quan-
+       tum)                                                 LEVEL
+                 100                 #                          0
+                 100                 #                          1
+                 100                 #                          2
+                 100                 #                          3
+                 100                 #                          4
+                 100                 #          5
+       90                 #               6
+       90                 #                7
+       .                  .               .
+       .                  .               .
+       .                  .               .
+       10                 #    58
+       10                 #    59
+
+FFiilleess
+       /usr/include/sys/fp.h
+
+RReeffeerreenncceess
+
+                                                                3
+

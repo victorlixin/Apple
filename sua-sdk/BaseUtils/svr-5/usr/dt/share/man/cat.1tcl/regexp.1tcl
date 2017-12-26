@@ -1,0 +1,134 @@
+
+
+regexp(1tcl)                                         regexp(1tcl)
+
+SSyynnooppssiiss
+       regexp  [switches] exp string [matchVar] [subMatchVar sub-
+       MatchVar ...]
+
+DDeessccrriippttiioonn
+       regexp  determines  whether  the  regular  expression  exp
+       matches  part or all of string and returns 1 if it does, 0
+       if it does not.
+
+       If additional arguments are specified  after  string  then
+       they  are  treated  as  the names of variables in which to
+       return information about which parts of string match  exp.
+       matchVar is set to the range of string that matched all of
+       exp.  The first subMatchVar  contains  the  characters  in
+       string that match the leftmost parenthesized subexpression
+       within exp, the next subMatchVar contains  the  characters
+       that  match  the  next  parenthesized subexpression to the
+       right in exp, and so on.
+
+       If the initial arguments to regexp start with - then  they
+       are  treated as switches.  The following switches are cur-
+       rently supported: Causes uppercase characters in string to
+       be  treated  as  lowercase  during  the  matching process.
+       Changes what is stored in the  subMatchVars.   Instead  of
+       storing the matching characters from string, each variable
+       contains a list of two decimal strings giving the  indices
+       in string of the first and last characters in the matching
+       range of characters.  Marks  the  end  of  switches.   The
+       argument  following  this one is treated as exp even if it
+       starts with a -.  If there  are  more  subMatchVar's  than
+       parenthesized  subexpressions within exp, or if a particu-
+       lar subexpression in exp does not match  the  string  (for
+       example,  because  it  was  in a portion of the expression
+       that was not matched), then the corresponding  subMatchVar
+       is  set  to -1 -1 if -indices has been specified, or to an
+       empty string otherwise.
+
+   RReegguullaarr eexxpprreessssiioonnss
+       Regular  expressions  are  implemented  using  the  public
+       domain   Henry  Spencer  package;  the  standard   regular
+       expression syntax (see does not apply. The following regu-
+       lar expressions are recognized by Tcl:
+
+       A  regular  expression is zero or more branches, separated
+       by |.   It  matches  anything  that  matches  one  of  the
+       branches.
+
+       A branch is zero or more pieces, concatenated.  It matches
+       a match for the first, followed by a match for the second,
+       and so on.
+
+       A  piece  is  an atom possibly followed by *, +, or ?.  An
+       atom followed by * matches a sequence of 0 or more matches
+       of  the atom.  An atom followed by + matches a sequence of
+
+                                                                1
+
+regexp(1tcl)                                         regexp(1tcl)
+
+       1 or more matches of the atom.   An  atom  followed  by  ?
+       matches a match of the atom, or the null string.
+
+       An atom is a regular expression in parentheses (matching a
+       match for the regular expression), a range (see below),  .
+       (matching  any  single  character),  ^  (matching the null
+       string at the beginning of the input string), $  (matching
+       the  null string at the end of the input string), a \ fol-
+       lowed by a single character (matching that character),  or
+       a  single  character  with no other significance (matching
+       that character).
+
+       A range is a sequence of characters enclosed  in  [].   It
+       normally  matches  any single character from the sequence.
+       If the sequence begins with ^, it matches any single char-
+       acter  not  from the rest of the sequence.  If two charac-
+       ters in the sequence are separated by -, this is shorthand
+       for  the  full  list of ASCII characters between them (for
+       example,``[0-9]'' matches any decimal digit).  To  include
+       a  literal  ] in the sequence, make it the first character
+       (following a possible ^).  To include a literal -, make it
+       the first or last character.
+
+   CChhoooossiinngg aammoonngg aalltteerrnnaattiivvee mmaattcchheess
+       In general there may be more than one way to match a regu-
+       lar expression to an input string.  For example,  consider
+       the  command:  regexp   (a*)b*  aabaaabb  x  y Considering
+       only the rules given so far, x and y could end up with the
+       values aabb and aa, aaab and aaa, ab and a, or any of sev-
+       eral other combinations.  To resolve this potential  ambi-
+       guity  regexp  chooses  among  alternatives using the rule
+       ``first then longest''.  In other words, it considers  the
+       possible  matches  in  order,  working  from left to right
+       across the input string and the pattern, and  it  attempts
+       to  match longer pieces of the input string before shorter
+       ones.  More specifically, the  following  rules  apply  in
+       decreasing  order of priority: If a regular expression can
+       match two different parts  of  an  input  string  then  it
+       matches  the  one  that  begins  earliest.   If  a regular
+       expression contains | operators then the leftmost matching
+       sub-expression  is  chosen.   In  *,  +, and ? constructs,
+       longer matches are chosen in preference to  shorter  ones.
+       In  sequences  of expression components the components are
+       considered from left to right.  In the example from above,
+       (a*)b*  matches  aab:   the (a*) portion of the pattern is
+       matched first and it consumes the leading aa; then the  b*
+       portion  of the pattern consumes the next b.  Or, consider
+       the following example: regexp  (ab|a)(b*)c  abc  x   y   z
+       After this command x will be abc, y will be ab, and z will
+       be an empty string.   Rule  4  specifies  that  (ab|a)  is
+       checked  for  a  match against the input string first, and
+       Rule 2 specifies that the  ab  sub-expression  is  checked
+       before  the a sub-expression.  Thus the b has already been
+       claimed before the (b*) component is checked and (b*) must
+
+                                                                2
+
+regexp(1tcl)                                         regexp(1tcl)
+
+       match an empty string.
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoommpplliiaannccee
+       The  regular expression package used in Tcl is not part of
+       any currently supported standard; it was developed at  the
+       University of Toronto by Dr Henry Spencer and incorporated
+       into Tcl at the University of California at Berkeley by Dr
+       John Ousterhout, and is used by permission.
+
+                                                                3
+

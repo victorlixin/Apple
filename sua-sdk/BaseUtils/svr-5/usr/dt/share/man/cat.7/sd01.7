@@ -1,0 +1,115 @@
+
+
+sd01(7)                                                   sd01(7)
+
+DDeessccrriippttiioonn
+       The sd01 disk target driver is the device-level driver for
+       Small Computer System Interface (SCSI)  hard  disks,  SCSI
+       optical  disks, and ESDI/ST506/IDE/MFM integral disks.  It
+       provides block and character (raw) access to the disk, and
+       I/O  controls  (ioctl) to the disk.  sd01 and vtoc sets up
+       two levels of organization to the disk, to allow the  disk
+       to  be  shared  with  other operating systems, and provide
+       efficient sized portions within the  system.
+
+       See for an explanation of &gemini; disk slices  and  minor
+       numbers.
+
+       Mapping  of  bad blocks is performed dynamically and auto-
+       matically by the sd01 disk driver, without user  interven-
+       tion  and  without  retaining a fixed bad block log on the
+       disk.  The SCSI  direct-access  controllers  reassign  the
+       defective  blocks to an area on the disk reserved for this
+       purpose.  The sd01 disk driver can map both  marginal  bad
+       blocks (that is, readable with some difficulty) and actual
+       bad blocks (that is, unreadable).  It also keeps track  of
+       blocks  that  are currently unreadable, but which have not
+       yet been remapped.  The sd01 driver does not map or report
+       a  bad  block residing in a non- System (for example, MS-)
+       partition of the disk.  In addition, even with dynamic bad
+       block  handling,  it  is possible for damage to occur that
+       cannot be mapped automatically.  This means that you might
+       have  to  restore the filesystem from the last full backup
+       if the bad block occurs in a critical  area  of  the  disk
+       that cannot tolerate bad sectors.
+
+       The  sd01 disk driver supports a recovery gauntlet to han-
+       dle jobs that timeout.   The  recovery  gauntlet  uses  an
+       hierarchical  approach  to  the recovery process.  Initial
+       action is to retry the job, unless the job had been  timed
+       out  by  the software timeout mechanism and the associated
+       job abort was not successful.  The working  assumption  is
+       that  if  the  job  was timed out and the job could not be
+       aborted, then the target  device  is  in  an  unresponsive
+       state.  In this case, the target driver resets the associ-
+       ated SCSI device, and then retries the job.   If  the  job
+       fails  after  the  device reset, the SCSI bus is reset and
+       the job is retried.  The recovery gauntlet  is  exited  on
+       the  successful  completion of the job after any retry, or
+       it is exited as a failed job when the  retry  fails  after
+       the SCSI bus reset.
+
+       The  sd01  disk  driver reports problems with driver error
+       messages.  The error numbers in the error  messages  iden-
+       tify  the  type  of error.  For SCSI sense codes, extended
+       sense codes, and command codes, see For SDI return  codes,
+       see
+
+       The  sd01 driver receives command requests from the kernel
+
+                                                                1
+
+sd01(7)                                                   sd01(7)
+
+       through the  Input/Output  (I/O)  control  call  The  sd01
+       driver generates the requested commands and passes them to
+       the host adapter driver.  When command execution  is  com-
+       plete,  the  host  adapter driver notifies the sd01 driver
+       through an interrupt.  After this notification,  the  sd01
+       driver  performs any required error recovery and indicates
+       to the kernel that the I/O request is complete.
+
+   iiooccttll ccaallllss
+       The ioctl calls used by the sd01 driver are documented  on
+       the manual page.
+
+UUssaaggee
+       The  vtoc  driver retries failed transfers up to two times
+       depending on the  error  type.   Certain  errors  are  not
+       retried.    sd01  displays  an  appropriate  message  upon
+       encountering an error during the transfer.
+
+       vtoc and the second-stage bootstrap require  that  no  bad
+       sectors  occur in the first 30 sectors of the  System par-
+       tition on the disk.  When a marginal bad block occurs, the
+       driver's  warning  indicates  that the controller's error-
+       correction algorithm successfully recovered from an error.
+       This may be a symptom of a sector going bad.
+
+       The  sd01  disk target driver allows access to non- parti-
+       tions on a disk, even if there is no UnixWare partition or
+       VTOC.   It  does  so by using the information in the fdisk
+       table and the /dsk/cCbBtTdDp[0-4] special device nodes.
+
+       The nodes called /dev/[r]dsk/1s[0-9] will exist only  when
+       there  is  actually  a  second disk on the system.  In the
+       past, these nodes were always created.  It  is  no  longer
+       possible  to  create these nodes when the second disk does
+       not exist because it is not possible to predict  the  cor-
+       rect minor number for them.
+
+CCoommppaattiibbiilliittyy
+       The  sd01  driver  recognizes  &everest; partitions set up
+       with the divvy command.  If it finds one  on  a  disk,  it
+       translates the partition division information to VTOC for-
+       mat in memory.  This enables read and write operations  to
+       an  &everest; slice, but the slice configuration cannot be
+       changed.  Currently mapped bad blocks are recognized,  but
+       no  new bad blocks can be mapped.  Use the command to con-
+       vert a disk formatted for &everest; to &gemini; format.
+
+FFiilleess
+RReeffeerreenncceess
+
+                                                                2
+

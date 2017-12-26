@@ -1,0 +1,130 @@
+
+
+mas_register_met(3mas)                     mas_register_met(3mas)
+
+SSyynnooppssiiss
+       cc [options] file -lmas
+
+       #include <sys/types.h> #include <mas.h> caddr_t mas_regis-
+       ter_met(metid_t   id,   name_t   name,   units_t    units,
+            name_t unitsnm, type_t mettype, uint32 obj_sz, uint32
+       nobj,       caddr_t  maddr,  resource_t  resource,  uint32
+       unitnum, ...);
+
+DDeessccrriippttiioonn
+       The  function  mas_register_met  registers  an  individual
+       instance of a metric with a metric ID number of id into  a
+       metric   registration  file  previously  initialized  with
+       mas_init.  The name of the metric is passed as a string in
+       name.  The units of the metric and a string representation
+       of the units are passed  in  units  and  unitsnm,  respec-
+       tively.   The  type  of  metric is passed in mettype.  The
+       size of each element of the metric is given in obj_sz, and
+       nobj is the number of elements that constitute the metric.
+       Under most circumstances, nobj will be set to 1.  A  value
+       greater  than 1 in nobj indicates that the metric is actu-
+       ally an array.  Metrics that are strings should be  regis-
+       tered  with  obj_sz set to 1 and nobj set to the number of
+       characters in the string.  The  maddr  argument  specifies
+       the  address at which the metric is located in the caller.
+       This address must reside within a  metric  segment  previ-
+       ously passed to mas_init, or it must be NULL.  If the met-
+       ric address is NULL, mas_register_met  attempts  to  place
+       the  metric in an internal metric segment.  If no internal
+       metric segment was  requested  in  the  previous  call  to
+       mas_init,  then  mas_register_met  fails  when  metaddr is
+       NULL.
+
+       Metrics can be kept based on one  or  more  resources.   A
+       resource  is  another  metric that specifies the number of
+       instances of a metric.  For example, if a metric  is  kept
+       on  a  per-cpu  basis, there is one instance of the metric
+       for each cpu, and the resource  is  the  number  of  cpus.
+       Likewise,  if  a metric is kept for each disk in a system,
+       then the resource is  the  number  of  disks.   Hence,  an
+       instance is an individual occurrence of a metric value.
+
+       An  instance of a metric is specified by a set of resource
+       and unit-number pairs, which are specified in resource and
+       unitnum.  Unit numbers are assigned from 0 to the value of
+       resource - 1.  Since metrics may be  kept  based  on  more
+       than  one resource, any number of resource and unit-number
+       pairs can be specified, but the list  must  be  terminated
+       with  a value of 0,0 for the last resource and unit-number
+       pair.
+
+       Two special resources are  defined  in  the  mas.h  header
+       file,  MAS_NATIVE  and  MAS_SYSTEM.   MAS_NATIVE indicates
+       that the metric being registered has  only  one  instance,
+
+                                                                1
+
+mas_register_met(3mas)                     mas_register_met(3mas)
+
+       and  is  a system constant.  MAS_SYSTEM indicates that the
+       metric being registered has only one instance,  and  is  a
+       value that is kept system wide.  Metrics used as resources
+       must be registered before other metrics can  use  them  as
+       resources.   They  also  must have their values set before
+       being used as a resource, and  their  values  must  remain
+       constant.
+
+   RReettuurrnn vvaalluueess
+       On  success, mas_register_met returns the address at which
+       the metric resides in the caller's address space.
+
+       On  failure,  mas_register_met  returns  NULL   and   sets
+       mas_errno to identify the error.
+
+   EErrrroorrss
+       mas_init was not called prior to calling mas_register_met.
+       The metric address in metaddr falls outside  of  the  seg-
+       ments passed to mas_init.  The object size of this metric,
+       obj_sz, does not match the object  size  from  a  previous
+       call  to mas_register_met.  The number of objects for this
+       metric, nobj, does not match the number of objects from  a
+       previous  call to mas_register_met.  A unit number is less
+       than 0 or greater than  or  equal  to  the  value  of  the
+       resource  for  which  it  is specified.  The name for this
+       metric, name, does not match the name from a previous call
+       to  mas_register_met.   The  units  field for this metric,
+       units, or the units name,  unitsnm,  does  not  match  the
+       units field or units name from a previous call to mas_reg-
+       ister_met.  The resource list for  this  metric  does  not
+       match the resource list from a previous call to mas_regis-
+       ter_met.  Multiple calls  have  been  made  to  mas_regis-
+       ter_met  to  register  the  same instance.  Multiple calls
+       have been made to mas_register_met to  register  the  same
+       instance.     More   than   MAS_MAX_METS   metrics,   (not
+       instances), have been registered.   MAS_MAX_METS  is  cur-
+       rently set to 2048.  More than MAS_MAX_META bytes of meta-
+       data space are in use.  MAS_MAX_META is currently  set  to
+       128K.  More than MAS_MAX_STRING bytes of string data space
+       are in use.  MAS_MAX_STRING  is  currently  set  to  128K.
+       More than MAS_MAX_METRIC bytes of metric data space are in
+       use in the internal  metric  segment.   MAS_MAX_METRIC  is
+       currently set to 128K.  A metric ID supplied as a resource
+       has not been registered with mas_register_met.   A  metric
+       ID  supplied  as  a resource has more than one element.  A
+       metric ID supplied as a resource has an object size  other
+       than  the  size  of  an elementary type, or is larger than
+       uint32.  A metric ID supplied as a resource  has  a  value
+       less than 0.
+
+UUssaaggee
+       Metrics  supplied  as  resources  are checked to make sure
+       they have a single value, but metric access support cannot
+       determine  if  a  resource value is variable.  If a metric
+
+                                                                2
+
+mas_register_met(3mas)                     mas_register_met(3mas)
+
+       whose value is not constant is used as a resource,  either
+       the  mas_get_met consumer call fails, or some other unpre-
+       dictable result occurs.
+
+RReeffeerreenncceess
+
+                                                                3
+

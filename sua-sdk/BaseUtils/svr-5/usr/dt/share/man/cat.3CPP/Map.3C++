@@ -1,0 +1,242 @@
+
+
+Map(3C++)                                               Map(3C++)
+
+SSyynnooppssiiss
+       #include <Map.h> #include <Mapio.h> namespace SCO_SC {
+
+       template  <class  T,class  V>  class Map{ public: //  Con-
+       structors, destructor
+           Map();
+           Map(const V& u);
+           ~Map(); //  Copy and assign
+           Map(const Map<T,V>& m);
+           Map<T,V>& operator=(const Map<T,V>& m); //  Insert and
+       remove elements
+           V& operator[](const T& t);
+           int remove(const T& t);
+           void make_empty(); //  Length
+           int size()const; //  Iterating
+           Mapiter<T,V> element(const T& t)const;
+           Mapiter<T,V> first()const;
+           Mapiter<T,V> last()const; }; //  Stream insertion tem-
+       plate <class T,class V> ostream&  operator<<(ostream&  os,
+       Map<T,V>&  m);  //   Structure  used  by  Mapiter template
+       <class T,class V> struct Map_pair{
+           const T key;
+           V value; }; template <class T,class V> class  Mapiter{
+       public: //  Constructors, destructor
+           Mapiter(const Map<T,V>& m);
+           ~Mapiter(); //  Copy and assign
+           Mapiter(const Mapiter<T,V>& mi);
+           Mapiter<T,V>&  operator=(const  Mapiter<T,V>&  mi); //
+       Check the attachment
+           Map<T,V>* the_map(); //  Test for vacuity
+           operator void*()const; //  Remove elements
+           void remove(); //  Map_pair functions
+           Map_pair<T,V>* curr();
+           Map_pair<T,V>* next();
+           Map_pair<T,V>* prev(); }; }
+
+DDeessccrriippttiioonn
+       A Map<T,V> is a collection of elements,  consisting  of  a
+       key of type T and a value of type V. The elements of a Map
+       all have distinct keys. Thus it must be possible  to  com-
+       pare values of type T for equality. Moreover, Map elements
+       are ordered by key, so T must have a  strong  total  order
+       relation  defined by operator<. Additional requirements on
+       T and V are described below.
+
+       Each Map carries a default value of type V. This  is  nor-
+       mally  the  value  of  an  otherwise  uninitialized static
+       object of type V, but an alternate value can be  specified
+       when  a  Map  is  created by using the special constructor
+       provided for this purpose.  Default  values  are  used  to
+       initialize newly-created elements (see Map<T,V>::operator[
+       ]).
+
+       Each Map  type  has  an  associated  iterator  type  whose
+
+                                                                1
+
+Map(3C++)                                               Map(3C++)
+
+       objects may be used for iterating over Map elements in key
+       order.
+
+       T can be any type having: T() T(const T&) operator< defin-
+       ing a strong total order relation on T.  V may be any type
+       having: V() V(const V&) operator=
+
+MMaapp<<TT,,VV>>
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Map(); An empty Map whose default value is that of an oth-
+       erwise  uninitialized  static  object  of  type V. Runs in
+       O(1).
+
+       Map(const V& u); An empty Map whose default  value  is  u.
+       Runs in O(1).
+
+       ~Map();  Destructor.   All iterators currently attached to
+       this Map will be informed of the  Map's  destruction  (see
+       the  function  Mapiter<T,V>::the_map()). Runs in O(#itera-
+       tors).
+
+   CCooppyy aanndd aassssiiggnn
+       Map<T,V>(const Map<T,V>& m); Copy constructor.  Creates  a
+       copy   of   m,   including  its  default  value.  Runs  in
+       O(m.size()).
+
+       Map<T,V>& operator=(const Map<T,V>& m); Assignment.   Cre-
+       ates  a  copy  of  the  elements of m, but not its default
+       value. Runs in O(lnsize() + lnm.size()).
+
+   IInnsseerrtt aanndd rreemmoovvee eelleemmeennttss
+       V& operator[](const T& t);  Returns  a  reference  to  the
+       value part of the element with key t. If an element having
+       this key does not exist, one is created and its value ini-
+       tialized  with the default value for this Map. The element
+       value can be changed by using the reference as the  target
+       of an assignment. Runs in O(lnsize()).
+
+       int  remove(const  T& t); Finds the element with key t and
+       removes it. Returns 1 if the element was found and 0  oth-
+       erwise.  Any  iterators  that refer to the removed element
+       will continue to refer to  that  element  until  they  are
+       incremented  or  decremented; that is, the removal appears
+       "delayed" to such iterators (see  the  Example).  Runs  in
+       O(lnsize()).
+
+       void  make_empty();  Removes  all  elements.   Behavior is
+       undefined if there are any iterators attached to the  Map.
+
+   LLeennggtthh
+       int size()const; The number of elements. Runs in O(1).
+
+   IItteerraattiinngg
+       Each  of  the following functions returns an iterator (see
+
+                                                                2
+
+Map(3C++)                                               Map(3C++)
+
+       below) attached to this Map.
+
+       Mapiter<T,V> element(const T& t)const; The iterator refers
+       to  the element with key t. If no such element exists, the
+       iterator will test as vacuous. Runs in O(lnsize()).
+
+       Mapiter<T,V> first()const; The iterator refers to the ele-
+       ment  with the lowest key. If the Map is empty, the itera-
+       tor will test as vacuous. Runs in O(lnsize()).
+
+       Mapiter<T,V> last()const; The iterator refers to the  ele-
+       ment with the highest key. If the Map is empty, the itera-
+       tor will test as vacuous. Runs in O(lnsize()).
+
+   SSttrreeaamm iinnsseerrttiioonn
+       ostream& operator<<(ostream& os, Map<T,V>& m); Inserts  an
+       ASCII  representation  of m into os. The representation is
+       in the form
+           {[ key1 val1 ] [ key2 val2 ] ... [ keyn valn ]}
+
+       Notice that all the keys and values are separated by white
+       space. Runs in O(size()).
+
+MMaappiitteerr<<TT,,VV>>
+       For  each  class  Map<T, V>, there is a class Mapiter<T,V>
+       whose objects, called iterators, are  used  for  iterating
+       over  Map  elements  in  key  order.  An  iterator of type
+       Mapiter<T,V> can  only  be  attached  to  a  Map  of  type
+       Map<T,V>,  and  refers  to  a current element in that Map.
+       Incrementing or decrementing an  iterator  normally  makes
+       the  iterator  refer  to  the  next  or  previous element,
+       respectively, in key order.  Two  special  boundary  cases
+       exist,  for  which  an iterator will test as vacuous (that
+       is, for which operator void* will return zero). These are:
+       (1)  an iterator that has been incremented after returning
+       the element with the highest key and (2) an iterator  that
+       has  been decremented after returning the element with the
+       lowest key. A  vacuous  iterator  may  be  incremented  or
+       decremented to obtain the element with the lowest or high-
+       est key, respectively. The behavior of all iterator opera-
+       tions except the_map() are undefined when the Map to which
+       an iterator is attached ceases to exist.
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Mapiter(const  Map<T,V>&  m);  Creates  a   new   iterator
+       attached  to  Map  m.   The iterator is initially vacuous.
+       Runs in O(1).
+
+       ~Mapiter(); Destructor.  Runs in O(#iterators).
+
+   CCooppyy aanndd aassssiiggnn
+       Copying or assigning a  Mapiter  creates  a  copy  of  its
+       value.
+
+                                                                3
+
+Map(3C++)                                               Map(3C++)
+
+       Mapiter(const Mapiter<T,V>& mi); Copy constructor. Runs in
+       O(1).
+
+       Mapiter<T,V>& operator=(const Mapiter<T,V>&  mi);  Assign-
+       ment.  Runs in O(#iterators).
+
+   CChheecckk tthhee aattttaacchhmmeenntt
+       Map<T,V>* the_map(); Returns a pointer to the Map to which
+       this iterator is attached, or 0 if there is  no  such  Map
+       (this  will happen if the Map is destroyed). Runs in O(1).
+
+   TTeesstt ffoorr vvaaccuuiittyy
+       operator void*()const; Returns zero  if  the  iterator  is
+       vacuous. Runs in O(1).
+
+   RReemmoovvee eelleemmeennttss
+       void  remove(); Removes the current element. If the itera-
+       tor is vacuous, the Map is unchanged.  This  iterator  (as
+       well as any other iterators that refer to the current ele-
+       ment) will continue to refer to the current element  until
+       they  are incremented or decremented; that is, the removal
+       appears "delayed" to such  iterators  (see  the  Example).
+       Runs in O(lnsize()).
+
+   MMaapp__ppaaiirr ffuunnccttiioonnss
+       Map_pair<T,V>* curr();
+
+       Map_pair<T,V>* next();
+
+       Map_pair<T,V>*  prev();  Returns  a  pointer to a Map_pair
+       structure that the Mapiter refers to.  The  next  function
+       first advances the iterator, the prev function first moves
+       the iterator back. If the  iterator  is  vacuous,  a  zero
+       pointer is returned.
+
+BBuuggss
+       A  core  dump  is likely if memory is exhausted unless the
+       client has provided an error handler for operator new.
+
+EExxaammppllee
+       The following program illustrates "delayed  removal"  (see
+       Mapiter<T, V>::remove()). It prints is now the time ?.
+           Map<String,int> m;
+           m["now"];
+           m["is"];
+           m["the"];
+           m["time"];
+           Mapiter<String,int> mi(m), mj(m);
+           while(mi.next() && mj.next()){
+               mi.remove();
+               cout << mj.curr()->key << ' ';
+           }
+           cout << '?';
+
+                                                                4
+
+Map(3C++)                                               Map(3C++)
+
+RReeffeerreenncceess
+
+                                                                5
+

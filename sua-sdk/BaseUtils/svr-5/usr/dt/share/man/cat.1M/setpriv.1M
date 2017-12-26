@@ -1,0 +1,146 @@
+
+
+setpriv(1M)                                           setpriv(1M)
+
+SSyynnooppssiiss
+       /etc/security/tools/setpriv -x [cmdname]
+       /etc/security/tools/setpriv [cmdname]
+
+DDeessccrriippttiioonn
+       Use  the  setpriv command to restore privilege information
+       associated with system commands and update  the  privilege
+       data  file  with  file  attribute information for the com-
+       mands.  It can also be used to query the privilege  infor-
+       mation stored in the privilege data file.
+
+       The  setpriv  command  with  the  -x option re-applies the
+       privilege information found in  the  privilege  data  file
+       (/etc/security/tcb/privs)  for  all  commands in the file.
+       It does this by executing a filepriv command for each line
+       of  the  privilege  data  file.   setpriv also updates the
+       privilege data file with the  attributes  of  the  command
+       files.  If cmdname is specified, setpriv executes a single
+       filepriv command for the specified cmdname (if cmdname  is
+       found in the privilege data file).
+
+       With no options, setpriv echoes to the standard output the
+       appropriate filepriv commands without executing them.  You
+       should  make  an  effort  to  determine why the privileges
+       associated with  a  system  command  were  removed  before
+       restoring them using setpriv.
+
+       While  some  common  events  can cause the privileges on a
+       file to be lost, the removal of privileges from  a  system
+       command  can indicate the presence of an intruder or mali-
+       cious user on  your  system  who  may  have  attempted  to
+       replace  a  system command with a command of their own, in
+       an effort to gain information about your system that  they
+       would not be able to obtain under normal circumstances.
+
+   OOppttiioonnss
+       Execute commands for each entry in the privilege data file
+       (/etc/security/tcb/privs), or a single filpriv command for
+       cmdname,  if supplied.  If cmdname is supplied and it does
+       not appear in the privilege database file, then no command
+       is executed.
+
+FFiilleess
+       the privilege data file
+
+UUssaaggee
+       Use  the  command  to first determine if the privilege and
+       attribute information on privileged command files on  your
+       system  is  out of sync with the contents of the privilege
+       database file.  Then use setpriv to correct  any  problems
+       found.
+
+       In  general, any event that alters in any way a privileged
+       system command file will cause that command file  to  lose
+
+                                                                1
+
+setpriv(1M)                                           setpriv(1M)
+
+       its privileges.  Examples of events that may cause loss of
+       privileges are: restoring system files using a  tool  that
+       does  not  backup  or  restore  privileges on files;  this
+       essentially replaces the privileged file with an  unprivi-
+       leged  file  executing  a pkgchk -f (see pkgchk may change
+       the file attributes on  a  privileged  system  command  to
+       match  the  /var/sadm/install/contents  file, which causes
+       the kernel to remove the privileges on the file  executing
+       the  command  on  a  system file with privileges;  as with
+       pkgchk, this attribute change causes the kernel to  remove
+       the file's privileges
+
+       The  action of removing privileges on a command file whose
+       attribute information no longer agreees with the  contents
+       of  the  privilege  data  file  is  taken by the kernel to
+       reduce the risk of a malicious user or intruder  replacing
+       a  privileged system command with an untrusted and program
+       whose use may compromise system security.
+
+       Once privileges are removed  on  a  previously  privielged
+       command,  the  command  can no longer be executed with the
+       privileges it needs to function properly (for at least one
+       of its intended uses).
+
+       The  absence of privilege from a system command is usually
+       first detected when such  a  command  ceases  to  function
+       properly.  For example, if the file /usr/bin/tfadmin loses
+       its privileges, the tfadmin command will no longer execute
+       properly.  This will in turn cause administration tools in
+       the desktop to not function.
+
+EExxiitt ccooddeess
+       The setpriv command  returns  0  on  success;  a  non-zero
+       return indicates a failure.
+
+EExxaammpplleess
+       The  following  is  an  example of using setpriv and other
+       privilege related commands.  A user has noticed  that  the
+       command is not working properly.  You run initprivs and it
+       returns  the  following:   UX:initprivs:   WARNING:   File
+       ``/usr/bin/ipcs'' fails validation: entry ignored UX:init-
+       privs:  WARNING:   1   entry   ignored   in   ``/etc/secu-
+       rity/tcb/privs'' Check the file with the filepriv command:
+       # filepriv /usr/bin/ipcs #
+
+       The absence of output indicates there are no privileges on
+       the  file.   Run  setpriv  with  no  options  on  ipcs:  #
+       /etc/security/tools/setpriv  ipcs  /sbin/filepriv  -f  dev
+       /usr/bin/ipcs #
+
+       This  output  indicates that /usr/bin/ipcs should have the
+       fixed dev privilege.  Determine why the file  was  changed
+       and verify that the file is the originally installed file.
+
+                                                                2
+
+setpriv(1M)                                           setpriv(1M)
+
+       Let's say you determine that the  file  /usr/bin/ipcs  was
+       corrupted  due  to  disk  problems,  and that the file was
+       restored from backup the previous night, using a tool that
+       does not recognize privilege information on files.  Verify
+       that the /usr/bin/ipcs file is indeed a copy of the origi-
+       nal  ipcs  command  that existed previously on your system
+       (by, for example, checking  previously  performed  trusted
+       backups).   Restore the privileges to /usr/bin/ipcs using:
+       # /etc/security/tools/setpriv -x ipcs Executing "filepriv"
+       for the following:
+
+               /usr/bin/ipcs  #  Use filepriv again to check that
+       privileges  were  restored  as  you  expect:  #   filepriv
+       /usr/bin/ipcs  fixed    dev # You could also run initprivs
+       again as a further check.
+
+SSttaannddaarrddss CCoonnffoorrmmaannccee
+       The setpriv command is not part of any currently supported
+       industry standard.
+
+RReeffeerreenncceess
+       on
+
+                                                                3
+

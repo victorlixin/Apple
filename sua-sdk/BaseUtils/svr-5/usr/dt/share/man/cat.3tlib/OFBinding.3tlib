@@ -1,0 +1,156 @@
+
+
+OFBinding(3tlib)                                 OFBinding(3tlib)
+
+SSyynnooppssiiss
+       OFBinding CDTVar [ osaDataString [ requestProcessor ] ]
+
+DDeessccrriippttiioonn
+       This  procedure  allows  Tcl  to  bind a class description
+       table (CDT) to the admin services library.  After  such  a
+       binding  the  admin  services  library  can  look into the
+       class's CDT and call the  appropriate  OSA-defined  proce-
+       dures when it gets a request for the class.
+
+   AArrgguummeennttss
+       name  of  the  variable  containing  the  class definition
+       table.  optional string that will be associated  with  the
+       class  being  defined.  optional OSA defined function that
+       will take over processing of the BMIP  requests  from  the
+       admin  services  library.   The  name  of  the function is
+       passed  to  OFBinding.   OFBinding  needs   three   tables
+       describing the attributes, groups and operations that com-
+       pose a class. It also needs a formal name for the class so
+       that  invokers  of the class will have some sort of handle
+       on it. The tables that the class needs  are  described  by
+       keyed lists described in the sections that follow.
+
+   AAttttrriibbuuttee ttaabbllee
+       set CDTVar(attributes) {
+               {attribute_1 {
+                       {validOperations   {operation1  operation2
+       ...}}
+                       {validFilters    {filter1 filter2 ...}}
+                       {dataType        {dataType}}}
+               {attribute_2 {
+                       {validOperations  {operation1   operation2
+       ...}}
+                       {validFilters    {filter1 filter2 ...}}
+                       {dataType        {dataType}}}
+               .
+               .
+               .   }  These  describe  each attribute that can be
+       accessed by this class. The fields in the attributes keyed
+       list  are  indexed by their attribute name, and defined in
+       the following way.  The validOperations is list of all the
+       operations  (besides  create) which are allowed to work on
+       this attribute.  create is always allowed to work  on  any
+       attribute (have that attribute include in the command line
+       passed from the client).  The validFilters is  a  list  of
+       all the valid filter operations that are allowed to refer-
+       ence this attribute.  The dataType has a value  of  either
+       single  or  set, which describes the type of data that the
+       attribute contains.
+
+   GGrroouupp ttaabbllee
+       set CDTVar(groups) {
+              {group_1    {{associatedAttributes     {attribute_1
+       attribute_2}}}}
+
+                                                                1
+
+OFBinding(3tlib)                                 OFBinding(3tlib)
+
+              {group_2     {{associatedAttributes    {attribute_2
+       attribute_3}}}}
+              .
+              .
+              .  } These described the all the  attribute  groups
+       that  can  be  accessed by users of the class being bound.
+       Any of the attributes  listed  in  the  CDTVar(attributes)
+       table  can  be  grouped together and referenced as one for
+       convince  sake.  Only  the  Get  and  Replace-with-default
+       actions  can work on grouped attributes. The list is keyed
+       by the name of the group attributes, and each  field  con-
+       tains  the  associatedAttributes keyed element, which is a
+       list of attributes found in the attribute table which  the
+       admin  services library will substitute the group name for
+       before calling any OSA functions.
+
+   OOppeerraattiioonn ttaabbllee
+       set CDTVar(operations) {
+               {operation_1 {
+                       {function    {function_1}}
+                       {granularity {perAttribute}}}
+               }
+               {operation_1 {
+                       {function    {function_2}}
+                       {granularity {perObject}}}
+               }
+               .
+               .
+               .  } This table defines all  the  operations  that
+       users  of  the  class  can call on.  The operation list is
+       keyed by the name of the operations themselves. Each oper-
+       ation  key  contains a sub-list composed of two keyed ele-
+       ments; what Tcl function the admin services library should
+       call  when the operation is to be performed, function, and
+       in what synchronization the procedure  should  be  called,
+       granularity.   The granularity of a function call can only
+       be one of two values; perAttribute or perObject.
+
+       Although the OFBinding routine will only  look  for  these
+       four fields (attributes, groups, operations & class name),
+       the OSA writer can place extra data  in  the  CDT  without
+       concern  about  the  Server API reporting errors.  This is
+       useful for OSA writers who need to store extra information
+       about  the  class  (such as contained sub-classes) in some
+       common place.
+
+       The OFBinding routine also allows the  OSA  to  specify  a
+       request  processor  to  handle incoming BMIP requests.  If
+       the OSA needs to perform  such  specialized  functions  as
+       containment,  synchronization, scoping or first pass vali-
+       dation; then it should provide  a  request  processor  and
+       point  to  its  location  with this parameter. The request
+       processor is explained in more detail in the &ScoadmDG;.
+
+                                                                2
+
+OFBinding(3tlib)                                 OFBinding(3tlib)
+
+       The OFBinding routine also allows the OSA to attach a data
+       string  with every declared class. This string can contain
+       anything, and is often best used as a handle to class spe-
+       cific  information, thus a useful way for multiple classes
+       that are identical in function but not in data to be  cre-
+       ated.  This can by done by calling OFBinding once for each
+       class, with the osaDataPtr  variable  naming  a  different
+       data  storage  area for each class instance. This variable
+       is never examined by the admin services  library,  and  is
+       forwarded  to  all  functions  in  the  OSA  called by the
+       library.
+
+DDiiaaggnnoossttiiccss
+       The function has been called more than once and a previous
+       invocation  has  used the same className value.  The vari-
+       able executionProcedure_fpt  executionProcedure  has  been
+       left  NULL in the OSAOp_t description of one of the opera-
+       tions.  The variable executionProcedure_fpt  executionPro-
+       cedure  has  been  left NULL in the OSAOp_t description of
+       the filter operation.  The operation array OSAOp_t  opera-
+       tions[] is empty and contains no data.  The list of opera-
+       tions in OSAAttr_t's char  *validOperations  variable  can
+       not  be interpreted by OFBinding().  One of the operations
+       listed in the OSAAttr_t's char  *validOperations  variable
+       is   not  listed  in  the  OSAOp_t  array.   The  list  of
+       attributes in OSAGroup_t's char *assocAttrs  variable  can
+       not  be interpreted by OFBinding().  One of the attributes
+       listed in the OSAGroup_t's char  *assocAttrs  variable  is
+       not  listed  in  the OSAAttr_t array.  The attribute array
+       OSAAttr_t attributes[] is empty and contains no data.
+
+RReeffeerreenncceess
+
+                                                                3
+

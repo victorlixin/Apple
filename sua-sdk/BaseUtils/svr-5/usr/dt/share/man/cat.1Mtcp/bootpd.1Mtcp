@@ -1,0 +1,134 @@
+
+
+bootpd(1Mtcp)                                       bootpd(1Mtcp)
+
+SSyynnooppssiiss
+       in.bootpd  [  -i  ]  [  -s  ]  [  -S ] [ -t timeout ] [ -D
+       debug_level ] [ -c chdir_path ] [ -P port ] [  bootptab  [
+       dumpfile ] ]
+
+DDeessccrriippttiioonn
+       bootpd  implements  an Internet Bootstrap Protocol (BOOTP)
+       server as defined in RFC 951, RFC 1542, and RFC 2132.
+
+       One host on each network segment is normally configured to
+       run  bootpd  from inetd by including the following line in
+       the file  /etc/inetd.conf:  bootps  dgram  udp  wait  root
+       /usr/sbin/in.bootpd in.bootpd bootptab This mode of opera-
+       tion is referred to as inetd mode and causes bootpd to  be
+       started  only  when a boot request arrives. If it does not
+       receive another packet within fifteen minutes of the  last
+       one   it   received,  it  will  exit  to  conserve  system
+       resources.  The  -t  option  controls  this  timeout  (see
+       ``Options'').
+
+       It  is  also  possible  to  run  bootpd in standalone mode
+       (without inetd) by simply invoking it from  a  shell  like
+       any other regular command. Standalone mode is particularly
+       useful when bootpd is  used  with  a  large  configuration
+       database, where the start up delay might otherwise prevent
+       timely response to client requests.
+
+       bootpd automatically detects whether it was  invoked  from
+       inetd or from a shell and automatically selects the appro-
+       priate mode. The -s or -i option  may  be  used  to  force
+       standalone  or inetd mode, respectively (see ``Options'').
+
+   OOppttiioonnss
+       Sets the current directory used by bootpd  while  checking
+       the  existence  and size of client boot files. This option
+       has no effect because this implementation of  bootpd  does
+       not do this checking. This option is equivalent with -p on
+       some older versions of bootpd.  Sets the debug_level vari-
+       able that controls the amount of debugging messages gener-
+       ated. For example, -D 1 will set the debugging level to 1.
+       Recognized values are 0, 1, 2, and 3 or greater. Zero gen-
+       erates no messages and 1 to 3 generate increasing  amounts
+       of  messages.  Specifying  an  integer over 3 has the same
+       result as specifying 3. For compatibility with older  ver-
+       sions of bootpd, using the option -d (without an argument)
+       will simply increment the debug level by one.  Force inetd
+       mode. This option is obsolete, but remains for compatibil-
+       ity with older versions of bootpd.  Specifies an alternate
+       port  on  which bootpd listens for BOOTP packets when run-
+       ning in slave mode. Use this option if dhcpd is running on
+       the  same  host.   Force  standalone  mode. This option is
+       obsolete, but remains for compatibility  with  older  ver-
+       sions  of bootpd.  Forces slave mode, which is required if
+       dhcpd is running on the same host as bootpd.  This  option
+
+                                                                1
+
+bootpd(1Mtcp)                                       bootpd(1Mtcp)
+
+       forces  bootpd to listen for packets on the port specified
+       with the -P option.  Specifies the timeout value (in  min-
+       utes)  that  a bootpd process will wait for a BOOTP packet
+       before exiting. If no packets  are  received  for  timeout
+       minutes,  then  the  program will exit. A timeout value of
+       zero means ``run  forever''.   In  standalone  mode,  this
+       option  is forced to zero.  bootptab specifies the name of
+       an alternate configuration file from  which  bootpd  loads
+       its  database  of  known  clients and client options.  The
+       default configuration file is /etc/inet/bootptab.
+
+       dumpfile specifies the name of the file into which  bootpd
+       will  dump  its internal database if it receives a SIGUSR1
+       signal.
+
+   OOppeerraattiioonn
+       bootpd listens for any packets sent to the bootps port and
+       forwards any BOOTREPLY packets.
+
+       When  bootpd  is  started,  it  reads a configuration file
+       (normally /etc/inet/bootptab) that initializes the  inter-
+       nal  database  of  known clients and client options.  This
+       internal database is reloaded from the configuration  file
+       when  bootpd  receives a hangup signal (SIGHUP) or when it
+       discovers that the configuration file has changed.
+
+       When bootpd receives a BOOTREQUEST packet, it  checks  the
+       modification  time  of  the configuration file and reloads
+       the database if necessary. Then it looks  for  a  database
+       entry matching the client request. If the client is known,
+       bootpd composes a  BOOTREPLY  packet  using  the  database
+       entry  found above and sends the reply to the client (pos-
+       sibly using a gateway). If  the  client  is  unknown,  the
+       request  is discarded (with a notice if the debug level is
+       greater than 0).
+
+       The receipt of a SIGUSR1 signal causes bootpd to dump  its
+       internal  database to the file /usr/tmp/bootpd.dump or the
+       dumpfile specified as a command line argument.
+
+       During initialization, bootpd determines the UDP port num-
+       bers  to be used by calling getservbyname (see (which nor-
+       mally uses /etc/services).  Two service  names  (and  port
+       numbers)  are  used:  BOOTP  server  listening  port BOOTP
+       client destination port If  the  port  numbers  cannot  be
+       determined using getservbyname, then the values default to
+       bootps=67 and bootpc=68.
+
+       When running dhcpd and bootpd on  the  same  host,  bootpd
+       must  be  run  in  "slave mode" by using the -S option. In
+       this mode, bootpd listens on an alternate port  which  you
+       specify  with the -P option. For information about running
+       bootpd and dhcpd on the same host, see
+
+                                                                2
+
+bootpd(1Mtcp)                                       bootpd(1Mtcp)
+
+FFiilleess
+       database file read by bootpd debugging dump  file  created
+       by bootpd internet service numbers current directory typi-
+       cally used by the TFTP server and bootpd
+
+RReeffeerreenncceess
+       RFC 951, RFC 1542, RFC 2132
+
+NNoottiicceess
+       Individual host entries must not exceed 1024 characters.
+
+                                                                3
+

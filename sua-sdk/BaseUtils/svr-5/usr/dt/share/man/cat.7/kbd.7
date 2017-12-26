@@ -1,0 +1,150 @@
+
+
+kbd(7)                                                     kbd(7)
+
+DDeessccrriippttiioonn
+       The  STREAMS  module kbd is a programmable string transla-
+       tion module.  It performs two types of  operations  on  an
+       input stream: the first type is simple byte-swapping via a
+       lookup table, the second is  string  translation.   It  is
+       useful for code set conversion and compose-key or dead-key
+       character production on terminals and production of  over-
+       striking  sequences  on printers.  It also can be used for
+       minor types of key-rebinding, expansion of  abbreviations,
+       and  keyboard  re-arrangement  (an  example  of the latter
+       would be swapping the positions  of  The  Y  and  Z  keys,
+       required  for  German  keyboards, or providing Dvorak key-
+       board emulation for QWERTY keyboards).   The  manual  page
+       discusses table construction, the input language, and con-
+       tains sample uses.  It is intended mainly to aid  adminis-
+       trators  in configuring the module on a particular system;
+       the user interface to the module is only through the  com-
+       mands and
+
+       The kbd module works by changing an input stream according
+       to instructions embodied in tables.  It has  no  built  in
+       default tables.  Some tables may be loaded when the system
+       is first brought up by  pushing  the  module  and  loading
+       standard  or  often-used  tables [see that are retained in
+       main-memory across invocations and made available  to  all
+       users.   These  are  called public tables.  Users may also
+       load private tables at  any  time;  these  tables  do  not
+       remain resident.
+
+       With  the kbdset command, users may query the module for a
+       list of available  and  attached  tables,  attach  various
+       tables,  and  set  the  optional  per-user hotkey, hot-key
+       mode, and verbose string for their particular  invocation.
+
+       When  a user attaches more than one table, the user's hot-
+       key may be used to cycle to the next table  in  the  list.
+       If only one table is specified, the hot-key may be used to
+       toggle translation on and off.  When multiple  tables  are
+       in  use, the hot-key may be used to cycle through the list
+       of tables.   [See  for  a  description  of  the  available
+       modes.]
+
+       In  its  initial state, kbd scans input for occurrences of
+       bytes beginning a translation  sequence.   When  receiving
+       such a byte, kbd attempts to match subsequent bytes of the
+       input to programmed sequences.  Input is  buffered  begin-
+       ning  with  the  byte  that caused the state change and is
+       released if a match is not found.  When a match fails, the
+       first  byte  of the invalid sequence is sent upstream, the
+       buffered input is shifted, and the scan begins again  with
+       the  resulting  input sequence.  If the current table con-
+       tains an error entry, its value (one  or  more  bytes)  is
+       substituted for the offending input byte.  When a sequence
+       is found to be valid, the entire sequence is replaced with
+
+                                                                1
+
+kbd(7)                                                     kbd(7)
+
+       the result string specified for it.
+
+       The  kbd  module  may  be used in either the read or write
+       directions, or both simultaneously.  Maps and hot-keys may
+       be specified independently for input and output.
+
+       The  kbd also supports the use of external kernel-resident
+       functions as  if  they  were  tables;  once  declared  and
+       attached (via kbdload and kbdset respectively) they may be
+       used as simple tables or members of composites.  To accom-
+       plish  this, kbd understands the registration functions of
+       the alp module and can access any function registered with
+       that  module.   Further  information on external functions
+       and their definition is contained  in  External  functions
+       are  especially  useful  in  supporting multibyte code set
+       conversions that would be  difficult  or  impossible  with
+       normal kbd tables.
+
+   LLiimmiittaattiioonnss
+       It  is  not  an  error  to  attach multiple tables without
+       defining a hot-key, but the tables will not all be  acces-
+       sible.   It  is recommended that the user's hot-key be set
+       before loading and attaching tables  to  avoid  unpleasant
+       side  effects  when  an  unfamiliar  arrangement  is first
+       loaded.
+
+       Each user has a limitation on the amount  of  memory  that
+       may  be  used  for  private  and  attached  tables.   This
+       ``quota'' is controlled by the kbd_umem variable described
+       below.  When a user that is not a privileged user attempts
+       to load a table or create a composite table, the quota  is
+       checked,  and  the  load  will  fail if it would cause the
+       quota to be exceeded.  When a composite table is attached,
+       the  space  for attachment (which requires more space than
+       the composite table itself) is charged against this  quota
+       (attachment  of  simple  tables is not charged against the
+       quota).  The quota  is  enforced  only  when  loading  new
+       tables.   Detaching  temporarily  from  unneeded composite
+       tables may reduce the current allocation enough to load  a
+       table  that would otherwise fail because of quota enforce-
+       ment.   To  minimize  chances  of  failure  while  loading
+       tables,  it  is  advisable to load all required tables and
+       make all required composite tables before attaching any of
+       them.
+
+   CCoonnffiigguurraattiioonn ppaarraammeetteerrss
+       The master (or space.c) file contains configurable parame-
+       ters.
+
+       NKBDU is the maximum number of tables that may be attached
+       by  a  single  user.  The number should be large enough to
+       cover uncommon cases, and must be at least 2.  Default  is
+       6.
+
+                                                                2
+
+kbd(7)                                                     kbd(7)
+
+       ZUMEM,  from  which  the variable kbd_umem is assigned, is
+       the maximum number of bytes that  a  user  (other  than  a
+       privileged  user)  may  have  allocated  to private tables
+       (that is, the quota).  Default is 4096.
+
+       KBDTIME is the default timer value for timeout  mode.   It
+       is  the  number  of clock ticks allowed before timing out.
+       The value of one clock tick depends on the  hardware,  but
+       is  usually 1/100 or 1/60 of a second.  A timeout value of
+       20 is 1/5 second at 100Hz; with a 60Hz clock, a  value  of
+       12  produces  a  1/5 second timeout.  Values from 5 to 400
+       inclusive are allowed by the module; if the value set  for
+       KBDTIME is outside this range, the module forces it to the
+       nearest limit.  (This value is only a default;  users  may
+       change  their  particular  stream to use a different value
+       depending on their own  preferences,  terminal  baud-rate,
+       and typing speed.)
+
+FFiilleess
+       /usr/lib/kbd        - directory containing system standard table files.
+       /usr/lib/kbd/*.map  - source for some system table files.
+
+RReeffeerreenncceess
+NNoottiicceess
+       NULL  characters  may  not  be  used  in  result  or input
+       strings, because they are used as string delimiters.
+
+                                                                3
+

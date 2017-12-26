@@ -1,0 +1,113 @@
+
+
+sdipath(1M)                                           sdipath(1M)
+
+SSyynnooppssiiss
+       sdipath -o list [-qv] [-d device]
+       sdipath -o fail -d device path
+       sdipath -o repair -d device path
+
+DDeessccrriippttiioonn
+       Multipath  I/O allows multiple Host Bus Adapters (HBAs) to
+       be connected to the  same  bus  and  multiported  devices.
+       This serves two purposes: Firstly, it provides high avail-
+       ability to the devices when an HBA fails.  Upon controller
+       failure,  the  operating  system will redirect I/O through
+       another I/O path to the  device.   Secondly,  it  provides
+       load  balancing  of I/O to the device across multiple con-
+       trollers.
+
+       Currently, disks are the only devices supported by  multi-
+       path I/O.
+
+       Multipath  I/O  is  implemented  as a device driver in the
+       operating system kernel and as such is able to detect  and
+       discover  all  known paths for devices on system boot.  By
+       default the multipath I/O (MPIO) driver  will  attempt  to
+       use all paths and load balance I/O across controllers.
+
+       The  sdipath  command  is  the administrative interface to
+       managing multipath I/O.  There are operations provided for
+       listing paths that include status and performance informa-
+       tion, and  operations  for  controlling  which  paths  are
+       active  so you can tune your system for better performance
+       or higher availability, as well as repair paths that  have
+       failed.
+
+       As  the  system  boots,  physical disks are discovered and
+       brought online.  Each disk has a stamp associated with  it
+       that  is used to determine if this is the first occurrence
+       of this disk.  If it is the  first  occurrence,  a  device
+       node  is  created in /dev/rdsk and /dev/dsk, then an entry
+       is made into the resource manager  database.   All  subse-
+       quent  occurrences  of this disk will only get an entry in
+       the database under an sdol entry.
+
+       The pathname associated with each path to the disk is cre-
+       ated  by  appending  the resource manager key value to the
+       word path.  Thus if a resource manager entry is made for a
+       path  having  a  resmgr  key  of 29, the name of this path
+       would be path29.
+
+   OOppttiioonnss
+       sdipath takes the following options: Specifies the  opera-
+       tion to be performed.  These can be as follows: This oper-
+       ation is used to list information about I/O paths known to
+       the  MPIO driver.  The following information is displayed:
+       pathname path state path locale number  of  read  requests
+       for path number of write requests for path
+
+                                                                1
+
+sdipath(1M)                                           sdipath(1M)
+
+       The  path state can be either Active, Inactive, or Failed.
+
+       If active, the path is currently available  for  I/O.   In
+       this state, the MPIO driver can send I/O through this path
+       to the device.
+
+       If inactive, the path is not available for I/O.  For exam-
+       ple,  a  path  may  be  inactive if it is connected to the
+       inactive port of a  standalone  RAID  device,  such  as  a
+       CLARiION disk array.
+
+       If  failed,  either  the  driver marked the path as failed
+       after being unable to perform I/O on the path, or the sys-
+       tem  administrator  marked  the  path  as failed manually.
+       Paths that are in the  failed  state  will  remain  failed
+       until  the  administrator  issues a repair operation after
+       the problem has been corrected.  This operation is used to
+       stop  the  I/O flow through a specified path.  It is some-
+       times useful to be able to turn off the I/O through a spe-
+       cific  path for either performance, availability, or main-
+       tenance reasons.  When this operation  is  performed,  the
+       MPIO  driver  sets  a  flag to indicate that the specified
+       path was failed.  This operation is used  to  restart  the
+       I/O flow through a path that has been in one of the failed
+       states.  This operation should be used to  activate  paths
+       that  were failed by the administrator, as well as reacti-
+       vating paths that have been physically  repaired  after  a
+       system  failure  that  resulted  in  the path being marked
+       failed.  device can be specified in  one  of  three  ways.
+       You  can  use the cCbBtTdLp0 notation, specify a full path
+       to the device node, or specify  the  alias  name  for  the
+       device  in the /etc/device.tab file.  Quiet mode.  Produce
+       an unformatted listing with no headers and  fields  delim-
+       ited  by a single space.  Verbose mode.  Produce a format-
+       ted listing  with  headers  and  aligned  columns.   (This
+       option is the default.)
+
+UUssaaggee
+       The  following  are  some  examples  of how sdipath can be
+       used.
+
+       To list information about all paths on the system: sdipath
+       -o  list  To  list  information about all paths associated
+       with disk3: sdipath -o list -d disk3  To  fail  path51  of
+       device c0b0t0d0p0: sdipath -o fail -d c0b0t0d0p0 path51 To
+       repair path52 of a device whose alias is disk1: sdipath -o
+       repair -d disk1 path52
+
+                                                                2
+

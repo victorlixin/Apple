@@ -1,0 +1,52 @@
+rexec(3)                                                       rexec(3)
+
+  rreexxeecc
+
+  NNAAMMEE
+
+    rexec() - return stream to a remote command
+
+  SSYYNNOOPPSSIISS
+
+    int rexec (char **ahost, int inport, char *user, char *passwd,
+               char *cmd, int *fd2p)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _rr_ee_xx_ee_cc(3) function looks up the host *ahost using _gg_ee_tt_hh_oo_ss_tt_bb_yy_nn_aa_mm_ee(2),
+    returning -1 if the host does not exist. Otherwise *ahost is set to the
+    standard name of the host. If a user name and password are both specified,
+    then these are used to authenticate to the foreign host; otherwise the
+    environment and then the user's ..nneettrrcc file in his home directory are
+    searched for appropriate information. If all this fails, the user is
+    prompted for the information.
+
+    The port inport specifies which well-known DARPA Internet port to use for
+    the connection; the call
+
+    getservbyname(exec, tcp)
+
+    (see ggeettsseerrvveenntt(2)) will return a pointer to a structure, which contains
+    the necessary port. The protocol for connection is described in detail in
+    rreexxeeccdd(1).
+
+    If the connection succeeds, a socket in the Internet domain of type
+    SOCK_STREAM is returned to the caller, and given to the remote command as
+    stdin and stdout. If fd2p is non-zero, then an auxiliary channel to a
+    control process will be setup, and a descriptor for it will be placed in
+    *fd2p. The control process will return diagnostic output from the command
+    (unit 2) on this channel, and will also accept bytes on this channel as
+    being standard signal numbers, to be forwarded to the process group of the
+    command. The diagnostic information returned does not include remote
+    authorization failure, as the secondary connection is set up after
+    authorization has been verified. If fd2p is 0, then the stderr (unit 2 of
+    the remote command) will be made the same as the stdout and no provision
+    is made for sending arbitrary signals to the remote process, although you
+    may be able to get its attention by using out-of-band data.
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The rreexxeecc function is thread safe.
+
+    The rreexxeecc function is not async-signal safe.
+

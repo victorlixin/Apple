@@ -1,0 +1,88 @@
+
+
+getnetpath(3N)                                     getnetpath(3N)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <netconfig.h>
+
+       void *setnetpath(void);
+
+       struct netconfig *getnetpath(void *handlep);
+
+       int endnetpath(void *handlep);
+
+       void nc_perror (char *msg);
+
+       char *nc_sperror (void);
+
+DDeessccrriippttiioonn
+       The  five  routines described on this page are part of the
+       System V Network Selection component.  They provide appli-
+       cation   access   to   the  system  network  configuration
+       database, /etc/netconfig, as it is filtered by the NETPATH
+       environment  variable (see Network Selection also includes
+       routines that access the  network  configuration  database
+       directly (see
+
+       A  call  to  setnetpath  ``binds'' or ``rewinds'' NETPATH.
+       setnetpath must be called before the first call to getnet-
+       path  and  may  be called at any other time.  It returns a
+       handle that is used by getnetpath.  setnetpath  will  fail
+       if  the  netconfig database is not present.  If NETPATH is
+       unset, or if NETPATH is set but null, the set  of  visible
+       networks  constitutes a default NETPATH for use by setnet-
+       path.
+
+       When first called, getnetpath returns  a  pointer  to  the
+       netconfig  database entry corresponding to the first valid
+       NETPATH component.  The netconfig entry is formatted as  a
+       netconfig  structure.  On each subsequent call, getnetpath
+       returns a pointer to the netconfig entry that  corresponds
+       to  the next valid NETPATH component.  getnetpath can thus
+       be used to search the netconfig database for all  networks
+       included  in  the NETPATH variable.  When NETPATH has been
+       exhausted, getnetpath returns NULL.
+
+       getnetpath silently ignores invalid NETPATH components.  A
+       NETPATH  component is invalid if there is no corresponding
+       entry in the netconfig database.
+
+       If the NETPATH variable is unset, getnetpath behaves as if
+       NETPATH were set to the sequence of ``default'' or ``visi-
+       ble'' networks in the netconfig database, in the order  in
+       which they are listed.
+
+       endnetpath  may  be called to ``unbind'' NETPATH when pro-
+       cessing is complete, releasing resources for reuse.   Pro-
+       grammers  should  be aware, however, that endnetpath frees
+       all memory allocated by setnetpath.  endnetpath returns  0
+
+                                                                1
+
+getnetpath(3N)                                     getnetpath(3N)
+
+       on  success  and -1 on failure (for example, if setnetpath
+       was not called previously).
+
+       nc_perror prints a message to the standard error  indicat-
+       ing  why any of the above routines failed.  The message is
+       prepended with string msg  and  a  colon.   A  newline  is
+       appended at the end of the message.
+
+       nc_sperror  is similar to nc_perror but instead of sending
+       the message to the standard error indicating why the  net-
+       work  selection  routines  failed, it returns a pointer to
+       the message.
+
+FFiilleess
+RReeffeerreenncceess
+NNoottiicceess
+       nc_sperror returns a pointer to static data that is  over-
+       written  on  each  call.  For multi-threaded applications,
+       each thread is allocated a separate message storage  area.
+
+       Functions that provide successive entries in files on suc-
+       cessive calls must be called from a single thread.
+
+                                                                2
+

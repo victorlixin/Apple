@@ -1,0 +1,206 @@
+
+
+rpc_clnt_create(3rpc)                       rpc_clnt_create(3rpc)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <rpc/rpc.h>
+
+       bool_t  clnt_control(CLIENT  *clnt,  const u_int req, char
+       *info);
+
+       CLIENT  *clnt_create(const  char   *host,   const   u_long
+       prognum,      const u_long versnum, const char *nettype);
+
+       void clnt_destroy(CLIENT *clnt);
+
+       CLIENT  *clnt_dg_create(const  int fd, const struct netbut
+       *svcaddr,      const u_long prognum, const u_long versnum,
+            const u_int sendsz, const u_int recvsz);
+
+       void clnt_pcreateerror(const char *s);
+
+       CLIENT *clnt_raw_create(const u_long prognum, const u_long
+       versnum);
+
+       char *clnt_spcreateerror(const char *s);
+
+       CLIENT *clnt_tli_create(const int fd, const struct netcon-
+       fig  *netconf,       const  struct  netbuf *svcaddr, const
+       u_long prognum,      const  u_long  versnum,  const  u_ini
+       sendsz,      const u_int recvsz);
+
+       CLIENT  *clnt_tp_create(const  char  *host,  const  u_long
+       prognum,      const u_long versnum, const struct netconfig
+       *netconf);
+
+       CLIENT *clnt_vc_create(const int fd, const struct netbuf *
+       svcaddr,      const u_long prognum, const u_long  versnum,
+            const u_int sendsz, const u_int recvsz);
+
+DDeessccrriippttiioonn
+       RPC  library  routines  allow  C language programs to make
+       procedure calls on  other  machines  across  the  network.
+       First a CLIENT handle is created and then the client calls
+       a procedure to send a data packet  to  the  server.   Upon
+       receipt of the packet, the server calls a dispatch routine
+       to perform the requested service, and then  sends  back  a
+       reply.
+
+   RRoouuttiinneess
+       See  for  the  definition  of  the  CLIENT data structure.
+       bool_t clnt_control(CLIENT *clnt, const  u_int  req,  char
+       *info);  A function macro used to change or retrieve vari-
+       ous information about a client object.  req indicates  the
+       type  of  operation, and info is a pointer to the informa-
+       tion.  For  both  connectionless  and  connection-oriented
+       transports, the supported values of req and their argument
+       types and what they do are shown in the following table:
+
+                                                                1
+
+rpc_clnt_create(3rpc)                       rpc_clnt_create(3rpc)
+
+       CLSET_TIMEOUT  struct timevalSet total timeout
+       CLGET_TIMEOUT  struct timevalGet total timeout
+       CLGET_FD       int           Get the associated file descriptor
+       CLGET_SVC_ADDR struct netbuf Get server's address
+       CLSET_FD_CLOSE int           Close  the  file  descriptor  when
+                                    destroying the client handle, see
+       CLSET_FD_NCLOSEint           Do  not  close the file descriptor
+                                    when destroying the client handle
+       Note that if you set the timeout using  clnt_control,  the
+       timeout  parameter  passed to clnt_call will be ignored in
+       all future calls.
+
+       The following  operations  are  valid  for  connectionless
+       transports only:
+       CLSET_RETRY_TIMEOUT  struct timeval  Set the retry timeout
+       CLGET_RETRY_TIMEOUT  struct timeval  Get the retry timeout
+       The  retry  timeout  is  the  time  that RPC waits for the
+       server to reply before retransmitting the request.
+
+       clnt_control returns  1  on  success  and  0  on  failure.
+       CLIENT   *  clnt_create(const  char  *host,  const  u_long
+       prognum,                    const  u_long  versnum,  const
+       char  *nettype);  Generic client creation routine for pro-
+       gram prognum and version  versnum.   host  identifies  the
+       name of the remote host where the server is located.  net-
+       type indicates the class of  transport  protocol  to  use.
+       The transports are tried in left to right order in NETPATH
+       variable  or  in  top  to  down  order  in  the  netconfig
+       database.
+
+       clnt_create  tries all the transports of the nettype class
+       available from the NETPATH environment  variable  and  the
+       netconfig  database, and chooses the first successful one.
+       Default timeouts  are  set,  but  can  be  modified  using
+       clnt_control.  void clnt_destroy(CLIENT *clnt); A function
+       macro that destroys the client's RPC handle.   Destruction
+       usually  involves deallocation of private data structures,
+       including clnt itself.  Use of  clnt  is  undefined  after
+       calling clnt_destroy.  If the RPC library opened the asso-
+       ciated file descriptor, or CLSET_FD_CLOSE  was  set  using
+       clnt_control,  it  will  be closed.  CLIENT * clnt_dg_cre-
+       ate(const  int   fd,   const   struct   netbuf   *svcaddr,
+                          const u_long prognum, const u_long ver-
+       snum,                    const u_int sendsz,  const  u_int
+       recvsz); This routine creates an RPC client for the remote
+       program prognum and version versnum;  the  client  uses  a
+       connectionless  transport.   The remote program is located
+       at address svcaddr.  The parameter fd is an open and bound
+       file  descriptor.   This routine will resend the call mes-
+       sage in intervals  of  15  seconds  until  a  response  is
+       received  or until the call times out.  The total time for
+       the call to time out is specified by clnt_call  (see  This
+       routine  returns NULL if it fails.  The retry time out and
+       the  total  time  out  periods  can   be   changed   using
+
+                                                                2
+
+rpc_clnt_create(3rpc)                       rpc_clnt_create(3rpc)
+
+       clnt_control.   The  user may set the size of the send and
+       receive buffers with the  parameters  sendsz  and  recvsz;
+       values  of  0  choose  suitable defaults.  void clnt_pcre-
+       ateerror(const char *s); Print a message to standard error
+       indicating  why  a client RPC handle could not be created.
+       The message is prepended with the string s  and  a  colon,
+       and  appended  with  a  newline.   CLIENT  * clnt_raw_cre-
+       ate(const u_long prognum, const u_long versnum); This rou-
+       tine  creates  a  toy  RPC  client  for the remote program
+       prognum and version versnum.  The transport used  to  pass
+       messages  to  the service is a buffer within the process's
+       address space, so the corresponding RPC server should live
+       in  the same address space; (see This allows simulation of
+       RPC and acquisition of RPC overheads, such as  round  trip
+       times,  without  any  kernel  interference.   This routine
+       returns NULL  if  it  fails.   clnt_raw_create  should  be
+       called  after  svc_raw_create.   char  *  clnt_spcreateer-
+       ror(const char *s); Like clnt_pcreateerror, except that it
+       returns  a  string  instead  of  printing  to the standard
+       error.  A newline is not appended to the message  in  this
+       case.
+
+       Note:  clnt_spcreateerror returns a pointer to static data
+       that is overwritten on each call.  CLIENT *  clnt_tli_cre-
+       ate(const   int   fd,  const  struct  netconfig  *netconf,
+                          const  struct  netbuf  *svcaddr,  const
+       u_long  prognum,                     const u_long versnum,
+       const   u_int   sendsz,                      const   u_int
+       recvsz); This routine creates an RPC client handle for the
+       remote program prognum and version  versnum.   The  remote
+       program is located at address svcaddr.  If svcaddr is NULL
+       and it is connection-oriented, it is assumed that the file
+       descriptor  is  connected.  For connectionless transports,
+       if svcaddr is NULL, RPC_UNKNOWNADDR error is set.  fd is a
+       file  descriptor  which  may be open, bound and connected.
+       If it is RPC_ANYFD, it opens  a  file  descriptor  on  the
+       transport  specified  by  netconf.   If netconf is NULL, a
+       RPC_UNKNOWNPROTO error is set.  If fd is unbound, then  it
+       will attempt to bind the descriptor.  The user may specify
+       the size of the buffers with  the  parameters  sendsz  and
+       recvsz;  values  of 0 choose suitable defaults.  Depending
+       upon the type of  the  transport  (connection-oriented  or
+       connectionless),  clnt_tli_create calls appropriate client
+       creation routines.  This routine returns NULL if it fails.
+       clnt_pcreateerror  can  be  used  to  print the reason for
+       failure.  The remote rpcbind service (see will not be con-
+       sulted  for  the  address of the remote service.  CLIENT *
+       clnt_tp_create(const char  *host,  const  u_long  prognum,
+                          const u_long versnum, const struct net-
+       config *netconf); clnt_tp_create creates a  client  handle
+       for  the  transport specified by netconf.  Default options
+       are set, which can be changed  using  clnt_control  calls.
+       The  remote  rpcbind service on the host host is consulted
+       for the address  of  the  remote  service.   This  routine
+
+                                                                3
+
+rpc_clnt_create(3rpc)                       rpc_clnt_create(3rpc)
+
+       returns  NULL  if it fails.  The clnt_pcreateerror routine
+       can be used to print the reason  for  failure.   CLIENT  *
+       clnt_vc_create(const int fd, const struct netbuf *svcaddr,
+                          const u_long prognum, const u_long ver-
+       snum,                     const  u_int sendsz, const u_int
+       recvsz); This routine creates an RPC client for the remote
+       program  prognum  and  version  versnum; the client uses a
+       connection-oriented  transport.   The  remote  program  is
+       located  at  address svcaddr.  The parameter fd is an open
+       and bound file descriptor.  The user may specify the  size
+       of the send and receive buffers with the parameters sendsz
+       and recvsz; values of 0 choose  suitable  defaults.   This
+       routine returns NULL if it fails.
+
+       The address svcaddr should not be NULL and should point to
+       the actual address of the remote program.   clnt_vc_create
+       will  not  consult  the  remote  rpcbind  service for this
+       information.
+
+FFiilleess
+       /usr/lib/locale/locale/LC_MESSAGES/uxns1
+
+RReeffeerreenncceess
+
+                                                                4
+

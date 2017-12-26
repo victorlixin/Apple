@@ -1,0 +1,150 @@
+
+
+ctime(3C)                                               ctime(3C)
+
+SSyynnooppssiiss
+       #include <time.h>
+
+       char *ctime(const time_t *clock);
+
+       char *ctime_r(const time_t *clock, char *buffer);
+
+       struct tm *localtime(const time_t *clock);
+
+       struct  tm  *localtime_r(const  time_t  *clock,  struct tm
+       *result);
+
+       struct tm *gmtime(const time_t *clock);
+
+       struct  tm  *gmtime_r(const  time_t  *clock,   struct   tm
+       *result);
+
+       char *asctime(const struct tm *tm);
+
+       char *asctime_r(const struct tm *tm, char *buffer);
+
+       void tzset(void);
+
+       extern time_t timezone, altzone;
+
+       extern int daylight;
+
+       extern char *tzname[2];
+
+DDeessccrriippttiioonn
+       The  reentrant functions (suffixed by _r) require the user
+       to allocate the necessary space for the return  value  and
+       pass a pointer to this area using result.
+
+       ctime,   ctime_r,   localtime,  localtime_r,  gmtime,  and
+       gmtime_r accept arguments of type time_t,  pointed  to  by
+       clock,  representing  the  time  in seconds since 00:00:00
+       UTC, January 1,  1970.   ctime  returns  a  pointer  to  a
+       26-character  string as shown below.  ctime_r converts the
+       calendar time pointed to by clock to  local  time  in  the
+       same  format as shown below and places the string into the
+       location pointed to by buffer, which is assumed to hold at
+       least 26 characters.  ctime_r returns buffer upon success-
+       ful completion.  Time zone and  daylight  savings  correc-
+       tions are made before the string is generated.  The fields
+       are constant in width: Fri Aug 13 00:00:00 1993\n\0
+
+       localtime and gmtime return  pointers  to  tm  structures,
+       described  below.   localtime  corrects  for the main time
+       zone and possible alternate  (``daylight  savings'')  time
+       zone;  gmtime  converts  directly to Coordinated Universal
+       Time (UTC), which is the time the UNIX system uses  inter-
+       nally.   localtime_r converts the calendar time pointed to
+       by clock into a broken-down time that  is  stored  in  the
+
+                                                                1
+
+ctime(3C)                                               ctime(3C)
+
+       struct  tm  pointed to by result.  It returns result, upon
+       successful completion.   gmtime_r  converts  the  calendar
+       time pointed to by clock into a broken-down time expressed
+       as Coordinated Universal Time (UTC).  The broken-down time
+       is stored in the struct tm pointed to by result.  gmtime_r
+       returns result, upon successful completion.
+
+       asctime converts a tm structure to a 26-character  string,
+       as  shown  in  the above example, and returns a pointer to
+       the string.  asctime_r converts the  broken-down  time  in
+       the  structure  pointed  to  by  tm  into a string that is
+       placed in the location pointed  to  by  buffer,  which  is
+       assumed to hold at least 26 characters.  It returns buffer
+       upon successful completion.
+
+       Declarations of all the functions and externals,  and  the
+       tm  structure, are in the time.h header file.  The members
+       for this structure include:      int  tm_sec;   /* seconds
+       after  the minute -- [0, 61] */                     /* for
+       leap seconds */      int  tm_min;   /* minutes  after  the
+       hour  -- [0, 59] */      int  tm_hour;  /* hour since mid-
+       night -- [0, 23]  */       int  tm_mday;  /*  day  of  the
+       month  --  [1,  31] */      int  tm_mon;   /* months since
+       January -- [0, 11] */      int  tm_year;  /*  years  since
+       1900 */      int  tm_wday;  /* days since Sunday -- [0, 6]
+       */      int  tm_yday;  /* days since January 1 -- [0, 365]
+       */       int  tm_isdst; /*  flag for alternate daylight */
+                           /* savings time */
+
+       The value of tm_isdst is positive if daylight savings time
+       is  in  effect,  zero  if  daylight savings time is not in
+       effect, and negative if the information is not  available.
+       (Previously, the value of tm_isdst was defined as non-zero
+       if daylight savings time was in effect.)
+
+       The external time_t variable altzone contains the  differ-
+       ence,  in  seconds, between Coordinated Universal Time and
+       the alternate time zone.  The external  variable  timezone
+       contains the difference, in seconds, between UTC and local
+       standard time.  The external variable  daylight  indicates
+       whether  time  should reflect daylight savings time.  Both
+       timezone and altzone default to  0  (UTC).   The  external
+       variable  daylight  is  non-zero if an alternate time zone
+       exists.  The time zone names are contained in the external
+       variable   tzname,  which  by  default  is  set  to:  char
+       *tzname[2] = { "GMT", "   " };
+
+       These functions know about the peculiarities of this  con-
+       version for various time periods for the U.S.A.  (specifi-
+       cally, the years 1974, 1975, and 1987).  They will  handle
+       the new daylight savings time starting with the first Sun-
+       day in April, 1987.
+
+       tzset uses the contents of the environment variable TZ  to
+
+                                                                2
+
+ctime(3C)                                               ctime(3C)
+
+       override  the  value  of the different external variables.
+       It also sets the external variable  daylight  to  zero  if
+       Daylight  Savings Time conversions should never be applied
+       for the time zone in use; otherwise, non-zero.   tzset  is
+       called by asctime and may also be called by the user.  See
+       for a description of the TZ environment variable.
+
+       Note that in most installations, TZ is set to the  correct
+       value  by  default  when  the  user logs on, via the local
+       /etc/profile file [see and
+
+   FFiilleess
+       file containing locale specific date and time information
+
+RReeffeerreenncceess
+NNoottiicceess
+       The return values for ctime, localtime, and  gmtime  point
+       to  static data whose content is overwritten by each call.
+
+       Setting the time during the interval of change from  time-
+       zone  to  altzone  or vice versa can produce unpredictable
+       results.
+
+       Use the reentrant  functions  for  multithreaded  applica-
+       tions.
+
+                                                                3
+

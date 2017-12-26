@@ -1,0 +1,130 @@
+ptmx(4)                                                         ptmx(4)
+
+  ppttyy
+
+  NNAAMMEE
+
+    pty, ptmx - pseudo terminal driver
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ppttyy(4) driver provides support for a device-pair termed a pseudo
+    terminal. A pseudo terminal is a pair of character devices, a master
+    device and a subordinate (slave) device. The subordinate device provides
+    to a process an interface identical to that described in _tt_tt_yy(4). Where all
+    other devices that provide the interface described in ttttyy(4) have a
+    hardware device of some sort behind them, the subordinate device has,
+    another process instead that manipulates it through the master half of the
+    pseudo terminal. That is, anything written on the master device is given
+    to the subordinate device as input and anything written on the subordinate
+    device is presented as input on the master device.
+
+    Subsystem for UNIX-based Applications is configured with 256 pseudo terminals.
+
+    The quick way to open a master pseudo terminal is to use _oo_pp_ee_nn(2) with a
+    path of //ddeevv//ppttmmxx. The name of the subordinate side can found with
+    _pp_tt_ss_nn_aa_mm_ee(2) or _pp_tt_ss_nn_aa_mm_ee____rr(2).
+
+    The following _ii_oo_cc_tt_ll(2) calls apply only to pseudo terminals:
+
+    TIOCSTOP
+        Stops output to a terminal (like typing ^S). Takes no parameter.
+
+    TIOCSTART
+        Restarts output (stopped by TIOCSTOP or by typing ^S). Takes no
+        parameter.
+
+    TIOCPKT
+        Enable/disable packet mode. Packet mode is enabled by specifying (by
+        reference) a nonzero parameter and is disabled by specifying (by
+        reference) a zero parameter. When applied to the master side of a
+        pseudo terminal, each subsequent rreeaadd() from the terminal will return
+        data written on the subordinate part of the pseudo terminal preceded
+        by a zero byte (symbolically defined as TIOCPKT_DATA), or a single
+        byte reflecting control status information. In the latter case, the
+        byte is an inclusive-or of zero or more of the bits:
+
+        TIOCPKT_FLUSHREAD
+            Whenever the read queue for the terminal is flushed or emptied.
+
+        TIOCPKT_FLUSHWRITE
+            Whenever the write queue for the terminal is flushed or emptied.
+
+        TIOCPKT_STOP
+            Whenever output to the terminal is stopped by using ^S.
+
+        TIOCPKT_START
+            Whenever output to the terminal is restarted.
+
+        TIOCPKT_DOSTOP
+            Whenever c_cc[VSTART] is ^S and c_cc[VSTOP] is ^Q.
+
+        TIOCPKT_NOSTOP
+            Whenever the start and stop characters are not ^S/^Q.
+            While this mode is in use, the presence of control status
+            information to be read from the master side can be detected by a
+            _ss_ee_ll_ee_cc_tt(2) for exceptional conditions.
+
+        TIOCPKT_IOCTL
+            Whenever one of the members of the tteerrmmiiooss structure for the
+            terminal changes. Only the new content of the tteerrmmiiooss structure is
+            returned. Other TIOCPKT control information (except for
+            TIOCPKT_DATA) can be combined using the exclusive-OR operation
+            with this control bit. A _ss_ee_ll_ee_cc_tt(2) on the master side of the
+            terminal will return true for read, in addition to exception.
+            While in packet mode, if a _rr_ee_aa_dd(2) request is for fewer than
+            ssiizzeeooff((ssttrruucctt tteerrmmiiooss)) ++11 bytes and TIOCPKT_IOCTL control
+            information is available, the TIOCPKT_IOCTL information will
+            remain pending until a sufficiently large _rr_ee_aa_dd(2) request is
+            performed. All other packet mode control bits will be delivered,
+            and _ss_ee_ll_ee_cc_tt(2) will continue to return true for read and exception
+            until the TIOCPKT_IOCTL information is retrieved.
+
+    TIOCUCNTL
+        Enable/disable a mode that allows a small number of simple user
+        iiooccttll() commands to be passed through the pseudo terminal, using a
+        protocol similar to that of TIOCPKT. The TIOCUCNTL and TIOCPKT modes
+        are mutually exclusive.
+        This mode is enabled from the master side of a pseudo terminal by
+        specifying (by reference) a nonzero parameter and disabled by
+        specifying (by reference) a zero parameter. Each subsequent rreeaadd()
+        from the master side will return data written on the subordinate part
+        of the pseudo terminal preceded by a zero byte, or a single byte
+        reflecting a user control operation on the subordinate side. A user
+        control command consists of a special iiooccttll() operation with no data;
+        the command is given as UIOCCMD where n is a number in the range 1-
+        255. The operation value n will be received as a single byte on the
+        next rreeaadd() from the master side. The iiooccttll() UIOCCMD is a no-op that
+        can be used to probe for the existence of this facility. As with
+        TIOCPKT mode, command operations can be detected with a sseelleecctt() for
+        exceptional conditions.
+
+    TIOCREMOTE
+        A mode for the master half of a pseudo terminal, independent of
+        TIOCPKT. TThhiiss iiss nnoott eennaabblleedd iinn tthhee ccuurrrreenntt vveerrssiioonn ooff IInntteerriixx.. This
+        mode causes input to the pseudo terminal to be flow controlled and not
+        input edited (regardless of the terminal mode). Each write operation
+        to the control terminal produces a record boundary for the process
+        reading the terminal. In normal usage, a write operation of data is
+        like the data typed as a line on the terminal; a write of 0 bytes is
+        like typing an end-of-file character. TIOCREMOTE can be used when
+        doing remote line editing in a window manager, or whenever flow
+        controlled input is required.
+
+  FFIILLEESS
+
+    //ddeevv//ppttyy[[pp--zzAA--EE]][[00--99aa--ff]]
+    //ddeevv//ppttmmxx
+        Master pseudo terminals
+
+    //ddeevv//ttttyy[[pp--zzAA--EE]][[00--99aa--ff]]
+        Subordinate (slave) pseudo terminals
+
+  SSEEEE AALLSSOO
+
+    _i_o_c_t_l(2)
+
+    _t_e_r_m_i_o_s(4)
+
+    _t_t_y(4)
+

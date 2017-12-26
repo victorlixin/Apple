@@ -1,0 +1,124 @@
+XauGetBestAuthByAddr(3X11R6)               XauGetBestAuthByAddr(3X11R6)
+
+  XXaauu
+
+  NNAAMMEE
+
+    Xau library: XauFileName, XauReadAuth, XauLockAuth, XauUnlockAuth,
+    XauWriteAuth, XauDisposeAuth, XauGetAuthByAddr, XauGetBestAuthByAddr - X
+    authority database routines
+
+  SSYYNNOOPPSSIISS
+
+    #include <X11/Xauth.h>
+    typedef struct xauth {
+         unsigned short family;
+         unsigned short address_length;
+         char           *address;
+         unsigned short number_length;
+         char           *number;
+         unsigned short name_length;
+         char           *name;
+         unsigned short data_length;
+         char           *data;
+    } Xauth;
+
+    char *XauFileName ()
+
+    Xauth *XauReadAuth (auth_file)
+         FILE *auth_file;
+
+    int XauWriteAuth (auth_file, auth)
+         FILE *auth_file;
+         Xauth *auth;
+
+    Xauth *XauGetAuthByAddr (family,
+    address_length, address,
+    number_length, number)
+         unsigned short family;
+         unsigned short address_length;
+         char *address;
+         unsigned short number_length;
+         char *number;
+
+    Xauth *XauGetBestAuthByAddr (family,
+    address_length, address,
+    number_length, number,
+    types_length, types, type_lengths)
+         unsigned short family;
+         unsigned short address_length;
+         char *address;
+         unsigned short number_length;
+         char *number;
+         int types_length;
+         char **types;
+         int *type_lengths;
+
+    int XauLockAuth (file_name, retries, timeout, dead)
+         char *file_name;
+         int retries;
+         int timeout;
+         long dead;
+
+    int XauUnlockAuth (file_name)
+         char *file_name;
+
+    XauDisposeAuth (auth)
+         Xauth *auth;
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    XXaauuFFiilleeNNaammee generates the default authorization file name by first
+    checking the XAUTHORITY environment variable if set, else it returns
+    $HOME/.Xauthority. This name is statically allocated and should not be
+    freed.
+
+    XXaauuRReeaaddAAuutthh reads the next entry from auth_file. The entry is nnoott
+    statically allocated and should be freed by calling XXaauuDDiissppoosseeAAuutthh.
+
+    XXuuWWrriitteeAAuutthh writes an authorization entry to auth_file. It returns 1 on
+    success, 0 on failure.
+
+    XXaauuGGeettAAuutthhBByyAAddddrr searches for an entry which matches the given network
+    address/display number pair. The entry is nnoott statically allocated and
+    should be freed by calling XXaauuDDiissppoosseeAAuutthh.
+
+    XXaauuGGeettBBeessttAAuutthhBByyAAddddrr is similar to XXaauuGGeettAAuutthhBByyAAddddrr, except that a list of
+    acceptable authentication methods is specified. Xau will choose the file
+    entry which matches the earliest entry in this list (e.g., the most secure
+    authentication method). The types argument is an array of strings, one
+    string for each authentication method. types_length specifies how many
+    elements are in the types array. types_lengths is an array of integers
+    representing the length of each string.
+
+    XXaauuLLoocckkAAuutthh does the work necessary to synchronously update an
+    authorization file. First it makes two file names, one with "-c" appended
+    to file_name, the other with "-l" appended. If the "-c" file already
+    exists and is more than dead seconds old, XXaauuLLoocckkAAuutthh removes it and the
+    associated "-l" file. To prevent possible synchronization troubles with
+    NFS, a dead value of zero forces the files to be removed. XXaauuLLoocckkAAuutthh
+    makes retries attempts to create and link the file names, pausing timeout
+    seconds between each attempt. XXaauuLLoocckkAAuutthh returns a collection of values
+    depending on the results:
+
+         LOCK_ERROR     A system error occurred, either a file_name
+                        which is too long, or an unexpected failure from
+                        a system call.  errno may prove useful.
+
+         LOCK_TIMEOUT   retries attempts failed
+
+         LOCK_SUCCESS   The lock succeeded.
+
+    XXaauuUUnnlloocckkAAuutthh undoes the work of XXaauuLLoocckkAAuutthh by unlinking both the "-c"
+    and "-l" file names.
+
+    XXaauuDDiissppoosseeAAuutthh frees storage allocated to hold an authorization entry.
+
+  SSEEEE AALLSSOO
+
+    _x_a_u_t_h(1X11R6)
+
+  AAUUTTHHOORR
+
+    Keith Packard, MIT X Consortium
+

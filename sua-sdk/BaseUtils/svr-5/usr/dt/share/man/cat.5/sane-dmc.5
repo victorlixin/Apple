@@ -1,0 +1,97 @@
+
+
+sane-dmc(5)                                           sane-dmc(5)
+
+DDeessccrriippttiioonn
+       sane-dmc implements a SANE (Scanner Access Now Easy) back-
+       end that provides access to the  Polaroid  Digital  Micro-
+       scope Camera.
+
+       sane-dmc  expects  device names of the form: special where
+       special is the  path-name for the special device that cor-
+       responds to the scanner. The special device name must be a
+       generic SCSI device or a symbolic link to such a device.
+
+       The Polaroid DMC  supports  a  number  of  imaging  modes.
+       sane-dmc supports: This mode corresponds to the 801-by-600
+       pixel full-color full-frame image.  This mode  corresponds
+       to  the  270-by-201 pixel greyscale viewfinder image. This
+       image is acquired very quickly.  This mode corresponds  to
+       the  1599-by-600  pixel  ``raw'' image from the CCD. It is
+       greyscale, with pixels  alternating  horizontally  between
+       red, green and  blue stripes. The pixels are twice as high
+       as they are wide, so the image is  distorted.   This  mode
+       corresponds  to  the  80-by-60  pixel full-color thumbnail
+       image.  This image  is  a  1599-by-1200  pixel  full-color
+       image  constructed  by  filtering  and  interpolating  the
+       ``raw'' image. The filtering and interpolation is done  in
+       software,  so  this  mode  is  very  slow. Also, this mode
+       places restrictions on how the image is read  which  means
+       that  the ``preview'' mode of does not work in Super Reso-
+       lution mode.  This setting adjusts the camera's  sensitiv-
+       ity.  You  can choose one of 25, 50, or 100 ``equivalent''
+       ASA.  You can select a shutter speed from 8 to  1000  mil-
+       liseconds.   The shutter speed is quantized in units of 32
+       microseconds.   You  can  choose   between   ``Daylight'',
+       ``Incandescent''  or  ``Fluorescent'' white balances. This
+       setting corresponds to the ``Color Temperature''  settings
+       on  Polaroid's  Windows  and Macintosh software.  dmc.conf
+       contains a list of device names  that  correspond  to  DMC
+       scanners.  Empty  lines and lines starting with a hash (#)
+       are ignored.  A sample configuration file is shown  below:
+       /dev/scanner # this is a comment /dev/sge
+
+       The  SANE_CONFIG_DIR  environment  variable  specifies the
+       list of directories that  may  contain  the  configuration
+       file.  The  directories  are separated by a colon (:).  If
+       this variable  is  not  set,  the  configuration  file  is
+       searched  in two default directories: firstly, the current
+       working directory (.) and then  in  /usr/local/etc/sane.d.
+       If  the  value  of  the environment variable ends with the
+       directory separator character, then the  default  directo-
+       ries  are searched after the explicitly specified directo-
+       ries. For example, setting SANE_CONFIG_DIR to  ``/tmp/con-
+       fig:''  would  result  in   directories tmp/config, ., and
+       /usr/local/etc/sane.d being searched (in this order).
+
+       The  SANE_DEBUG_DC25  environment  variable  controls  the
+       debug  level  for the sane-dc25 backend if the library was
+
+                                                                1
+
+sane-dmc(5)                                           sane-dmc(5)
+
+       compiled with debugging support enabled. A  value  of  128
+       requests  full  debug  output;  smaller levels reduce ver-
+       bosity.
+
+FFiilleess
+       The  backend  configuration file (see the  description  of
+       SANE_CONFIG_DIR).   The  static  library implementing this
+       backend.  The shared  library  implementing  this  backend
+       (present on systems that support dynamic loading).
+
+NNoottiicceess
+       In  the  Full  Frame and Raw modes, images must be read in
+       units of entire lines. The driver performs no buffering in
+       these  modes;  if you ask sane_read to read a non-integral
+       number of lines, it may read less than you ask for. If you
+       ask  sane_read to read less than a single line, it returns
+       SANE_STATUS_INVAL.
+
+       In the Super Resolution mode, images must be read in units
+       of  two  lines  (3198 pixels or 9594 bytes.) If you try to
+       read less than two lines, you get SANE_STATUS_INVAL.   The
+       Super Resolution mode is very slow.
+
+       In  the  Viewfinder  and Thumbnail modes, the entire image
+       must be read in one  SCSI  transfer.  In  this  case,  the
+       driver performs buffering and you can read the image in as
+       small an increment as you like.
+
+       Author is David F Skoll.
+
+RReeffeerreenncceess
+
+                                                                2
+

@@ -1,0 +1,111 @@
+
+
+sigfpe(3bsd)                                         sigfpe(3bsd)
+
+SSyynnooppssiiss
+       /usr/ucb/cc [flag . . . ] file . . .
+
+       #include <signal.h>
+
+       #include <fp.h>
+
+       sigfpe_handler_type      sigfpe(sigfpe_code_type     code,
+       sigfpe_handler_type hdl);
+
+DDeessccrriippttiioonn
+       This function allows signal handling to be  specified  for
+       particular  SIGFPE  codes.  A call to sigfpe defines a new
+       handler hdl for a particular SIGFPE code and  returns  the
+       old handler as the value of the function sigfpe.  Normally
+       handlers are specified as pointers to functions; the  spe-
+       cial cases SIGFPE_IGNORE, SIGFPE_ABORT, and SIGFPE_DEFAULT
+       allow ignoring, specifying core dump using or default han-
+       dling respectively.
+
+       Default  handling is defined to call the handler specified
+       to for these IEEE-related codes:
+
+       --------------------------------------------------------------
+       FPE_FLTINEX_TRAP    fp_inexact     floating inexact result
+       FPE_FLTDIV_TRAP     fp_division    floating division by zero
+       FPE_FLTUND_TRAP     fp_underflow   floating underflow
+       FPE_FLTOVF_TRAP     fp_overflow    floating overflow
+       FPE_FLTBSUN_TRAP    fp_invalid     branch or set on unordered
+       FPE_FLTOPERR_TRAP   fp_invalid     floating operand error
+       FPE_FLTNAN_TRAP     fp_invalid     floating Not-A-Number
+
+       For all other SIGFPE codes, default handling  is  to  core
+       dump using
+
+       The  compilation  option -ffpa causes fpa recomputation to
+       replace the default abort action for  code  FPE_FPA_ERROR.
+       SIGFPE_DEFAULT will restore abort rather than FPA recompu-
+       tation for this code.  Three steps are required to  inter-
+       cept  an  IEEE-related  SIGFPE  code with sigfpe: Set up a
+       handler with sigfpe.  Enable the  relevant  IEEE  trapping
+       capability in the hardware, perhaps by using assembly-lan-
+       guage instructions.  Perform  a  floating-point  operation
+       that generates the intended IEEE exception.
+
+       Unlike  sigfpe  never changes floating-point hardware mode
+       bits affecting IEEE trapping.  No IEEE-related SIGFPE sig-
+       nals will be generated unless those hardware mode bits are
+       enabled.
+
+       SIGFPE signals can be handled using  or  In  a  particular
+       program,  to avoid confusion, use only one of these inter-
+       faces to handle SIGFPE signals.
+
+                     BSD System Compatibility                   1
+
+sigfpe(3bsd)                                         sigfpe(3bsd)
+
+FFiilleess
+RReettuurrnn vvaalluueess
+       sigfpe returns BADSIG if code is not 0 or a defined SIGFPE
+       code.
+
+RReeffeerreenncceess
+EExxaammpplleess
+       A user-specified signal handler might look like this: void
+       sample_handler(     sig,     code,     scp,     addr     )
+                        int sig ;                /* sig == SIGFPE
+       always      */                       int      code       ;
+                        struct       sigcontext       *scp      ;
+                        char    *addr    ;                      {
+                                       /*
+                                            Sample   user-written
+       sigfpe   code  handler.
+       Prints       a        message        and        continues.
+                                           struct  sigcontext  is
+       defined in  <signal.h>.
+       */                                 printf(" ieee exception
+       code     %x     occurred      at      pc      %X      \n",
+                                                                    code,scp->sc_pc);
+                        }
+
+       and it might be set up like this:                   extern
+       void sample_handler;
+                        main                                    {
+                                       sigfpe_handler_type   hdl,
+       old_handler1,       old_handler2;                       /*
+                         * save current overflow and invalid han-
+       dlers; set the new                   * overflow handler to
+       sample_handler and set the new                   * invalid
+       handler     to    SIGFPE_ABORT    (abort    on    invalid)
+                         */                                 hdl =
+       (sigfpe_handler_type)                      sample_handler;
+                                       old_handler1             =
+       sigfpe(FPE_FLTOVF_TRAP,                              hdl);
+                                       old_handler2             =
+       sigfpe(FPE_FLTOPERR_TRAP,                   SIGFPE_ABORT);
+                                       ...                     /*
+                          * restore old overflow and invalid han-
+       dlers                                                   */
+                                       sigfpe(FPE_FLTOVF_TRAP,
+       old_handler1);
+                                       sigfpe(FPE_FLTOPERR_TRAP,
+       old_handler2);                  }
+
+                     BSD System Compatibility                   2
+

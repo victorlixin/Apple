@@ -1,0 +1,492 @@
+
+
+bcfg(4dsp)                                             bcfg(4dsp)
+
+SSyynnooppssiiss
+       #$version 1 #MANIFEST:
+           FILES="all DSP files used by this driver
+                  continuation of list"
+           [EXTRA_FILES="all non-DSP files used by this driver
+                  continuation of list"]
+           [CONFIG_CMDS="cmd1
+                  cmd2"]
+           [PRE_SCRIPT=preinstall_script_name]
+           [POST_SCRIPT=postinstall_script_name] #DRIVER:
+           TYPE=DLPI|MDI
+           FAILOVER=true|false
+           PROMISCUOUS=true|false
+           DRIVER_NAME=name
+           HELPFILE=name
+           [WRITEFW=true|false]
+           [UNIT=number_of_configured_cards]
+           REBOOT=true|false
+           RM_ON_FAILURE="value1 value2"
+           NAME=value
+           [CUSTOM_NUM=number_of_custom_specs]
+           [CUSTOM[1]='values
+                    contents']
+           [CUSTOM[2]='values
+                    contents']
+           AUTOCONF=true|false
+           [ISAVERIFY="param1 param2 ... paramn "]
+           [DEPEND=value] #ADAPTER
+           MAX_BD=highest_supported_adapter_number
+           BOARD_IDS=values
+           CONFORMANCE=hex_value
+           [NET_BOOT=static|dynamic|autosearch]
+           ACTUAL_RECEIVE_SPEED=speed
+           ACTUAL_SEND_SPEED=values
+           [DMA="values"]
+           [INT="values"]
+           BUS=bus
+           [MEM="values"]
+           NUM_PORTS=max_number_of_ports_on_board
+           [PORT="values"]
+           TOPOLOGY="ETHER | TOKEN | ISDN | ISDN | FDDI
+                | ATM | X25 | FRAMERELAY | OTHER"
+
+DDeessccrriippttiioonn
+       Each  network  driver  must have a bcfg file that provides
+       information for the The bcfg file is a file that is parsed
+       by a dual-parser and program that enforces type and syntax
+       checking.  All configuration information that a  user  can
+       modify  must  be  defined in the bcfg file rather than the
+       driver's and space.h files.
+
+       Use the command to check the sanity of the bcfg file.   It
+       is also useful to check the /tmp/ncfgLog file that is cre-
+       ated when a driver is installed with  either  the  Network
+
+                                                                1
+
+bcfg(4dsp)                                             bcfg(4dsp)
+
+       Configuration Manager or the -L option to the command.
+
+       The  format  of  the bcfg file is: $version and the stanza
+       section identifiers must be preceded with a  pound  symbol
+       (#).   This  allows  the to treat the bcfg file as a shell
+       script.  The dcu then sources in the  file.   Other  lines
+       that  start  with  a  #  character  are  comments  and are
+       ignored.  Comments can not  be  used  when  inside  quoted
+       text,  even if the quoted text extends over several lines.
+       does not source in the bcfg file, so the file  cannot  use
+       programming  constructs other than setting variables.  The
+       bcfg file can only include the stanza section  identifiers
+       and  variables  that  are listed in the "Synopsis" of this
+       manual  page.   Values  for  multi-valued  variables   are
+       enclosed  in  double  quotes  and  each  possible value is
+       delimitated by a space.  For example: PARAM = "val1  val2"
+       Values  for  variables  that  take  a single value are not
+       quoted.  Values for the NAME=  variable  are  enclosed  in
+       single  quotes  and  may  include  spaces.  NAME= "My Acme
+       Driver" White space is ignored in all lines except for the
+       value  to the NAME= variable, which prints each word sepa-
+       rated by a space.
+
+       A network driver can have multiple bcfg files,  each  with
+       different NAME= and BOARD_IDS= fields.  This may be imple-
+       mented, for example, if a particular device model (identi-
+       fied  by BOARD_IDS= enables a configurable feature (custom
+       parameter) not found in other  devices  supported  by  the
+       same  driver.   In  this  case, the driver must be able to
+       handle all custom parameters found in all applicable  bcfg
+       files.
+
+       Multiple bcfg files are required if a driver supports mul-
+       tiple buses (for example, PCI and EISA);  each  bcfg  file
+       would have a different BUS= field entry.
+
+   FFiieellddss
+       Required  first  line for all bcfg files.  Use #$version=0
+       for &uw2;.x bcfg files, and  #$version=1  for  &geminiREL;
+       bcfg  files.   If  this  variable  is  not  specified,  it
+       defaults to 0 to provide backward compatibility with  ear-
+       lier bcfg files that did not use this variable.  A list of
+       all files that are part of the driver's and used by  Files
+       that  are not part of the driver's DSP but are required by
+       the driver.  These are listed here, with a full  pathname,
+       one  file per line.  This list should include all the exe-
+       cutable files that are required to  run  the  POST_SCRIPT=
+       and  PRE_SCRIPT=  programs  that  are  specified  for this
+       driver so that all over them  will  be  bundled  onto  the
+       netinstall  floppy  disks.   List of commands that must be
+       executed after the driver is loaded, such as commands that
+       download  code.   Each line specifies the full path of the
+       command with all options and arguments.  The full path  of
+       the  executable  command file should also be listed in the
+
+                                                                2
+
+bcfg(4dsp)                                             bcfg(4dsp)
+
+       EXTRA_FILES variable.  netinstall executes each line after
+       the  files  listed in EXTRA_FILES are downloaded.  Name of
+       optional script to be run before  This  can  be  used  for
+       back-end  processing  required when installing the device.
+       Do not use this parameter  to  download  firmware  to  the
+       device; code the function in the driver code instead.  The
+       PRE_SCRIPT script runs once, the first time the driver  is
+       installed.  Use an Rc script instead of this parameter for
+       a script that needs to run every time the system is booted
+       with  this  driver configured.  Name of optional script to
+       be  run  after  the  idinstall  delete   operation.    The
+       POST_SCRIPT script runs only when the last instance of the
+       card is removed from the system.  Use an Sd script instead
+       of  this  parameter  for  a script that needs to run every
+       time the system is shut down with this driver  configured.
+       Set  to  false  for  EISA,  PCCARD,  PCI,  and MCA network
+       drivers that are not automatically configured by the  con-
+       figuration manager when the kernel is initialized, such as
+       network cards that are integrated into the  mother  board.
+       This  must  always  be  false  for PCCARD and PnPISA buses
+       because the autoconfiguration mechanism does not automati-
+       cally  add information for these bus types to the resource
+       manager.  When this is false,  the  bcfg  file  must  also
+       define  INT, PORT, MEM, and DMA that the network card sup-
+       ports, and the configuration process will  proceed  as  if
+       this  was  an  ISA  board,  prompting the user for each of
+       these addresses.
+
+       After the user supplies this information, changes the  IRQ
+       from  2  to  9  and  adds the values of UNIT, IRQ, IOADDR,
+       MEMADDR, and DMAC to the particular resource manager  key.
+       Identifies other drivers on which this driver has a depen-
+       dency.  Normally, this value  matches  the  value  of  the
+       $depend  field in the file.  Drivers listed for this vari-
+       able should not have their own bcfg files.
+
+       The value of the TYPE= variable determines  which  drivers
+       are  automatically  installed  by the interface, and so do
+       not need to be listed as a value for the DEPEND= variable.
+       The drivers automatically installed are:
+       TYPE=MDI    idinstall  dlpi, dlip-
+                   base, and netX
+       TYPE=DLPI   none
+       Drivers specified through the  DEPEND=  variable  are  not
+       available  during  network  installation.  Type of driver.
+       Valid values are MDI and DLPI.   DLPI  is  used  for  both
+       &uw2;  DLPI  drivers and &geminiREL; DLPI modules.  Set to
+       true to specify that a driver is failover-capable;  other-
+       wise set to false.  To be failover-capable the driver must
+       have a configurable and support the setting of the follow-
+       ing multicast attributes: single address set all multicast
+       addresses; see set of an unlimited number of single multi-
+       cast addresses
+
+                                                                3
+
+bcfg(4dsp)                                             bcfg(4dsp)
+
+       Default  value  is  false.   If your driver implements the
+       criteria listed in set FAILOVER=true so that can  failover
+       either  from  or to your card as required.  This mandatory
+       parameter says how the driver responds to  a  message.   A
+       value of true indicates that the driver implements promis-
+       cuous mode, while a value  of  false  indicates  that  the
+       driver does not support promiscuous mode.  See Name of the
+       driver associated with the network  card  defined  by  the
+       bcfg  file.   If  a  network  card  requires more than one
+       driver to be installed, use the DEPEND variable.   Set  to
+       true  for ISA cards that must program settings in firmware
+       (on NVRAM/EEPROM).  If true, operations will fail when the
+       board  cannot  be  found.   If this is true, the ISA board
+       must be present before it can be  configured.   Number  of
+       network  adapter cards configured.  Populate this variable
+       for cards that must have the correct value  for  the  UNIT
+       field  in  the  resource  manager database and for network
+       cards that work in both Single Port and Dual  Port  modes.
+       When  populated,  this  value  will  be  saved in both the
+       resource  manager   and   the   driver's   file   in   the
+       /etc/conf/sdevice.d  directory.   Note  that UNIT does not
+       provide a unique identifier  for  each  board.   If  true,
+       installing this driver causes a shutdown and reboot.
+
+       Set to false for all loadable drivers.  Contains a list of
+       files, beyond the normal DSP files, that should be deleted
+       from  the  system  if an error occurs while installing the
+       driver.  Typically, this includes all files listed in  the
+       PRE_SCRIPT or CONFIG_CMDS variable.  Full name of the net-
+       work adapter, enclosed with double quotes.   This  is  the
+       text that is displayed to the user when selecting the num-
+       ber of cards installed.  NAME may include spaces, but  the
+       text  should  be  less  than  25 characters and should not
+       include commas, parentheses, or apostrophes.
+
+       Do not include version information here; version  informa-
+       tion  is  generated automatically from version information
+       is generated automatically from the _ndversion variable in
+       your  source  code.   The definition must be in one of the
+       following  two  forms:  static  char   *_ndversion="28.2";
+       static  char  _ndversion[]="28.2"; The _ndversion variable
+       must be static or will not allow users to  configure  your
+       driver.   The version itself (here 28.2) can be any print-
+       able string and must reflect any change  is  made  to  the
+       driver,  even if the change to your driver is in different
+       file than the one containing  the  version  string.   This
+       allows  easy  identification  of the driver version to the
+       user when installing an updated  driver  package  or  when
+       running  to configure the network adapter.  Number of CUS-
+       TOM[x] variables that are specified.  This determines  the
+       size  of  the CUSTOM[x] array.  Valid values are 1 through
+       9, inclusive.  Define custom variables  required  by  this
+       card.   x  is  an integer from 1-9 inclusive that uniquely
+       identifies this custom  variable  for  the  driver.   Each
+
+                                                                4
+
+bcfg(4dsp)                                             bcfg(4dsp)
+
+       parameter  gets  a  CUSTOM[x]  variable,  with 9 lines per
+       parameter: Name of variable (maximum 11  characters)  that
+       is  stored  in  the  resource  manager for this parameter.
+       This parameter is always stored as a string, even  if  the
+       value  can  be  interpreted  as a number or numeric range.
+       Single or multivalued values that the driver can  retrieve
+       with  the  function.   Multiple  values  are  separated by
+       spaces.  The selected value is stored in the resource man-
+       ager  as  a  string  and  not  a number.  This allows text
+       options to be stored in the resource manager.  The  driver
+       must  convert  this  information from an ASCII string to a
+       number if it requires a numeric value.   List  of  choices
+       (text  strings)  that  are  displayed to the user when the
+       key is pressed.
+
+       To solicit free-form input from the  user,  populate  this
+       field  with:  __STRING__  The  user input must be one word
+       with no spaces, maximum 10  characters.   Title  displayed
+       for  choices  in  Line 3.  Entire line is interpreted as a
+       text string.  Must be the text string RESERVED.   Text  of
+       the prompt that is displayed to the user, interpreted as a
+       text string.  Set to BASIC or  ADVANCED  to  indicate  the
+       appropriate  section  in  which  the option should appear.
+       Users are always  prompted  for  BASIC  options;  ADVANCED
+       choices  are  displayed  only  when  the  user selects the
+       Advanced section in the command, so  parameters  that  are
+       specified  as  Advanced may not be written to the resource
+       manager during driver installation.  Driver writers should
+       use  an appropriate default value when ADVANCED parameters
+       are not set.  Applicable TOPOLOGY values for this  parame-
+       ter.   The  user  will be prompted for this parameter only
+       when one of the specified TOPOLOGYs is being  used.   This
+       is useful for parameters that are used only for some media
+       types and are not appropriate for  other  media,  such  as
+       token  ring  routing  parameters.   Indicates the scope of
+       this parameter.  Valid values are: parameter is  set  only
+       for  this  instance  of  the driver; changing the value of
+       this parameter for one board should not change this param-
+       eter for other boards supported by this driver.  parameter
+       is set for all instances of this driver.  Used for parame-
+       ters  that  are defined in this driver's and files.  Using
+       DRIVER scope causes an immediate  build  as  discussed  in
+       parameter  is set for all MDI and DLPI drivers on the sys-
+       tem.  When runs, it can affect any driver on  the  system.
+       Consequently, GLOBAL scope forces a deferred build as dis-
+       cussed in MDI drivers do  not  normally  set  this  value.
+       patch the kernel symbol found in Line 1 of /dev/kmem.
+
+       The  CUSTOM[xx]  variable  is  used by netinstall when the
+       value is added  to  the  resource  manager  database.   If
+       netcfg  is run in silent mode, these values are not filled
+       in, so the driver should define a reasonable default  case
+       and  print a CE_NOTE message if the parameter is not found
+       in the resource manager database.  This is especially true
+
+                                                                5
+
+bcfg(4dsp)                                             bcfg(4dsp)
+
+       when Line 7 is set to ADVANCED and for mixed topology cus-
+       tom parameters.  Declare the write-back capability of  the
+       firmware  for  ISA  board  drivers that use the CFG_VERIFY
+       subfunction of the entry point routine or,  for  DDI  ver-
+       sions  prior to 8, the entry point routine.  This does not
+       include custom parameters.  The following  parameters  are
+       supported:    WRITEIOADDR                       READIOADDR
+       WRITEIRQ                                  READIRQ   WRITE-
+       MEMADDR                                READMEMADDR   WRIT-
+       EDMA                                  READDMA  See   These
+       variables  provide  information  about the actual hardware
+       and are used only for hardware drivers.  Highest  numbered
+       adapter  supported  by  the driver.  This is the number of
+       adapters supported by the driver minus 1, because adapters
+       are  numbered  up from 0.  For example, if the driver sup-
+       ports up to 4 adapters on a single machine, set  MAX_BD=3.
+       List  of  all  Board IDs supported by this network adapter
+       card.  This must match the  related  field  in  the  file.
+       This  includes  what  Smart Start might pass in as a Board
+       ID.  For example, for PCI cards, the Smart Start installa-
+       tion  scripts  append  a PC prefix to the Board ID, such a
+       PC102222000 for the AMD_PCnet card.  Hex digits must be in
+       uppercase.
+
+       EISA board IDs are in uncompressed form.
+
+       MCA  board  IDs are the form 0xDDDD where each D is a hex-
+       adecimal digit (0-9 or A-F).  MCA board IDs must  be  four
+       digits; use leading zeroes to pad if necessary.  So 0x0ABC
+       is correct; 0xABC is not.
+
+       PCI board IDs are in the form 0xVVVVDDDD where VVVV is the
+       hexadecimal  vendor  ID and DDDD is the hexadecimal device
+       ID.  Note the lowercase x.
+
+       PCI and MCA boards have a specific syntax.  Wildcards can-
+       not  be  used  in  bcfg files as they are in Drvmap files.
+       Mixed-platform BOARD_IDS are not allowed;  all  IDs  given
+       must  be  correct  for  the single specified BUS= line and
+       match the Drvmap file.  Create multiple  bcfg  files,  one
+       for  each BUS that the driver supports, with the appropri-
+       ate BOARD_IDS for each BUS in the bcfg file.
+
+       Board revisions are not applicable for PCI devices.
+
+       If BUS= is PCI, EISA, or MCA, BOARD_IDS must be set unless
+       AUTOCONF=false.   In  this  case, you must also supply ISA
+       parameters or set BUS=ISA and emulate an ISA board.   Ver-
+       sion  of  the applicable driver interface specification to
+       which this driver conforms, expressed as a single hexadec-
+       imal number with a leading 0x.  Valid values are:
+
+                                                                6
+
+bcfg(4dsp)                                             bcfg(4dsp)
+
+       --------------------------------------
+       Interface   Value    Notes
+       --------------------------------------
+       MDI 2.0     0x0200   see  MDI_VERSION
+                            in mdi.h  header
+                            file
+       DLPI        0x02     see      DL_CUR-
+                            RENT_VERSION  in
+                            dlpi.h    header
+                            file
+       Relative speed of this card/driver combination.   It  must
+       be  set  to  a  single,  positive  decimal integer number.
+       Valid values can be obtained from the output of the  util-
+       ity.   The  value  0  is  set by for &uw2;.1 bcfg files to
+       indicate that this value is unknown.
+
+       The primitive captures this information and passes  it  to
+       the  primitive.   This  variable  provides some measure of
+       performance of a  particular  card/driver  combination  to
+       protocol  stacks that choose to access it.  Relative speed
+       of this card/driver combination.  It must be set to a sin-
+       gle, positive decimal integer number.  Valid values can be
+       obtained from the output of the utility.  The value  0  is
+       set  by for &uw2;.1 bcfg files to indicate that this value
+       is unknown.
+
+       This variable provides some measure of  performance  of  a
+       particular card/driver combination to protocol stacks that
+       choose to access it.  It does not reflect the speed of the
+       underlying  media that is available to stacks as part of a
+       returned primitive.  The primitive captures this  informa-
+       tion and passes it to the primitive.  List of DMA channels
+       supported by this network card.  The numbers are in  deci-
+       mal.   Interrupt  vectors  supported  by the network card.
+       Use decimal numbers, separated by a space, and  surrounded
+       by  double  quotes  ("),  for  example:  INT="2 3 4 5 6 9"
+       Drivers that use IRQ 2 should include both 2 and 9 in this
+       parameter  list for user convenience, even though silently
+       converts IRQ 2 to IRQ 9 so that only IRQ 9 will really  be
+       read.
+
+       This  variable  is  not  used  for Bus type of the network
+       card.  Valid values are ISA, EISA, PCI,  MCA,  and  PCCARD
+       (not  PCMCIA).   PnPISA  support  is  not yet fully imple-
+       mented, so this cannot be specified for BUS= at this time.
+       This  value  cannot be multivalued.  If multiple bus types
+       are supported, create a separate bcfg file for each appli-
+       cable bus.
+
+       If BUS= is set to PCCARD, AUTOCONF=false must also be set.
+       Certain EISA boards have this requirement.
+
+       This variable limits the selections that  the  user  sees.
+       Users will only be able to select the bcfg file(s) for bus
+
+                                                                7
+
+bcfg(4dsp)                                             bcfg(4dsp)
+
+       types  that  are  configured  on  the   machine.    Memory
+       addresses  that the network card supports.  This is a list
+       of   address   ranges   expressed   as:   MEM="start1-end2
+       start2-end2"  Memory  addresses are displayed in uppercase
+       hexadecimal notation, without a leading 0x.  For  example:
+       MEM="D0000-D1FFF   D2000-D3FFF"   This   variable  is  not
+       required for autoconfigurable drivers.   Number  of  ports
+       supported  on  a  single card, used for network cards that
+       support more than one port simultaneously.  This  variable
+       is  not  currently implemented; use the CUSTOM variable to
+       set this.  I/O addresses supported by this  network  card.
+       This   is   a   list   of  address  ranges  expressed  as:
+       PORT="start1-end2 start2-end2" I/O addresses are displayed
+       in  uppercase  hexadecimal notation, without a leading 0x.
+       For example: PORT="3FA-3FF 3BC-3EF" This variable  is  not
+       required  for  Topologies  supported  by  the hardware and
+       driver.  It can be multivalued if the card is  dual-topol-
+       ogy  capable.   uses  this variable to select drivers of a
+       particular type.
+
+       For dual-topology cards, you must also define a  CUSTOM[x]
+       variable  to  query  the  user  for more information about
+       which topology the card should use if it cannot autodetect
+       the  media in use.  If each TOPOLOGY must uniquely match a
+       BOARD_IDS value, you can set up separate  bcfg  files  for
+       each TOPOLOGY.  The topology is required so that the prim-
+       itive can contain the correct  single  value  (MAC_CSMACD,
+       MAC_TPR, or MAC_FDDI).
+
+   SSeemmaannttiicc cchheecckkss ppeerrffoorrmmeedd
+       The  following syntax and semantic checks are performed on
+       the bcfg file each time it  is  loaded:  Verify  that  all
+       mandatory  variables  for  the  applicable  #$version  are
+       defined.  Verify that all variables that  take  values  of
+       true  or  false  are defined to one of these.  Verify that
+       all variables that contain numbers or numeric ranges  have
+       numeric  values  in the correct base.  For example, inter-
+       rupts are expressed in decimal values and  memory  address
+       ranges  are  expressed in hexadecimal values.  Verify that
+       variables that can contain only  a  single  value  do  not
+       define multiple values.  Verify that the INT and MEM vari-
+       ables are defined if  BUS=ISA.   Verify  that  no  unknown
+       variable names are defined.
+
+   DDiiffffeerreenncceess bbeettwweeeenn vveerrssiioonnss
+       #$version  1  identifies  bcfg  files  for &gemini;.  This
+       replaces the AOF, acfg, SYSDB, and lkcfg file formats that
+       were  supported  in  earlier product releases.  &uw2; bcfg
+       files do not include  the  #$version  definition  and  are
+       assumed  to be version 0.  The differences between version
+       1 and version 2 bcfg  files  are:  Version  1  files  must
+       include  the  #MANIFEST, #ADAPTER, and #DRIVER stanza sec-
+       tions.  Version 1 adds the following variables:
+
+                                                                8
+
+bcfg(4dsp)                                             bcfg(4dsp)
+
+       The following version 0 variables are not recognized:
+
+       use AUTOCONF instead use TYPE  instead  Version  1  allows
+       spaces  in  the  value  of  the NAME= variable.  CUSTOM[x]
+       variable is replaced by the CUSTOMx variable, with a  dif-
+       ferent  syntax.   CUSTOM[x]  information  is  saved in the
+       resource manager and not in the Space.c or Space.h file as
+       it  was on &everest;.  Lines 7-9 of the CUSTOM[x] variable
+       are available only in #$version 1 bcfg files.
+
+       Note that the FAILOVER parameter has no effect  on  &gemi-
+       niREL;0.0  systems,  although  it  must  be set to a valid
+       value.  For &castor; and subsequent  releases,  checks  if
+       FAILOVER=true and, if so, takes appropriate action.
+
+FFiilleess
+RReeffeerreenncceess
+       in the HDK documentation.
+
+                                                                9
+

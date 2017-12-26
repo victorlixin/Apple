@@ -1,0 +1,436 @@
+ps(1)                                                             ps(1)
+
+  ppss
+
+  NNAAMMEE
+
+    ps - process status
+
+  SSYYNNOOPPSSIISS
+
+    ps [[-aAdefFhjHlLnwx]] [[-g sids]] [[-G grouplist]]
+       [[-o "format[[=head]][[,format[[=head]]]]......"]]
+       [[-p proclist]] [[-S sessionlist]] [[-t ttylist]]
+       [[-u userlist]] [[-U userlist]] [[-X{{unix||win}}]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ppss(1) utility displays a header line followed by lines containing
+    information about your processes that have controlling terminals. (The
+    information is read from the //pprroocc file system.)
+
+    The information displayed is selected based on a set of keywords (see the
+    --LL --OO and --oo options). The default output format includes, for each
+    process, the controlling terminal for the process, CPU time (including
+    both user and system time), state, and associated command.
+
+    The options are as follows:
+
+    --aa
+        Display all processes with controlling terminals, except session
+        leaders.
+
+    --AA
+        Display all processes.
+
+    --dd
+        Display all processes, except session leaders.
+
+    --ee
+        Display all processes (same as --AA).
+
+    --ff
+        Use full output format.
+
+    --FF
+        Display number of open file descriptors for each process. This value
+        is always 0 for Windows processes.
+    --gg sids
+        Display processes whose session leaders are in the list sids; this is
+        a comma-separated or blank-separated list.
+    --GG grouplist
+        Display processes whose real group identifiers (IDs) are given in
+        grouplist; this is a comma-separated or blank-separated list.
+
+    --hh
+        Display help for command options.
+
+    --HH
+        Display help for output formats.
+
+    --ii
+        Indent output to display the process hierarchy. The indentation
+        represents the process tree. Each process listed is followed by its
+        children (recursively); the content of the CMD column is indented one
+        character for the children; a grandchild of a process is therefore
+        indented two spaces, and so on.
+
+    --jj
+        Include the process group ID and the session ID in the output.
+
+    --ll
+        Use long output format.
+
+    --LL
+        Displays the identifier of each thread (also known as a lightweight
+        process, or LWP).
+
+    --nn
+        Display user and group IDs in numeric format.
+    --oo format
+        Specify output format; this overrides the other output format options
+        (--ffjjll). The format string supplied with the --oo option is a blank- or
+        comma-separated list of format specifiers. Each specifier is a field
+        name or has the form fieldname=title, where title is the string
+        displayed in the header that ppss(1) prints as its first line of output.
+        For example, --oo uusseerr==NNAAMMEE causes the user field in the output to have
+        the title NAME.
+    --pp proclist
+        Display processes whose process IDs are given in proclist; this is a
+        comma-separated list.
+    --SS sessionlist
+        Display Windows sessions whose session IDs are given in sessionlist;
+        this is a comma-separated list. Session 0 exists whenever Windows is
+        running. Additional sessions typically identify Terminal Server
+        sessions. See "Output format" for information about displaying Windows
+        session numbers.
+    --tt ttylist
+        Display processes whose ttys are given in the list ttylist; this is a
+        comma-separated or blank-separated list.
+    --uu userlist
+        Display processes whose real user identifiers are given in userlist;
+        this is a comma-separated or blank-separated list.
+    --UU userlist
+        Same as --uu uusseerrlliisstt; this is a comma-separated or blank-separated list; if
+        blanks are used, the list must be quoted.
+
+    --ww
+        Use 132 columns instead of 80. It also expands the user, ruser, group,
+        and rgroup fields to a default width of 20 characters. --wwww means no
+        line-width limit.
+
+    --xx
+        Display processes belonging to the current user (equivalent to ppss --
+        uu $$UUSSEERR). The command ppss --aaxx displays all processes for the current
+        user and is equivalent to ppss --ee. If any process-selection option other
+        than --aa is combined with --xx, --xx has no effect.
+
+    --XXuunniixx
+        Display processes associated with the SUA subsystem, including
+        processes for Windows applications started within an SUA command
+        shell.
+
+    --XXwwiinn
+        Display processes associated with the Windows subsystem, not including
+        those that were started within an SUA command shell.
+
+  OOUUTTPPUUTT FFOORRMMAATT
+
+    Output comes in three formats: default, full, and long. The options --ff, --
+    jj, --ll, and --oo change the default format. The section Format later in this
+    topic describes all of the possible output fields. Very long lines of
+    output are truncated to 80 characters, unless either --ww or --wwww options is
+    given.
+
+  DDeeffaauulltt oouuttppuutt
+
+    For each process, the default output format displays the following:
+    *     The process ID.
+    *     The name of the tty; the nn prefix indicates an SUA process; SS
+          identifies a Windows session.
+    *     The processor time used by the command.
+    *     The command line.
+          $ ps -a
+             PID TTY     TIME CMD
+            8515 n00  0:00.06 ksh
+            8579 n00  0:00.01 ps
+               8 S00  0:30.40 SystemProcess
+             200 S00  0:00.64 csrss.exe
+             224 S00  0:11.20 winlogon.exe
+             252 S00  0:12.26 services.exe
+             264 S00  1:13.64 lsass.exe
+          ...
+
+  FFuullll oouuttppuutt
+
+    For each process, the full output format displays the following:
+    *     The user's name.
+    *     The process ID.
+    *     The process ID of the parent process (PPID).
+    *     Elapsed time since the process was started.
+    *     The tty name; the nn prefix indicates an SUA process; SS
+          identifies a Windows session.
+    *     Cumulative CPU time used by the process.
+    *     The command line.
+          $ ps -af
+                 UID    PID   PPID    STIME TTY     TIME CMD
+                 kim   8259   8515 12:43:31 n00  0:00.01 ps -af
+                 kim   8515   8131 12:41:06 n00  0:00.07 ksh
+             +SYSTEM      8      0   Jul 27 S00  0:30.43 SystemProcess
+             +SYSTEM    200    172   Jul 27 S00  0:00.64 F:
+          \WINNT\system32\csrss.exe F:\W
+             +SYSTEM    224    172   Jul 27 S00  0:11.22 F:
+          \WINNT\system32\winlogon.exe w
+             +SYSTEM    252    224   Jul 27 S00  0:12.27 F:
+          \WINNT\system32\services.exe F
+             +SYSTEM    264    224   Jul 27 S00  1:13.68 F:
+          \WINNT\system32\lsass.exe F:\W
+          ...
+
+  LLoonngg oouuttppuutt
+
+    For each process, the long output format displays the following:
+    *     The state of the process.
+    *     The user's name.
+    *     The PID.
+    *     The process ID of the parent process (PPID).
+    *     The scheduling priority of the process.
+    *     The size of the working set, in kilobytes.
+    *     Elapsed time since the process was started.
+    *     The tty name; the nn prefix indicates an SUA process; SS
+          identifies a Windows session.
+    *     Cumulative CPU time used by the process.
+    *     The command line.
+          $ ps -al
+          STATE           UID    PID   PPID NI    SZ    WCHAN TTY     TIME CMD
+          Seg             kim   8515   8131  2   584 4a7aa3a5 n00  0:00.07 ksh
+          Seg             kim   8643   8515  2   424        0 n00  0:00.02 ps
+          R           +SYSTEM      8      0  2   216        0 S00  0:30.44
+          SystemProcess
+          R           +SYSTEM    200    172 -3  1388        0 S00  0:00.64
+          csrss.exe
+          R           +SYSTEM    224    172 -3 11440        0 S00  0:11.22
+          winlogon.exe
+          R           +SYSTEM    252    224  1  5328        0 S00  0:12.27
+          services.exe
+          R           +SYSTEM    264    224 -3 11596        0 S00  1:13.75
+          lsass.exe
+          ...
+
+  SSttaattee
+
+    The --ll option provides a state field, which consists of a one-letter run
+    state followed by one or more flag letters.
+
+    The run state is one of the following:
+
+    F
+        FFrreeee. The process has been freed and is no longer active. The ppss(1)
+        command should never report this state.
+
+    I
+        IInniittiiaalliizziinngg. The process is being created and the process table is
+        being initialized. This state lasts for only a brief period of time.
+
+    R
+        AAccttiivvee. The process is considered active; this is equivalent to a
+        runnable process on traditional systems.
+
+    S
+        IInn aa ssyysstteemm ccaallll. The process has made a request to the SUA
+        subsystem, is waiting on the reply, and the subsystem is still
+        servicing the request.
+
+    T
+        SSttooppppeedd. The process has been stopped.
+
+    U
+        UUnnccoonnnneecctteedd. A freshly created process briefly passes through this
+        state during process initialization.
+
+    W
+        WWaaiittiinngg. The process is blocked and waiting, either in a _ww_aa_ii_tt(2) or a
+        _ww_aa_ii_tt_pp_ii_dd(2) call.
+
+    X
+        EExxiittiinngg. The process is currently exiting and not yet ready to be
+        reaped by the parent. This state lasts for only a brief period of
+        time.
+
+    Y
+        TTttyy. Process is blocked doing tty input/output (I/O).
+
+    Z
+        EExxiitteedd. This is a zombie process; the process has exited but the
+        parent of the process has not yet waited for the process.
+
+    The flag letters can be:
+
+    a
+        The process has posted an asynchronous stop for debugging.
+
+    b
+        Indicates a process that is or was the parent of a _vv_ff_oo_rr_kk(2). The
+        process is temporarily blocking signals (except for SIGKILL) while it
+        waits to receive full control of its process space from the _vv_ff_oo_rr_kk(2)
+        child. Signals that are sent become pending and are acted upon once
+        the parent process receives control of its process space.
+
+    D
+        The process has a debugging port and is starting.
+
+    d
+        The process is currently delivering or receiving a signal by remote
+        procedure call (RPC).
+
+    e
+        The process has called the _ee_xx_ee_cc(2) function at some point in its
+        history; that is, it has tried to run another process.
+
+    F
+        The children of the process will inherit its trace flags on _ff_oo_rr_kk(2).
+
+    f
+        The process is a Win32 process. (The "f" stands for foreign.)
+
+    g
+        This process slot is currently reserved to allow process group
+        identification.
+
+    i
+        The process has been stopped by a debugger.
+
+    L
+        Kill on last close: the last close of the //pprroocc file of this process
+        will kill the process.
+
+    l
+        (The lowercase letter L.) Run on last close: the process will continue
+        to run normally after the last _cc_ll_oo_ss_ee(2) on the //pprroocc file of this
+        process.
+
+    n
+        The process has its P_NO_FORK flag set. This flag is set briefly for
+        the period between the receipt of a signal and the response. This
+        condition should not persist.
+
+    S
+        The process is under single-step control for debugging.
+
+    s
+        The process is a session leader.
+
+    t
+        The process is pending termination because the current outstanding
+        signal will be fatal when delivery is completed.
+
+    u
+        The process or one of its ancestors has called one of the set-UID
+        functions (_ss_ee_tt_uu_ss_ee_rr(2) or (_ss_ee_tt_uu_ii_dd(2)).
+
+    V
+        Indicates the child of a process that has performed a _vv_ff_oo_rr_kk(2).
+
+    v
+        Indicates the parent process that has performed a _vv_ff_oo_rr_kk(2).
+
+    w
+        The process has its P_WAITED flag set. This flag is normally unset. It
+        indicates that the process was stopped and was being waited upon, but
+        that the _ww_aa_ii_tt(2) or _ww_aa_ii_tt_pp_ii_dd(2) call has returned. It is cleared if the
+        process is stopped again.
+
+  FFoorrmmaatt ssppeecciiffiieerrss
+
+    You can use the --oo option to specify the format of the output; the format
+    string consists of field names and optional column titles for those
+    fields.
+
+    The following list provides the field names, with their default titles:
+    FFiieelldd      TTiittllee       MMeeaanniinngg
+
+    aaddddrr       ADDR        address (not implemented)
+
+    aarrggss       COMMAND     command and argument list
+
+    cc          C           cpu use for scheduling (not implemented)
+
+    ccoommmm       COMMAND     argv[0] (the command name)
+
+    eettiimmee      ELAPSED     elapsed time
+
+    ffllaaggss      F           process flags (octal)
+
+    ggrroouupp      GROUP       effective group ID
+
+    nniiccee       NI          scheduling priority
+
+    ooffddcc       FDCOUNT     number of open file descriptors
+
+    ppccppuu       %CPU        cpu time used/available
+
+    ppggiidd       PGID        process group ID
+
+    ppiidd        PID         process ID
+
+    ppppiidd       PPID        parent process ID
+
+    pprrii        PRI         priority (not implemented)
+
+    rrggrroouupp     RGROUP      real group ID
+
+    rruusseerr      RUSER       real user ID
+
+    ss          S           process state
+
+    ssiidd        SID         session ID
+
+    ssttaattee      STATE       process state & flags
+
+    ssttiimmee      STIME       process starting time
+
+    sszz         SZ          working set size, in K
+
+    ttiimmee       TIME        cpu time
+
+    ttttyy        TT          controlling terminal
+
+    uusseerr       USER        effective user ID
+
+    vvsszz        VSZ         virtual memory size, in K
+
+    wwcchhaann      WCHAN       even on which process is blocked
+
+    If you specify a field that is not implemented, ppss(1) displays a hyphen (-
+    ).
+
+    Since there is no way for a process to change its effective user or group
+    ID, the uusseerr and ggrroouupp fields are always identical to the rruusseerr and rrggrroouupp
+    fields, respectively.
+
+    Note that if your full user name (such as ACCTG+rrichards) is smaller than
+    the width of the USER field, the user name will be printed, and if it is
+    longer, the numeric user ID is printed. The default width is ten
+    characters. To force the user name to be displayed, make sure that the
+    field width for USER is large enough. For example:
+
+    ps -ef -o "user=ReallyWideUidHeaderField,pid,ppid,tty,time,comm"
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    The ppss(1) utility returns 0 for success and greater than 0 if an error
+    occurred.
+
+  BBUUGGSS
+
+    Because ppss(1) cannot run faster than the system, and is run as any other
+    scheduled process, the information it displays can never be exact.
+
+  NNOOTTEESS
+
+    The ppss(1) command does not display the full command line for other users'
+    processes. This is a security feature: command lines can contain sensitive
+    information, such as a password.
+
+  SSEEEE AALLSSOO
+
+    _k_i_l_l(1)
+
+    _e_x_e_c(2)
+
+    _s_e_t_u_i_d(2)
+
+    _s_t_r_f_t_i_m_e(3)
+
+    _p_r_o_c(4)
+

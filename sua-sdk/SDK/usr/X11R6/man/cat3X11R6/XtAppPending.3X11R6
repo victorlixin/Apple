@@ -1,0 +1,117 @@
+XtAppPending(3X11R6)                               XtAppPending(3X11R6)
+
+  XXttAAppppNNeexxttEEvveenntt
+
+  NNAAMMEE
+
+    XtAppNextEvent, XtAppPending, XtAppPeekEvent, XtAppProcessEvent,
+    XtDispatchEvent, XtAppMainLoop - query and process events and input
+
+  SSYYNNTTAAXX
+
+    void XtAppNextEvent(app_context, event_return)
+          XtAppContext app_context;
+          XEvent *event_return;
+
+    Boolean XtAppPeekEvent(app_context, event_return)
+          XtAppContext app_context;
+          XEvent *event_return;
+
+    XtInputMask XtAppPending(app_context)
+          XtAppContext app_context;
+
+    void XtAppProcessEvent(app_context, mask)
+          XtAppContext app_context;
+          XtInputMask mask;
+
+    Boolean XtDispatchEvent(event)
+          XEvent *event;
+
+    void XtAppMainLoop(app_context)
+          XtAppContext app_context;
+
+  AARRGGUUMMEENNTTSS
+
+    app_context
+        Specifies the application context that identifies the application .
+
+    event
+        Specifies a pointer to the event structure that is to be dispatched to
+        the appropriate event handler.
+
+    event_return
+        Returns the event information to the specified event structure.
+
+    mask
+        Specifies what types of events to process. The mask is the bitwise
+        inclusive OR of any combination of XtIMXEvent, XtIMTimer,
+        XtIMAlternateInput, and XtIMSignal. As a convenience, the X Toolkit
+        defines the symbolic name XtIMAll to be the bitwise inclusive OR of
+        all event types.
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    If the X event queue is empty, XXttAAppppNNeexxttEEvveenntt flushes the X output buffers
+    of each Display in the application context and waits for an event while
+    looking at the other input sources, timeout timeout values, and signal
+    handlers and calling any callback procedures triggered by them. This wait
+    time can be used for background processing (see Section 7.8).
+
+    If there is an event in the queue, XXttAAppppPPeeeekkEEvveenntt fills in the event and
+    returns a nonzero value. If no X input is on the queue, XXttAAppppPPeeeekkEEvveenntt
+    flushes the output buffer and blocks until input is available (possibly
+    calling some timeout callbacks in the process). If the input is an event,
+    XXttAAppppPPeeeekkEEvveenntt fills in the event and returns a nonzero value. Otherwise,
+    the input is for an alternate input source, and XXttAAppppPPeeeekkEEvveenntt returns
+    zero.
+
+    The XXttAAppppPPeennddiinngg function returns a nonzero value if there are events
+    pending from the X server, timer pending, or other input sources pending.
+    The value returned is a bit mask that is the OR of XtIMXEvent, XtIMTimer,
+    XtIMAlternateInput, and XtIMSignal (see XXttAAppppPPrroocceessssEEvveenntt). If there are
+    no events pending, XXttAAppppPPeennddiinngg flushes the output buffer and returns
+    zero.
+
+    The XXttAAppppPPrroocceessssEEvveenntt function processes one timer, alternate input,
+    signal source, or X event. If there is nothing of the appropriate type to
+    process, XXttAAppppPPrroocceessssEEvveenntt blocks until there is. If there is more than
+    one type of thing available to process, it is undefined which will get
+    processed. Usually, this procedure is not called by client applications
+    (see XXttAAppppMMaaiinnLLoooopp). XXttAAppppPPrroocceessssEEvveenntt processes timer events by calling
+    any appropriate timer callbacks, alternate input by calling any
+    appropriate alternate input callbacks, signal source by calling any
+    appropriate signal callbacks, and X events by calling XXttDDiissppaattcchhEEvveenntt.
+
+    When an X event is received, it is passed to XXttDDiissppaattcchhEEvveenntt, which calls
+    the appropriate event handlers and passes them the widget, the event, and
+    client-specific data registered with each procedure. If there are no
+    handlers for that event registered, the event is ignored and the
+    dispatcher simply returns. The order in which the handlers are called is
+    undefined.
+
+    The XXttDDiissppaattcchhEEvveenntt function sends those events to the event handler
+    functions that have been previously registered with the dispatch routine.
+    XXttDDiissppaattcchhEEvveenntt returns True if it dispatched the event to some handler
+    and False if it found no handler to dispatch the event to. The most common
+    use of XXttDDiissppaattcchhEEvveenntt is to dispatch events acquired with the
+    XXttAAppppNNeexxttEEvveenntt procedure. However, it also can be used to dispatch user-
+    constructed events. XXttDDiissppaattcchhEEvveenntt also is responsible for implementing
+    the grab semantics for XXttAAddddGGrraabb.
+
+    The XXttAAppppMMaaiinnLLoooopp function first reads the next incoming X event by
+    calling XXttAAppppNNeexxttEEvveenntt and then it dispatches the event to the appropriate
+    registered procedure by calling XXttDDiissppaattcchhEEvveenntt. This constitutes the main
+    loop of X Toolkit applications, and, as such, it does not return.
+    Applications are expected to exit in response to some user action. There
+    is nothing special about XXttAAppppMMaaiinnLLoooopp; it is simply an infinite loop that
+    calls XXttAAppppNNeexxttEEvveenntt and then XXttDDiissppaattcchhEEvveenntt.
+
+    Applications can provide their own version of this loop, which tests some
+    global termination flag or tests that the number of top-level widgets is
+    larger than zero before circling back to the call to XXttAAppppNNeexxttEEvveenntt.
+
+  SSEEEE AALLSSOO
+
+    X Toolkit Intrinsics - C Language Interface
+    Xlib - C Language X Interface
+

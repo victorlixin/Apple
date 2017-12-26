@@ -1,0 +1,96 @@
+
+
+config(4tcp)                                         config(4tcp)
+
+SSyynnooppssiiss
+       /etc/inet/config
+
+DDeessccrriippttiioonn
+       The  config  file  contains  information used to configure
+       various  Internet  networking  services.   The   file   is
+       accessed   by  /usr/sbin/initialize  which  is  called  by
+       /etc/rc2.d/S69inet at boot time.
+
+UUssaaggee
+       For each networking service, the config  file  contains  a
+       one-line  entry  of  the form: sort-key:daemon:overriding-
+       daemon:flag:config-filename:options:
+
+       The semantics of a config file entry can be summarized  as
+       follows:
+
+       Using the sort sequence defined by the sort-key field val-
+       ues: start the daemon daemon with options options when the
+       flag  field contains the value Y or y and the config-file-
+       name field contains a valid value do not start the  daemon
+       daemon  if  overriding-daemon  was able to run by the same
+       criteria
+
+       The fields in the config file are described as follows:  A
+       required field that specifies the order in which daemon is
+       started, relative to the other daemons defined in the con-
+       fig  file.  A required field that specifies the full path-
+       name of the daemon  that  /usr/sbin/initialize  starts  to
+       provide  a  particular network service.  An optional field
+       that specifies  the  full  pathname  of  the  daemon  that
+       /usr/sbin/initialize  is to start instead of starting dae-
+       mon.
+
+       Note that, if /usr/sbin/initialize  is  unable  to  invoke
+       overriding-daemon  (because,  for example, no entry exists
+       for overriding-daemon in the config file), or if the  flag
+       field  in  the  config file entry for overriding-daemon is
+       set to N or n, daemon will be started instead.  A required
+       field  that  indicates  whether  daemon is started at boot
+       time.  Values are: start the daemon at boot  time  do  not
+       start the daemon at boot time An optional field that spec-
+       ifies the full pathname of the configuration file  associ-
+       ated with daemon.
+
+       If  the  flag field is set to Y or y, and if the file con-
+       fig-filename is readable (or the value of the config-file-
+       name  field is null), then /usr/sbin/initialize will start
+       daemon.  An optional field that lists the command  options
+       to be specified when daemon is started.
+
+       Each field in an entry is separated by a colon; each entry
+       in the file is separated by a new-line.
+
+                                                                1
+
+config(4tcp)                                         config(4tcp)
+
+       The sort-key field provides a mechanism for  dealing  with
+       dependencies  between  network  services  daemons  at boot
+       time.  For example, if your time daemon is fast enough  to
+       attempt  to  reach the Internet before your routing daemon
+       has established a route for it to use,  your  time  daemon
+       will fail.  In this case, you would assign to your routing
+       daemon a sort key value in the sort-key field that is less
+       than  the  value  you  assign  to  your time daemon.  This
+       ensures that your routing daemon is  started  before  your
+       time daemon is started.  Note that multiple characters may
+       be used as sort keys in the  sort-key  field.   Note  also
+       that  the  physical sequence of entries in the config file
+       is unimportant; at boot time, daemons  are  started  using
+       sort-key field key values only.
+
+   EExxaammpplleess
+       Here   is   a  sample  config  file:  1:/usr/eac/bin/init-
+       sock::y:::  5:/usr/sbin/in.named::y:/etc/inet/named.boot::
+       4a:/usr/sbin/in.gated::Y:/etc/inet/gated.conf::
+       4b:/usr/sbin/in.routed:/usr/sbin/in.gated:Y::-q:
+       4c:/usr/sbin/route::n::add  default  router_placeholder 1:
+       6:/usr/sbin/in.xntpd::y:/etc/inet/ntp.conf::
+       7:/usr/bin/sh::y:/etc/inet/rc.inet:/etc/inet/rc.inet
+       start:
+
+       In this example, the line beginning with 4a says that,  if
+       the  configuration  file /etc/inet/gated.conf exists, then
+       run the daemon /usr/sbin/in.gated with  no  options.   The
+       line   beginning   with   4b  says  that,  if  the  daemon
+       /usr/sbin/in.gated  was  not  run,  then  run  the  daemon
+       /usr/sbin/in.routed with the -q option.
+
+                                                                2
+

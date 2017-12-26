@@ -1,0 +1,141 @@
+
+
+fstream(3C++)                                       fstream(3C++)
+
+SSyynnooppssiiss
+       #include <fstream.h>
+
+       typedef  long  streamoff,  streampos;  class ios { public:
+            enum seek_dir { beg, cur, end } ;      enum open_mode
+       {  in,  out,  ate,  app,  trunc,  nocreate,  noreplace } ;
+            enum io_state { goodbit=0, eofbit, failbit, badbit  }
+       ;      // and lots of other stuff, see ios(3C++) ...  } ;
+
+       class   ifstream   :   istream  {            ifstream()  ;
+                 ~ifstream()  ;            ifstream(const   char*
+       name,  int  =ios::in,                            int  prot
+       =filebuf::openprot)   ;             ifstream(int   fd)   ;
+                 ifstream(int fd, char* p, int l) ;
+
+            void attach(int    fd)    ;         int  detach()   ;
+            void close()   ;        void open(char*   name,   int
+       =ios::in,                  int  prot=filebuf::openprot)  ;
+            filebuf*  rdbuf() ;      void setbuf(char* p, int  l)
+       ; };
+
+       class   ofstream   :   ostream  {            ofstream()  ;
+                 ~ofstream()  ;            ofstream(const   char*
+       name,  int  =ios::out,                            int prot
+       =filebuf::openprot)   ;             ofstream(int   fd)   ;
+                 ofstream(int fd, char* p, int l) ;
+
+            void attach(int    fd)    ;         int  detach()   ;
+            void close()   ;        void open(char*   name,   int
+       =ios::out,       int       prot=filebuf::openprot)       ;
+            filebuf*  rdbuf() ;      void setbuf(char* p, int  l)
+       ; };
+       class   fstream   :   iostream   {            fstream()  ;
+                 ~fstream() ;           fstream(const char* name,
+       int   mode,                              int  prot  =file-
+       buf::openprot)    ;              fstream(int     fd)     ;
+                 fstream(int fd, char* p, int l) ;
+
+            void attach(int     fd)     ;          int  detach();
+            void close() ;      void open(char* name,  int  mode,
+       int  prot=filebuf::openprot)  ;       filebuf*  rdbuf()  ;
+            void setbuf(char* p, int l) ; };
+
+DDeessccrriippttiioonn
+       ifstream,  ofstream,  and  fstream   specialize   istream,
+       ostream,  and  iostream, respectively, to files.  That is,
+       the associated streambuf will be a filebuf.
+
+       In the following descriptions, assume
+       -- f is any of ifstream, ofstream, or fstream.
+       -- pfb is a filebuf*.
+       -- psb is a streambuf*.
+       -- name and ptr are char*s.
+       -- i, fd, len, and prot are ints.
+
+                                                                1
+
+fstream(3C++)                                       fstream(3C++)
+
+       -- mode is an int representing an open_mode.
+
+   CCoonnssttrruuccttoorrss
+       The constructors for xstream, where x is either if, of, or
+       f,  are:  Constructs  an  unopened xstream.  Constructs an
+       xstream and opens file name using mode as  the  open  mode
+       and  prot  as  the  protection  mode.  By default, prot is
+       filebuf::openprot,  which  is  0644.   The   error   state
+       (io_state)  of the constructed xstream will indicate fail-
+       ure in case the open fails.  Constructs  an  xstream  con-
+       nected  to  file descriptor d, which must be already open.
+       Constructs an xstream connected to file descriptor d, and,
+       in addition, initializes the associated filebuf to use the
+       len bytes at ptr as the reserve area.  If ptr is  null  or
+       len is 0, the filebuf will be unbuffered.
+
+   MMeemmbbeerr ffuunnccttiioonnss
+       Connects  f  to  the  file descriptor d.  A failure occurs
+       when f is already connected to a  file.   A  failure  sets
+       ios::failbit in f's error state.  Disconnects the attached
+       file descriptor from f and returns  the  file  descriptor.
+       Before  disconnection,  flushes  any waiting output to the
+       file associated with  the  file  descriptor.   Closes  any
+       associated  filebuf  and  thereby breaks the connection of
+       the f to a file.  f's error state  is  cleared  except  on
+       failure.     A   failure   occurs   when   the   call   to
+       f.rdbuf()->close() fails.  Opens file name and connects  f
+       to  it.  If the file does not already exist, an attempt is
+       made  to  create  it  with  protection  mode  prot  unless
+       ios::nocreate  is set.  By default, prot is filebuf::open-
+       prot, which is 0644.  Failure occurs if f is already open,
+       or  the  call to f.rdbuf()->open() fails.  ios::failbit is
+       set in f's  error  status  on  failure.   The  members  of
+       open_mode  are  bits that may be or'ed together.  (Because
+       the or'ing returns an int, open() takes an int rather than
+       an  open_mode  argument.)   The  meanings of these bits in
+       mode are: A seek to the end of file is performed.   Subse-
+       quent  data written to the file is always added (appended)
+       at the end of file.  On some systems this  is  implemented
+       in  the  operating system.  In others it is implemented by
+       seeking  to  the  end  of  the  file  before  each  write.
+       ios::app  implies ios::out.  A seek to the end of the file
+       is performed during the open().  ios::ate does  not  imply
+       ios::out.   The  file  is  opened  for  input.  ios::in is
+       implied by  construction  and  opens  of  ifstreams.   For
+       fstreams  it  indicates  that  input  operations should be
+       allowed if possible.  It is legal to  include  ios::in  in
+       the  modes of an ostream in which case it implies that the
+       original file (if it exists) should not be truncated.   If
+       the  file  being opened for input does not exist, the open
+       will fail.  The file is opened for  output.   ios::out  is
+       implied  by  construction  and  opens  of  ofstreams.  For
+       fstream it says that output operations are to be  allowed.
+       ios::out  may  be  specified  even if prot does not permit
+
+                                                                2
+
+fstream(3C++)                                       fstream(3C++)
+
+       output.  If the file already exists, its contents will  be
+       truncated (discarded).  This mode is implied when ios::out
+       is  specified  (including   implicit   specification   for
+       ofstream)  and neither ios::ate nor ios::app is specified.
+       If the file does not already exist, the open() will  fail.
+       If  the  file  already exists, the open() will fail.  Only
+       valid with ios::out.  Returns a  pointer  to  the  filebuf
+       associated  with f.  fstream::rdbuf() has the same meaning
+       as iostream::rdbuf() but is typed  differently.   Has  the
+       usual  effect  of  a  setbuf()  (see  offering space for a
+       reserve area or requesting unbuffered I/O.   Normally  the
+       returned  psb  is  f.rdbuf(),  but  it is 0 on failure.  A
+       failure occurs if f is open or the call to f.rdbuf()->set-
+       buf fails.
+
+RReeffeerreenncceess
+
+                                                                3
+

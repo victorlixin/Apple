@@ -1,0 +1,104 @@
+
+
+t_listen(3xti)                                     t_listen(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       int t_listen(int fd, struct t_call *call);
+
+DDeessccrriippttiioonn
+       This function is a TLI/XTI routine for use in establishing
+       a transport connection.  t_listen listens  for  a  connect
+       indication from another transport user and is designed for
+       use by server applications using connection-mode transport
+       services.
+
+       fd  identifies  the local transport endpoint where connect
+       indications arrive, and on return, call contains  informa-
+       tion describing the connect indication.
+
+   PPaarraammeetteerrss
+       the  file descriptor for the transport endpoint where con-
+       nect indications arrive.  points to the  t_call  structure
+       used to describe the connect indications.
+
+   SSttrruuccttuurree ddeeffiinniittiioonnss
+       call points to a t_call structure, which contains the fol-
+       lowing  members:  struct  netbuf  addr;       /*   address
+       */  struct  netbuf  opt;       /*  options              */
+       struct netbuf udata;     /*  user  data            */  int
+       sequence;            /*  sequence  number     */ netbuf is
+       described in In call, addr returns the protocol address of
+       the  other  transport  user, opt returns protocol-specific
+       parameters associated with the connect  indication,  udata
+       returns  any  user data sent by the other user on the con-
+       nect request, and sequence is a number that uniquely iden-
+       tifies  the  returned  connect  indication.   The value of
+       sequence enables the user to listen for  multiple  connect
+       indications before responding to any of them.
+
+       Since  this function returns values for the addr, opt, and
+       udata fields of call, the maxlen field of each must be set
+       before  issuing  t_listen  to indicate the maximum size of
+       the buffer for each.
+
+   SSttaattee ttrraannssiittiioonnss
+       T_IDLE on  entry.   T_INCON  (successful)  or  T_IDLE  (no
+       requests) on exit.
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+UUssaaggee
+       By default, t_listen  executes  in  synchronous  mode  and
+       waits  for a connect indication to arrive before returning
+       to the user.  However, if O_NONBLOCK is set (via t_open or
+       fcntl),  t_listen  executes  asynchronously, reducing to a
+
+                                                                1
+
+t_listen(3xti)                                     t_listen(3xti)
+
+       poll for existing connect indications.  If none are avail-
+       able, it returns -1 and sets t_errno to TNODATA.
+
+       If  the  transport provider does not distinguish between a
+       connect indication and an actual connection, the return of
+       t_listen  indicates a connection.  If a user issues t_lis-
+       ten in synchronous mode on a transport endpoint  that  was
+       not  bound  for  listening  (that  is,  qlen  was  zero on
+       t_bind), the call will wait  forever  because  no  connect
+       indications will arrive on that endpoint.
+
+RReettuurrnn vvaalluueess
+       t_listen  returns  0  on  success  and  -1  on failure and
+       t_errno is set to indicate the error.
+
+   EErrrroorrss
+       On failure, t_errno may be set to one  of  the  following:
+       The  specified  file descriptor does not refer to a trans-
+       port endpoint.  The argument qlen of the  endpoint  speci-
+       fied  by  fd is 0.  The number of bytes (maxlen) allocated
+       for an incoming argument is greater than zero but not suf-
+       ficient   to  store  the  value  of  that  argument.   The
+       provider's state, as seen by the user, changes to T_INCON,
+       and  the  connect indication information to be returned in
+       call is discarded.  O_NONBLOCK was  set,  but  no  connect
+       indications  had  been  queued.  An asynchronous event has
+       occurred on this transport endpoint and requires immediate
+       attention.  This function is not supported by the underly-
+       ing transport provider.  A system error has occurred  dur-
+       ing  execution  of  this  function.  The maximum number of
+       connect indications has  been  reached  for  the  endpoint
+       specified  by  fd.   The  function was issued in the wrong
+       sequence on the transport endpoint referenced  by  fd.   A
+       communication problem has been detected with the transport
+       provider and  there  is  no  other  value  of  t_errno  to
+       describe the error condition.
+
+RReeffeerreenncceess
+
+                                                                2
+

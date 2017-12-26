@@ -1,0 +1,382 @@
+
+
+vtoc(7)                                                   vtoc(7)
+
+DDeessccrriippttiioonn
+       The first level of organization of the disk by vtoc is the
+       partition table.  The partition  table  divides  the  disk
+       into  pieces  (called  partitions)  that  serve as logical
+       disks.  There are a maximum of four  partitions  for  each
+       disk.   A partition has four characteristics: a start sec-
+       tor a length an operating system type (for example, , , or
+       Extended  )  an  active  flag  that identifies the current
+       bootable partition
+
+       A valid partition has at  least  the  first  three  fields
+       defined.   A  bootable valid partition has all four fields
+       defined or on.
+
+       The partition table is maintained  by  the  command.   The
+       vtoc target driver searches the partition table for parti-
+       tions.  The active flag is used not only to indicate  that
+       a  partition  on  the  boot  disk is bootable, but also to
+       indicate whether it is accessible  (a   partition  on  the
+       second  disk  that is not active cannot be accessed).  The
+       vtoc target driver also allows access to  non-  partitions
+       on  a  disk,  even  if there is no  partition, and thus no
+       Volume Table of Contents (VTOC).   This  method  uses  the
+       information on the fdisk table.
+
+       The second level of organization of the disk is the slice.
+       A slice is a contiguous section  of  a  partition.   These
+       slices  are  defined by the VTOC and they provide a way to
+       better manage the space, to differentiate slices for  spe-
+       cial purposes, and to allow protection.  vtoc allows for a
+       maximum of 184  slices per  disk partition.  A slice  also
+       has  four characteristics: a start sector a length a slice
+       type (for example, root, user,  swap,  stand)  permissions
+       (valid and mountable/unmountable)
+
+       A  slice  can  contain  a  filesystem, can be used as swap
+       space for paging, or left to be organized by  an  applica-
+       tion such as a database.
+
+       Some  slices  have required definitions: The whole  parti-
+       tion; it has the same start and length as the   partition.
+       The boot slice that contains  boot code (if it is the boot
+       disk), the VTOC information,  and  the  PDINFO  (described
+       later).   This slice occupies sector 1 through 34 of  par-
+       tition.  The alternates slice,  containing  the  table  of
+       remapped sectors, sectors that have been remapped, sectors
+       that  have  read-errors  but  which  have  not  yet   been
+       remapped, and spare sectors available for remapping.
+
+       This  slice  is optional, and may not be present.  Used in
+       SVR4.0 and earlier  releases additionally as the alternate
+       track  area.   The  alternates  mechanism was consolidated
+       beginning with SVR4.2 to use one slice.  Therefore,  Slice
+       9 can be used for any purpose.
+
+                                                                1
+
+vtoc(7)                                                   vtoc(7)
+
+       On  the  boot  disk  there are additional slices that have
+       required definitions: the root file system the swap  slice
+       the boot slice which is organized as a BFS filesystem
+
+       On  a boot disk optional filesystems are organized as fol-
+       lows: the /home filesystem the /home2 filesystem currently
+       unused  the  dump  slice  (holds  memory  dumps) currently
+       unused the /var filesystem the /home2 filesystem the  /tmp
+       filesystem  the  Volume Management public slice the Volume
+       Management private slice
+
+       The slices of a disk  are  represented  by  device  nodes,
+       which  have  a minor number pointing to one of the slices.
+       There are a maximum of 184  slices and five special parti-
+       tions (one for each entry in the partition table) for each
+       disk.
+
+       The system supports 256 slices (minor numbers)  per  disk.
+       Minor  numbers  for  the first disk on the system are num-
+       bered 0 through 255; a second disk's minor  numbers  would
+       start at 256 and continue through 511; and so on for third
+       and subsequent disks (in blocks of 256 minor  numbers  per
+       disk).   The  following paragraphs show minor number usage
+       relative to the first disk (numbers 0-255);  a  subsequent
+       disk  has  the  same slices in the same relative positions
+       within the minor number range for that disk.
+
+       Minor numbers 0-15 are for standard  slices  (see  above),
+       16-183  are  for extended slices, 184 represents the whole
+       disk, and 185-188 represent the fdisk table partitions.
+
+       When the disk device is opened, the  partition  table  and
+       the VTOC are read by vtoc to fill out its tables of parti-
+       tions and
+        slices.  Device nodes are always created for slices  0-15
+       and  184-188.   Nodes are created for extended slices only
+       when the slice is used.
+
+       The vtoc driver receives command requests from the  kernel
+       through  the  Input/Output  (I/O)  control  call  The vtoc
+       driver generates the requested commands  and  passes  them
+       through  the  I/O  stack.   When command execution is com-
+       plete, the host adapter driver notifies  the  vtoc  driver
+       through an interrupt.
+
+       The  files  in  the  /dev/dsk  directory  access  the disk
+       through the system's normal buffering mechanism,  and  may
+       be  read  and  written  without  regard  to  physical disk
+       records.
+
+       There is also a raw interface (specified with an r in  the
+       name) that provides for direct access between the disk and
+       the user's read or write buffer.  A single read  or  write
+       call results in exactly one I/O operation.  Therefore, raw
+
+                                                                2
+
+vtoc(7)                                                   vtoc(7)
+
+       I/O is considerably more efficient  for  large  transfers.
+       The names of the raw disk files contain /dev/rdsk and have
+       the same form as the /dev/dsk files.
+
+       In raw I/O, the buffer must begin on a 512-byte  boundary,
+       and  transfer  counts  must  be  integral multiples of 512
+       bytes.
+
+       The special device filenames associated with the vtoc disk
+       driver   have   either   of   the   two  following  forms:
+       /dev/[r]dsk/cCbBtTdDsS
+       /dev/[r]dsk/cCbBtTdDpP More information can  be  found  on
+       the  manual page.  Access to the active  partition is pro-
+       hibited if you specify the slice in the form pP.  Also the
+       vtoc driver map report a bad block residing in a non- sys-
+       tem (for example, MS-) partition of the disk.  If the disk
+       does  not  contain  a  partition, there will be no VTOC or
+       PDINFO on the disk.  You will, however, be able to  access
+       other  partitions through the special p1-p4 nodes, and the
+       whole disk through the p0 node.
+
+       The disk parameters -- number  of  cylinders,  heads,  and
+       sectors per track -- are obtained at driver initialization
+       (init) time.  If the disk is an ESDI, ST506, or IDE drive,
+       the CMOS contains parameters for the first two disks.  For
+       SCSI disks, a read capacity command  is  issued,  and  the
+       disk parameters are calculated based on a disk geometry of
+       32 sectors-per-track and 64 heads.  This geometry  is  for
+       drives  with 512-byte sectors.  It is adjusted if the num-
+       ber of bytes per sector changes.  The disk parameters  are
+       stored  in Physical Descriptor Information (PDINFO) struc-
+       ture which is stored in the boot slice of the  disk.   The
+       PDINFO  is  kept  as a sanity check against those found at
+       driver init time.
+
+       When the machine is booted, the primary boot  code  (BIOS)
+       looks  in  the  fdisk  table  for the active partition and
+       jumps to sector 0 of that partition  to  find  the  first-
+       stage bootstrap.  If the first-stage bootstrap is over one
+       sector in length, it is the responsibility of  the  first-
+       stage  bootstrap  to  understand this.  The boot code will
+       read in the VTOC to locate the BFS  filesystem.   It  will
+       then load the kernel and begin executing the kernel.
+
+   iiooccttll ccaallllss
+       The  ioctl  calls  used  by the vtoc driver to control the
+       reading and writing of data to disk are as  follows:  Used
+       to  modify  the parameters (cylinders and heads) of a disk
+       device.  Its usage is not recommended and it is no  longer
+       used  in  any of the system commands.  The argument to the
+       ioctl is the address of one of the  following  structures,
+       defined  in  sys/vtoc.h,  containing the new configuration
+       parameters:    union    io_arg     {          struct     {
+                 ushort    ncyl;     /*  Number  of  cylinders */
+
+                                                                3
+
+vtoc(7)                                                   vtoc(7)
+
+                 unchar    nhead;    /*     Heads/cylinder     */
+                 unchar    nsec;     /*      Sectors/track     */
+                 ushort    secsiz;   /*  Bytes/sector  */       }
+       ia_cd;  }  It is not possible to change the sector size on
+       the hard disk with this ioctl. An attempt to do so results
+       in the ioctl failing, with errno set to EINVAL.  This call
+       is provided for backward compatibility with  any  commands
+       that  use  it.   This  call will not work with a disk that
+       does not have a  partition.  This call should no longer be
+       used  and  will  be removed in the future.  Forces vtoc to
+       re-read the VTOC on the next open operation of the  drive.
+       It  fails  if  any  slice  other than slice 0 is currently
+       open, because the VTOC information cannot be updated while
+       a  process  is  using  a  slice.   This is used by when it
+       changes the VTOC to signal vtoc  to  update  its  internal
+       tables.  This call will not work with a disk that does not
+       have a  partition.  Gets  information  about  the  current
+       drive  configuration.   The  argument  to the ioctl is the
+       address of the following structure, defined in sys/vtoc.h,
+       which  is  filled  in  by  the  ioctl: struct disk_parms {
+            char dp_type;  /*   Disk   type   (see   below)    */
+            unchar    dp_heads; /*     No.     of     heads    */
+            ulong     dp_cyls;  /*   No.    of    cylinders    */
+            unchar    dp_sectors;    /*  No.  of sectors/track */
+            ushort    dp_secsiz;     /* No.  of  bytes/sector  */
+            ushort    dp_ptag;  /*    Currently   not   used   */
+            ushort    dp_pflag; /*   Currently   not   used    */
+            daddr_t   dp_pstartsec;  /*  Starting abs. sector no.
+       */      daddr_t   dp_pnumsec;    /* Currently not used  */
+       }
+
+       /*  Disk  types  */ #define   DPT_NOTDISK    0    /* Not a
+       disk device */ #define   DPT_WINI  1    /* Winchester disk
+       */      #define   DPT_FLOPPY     2    /*     Floppy     */
+       #define   DPT_OTHER 3    /*  Other   type   of   disk   */
+       #define   DPT_SCSI_HD    4    /*   SCSI   hard   disk   */
+       #define   DPT_SCSI_OD    5    /* SCSI optical disk */
+
+       /*  Partition  tag   */   #define   V_BOOT         1    /*
+       Bootable   partition  */  #define   V_ROOT         2    /*
+       Root filesystem */  #define   V_SWAP         3    /*  Swap
+       slice  */ #define   V_USR          4    /* User filesystem
+       */    #define   V_BACKUP  5    /*    Entire    disk     */
+       #define   V_ALTS         6    /* Alternate sectors (SVR4.0
+       and earlier)  */ #define   V_OTHER        7    /* Non-UNIX
+       System  partition */ #define   V_ALTTRK  8    /* Alternate
+       tracks        (SVR4.0        and        earlier)        */
+       #define   V_STAND        9    /* stand (BFS) filesystem */
+       #define   V_VAR          0A   /*   Var    filesystem    */
+       #define   V_HOME         0B   /*    Home   filesystem   */
+       #define   V_DUMP         0C   /*     Dump     slice     */
+       #define   V_ALTSCTR 0D   /* Alternate sectors (SVR4.2) */
+
+       /* Partition flag */ #define   V_UNMNT        0x001     /*
+
+                                                                4
+
+vtoc(7)                                                   vtoc(7)
+
+       Unmountable                  partition                  */
+       #define   V_RONLY        0x010     /*  Read only partition
+       */ #define   V_OPEN         0x100     /* Partition open */
+       #define   V_VALID        0x200     /*  Partition  valid to
+       use */ For SCSI disks the disk type is  DPT_SCSI_HD.   For
+       ESDI, ST506, and IDE disks, the disk type is DPT_WINI.  To
+       support disks with more than 65535 cylinders, the  defini-
+       tion  of the dp_cyls member has been changed from a ushort
+       to a ulong in &geminiRELtm;.  Consequently, legacy  appli-
+       cations  that  use  the V_GETPARMS ioctl or the disk_parms
+       structure will need to be recompiled to run on &geminiREL;
+       and later releases.  Returns the logical sector address of
+       the pdinfo structure.  The value  is  returned  in  pdloc:
+       unsigned  long    pdloc;  This  call  will not work with a
+       disk that does not have a  partition.  Used as a means for
+       reading  and  writing  any  sector on the hard disk.  Only
+       users with root privilege can freely  access  any  sector.
+       The  absolute sector address to be written to is placed in
+       abs_sec.  The data for the sector is read  to  or  written
+       from   abs_buf.    The   size   of   abs_buf   should   be
+       disk_parms.dp_secsize for the current  drive.   Note  that
+       both the first cylinder (containing the table, first-stage
+       bootstrap and VTOC) and the first track of the active par-
+       tition  (containing the first-stage bootstrap) can only be
+       accessed using partition 0, since these  tracks  are  nor-
+       mally  not  considered  part of any other partition in the
+       VTOC.  The  absio  structure  is  defined  in  sys/vtoc.h:
+       struct absio {      daddr_t  abs_sec;     /* Absolute sec-
+       tor no. (from 0) */      char    *abs_buf;      /*  Sector
+       buffer  */  };  Used to read or write one or more sectors.
+       Data size must be a multiple sector size.  Only users with
+       root  privilege can use these calls.  The starting logical
+       sector address to be written to or read from is placed  in
+       sectst, the number of bytes to be transferred is placed in
+       datasz, the data to be transferred is placed  in  memaddr,
+       and  the  phyio structure is defined in sys/vtoc.h: struct
+       phyio {      int         retval;        /* Return value */
+            unsigned     long  sectst;    /*  Sector  address  */
+            unsigned     long  memaddr;   /*  Buffer  address  */
+            unsigned     long datasz;   /* Transfer size in bytes
+       */ }; Used to read or write the Physical Description  sec-
+       tor  on  the  disk,  regardless of this sector's location.
+       Only users with root privilege can use these  calls.   The
+       starting  logical  sector address to be written to or read
+       from is assigned by the vtoc driver, the  physical  sector
+       size  of the disk must be placed in datasz, the data to be
+       transferred is placed in memaddr, and the phyio  structure
+       is  defined  in  sys/vtoc.h.   Returns the physical sector
+       address of the pdinfo structure.  The value is returned in
+       pdloc:  unsigned  long  pdloc; Releases a SCSI disk from a
+       processor.
+
+       Four ioctl commands provide access to  the  pdinfo,  VTOC,
+       and  VTOC  extension  information: Used to read or write a
+
+                                                                5
+
+vtoc(7)                                                   vtoc(7)
+
+       VTOC for a drive.  The argument to the call is the address
+       of  the following structure defined in sys/vtoc.h.  struct
+       vtoc_ioctl {      int v_nslices;                /*  number
+       of       slices       */            struct       partition
+       v_slices[V_NUMSLICES]; /* slice headers */ }; Used to read
+       or write a Physical Descriptor Information (PDINFO) struc-
+       ture that is stored in the boot slice of  the  disk.   The
+       PDINFO  is  kept  as a sanity check against those found at
+       driver init time.  The  pdinfo  structure  is  defined  in
+       sys/vtoc.h:       struct      pdinfo  {           unsigned
+       long  driveid;  /*identifies     the     device     type*/
+            unsigned  long sanity;        /*verifies  device san-
+       ity*/       unsigned  long  version;  /*version   number*/
+            char      serial[12];    /*serial   number   of   the
+       device*/       unsigned  long  cyls;          /*number  of
+       cylinders         per         drive*/             unsigned
+       long  tracks;        /*number   tracks   per    cylinder*/
+            unsigned  long sectors;  /*number sectors per track*/
+            unsigned long  bytes;         /*number of  bytes  per
+       sector*/         unsigned    long  logicalst;     /*sector
+       address    of    logical    sector    0*/         unsigned
+       long  errlogst; /*sector   address  of  error  log  area*/
+            unsigned long  errlogsz; /*size in bytes of error log
+       area*/      unsigned long  mfgst;         /*sector address
+       of      mfg.       defect       info*/            unsigned
+       long  mfgsz;         /*size in bytes of mfg. defect info*/
+            unsigned  long   defectst; /*sector  address  of  the
+       defect map*/      unsigned long  defectsz; /*size in bytes
+       of defect map*/      unsigned  long  relno;         /*num-
+       ber      of      relocation      areas*/          unsigned
+       long  relst;         /*sector address of relocation area*/
+            unsigned  long   relsz;         /*size  in sectors of
+       relocation area*/      unsigned  long  relnext;  /*address
+       of next avail reloc sector*/
+
+       /*  the  previous  items  are  left intact from AT&T's 3b2
+       pdinfo.
+          Following are added for the 80386 port */
+
+            unsigned  long  vtoc_ptr; /*byte   offset   of   vtoc
+       block*/       unsigned  short vtoc_len; /*byte  length  of
+       vtoc  block*/       unsigned   short vtoc_pad; /*pad   for
+       16-bit       machine       alignment*/            unsigned
+       long  alt_ptr;  /*byte  offset   of   alternates   table*/
+            unsigned  short     alt_len;  /*byte length of alter-
+       nates table*/
+
+            /* new in version 3 */
+
+            unsigned  long  pcyls;         /*physical   cylinders
+       per   drive*/        unsigned   long  ptracks;  /*physical
+       tracks        per         cylinder*/              unsigned
+       long  psectors; /*physical     sectors     per     track*/
+            unsigned  long pbytes;        /*physical  bytes   per
+
+                                                                6
+
+vtoc(7)                                                   vtoc(7)
+
+       sector*/       unsigned  long  secovhd;  /*sector overhead
+       bytes         per          sector*/               unsigned
+       short interleave;    /*interleave  factor*/       unsigned
+       short skew;          /*skew     factor*/          unsigned
+       long  pad[8];        /*space for more stuff*/ };
+
+UUssaaggee
+       The  vtoc  disk target driver allows access to non- parti-
+       tions on a disk, even if there is no UnixWare partition or
+       VTOC.   It  does  so by using the information in the table
+       and the /dsk/cCbBtTdDp[0-4] special device nodes.
+
+       The nodes called /dev/[r]dsk/1s[0-9] will exist only  when
+       there  is  actually  a  second disk on the system.  In the
+       past, these nodes were always created.  It  is  no  longer
+       possible  to  create these nodes when the second disk does
+       not exist because it is not possible to predict  the  cor-
+       rect minor number for them.
+
+FFiilleess
+RReeffeerreenncceess
+
+                                                                7
+

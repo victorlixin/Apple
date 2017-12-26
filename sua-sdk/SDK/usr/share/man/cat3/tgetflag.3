@@ -1,0 +1,123 @@
+tgetflag(3)                                                 tgetflag(3)
+
+  ttggeetteenntt(())
+
+  NNAAMMEE
+
+    tgetent(), tgetnum(), tgetflag(), tgetstr(), tgoto(), tputs() - terminal
+    independent operation (termcap) routines
+
+  SSYYNNOOPPSSIISS
+
+    #include <curses.h>
+
+    char PC;
+    char * BC;
+    char * UP;
+    short ospeed;
+
+    int tgetent (char *bp, char *name)
+    int tgetnum (char *id)
+    int tgetflag (char *id)
+    char * tgetstr (char *id, char **area)
+    char * tgoto (char *cm, char *destcol, char *destline)
+    char * tputs (register char *cp, int affcnt, void (*outc)())
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    These functions extract and use capabilities from a terminal capability
+    data base, usually //uussrr//sshhaarree//tteerrmmccaapp. (The actual parent of uussrr//sshhaarree
+    depends upon where you installed Subsystem for UNIX-based Applications.) These are low level routines
+    that access the termcap database; high-level routines are available in the
+    curses package, but they access the terminfo database.
+
+    The _tt_gg_ee_tt_ee_nn_tt(3) function extracts the entry for terminal name into the
+    buffer at bp. The bp argument should be a character buffer of size 1024
+    and must be retained through all subsequent calls to _tt_gg_ee_tt_nn_uu_mm(3),
+    _tt_gg_ee_tt_ff_ll_aa_gg(3), and _tt_gg_ee_tt_ss_tt_rr(3). The _tt_gg_ee_tt_ee_nn_tt(3) function returns -1 if none of
+    the tteerrmmccaapp database files could be opened, 0 if the terminal name given
+    does not have an entry, and 1 if all goes well.
+
+    The function _tt_gg_ee_tt_ee_nn_tt(3) looks in the environment for a TERMCAP variable.
+    If found, and the value does not begin with a slash, and the terminal type
+    name is the same as the environment string TERM, the TERMCAP string is
+    used instead of reading a tteerrmmccaapp file. If it does begin with a slash, the
+    string is used as a pathname of the tteerrmmccaapp file to search. If TERMCAP
+    does not begin with a slash and name is different from TERM, _tt_gg_ee_tt_ee_nn_tt(3)
+    searches the files $$HHOOMMEE//..tteerrmmccaapp and //uussrr//sshhaarree//tteerrmmccaapp, in that order -
+    - unless the environment variable TERMPATH exists, in which case it
+    specifies a list of file pathnames (separated by spaces or colons) to be
+    searched instead. Whenever multiple files are searched and a tc field
+    occurs in the requested entry, the entry it names must be found in the
+    same file or one of the succeeding files. This can speed up entry into
+    programs that call _tt_gg_ee_tt_ee_nn_tt(3), as well as help debug new terminal
+    descriptions or make one for your terminal if you can't write the file //
+    uussrr//sshhaarree//tteerrmmccaapp.
+
+    The _tt_gg_ee_tt_nn_uu_mm(3) function gets the numeric value of capability id, returning
+    -1 if it is not given for the terminal. The _tt_gg_ee_tt_ff_ll_aa_gg(3) function returns 1
+    if the specified capability is present in the terminal's entry, 0 if it is
+    not.
+
+    The _tt_gg_ee_tt_ss_tt_rr(3) function returns the string value of the capability id,
+    places it in the buffer at area, and advances the area pointer. It decodes
+    the abbreviations for this field, except for cursor addressing and padding
+    information. The _tt_gg_ee_tt_ss_tt_rr(3) function returns NULL if the capability was
+    not found.
+
+    The _tt_gg_oo_tt_oo(3) function returns a cursor addressing string decoded from cm
+    to go to column destcol in line destline. It uses the external variables
+    UP (from the up capability) and BC (if bc is given rather than bs) if
+    necessary to avoid placing \n, ^D or ^@ in the returned string. (Programs
+    that call _tt_gg_oo_tt_oo(3) should be sure to turn off the XTABS bit(s), since
+    _tt_gg_oo_tt_oo(3) might now output a tab. Note that programs using termcap should
+    in general turn off XTABS anyway because some terminals use control-I for
+    other functions, such as nondestructive space.) If a % sequence is given
+    which is not understood, _tt_gg_oo_tt_oo(3) returns (OOPS).
+
+    The _tt_pp_uu_tt_ss(3) function decodes the leading padding information of the
+    string cp; affcnt gives the number of lines affected by the operation, or
+    1 if this is not applicable, outc is a routine which is called with each
+    character in turn. The external variable ospeed should contain the output
+    speed of the terminal as encoded by ssttttyy(). The external variable PC
+    should contain a pad character to be used (from the pc capability) if a
+    null (^@) is inappropriate.
+
+  FFIILLEESS
+
+    //uussrr//lliibb//lliibbtteerrmmccaapp..aa
+        The --lltteerrmmccaapp library (also known as --lltteerrmmlliibb).
+
+    //uussrr//sshhaarree//tteerrmmccaapp
+        The standard terminal capability database (the actual location on your
+        system will depend upon where Subsystem for UNIX-based Applications is installed).
+
+    $$HHOOMMEE//..tteerrmmccaapp
+        The user's terminal capability database.
+
+  NNOOTTEESS
+
+    Although the functions are declared in <<ccuurrsseess..hh>>, there are two different
+    sets of them: one in the termcap library and one set in the curses library
+    that refer to the terminfo database.
+
+    To include the termcap versions, link against the termcap library
+    (lliibbtteerrmmccaapp..aa); ((libtermcap.a to include the terminfo versions, link
+    against the curses library
+
+  SSEEEE AALLSSOO
+
+    _e_x(1)
+
+    _c_u_r_s_e_s(3)
+
+    _t_e_r_m_c_a_p(5)
+
+    _t_e_r_m_i_n_f_o(5)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    None of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

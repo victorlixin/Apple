@@ -1,0 +1,170 @@
+
+
+                                                                1
+
+dnssec-keygen(1Mtcp)                         dnssec-keygen(1Mtcp)
+
+SSYYNNOOPPSSIISS
+       dnssec-keygen -a Ar algorithm -b Ar keysize -c class -e -g
+       generator -h -n Ar nametype -p protocol-value -r randomdev
+       -s strength-value -t type -v level name
+
+DDEESSCCRRIIPPTTIIOONN
+       dnssec-keygen  generates  keys  for DNSSEC, Secure DNS, as
+       defined in RFC2535.  It also generates  keys  for  use  in
+       Transaction Signatures, TSIG, which is defined in RFC2845.
+
+       A short summary of the options and  arguments  to  dnssec-
+       keygen is printed by the -h (help) option.
+
+       The  -a,  -b,  and  -n options and their arguments must be
+       supplied when generating keys.  The domain name  that  the
+       key has to be generated for is given by name .
+
+       The  choice  of encryption algorithm is selected by the -a
+       option to dnssec-keygen, algorithm must be one of  RSAMD5,
+       DH,  DSA or HMAC-MD5 to indicate that an RSA, Diffie-Hell-
+       man,  Digital  Signature  Algorithm  or  HMAC-MD5  key  is
+       required.   An argument of RSA can also be given, which is
+       equivalent  to  RSAMD5.   The  argument  identifying   the
+       encryption  algorithm  is case-insensitive.  DNSSEC speci-
+       fies DSA as a mandatory algorithm and RSA as a recommended
+       one.  Implementations of TSIG must support HMAC-MD5.
+
+       The number of bits in the key is determined by the keysize
+       argument following the -b option.  The choice of key  size
+       depends  on  the algorithm that is used.  RSA keys must be
+       between 512 and 2048 bits.  Diffie-Hellman  keys  must  be
+       between  128 and 4096 bits.  For DSA, the key size must be
+       between 512 and 1024 bits  and  a  multiple  of  64.   The
+       length of an HMAC-MD5 key can be between 1 and 512 bits.
+
+       The  -n  option  specifies  how  the generated key will be
+       used.  nametype can be either ZONE, HOST, ENTITY, or  USER
+       to  indicate that the key will be used for signing a zone,
+       host, entity or user respectively.  In this  context  HOST
+       and ENTITY are identical.  nametype is case-insensitive.
+
+       The  -c  option  specifies  that  the  when creating a KEY
+       record, the specified class should be used instead of  IN.
+
+       The  -e  option can only be used when generating RSA keys.
+       It tells dnssec-keygen to use a large exponent.  When cre-
+       ating  Diffie-Hellman  keys,  the  -g  option  selects the
+       Diffie-Hellman generator generator that  is  to  be  used.
+       The  only supported values value of generator are 2 and 5.
+       If no Diffie-Hellman generator is supplied, a known  prime
+       from RFC2539 will be used if possible; otherwise 2 will be
+       used as the generator.
+
+       The -p option sets the protocol value  for  the  generated
+
+                                                                1
+
+dnssec-keygen(1Mtcp)                         dnssec-keygen(1Mtcp)
+
+       key to protocol-value .  The default is 2 (email) for keys
+       of type USER and 3  (DNSSEC)  for  all  other  key  types.
+       Other  possible  values  for  this  argument are listed in
+       RFC2535 and its successors.
+
+       dnssec-keygen uses random numbers to seed the  process  of
+       generating  keys.  If the system does not have a /dev/ran-
+       dom device that can be used for generating random numbers,
+       dnssec-keygen  will  prompt for keyboard input and use the
+       time intervals between keystrokes to  provide  randomness.
+       The -r option overrides this behaviour, making dnssec-key-
+       gen use randomdev as a source of random data.
+
+       The key's strength value can be set with  the  -s  option.
+       The  generated  key  will sign DNS resource records with a
+       strength value of strength-value .  It should be a  number
+       between  0 and 15.  The default strength is zero.  The key
+       strength field currently has no defined purpose in DNSSEC.
+
+       The  -t  option  indicates  if  the  key is to be used for
+       authentication or confidentiality.  type  can  be  one  of
+       AUTHCONF,  NOAUTHCONF,  NOAUTH  or NOCONF.  The default is
+       AUTHCONF.  If type is AUTHCONF the key  can  be  used  for
+       authentication  and confidentialty.  Setting type to NOAU-
+       THCONF indicates that the key cannot be used for authenti-
+       cation or confidentialty.  A value of NOAUTH means the key
+       can be used for confidentiality but  not  for  authentica-
+       tion.   Similarly,  NOCONF  defines that the key cannot be
+       used for confidentiality though it can be used for authen-
+       tication.
+
+       The  -v option can be used to make dnssec-keygen more ver-
+       bose.  As the  debugging/tracing  level  level  increases,
+       dnssec-keygen   generates  increasingly  detailed  reports
+       about what it is doing.  The default level is zero.
+
+GGEENNEERRAATTEEDD KKEEYYSS
+       When dnssec-keygen completes it prints  a  string  of  the
+       form  Knnnn.+aaa+iiiii on the standard output.  This is an
+       identification string for the key it has generated.  These
+       strings can be supplied as arguments to
+
+       The nnnn.  part is the dot-terminated domain name given by
+       name .  The DNSSEC algorithm identifier  is  indicated  by
+       aaa  - 001 for RSA, 002 for Diffie-Hellman, 003 for DSA or
+       157 for HMAC-MD5.  iiiii is a five-digit number  identify-
+       ing the key.
+
+       dnssec-keygen  creates  two  files.   The  file  names are
+       adapted from the key identification  string  above.   They
+       have   names   of   the   form:  Knnnn.+aaa+iiiii.key  and
+       Knnnn.+aaa+iiiii.private .  These contain the  public  and
+       private  parts  of the key respectively.  The files gener-
+       ated by dnssec-keygen obey this naming convention to  make
+
+                                                                2
+
+dnssec-keygen(1Mtcp)                         dnssec-keygen(1Mtcp)
+
+       it  easy  for  the  signing tool to identify which file(s)
+       have to be read to find the necessary key(s) for  generat-
+       ing or validating signatures.
+
+       The  file  contains  a  KEY  resource  record  that can be
+       inserted into a zone file with a $INCLUDE statement.   The
+       private  part  of  the  key  is  in the file.  It contains
+       details of the encryption algorithm that was used and  any
+       relevant parameters: prime number, exponent, modulus, sub-
+       prime, etc.  For obvious security reasons, this file  does
+       not have general read permission.  The private part of the
+       key is used by to generate signatures and the public  part
+       is  used to verify the signatures.  Both and key files are
+       generated for symmetric encryption algorithm such as HMAC-
+       MD5,  even  though  the public and private key are equiva-
+       lent.
+
+EEXXAAMMPPLLEE
+       To generate a 768-bit DSA key for the domain  example.com,
+       the following command would be issued:
+
+       #  dnssec-keygen  -a DSA -b 768 -n ZONE example.com Kexam-
+       ple.com.+003+26160
+
+       dnssec-keygen has printed the  key  identification  string
+       Kexample.com.+003+26160, indicating a DSA key with identi-
+       fier 26160.  It will also have created  the  files  Kexam-
+       ple.com.+003+26160.key and Kexample.com.+003+26160.private
+       containing respectively the public and  private  keys  for
+       the generated DSA key.
+
+FFIILLEESS
+       /dev/random
+
+SSEEEE AALLSSOO
+       RFC2535, RFC2845, RFC2539,
+
+BBUUGGSS
+       The naming convention for the public and private key files
+       is a little clumsy.  It won't work for domain  names  that
+       are  longer  than  236  characters  because  of the suffix
+       results in filenames that are too long for most UNIX  sys-
+       tems.
+
+                                                                3
+

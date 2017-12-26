@@ -1,0 +1,157 @@
+#!/bin/ksh
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+#
+# srcId = $Id: usermod#1 2004/09/23 05:45:17 FAREAST\\ranas $
+#
+# 
+NTROOT=//C/WINNT/system32
+DEFAULT_PROFILE=kljskldfjskldj
+POSIXHOMEROOT=//C/tmp
+DEFAULTHOME=$POSIXHOMEROOT/default
+DOSHOMEROOT=`posixpath2nt $POSIXHOMEROOT`
+CMD_NET=$NTROOT/net.exe
+CMD_CACLS=$NTROOT/cacls.exe
+V=FALSE
+
+DEBUG=echo
+
+problem()
+{
+	echo $*
+	exit 1
+}
+usage()
+{
+	cat << EEE
+usage: $0 [-g group ] [-G group[[,group]...]] [-d dir ]
+	[-c comment ] [-p password ] username
+EEE
+}
+
+bail()
+{
+	usage
+	exit 1
+}
+
+check_valid_group()
+{
+	GRP=$1
+	echo ${localgroups} | grep "${GRP}" > /dev/null 2>&1
+	[ $? != 0 ] && { problem "Group \"${GRP}\" does not exist"; }
+	GROUP="${GROUP} ${GRP}"
+}
+
+add_user_to_group()
+{
+	#net.exe group groupname username /ADD
+	NGRP=$1
+cat << EEE > .t.$$
+$CMD_NET localgroup \\\"${NGRP}\\\" ${USER} /ADD  >.addu.err.$$ 2>&1
+EEE
+	sh .t.$$
+	ret=$?
+	rm -f .addu.err.$$ .t.$$
+	if [ $ret != 0 ] 
+	then
+		[ $ret != 2 ] && { echo "Couldn't add $USER to ${NGRP}"; }
+	fi
+	[ $V = TRUE ] && echo "$USER added to group ${NGRP}"
+}
+
+while getopts "G:c:p:g:d:V" opt; do
+	case "$opt" in
+		p) P="$OPTARG" ;;
+		g) G="$OPTARG" ;;
+		d) D="$OPTARG" ;;
+		c) C="$OPTARG" ;;
+		G) S="$OPTARG" ;;
+		V) V="TRUE" ;;
+		*) echo "Bad option -$opt"; bail ;;
+	esac
+done
+
+shift $OPTIND-1
+set -- $*
+USER=${1}
+[ -z "$USER" ] && bail
+${CMD_NET} users ${USER} > /dev/null 2>&1
+[ $? != 0 ] && { problem "User \"${USER}\" does not exist"; }
+
+if [ -n "$P" ] # include password
+then
+	PASS="${P}"
+	[ "$V" = "TRUE" ] && echo "Setting password to ${PASS}"
+fi
+
+if [ -n "$D" ]  # make the directory
+then
+	echo "${D}" | grep "^//[A-Z]/" >/dev/null 2>&1
+	[ $? = 0 ] || { problem "Directory must include drive, ex. -d //C${D}"; }
+	DD=`posixpath2nt ${D}`
+	DIR="/HOMEDIR:${DD}"
+	[ "$V" = "TRUE" ] && echo "Setting directory to ${D}"
+fi
+
+if [ -n "${C}" ] # Comment
+then
+	COMMENT="/FULLNAME:\"${C}\""
+	[ "$V" = "TRUE" ] && echo "Setting COMMENT to ${COMMENT}"
+fi
+
+${CMD_NET} localgroup > .addu.$$ 2>/dev/null
+grep "\*" .addu.$$ | sed "s/\*//g" |
+sed 's/^/"/' | sed 's/  *$/"/' | sed 's/   */" "/g' > .addur.$$
+flip -u .addur.$$
+localgroups=`cat .addur.$$`
+rm .addu.$$ .addur.$$
+
+[ -n "${G}" -a -n "${S}" ] && { problem "can't do -g and -G"; }
+[ -n "${G}" ] && STR="${G}"
+[ -n "${S}" ] && STR="${S}"
+IFS=","
+for g in ${STR}
+do
+	check_valid_group $g
+done
+IFS=" "
+
+[ "$V" = "TRUE" ] && echo $localgroups
+
+#
+# This command creates the account
+#
+${DEBUG} ${CMD_NET} USER ${USER} ${PASS} ${COMMENT} ${DIR} >/dev/null 2>&1
+[ $? != 0 ] && { problem "Couldn't create account ${USER}"; }
+#
+# Create the directory for the newly created user if specified
+#
+if [ -n "${D}" ]
+then
+	${DEBUG} mkdir -p ${D}
+	[ $? != 0 ] && { problem "Couldn't create directory ${D}"; }
+	[ -f ${DEFAULT_PROFILE} ] && ${DEBUG} cp ${DEFAULT_PROFILE} ${D}
+	${DEBUG} ${CMD_CACLS} ${DD} /G ${USER}:F
+	[ $? != 0 ] && { problem "Couldn't change ACLS"; }
+	chmod 775 ${D} >/dev/null 2>&1
+fi
+	
+#
+# Now complete the transaction and add the user to groups
+# if specified
+#
+if [ -n "${G}" -o -n "${S}" ] 
+then
+	[ -n "${G}" ] && STR="${G}"
+	[ -n "${S}" ] && STR="${S}"
+	IFS=","
+	for grp in ${STR}
+	do
+		add_user_to_group ${grp}
+	done
+	IFS=" "
+fi
+
+echo "${USER} Account Created"
+

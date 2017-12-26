@@ -1,0 +1,116 @@
+
+
+eucioctl(5)                                           eucioctl(5)
+
+SSyynnooppssiiss
+       #include <sys/eucioctl.h>
+
+       ioctl(int fd, I_STR, struct strioctl *sb);
+
+DDeessccrriippttiioonn
+       This  interface is implemented in tty drivers and pushable
+       STREAMS modules that handle EUC codes.  It is intended  as
+       a  generic  interface  for  EUC  handling, to eliminate an
+       explosion of module-specific ioctl calls that would other-
+       wise  be  necessary,  and to provide uniformity in dealing
+       with EUC code sets in the tty subsystem.
+
+       Several calls are defined.  The first two  calls  take  an
+       argument,  which  is expected to be a pointer to an eucioc
+       structure, defined  in  the  header  file  sys/eucioctl.h:
+            struct  eucioc  {            unsigned  char  eucw[4];
+                 unsigned  char  scrw[4];       };        typedef
+       struct eucioc     eucioc_t;
+
+       In  all  cases,  these  calls  return non-zero on failure.
+       Failure should be usually taken as an indication that  the
+       current  driver,  or line discipline module, does not sup-
+       port EUC, in which case errno will be set to EINVAL.   For
+       the  EUC_WSET  or  EUC_WGET  calls,  errno  will be set to
+       EPROTO if struct eucioc argument is  invalid.   This  call
+       takes a pointer to an eucioc structure, and uses it to set
+       the EUC line discipline's local definition  for  the  code
+       set  widths  to be used for subsequent operations.  Within
+       the stream, the  line  discipline  may  optionally  notify
+       other  modules  of  this setting via M_CTL messages.  This
+       call takes a pointer to an eucioc structure,  and  returns
+       in  it the EUC code set widths currently in use by the EUC
+       line discipline.  It needs to be recognized only  by  line
+       discipline modules.
+
+       The  following  calls take no arguments.  They should only
+       fail if the driver (at the bottom of the tty stream)  does
+       not  recognize  EUC  codes.   Drivers  that  support  EUC,
+       whether the stream contains modules that  respond  to  the
+       calls  or  not,  will  recognize the calls and acknowledge
+       them.  These calls are normally only interpreted  by  mod-
+       ules that have modes other than ASCII, and/or do some form
+       of I/O conversion that normally prevents  a  program  from
+       receiving  non-EUC  characters in its byte stream.  All of
+       these calls, when received by modules, are passed down the
+       tty  stream,  to  be  ultimately  acknowledged  by the tty
+       driver.  This call has no effect on modules that are  cur-
+       rently in ASCII mode.  Otherwise (i.e., for modules not in
+       ASCII mode), the following actions are taken by  all  mod-
+       ules that recognize this call: (1) the current mode status
+       is saved, (2) the mode is changed to  ASCII  mode  immedi-
+       ately.  If a mode was saved via a previous EUC_MSAVE call,
+       the saved mode is restored, and the saved  state  flag  is
+
+                                                                1
+
+eucioctl(5)                                           eucioctl(5)
+
+       cleared.   If the mode was not previously saved, this call
+       has no effect.  (The exact semantics are  somewhat  depen-
+       dent on the module, since some modules may respond to spe-
+       cific user requests to switch modes, even while a mode  is
+       being saved via EUC_MSAVE.)  If a module is currently in a
+       state where input conversion is  being  performed  on  the
+       incoming byte stream, then input conversion is turned off,
+       and the module's mode status is saved.  If no  input  con-
+       version is being performed, there is no effect on the mod-
+       ule.  The purpose of this call is  to  provide  a  way  of
+       insuring  a  pure  byte  stream  to the program.  The byte
+       stream while input conversion is off is,  of  course,  not
+       guaranteed  to be a stream of EUC characters.  Turning off
+       input conversion is roughly equivalent to the old  concept
+       of  raw  mode, if used in conjunction with ICANON off.  It
+       should normally not be used by applications.  If a  module
+       previously  saved  its  state and turned off input conver-
+       sion, then input conversion is restored (i.e., turned back
+       on);  otherwise,  there is no effect.  In a manner similar
+       to EUC_IXLOFF, any output conversion is turned off and the
+       current  mode  status  saved.   In  a  manner  similar  to
+       EUC_IXLON, any saved output conversion status is  restored
+       (i.e.,  output  conversion is turned back on if previously
+       turned off via EUC_OXLOFF).
+
+FFiilleess
+       /usr/include/sys/eucioctl.h
+
+NNoottiicceess
+       Drivers and modules that support EUC  should  all  respond
+       appropriately  to  these  calls,  depending on their type.
+       Line disciplines must respond to  EUC_WSET  and  EUC_WGET,
+       changing  their  current  code set sizes to match EUC_WSET
+       requests.  All tty STREAMS modules that do  any  input  or
+       output  conversion  should recognize the other calls; mod-
+       ules that do no code set conversion are  not  required  to
+       recognize  the calls, but must pass them through.  Drivers
+       that support EUC tty  streams  must  all  acknowledge  the
+       ON/OFF  calls, whether the drivers themselves are affected
+       or not, since these calls are purposely  not  acknowledged
+       by  modules  which  receive  them; they are intended to be
+       made available for affecting  all  modules  in  the  whole
+       stream.
+
+       Adherence to this protocol for all EUC handling modules is
+       strongly encouraged in order to increase  portability  and
+       language-independence  of  applications.   These calls are
+       intended as a small set of primitives to  help  reduce  an
+       anticipated  plethora  of  module-  and language-dependent
+       operations.
+
+                                                                2
+

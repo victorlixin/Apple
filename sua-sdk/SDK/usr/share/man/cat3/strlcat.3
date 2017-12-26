@@ -1,0 +1,94 @@
+strlcat(3)                                                   strlcat(3)
+
+  ssttrrllccppyy(())
+
+  NNAAMMEE
+
+    strlcpy, strlcat - size-bounded string copying and concatenation
+
+  SSYYNNOOPPSSIISS
+
+    #include <string.h>
+
+    size_t  strlcpy(char *dst, const char *src, size_t size);
+
+    size_t  strlcat(char *dst, const char *src, size_t size);
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ssttrrllccppyy() and ssttrrllccaatt() functions copy and concatenate strings
+    respectively. They are designed to be safer, more consistent, and less
+    error prone replacements for _ss_tt_rr_cc_pp_yy(3) and _ss_tt_rr_nn_cc_aa_tt(3). Unlike those
+    functions, ssttrrllccppyy() and ssttrrllccaatt() take the full size of the buffer (not
+    just the length) and guarantee to NUL-terminate the result (as long as
+    size is larger than 0). Note that you should include a byte for the NUL in
+    size.
+
+    The ssttrrllccppyy() function copies up to size - 1 characters from the NUL-
+    terminated string src to dst, and NUL-terminating the result.
+
+    The ssttrrllccaatt() function appends the NUL-terminated string src to the end of
+    dst. It will append at most (size - ssttrrlleenn(dst) - 1) bytes, and NUL-
+    terminating the result.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The ssttrrllccppyy() and ssttrrllccaatt() functions return the total length in bytes of
+    the string they tried to create, not including the NUL terminator.
+
+    For ssttrrllccppyy() that means the length of src.
+
+    For ssttrrllccaatt() that means the initial length of dst plus the length of src.
+
+    Because this return value is the total potential length, it is easy to
+    detect when truncation happens in dst by comparing this value to size.
+
+  EEXXAAMMPPLLEESS
+
+    The following code fragment illustrates the simple case:
+
+    char *s, *p, buf[BUFSIZ];
+    ...
+    (void)strlcpy(buf, s, sizeof(buf));
+    (void)strlcat(buf, p, sizeof(buf));
+
+    To detect truncation, perhaps while building a pathname, something like
+    the following might be used:
+
+    char *dir, *file, pname[MAXPATHNAMELEN];
+    ...
+    if (strlcpy(pname, dir, sizeof(pname)) >= sizeof(pname))
+            goto toolong;
+    if (strlcat(pname, file, sizeof(pname)) >= sizeof(pname))
+            goto toolong;
+
+    Since we know how many characters we copied the first time, we can speed
+    things up a bit by using a copy instead on an append:
+
+    char *dir, *file, pname[MAXPATHNAMELEN];
+    size_t n;
+    ...
+    n = strlcpy(pname, dir, sizeof(pname));
+    if (n >= sizeof(pname))
+            goto toolong;
+    if (strlcpy(pname + n, file, sizeof(pname) - n) >=sizeof(pname) - n)
+            goto toolong;
+
+    However, one may question the validity of such optimizations, as they
+    defeat the whole purpose of ssttrrllccppyy() and ssttrrllccaatt(). As a matter of fact,
+    the first version of this manual page got it wrong.
+
+  SSEEEE AALLSSOO
+
+    _s_n_p_r_n_t_f(3)
+
+    _s_t_r_c_a_t(3)
+
+    _s_t_r_n_c_p_y(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

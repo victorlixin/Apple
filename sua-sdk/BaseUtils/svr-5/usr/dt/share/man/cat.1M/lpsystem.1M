@@ -1,0 +1,189 @@
+
+
+lpsystem(1M)                                         lpsystem(1M)
+
+SSyynnooppssiiss
+       lpsystem  [-t type] [-T timeout] [-R retry] [-y "comment"]
+       system-name
+            [system-name . . . ]
+       lpsystem -l [system-name . . . ]
+       lpsystem -r system-name [system-name . . . ]
+       lpsystem -A
+
+DDeessccrriippttiioonn
+       The lpsystem command is used to define parameters for  the
+       LP  print  service,  with  respect to communication (via a
+       high-speed network such as TCP/IP)  with  remote  systems.
+       Only  a  user  with appropriate privileges may execute the
+       lpsystem command.
+
+       Specifically, the  lpsystem  command  is  used  to  define
+       remote  systems  with which the local LP print service can
+       exchange  print  requests.   These  remote   systems   are
+       described  to  the local LP print service in terms of sev-
+       eral parameters that control  communication:  type,  retry
+       and timeout.  These parameters are defined in /etc/lp/Sys-
+       tems.  You can edit this file with a text editor (such  as
+       vi)  but  editing  is not recommended.  By using lpsystem,
+       you can ensure that lpsched is notified of any changes  to
+       the Systems file.
+
+       The type parameter defines the remote system as one of the
+       following types: System V Release 4 SunOS The default type
+       is s5.
+
+       The  timeout  parameter  specifies  the length of time (in
+       minutes) that the print service  should  allow  a  network
+       connection  to  be  idle.  If the connection to the remote
+       system is idle (that is, there is no network traffic)  for
+       N  minutes, then drop the connection.  (When there is more
+       work the connection will be re-established.)  Legal values
+       are n, 0, and N, where N is an integer greater than 0.  If
+       a decimal number is used for N, it will  be  truncated  to
+       the whole number.  The value n means ``never time out''; 0
+       means ``as soon as the connection is idle, drop it.''  The
+       default is n.
+
+       The  retry parameter specifies the length of time (in min-
+       utes) to wait before trying to re-establish  a  connection
+       to  the  remote  system,  when  the connection was dropped
+       abnormally (that is, a network error).  Legal  values  are
+       n,  0,  and N, where N is an integer greater than 0 and it
+       means ``wait N minutes before trying to reconnect.   If  a
+       decimal  number is used for N, it will be truncated to the
+       whole number.  (The default is 10 minutes.)  The  value  n
+       means  ``do  not  retry dropped connections until there is
+       more work''; 0 means ``try to reconnect immediately.''
+
+       The comment argument allows you to associate a  free  form
+
+                                                                1
+
+lpsystem(1M)                                         lpsystem(1M)
+
+       comment  with  the  system  entry.   This  is visible when
+       lpsystem -l is used.
+
+       system-name is the name of the remote  system  from  which
+       you want to be able to receive jobs, and to which you want
+       to be able to send jobs.  Two special entries are provided
+       with  the  /etc/lp/Systems file by default.  These entries
+       allow all connections to s5 and bsd  systems.   The  entry
+       that allows connection to any s5 system uses the plus sign
+       (+) as the system-name.  The entry that allows  connection
+       to  any  bsd  system  uses the asterisk (*) as the system-
+       name.
+
+       The command lpsystem -l [system-name]  will  print  out  a
+       description  of the parameters associated with system-name
+       (if a system has been specified), or with all the  systems
+       in its database (if system-name has not been specified).
+
+       The  command lpsystem -r system-name will remove the entry
+       associated with system-name.  The print  service  will  no
+       longer  accept  jobs  from that system or send jobs to it,
+       even if the remote printer is still defined on  the  local
+       system.  The scheduler must be running when the removal of
+       a systems file entry occurs, because the scheduler  checks
+       whether  the  system  entry is currently used by a printer
+       destination.  If currently used, the system  entry  cannot
+       be removed.
+
+       If  you use lpsystem -r system-name to remove a system and
+       you have active printers for that system, you will not  be
+       allowed to remove the system from the system file.  lpsys-
+       tem -r system-name will only work if no printers for  that
+       system exist.
+
+       The  command lpsystem -A will print out the TCP/IP address
+       of the local machine in a format to be used when configur-
+       ing the local port monitor to accept requests from a SunOS
+       system.
+
+FFiilleess
+       language-specific message file (see LANG on
+
+RReeffeerreenncceess
+NNoottiicceess
+       Network addresses and services are handled by the Name-to-
+       Address Mapping facilities.  (See the ``Network Services''
+       chapter in the Network Administration for a discussion  of
+       network  addresses  and  services.)   Port monitors handle
+       listening for remote service requests and routing the con-
+       nection to the print service.
+
+       If  the  Name-to-Address Mapping facilities are not set up
+       properly, out-bound remote print service probably will not
+       work.   Similarly,  if the local port monitors are not set
+
+                                                                2
+
+lpsystem(1M)                                         lpsystem(1M)
+
+       up to route remote print requests to  the  print  service,
+       then service for remote systems will not be provided.
+
+       With  respect  to  the  semantics of the timeout and retry
+       values, the print service uses one process for each remote
+       system  with  which  it  communicates, and it communicates
+       with a remote system only when there is work to be done on
+       that system or work is being sent from that system.
+
+       The  system  initiating  the  connection is the ``master''
+       process and the system accepting  the  connection  is  the
+       ``slave'' process.  This designation serves only to deter-
+       mine which process dies (the slave) when a  connection  is
+       dropped.   This  helps  prevent there from being more than
+       one process communicating with a remote system.   Further-
+       more,  all  connections  are bi-directional, regardless of
+       the master/slave designation.  You cannot control  a  sys-
+       tem's   master/slave  designation.   Typically,  a  client
+       machine has the master child and the  server  machine  has
+       the  slave  child.   Now,  keeping all this information in
+       mind, if a master process times out, then both  the  slave
+       and  master  will  exit.  If a slave times out, then it is
+       possible that the master may still live and retry the con-
+       nection after the retry interval.  Therefore, one system's
+       resource management strategy can affect  another  system's
+       strategy.
+
+       With  respect  to  lpsystem  -A: a SunOS system (described
+       with -t bsd) can be connected  to  your  system  only  via
+       TCP/IP, and print requests from a SunOS system can come in
+       to your machine  only  via  a  special  port  (515).   The
+       address  given to you from lpsystem will be the address of
+       your system and port 515.  This address is  used  by  your
+       TCP/IP  port  monitor  to  ``listen''  on that address and
+       port, and to route connections to the print service.  (See
+       and The important point here is that this is where you get
+       the address referred to in that procedure.
+
+       The command lpsystem -A will not work if your system  name
+       and  IP  address are not listed in /etc/inet/hosts and the
+       printer service is not listed in /etc/inet/services.
+
+       All forms of  the  lpsystem  command  accept  +  or  ``*''
+       (asterisk enclosed in double quotes) for system-name.
+
+       For  the bsd print protocol, an extra configuration option
+       is supported, but only via the /etc/lp/Systems file. On  a
+       printer server, it is possible to allow the root user on a
+       remote client to  cancel  requests  originating  with  any
+       other  client.  See As this may not be a desirable feature
+       in all environments, it is disabled by default. To enable,
+       close down the print services, using and edit /etc/lp/Sys-
+       tems, replacing the hyphen (-) in column 5 with  a  ``t'',
+       for  those bsd clients marked as ``trusted''. After saving
+
+                                                                3
+
+lpsystem(1M)                                         lpsystem(1M)
+
+       the file, restart the print services using
+
+       Note that, depending upon the configuration  of  the  name
+       server,  you may need to change the entry in the ``System-
+       name'' field in /etc/lp/Systems to a full domain name.
+
+                                                                4
+

@@ -1,0 +1,470 @@
+
+
+hosts_access(4tcp)                             hosts_access(4tcp)
+
+DDeessccrriippttiioonn
+       The  /etc/inet/hosts.allow  and /etc/inet/hosts.deny files
+       are read by the server to decide which hosts will or  will
+       not  be  allowed access to services that are configured in
+       the inetd configuration file, These  files  use  a  simple
+       access  control  language  that  is  based on client (host
+       name/address, user name), and server (process  name,  host
+       name/address) patterns.
+
+       are enabled in the supplied version of tcpd.  These exten-
+       sions were enabled by building tcpd  with  PROCESS_OPTIONS
+       defined.
+
+       In  the  following  text,  daemon is the process name of a
+       network daemon process, and  client  is  the  name  and/or
+       address  of a host requesting service. Network daemon pro-
+       cess names are specified in /etc/inet/inetd.conf.
+
+   AAcccceessss ccoonnttrrooll ffiilleess
+       The access control software consults two files. The search
+       stops  at  the  first match in the following steps: Access
+       will be granted when a  (daemon,client)  pair  matches  an
+       entry   in  the  /etc/inet/hosts.allow  file.   Otherwise,
+       access will be denied when a (daemon,client) pair  matches
+       an  entry  in  the  /etc/inet/hosts.deny file.  Otherwise,
+       access will be granted.   A  non-existing  access  control
+       file  is treated as if it were an empty file. Thus, access
+       control can be turned off by providing no  access  control
+       files.
+
+   AAcccceessss ccoonnttrrooll rruulleess
+       Each access control file consists of zero or more lines of
+       text. These lines are processed in  order  of  appearance.
+       The search terminates when a match is found.
+
+       A  newline  character  is ignored when it is preceded by a
+       backslash character. This permits you  to  break  up  long
+       lines so that they are easier to edit.
+
+       Blank  lines  or lines that begin with a `#' character are
+       ignored.  This permits you to insert comments and  whites-
+       pace so that the tables are easier to read.
+
+       All  other lines should satisfy the following format: dae-
+       mon_list : client_list [ : shell_command ] daemon_list  is
+       a  list  of one or more daemon process names (argv[0] val-
+       ues) or wildcards (see below).
+
+       client_list is a list of one  or  more  host  names,  host
+       addresses,  patterns or wildcards (see below) that will be
+       matched against the client host name or address.
+
+       The more  complex  forms  daemon@host  and  user@host  are
+       explained in and respectively.
+
+                                                                1
+
+hosts_access(4tcp)                             hosts_access(4tcp)
+
+       List elements should be separated by blanks and/or commas.
+
+       With the exception of NIS  netgroup  lookups,  all  access
+       control checks are case insensitive.
+
+   PPaatttteerrnnss
+       The  access control language implements the following pat-
+       terns: A string that begins with a .  character.   A  host
+       name  is  matched if the last components of its name match
+       the  specified  pattern.    For   example,   the   pattern
+       ``.tue.nl''  matches  the host name ``wzv.win.tue.nl''.  A
+       string that ends with a . character.  A  host  address  is
+       matched  if  its  first  numeric  fields  match  the given
+       string.  For example, the pattern ``131.155.'' matches the
+       address of (almost) every host on the network 131.155.*.*.
+       A string that begins with an @ character is treated as  an
+       NIS  netgroup name. A host name is matched if it is a host
+       member of the specified netgroup. Netgroup matches are not
+       supported  for  daemon  process  names  or for client user
+       names.       An      expression      of      the      form
+       ``n1.n2.n3.n4/m1.m2.m3.m4''  is  interpreted  as  a ``net-
+       work_address/netmask'' pair.  A host address is matched if
+       the  network  address  is  equal to the bitwise AND of its
+       address  and  the  netmask.  For  example,   the   pattern
+       ``131.155.72.0/255.255.254.0''  matches  every  address in
+       the range ``131.155.72.0'' through ``131.155.73.255''.
+
+   WWiillddccaarrddss
+       The  access  control  language  supports   the   following
+       explicit   wildcards:   The   universal  wildcard,  always
+       matches.  Matches any host whose name does not  contain  a
+       dot  character.   Matches  any user whose name is unknown,
+       and matches any host whose name or  address  are  unknown.
+       This pattern should be used with care as host names may be
+       unavailable due to temporary name server problems.  A net-
+       work  address will be unavailable when the software cannot
+       figure out what type of network it is talking to.  Matches
+       any  user  whose name is known, and matches any host whose
+       name and address are known. This pattern  should  be  used
+       with  care  as host names may be unavailable due to tempo-
+       rary name server problems.   A  network  address  will  be
+       unavailable  when the software cannot figure out what type
+       of network it is talking to.  Matches any host whose  name
+       does  not  match  its address.  As the supplied version of
+       tcpd was built with PARANOID defined  (default  mode),  it
+       drops  requests  from  such clients even before looking at
+       the access control tables.
+
+   OOppeerraattoorrss
+       The EXCEPT operator is  intended  for  use  in  the  form:
+       list_1  EXCEPT list_2 This construct matches anything that
+       matches list_1 unless it matches list_2.  The EXCEPT oper-
+       ator can be used in daemon_lists and in client_lists.  The
+       EXCEPT operator can be nested:  if  the  control  language
+
+                                                                2
+
+hosts_access(4tcp)                             hosts_access(4tcp)
+
+       would  permit  the use of parentheses, ``a EXCEPT b EXCEPT
+       c'' would be parsed as ``(a EXCEPT (b EXCEPT c))''.
+
+   SShheellll ccoommmmaannddss
+       If the first-matched access control rule contains a  shell
+       command,  that  command  is subjected to %letter substitu-
+       tions (see The result is executed by a /bin/sh child  pro-
+       cess  with  standard  input, output and error connected to
+       /dev/null.  Specify an & at the end of the command if  you
+       do not want to wait until it has completed.
+
+       Shell  commands should not rely on the PATH setting of the
+       inetd.  Instead, they should use absolute path  names,  or
+       they  should  begin  with an explicit PATH=whatever state-
+       ment.
+
+       describes an alternative language that uses the shell com-
+       mand field in a different and incompatible way.
+
+   LLeetttteerr eexxppaannssiioonnss
+       The  following  expansions are available within shell com-
+       mands: The client host address.  The server host  address.
+       Client  information: user@host, user@address, a host name,
+       or just an address, depending on how much  information  is
+       available.   The daemon process name (argv[0] value).  The
+       client host name or address, if the host name is  unavail-
+       able.   The  server host name or address, if the host name
+       is unavailable.  The client host name (or unknown or para-
+       noid).   The  server  host  name (or unknown or paranoid).
+       The daemon process ID.  Server  information:  daemon@host,
+       daemon@address,  or  just  a daemon name, depending on how
+       much information is available.  The client user  name  (or
+       unknown).  Expands to a single % character.  Characters in
+       % expansions that may confuse the shell  are  replaced  by
+       underscores.
+
+   SSeerrvveerr eennddppooiinntt ppaatttteerrnnss
+       In  order  to  distinguish  clients by the network address
+       that they connect to,  use  patterns  of  the  form:  pro-
+       cess_name@host_pattern  :  client_list  ...  Patterns like
+       these can be used when the machine has different  internet
+       addresses   with  different  internet  hostnames.  Service
+       providers can use this facility to offer  FTP,  GOPHER  or
+       WWW  archives  with internet names that may even belong to
+       different organizations. See also the twist option in  You
+       can  use  to define more than one IP address (alias) for a
+       network interface.
+
+       The host_pattern obeys the same syntax rules as host names
+       and addresses in client_list context. Usually, server end-
+       point information is available only  with  connection-ori-
+       ented services.
+
+                                                                3
+
+hosts_access(4tcp)                             hosts_access(4tcp)
+
+   CClliieenntt uusseerrnnaammee llooookkuupp
+       When  the client host supports the RFC 931 protocol or one
+       of its descendants (TAP, IDENT, RFC 1413) the wrapper pro-
+       grams  can retrieve additional information about the owner
+       of a connection. Client username information, when  avail-
+       able,  is  logged  together with the client host name, and
+       can be used to match  patterns  like:  daemon_list  :  ...
+       user_pattern@host_pattern  ...   The  daemon wrappers were
+       configured at compile time to perform rule-driven username
+       lookups.   The above rule would cause username lookup only
+       when both the daemon_list and the host_pattern match.
+
+       A user pattern has the same syntax  as  a  daemon  process
+       pattern,  so the same wildcards apply (netgroup membership
+       is not supported). One should not get  carried  away  with
+       username lookups, though.
+
+       Note  the  following problems that might occur: The client
+       username information cannot be trusted when it  is  needed
+       most,  that  is,  when  the client system has been compro-
+       mised. In general, ALL and (UN)KNOWN  are  the  only  user
+       name  patterns that make sense.  Username lookups are pos-
+       sible only with TCP-based  services,  and  only  when  the
+       client host runs a suitable daemon; in all other cases the
+       result is unknown.  Username lookups may cause  noticeable
+       delays  for non-UNIX users.  The default timeout for user-
+       name lookups is 10 seconds: too short to  cope  with  slow
+       networks,  but long enough to irritate some users.  Selec-
+       tive username lookups can alleviate the last problem.  For
+       example,  a  rule  like: daemon_list : @pcnetgroup ALL@ALL
+       This would match members of the pcnetgroup  without  doing
+       username  lookups,  but  it would perform username lookups
+       with all other systems.
+
+   DDeetteeccttiinngg aaddddrreessss ssppooooffiinngg aattttaacckkss
+       The IDENT (RFC 931) service can be  used  to  detect  host
+       address   spoofing  attacks  where  intruders  impersonate
+       trusted hosts and, for example, try to break  in  via  the
+       remote  shell service.  Before accepting a client request,
+       the wrappers can use the IDENT service to find out if  the
+       client  really did send the request.  When the client host
+       provides IDENT service, a  negative  IDENT  lookup  result
+       (the  client  matches ``UNKNOWN@host'') is strong evidence
+       of a host spoofing attack.
+
+       A  positive  IDENT  lookup  result  (the  client   matches
+       ``KNOWN@host'') is less trustworthy. It is possible for an
+       intruder to spoof both the client connection and the IDENT
+       lookup,  although  doing  so  is much harder than spoofing
+       just a client connection. It may also be that the client's
+       IDENT server is lying.
+
+       Note that IDENT lookups do not work with UDP services.
+
+                                                                4
+
+hosts_access(4tcp)                             hosts_access(4tcp)
+
+CCoonnttrrooll llaanngguuaaggee eexxtteennssiioonnss
+       The  extensions  to the control language use the following
+       format: daemon_list : client_list : option  :  option  ...
+       Zero  or  more options may be specified, and must be sepa-
+       rated by colons (:).   Any  :  characters  within  options
+       should be protected with a backslash.
+
+       An  option  takes the form keyword, keyword value, or key-
+       word=value.  Options are processed in the specified order.
+       Some  options  are subjected to %letter substitutions. For
+       the sake of backwards compatibility with earlier versions,
+       an  =  character  is permitted between the keyword and its
+       value.
+
+   LLooggggiinngg
+       The  following  option  keyword  controls  event  logging:
+       Change  the  severity  level  (such as info and notice) at
+       which the event will be logged. Facility  names  (such  as
+       mail)  are  optional.   The severity option can be used to
+       emphasize or to ignore specific events.
+
+   AAcccceessss ccoonnttrrooll
+       The following option keywords control access:  Grant  ser-
+       vice.  This option must appear at the end of a rule.  Deny
+       service. This option must appear at the  end  of  a  rule.
+       The  allow  and deny keywords make it possible to keep all
+       access  control  rules  within  a  single  file  such   as
+       hosts.allow.
+
+       For  example,  to  permit access from specific hosts only:
+       ALL: .friendly.domain: ALLOW  ALL:  ALL:  DENY  To  permit
+       access  from  all  hosts except a few trouble makers: ALL:
+       .bad.domain: DENY ALL: ALL: ALLOW Notice the  leading  dot
+       on the domain name patterns.
+
+   RRuunnnniinngg ootthheerr ccoommmmaannddss
+       The following option keywords allows you to run other com-
+       mands: Execute the specified shell command in a child pro-
+       cess after performing any %letter expansions.  The command
+       is executed with stdin, stdout and stderr connected to the
+       null  device, so that it will not mess up the conversation
+       with the client host. For example, the  following  use  of
+       spawn executes the shell command safe_finger -l @%h | mail
+       root in a background child process after replacing  %h  by
+       the   name   or   address   of  the  remote  host.   spawn
+       (/usr/sbin/safe_finger -l @%h | /usr/bin/mail root) &  The
+       example  uses the safe_finger command instead of the regu-
+       lar finger command, to limit  possible  damage  from  data
+       sent by the finger server. The safe_finger command is part
+       of the daemon wrapper package; it is a wrapper around  the
+       regular  finger  command that filters the data sent by the
+       remote host.  Replace the current process by  an  instance
+       of the specified shell command, after performing any %let-
+       ter expansions.  stdin, stdout and stderr are connected to
+
+                                                                5
+
+hosts_access(4tcp)                             hosts_access(4tcp)
+
+       the  client process. This option must appear at the end of
+       a rule.
+
+       This example shows twist being used to send  a  customized
+       bounce  message  to the client instead of running the real
+       FTP daemon: in.ftpd :  ...  :  twist  /bin/echo  421  Some
+       bounce  message  For  an alternative way to talk to client
+       processes, see the  description  of  the  banners  keyword
+       below.
+
+       To  run  /some/other/in.telnetd without polluting its com-
+       mand-line array or its process environment:  in.telnetd  :
+       ...  :  twist PATH=/some/other; exec in.telnetd In case of
+       UDP services, do not twist to commands that  use  standard
+       I/O  or  the  and  routines to communicate with the client
+       process; UDP requires other I/O primitives.
+
+   NNeettwwoorrkk ooppttiioonnss
+       The following option keywords control networking behavior:
+       Causes  the  server  to periodically send a message to the
+       client. The  connection  is  considered  broken  when  the
+       client  does not respond. The keepalive option can be use-
+       ful when users turn off their machine while  it  is  still
+       connected  to a server. The keepalive option is not useful
+       for datagram (UDP) services.  Specifies how long the  ker-
+       nel  will try to deliver as-yet undelivered data after the
+       server process closes a connection.
+
+   UUsseerrnnaammee llooookkuupp
+       The following option keyword controls lookup of usernames:
+       Look up the client user name with the RFC 931 (TAP, IDENT,
+       RFC 1413) protocol.  This option is  silently  ignored  in
+       case  of services based on transports other than TCP.  The
+       client system must run a daemon that is compliant with RFC
+       931  (IDENT,  and  so on).  It may cause noticeable delays
+       with  connections  from  non-UNIX  clients.   The  timeout
+       period  is  optional.   If  no  timeout  is specified, the
+       default value is 10 seconds.
+
+   MMiisscceellllaanneeoouuss
+       The following are miscellaneous option keywords: Look  for
+       a  file in directory with the same name as the daemon pro-
+       cess (for example in.telnetd for the telnet service),  and
+       copy  its  contents  to the client. Newline characters are
+       replaced by carriage-return newline, and %letter sequences
+       are expanded.
+
+       The  tcp wrappers source code distribution provides a sam-
+       ple  makefile  (Banners.Makefile)  for  convenient  banner
+       maintenance.   Banners  are  supported for connection-ori-
+       ented (TCP) network services only.  Change the nice  value
+       of  the  process (default 10). Specify a positive value to
+       spend more CPU resources  on  other  processes.   Place  a
+       (name,  value)  pair  into  the  process environment.  The
+
+                                                                6
+
+hosts_access(4tcp)                             hosts_access(4tcp)
+
+       value is subjected to %letter expansions and  may  contain
+       whitespace  (but  leading and trailing blanks are stripped
+       off).  Many network daemons reset their environment before
+       spawning a login or shell process.  Like the umask command
+       that is built into the shell.  The mask argument should be
+       an  octal  number.   An mask of 022 would prevent the cre-
+       ation of files with  group  and  world  write  permission.
+       Assume  the  privileges  of  the userid name (and group if
+       required).  The first form is useful with inetd  implemen-
+       tations  that  run  all  services with root privilege. The
+       second form is useful for services that need special group
+       privileges.
+
+FFiilleess
+       (daemon,client)  pairs  that  are  granted  access.  (dae-
+       mon,client) pairs that are denied access.
+
+DDiiaaggnnoossttiiccss
+       An error is reported when a syntax error  is  found  in  a
+       host  access  control  rule;  when the length of an access
+       control rule exceeds the capacity of an  internal  buffer;
+       when an access control rule is not terminated by a newline
+       character; when the  result  of  %letter  expansion  would
+       overflow an internal buffer; when a system call fails that
+       should not. All problems are reported via the syslog  dae-
+       mon and service is denied.
+
+RReeffeerreenncceess
+NNoottiicceess
+       If  a name server lookup times out, the host name will not
+       be available to the access control software,  even  though
+       the host is registered.
+
+       Domain  name server lookups are case insensitive; NIS net-
+       group lookups are case sensitive.
+
+   AAuutthhoorr
+       Wietse Venema (wietse@wzv.win.tue.nl) Department of Mathe-
+       matics and Computing Science Eindhoven University of Tech-
+       nology Den Dolech 2, P.O. Box 513, 5600 MB Eindhoven,  The
+       Netherlands
+
+EExxaammpplleess
+       The  language  is  flexible enough that different types of
+       access control policy can be expressed with a  minimum  of
+       fuss.  Although  the  language  uses  two  access  control
+       tables, the most common policies can be  implemented  with
+       one of the tables being trivial or even empty.
+
+       When reading the examples below it is important to realize
+       that the allow table is scanned  before  the  deny  table,
+       that the search terminates when a match is found, and that
+       access is granted when no match is found at all.
+
+                                                                7
+
+hosts_access(4tcp)                             hosts_access(4tcp)
+
+       The examples use  host  and  domain  names.  They  can  be
+       improved   by  including  address  and/or  network/netmask
+       information, to reduce the impact of temporary name server
+       lookup failures.
+
+   MMoossttllyy cclloosseedd
+       In this case, access is denied by default. Only explicitly
+       authorized hosts are permitted access.
+
+       The default policy (no access) is implemented with a triv-
+       ial  /etc/inet/hosts.deny  file:  ALL: ALL This denies all
+       service to all hosts, unless they are permitted access  by
+       entries in the allow file.
+
+       The   explicitly   authorized  hosts  are  listed  in  the
+       /etc/inet/hosts.allow file: ALL: LOCAL @some_netgroup ALL:
+       .foobar.edu  EXCEPT  terminalserver.foobar.edu  The  first
+       rule permits access from hosts in the local domain  (no  .
+       in  the  host  name) and from members of the some_netgroup
+       netgroup.  The second rule permits access from  all  hosts
+       in  the  foobar.edu  domain (notice the leading dot), with
+       the exception of terminalserver.foobar.edu.
+
+   MMoossttllyy ooppeenn
+       Here, access is granted by default; only explicitly speci-
+       fied hosts are refused service.
+
+       The  default  policy (access granted) makes the allow file
+       redundant so that it can be omitted.  The explicitly  non-
+       authorized  hosts  are  listed in the /etc/inet/hosts.deny
+       file: ALL: some.host.name, .some.domain ALL EXCEPT in.fin-
+       gerd: other.host.name, .other.domain The first rule denies
+       some hosts and domains all services; the second rule still
+       permits finger requests from other hosts and domains.
+
+   BBoooobbyy ttrraappss
+       The  next  example permits tftp requests from hosts in the
+       local domain (notice the leading dot). Requests  from  any
+       other  hosts are denied.  Instead of the requested file, a
+       finger probe is sent to the offending host. The result  is
+       mailed  to  the superuser.  The /etc/inet/hosts.allow file
+       contains:     in.tftpd:     LOCAL      .my.domain      The
+       /etc/inet/hosts.deny  file  contains: in.tftpd: ALL: spawn
+       (/usr/sbin/safe_finger -l @%h |  \       /usr/bin/mail  -s
+       %d-%h root) & The safe_finger command limits possible dam-
+       age from data sent by the remote finger server.  It  gives
+       better  protection  than  the standard finger command.  Do
+       not booby-trap your finger daemon  (fingerd),  unless  you
+       are  prepared to accept infinite finger loops.  On network
+       firewall systems, this trick can be carried even  further.
+       The  typical  network firewall only provides a limited set
+       of services to the outer world. All other services can  be
+       bugged  just like the above tftp example. The result is an
+       excellent early-warning system.
+
+                                                                8
+

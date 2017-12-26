@@ -1,0 +1,158 @@
+
+
+rwlock(3synch)                                     rwlock(3synch)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <synch.h>
+
+       int rwlock_init(rwlock_t *lock, int type, void *arg);
+
+       int rw_rdlock(rwlock_t *lock);
+
+       int rw_wrlock(rwlock_t *lock);
+
+       int rw_tryrdlock(rwlock_t *lock);
+
+       int rw_trywrlock(rwlock_t *lock);
+
+       int rw_unlock(rwlock_t *lock);
+
+       int rwlock_destroy(rwlock_t *lock);
+
+DDeessccrriippttiioonn
+       Reader-writer  locks allow many threads to have simultane-
+       ous read-only access to  data,  while  allowing  only  one
+       thread  to  have write access at any time.  They are typi-
+       cally used to protect data that  is  searched  more  often
+       than it is changed.
+
+   rrwwlloocckk__iinniitt
+       rwlock_init  initializes the reader-writer lock pointed to
+       by rwlock to be of type type and in  the  unlocked  state.
+       Once initialized, the lock can be used any number of times
+       without being reinitialized.
+
+   PPaarraammeetteerrss
+       pointer  to   reader-writer   lock   to   be   initialized
+       USYNC_THREAD  or  USYNC_PROCESS  NULL (reserved for future
+       use)
+
+   rrww__rrddlloocckk((33ssyynncchh))
+       rw_rdlock acquires the reader-writer lock  pointed  to  by
+       lock in read mode.
+
+       A  reader-writer lock can be held by any number of readers
+       at one time, but only one writer at a time  can  hold  the
+       lock.    Once   a  writer  has  requested  the  lock  with
+       rw_wrlock, all subsequent requests for the lock in  either
+       read or write mode are queued.
+
+       If  the  lock  is  free,  or  is currently held by another
+       reader and there are no writers waiting, rw_rdlock  incre-
+       ments  the  reader  count  and  the caller proceeds.  If a
+       writer holds the lock or if any writer is waiting for  the
+       lock, the caller blocks to wait for the lock.
+
+                                                                1
+
+rwlock(3synch)                                     rwlock(3synch)
+
+   rrww__wwrrlloocckk((33ssyynncchh))
+       rw_wrlock  acquires  the  reader-writer lock pointed to by
+       lock in write mode.
+
+       Only one writer at a time can hold a  reader-writer  lock,
+       although  any  number  of readers can hold the lock at any
+       time.   Once  a  writer  has  requested  the   lock   with
+       rw_wrlock,  all subsequent requests for the lock in either
+       read or write mode are blocked.
+
+       When no other readers or writers hold the lock,  rw_wrlock
+       will  acquire  the lock, and the caller will proceed.  Any
+       other write and read requests  for  the  lock  will  block
+       until the caller unlocks the lock with
+
+       If  the  lock  is  held  by  any readers when rw_wrlock is
+       called, and no writer is waiting for the lock, the  caller
+       blocks  until  all  the  current readers have released the
+       lock.  If the lock is held by another writer, or if  there
+       are  any  other  writers already waiting for the lock, the
+       caller blocks to wait for the lock.
+
+   rrww__ttrryyrrddlloocckk((33ssyynncchh))
+       rw_tryrdlock attempts once to  acquire  the  reader-writer
+       lock  pointed  to  by lock in read mode; it does not block
+       the caller if the lock is unavailable.
+
+       A reader-writer lock can be held by any number of  readers
+       at  one  time,  but only one writer at a time can hold the
+       lock.
+
+       If the lock is free or is currently held by another reader
+       and  there are no writers waiting, rw_tryrdlock increments
+       the reader count and the caller proceeds.
+
+       If the lock is currently held by a writer,  or  there  are
+       writers waiting, rw_tryrdlock immediately returns EBUSY to
+       the caller, without acquiring the lock.
+
+   rrww__ttrryywwrrlloocckk((33ssyynncchh))
+       rw_trywrlock makes a single attempt to acquire the reader-
+       writer  lock pointed to by lock in write mode; it does not
+       block the caller if the lock is unavailable.
+
+       A reader-writer lock can be held by any number of  readers
+       at  one  time,  but only one writer at a time can hold the
+       lock.
+
+       If the lock is free, rw_trywrlock  acquires  the  lock  in
+       write mode and the caller proceeds.
+
+       If  the  lock  is currently held, rw_trywrlock immediately
+       returns EBUSY to the caller, without acquiring the lock.
+
+                                                                2
+
+rwlock(3synch)                                     rwlock(3synch)
+
+   rrww__uunnlloocckk((33ssyynncchh))
+       rw_unlock  releases  a   reader-writer   lock   previously
+       acquired by rw_rdlock, rw_wrlock, rw_tryrdlock, or rw_try-
+       wrlock.  The behavior differs  according  to  whether  the
+       caller  is  a  reader  or  a  writer:  When a writer calls
+       rw_unlock, the lock is  unlocked.   When  a  reader  calls
+       rw_unlock, the reader count is decremented.  If the reader
+       count is zero, rw_unlock unlocks the lock, otherwise,  the
+       lock is not unlocked.
+
+       When  rw_unlock unlocks the lock, the first waiter (reader
+       or writer) is activated.  If the  thread  activated  is  a
+       reader,  all  subsequent  readers are activated (up to the
+       next writer or end of queue)  and  the  count  of  readers
+       holding  the  lock  is  changed  to  reflect this.  If the
+       thread activated is a writer, no other threads  are  acti-
+       vated and the lock is marked as being held by a writer.
+
+   rrwwlloocckk__ddeessttrrooyy
+       rwlock_destroy  destroys the reader-writer lock pointed to
+       by lock.  This includes invalidating the lock and  freeing
+       any associated dynamically allocated resources.
+
+   UUSSYYNNCC__TTHHRREEAADD aanndd UUSSYYNNCC__PPRROOCCEESSSS rreeaaddeerr--WWrriitteerr lloocckkss
+       Reader-writer  locks  are  initialized  to  be  one of two
+       types: USYNC_THREAD or USYNC_PROCESS.  USYNC_THREAD  locks
+       are  available only to threads within the current process.
+       USYNC_PROCESS locks can be used by  threads  in  different
+       processes.
+
+WWaarrnniinnggss
+       Operations  on  locks initialized with rwlock_init are not
+       recursive--a thread can deadlock if it attempts  to  reac-
+       quire a reader-writer lock that it already has acquired.
+
+RReeffeerreenncceess
+
+                                                                3
+

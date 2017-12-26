@@ -1,0 +1,128 @@
+
+
+typed_io(3C++)                                     typed_io(3C++)
+
+SSyynnooppssiiss
+       // For each record type defined in // the corresponding .g
+       file:
+           typedef type_specifier T;
+           istream& operator>>(istream& is,T& t);
+           ostream& operator<<(ostream& os,const T& t);
+
+DDeessccrriippttiioonn
+       The G2++ compiler, must be used prior to compiling  client
+       code   that   uses   G2++   typed  input/output  routines.
+       g2++comp(1C++) reads a collection of G2++  record  defini-
+       tions from one or more .g files (each definition is itself
+       a G2++ record) and writes a pair of files, one .h file and
+       one  .c  file, for each .g file.  The .c file must be com-
+       piled and linked with the rest of the application.  The .h
+       file  must  be  included  by client programs.  The .h file
+       contains a set of three declarations for each record  type
+       defined in the .g file.  The three declarations are:
+
+       typedef  type_specifier  T;  Used by the client to declare
+       variables suitable as sources or targets of the typed  I/O
+       operators.  T is the upper case version of the record name
+       in the .g file.   For  simple  records  (records  with  no
+       indented  groups),  type_specifier  will be a simple type;
+       otherwise, type_specifier will be a structure type.
+
+       istream& operator>>(istream& is,T& t);  Stream  extraction
+       operator.   Scans  istream  is  until it encounters a G2++
+       record of type T and maps the record contents into t.   If
+       a  record  of  type T cannot be found before the stream is
+       exhausted, the stream will test as null after  the  opera-
+       tion and the contents of t will be undefined.  The mapping
+       obeys the following rules (see G2++(4C++) for  definitions
+       of italicized terms): A group with an unknown name will be
+       ignored.  If a group is missing, each member of the corre-
+       sponding  group  will  be  assigned  the null value of its
+       respective type.  If a value has been defined as  a  fixed
+       size string, characters in excess of the defined size will
+       be ignored.  If a value has been defined as a  fixed  size
+       array,  elements  with  an  out-of-bounds  index  will  be
+       ignored.  An out-of-order name will be recognized as  long
+       as  it occurs within its proper group.  A string is termi-
+       nated  by  the  first  non-printable  character.   If  the
+       remaining  characters  of  the string still cannot be con-
+       verted to a value of its defined type, the null value  for
+       that  type will be assigned to the corresponding structure
+       member.  Otherwise, the string will be  converted  to  the
+       appropriate  type and assigned to the corresponding struc-
+       ture member.  ostream& operator<<(ostream& os,const T& t);
+       Stream  insertion  operator.   Maps the values in t into a
+       G2++ record and inserts the record into os.   The  mapping
+       obeys  the  following  rules: Only members containing non-
+       null strings or non-zero integers will be inserted.  Fixed
+       size  strings  and arrays will be truncated if they exceed
+
+                                                                1
+
+typed_io(3C++)                                     typed_io(3C++)
+
+       their defined sizes.
+
+EExxaammppllee
+       Using g2++comp(1C++) to  compile  the  following  person.g
+       file:
+               Time    USER
+                       .header Time.h
+                       .header Timeio.h
+                       .null   Time::MIN
+               person
+                       id      *
+                       age     SHORT
+                       b_day   Time
+                       hobbies
+                               *       *
+
+       produces the following person.h file:
+               #ifndef PERSONH
+               #define PERSONH
+               #include <g2++.h>
+               #include <Vblock.h>
+               #include <String.h>
+               #include "Time.h"
+               #include "Timeio.h"
+               class istream;
+               class ostream;
+               typedef struct PERSON{
+                       String id;
+                       short   age;
+                       Time    b_day;
+                       Vblock<String> hobbies;  see Vblock(3C++)
+                       PERSON();
+               }PERSON;
+               istream& operator>>(istream& is, PERSON& x);
+               ostream& operator<<(ostream& os, const PERSON& x);
+               #endif
+
+       The following "batch" update program adds 1 to the age  of
+       every person whose birthday is today.
+               #include "person.h"
+               #include <time.h>
+               #include <Time.h>
+               main(){
+                   PERSON p;
+                   Time today = make_time(time(0));
+                   while(cin >> p){
+                       if(p.b_day==today){
+                            p.age += 1;
+                       }
+                       cout << p;
+                   }
+               }
+
+                                                                2
+
+typed_io(3C++)                                     typed_io(3C++)
+
+NNootteess
+       Applications  without  a  priori knowledge of record types
+       must use untyped I/O (see
+
+RReeffeerreenncceess
+
+                                                                3
+

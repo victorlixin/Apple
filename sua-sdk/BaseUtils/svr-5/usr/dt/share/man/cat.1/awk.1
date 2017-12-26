@@ -1,0 +1,278 @@
+
+
+awk(1)                                                     awk(1)
+
+SSyynnooppssiiss
+       awk   [-Ffieldsep]  [-v  var=value] [-f progfile | 'prog']
+       [file . . .]
+
+DDeessccrriippttiioonn
+       awk scans each input file for lines that match  any  of  a
+       set  of  patterns specified in prog.  The prog string must
+       be enclosed in single quotes (') to protect  it  from  the
+       shell.   Patterns  are  arbitrary  Boolean combinations of
+       extended regular expressions (see and  relational  expres-
+       sions.   For  each pattern in prog there may be an associ-
+       ated action performed when a line of a  file  matches  the
+       pattern.   The set of pattern-action statements may appear
+       literally as prog or in a file specified with the -f prog-
+       file  option.  Input files are read in order; if there are
+       no files, the standard input is read.   The  file  name  -
+       means the standard input.
+
+       awk  processes  supplementary  code set characters in pat-
+       tern-action statements and comments, and  recognizes  sup-
+       plementary  code  set  characters as field separators (see
+       below) according to the locale specified in  the  LC_CTYPE
+       environment  variable (see LANG on In regular expressions,
+       pattern searches are performed on characters,  not  bytes,
+       as described on
+
+       Each  input line is matched against the pattern portion of
+       every pattern-action statement; the associated  action  is
+       performed  for each matched pattern.  Any file of the form
+       var=value is treated as an assignment, not a filename, and
+       is  executed  at  the time it would have been opened if it
+       were a filename, and is executed at the time it would have
+       been opened if it were a filename.  The option -v followed
+       by var=value is an assignment to be done  before  prog  is
+       executed; any number of -v options may be present.
+
+       An  input  line is normally made up of fields separated by
+       white space.  (This default can be changed by using the FS
+       built-in  variable  or the -Ffieldsep option.)  The fields
+       are denoted $1, $2,  ... ; $0 refers to the entire line.
+
+       A pattern-action statement has the form: pattern {  action
+       }
+
+       Either  pattern  or action may be omitted.  If there is no
+       action with a pattern, the matching line is  printed.   If
+       there  is  no  pattern  with an action, the action is per-
+       formed on every input line.  Pattern-action statements are
+       separated by newlines or semicolons.
+
+       As noted, patterns are arbitrary Boolean combinations ( !,
+       ||, &&, and parentheses)  of  relational  expressions  and
+       extended  regular expressions.  A relational expression is
+       one  of  the  following:   expression   relop   expression
+
+                                                                1
+
+awk(1)                                                     awk(1)
+
+       expression matchop regular_expression expression in array-
+       name (expression,expression, ...  ) in array-name
+
+       where a relop is any of the six relational operators in C,
+       and  a matchop is either ~ (contains) or !~ (does not con-
+       tain).  An expression is an arithmetic expression, a rela-
+       tional expression, the special expression var in array
+
+       or a Boolean combination of these.
+
+       In  patterns  extended  regular  expressions  must be sur-
+       rounded by slashes.  Isolated  regular  expressions  in  a
+       pattern  apply  to  the  entire  line.   Extended  regular
+       expressions may also occur in relational  expressions.   A
+       pattern  may consist of two patterns separated by a comma;
+       in this case,  the  action  is  performed  for  all  lines
+       between  an  occurrence  of the first pattern and the next
+       occurrence of the second pattern.
+
+       The special patterns BEGIN and END may be used to  capture
+       control  before  the  first  input  line has been read and
+       after the last input  line  has  been  read  respectively.
+       These keywords do not combine with any other patterns.
+
+       An  extended  regular  expression  may be used to separate
+       fields by using the -F fieldsep option or by assigning the
+       expression to the built-in variable FS.  The default is to
+       ignore leading blanks and to  separate  fields  by  blanks
+       and/or  tab  characters.   However,  if  FS  is assigned a
+       value, leading blanks are no longer ignored.
+
+       Other built-in variables include:  command  line  argument
+       count  command line argument array a conversion format for
+       non-integer numeric values;  see the  description  of  the
+       sprintf built-in function
+
+       A  numeric  value that is exactly equal to the value of an
+       integer will be converted to a string by the equivalent of
+       a call to the sprintf built-in function with the string %d
+       as the fmt parameter and the numeric value being converted
+       as  the  first and only expr parameter.  Any other numeric
+       value will be converted to a string by the equivalent of a
+       call  to  the  sprintf built-in function with the value of
+       the variable CONVFMT as the fmt parameter and the  numeric
+       value  being  converted as the first and only expr parame-
+       ter.  array of environment variables; subscripts are names
+       name  of the current input file ordinal number of the cur-
+       rent record in the current file input field separator reg-
+       ular  expression  (default blank and tab) number of fields
+       in the current record ordinal number of the current record
+       output format for numbers (default %.6g) output field sep-
+       arator (default blank) output  record  separator  (default
+       new-line)  input record separator (default new-line) sepa-
+       rates multiple subscripts (default is 034)
+
+                                                                2
+
+awk(1)                                                     awk(1)
+
+       The field separators specified with the -F option or  with
+       the  variables  OFS, ORS, and FS may be supplementary code
+       set characters.
+
+       An action is a sequence of statements.  A statement may be
+       one  of  the  following: if ( expression ) statement [else
+       statement] while ( expression  )  statement  do  statement
+       while  (  expression  )  for  (  expression ; expression ;
+       expression ) statement for (  var  in  array  )  statement
+       delete  array[subscript]  #delete  an  array element break
+       continue { [statement]  ...  }  expression     #  commonly
+       variable  =  expression  print [expression-list] [>expres-
+       sion]  printf  format  [,  expression-list]  [>expression]
+       next      #  skip  remaining  patterns  on this input line
+       exit [expr] # skip the rest of the input; exit  status  is
+       expr return [expr]
+
+       Statements  are  terminated  by  semicolons, new-lines, or
+       right braces.  An empty  expression-list  stands  for  the
+       whole  input  line.  Expressions take on string or numeric
+       values as appropriate, and are built using  the  operators
+       +, -, *, /, %, ^ and concatenation (indicated by a blank).
+       The operators ++ -- += -= *= /= %= ^= > >= < <= ==  !=  ?:
+       are  also  available  in  expressions.   Variables  may be
+       scalars, array elements (denoted x[i]), or fields.   Vari-
+       ables  are  initialized to the null string or zero.  Array
+       subscripts may be any  string,  not  necessarily  numeric;
+       this  allows  for  a form of associative memory.  Multiple
+       subscripts such as [i,j,k] are permitted; the constituents
+       are  concatenated,  separated  by  the  value  of  SUBSEP.
+       String constants are quoted (""), with the usual C escapes
+       recognized within.
+
+       The  print  statement prints its arguments on the standard
+       output, or on a file if >expression is present,  or  on  a
+       pipe  if | cmd is present.  The arguments are separated by
+       the current output field separator and terminated  by  the
+       output record separator.  The printf statement formats its
+       expression list according to the format (see The  built-in
+       function close(expr) closes the file or pipe expr.
+
+       The  mathematical  functions:  atan2,  cos, exp, log, sin,
+       sqrt, are built-in.
+
+       Other built-in functions include:
+
+       behaves like sub (see below), except that it replaces suc-
+       cessive occurrences of the regular expression (like the ed
+       global  substitute  command).   returns  the  position  in
+       string  s where string t first occurs, or 0 if it does not
+       occur at all.  truncates to an integer value.  returns the
+       length  in  bytes of its argument taken as a string, or of
+       the whole line if there is no argument.  returns the posi-
+       tion  in  string s where the regular expression re occurs,
+
+                                                                3
+
+awk(1)                                                     awk(1)
+
+       or 0 if it does not occur at all.  RSTART is  set  to  the
+       starting  position  (which  is  the  same  as the returned
+       value), and RLENGTH is set to the length  of  the  matched
+       string.   random  number  on  (0, 1).  splits the string s
+       into array elements a[1], a[2], a[n], and returns n.   The
+       separation  is done with the regular expression fs or with
+       the field separator FS if fs is not given.  sets the  seed
+       for  rand  and  returns  the  previous  seed.  formats the
+       expressions according to  the  format  given  by  fmt  and
+       returns the resulting string.  substitutes the string repl
+       in place of the first instance of the  regular  expression
+       for  in string in and returns the number of substitutions.
+       If in is omitted, awk substitutes in  the  current  record
+       ($0).   returns the n-character substring of s that begins
+       at position m.  returns a string in which each upper  case
+       character  in string s is replaced by a lower case charac-
+       ter.  returns a string in which each lower case  character
+       in string s is replaced by an upper case character.
+
+       The  input/output  built-in functions are: closes the file
+       or pipe named filename and returns the status.  pipes  the
+       output  of  cmd into getline; each successive call to get-
+       line returns the next line of output from cmd.  sets $0 to
+       the  next  input record from the current input file.  sets
+       $0 to the next record from file.  sets variable x instead.
+       sets  x  from  the  next record of file.  executes cmd and
+       returns its exit status.
+
+       All forms of getline return 1 for successful input, 0  for
+       end of file, and -1 for an error.
+
+       awk  also provides user-defined functions.  Such functions
+       may be defined (in the  pattern  position  of  a  pattern-
+       action  statement) as function name(args,...) { stmts } or
+       func name(args,...)  {  stmts  }  Function  arguments  are
+       passed  by value if scalar and by reference if array name.
+       Argument names are local to the function; all other  vari-
+       able  names  are global.  Function calls may be nested and
+       functions may be recursive.  The return statement  may  be
+       used to return a value.
+
+EExxaammpplleess
+       Print lines longer than 72 characters: length > 72
+
+       Print first two fields in opposite order: { print $2, $1 }
+
+       Same, with input fields separated by comma  and/or  blanks
+       and tabs: BEGIN     { FS = ",[ \t]*|[ \t]+" }      { print
+       $2, $1 }
+
+       Add up first column, print sum and average:      { s += $1
+       } END  { print "sum is", s, " average is", s/NR }
+
+       Print  fields in reverse order: { for (i = NF; i > 0; --i)
+
+                                                                4
+
+awk(1)                                                     awk(1)
+
+       print $i }
+
+       Print all lines between start/stop pairs: /start/, /stop/
+
+       Print all lines whose first field is different from previ-
+       ous one: $1 != prev { print; prev = $1 }
+
+       Simulate  BEGIN     {       for  (i  =  1;  i < ARGC; i++)
+                 printf "%s", ARGV[i]      printf "\n"       exit
+            }
+
+       Print  a  file,  filling  in  page  numbers starting at 5:
+       /Page/    { $2 = n++; }      { print }
+
+       Assuming this program is in a file named prog, the follow-
+       ing command line prints the file input numbering its pages
+       starting at 5: awk -f prog n=5 input.
+
+FFiilleess
+       language-specific message file (See LANG on
+
+RReeffeerreenncceess
+       A. V. Aho, B. W. Kernighan, P. J. Weinberger, The awk Pro-
+       gramming Language Addison-Wesley, 1988
+
+NNoottiicceess
+       nawk is equivalent to awk.
+
+       Input white space is not preserved on output if fields are
+       involved.
+
+       There are no  explicit  conversions  between  numbers  and
+       strings.  To force an expression to be treated as a number
+       add 0 to it; to force it to be treated as  a  string  con-
+       catenate the null string ("") to it.
+
+                                                                5
+

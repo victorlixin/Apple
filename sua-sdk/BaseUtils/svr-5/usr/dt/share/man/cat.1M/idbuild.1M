@@ -1,0 +1,199 @@
+
+
+idbuild(1M)                                           idbuild(1M)
+
+SSyynnooppssiiss
+       /etc/conf/bin/idbuild  [-B]  [-#]  [-K] [-Q] [[-I include-
+       path] . . .]
+            [-O output-file] [-S] [[-M module-name] . . .] [-x]
+            [[-D symbol] . . .] [[-U symbol] . . .]
+            [-C] [-F] [-x] [-c] [-n]
+
+DDeessccrriippttiioonn
+       One of the ID/TP (Installable  Driver/Tunable  Parameters)
+       kernel  configuration tools, idbuild builds a  system base
+       kernel and/or configures loadable kernel modules using the
+       current system configuration in $ROOT/$MACH/etc/conf.
+
+       idbuild  uses  the  environment  variables $ROOT and $MACH
+       from the user's environment to compose its  starting  path
+       as  $ROOT/$MACH.   Except  for  the special case of kernel
+       development in a non-root source tree, the shell  variable
+       $ROOT  should  always  be set to null or to /; if $ROOT is
+       null or /, $MACH is ignored (treated as null).
+
+       Before idbuild uses the system configuration, it calls  to
+       synchronize  the resource manager database and the sdevice
+       files.
+
+   OOppttiioonnss
+       idbuild takes the following options:  Rebuild  the  kernel
+       immediately.   If  any  other  options are used, it is not
+       necessary to specify this  one.   Always  clean  temporary
+       files if the -K option is not set, regardless of available
+       space.  Without -C or -K, temporary files are cleaned only
+       if  space  is  low.  Print debugging information.  Force a
+       full rebuild, ignoring modification times.   Without  this
+       option,  only  out-of-date  components  are rebuilt.  This
+       option is not normally required and will be removed  in  a
+       later release.  Keep the temporary configuration files and
+       object modules created by idbuild.  This can allow you  to
+       perform  a  quick  rebuild using the -Q option.  Perform a
+       quick build, where some of the normal processing and  com-
+       pilation  of configuration-dependent files is skipped.  To
+       use the quick build option, you must  have  the  temporary
+       configuration  files  and  object  modules  from  the last
+       rebuild of the kernel, which are kept when you use the  -K
+       option for a normal build.
+
+       Use  the quick build option with caution.  The use of this
+       option  precludes  the  use  of  the  other  configuration
+       options,  except  for  -#, -K, -O, -l.  This option should
+       not normally be required and will be removed  in  a  later
+       release.   Search  the  specified  directory  for #include
+       files   before   searching    the    default    directory,
+       $ROOT/usr/include.   This  option  can  be repeated on the
+       command line as many times  as  needed  to  list  all  the
+       directories  to  be searched.  Place the kernel in output-
+       file  rather  than  placing  it  in   the   default   file
+
+                                                                1
+
+idbuild(1M)                                           idbuild(1M)
+
+       $ROOT/$MACH/etc/conf/cf.d/unix.   Statically  link all the
+       configured kernel modules into the base kernel.  Configure
+       the  specified  loadable kernel module and put it into the
+       $ROOT/$MACH/etc/conf/mod.d directory, using a  file  named
+       the  same as the module.  The -M option can be repeated on
+       the command line as many times as needed  to  include  all
+       the  required  modules.   More  details  about  using this
+       option are listed below.  Supress checks of the  files  in
+       the   sdevice  directory.   Sdevice  file  information  is
+       ignored.  All modules are assumed to  be  configured  into
+       the system.  Modules capable of being loadable are config-
+       ured loadable.  No resource conflict checking is done.  No
+       build.   Check for configuration and symbol errors, but do
+       not actually build any modules.  No changes  are  made  to
+       any files.  Like -c, all modules are assumed to be config-
+       ured into the system.  Implies the -S option.   Limit  the
+       symbol  table  information attached to the newly generated
+       kernel to the global symbols.  In addition to the standard
+       symbols,  #define the specified symbol when configuration-
+       dependent files are compiled.  This option can be repeated
+       on the command line as many times as needed to specify all
+       the required symbols.  #undef  for  the  specified  symbol
+       when  the configuration-dependent files are compiled, even
+       if the symbol normally would be defined.   The  -U  option
+       overrides any -D option specified for the same symbol, and
+       can be repeated on the  command  line  as  many  times  as
+       needed to specify all the undefined symbols.
+
+UUssaaggee
+       Building a  system kernel consists of three steps.  First,
+       configuration tables and symbols,  and  module  lists  are
+       generated from the configuration data files.  Second, con-
+       figuration-dependent files are compiled,  and  then  these
+       are  linked together with all of the configured kernel and
+       device driver object modules.  Third, if the loadable ker-
+       nel module feature or a kernel debugger is enabled, kernel
+       symbol table information is attached to the kernel.
+
+       The    kernel    is,     by     default,     placed     in
+       $ROOT/$MACH/etc/conf/cf.d/unix.
+
+       If  the kernel build is successful and $ROOT is null or /,
+       idbuild sets a flag to instruct the system shutdown/reboot
+       sequence  to  replace  the  standard kernel in /stand/unix
+       with the new kernel.  Then, another flag will  be  set  to
+       cause the environment (device special files, /etc/inittab,
+       and so on) to be reconfigured accordingly.
+
+       If one or more loadable kernel modules are specified  with
+       the  -M  option, idbuild will configure only the specified
+       loadable  kernel   modules   and   put   them   into   the
+       $ROOT/$MACH/etc/conf/mod.d  directory.  Otherwise, a  sys-
+       tem base kernel is rebuilt with all the  loadable  modules
+       reconfigured    into   the   $ROOT/$MACH/etc/conf/modnew.d
+
+                                                                2
+
+idbuild(1M)                                           idbuild(1M)
+
+       directory, which will be changed to /etc/conf/mod.d at the
+       next system reboot if $ROOT is null or / (see
+
+       If  a  loadable  module  has  already  been loaded, but to
+       another major device range, you can either unload the mod-
+       ule  and  then  use  idbuild  with  the  -M option, or use
+       idbuild without the -M option and reboot the  system.   If
+       you  attempt  to  use  the  -M option for a module already
+       loaded at another major device range,  idbuild  will  fail
+       with error ENXIO.
+
+       When  loadable  kernel  modules are configured with the -M
+       option, idbuild also creates the necessary  nodes  in  the
+       /dev directory, adding and activating /etc/inittab entries
+       if any Init file is associated with the modules, and  reg-
+       istering  the  modules  to the running kernel.  This makes
+       them available for dynamic  loading  without  requiring  a
+       system reboot.
+
+       Base kernel rebuilds are usually needed after a statically
+       linked kernel module is installed, when any static  module
+       is  removed,  or  when system tunable parameters are modi-
+       fied.  If you execute idbuild without any options  and  if
+       the environment variable $ROOT is null or /, a flag is set
+       and the kernel rebuild is deferred to next system  reboot.
+
+FFiilleess
+       The configuration data files needed as input for each mod-
+       ule are described in: These files  must  be  installed  in
+       $ROOT/$MACH/etc/conf  using prior to invoking idbuild.  In
+       addition, idbuild expects the following  files  to  be  in
+       $ROOT/$MACH/etc/conf/cf.d:  This  file  contains a list of
+       extra arguments to use when compiling configuration-depen-
+       dent  files  (including Space.c files); these should be of
+       the -Dxxxxxxx or  -Uxxxxxxx,  where  xxxxxxx  is  used  to
+       define or undefine platform-specific pre-processor symbols
+       (for example, -Dat386 or -Dhector).  This file is provided
+       as  part  of  the  base system and should not be modified.
+       This platform-specific mapfile is passed to to control the
+       kernel linking.  This file is provided as part of the base
+       system and should not be  modified.   This  file  contains
+       site-specific tunable parameter values.  You should access
+       the stune file using
+
+EExxiitt ccooddeess
+       Since idbuild calls other system commands to  perform  the
+       system reconfiguration, link editing, and symbol table set
+       up, it will report all errors encountered  by  those  com-
+       mands.   In  general,  the exit value 1 indicates an error
+       was encountered by idbuild and the exit value 0  indicates
+       success.
+
+       The errors encountered fall into the following categories:
+       configuration data file error messages from  compiler  and
+
+                                                                3
+
+idbuild(1M)                                           idbuild(1M)
+
+       link-editor  error  messages  from  and If, when loading a
+       module using the -M option, a  driver  module  is  already
+       loaded at a different major device range, the idbuild com-
+       mand will fail with the error ENXIO.   In  this  instance,
+       idbuild  reports  that  module configuration is completed,
+       meaning that the configuration completed  with  a  failure
+       condition.   In  this  instance, the module load has still
+       failed.  A description of what to do if this happens  fol-
+       lows in the next section of this manual page.
+
+       If  the  idinstall  of  a  particular  module fails during
+       reconfiguration, a message  is  displayed  indicating  the
+       failure, then the reconfiguration continues.
+
+RReeffeerreenncceess
+
+                                                                4
+

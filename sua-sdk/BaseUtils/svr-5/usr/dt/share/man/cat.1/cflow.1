@@ -1,0 +1,93 @@
+
+
+cflow(1)                                                 cflow(1)
+
+SSyynnooppssiiss
+       cflow [-c] [-r] [-ix] [-i_] [-dnum] -V files
+
+DDeessccrriippttiioonn
+       The  cflow  command analyzes a collection of C, yacc, lex,
+       assembler, and object files and builds  a  graph  charting
+       the external function references.  Files suffixed with .y,
+       .l, and .c are processed by yacc, lex, and the C  compiler
+       as  appropriate.   The  results of the preprocessed files,
+       and files suffixed with .i, are then run through the first
+       pass  of  lint.   Files  suffixed  with  .s are assembled.
+       Assembled files, and files suffixed with .o, have informa-
+       tion  extracted from their symbol tables.  The results are
+       collected and turned into a graph of  external  references
+       that  is  written  on the standard output.  When used with
+       the -c option cflow  produces  an  intermediate  .cf  file
+       which  can be given to cflow as input for further process-
+       ing.  cflow processes supplementary code set characters in
+       literals  and  constants according to the locale specified
+       in the LC_CTYPE environment variable [see LANG on
+
+       Each line of output begins with a reference  number,  fol-
+       lowed  by  a suitable number of tabs indicating the level,
+       then the name of the global symbol followed by a colon and
+       its  definition.  Normally only function names that do not
+       begin with an underscore are listed (see  the  -i  options
+       below).  For information extracted from C source, the def-
+       inition consists of  an  abstract  type  declaration  (for
+       example,  char  *),  and, delimited by angle brackets, the
+       name of the source file and the line number where the def-
+       inition  was  found.   Definitions  extracted  from object
+       files indicate the file name and  location  counter  under
+       which  the  symbol  appeared  (for example, text).  If the
+       compilation system adds a leading underscore  to  external
+       names,  it  is  removed.   Once a definition of a name has
+       been printed, subsequent references to that  name  contain
+       only the reference number of the line where the definition
+       may be found.  For undefined references,  only  ``<>''  is
+       printed.
+
+       As  an  example,  suppose the following code is in file.c:
+       int  i;
+
+       main() {      f();      g();      f(); }
+
+       f() {      i = h(); } The command cflow -ix file.c
+
+       produces  the  output   1    main:   int(),   <file.c   4>
+       2         f:   int(),  <file.c  11>  3              h:  <>
+       4              i: int, <file.c 1> 5         g: <>
+
+       When the nesting level becomes too  deep,  the  output  of
+       cflow can be piped to the pr command, using the -e option,
+       to compress the tab expansion to something less than every
+
+                                                                1
+
+cflow(1)                                                 cflow(1)
+
+       eight spaces.
+
+       In  addition to the -D, -I, -Kdollar and -U options (which
+       are interpreted just as they are  by  cc),  the  following
+       options    are   interpreted   by   cflow:   Reverse   the
+       ``caller:callee'' relationship producing an inverted list-
+       ing  showing the callers of each function.  The listing is
+       also sorted in lexicographical order by  callee.   Include
+       external  and  static  data  symbols.   The  default is to
+       include only functions in the  flowgraph.   Include  names
+       that  begin with an underscore.  The default is to exclude
+       these functions (and data if -ix is used).  The num  deci-
+       mal  integer indicates the depth at which the flowgraph is
+       cut off.  By default this number is very large.   Attempts
+       to  set  the cutoff depth to a nonpositive integer will be
+       ignored.  Prints version information on the standard error
+       output.
+
+   EErrrroorrss
+       Complains about multiple definitions and only believes the
+       first.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Files produced by lex and yacc  cause  the  reordering  of
+       line number declarations, which can confuse cflow.  To get
+       proper results, feed cflow the yacc or lex input.
+
+                                                                2
+

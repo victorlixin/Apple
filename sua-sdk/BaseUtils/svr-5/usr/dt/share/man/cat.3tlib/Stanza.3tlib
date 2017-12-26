@@ -1,0 +1,183 @@
+
+
+Stanza(3tlib)                                       Stanza(3tlib)
+
+SSyynnooppssiiss
+       StanzaOpen  stanzaFile mode StanzaClose stanzaHandle Stan-
+       zaPrint stanzaHandle StanzaSync  stanzaHandle  StanzaCall-
+       backs  stanzaFile  beginCB  endCB  attrCB StanzaFilenames-
+       tanzaHandle
+
+       StanzaGetSects  stanzaHandle  StanzaAddSect   stanzaHandle
+       sect  StanzaModSect  stanzaHandle  oldSectName newSectName
+       StanzaDelSect stanzaHandle sect
+
+       StanzaGetAttrs stanzaHandle sect StanzaAddAttr  stanzaHan-
+       dle  sect  attr  StanzaModAttr  stanzaHandle  sect oldAttr
+       newAttr StanzaDelAttr stanzaHandle sect attr
+
+       StanzaGetVals stanzaHandle sect attr StanzaAddValue  stan-
+       zaHandle  sect attr value StanzaModValue stanzaHandle sect
+       attr oldValue newValue  StanzaDelValue  stanzaHandle  sect
+       attr  value StanzaReplaceValue stanzaHandle sect attr val-
+       ues StanzaModIdxValue stanzaHandle sect  attr  index  new-
+       Value
+
+DDeessccrriippttiioonn
+       The  stanza functions implement a three-level hierarchical
+       database for textual information  which  is  stored  in  a
+       human-readable  file,  the  format  of  which is described
+       below. A stanza file consists of zero  or  more  sections,
+       each of which contains zero or more attributes. Attributes
+       in turn consist of zero or move values. Stanza  files  are
+       automatically  locked  so  that only one process at a time
+       can modify a given file.
+
+   FFiillee ooppeerraattiioonnss
+       opens a stanza file, reads it into memory, and  returns  a
+       stanza  handle.   If the file is opened for writing (using
+       the STZ_RDWR or STZ_WRONLY flags) and another process  has
+       the  same  file open for writing, the open will not return
+       until the other process has closed the file.  An error  is
+       thrown  if there is an error opening the file, if there is
+       a syntax error in the file, or if there is a problem open-
+       ing a lock file.  writes the stanza file to disk if it was
+       modified, and frees up the stanza handle.  An  error  will
+       occur  if  there  was  an  error opening a temporary file,
+       writing the new version of the file, or moving the  tempo-
+       rary  file  to  the  new file.  updates the stanza file on
+       disk while keeping the stanza handle available for further
+       modification.   An  error will occur if there was an error
+       opening a temporary file, writing the new version  of  the
+       file, or moving the temporary file to the new file.  opens
+       a stanza file and calls user defined callbacks for  begin-
+       ning, end, and attributes of each stanza section.
+
+       The Tcl callbacks are called with the following arguments:
+       beginCB sect endCB attrCB attr value An error is thrown if
+       there  is  an error opening the file, if there is a syntax
+
+                                                                1
+
+Stanza(3tlib)                                       Stanza(3tlib)
+
+       error in the file, or if there is a problem opening a lock
+       file.
+
+   SSttaannzzaa FFiillee DDaattaa OOppeerraattiioonnss
+       Sections  returns  a  Tcl  list  of  sections found in the
+       stanza file associated with the given stanza handle.  adds
+       a  section  to  the  stanza  file specified with the given
+       stanza handle.  An error is thrown if the section  already
+       exists.  change the name of the section in the stanza file
+       specified with the given stanza handle.
+
+       An error is thrown if the section does not exist.  deletes
+       the  section  found  in  a stanza file associated with the
+       given stanza handle.
+
+       An  error  is  thrown  if  the  section  does  not  exist.
+       Attributes get the attributes associated with a given sec-
+       tion.  An error is thrown if the section does  not  exist.
+       add  an  attribute  to  a  specified section.  An error is
+       thrown if the section does not exist or if  the  attribute
+       already  exists.   modify  an  attribute associated with a
+       given stanza section. An error is  thrown  if  either  the
+       section  or attribute does not exist.  delete an attribute
+       associated with a given section. An  error  is  thrown  if
+       either  the  section  or attribute does not exist.  Values
+       get a Tcl list of values associated with a  given  section
+       and attribute. An error is thrown if either the section or
+       attribute does not exist.  add a Tcl  value  to  the  list
+       associated  with  the  specified  section and attribute.An
+       error is thrown if either the section  or  attribute  does
+       not exist, or the value already exists.  replace the given
+       value under the given section and attribute with  the  new
+       value.   An  error is thrown if the section, attribute, or
+       value does not exist.  delete the specified value from the
+       specified  attribute.  An  error is thrown if the section,
+       attribute, or value does not exist.   replace  all  values
+       assigned  to  the given section and attribute with the new
+       list of values.  An error is thrown if either the  section
+       or  the  attribute  does not exist.  for the given section
+       and attribute, replace the nth value with  the  given  new
+       value, where n is the given index, starting with 0 for the
+       first value.  An error is thrown if either the section  or
+       the  attribute does not exist, or if the index is too high
+       for the number of values.
+
+   AArrgguummeennttss
+       pathname of stanza database file.  this  defines  the  way
+       the  Stanza  manager interacts with the file: STZ_RDONLY -
+       read only STZ_RDWR  - read and write  STZ_WRONLY  -  write
+       only STZ_NOTAB - equivalent to STZ_RDWR, but the file will
+       be written with no tabs before the attributes lines, which
+       is  a requirement for certain files in /etc/default.  file
+       handle  returned  by  StanzaOpen.   Stanza  section  name.
+       Stanza attribute name within a section.  value assigned to
+
+                                                                2
+
+Stanza(3tlib)                                       Stanza(3tlib)
+
+       an attribute. Can be a list.  index into a list of  values
+       associated with an attribute.  user-defined callback func-
+       tion for begin of section.  user-defined callback function
+       for  end  of  section.  user-defined callback function for
+       attributes.
+
+   FFiillee FFoorrmmaatt
+       A stanza file is line-oriented, consisting of zero or more
+       section  lines in the format <section-name>:" Each section
+       line is followed by zero or more attribute  lines  in  the
+       format <attribute-name> = <value1>, <value2>, <value3> ...
+       The convention is for the attribute line to be preceded by
+       a  tab, but this is not necessary. White space is stripped
+       from the beginning and end of strings but not within them.
+
+       The  sections,  attributes,  and  values can use any ASCII
+       character, but a few characters and sequences are special,
+       as  described below. When using the stanza functions, spe-
+       cial characters do not need to  be  escaped  because  they
+       will  be  escaped  automatically when the file is written.
+       escapes any special character including another \. At  the
+       end  of  a line, it causes the next line to be interpreted
+       as part of the current line  but  doesn't  stand  for  any
+       value  in itself. If \ is followed by a nonspecial charac-
+       ter, it stands for the value of the nonspecial  character.
+       (where  nnn is an octal number from 1 to 377) is the char-
+       acter with  the  value  nnn.  All  three  digits  are  not
+       required.  is the character with the value nn (where nn is
+       a hex number from 1 to FF).  Both digits are not required.
+       stands  for newline (value 10) stands for tab (value 9) is
+       the delimiter between values is the delimiter  between  an
+       attribute and its values denotes the end of a section name
+       Double quotes around a  string  will  escape  all  special
+       characters  in that string Denotes the beginning of a com-
+       ment; all characters from the # to the  end  of  the  line
+       will be ignored. The # can be anywhere within the line
+
+       Here  is a stanza file showing some examples of the above:
+       section1:
+               attrib1 = value1, value2
+               attrib2 = this is all one value  #  spaces  aren't
+       special      within value
+               attrib3 = "value, with, commas"
+               attrib4  =  another\,  way\,  to\, escape\, commas
+       section 2:                         # sections can  contain
+       spaces too
+               long  value  =  if we want a value to be very long
+       but we want \ to split it up into lines we can use a \\ at
+       the  end  of  the  line\, but \ if we want a literal \\ we
+       have to escape it.
+               another value = \"quotes can be part of the  value
+       too if you \ escape them\"
+
+                                                                3
+
+Stanza(3tlib)                                       Stanza(3tlib)
+
+RReeffeerreenncceess
+
+                                                                4
+

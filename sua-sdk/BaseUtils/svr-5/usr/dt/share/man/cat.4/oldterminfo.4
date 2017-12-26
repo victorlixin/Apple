@@ -1,0 +1,2695 @@
+
+
+oldterminfo(4)                                     oldterminfo(4)
+
+SSyynnooppssiiss
+       /usr/share/lib/terminfo/?/*
+
+DDeessccrriippttiioonn
+       This  manual page describes the UNIX(R) System V Release 4
+       terminfo database format used in prior versions  of  &gem-
+       ini;.   The  default terminfo database format is described
+       on and complies with the X/Open Curses, Issue 4 Version  2
+       standard  found  in The Single UNIX(R) Specification, Ver-
+       sion 2.
+
+       terminfo is a database produced by tic that describes  the
+       capabilities  of  devices  such as terminals and printers.
+       Devices are described in terminfo source files by specify-
+       ing  a set of capabilities, by quantifying certain aspects
+       of the device, and by specifying character sequences  that
+       affect particular results.  This database is often used by
+       screen oriented applications such as vi  and  curses  pro-
+       grams,  as well as by some  system commands such as ls and
+       more.  This usage allows them to work with  a  variety  of
+       devices without changes to the programs.
+
+       terminfo  source  files  consist  of  one  or  more device
+       descriptions.   Each  description  consists  of  a  header
+       (beginning  in  column  1) and one or more lines that list
+       the features for that particular device.  Every line in  a
+       terminfo  source file must end in a comma (,).  Every line
+       in a terminfo  source  file  except  the  header  must  be
+       indented  with  one or more white spaces (either spaces or
+       tabs).
+
+       Entries in terminfo source files consist of  a  number  of
+       comma-separated  fields.   White space after each comma is
+       ignored.  Embedded commas must be escaped by using a back-
+       slash.   The  following example shows the format of a ter-
+       minfo source file.  alias1 | alias2 | . .  .  |  aliasn  |
+       longname,  <white  space>  am,  lines  #24,  <white space>
+       home=\Eeh,
+
+       The first line, commonly referred to as the  header  line,
+       must  begin  in  column  one and must contain at least two
+       aliases separated by vertical bars.  The last field in the
+       header line must be the long name of the device and it may
+       contain any string.  Alias names must  be  unique  in  the
+       terminfo  database  and  they must conform to  system file
+       naming conventions [see they cannot, for example,  contain
+       white space or slashes.
+
+       Every  device  must  be  assigned  a  name, such as vt100.
+       Device names (except the long name) should be chosen using
+       the  following  conventions.   The name should not contain
+       hyphens because hyphens are reserved for use  when  adding
+       suffixes that indicate special modes.
+
+                                                                1
+
+oldterminfo(4)                                     oldterminfo(4)
+
+       These  special modes may be modes that the hardware can be
+       in, or user preferences.  To assign a special  mode  to  a
+       particular  device, append a suffix consisting of a hyphen
+       and an indicator of the mode  to  the  device  name.   For
+       example,  the  -w  suffix means ``wide mode''; when speci-
+       fied, it allows for a width of 132 columns instead of  the
+       standard  80  columns.   Therefore,  if  you want to use a
+       vt100 device set to wide mode, name  the  device  vt100-w.
+       Use the following suffixes where possible.
+       ----------------------------------------------------------------
+             Suffix   Meaning                                Example
+
+                    -w       Wide mode (more than 80 columns)       5410-w
+             -am      With auto. margins (usually default)   vt100-am
+             -nam     Without automatic margins              vt100-nam
+             -n       Number of lines on the screen          2300-40
+             -na      No arrow keys (leave them in local)    c100-na
+             -np      Number of pages of memory              c100-4p
+             -rv      Reverse video                          4415-rv
+
+       The  terminfo  reference  manual  page is organized in two
+       sections: ``DEVICE CAPABILITIES'' and ``PRINTER  CAPABILI-
+       TIES.''
+
+   PPAARRTT 11:: DDEEVVIICCEE CCAAPPAABBIILLIITTIIEESS
+       Capabilities in terminfo are of three types: Boolean capa-
+       bilities (which show that a device has or does not have  a
+       particular  feature), numeric capabilities (which quantify
+       particular features of a device), and string  capabilities
+       (which  provide sequences that can be used to perform par-
+       ticular operations on devices).
+
+       In the following table, a Variable is the name by which  a
+       C  programmer  accesses  a  capability  (at  the  terminfo
+       level).  A Capname is the  short  name  for  a  capability
+       specified  in  the  terminfo source file.  It is used by a
+       person updating the source file and by the  tput  command.
+       A  Termcap  Code is a two-letter sequence that corresponds
+       to the termcap capability name.  (Note that termcap is  no
+       longer supported.)
+
+       Capability  names have no real length limit, but an infor-
+       mal limit of five characters has been adopted to keep them
+       short.   Whenever possible, capability names are chosen to
+       be the same as or similar to those specified by  the  ANSI
+       X3.64-1979 standard.  Semantics are also intended to match
+       those of the ANSI standard.
+
+       All string capabilities  listed  below  may  have  padding
+       specified,  with  the  exception  of those used for input.
+       Input capabilities, listed under the  ``Strings''  section
+       in  the  following tables, have names beginning with key_.
+       The #i symbol in the description field  of  the  following
+       tables refers to the ith parameter.
+
+                                                                2
+
+oldterminfo(4)                                     oldterminfo(4)
+
+   BBoooolleeaannss
+       ---------------------------------------------------------------------------------------
+                                  Cap-    Termcap
+       Variable                   name    Code      Description
+
+              auto_left_margin           bw      bw        cub1 wraps from column 0 to
+                                                    last column
+       auto_right_margin          am      am        Terminal has automatic margins
+       back_color_erase           bce     be        Screen erased with background color
+       can_change                 ccc     cc        Terminal can re-define existing color
+       ceol_standout_glitch       xhp     xs        Standout not erased by overwriting (hp)
+       col_addr_glitch            xhpa    YA        Only positive motion for hpa/mhpa caps
+       cpi_changes_res            cpix    YF        Changing character pitch changes
+                                                    resolution
+       cr_cancels_micro_mode      crxm    YB        Using cr turns off micro mode
+       eat_newline_glitch         xenl    xn        Newline ignored after 80 columns
+                                                    (Concept)
+       erase_overstrike           eo      eo        Can erase overstrikes with a blank
+       generic_type               gn      gn        Generic line type (e.g., dialup, switch)
+       hard_copy                  hc      hc        Hardcopy terminal
+       hard_cursor                chts    HC        Cursor is hard to see
+       has_meta_key               km      km        Has a meta key (shift, sets parity bit)
+       has_print_wheel            daisy   YC        Printer needs operator to change
+                                                    character set
+       has_status_line            hs      hs        Has extra ``status line''
+       hue_lightness_saturation   hls     hl        Terminal uses only HLS color
+                                                    notation (Tektronix)
+       insert_null_glitch         in      in        Insert mode distinguishes nulls
+       lpi_changes_res            lpix    YG        Changing line pitch changes resolution
+       memory_above               da      da        Display may be retained above the screen
+       memory_below               db      db        Display may be retained below the screen
+       move_insert_mode           mir     mi        Safe to move while in insert mode
+       move_standout_mode         msgr    ms        Safe to move in standout modes
+       needs_xon_xoff             nxon    nx        Padding won't work, xon/xoff required
+       no_esc_ctlc                xsb     xb        Beehive (f1=escape, f2=ctrl C)
+       non_dest_scroll_region     ndscr   ND        Scrolling region is
+                                                    nondestructive
+       non_rev_rmcup              nrrmc   NR        smcup does not reverse rmcup
+       no_pad_char                npc     NP        Pad character doesn't exist
+       over_strike                os      os        Terminal overstrikes on hard-copy
+                                                    terminal
+       prtr_silent                mc5i    5i        Printer won't echo on screen
+       row_addr_glitch            xvpa    YD        Only positive motion for vpa/mvpa caps
+       semi_auto_right_margin     sam     YE        Printing in last column causes cr
+       status_line_esc_ok         eslok   es        Escape can be used on the status line
+       dest_tabs_magic_smso       xt      xt        Destructive tabs, magic smso char (t1061)
+       tilde_glitch               hz      hz        Hazeltine; can't print tilde (~)
+       transparent_underline      ul      ul        Underline character overstrikes
+       xon_xoff                   xon     xo        Terminal uses xon/xoff handshaking
+
+   NNuummbbeerrss
+       -------------------------------------------------------------------------------------------------
+                              Cap-     Termcap
+
+                                                                3
+
+()                                                             ()
+
+       Variable               name     Code      Description
+
+              bit_image_entwining    bitwin   Yo        Number of passes for each bit-map row
+       bit_image_type         bitype   Yp        Type of bit image device
+       buffer_capacity        bufsz    Ya        Number of bytes buffered before printing
+       buttons                btns     BT        Number of buttons on the mouse
+       columns                cols     co        Number of columns in a line
+       dot_vert_spacing       spinv    Yb        Spacing of pins vertically in pins per inch
+       dot_horz_spacing       spinh    Yc        Spacing of dots horizontally in dots per inch
+       init_tabs              it       it        Tabs initially every # spaces
+       label_height           lh       lh        Number of rows in each label
+       label_width            lw       lw        Number of columns in each label
+       lines                  lines    li        Number of lines on a screen or a page
+       lines_of_memory        lm       lm        Lines of memory if > lines; 0 means varies
+       magic_cookie_glitch    xmc      sg        Number of blank characters left by
+       max_attributes         ma       ma        Maximum combined video attributes terminal can display
+                                                 smso or rmso
+       max_colors             colors   Co        Maximum number of colors on the screen
+       maximum_windows        Wnum     MW        Maximum number of definable
+                                                 windows
+       max_micro_address      maddr    Yd        Maximum value in micro_..._address
+       max_micro_jump         mjump    Ye        Maximum value in parm_..._micro
+       max_pairs              pairs    pa        Maximum number of color-pairs on the
+                                                 screen
+       micro_col_size         mcs      Yf        Character step size when in micro mode
+       micro_line_size        mls      Yg        Line step size when in micro mode
+       no_color_video         ncv      NC        Video attributes that can't be used
+                                                 with colors
+       number_of_pins         npins    Yh        Number of pins in print-head
+       num_labels             nlab     Nl        Number of labels on screen (start at 1)
+       output_res_char        orc      Yi        Horizontal resolution in units per character
+       output_res_line        orl      Yj        Vertical resolution in units per line
+       output_res_horz_inch   orhi     Yk        Horizontal resolution in units per inch
+       output_res_vert_inch   orvi     Yl        Vertical resolution in units per inch
+       padding_baud_rate      pb       pb        Lowest baud rate where padding needed
+       print_rate             cps      Ym        Print rate in characters per
+                                                 inch
+       virtual_terminal       vt       vt        Virtual terminal number ( system)
+       wide_char_size         widcs    Yn        Character step size when in double
+                                                 wide mode
+       width_status_line      wsl      ws        Number of columns in status line
+
+   SSttrriinnggss
+       The  following table lists the general string values.  The
+       strings sent by specific keys  are  listed  in  the  ``Key
+       Strings'' section following this one.
+       -------------------------------------------------------------------------------------------------------
+                                   Cap-      Termcap
+       Variable                    name      Code     Description
+
+              acs_chars                   acsc      ac       Graphic charset pairs aAbBcC
+       alt_scancode_esc            scesca    S8       Alternate escape for scancode emulation
+                                                      (default is for vt100)
+
+                                                                4
+
+()                                                             ()
+
+       back_tab                    cbt       bt       Back tab
+       bell                        bel       bl       Audible signal (bell)
+       bit_image_carriage_return   bicr      Yv       Move to beginning of same row (use tparm)
+       bit_image_newline           binel     Zz       Move to next row of the bit image (use tparm)
+       bit_image_repeat            birep     Zy       Repeat bit-image cell #1 #2 times (use tparm)
+       carriage_return             cr        cr       Carriage return
+       change_char_pitch           cpi       ZA       Change number of characters per inch
+       change_line_pitch           lpi       ZB       Change number of lines per inch
+       change_res_horz             chr       ZC       Change horizontal resolution
+       change_res_vert             cvr       ZD       Change vertical resolution
+       change_scroll_region        csr       cs       Change to lines #1 through #2 (vt100)
+       char_padding                rmp       rP       Like ip but when in replace mode
+       char_set_names              csnm      Zy       List of character set names
+       clear_all_tabs              tbc       ct       Clear all tab stops
+       clear_margins               mgc       MC       Clear all margins (top, bottom,
+                                                      and sides)
+       clear_screen                clear     cl       Clear screen and home cursor
+       clr_bol                     el1       cb       Clear to beginning of line, inclusive
+       clr_eol                     el        ce       Clear to end of line
+       clr_eos                     ed        cd       Clear to end of display
+       code_set_init               csin      ci       Init sequence for multiple codesets
+       color_names                 colornm   Yw       Give name for color #1
+       column_address              hpa       ch       Horizontal position absolute
+       command_character           cmdch     CC       Terminal settable cmd character
+                                                      in prototype
+       create_window               cwin      CW       Define win #1 to go from #2, #3 to #4, #5
+       cursor_address              cup       cm       Move to row #1 col #2
+       cursor_down                 cud1      do       Down one line
+       cursor_home                 home      ho       Home cursor (if no cup)
+       cursor_invisible            civis     vi       Make cursor invisible
+       cursor_left                 cub1      le       Move left one space.
+       cursor_mem_address          mrcup     CM       Memory relative cursor addressing
+       cursor_normal               cnorm     ve       Make cursor appear normal
+                                                      (undo vs/vi)
+       cursor_right                cuf1      nd       Non-destructive space (cursor or
+                                                      carriage right)
+       cursor_to_ll                ll        ll       Last line, first column (if no cup)
+       cursor_up                   cuu1      up       Upline (cursor up)
+       cursor_visible              cvvis     vs       Make cursor very visible
+       define_bit_image_region     defbi     Yx       Define rectangular bit-image region
+                                                      (use tparm)
+       define_char                 defc      ZE       Define a character in a character set
+       delete_character            dch1      dc       Delete character
+       delete_line                 dl1       dl       Delete line
+       device_type                 devt      dv       Indicate language/codeset support
+       dial_phone                  dial      DI       Dial phone number #1
+       dis_status_line             dsl       ds       Disable status line
+       display_clock               dclk      DK       Display time-of-day clock
+       display_pc_char             dispc     S1       Display PC character
+       down_half_line              hd        hd       Half-line down (forward 1/2 linefeed)
+       ena_acs                     enacs     eA       Enable alternate character set
+       end_bit_image_region        endbi     Yy       End a bit-image region (use tparm)
+       enter_alt_charset_mode      smacs     as       Start alternate character set
+
+                                                                5
+
+()                                                             ()
+
+       enter_am_mode               smam      SA       Turn on automatic margins
+       enter_blink_mode            blink     mb       Turn on blinking
+       enter_bold_mode             bold      md       Turn on bold (extra bright) mode
+       enter_ca_mode               smcup     ti       String to begin programs that use cup
+       enter_delete_mode           smdc      dm       Delete mode (enter)
+       enter_dim_mode              dim       mh       Turn on half-bright mode
+       enter_doublewide_mode       swidm     ZF       Enable double wide printing
+       enter_draft_quality         sdrfq     ZG       Set draft quality print
+       enter_insert_mode           smir      im       Insert mode (enter)
+       enter_italics_mode          sitm      ZH       Enable italics
+       enter_leftward_mode         slm       ZI       Enable leftward carriage motion
+       enter_micro_mode            smicm     ZJ       Enable micro motion capabilities
+       enter_near_letter_quality   snlq      ZK       Set near-letter quality print
+       enter_normal_quality        snrmq     ZL       Set normal quality print
+       enter_pc_charset_mode       smpch     S2       Enter PC character display mode
+       enter_protected_mode        prot      mp       Turn on protected mode
+       enter_reverse_mode          rev       mr       Turn on reverse video mode
+       enter_scancode_mode         smsc      S4       Enter PC scancode mode
+       enter_secure_mode           invis     mk       Turn on blank mode
+                                                      (characters invisible)
+       enter_shadow_mode           sshm      ZM       Enable shadow printing
+       enter_standout_mode         smso      so       Begin standout mode
+       enter_subscript_mode        ssubm     ZN       Enable subscript printing
+       enter_superscript_mode      ssupm     ZO       Enable superscript printing
+       enter_underline_mode        smul      us       Start underscore mode
+       enter_upward_mode           sum       ZP       Enable upward carriage motion
+       enter_xon_mode              smxon     SX       Turn on xon/xoff handshaking
+       erase_chars                 ech       ec       Erase #1 characters
+       exit_alt_charset_mode       rmacs     ae       End alternate character set
+       exit_am_mode                rmam      RA       Turn off automatic margins
+       exit_attribute_mode         sgr0      me       Turn off all attributes
+       exit_ca_mode                rmcup     te       String to end programs that use cup
+       exit_delete_mode            rmdc      ed       End delete mode
+       exit_doublewide_mode        rwidm     ZQ       Disable double wide printing
+       exit_insert_mode            rmir      ei       End insert mode
+       exit_italics_mode           ritm      ZR       Disable italics
+       exit_leftward_mode          rlm       ZS       Enable rightward (normal)
+                                                      carriage motion
+       exit_micro_mode             rmicm     ZT       Disable micro motion capabilities
+       exit_pc_charset_mode        rmpch     S3       Disable PC character display mode
+       exit_scancode_mode          rmsc      S5       Disable PC scancode mode
+       exit_shadow_mode            rshm      ZU       Disable shadow printing
+       exit_standout_mode          rmso      se       End standout mode
+       exit_subscript_mode         rsubm     ZV       Disable subscript printing
+       exit_superscript_mode       rsupm     ZW       Disable superscript printing
+       exit_underline_mode         rmul      ue       End underscore mode
+       exit_upward_mode            rum       ZX       Enable downward (normal)
+                                                      carriage motion
+       exit_xon_mode               rmxon     RX       Turn off xon/xoff handshaking
+       fixed_pause                 pause     PA       Pause for 2-3 seconds
+       flash_hook                  hook      fh       Flash the switch hook
+       flash_screen                flash     vb       Visible bell (may not move cursor)
+       form_feed                   ff        ff       Hardcopy terminal page eject
+
+                                                                6
+
+()                                                             ()
+
+       from_status_line            fsl       fs       Return from status line
+       get_mouse                   getm      Gm       Curses should get button events
+       goto_window                 wingo     WG       Goto window #1
+       hangup                      hup       HU       Hang-up phone
+       init_1string                is1       i1       Terminal or printer initialization string
+       init_2string                is2       is       Terminal or printer initialization string
+       init_3string                is3       i3       Terminal or printer initialization string
+       init_file                   if        if       Name of initialization file
+       init_prog                   iprog     iP       Path name of program for initialization
+       initialize_color            initc     Ic       Initialize the definition of color
+       initialize_pair             initp     Ip       Initialize color-pair
+       insert_character            ich1      ic       Insert character
+       insert_line                 il1       al       Add new blank line
+       insert_padding              ip        ip       Insert pad after character inserted
+       keypad_local                rmkx      ke       Out of ``keypad-transmit'' mode
+       keypad_xmit                 smkx      ks       Put terminal in ``keypad-transmit'' mode
+       lab_f0                      lf0       l0       Labels on function key f0 if not f0
+       lab_f1                      lf1       l1       Labels on function key f1 if not f1
+       lab_f10                     lf10      la       Labels on function key f10 if not f10
+       lab_f2                      lf2       l2       Labels on function key f2 if not f2
+       lab_f3                      lf3       l3       Labels on function key f3 if not f3
+       lab_f4                      lf4       l4       Labels on function key f4 if not f4
+       lab_f5                      lf5       l5       Labels on function key f5 if not f5
+       lab_f6                      lf6       l6       Labels on function key f6 if not f6
+       lab_f7                      lf7       l7       Labels on function key f7 if not f7
+       lab_f8                      lf8       l8       Labels on function key f8 if not f8
+       lab_f9                      lf9       l9       Labels on function key f9 if not f9
+       label_format                fln       Lf       Label format
+       label_off                   rmln      LF       Turn off soft labels
+       label_on                    smln      LO       Turn on soft labels
+       meta_off                    rmm       mo       Turn off ``meta mode''
+       meta_on                     smm       mm       Turn on ``meta mode'' (8th bit)
+       micro_column_address        mhpa      ZY       Like column_address for micro
+                                                      adjustment
+       micro_down                  mcud1     ZZ       Like cursor_down for micro adjustment
+       micro_left                  mcub1     Za       Like cursor_left for micro adjustment
+       micro_right                 mcuf1     Zb       Like cursor_right for micro
+                                                      adjustment
+       micro_row_address           mvpa      Zc       Like row_address for micro adjustment
+       micro_up                    mcuu1     Zd       Like cursor_up for micro adjustment
+       mouse_info                  minfo     Mi       Mouse status information
+       newline                     nel       nw       Newline (behaves like cr followed
+                                                      by lf)
+       order_of_pins               porder    Ze       Matches software bits to print-head pins
+       orig_colors                 oc        oc       Set all color(-pair)s to the original ones
+       orig_pair                   op        op       Set default color-pair to the original one
+       pad_char                    pad       pc       Pad character (rather than null)
+       parm_dch                    dch       DC       Delete #1 chars
+       parm_delete_line            dl        DL       Delete #1 lines
+       parm_down_cursor            cud       DO       Move down #1 lines.
+       parm_down_micro             mcud      Zf       Like parm_down_cursor for micro
+                                                      adjust.
+       parm_ich                    ich       IC       Insert #1 blank chars
+
+                                                                7
+
+()                                                             ()
+
+       parm_index                  indn      SF       Scroll forward #1 lines.
+       parm_insert_line            il        AL       Add #1 new blank lines
+       parm_left_cursor            cub       LE       Move cursor left #1 spaces
+       parm_left_micro             mcub      Zg       Like parm_left_cursor for micro
+                                                      adjust.
+       parm_right_cursor           cuf       RI       Move right #1 spaces.
+       parm_right_micro            mcuf      Zh       Like parm_right_cursor for micro
+                                                      adjust.
+       parm_rindex                 rin       SR       Scroll backward #1 lines.
+       parm_up_cursor              cuu       UP       Move cursor up #1 lines.
+       parm_up_micro               mcuu      Zi       Like parm_up_cursor for micro adjust.
+       pc_term_options             pctrm     S6       PC terminal options
+       pkey_key                    pfkey     pk       Prog funct key #1 to type string #2
+       pkey_local                  pfloc     pl       Prog funct key #1 to execute string #2
+       pkey_plab                   pfxl      xl       Prog key #1 to xmit string #2 and show string #3
+       pkey_xmit                   pfx       px       Prog funct key #1 to xmit string #2
+       plab_norm                   pln       pn       Prog label #1 to show string #2
+       print_screen                mc0       ps       Print contents of the screen
+       prtr_non                    mc5p      pO       Turn on the printer for #1 bytes
+       prtr_off                    mc4       pf       Turn off the printer
+       prtr_on                     mc5       po       Turn on the printer
+       pulse                       pulse     PU       Select pulse dialing
+       quick_dial                  qdial     QD       Dial phone number #1, without progress detection
+       remove_clock                rmclk     RC       Remove time-of-day clock
+       repeat_char                 rep       rp       Repeat char #1 #2 times
+       req_for_input               rfi       RF       Send next input char (for ptys)
+       req_mouse_pos               reqmp     RQ       Request mouse position report
+       reset_1string               rs1       r1       Reset terminal completely to sane modes
+       reset_2string               rs2       r2       Reset terminal completely to sane modes
+       reset_3string               rs3       r3       Reset terminal completely to sane modes
+       reset_file                  rf        rf       Name of file containing reset string
+       restore_cursor              rc        rc       Restore cursor to position of last sc
+       row_address                 vpa       cv       Vertical position absolute
+       save_cursor                 sc        sc       Save cursor position
+       scancode_escape             scesc     S7       Escape for scancode emulation
+       scroll_forward              ind       sf       Scroll text up
+       scroll_reverse              ri        sr       Scroll text down
+       select_char_set             scs       Zj       Select character set
+       set0_des_seq                s0ds      s0       Shift into codeset 0 (EUC set 0, ASCII)
+       set1_des_seq                s1ds      s1       Shift into codeset 1
+       set2_des_seq                s2ds      s2       Shift into codeset 2
+       set3_des_seq                s3ds      s3       Shift into codeset 3
+       set_a_background            setab     AB       Set background color using ANSI escape
+       set_a_foreground            setaf     AF       Set foreground color using ANSI escape
+       set_attributes              sgr       sa       Define the video attributes #1-#9
+       set_background              setb      Sb       Set current background color
+       set_bottom_margin           smgb      Zk       Set bottom margin at current line
+       set_bottom_margin_parm      smgbp     Zl       Set bottom margin at line #1 or #2
+                                                      lines from bottom
+       set_clock                   sclk      SC       Set time-of-day clock.
+       set_color_band              setcolor  Yz       Change to ribbon color #1
+       set_color_pair              scp       sp       Set current color-pair
+       set_foreground              setf      Sf       Set current foreground color1
+
+                                                                8
+
+()                                                             ()
+
+       set_left_margin             smgl      ML       Set left margin at current line
+       set_left_margin_parm        smglp     Zm       Set left (right) margin at column #1 (#2)
+       set_lr_margin               smglr     ML       Sets both left and right margins
+       set_page_length             slines    YZ       Set page length to #1 lines (use tparm)
+       set_pglen_inch              slength   YI       Set page length to #1 hundredths of an inch (use tparm)
+       set_right_margin            smgr      MR       Set right margin at current column
+       set_right_margin_parm       smgrp     Zn       Set right margin at column #1
+       set_tab                     hts       st       Set a tab in all rows, current column
+       set_tb_margin               smgtb     MT       Sets both top and bottom margins
+       set_top_margin              smgt      Zo       Set top margin at current line
+       set_top_margin_parm         smgtp     Zp       Set top (bottom) margin at line #1 (#2)
+       set_window                  wind      wi       Current window is lines #1-#2 cols #3-#4
+       start_bit_image             sbim      Zq       Start printing bit image graphics
+       start_char_set_def          scsd      Zr       Start definition of a character set
+       stop_bit_image              rbim      Zs       End printing bit image graphics
+       stop_char_set_def           rcsd      Zt       End definition of a character set
+       subscript_characters        subcs     Zu       List of ``subscript-able'' characters
+       superscript_characters      supcs     Zv       List of ``superscript-able'' characters
+       tab                         ht        ta       Tab to next 8-space hardware tab stop
+       these_cause_cr              docr      Zw       Printing any of these chars causes cr
+       to_status_line              tsl       ts       Go to status line, col #1
+       tone                        tone      TO       Select touch tone dialing
+       underline_char              uc        uc       Underscore one char and move past it
+       up_half_line                hu        hu       Half-line up (reverse 1/2 linefeed)
+       user0                       u0        u0       User string 0
+       user1                       u1        u1       User string 1
+       user2                       u2        u2       User string 2
+       user3                       u3        u3       User string 3
+       user4                       u4        u4       User string 4
+       user5                       u5        u5       User string 5
+       user6                       u6        u6       User string 6
+       user7                       u7        u7       User string 7
+       user8                       u8        u8       User string 8
+       user9                       u9        u9       User string 9
+       wait_tone                   wait      WA       Wait for dial tone.
+       xoff_character              xoffc     XF       X-off character
+       xon_character               xonc      XN       X-on character
+       zero_motion                 zerom     Zx       No motion for the subsequent character
+
+   KKeeyy SSttrriinnggss
+       The  ``key_''  strings  are  sent  by  specific keys.  The
+       ``key_''  descriptions  include  the  macro,  defined   in
+       curses.h,  for  the  code  returned  by the curses routine
+       getch when the key is pressed [see
+       ---------------------------------------------------------------------------
+                         Cap-   Termcap
+       Variable          name   Code     Description
+
+              _kk_ee_yy____aa_11            _kk_aa_11    _KK_11       KEY_A1, upper left of keypad
+       _kk_ee_yy____aa_33            _kk_aa_33    _KK_33       KEY_A3, upper right of keypad
+       _kk_ee_yy____bb_22            _kk_bb_22    _KK_22       KEY_B2, center of keypad
+       _kk_ee_yy____bb_aa_cc_kk_ss_pp_aa_cc_ee     _kk_bb_ss    _kk_bb       KEY_BACKSPACE, sent by backspace key
+       _kk_ee_yy____bb_ee_gg           _kk_bb_ee_gg   _@@_11       KEY_BEG, sent by beg(inning) key
+
+                                                                9
+
+()                                                             ()
+
+       _kk_ee_yy____bb_tt_aa_bb          _kk_cc_bb_tt   _kk_BB       KEY_BTAB, sent by back-tab key
+       _kk_ee_yy____cc_11            _kk_cc_11    _KK_44       KEY_C1, lower left of keypad
+       _kk_ee_yy____cc_33            _kk_cc_33    _KK_55       KEY_C3, lower right of keypad
+       _kk_ee_yy____cc_aa_nn_cc_ee_ll        _kk_cc_aa_nn   _@@_22       KEY_CANCEL, sent by cancel key
+       _kk_ee_yy____cc_aa_tt_aa_bb         _kk_tt_bb_cc   _kk_aa       KEY_CATAB, sent by clear-all-tabs key
+       _kk_ee_yy____cc_ll_ee_aa_rr         _kk_cc_ll_rr   _kk_CC       KEY_CLEAR, sent by clear-screen or
+                                         erase key
+       _kk_ee_yy____cc_ll_oo_ss_ee         _kk_cc_ll_oo   _@@_33       KEY_CLOSE, sent by close key
+       _kk_ee_yy____cc_oo_mm_mm_aa_nn_dd       _kk_cc_mm_dd   _@@_44       KEY_COMMAND, sent by cmd (command)
+                                         key
+       _kk_ee_yy____cc_oo_pp_yy          _kk_cc_pp_yy   _@@_55       KEY_COPY, sent by copy key
+       _kk_ee_yy____cc_rr_ee_aa_tt_ee        _kk_cc_rr_tt   _@@_66       KEY_CREATE, sent by create key
+       _kk_ee_yy____cc_tt_aa_bb          _kk_cc_tt_aa_bb  _kk_tt       KEY_CTAB, sent by clear-tab key
+       _kk_ee_yy____dd_cc            _kk_dd_cc_hh_11  _kk_DD       KEY_DC, sent by delete-character key
+       _kk_ee_yy____dd_ll            _kk_dd_ll_11   _kk_LL       KEY_DL, sent by delete-line key
+       _kk_ee_yy____dd_oo_ww_nn          _kk_cc_uu_dd_11  _kk_dd       KEY_DOWN, sent by terminal
+                                         down-arrow key
+       _kk_ee_yy____ee_ii_cc           _kk_rr_mm_ii_rr  _kk_MM       KEY_EIC, sent by rmir or smir in
+                                         insert mode
+       _kk_ee_yy____ee_nn_dd           _kk_ee_nn_dd   _@@_77       KEY_END, sent by end key
+       _kk_ee_yy____ee_nn_tt_ee_rr         _kk_ee_nn_tt   _@@_88       KEY_ENTER, sent by enter/send key
+       _kk_ee_yy____ee_oo_ll           _kk_ee_ll    _kk_EE       KEY_EOL, sent by clear-to-end-of-line
+                                         key
+       _kk_ee_yy____ee_oo_ss           _kk_ee_dd    _kk_SS       KEY_EOS, sent by clear-to-end-of-screen
+                                         key
+       _kk_ee_yy____ee_xx_ii_tt          _kk_ee_xx_tt   _@@_99       KEY_EXIT, sent by exit key
+       _kk_ee_yy____ff_00            _kk_ff_00    _kk_00       KEY_F(0), sent by function key f0
+       _kk_ee_yy____ff_11            _kk_ff_11    _kk_11       KEY_F(1), sent by function key f1
+       _kk_ee_yy____ff_22            _kk_ff_22    _kk_22       KEY_F(2), sent by function key f2
+       _kk_ee_yy____ff_33            _kk_ff_33    _kk_33       KEY_F(3), sent by function key f3
+       _kk_ee_yy____ff_44            _kk_ff_44    _kk_44       KEY_F(4), sent by function key f4
+       _kk_ee_yy____ff_55            _kk_ff_55    _kk_55       KEY_F(5), sent by function key f5
+       _kk_ee_yy____ff_66            _kk_ff_66    _kk_66       KEY_F(6), sent by function key f6
+       _kk_ee_yy____ff_77            _kk_ff_77    _kk_77       KEY_F(7), sent by function key f7
+       _kk_ee_yy____ff_88            _kk_ff_88    _kk_88       KEY_F(8), sent by function key f8
+       _kk_ee_yy____ff_99            _kk_ff_99    _kk_99       KEY_F(9), sent by function key f9
+       _kk_ee_yy____ff_11_00           _kk_ff_11_00   _kk_;;       KEY_F(10), sent by function key f10
+       _kk_ee_yy____ff_11_11           _kk_ff_11_11   _FF_11       KEY_F(11), sent by function key f11
+       _kk_ee_yy____ff_11_22           _kk_ff_11_22   _FF_22       KEY_F(12), sent by function key f12
+       _kk_ee_yy____ff_11_33           _kk_ff_11_33   _FF_33       KEY_F(13), sent by function key f13
+       _kk_ee_yy____ff_11_44           _kk_ff_11_44   _FF_44       KEY_F(14), sent by function key f14
+       _kk_ee_yy____ff_11_55           _kk_ff_11_55   _FF_55       KEY_F(15), sent by function key f15
+       _kk_ee_yy____ff_11_66           _kk_ff_11_66   _FF_66       KEY_F(16), sent by function key f16
+       _kk_ee_yy____ff_11_77           _kk_ff_11_77   _FF_77       KEY_F(17), sent by function key f17
+       _kk_ee_yy____ff_11_88           _kk_ff_11_88   _FF_88       KEY_F(18), sent by function key f18
+       _kk_ee_yy____ff_11_99           _kk_ff_11_99   _FF_99       KEY_F(19), sent by function key f19
+       _kk_ee_yy____ff_22_00           _kk_ff_22_00   _FF_AA       KEY_F(20), sent by function key f20
+       _kk_ee_yy____ff_22_11           _kk_ff_22_11   _FF_BB       KEY_F(21), sent by function key f21
+       _kk_ee_yy____ff_22_22           _kk_ff_22_22   _FF_CC       KEY_F(22), sent by function key f22
+       _kk_ee_yy____ff_22_33           _kk_ff_22_33   _FF_DD       KEY_F(23), sent by function key f23
+       _kk_ee_yy____ff_22_44           _kk_ff_22_44   _FF_EE       KEY_F(24), sent by function key f24
+       _kk_ee_yy____ff_22_55           _kk_ff_22_55   _FF_FF       KEY_F(25), sent by function key f25
+       _kk_ee_yy____ff_22_66           _kk_ff_22_66   _FF_GG       KEY_F(26), sent by function key f26
+
+                                                               10
+
+()                                                             ()
+
+       _kk_ee_yy____ff_22_77           _kk_ff_22_77   _FF_HH       KEY_F(27), sent by function key f27
+       _kk_ee_yy____ff_22_88           _kk_ff_22_88   _FF_II       KEY_F(28), sent by function key f28
+       _kk_ee_yy____ff_22_99           _kk_ff_22_99   _FF_JJ       KEY_F(29), sent by function key f29
+       _kk_ee_yy____ff_33_00           _kk_ff_33_00   _FF_KK       KEY_F(30), sent by function key f30
+       _kk_ee_yy____ff_33_11           _kk_ff_33_11   _FF_LL       KEY_F(31), sent by function key f31
+       _kk_ee_yy____ff_33_22           _kk_ff_33_22   _FF_MM       KEY_F(32), sent by function key f32
+       _kk_ee_yy____ff_33_33           _kk_ff_33_33   _FF_NN       KEY_F(13), sent by function key f13
+       _kk_ee_yy____ff_33_44           _kk_ff_33_44   _FF_OO       KEY_F(34), sent by function key f34
+       _kk_ee_yy____ff_33_55           _kk_ff_33_55   _FF_PP       KEY_F(35), sent by function key f35
+       _kk_ee_yy____ff_33_66           _kk_ff_33_66   _FF_NN       KEY_F(36), sent by function key f36
+       _kk_ee_yy____ff_33_77           _kk_ff_33_77   _FF_RR       KEY_F(37), sent by function key f37
+       _kk_ee_yy____ff_33_88           _kk_ff_33_88   _FF_SS       KEY_F(38), sent by function key f38
+       _kk_ee_yy____ff_33_99           _kk_ff_33_99   _FF_TT       KEY_F(39), sent by function key f39
+       _kk_ee_yy____ff_44_00           _kk_ff_44_00   _FF_UU       KEY_F(40), sent by function key f40
+       _kk_ee_yy____ff_44_11           _kk_ff_44_11   _FF_VV       KEY_F(41), sent by function key f41
+       _kk_ee_yy____ff_44_22           _kk_ff_44_22   _FF_WW       KEY_F(42), sent by function key f42
+       _kk_ee_yy____ff_44_33           _kk_ff_44_33   _FF_XX       KEY_F(43), sent by function key f43
+       _kk_ee_yy____ff_44_44           _kk_ff_44_44   _FF_YY       KEY_F(44), sent by function key f44
+       _kk_ee_yy____ff_44_55           _kk_ff_44_55   _FF_ZZ       KEY_F(45), sent by function key f45
+       _kk_ee_yy____ff_44_66           _kk_ff_44_66   _FF_aa       KEY_F(46), sent by function key f46
+       _kk_ee_yy____ff_44_77           _kk_ff_44_77   _FF_bb       KEY_F(47), sent by function key f47
+       _kk_ee_yy____ff_44_88           _kk_ff_44_88   _FF_cc       KEY_F(48), sent by function key f48
+       _kk_ee_yy____ff_44_99           _kk_ff_44_99   _FF_dd       KEY_F(49), sent by function key f49
+       _kk_ee_yy____ff_55_00           _kk_ff_55_00   _FF_ee       KEY_F(50), sent by function key f50
+       _kk_ee_yy____ff_55_11           _kk_ff_55_11   _FF_ff       KEY_F(51), sent by function key f51
+       _kk_ee_yy____ff_55_22           _kk_ff_55_22   _FF_gg       KEY_F(52), sent by function key f52
+       _kk_ee_yy____ff_55_33           _kk_ff_55_33   _FF_hh       KEY_F(53), sent by function key f53
+       _kk_ee_yy____ff_55_44           _kk_ff_55_44   _FF_ii       KEY_F(54), sent by function key f54
+       _kk_ee_yy____ff_55_55           _kk_ff_55_55   _FF_jj       KEY_F(55), sent by function key f55
+       _kk_ee_yy____ff_55_66           _kk_ff_55_66   _FF_kk       KEY_F(56), sent by function key f56
+       _kk_ee_yy____ff_55_77           _kk_ff_55_77   _FF_ll       KEY_F(57), sent by function key f57
+       _kk_ee_yy____ff_55_88           _kk_ff_55_88   _FF_mm       KEY_F(58), sent by function key f58
+       _kk_ee_yy____ff_55_99           _kk_ff_55_99   _FF_nn       KEY_F(59), sent by function key f59
+       _kk_ee_yy____ff_66_00           _kk_ff_66_00   _FF_oo       KEY_F(60), sent by function key f60
+       _kk_ee_yy____ff_66_11           _kk_ff_66_11   _FF_pp       KEY_F(61), sent by function key f61
+       _kk_ee_yy____ff_66_22           _kk_ff_66_22   _FF_qq       KEY_F(62), sent by function key f62
+       _kk_ee_yy____ff_66_33           _kk_ff_66_33   _FF_rr       KEY_F(63), sent by function key f63
+       _kk_ee_yy____ff_ii_nn_dd          _kk_ff_nn_dd   _@@_00       KEY_FIND, sent by find key
+       _kk_ee_yy____hh_ee_ll_pp          _kk_hh_ll_pp   _%%_11       KEY_HELP, sent by help key
+       _kk_ee_yy____hh_oo_mm_ee          _kk_hh_oo_mm_ee  _kk_hh       KEY_HOME, sent by home key
+       _kk_ee_yy____ii_cc            _kk_ii_cc_hh_11  _kk_II       KEY_IC, sent by ins-char/enter
+                                         ins-mode key
+       _kk_ee_yy____ii_ll            _kk_ii_ll_11   _kk_AA       KEY_IL, sent by insert-line key
+       _kk_ee_yy____ll_ee_ff_tt          _kk_cc_uu_bb_11  _kk_ll       KEY_LEFT, sent by terminal left-arrow
+                                         key
+       _kk_ee_yy____ll_ll            _kk_ll_ll    _kk_HH       KEY_LL, sent by home-down key
+       _kk_ee_yy____mm_aa_rr_kk          _kk_mm_rr_kk   _%%_22       KEY_MARK, sent by mark key
+       _kk_ee_yy____mm_ee_ss_ss_aa_gg_ee       _kk_mm_ss_gg   _%%_33       KEY_MESSAGE, sent by message key
+       _kk_ee_yy____mm_oo_uu_ss_ee         _kk_mm_oo_uu_ss  _KK_mm       Mouse event has occurred
+       _kk_ee_yy____mm_oo_vv_ee          _kk_mm_oo_vv   _%%_44       KEY_MOVE, sent by move key
+       _kk_ee_yy____nn_ee_xx_tt          _kk_nn_xx_tt   _%%_55       KEY_NEXT, sent by next-object key
+       _kk_ee_yy____nn_pp_aa_gg_ee         _kk_nn_pp    _kk_NN       KEY_NPAGE, sent by next-page key
+       _kk_ee_yy____oo_pp_ee_nn          _kk_oo_pp_nn   _%%_66       KEY_OPEN, sent by open key
+
+                                                               11
+
+()                                                             ()
+
+       _kk_ee_yy____oo_pp_tt_ii_oo_nn_ss       _kk_oo_pp_tt   _%%_77       KEY_OPTIONS, sent by options key
+       _kk_ee_yy____pp_pp_aa_gg_ee         _kk_pp_pp    _kk_PP       KEY_PPAGE, sent by previous-page key
+       _kk_ee_yy____pp_rr_ee_vv_ii_oo_uu_ss      _kk_pp_rr_vv   _%%_88       KEY_PREVIOUS, sent by previous-object
+                                         key
+       _kk_ee_yy____pp_rr_ii_nn_tt         _kk_pp_rr_tt   _%%_99       KEY_PRINT, sent by print or copy key
+       _kk_ee_yy____rr_ee_dd_oo          _kk_rr_dd_oo   _%%_00       KEY_REDO, sent by redo key
+       _kk_ee_yy____rr_ee_ff_ee_rr_ee_nn_cc_ee     _kk_rr_ee_ff   _&&_11       KEY_REFERENCE, sent by ref(erence) key
+       _kk_ee_yy____rr_ee_ff_rr_ee_ss_hh       _kk_rr_ff_rr   _&&_22       KEY_REFRESH, sent by refresh key
+       _kk_ee_yy____rr_ee_pp_ll_aa_cc_ee       _kk_rr_pp_ll   _&&_33       KEY_REPLACE, sent by replace key
+       _kk_ee_yy____rr_ee_ss_tt_aa_rr_tt       _kk_rr_ss_tt   _&&_44       KEY_RESTART, sent by restart key
+       _kk_ee_yy____rr_ee_ss_uu_mm_ee        _kk_rr_ee_ss   _&&_55       KEY_RESUME, sent by resume key
+       _kk_ee_yy____rr_ii_gg_hh_tt         _kk_cc_uu_ff_11  _kk_rr       KEY_RIGHT, sent by terminal
+                                         right-arrow key
+       _kk_ee_yy____ss_aa_vv_ee          _kk_ss_aa_vv   _&&_66       KEY_SAVE, sent by save key
+       _kk_ee_yy____ss_bb_ee_gg          _kk_BB_EE_GG   _&&_99       KEY_SBEG, sent by shifted beginning key
+       _kk_ee_yy____ss_cc_aa_nn_cc_ee_ll       _kk_CC_AA_NN   _&&_00       KEY_SCANCEL, sent by shifted cancel key
+       _kk_ee_yy____ss_cc_oo_mm_mm_aa_nn_dd      _kk_CC_MM_DD   _**_11       KEY_SCOMMAND, sent by shifted
+                                         command key
+       _kk_ee_yy____ss_cc_oo_pp_yy         _kk_CC_PP_YY   _**_22       KEY_SCOPY, sent by shifted copy key
+       _kk_ee_yy____ss_cc_rr_ee_aa_tt_ee       _kk_CC_RR_TT   _**_33       KEY_SCREATE, sent by shifted create key
+       _kk_ee_yy____ss_dd_cc           _kk_DD_CC    _**_44       KEY_SDC, sent by shifted delete-char key
+       _kk_ee_yy____ss_dd_ll           _kk_DD_LL    _**_55       KEY_SDL, sent by shifted delete-line key
+       _kk_ee_yy____ss_ee_ll_ee_cc_tt        _kk_ss_ll_tt   _**_66       KEY_SELECT, sent by select key
+       _kk_ee_yy____ss_ee_nn_dd          _kk_EE_NN_DD   _**_77       KEY_SEND, sent by shifted end key
+       _kk_ee_yy____ss_ee_oo_ll          _kk_EE_OO_LL   _**_88       KEY_SEOL, sent by shifted clear-line key
+       _kk_ee_yy____ss_ee_xx_ii_tt         _kk_EE_XX_TT   _**_99       KEY_SEXIT, sent by shifted exit key
+       _kk_ee_yy____ss_ff            _kk_ii_nn_dd   _kk_FF       KEY_SF, sent by scroll-forward/down
+                                         key
+       _kk_ee_yy____ss_ff_ii_nn_dd         _kk_FF_NN_DD   _**_00       KEY_SFIND, sent by shifted find key
+       _kk_ee_yy____ss_hh_ee_ll_pp         _kk_HH_LL_PP   _##_11       KEY_SHELP, sent by shifted help key
+       _kk_ee_yy____ss_hh_oo_mm_ee         _kk_HH_OO_MM   _##_22       KEY_SHOME, sent by shifted home key
+       _kk_ee_yy____ss_ii_cc           _kk_II_CC    _##_33       KEY_SIC, sent by shifted input key
+       _kk_ee_yy____ss_ll_ee_ff_tt         _kk_LL_FF_TT   _##_44       KEY_SLEFT, sent by shifted left-arrow
+                                         key
+       _kk_ee_yy____ss_mm_ee_ss_ss_aa_gg_ee      _kk_MM_SS_GG   _%%_aa       KEY_SMESSAGE, sent by shifted message
+                                         key
+       _kk_ee_yy____ss_mm_oo_vv_ee         _kk_MM_OO_VV   _%%_bb       KEY_SMOVE, sent by shifted move key
+       _kk_ee_yy____ss_nn_ee_xx_tt         _kk_NN_XX_TT   _%%_cc       KEY_SNEXT, sent by shifted next key
+       _kk_ee_yy____ss_oo_pp_tt_ii_oo_nn_ss      _kk_OO_PP_TT   _%%_dd       KEY_SOPTIONS, sent by shifted options
+                                         key
+       _kk_ee_yy____ss_pp_rr_ee_vv_ii_oo_uu_ss     _kk_PP_RR_VV   _%%_ee       KEY_SPREVIOUS, sent by shifted prev
+                                         key
+       _kk_ee_yy____ss_pp_rr_ii_nn_tt        _kk_PP_RR_TT   _%%_ff       KEY_SPRINT, sent by shifted print key
+       _kk_ee_yy____ss_rr            _kk_rr_ii    _kk_RR       KEY_SR, sent by scroll-backward/up
+                                         key
+       _kk_ee_yy____ss_rr_ee_dd_oo         _kk_RR_DD_OO   _%%_gg       KEY_SREDO, sent by shifted redo key
+       _kk_ee_yy____ss_rr_ee_pp_ll_aa_cc_ee      _kk_RR_PP_LL   _%%_hh       KEY_SREPLACE, sent by shifted replace
+                                         key
+       _kk_ee_yy____ss_rr_ii_gg_hh_tt        _kk_RR_II_TT   _%%_ii       KEY_SRIGHT, sent by shifted
+                                         right-arrow key
+       _kk_ee_yy____ss_rr_ss_uu_mm_ee        _kk_RR_EE_SS   _%%_jj       KEY_SRSUME, sent by shifted resume
+                                         key
+       _kk_ee_yy____ss_ss_aa_vv_ee         _kk_SS_AA_VV   _!!_11       KEY_SSAVE, sent by shifted save key
+
+                                                               12
+
+()                                                             ()
+
+       _kk_ee_yy____ss_ss_uu_ss_pp_ee_nn_dd      _kk_SS_PP_DD   _!!_22       KEY_SSUSPEND, sent by shifted suspend
+                                         key
+       _kk_ee_yy____ss_tt_aa_bb          _kk_hh_tt_ss   _kk_TT       KEY_STAB, sent by set-tab key
+       _kk_ee_yy____ss_uu_nn_dd_oo         _kk_UU_NN_DD   _!!_33       KEY_SUNDO, sent by shifted undo key
+       _kk_ee_yy____ss_uu_ss_pp_ee_nn_dd       _kk_ss_pp_dd   _&&_77       KEY_SUSPEND, sent by
+                                         suspend key
+       _kk_ee_yy____uu_nn_dd_oo          _kk_uu_nn_dd   _&&_88       KEY_UNDO, sent by undo key
+       _kk_ee_yy____uu_pp            _kk_cc_uu_uu_11  _kk_uu       KEY_UP, sent by terminal up-arrow key
+
+   SSaammppllee EEnnttrryy
+       The following entry, which describes the Wyse(R) 30 termi-
+       nal,  is  among  the  more complex entries in the terminfo
+       file as of this writing.  # The following terminfo entries
+       are    directly   from:   #              Wyse   Technology
+       #              3571 North First Street  #              San
+       Jose,   CA   95134   #   #   WYSE   wy30|wyse30|Wyse   30,
+                      acsc=0wa_h[jukslrmqnxqzttuyv]wpxv,      am,
+       bel=^G,     blink=\EG2,     bw,                   cbt=\EI,
+       civis=\E`0, clear=\E*$<80>,  cnorm=\E`1,  cols#80,  cr=^M,
+                      cub1=^H,   cud1=^J,  cuf1=^L,  cup=\E=%p1%'
+       '%+%c%p2%' '%+%c,  cuu1=^K,                 dch1=\EW$<10>,
+       dim=\EGp,              dl1=\ER$<1>,             dsl=\EF^M,
+                      ed=\Ey$<80>,        el=\Et,         fsl=^M,
+                      home=^^,     hs,     ht=^I$<1>,    hts=\E1,
+                      .ich1=\EQ,     il1=\EE$<2>,     ind=^J$<2>,
+       invis=\EG1, ip=$<2>,                is2=\E'\E(\E3\E`9^N^T,
+                      kbs=^H,   kcbt=\EI,   kcub1=^H,   kcud1=^J,
+       kcuf1=^L,  kcuu1=^K,  kdch1=\EW,                 kdl1=\ER,
+       kent=\E7,   ked=\EY,   kel=\ET,   kf1=^A@^M,    kf2=^AA^M,
+                      kf3=^AB^M, kf4=^AC^M, kf5=^AD^M, kf6=^AE^M,
+       kf7=^AF^M, kf8=^AG^M,                 kHOM=\E{,  khome=^^,
+       kich1=\EQ,    kil1=\EE,    knp=\EK,   kpp=\EJ,   krpl=\Er,
+                      lh#1,     lines#24,     ll=^^^K,      lw#8,
+                      mc0=\EP,  mc4=^T,  mc5=^R,  mir,  nel=^M^J,
+       nlab#8,                       pfx=\Ez%p1%'?'%+%c%p2%s\177,
+       pln=\Ez%p1%'/'%+%c%p2%s^M,                   prot=\EG0\E),
+                      rev=\EG4,   ri=\Ej$<3>,    rmacs=\EG0\EH^C,
+       rmir=\Er, rmln=\EA11,                rmso=\EG0, rmul=\EG0,
+                      sgr=\EG%'0'%?%p2%p6%|%t%{8}%|%;%?%p1%p3%|%p6%|%t%{4}%|%;%?%p4%t%{2}%|%;%?
+                                                       %p5%t%{64}
+       %|%;%?%p7%t%{1}%|%;%c%?%p8%t\E)%e\E(%;%?%p9%t\EH^B%e\EH^C%;,
+                      sgr0=\EG0\E(\EH^C,         smacs=\EG0\EH^B,
+       smir=\Eq, smln=\EA10, smso=\EG4,                smul=\EG8,
+       tbc=\E0,  tsl=\EF,  wsl#45, xmc#1, xon, #              The
+       mandatory  pause  used  by  flash  does  not   work   with
+       #              older  versions  of  terminfo.   If you see
+       this effect then #              unset xon and delete the /
+       from  the  delay.   #              i.e.  change $<100/> to
+       $<100>    wy30-vb|wyse30-vb|wyse    30    Visible    bell,
+                      flash=\E`8$<100/>\E`9,            use=wy30,
+       wy30n|wy30nam|wy30-nam|Wyse  30  with  no  auto   margins,
+                      am@, use=wy30, #
+
+                                                               13
+
+()                                                             ()
+
+   TTyyppeess ooff CCaappaabbiilliittiieess iinn tthhee SSaammppllee EEnnttrryy
+       The  sample entry shows the formats for the three types of
+       terminfo  capabilities  listed:  Boolean,   numeric,   and
+       string.  All capabilities specified in the terminfo source
+       file must be followed by commas, including the last  capa-
+       bility  in  the  source  file.   In terminfo source files,
+       capabilities are referenced by their capability names  (as
+       shown in the previous tables).
+
+       Boolean  capabilities  are specified simply by their comma
+       separated Capnames.
+
+       Numeric capabilities are followed by the character `#' and
+       then  a positive integer value.  (Values for numeric capa-
+       bilities may be specified in decimal, octal, or  hexadeci-
+       mal, using normal C programming language conventions.)
+
+       Finally,  string-valued  capabilities such as el (clear to
+       end of line sequence) are listed by a two- to five-charac-
+       ter capname, an `=', and a string ended by the next occur-
+       rence of a comma.  A delay in milliseconds may appear any-
+       where  in such a capability, preceded by $ and enclosed in
+       angle brackets, as in el=\EK$<3>.  Padding characters  are
+       supplied  by tput.  The delay can be any of the following:
+       a number, a number followed by an asterisk, such as 5*,  a
+       number  followed  by a slash, such as 5/, or a number fol-
+       lowed by both, such as 5*/.  A * shows  that  the  padding
+       required  is  proportional to the number of lines affected
+       by the  operation,  and  the  amount  given  is  the  per-
+       affected-unit  padding  required.   (In the case of insert
+       characters, the  factor  is  still  the  number  of  lines
+       affected.   This  is always 1 unless the device has in and
+       the software uses it.)  When a * is specified, it is some-
+       times  useful to give a delay of the form 3.5 to specify a
+       delay per unit to tenths of milliseconds.  (Only one deci-
+       mal place is allowed.)
+
+       A  `/'  indicates  that  the  padding  is mandatory.  If a
+       device has xon defined, the padding information  is  advi-
+       sory  and will only be used for cost estimates or when the
+       device is in raw mode.  Mandatory padding will  be  trans-
+       mitted  regardless  of  the  setting  of  xon.  If padding
+       (whether advisory or mandatory) is specified  for  bel  or
+       flash,  however,  it  will  always  be used, regardless of
+       whether xon is specified.
+
+       terminfo offers notation for encoding special  characters.
+       Both  \E  and  \e map to an ESCAPE character, ^x maps to a
+       control x for any appropriate x, and the sequences \n, \l,
+       \r,  \t,  \b, \f, and \s give a newline, linefeed, return,
+       tab, backspace, formfeed, and space, respectively.   Other
+       escapes  include:  \^ for caret (^); \\ for backslash (\);
+       \, for comma (,); \: for colon (:); and \0 for null.   (\0
+       will  actually  produce  \200,  which does not terminate a
+
+                                                               14
+
+()                                                             ()
+
+       string but behaves as a null character  on  most  devices,
+       providing  CS7 is specified.  [See Finally, characters may
+       be given as three octal  digits  after  a  backslash  (for
+       example, \123).
+
+       Sometimes  individual  capabilities must be commented out.
+       To do this, put a period before the capability name.   For
+       example,  see  the  second ind in the example above.  Note
+       that capabilities are defined  in  a  left-to-right  order
+       and,  therefore,  a prior definition will override a later
+       definition.
+
+   PPrreeppaarriinngg DDeessccrriippttiioonnss
+       The most effective way to prepare a device description  is
+       by  imitating  the description of a similar device in ter-
+       minfo and building up a description gradually, using  par-
+       tial  descriptions with vi to check that they are correct.
+       Be aware that a very unusual device may  expose  deficien-
+       cies in the ability of the terminfo file to describe it or
+       the inability of vi to work with that device.  To  test  a
+       new  device description, set the environment variable TER-
+       MINFO to the pathname of a directory containing  the  com-
+       piled  description  you  are  working on and programs will
+       look there rather than in /usr/share/lib/terminfo.  To get
+       the  padding  for insert-line correct (if the device manu-
+       facturer did not document it) a severe test is to  comment
+       out xon, edit a large file at 9600 baud with vi, delete 16
+       or so lines from the middle of the screen, and then  press
+       the  u  key  several  times  quickly.   If  the display is
+       corrupted, more padding is usually needed.  A similar test
+       can be used for insert-character.
+
+   SSeeccttiioonn 11--11:: BBaassiicc CCaappaabbiilliittiieess
+       The number of columns on each line for the device is given
+       by the cols numeric  capability.   If  the  device  has  a
+       screen, then the number of lines on the screen is given by
+       the lines capability.  If the device wraps around  to  the
+       beginning  of the next line when it reaches the right mar-
+       gin, then it should have the am capability.  If the termi-
+       nal  can  clear its screen, leaving the cursor in the home
+       position, then this is given by the clear string  capabil-
+       ity.   If the terminal overstrikes (rather than clearing a
+       position when a character is struck over) then  it  should
+       have  the os capability.  If the device is a printing ter-
+       minal, with no soft copy unit, specify both hc and os.  If
+       there  is a way to move the cursor to the left edge of the
+       current row, specify this as cr.  (Normally this  will  be
+       carriage return, control M.)  If there is a way to produce
+       an audible signal (such as a bell or a beep),  specify  it
+       as  bel.   If, like most devices, the device uses the xon-
+       xoff flow-control protocol, specify xon.
+
+       If there is a way to move the cursor one position  to  the
+       left  (such as backspace), that capability should be given
+
+                                                               15
+
+()                                                             ()
+
+       as cub1.  Similarly, sequences to move to the  right,  up,
+       and  down should be given as cuf1, cuu1, and cud1, respec-
+       tively.  These local cursor motions  must  not  alter  the
+       text  they  pass over; for example, you would not normally
+       use ``cuf1=\s'' because the space would erase the  charac-
+       ter moved over.
+
+       A  very  important  point  here  is  that the local cursor
+       motions encoded in terminfo are undefined at the left  and
+       top  edges  of  a  screen terminal.  Programs should never
+       attempt to backspace around the left edge,  unless  bw  is
+       specified,  and  should never attempt to go up locally off
+       the top.  To scroll text up, a program goes to the  bottom
+       left  corner  of  the  screen  and  sends  the ind (index)
+       string.
+
+       To scroll text down, a program goes to the top left corner
+       of  the  screen  and  sends the ri (reverse index) string.
+       The strings ind and ri are undefined  when  not  on  their
+       respective corners of the screen.
+
+       Parameterized versions of the scrolling sequences are indn
+       and rin.  These versions have the same  semantics  as  ind
+       and ri, except that they take one parameter and scroll the
+       number of lines specified by  that  parameter.   They  are
+       also  undefined  except  at  the  appropriate  edge of the
+       screen.
+
+       The am capability tells whether the cursor sticks  at  the
+       right  edge  of  the  screen when text is output, but this
+       does not necessarily apply to a cuf1 from the last column.
+       Backward motion from the left edge of the screen is possi-
+       ble only when bw is specified.  In this  case,  cub1  will
+       move  to the right edge of the previous row.  If bw is not
+       given, the effect is undefined.  This is useful for  draw-
+       ing  a box around the edge of the screen, for example.  If
+       the device has switch  selectable  automatic  margins,  am
+       should  be specified in the terminfo source file.  In this
+       case, initialization strings should turn on  this  option,
+       if  possible.   If  the device has a command that moves to
+       the first column of the next line,  that  command  can  be
+       given as nel (newline).  It does not matter if the command
+       clears the remainder of the current line, so if the device
+       has no cr and lf it may still be possible to craft a work-
+       ing nel out of one or both of them.
+
+       These capabilities suffice to describe hardcopy and screen
+       terminals.   Thus  the  AT&T  5320  hardcopy  terminal  is
+       described as follows:
+          5320|att5320|AT&T     5320      hardcopy      terminal,
+                         am,  hc,  os,                  cols#132,
+                          bel=^G,   cr=\r,   cub1=\b,    cnd1=\n,
+                          dch1=\E[P,   dl1=\E[M,
+       ind=\n,
+
+                                                               16
+
+()                                                             ()
+
+       while the Lear Siegler ADM-3 is described as
+          adm3|lsi adm3,
+          am, bel=^G, clear=^Z, cols#80, cr=^M, cub1=^H,
+          cud1=^J, ind=^J, lines#24,
+
+   SSeeccttiioonn 11--22:: PPaarraammeetteerriizzeedd SSttrriinnggss
+       Cursor addressing and other strings  requiring  parameters
+       are  described  by a parameterized string capability, with
+       printf-like escapes (%x) in it.  For example,  to  address
+       the cursor, the cup capability is given, using two parame-
+       ters: the row and column to address to.  (Rows and columns
+       are  numbered  from  zero and refer to the physical screen
+       visible to the user, not to any unseen  memory.)   If  the
+       terminal  has  memory relative cursor addressing, that can
+       be indicated by mrcup.
+
+       The parameter mechanism uses a stack and special  %  codes
+       to  manipulate  the  stack in the manner of Reverse Polish
+       Notation (postfix).  Typically a sequence will push one of
+       the  parameters  onto  the stack and then print it in some
+       format.  Often  more  complex  operations  are  necessary.
+       Operations  are  in  postfix form with the operands in the
+       usual order.  That is, to subtract 5 from the first param-
+       eter, one would use %p1%{5}%-.
+
+       The  %  encodings have the following meanings: outputs `%'
+       as in printf, flags are [-+#] and space print pop gives %c
+       push  ith  parm  set  dynamic  variable  [a-z]  to pop get
+       dynamic variable [a-z] and push it set static variable [a-
+       z]  to pop get static variable [a-z] and push it push char
+       constant c  push  decimal  constant  nn  push  strlen(pop)
+       arithmetic (%m is mod): push(pop integer2 op pop integer1)
+       where integer1 is the top of  the  stack  bit  operations:
+       push(pop  integer2  op  pop  integer1) logical operations:
+       push(pop integer2 op  pop  integer1)  logical  operations:
+       and,  or  unary  operations: push(op pop) (for ANSI termi-
+       nals) add 1 to first parm, if one parm present,  or  first
+       two  parms, if more than one parm present if-then-else; %e
+       elsepart is optional; else-if's are possible ala Algol 68:
+       %? c1 %t b1 %e c2 %t b2 %e c3 %t b3 %e c4 %t b4 %e b5%;
+
+       ci are conditions, bi are bodies.
+
+       If  the ``-'' flag is used with ``%[doxXs]'', then a colon
+       (:) must be placed between the ``%'' and the ``-'' to dif-
+       ferentiate  the  flag from the binary ``%-'' operator, for
+       example, ``%:-16.16s''.
+
+       Consider the Hewlett-Packard 2645, which, to get to row  3
+       and  column  12,  needs to be sent \E&a12c03Y padded for 6
+       milliseconds.  Note that the order of the rows and columns
+       is  inverted  here,  and that the row and column are zero-
+       padded  as  two  digits.   Thus  its  cup  capability  is:
+       cup=\E&a%p2%2.2dc%p1%2.2dY$<6>
+
+                                                               17
+
+()                                                             ()
+
+       The  Micro-Term  ACT-IV  needs  the current row and column
+       sent preceded by a ^T, with  the  row  and  column  simply
+       encoded in binary, ``cup=^T%p1%c%p2%c''.  Devices that use
+       ``%c'' need to be able to backspace the cursor (cub1), and
+       to move the cursor up one line on the screen (cuu1).  This
+       is necessary because it is not always safe to transmit \n,
+       ^D,  and  \r,  as  the  system may change or discard them.
+       (The library routines dealing with terminfo set tty  modes
+       so  that  tabs  are never expanded, so \t is safe to send.
+       This turns out to be essential for the Ann Arbor 4080.)
+
+       A final example is the LSI ADM-3a, which uses row and col-
+       umn     offset     by     a    blank    character,    thus
+       ``cup=\E=%p1%'\s'%+%c%p2%'\s'%+%c''.     After     sending
+       ``\E='', this pushes the first parameter, pushes the ASCII
+       value for a space (32), adds them (pushing the sum on  the
+       stack  in  place  of the two previous values), and outputs
+       that value as a character.  Then the same is done for  the
+       second  parameter.   More  complex  arithmetic is possible
+       using the stack.
+
+   SSeeccttiioonn 11--33:: CCuurrssoorr MMoottiioonnss
+       If the terminal has a fast way to home the cursor (to very
+       upper  left  corner  of  screen) then this can be given as
+       home; similarly a fast way of getting to the  lower  left-
+       hand  corner can be given as ll; this may involve going up
+       with cuu1 from the home position,  but  a  program  should
+       never  do this itself (unless ll does) because it can make
+       no assumption about the effect of moving up from the  home
+       position.   Note  that  the  home  position is the same as
+       addressing to (0,0): to the top left corner of the screen,
+       not of memory.  (Thus, the \EH sequence on Hewlett-Packard
+       terminals cannot be used for home without losing  some  of
+       the other features on the terminal.)
+
+       If  the  device has row or column absolute-cursor address-
+       ing, these can be given as single  parameter  capabilities
+       hpa (horizontal position absolute) and vpa (vertical posi-
+       tion absolute).  Sometimes these are shorter than the more
+       general  two-parameter  sequence  (as  with  the  Hewlett-
+       Packard 2645) and can be used in preference  to  cup.   If
+       there are parameterized local motions (for example, move n
+       spaces to the right) these can be given as cud, cub,  cuf,
+       and cuu with a single parameter indicating how many spaces
+       to move.  These are primarily useful if  the  device  does
+       not have cup, such as the Tektronix 4025.
+
+       If the device needs to be in a special mode when running a
+       program that uses these capabilities, the codes  to  enter
+       and  exit this mode can be given as smcup and rmcup.  This
+       arises, for example, from terminals, such as the  Concept,
+       with more than one page of memory.  If the device has only
+       memory relative cursor addressing and not screen  relative
+       cursor addressing, a one screen-sized window must be fixed
+
+                                                               18
+
+()                                                             ()
+
+       into the device for cursor addressing  to  work  properly.
+       This is also used for the Tektronix 4025, where smcup sets
+       the command character to be the one used by terminfo.   If
+       the  smcup  sequence  will not restore the screen after an
+       rmcup sequence is output (to the state prior to outputting
+       rmcup), specify nrrmc.
+
+   SSeeccttiioonn 11--44:: AArreeaa CClleeaarrss
+       If the terminal can clear from the current position to the
+       end of the line, leaving the  cursor  where  it  is,  this
+       should be given as el.  If the terminal can clear from the
+       beginning of the line to the current  position  inclusive,
+       leaving  the  cursor  where it is, this should be given as
+       el1.  If the terminal can clear from the current  position
+       to  the  end  of the display, then this should be given as
+       ed.  ed is only defined from the first column of  a  line.
+       (Thus,  it can be simulated by a request to delete a large
+       number of lines, if a true ed is not available.)
+
+   SSeeccttiioonn 11--55:: IInnsseerrtt//DDeelleettee LLiinnee
+       If the terminal can open a new blank line before the  line
+       where  the cursor is, this should be given as il1; this is
+       done only from the first position of a line.   The  cursor
+       must then appear on the newly blank line.  If the terminal
+       can delete the line which the  cursor  is  on,  then  this
+       should  be  given as dl1; this is done only from the first
+       position on the line to be deleted.  Versions of  il1  and
+       dl1  which  take  a  single parameter and insert or delete
+       that many lines can be given as il and dl.
+
+       If the  terminal  has  a  settable  destructive  scrolling
+       region  (like  the  VT100)  the command to set this can be
+       described with the csr capability, which takes two parame-
+       ters:  the  top  and bottom lines of the scrolling region.
+       The cursor position is, alas, undefined after  using  this
+       command.   It  is  possible to get the effect of insert or
+       delete line using this command -- the sc and rc (save  and
+       restore cursor) commands are also useful.  Inserting lines
+       at the top or bottom of the screen can also be done  using
+       ri  or  ind on many terminals without a true insert/delete
+       line, and is often faster even  on  terminals  with  those
+       features.
+
+       To  determine whether a terminal has destructive scrolling
+       regions or non-destructive  scrolling  regions,  create  a
+       scrolling  region  in the middle of the screen, place data
+       on the bottom line of the scrolling region, move the  cur-
+       sor  to  the  top  line  of the scrolling region, and do a
+       reverse index (ri) followed by  a  delete  line  (dl1)  or
+       index  (ind).  If the data that was originally on the bot-
+       tom line of the scrolling region  was  restored  into  the
+       scrolling  region by the dl1 or ind, then the terminal has
+       non-destructive  scrolling  regions.   Otherwise,  it  has
+       destructive  scrolling regions.  Do not specify csr if the
+
+                                                               19
+
+()                                                             ()
+
+       terminal has  non-destructive  scrolling  regions,  unless
+       ind,  ri,  indn, rin, dl, and dl1 all simulate destructive
+       scrolling.
+
+       If the terminal has the ability to define a window as part
+       of  memory,  which all commands affect, it should be given
+       as the parameterized string wind.  The four parameters are
+       the  starting  and ending lines in memory and the starting
+       and ending columns in memory, in that order.
+
+       If the terminal can retain display memory above, then  the
+       da  capability  should  be given; if display memory can be
+       retained below, then db should be given.   These  indicate
+       that  deleting a line or scrolling a full screen may bring
+       non-blank lines up from below or that scrolling back  with
+       ri may bring down non-blank lines.
+
+   SSeeccttiioonn 11--66:: IInnsseerrtt//DDeelleettee CChhaarraacctteerr
+       There  are  two  basic kinds of intelligent terminals with
+       respect to insert/delete character operations which can be
+       described  using  terminfo.  The most common insert/delete
+       character operations affect only  the  characters  on  the
+       current  line and shift characters off the end of the line
+       rigidly.  Other terminals, such as the Concept 100 and the
+       Perkin  Elmer  Owl,  make  a distinction between typed and
+       untyped blanks on the screen, shifting upon an  insert  or
+       delete  only  to  an  untyped blank on the screen which is
+       either eliminated, or expanded to two untyped blanks.  You
+       can  determine  the  kind of terminal you have by clearing
+       the screen  and  then  typing  text  separated  by  cursor
+       motions.   Type  ``abc    def'' using local cursor motions
+       (not spaces) between the abc and the def.   Then  position
+       the  cursor  before the abc and put the terminal in insert
+       mode.  If typing characters causes the rest of the line to
+       shift  rigidly  and  characters  to fall off the end, then
+       your terminal does  not  distinguish  between  blanks  and
+       untyped  positions.   If  the  abc  shifts over to the def
+       which then move together around the  end  of  the  current
+       line  and onto the next as you insert, you have the second
+       type of terminal, and should give the capability in, which
+       stands for ``insert null.''  While these are two logically
+       separate attributes  (one  line  versus  multiline  insert
+       mode,  and  special  treatment  of untyped spaces) we have
+       seen no terminals whose insert mode  cannot  be  described
+       with the single attribute.
+
+       terminfo  can  describe both terminals that have an insert
+       mode and terminals which send a simple sequence to open  a
+       blank  position  on  the  current  line.  Give as smir the
+       sequence to get  into  insert  mode.   Give  as  rmir  the
+       sequence  to  leave  insert  mode.   Now  give as ich1 any
+       sequence needed to be sent just before sending the charac-
+       ter  to  be  inserted.   Most terminals with a true insert
+       mode will not give ich1; terminals that send a sequence to
+
+                                                               20
+
+()                                                             ()
+
+       open a screen position should give it here.  (If your ter-
+       minal has both, insert mode is usually preferable to ich1.
+       Do  not  give  both  unless the terminal actually requires
+       both to be used in combination.)  If  post-insert  padding
+       is  needed,  give this as a number of milliseconds padding
+       in ip (a string option).  Any  other  sequence  which  may
+       need  to be sent after an insert of a single character may
+       also be given in ip.  If your terminal needs  both  to  be
+       placed into an `insert mode' and a special code to precede
+       each inserted character, then both smir/rmir and ich1  can
+       be given, and both will be used.  The ich capability, with
+       one parameter, n, will insert n blanks.
+
+       If padding is necessary between characters typed while not
+       in  insert  mode,  give  this  as a number of milliseconds
+       padding in rmp.
+
+       It is occasionally  necessary  to  move  around  while  in
+       insert  mode  to  delete  characters on the same line (for
+       example, if there is a tab after the insertion  position).
+       If  your  terminal  allows motion while in insert mode you
+       can give the capability mir to speed up inserting in  this
+       case.   Omitting  mir will affect only speed.  Some termi-
+       nals (notably Datamedia's) must not have  mir  because  of
+       the way their insert mode works.
+
+       Finally,  you  can specify dch1 to delete a single charac-
+       ter, dch with one parameter, n, to  delete  n  characters,
+       and  delete mode by giving smdc and rmdc to enter and exit
+       delete mode (any mode the terminal needs to be  placed  in
+       for dch1 to work).
+
+       A  command to erase n characters (equivalent to outputting
+       n blanks without moving the cursor) can be  given  as  ech
+       with one parameter.
+
+   SSeeccttiioonn 11--77:: HHiigghhlliigghhttiinngg,, UUnnddeerrlliinniinngg,, aanndd VViissiibbllee BBeellllss
+       Your  device  may  have  one  or  more  kinds  of  display
+       attributes that allow you to highlight selected characters
+       when  they  appear  on  the screen.  The following display
+       modes (shown with the names by which they are set) may  be
+       available: a blinking screen (blink), bold or extra-bright
+       characters (bold), dim or  half-bright  characters  (dim),
+       blanking or invisible text (invis), protected text (prot),
+       a reverse-video screen (rev), and an  alternate  character
+       set  (smacs to enter this mode and rmacs to exit it).  (If
+       a command is necessary  before  you  can  enter  alternate
+       character set mode, give the sequence in enacs or ``enable
+       alternate-character-set'' mode.)  Turning on any of  these
+       modes singly may or may not turn off other modes.
+
+       sgr0  should  be  used  to  turn off all video enhancement
+       capabilities.  It should always be  specified  because  it
+       represents  the  only  way  to turn off some capabilities,
+
+                                                               21
+
+()                                                             ()
+
+       such as dim or blink.
+
+       You should choose one display method as standout mode [see
+       and  use it to highlight error messages and other kinds of
+       text to which you want to draw attention.  Choose  a  form
+       of  display that provides strong contrast but that is easy
+       on the eyes.  (We recommend reverse-video plus half-bright
+       or  reverse-video alone.)  The sequences to enter and exit
+       standout mode are given as smso  and  rmso,  respectively.
+       If  the code to change into or out of standout mode leaves
+       one or even two blank spaces on the screen, as the TVI 912
+       and  Teleray 1061 do, then xmc should be given to tell how
+       many spaces are left.
+
+       Sequences to begin underlining and end underlining can  be
+       specified  as smul and rmul , respectively.  If the device
+       has a sequence to underline the current character  and  to
+       move the cursor one space to the right (such as the Micro-
+       Term MIME), this sequence can be specified as uc.
+
+       Terminals with the ``magic cookie'' glitch  (xmc)  deposit
+       special   ``cookies''   when   they  receive  mode-setting
+       sequences, which affect the display algorithm rather  than
+       having  extra  bits  for  each character.  Some terminals,
+       such as  the  Hewlett-Packard  2621,  automatically  leave
+       standout  mode  when they move to a new line or the cursor
+       is addressed.  Programs using standout  mode  should  exit
+       standout  mode  before moving the cursor or sending a new-
+       line, unless the msgr capability,  asserting  that  it  is
+       safe to move in standout mode, is present.
+
+       If  the terminal has a way of flashing the screen to indi-
+       cate an error quietly (a bell replacement), then this  can
+       be  given  as  flash; it must not move the cursor.  A good
+       flash can be done by  changing  the  screen  into  reverse
+       video,  pad  for  200 ms, then return the screen to normal
+       video.
+
+       If the cursor needs to be made more  visible  than  normal
+       when it is not on the bottom line (to make, for example, a
+       non-blinking underline into an easier  to  find  block  or
+       blinking  underline)  give  this  sequence  as cvvis.  The
+       boolean chts should also be given.  If there is a  way  to
+       make  the cursor completely invisible, give that as civis.
+       The capability cnorm should  be  given  which  undoes  the
+       effects of either of these modes.
+
+       If  your terminal generates underlined characters by using
+       the underline character (with no special sequences needed)
+       even  though  it does not otherwise overstrike characters,
+       then you should specify the capability ul.  For devices on
+       which a character overstriking another leaves both charac-
+       ters on the screen, specify the capability os.   If  over-
+       strikes  are  erasable  with  a blank, then this should be
+
+                                                               22
+
+()                                                             ()
+
+       indicated by specifying eo.
+
+       If there is a sequence to set  arbitrary  combinations  of
+       modes,  this should be given as sgr (set attributes), tak-
+       ing nine parameters.  Each parameter is either 0  or  non-
+       zero,  as  the  corresponding attribute is on or off.  The
+       nine  parameters  are,  in  order:  standout,   underline,
+       reverse, blink, dim, bold, blank, protect, alternate char-
+       acter set.  Not all modes need to  be  supported  by  sgr;
+       only those for which corresponding separate attribute com-
+       mands exist  should  be  supported.   For  example,  let's
+       assume  that  the terminal in question needs the following
+       escape sequences to turn on various modes.
+       ----------------------------------------------
+       tparm
+       parameter     attribute      escape sequence
+
+                            none           _\\_EE_[[_00_mm
+       _pp_11            standout       _\\_EE_[[_00_;;_44_;;_77_mm
+       _pp_22            underline      _\\_EE_[[_00_;;_33_mm
+       _pp_33            reverse        _\\_EE_[[_00_;;_44_mm
+       _pp_44            blink          _\\_EE_[[_00_;;_55_mm
+       _pp_55            dim            _\\_EE_[[_00_;;_77_mm
+       _pp_66            bold           _\\_EE_[[_00_;;_33_;;_44_mm
+       _pp_77            invis          _\\_EE_[[_00_;;_88_mm
+       _pp_88            protect        _nn_oo_tt _aa_vv_aa_ii_ll_aa_bb_ll_ee
+       _pp_99            altcharset     _^^_OO _((_oo_ff_ff_)) _^^_NN _((_oo_nn_))
+
+       Note that each escape sequence requires a 0  to  turn  off
+       other  modes  before  turning  on its own mode.  Also note
+       that, as suggested above, standout is set  up  to  be  the
+       combination of reverse and dim.  Also, because this termi-
+       nal has no bold mode, bold is set up as the combination of
+       reverse  and  underline.   In  addition, to allow combina-
+       tions, such as underline+blink, the sequence to use  would
+       be  \E[0;3;5m.   The  terminal  doesn't have protect mode,
+       either, but that cannot be simulated in any way, so p8  is
+       ignored.   The  altcharset mode is different in that it is
+       either ^O or ^N, depending on whether it is off or on.  If
+       all  modes  were  to  be  turned on, the sequence would be
+       \E[0;3;4;5;7;8m^N.
+
+       Now look at when  different  sequences  are  output.   For
+       example,  ;3  is output when either p2 or p6 is true, that
+       is, if either underline  or  bold  modes  are  turned  on.
+       Writing  out  the above sequences, along with their depen-
+       dencies, gives the following:
+       ---------------------------------------------------------
+       sequence     when to output        terminfo translation
+
+              \E[0         always                _\\_EE_[[_00
+       ;3           if p2 or p6           _%%_??_%%_pp_22_%%_pp_66_%%_||_%%_tt_;;_33_%%_;;
+       ;4           if p1 or p3 or p6     _%%_??_%%_pp_11_%%_pp_33_%%_||_%%_pp_66_%%_||_%%_tt_;;_44_%%_;;
+
+                                                               23
+
+()                                                             ()
+
+       ;5           if p4                 _%%_??_%%_pp_44_%%_tt_;;_55_%%_;;
+       ;7           if p1 or p5           _%%_??_%%_pp_11_%%_pp_55_%%_||_%%_tt_;;_77_%%_;;
+       ;8           if p7                 _%%_??_%%_pp_77_%%_tt_;;_88_%%_;;
+       m            always                _mm
+       ^N or ^O     if p9 ^N, else ^O     _%%_??_%%_pp_99_%%_tt_^^_NN_%%_ee_^^_OO_%%_;;
+
+       Putting this all together into  the  sgr  sequence  gives:
+       sgr=\E[0%?%p2%p6%|%t;3%;%?%p1%p3%|%p6%
+               |%t;4%;%?%p5%t;5%;%?%p1%p5%
+               |%t;7%;%?%p7%t;8%;m%?%p9%t^N%e^O%;,  Remember that
+       sgr and sgr0 must always be specified.
+
+   SSeeccttiioonn 11--88:: KKeeyyppaadd
+       If the device has a keypad that transmits  sequences  when
+       the  keys are pressed, this information can also be speci-
+       fied.  Note that it is  not  possible  to  handle  devices
+       where  the  keypad  only works in local (this applies, for
+       example, to the unshifted Hewlett-Packard 2621 keys).   If
+       the keypad can be set to transmit or not transmit, specify
+       these sequences as smkx and rmkx.  Otherwise the keypad is
+       assumed to always transmit.
+
+       The  sequences  sent  by  the  left arrow, right arrow, up
+       arrow, down arrow, and home keys can be  given  as  kcub1,
+       kcuf1,  kcuu1,  kcud1,  and khome, respectively.  If there
+       are function keys such as f0, f1, ..., f63, the  sequences
+       they send can be specified as kf0, kf1, ..., kf63.  If the
+       first 11 keys  have  labels  other  than  the  default  f0
+       through  f10,  the  labels  can be given as lf0, lf1, ...,
+       lf10.  The codes transmitted by certain other special keys
+       can  be  given:  kll  (home  down),  kbs (backspace), ktbc
+       (clear all tabs), kctab (clear the tab stop in  this  col-
+       umn),  kclr  (clear  screen  or  erase key), kdch1 (delete
+       character), kdl1 (delete line), krmir (exit insert  mode),
+       kel  (clear to end of line), ked (clear to end of screen),
+       kich1  (insert  character  or  enter  insert  mode),  kil1
+       (insert  line), knp (next page), kpp (previous page), kind
+       (scroll forward/down), kri (scroll backward/up), khts (set
+       a  tab  stop  in this column).  In addition, if the keypad
+       has a 3 by 3 array of keys including the four arrow  keys,
+       the  other  five  keys can be given as ka1, ka3, kb2, kc1,
+       and kc3.  These keys are useful when the effects of a 3 by
+       3  directional  pad  are needed.  Further keys are defined
+       above in the capabilities list.
+
+       Strings to program  function  keys  can  be  specified  as
+       pfkey,  pfloc, and pfx.  A string to program screen labels
+       should be specified as pln.  Each of these  strings  takes
+       two  parameters: a function key identifier and a string to
+       program it with.  pfkey causes pressing the given  key  to
+       be  the  same  as  the user typing the given string; pfloc
+       causes the string to be executed by the terminal in  local
+       mode;  and  pfx causes the string to be transmitted to the
+       computer.  The capabilities nlab, lw  and  lh  define  the
+
+                                                               24
+
+()                                                             ()
+
+       number  of  programmable screen labels and their width and
+       height.  If there are commands to turn the labels  on  and
+       off, give them in smln
+       and  rmln.   smln is normally output after one or more pln
+       sequences to make sure that the change becomes visible.
+
+   SSeeccttiioonn 11--99:: TTaabbss aanndd IInniittiiaalliizzaattiioonn
+       If the device has hardware tabs, the command to advance to
+       the  next tab stop can be given as ht (usually control I).
+       A ``backtab'' command that moves leftward to the next  tab
+       stop  can  be  given  as cbt.  By convention, if tty modes
+       show that tabs are being expanded by the  computer  rather
+       than  being sent to the device, programs should not use ht
+       or cbt (even if they are present) because the user may not
+       have  the tab stops properly set.  If the device has hard-
+       ware tabs that are initially set every n spaces  when  the
+       device  is  powered up, the numeric parameter it is given,
+       showing the number of spaces the tabs are set to.  This is
+       normally  used  by  tput init [see to determine whether to
+       set the mode for hardware tab expansion and whether to set
+       the  tab  stops.   If the device has tab stops that can be
+       saved in nonvolatile memory, the terminfo description  can
+       assume  that they are properly set.  If there are commands
+       to set and clear tab stops,  they  can  be  given  as  tbc
+       (clear  all tab stops) and hts (set a tab stop in the cur-
+       rent column of every row).
+
+       Other capabilities include: is1, is2, and is3, initializa-
+       tion  strings  for  the  device; iprog, the path name of a
+       program to be run to initialize the device;  and  if,  the
+       name  of  a  file  containing long initialization strings.
+       These strings are expected to set the  device  into  modes
+       consistent  with  the  rest  of  the terminfo description.
+       They must be sent to the device each time the user logs in
+       and  be  output  in  the  following order: run the program
+       iprog; output is1; output is2; set the margins using  mgc,
+       smgl  and  smgr; set the tabs using tbc and hts; print the
+       file if; and finally output is3.   This  is  usually  done
+       using the init option of tput.
+
+       Most  initialization  is  done  with  is2.  Special device
+       modes can be set up without duplicating strings by putting
+       the  common  sequences in is2 and special cases in is1 and
+       is3.  Sequences that do a reset  from  a  totally  unknown
+       state  can be given as rs1, rs2, rf, and rs3, analogous to
+       is1, is2, is3, and if.  (The method using  files,  if  and
+       rf,  is used for a few terminals, from /usr/share/lib/tab-
+       set/*; however, the recommended method is to use the  ini-
+       tialization  and reset strings.)  These strings are output
+       by tput reset, which is used when the terminal gets into a
+       wedged  state.   Commands are normally placed in rs1, rs2,
+       rs3, and rf only if they produce annoying effects  on  the
+       screen  and  are not necessary when logging in.  For exam-
+       ple, the command to set a  terminal  into  80-column  mode
+
+                                                               25
+
+()                                                             ()
+
+       would  normally  be  part of is2, but on some terminals it
+       causes an annoying glitch on the screen and  is  not  nor-
+       mally  needed  because  the terminal is usually already in
+       80-column mode.
+
+       If a more complex sequence is needed to set the tabs  than
+       can be described by using tbc and hts, the sequence can be
+       placed in is2 or if.
+
+       Any margin can be cleared with mgc.  (For instructions  on
+       how  to  specify  commands  to  set and clear margins, see
+       ``Margins'' below under ``PRINTER CAPABILITIES.'')
+
+   SSeeccttiioonn 11--1100:: DDeellaayyss
+       Certain capabilities control padding in  the  tty  driver.
+       These are primarily needed by hard-copy terminals, and are
+       used by tput init to set tty modes appropriately.   Delays
+       embedded  in  the  capabilities cr, ind, cub1, ff, and tab
+       can be used to set the appropriate delay bits to be set in
+       the tty driver.  If pb (padding baud rate) is given, these
+       values can be ignored at baud rates below the value of pb.
+
+   SSeeccttiioonn 11--1111:: SSttaattuuss LLiinneess
+       If  the  terminal has an extra ``status line'' that is not
+       normally used by software, this fact can be indicated.  If
+       the  status line is viewed as an extra line below the bot-
+       tom line, into which one can cursor address normally (such
+       as  the  Heathkit  h19's  25th line, or the 24th line of a
+       VT100 which is set to a  23-line  scrolling  region),  the
+       capability hs should be given.  Special strings that go to
+       a given column of the status line and return from the sta-
+       tus line can be given as tsl and fsl.  (fsl must leave the
+       cursor position in the same place it was before  tsl.   If
+       necessary,  the  sc  and rc strings can be included in tsl
+       and fsl to get this effect.)  The capability tsl takes one
+       parameter,  which  is the column number of the status line
+       the cursor is to be moved to.
+
+       If escape sequences and other special  commands,  such  as
+       tab,  work while in the status line, the flag eslok can be
+       given.  A string which turns off the status line (or  oth-
+       erwise  erases  its  contents) should be given as dsl.  If
+       the terminal has commands to save and restore the position
+       of the cursor, give them as sc and rc.  The status line is
+       normally assumed to be the same width as the rest  of  the
+       screen,  for  example, cols.  If the status line is a dif-
+       ferent width (possibly because the terminal does not allow
+       an entire line to be loaded) the width, in columns, can be
+       indicated with the numeric parameter wsl.
+
+   SSeeccttiioonn 11--1122:: LLiinnee GGrraapphhiiccss
+       If the device has a line drawing alternate character  set,
+       the  mapping of glyph to character would be given in acsc.
+       The definition of this string is based  on  the  alternate
+
+                                                               26
+
+()                                                             ()
+
+       character  set  used  in  the DEC VT100 terminal, extended
+       slightly with some characters from the AT&T 4410v1  termi-
+       nal.
+
+       ------------------------------------
+                                 vt100+
+       glyph name                character
+
+              arrow pointing right      _++
+       arrow pointing left       _,,
+       arrow pointing down       _..
+       solid square block        _00
+       lantern symbol            _II
+       arrow pointing up         _--
+       diamond                   _``
+       checker board (stipple)   _aa
+       degree symbol             _ff
+       plus/minus                _gg
+       board of squares          _hh
+       lower right corner        _jj
+       upper right corner        _kk
+       upper left corner         _ll
+       lower left corner         _mm
+       plus                      _nn
+       scan line 1               _oo
+       horizontal line           _qq
+       scan line 9               _ss
+       left tee (|-)             _tt
+       right tee (-|)            _uu
+       bottom tee_ (_|)           _vv
+       top tee ( |)              _ww
+       vertical line             _xx
+       bullet                    _~~
+
+       The  best way to describe a new device's line graphics set
+       is to add a third column to the above table with the char-
+       acters  for  the  new  device that produce the appropriate
+       glyph when the device is in the  alternate  character  set
+       mode.  For example,
+
+       --------------------------------------
+                            vt100+   new tty
+       glyph name           char     char
+
+              upper left corner    _ll        _RR
+       lower left corner    _mm        _FF
+       upper right corner   _kk        _TT
+       lower right corner   _jj        _GG
+       horizontal line      _qq        _,,
+       vertical line        _xx        _..
+
+       Now  write  down  the  characters  left  to  right,  as in
+       ``acsc=lRmFkTjGq\,x.''.
+
+                                                               27
+
+()                                                             ()
+
+       In addition, terminfo allows you to define multiple  char-
+       acter sets.  See Section 2-5 for details.
+
+   SSeeccttiioonn 11--1133:: CCoolloorr MMaanniippuullaattiioonn
+       Let  us define two methods of color manipulation: the Tek-
+       tronix method and the HP  method.   The  Tektronix  method
+       uses a set of N predefined colors (usually 8) from which a
+       user can select ``current'' foreground and background col-
+       ors.   Thus  a  terminal  can support up to N colors mixed
+       into N*N color-pairs to be displayed on the screen at  the
+       same time.  When using an HP method the user cannot define
+       the foreground independently of the background,  or  vice-
+       versa.  Instead, the user must define an entire color-pair
+       at once.  Up to M color-pairs,  made  from  2*M  different
+       colors, can be defined this way.  Most existing color ter-
+       minals belong to one of these two classes of terminals.
+
+       The numeric variables colors and pairs define  the  number
+       of  colors  and  color-pairs  that can be displayed on the
+       screen at the same time.  If a  terminal  can  change  the
+       definition of a color (for example, the Tektronix 4100 and
+       4200 series terminals), this should be specified with  ccc
+       (can  change  color).  To change the definition of a color
+       (Tektronix 4200 method), use initc (initialize color).  It
+       requires  four  arguments: color number (ranging from 0 to
+       colors-1) and three RGB (red, green, and blue)  values  or
+       three  HLS colors (Hue, Lightness, Saturation).  Ranges of
+       RGB and HLS values are terminal dependent.
+
+       Tektronix 4100 series terminals only use HLS  color  nota-
+       tion.   For  such  terminals (or dual-mode terminals to be
+       operated in HLS mode) one must define a  boolean  variable
+       hls;  that would instruct the curses init_color routine to
+       convert its RGB arguments to HLS before  sending  them  to
+       the  terminal.   The  last  three  arguments  to the initc
+       string would then be HLS values.
+
+       If a terminal can change the definitions  of  colors,  but
+       uses  a  color notation different from RGB and HLS, a map-
+       ping to either RGB or HLS must be developed.
+
+       To set current foreground or background to a given  color,
+       use  setaf (set ANSI foreground) and setab (set ANSI back-
+       ground).  They require one parameter: the  number  of  the
+       color.   To initialize a color-pair (HP method), use initp
+       (initialize pair).  It requires seven parameters: the num-
+       ber of a color-pair (range=0 to pairs-1), and six RGB val-
+       ues: three for the foreground followed by  three  for  the
+       background.   (Each  of these groups of three should be in
+       the order RGB.)  When initc or initp are used, RGB or  HLS
+       arguments  should be in the order ``red, green, blue'' (or
+       ``hue, lightness, saturation''), respectively.  To make  a
+       color-pair  current,  use  scp (set color-pair).  It takes
+       one parameter, the number of a color-pair.
+
+                                                               28
+
+()                                                             ()
+
+       Some terminals (for example, most color terminal emulators
+       for PCs) erase areas of the screen with current background
+       color.  In such cases, bce (background color erase) should
+       be  defined.   The  variable op (original pair) contains a
+       sequence for setting the  foreground  and  the  background
+       colors  to  what  they were at the terminal start-up time.
+       Similarly,  oc  (original  colors)  contains   a   control
+       sequence for setting all colors (for the Tektronix method)
+       or color-pairs (for the HP method) to the values they  had
+       at the terminal start-up time.
+
+       Some   color   terminals   substitute   color   for  video
+       attributes.  Such video attributes should not be  combined
+       with  colors.   Information  about  these video attributes
+       should be packed into the ncv (no color  video)  variable.
+       There  is  a  one-to-one  correspondence  between the nine
+       least significant bits of  that  variable  and  the  video
+       attributes.   The  following table depicts this correspon-
+       dence.
+
+       ----------------------------------
+                      Bit        Decimal
+       Attribute      Position   Value
+       ----------------------------------
+       _AA____SS_TT_AA_NN_DD_OO_UU_TT        0           1
+       _AA____UU_NN_DD_EE_RR_LL_II_NN_EE       1           2
+       _AA____RR_EE_VV_EE_RR_SS_EE         2           4
+       _AA____BB_LL_II_NN_KK           3           8
+       _AA____DD_II_MM             4          16
+       _AA____BB_OO_LL_DD            5          32
+       _AA____II_NN_VV_II_SS           6          64
+       _AA____PP_RR_OO_TT_EE_CC_TT         7         128
+       _AA____AA_LL_TT_CC_HH_AA_RR_SS_EE_TT      8         256
+
+       When a particular video attribute should not be used  with
+       colors, the corresponding ncv bit should be set to 1; oth-
+       erwise it should be set to zero.  To determine the  infor-
+       mation  to  pack  into  the  ncv  variable,  you  must add
+       together  the  decimal  values  corresponding   to   those
+       attributes  that cannot coexist with colors.  For example,
+       if the terminal uses colors to simulate reverse video (bit
+       number  2  and decimal value 4) and bold (bit number 5 and
+       decimal value 32), the resulting value for ncv will be  36
+       (4 + 32).
+
+   SSeeccttiioonn 11--1144:: MMiisscceellllaanneeoouuss
+       If  the terminal requires other than a null (zero) charac-
+       ter as a pad, then this can be given  as  pad.   Only  the
+       first  character of the pad string is used.  If the termi-
+       nal does not have a pad character, specify npc.
+
+       If the terminal can move up or down half a line, this  can
+       be  indicated  with  hu  (half-line  up) and hd (half-line
+       down).  This is  primarily  useful  for  superscripts  and
+
+                                                               29
+
+()                                                             ()
+
+       subscripts  on hardcopy terminals.  If a hardcopy terminal
+       can eject to the next page (form feed), give  this  as  ff
+       (usually control L).
+
+       If  there is a command to repeat a given character a given
+       number of times (to save time transmitting a large  number
+       of  identical  characters)  this can be indicated with the
+       parameterized string rep.   The  first  parameter  is  the
+       character  to  be repeated and the second is the number of
+       times to repeat it.  Thus, tparm(repeat_char, 'x', 10)  is
+       the same as xxxxxxxxxx.
+
+       If  the terminal has a settable command character, such as
+       the Tektronix 4025, this can be indicated with  cmdch.   A
+       prototype command character is chosen which is used in all
+       capabilities.  This character is given in the cmdch  capa-
+       bility  to  identify it.  The following convention is sup-
+       ported on some  systems: If the  environment  variable  CC
+       exists,  all  occurrences  of  the prototype character are
+       replaced with the character in CC.
+
+       Terminal descriptions that do  not  represent  a  specific
+       kind of known terminal, such as switch, dialup, patch, and
+       network, should include the  gn  (generic)  capability  so
+       that  programs  can  complain that they do not know how to
+       talk to the terminal.  (This capability does not apply  to
+       virtual   terminal   descriptions  for  which  the  escape
+       sequences are known.)  If the terminal  is  one  of  those
+       supported  by  the   system virtual terminal protocol, the
+       terminal number can be given as  vt.   A  line-turn-around
+       sequence  to  be  transmitted before doing reads should be
+       specified in rfi.
+
+       If the device uses xon/xoff handshaking for flow  control,
+       give xon.  Padding information should still be included so
+       that routines can make better decisions about  costs,  but
+       actual  pad characters will not be transmitted.  Sequences
+       to turn on and off xon/xoff handshaking may  be  given  in
+       smxon  and  rmxon.  If the characters used for handshaking
+       are not ^S and ^Q, they may be  specified  with  xonc  and
+       xoffc.
+
+       If  the  terminal has a ``meta key'' which acts as a shift
+       key, setting the 8th bit  of  any  character  transmitted,
+       this  fact  can be indicated with km.  Otherwise, software
+       will assume that the 8th bit is parity and it will usually
+       be  cleared.   If strings exist to turn this ``meta mode''
+       on and off, they can be given as smm and rmm.
+
+       If the terminal has more lines of memory than will fit  on
+       the  screen  at once, the number of lines of memory can be
+       indicated with lm.  A value of  lm#0  indicates  that  the
+       number of lines is not fixed, but that there is still more
+       memory than fits on the screen.
+
+                                                               30
+
+()                                                             ()
+
+       Media copy strings which control an auxiliary printer con-
+       nected to the terminal can be given as mc0: print the con-
+       tents of the screen, mc4: turn off the printer,  and  mc5:
+       turn  on  the  printer.   When the printer is on, all text
+       sent to the terminal will be sent to the printer.  A vari-
+       ation,  mc5p,  takes one parameter, and leaves the printer
+       on for as many characters as the value of  the  parameter,
+       then  turns  the  printer  off.   The parameter should not
+       exceed 255.  If the text is not displayed on the  terminal
+       screen  when  the  printer  is  on,  specify  mc5i (silent
+       printer).   All  text,  including  mc4,  is  transparently
+       passed to the printer while an mc5p is in effect.
+
+   SSeeccttiioonn 11--1155:: SSppeecciiaall CCaasseess
+       The  working  model  used  by terminfo fits most terminals
+       reasonably well.  However,  some  terminals  do  not  com-
+       pletely  match  that  model,  requiring special support by
+       terminfo.  These are not meant to be  construed  as  defi-
+       ciencies  in  the  terminals;  they  are  just differences
+       between the working model and the actual  hardware.   They
+       may  be  unusual  devices or, for some reason, do not have
+       all the features of the terminfo model implemented.
+
+       Terminals that cannot display tilde (~)  characters,  such
+       as certain Hazeltine terminals, should indicate hz.
+
+       Terminals  that  ignore a linefeed immediately after an am
+       wrap, such as  the  Concept  100,  should  indicate  xenl.
+       Those  terminals  whose  cursor  remains on the right-most
+       column until another character has been  received,  rather
+       than  wrapping  immediately  upon receiving the right-most
+       character, such as the VT100, should also indicate xenl.
+
+       If el is required to get rid of standout (instead of writ-
+       ing normal text on top of it), xhp should be given.
+
+       Those  Teleray  terminals  whose  tabs turn all characters
+       moved over to  blanks,  should  indicate  xt  (destructive
+       tabs).   This  capability is also taken to mean that it is
+       not possible to position the cursor on top  of  a  ``magic
+       cookie.''  Therefore, to erase standout mode, it is neces-
+       sary, instead, to use delete and insert line.
+
+       Those Beehive Superbee terminals which do not transmit the
+       escape  or control-C characters, should specify xsb, indi-
+       cating that the f1 key is to be used for escape and the f2
+       key for control C.
+
+   SSeeccttiioonn 11--1166:: SSiimmiillaarr TTeerrmmiinnaallss
+       If  there  are  two  very  similar  terminals,  one can be
+       defined as being just like the other with  certain  excep-
+       tions.   The  string  capability use can be given with the
+       name of the  similar  terminal.   The  capabilities  given
+       before  use override those in the terminal type invoked by
+
+                                                               31
+
+()                                                             ()
+
+       use.  A capability can be canceled by placing xx@  to  the
+       left  of  the capability definition, where xx is the capa-
+       bility.  For example, the entry att4424-2|Teletype 4424 in
+       display function group ii, rev@, sgr@, smul@, use=att4424,
+
+       defines an AT&T 4424 terminal that does not have the  rev,
+       sgr, and smul capabilities, and hence cannot do highlight-
+       ing.  This is useful for different modes for  a  terminal,
+       or  for  different  user  preferences.   More than one use
+       capability may be given.
+
+   PPAARRTT 22:: PPRRIINNTTEERR CCAAPPAABBIILLIITTIIEESS
+       The terminfo database allows you to define capabilities of
+       printers as well as terminals.  To find out what capabili-
+       ties are available for printers as well as for  terminals,
+       see  the two lists under ``DEVICE CAPABILITIES'' that list
+       capabilities by variable and by capability name.
+
+   SSeeccttiioonn 22--11:: RRoouunnddiinngg VVaalluueess
+       Because parameterized string capabilities work  only  with
+       integer  values, we recommend that terminfo designers cre-
+       ate strings that expect  numeric  values  that  have  been
+       rounded.   Application  designers  should  note  this  and
+       should always round values to the nearest  integer  before
+       using them with a parameterized string capability.
+
+   SSeeccttiioonn 22--22:: PPrriinntteerr RReessoolluuttiioonn
+       A printer's resolution is defined to be the smallest spac-
+       ing of characters it can  achieve.   In  general  printers
+       have  independent  resolution horizontally and vertically.
+       Thus the vertical resolution of a printer  can  be  deter-
+       mined   by  measuring  the  smallest  achievable  distance
+       between consecutive printing baselines, while the horizon-
+       tal resolution can be determined by measuring the smallest
+       achievable distance between the left-most edges of consec-
+       utive printed, identical, characters.
+
+       All  printers are assumed to be capable of printing with a
+       uniform horizontal and vertical resolution.  The  view  of
+       printing that terminfo currently presents is one of print-
+       ing inside a uniform matrix: All characters are printed at
+       fixed  positions  relative to each ``cell'' in the matrix;
+       furthermore, each cell has the  same  size  given  by  the
+       smallest  horizontal  and  vertical step sizes dictated by
+       the resolution.  (The cell size can be changed as will  be
+       seen later.)
+
+       Many  printers  are  capable of ``proportional printing,''
+       where the horizontal spacing depends on the  size  of  the
+       character  last  printed.   terminfo  does not make use of
+       this capability, although it does provide enough  capabil-
+       ity  definitions  to allow an application to simulate pro-
+       portional printing.
+
+                                                               32
+
+()                                                             ()
+
+       A printer must not only be able  to  print  characters  as
+       close  together as the horizontal and vertical resolutions
+       suggest, but also of ``moving'' to a position an  integral
+       multiple  of  the  smallest  distance away from a previous
+       position.  Thus printed characters can be spaced  apart  a
+       distance that is an integral multiple of the smallest dis-
+       tance, up to the length or width of a single page.
+
+       Some printers can have different resolutions depending  on
+       different  ``modes.''   In  ``normal  mode,'' the existing
+       terminfo capabilities are assumed to work on  columns  and
+       lines,  just  like  a  video terminal.  Thus the old lines
+       capability would give the length of a page in  lines,  and
+       the  cols  capability  would  give  the width of a page in
+       columns.  In ``micro mode,''  many  terminfo  capabilities
+       work on increments of lines and columns.  With some print-
+       ers the micro mode may be concomitant with normal mode, so
+       that all the capabilities work at the same time.
+
+   SSeeccttiioonn 22--33:: SSppeecciiffyyiinngg PPrriinntteerr RReessoolluuttiioonn
+       The  printing  resolution of a printer is given in several
+       ways.  Each specifies the  resolution  as  the  number  of
+       smallest steps per distance:
+
+       ----------------------------------------
+       Specification of Printer Resolution
+       Characteristic Number of Smallest Steps
+       ----------------------------------------
+       orhi     Steps per inch horizontally
+       orvi     Steps per inch vertically
+       orc      Steps per column
+       orl      Steps per line
+
+       When  printing  in  normal  mode,  each  character printed
+       causes movement to the  next  column,  except  in  special
+       cases  described  later; the distance moved is the same as
+       the per-column resolution.  Some printers cause  an  auto-
+       matic  movement  to  the  next  line  when  a character is
+       printed in the rightmost position; the distance moved ver-
+       tically  is  the  same  as  the per-line resolution.  When
+       printing in micro mode, these distances can be  different,
+       and may be zero for some printers.
+       ------------------------------------
+       Specification of Printer Resolution
+       Automatic Motion after Printing
+       ------------------------------------
+       Normal Mode:
+       orc     Steps moved horizontally
+       orl     Steps moved vertically
+       Micro Mode:
+       mcs     Steps moved horizontally
+       mls     Steps moved vertically
+
+       Some  printers  are  capable  of printing wide characters.
+
+                                                               33
+
+()                                                             ()
+
+       The distance moved when a wide  character  is  printed  in
+       normal  mode  may  be  different from when a regular width
+       character is printed.  The  distance  moved  when  a  wide
+       character  is  printed in micro mode may also be different
+       from when a regular character is printed  in  micro  mode,
+       but the differences are assumed to be related: If the dis-
+       tance moved for a regular character is the same whether in
+       normal  mode  or  micro  mode (mcs=orc), then the distance
+       moved for a wide character is also  the  same  whether  in
+       normal  mode  or micro mode.  This doesn't mean the normal
+       character distance is necessarily the  same  as  the  wide
+       character  distance,  just that the distances don't change
+       with a change in normal to micro mode.   However,  if  the
+       distance  moved  for  a  regular character is different in
+       micro  mode  from  the  distance  moved  in  normal   mode
+       (mcs<orc),  the  micro  mode distance is assumed to be the
+       same for a wide character printed in micro  mode,  as  the
+       table below shows.
+
+       -----------------------------------------------
+       Specification of Printer Resolution
+       Automatic Motion after Printing Wide Character
+       -----------------------------------------------
+       Normal Mode or Micro Mode (mcs = orc):
+       widcs          Steps moved horizontally
+       Micro Mode (mcs < orc):
+       mcs            Steps moved horizontally
+
+       There  may  be  control  sequences to change the number of
+       columns per inch (the character pitch) and to  change  the
+       number  of  lines per inch (the line pitch).  If these are
+       used, the resolution of the printer changes, but the  type
+       of change depends on the printer:
+
+       -------------------------------------------------------
+       Specification of Printer Resolution
+       Changing the Character/Line Pitches
+       -------------------------------------------------------
+       cpi    Change character pitch
+       cpix   If set, cpi changes orhi, otherwise changes orc
+       lpi    Change line pitch
+       lpix   If set, lpi changes orvi, otherwise changes orl
+       chr    Change steps per column
+       cvr    Change steps per line
+
+       The  cpi  and lpi string capabilities are each used with a
+       single argument, the pitch in columns (or characters)  and
+       lines  per  inch,  respectively.   The  chr and cvr string
+       capabilities are each used with  a  single  argument,  the
+       number of steps per column and line, respectively.
+
+       Using  any  of the control sequences in these strings will
+       imply a change in some of the values of  orc,  orhi,  orl,
+       and  orvi.  Also, the distance moved when a wide character
+
+                                                               34
+
+()                                                             ()
+
+       is printed, widcs, changes in relation to orc.   The  dis-
+       tance moved when a
+       character  is  printed  in  micro mode, mcs, changes simi-
+       larly, with one exception: if
+       the distance is 0 or 1, then no change is assumed.
+
+       Programs that use cpi, lpi, chr, or cvr should recalculate
+       the  printer resolution (and should recalculate other val-
+       ues--see ``Effect of Changing Printing Resolution''  under
+       ``Dot-Mapped Graphics'').
+       ---------------------------------------------------------
+       Specification of Printer Resolution
+       Effects of Changing the Character/Line Pitches
+       ---------------------------------------------------------
+       Before                       After
+       ---------------------------------------------------------
+       Using cpi with cpix clear:
+       orhi                         orhi
+       orc'                         orc = orhi/Vcpi
+
+              Using cpi with cpix set:
+       orhi'                        orhi = orc x Vcpi
+       orc'                         orc
+
+              Using lpi with lpix clear:
+       orvi'                        orvi
+       orl'                         orl = orvi/Vlpi
+
+              Using lpi with lpix set:
+       orvi'                        orvi = orl x Vlpi
+       orl'                         orl
+
+              Using chr:
+       orhi'                        orhi
+       orc'                         Vchr
+
+              Using cvr:
+       orvi'                        orvi
+       orl'                         Vcvr
+
+              Using cpi or chr:
+       widcs'                       widcs = widcs' x (orc/orc')
+       mcs'                         mcs = mcs' x (orc/orc')
+
+       Vcpi,  Vlpi,  Vchr,  and  Vcvr are the arguments used with
+       cpi, lpi, chr, and cvr, respectively.  The prime marks (')
+       indicate the old values.
+
+   SSeeccttiioonn 22--44:: CCaappaabbiilliittiieess tthhaatt CCaauussee MMoovveemmeenntt
+       In  the following descriptions, ``movement'' refers to the
+       motion of the ``current position.''  With video  terminals
+       this  would  be the cursor; with some printers this is the
+       carriage position.  Other printers have different  equiva-
+       lents.   In  general,  the  current  position  is  where a
+
+                                                               35
+
+()                                                             ()
+
+       character would be displayed if printed.
+
+       terminfo has string  capabilities  for  control  sequences
+       that cause movement a number of full columns or lines.  It
+       also  has  equivalent  string  capabilities  for   control
+       sequences  that cause movement a number of smallest steps.
+       ------------------------------------
+       String Capabilities for Motion
+       ------------------------------------
+       mcub1    Move 1 step left
+       mcuf1    Move 1 step right
+       mcuu1    Move 1 step up
+       mcud1    Move 1 step down
+       mcub     Move N steps left
+       mcuf     Move N steps right
+       mcuu     Move N steps up
+       mcud     Move N steps down
+       mhpa     Move N steps from the left
+       mvpa     Move N steps from the top
+
+       The latter six strings are each used with a  single  argu-
+       ment, N.
+
+       Sometimes  the motion is limited to less than the width or
+       length of a page.  Also, some printers don't accept  abso-
+       lute motion to the left of the current position.  terminfo
+       has capabilities for specifying these limits.
+
+       ---------------------------------------------------
+       Limits to Motion
+       ---------------------------------------------------
+       mjump   Limit on use of mcub1, mcuf1, mcuu1, mcud1
+       maddr   Limit on use of mhpa, mvpa
+       xhpa    If set, hpa and mhpa can't move left
+       xvpa    If set, vpa and mvpa can't move up
+
+       If a printer needs to be  in  a  ``micro  mode''  for  the
+       motion  capabilities  described  above  to work, there are
+       string  capabilities  defined  to  contain   the   control
+       sequence to enter and exit this mode.  A boolean is avail-
+       able for those printers  where  using  a  carriage  return
+       causes an automatic return to normal mode.
+
+       ----------------------------------
+       Entering/Exiting Micro Mode
+       ----------------------------------
+       smicm   Enter micro mode
+       rmicm   Exit micro mode
+       crxm    Using cr exits micro mode
+
+       The  movement  made  when  a  character  is printed in the
+       rightmost position varies among printers.   Some  make  no
+       movement,  some  move  to  the beginning of the next line,
+       others move to the beginning of the same  line.   terminfo
+
+                                                               36
+
+()                                                             ()
+
+       has boolean capabilities for describing all three cases.
+
+       -----------------------------------------------
+       What Happens After Character
+       Printed in Rightmost Position
+       -----------------------------------------------
+       sam   Automatic move to beginning of same line
+
+       Some printers can be put in a mode where the normal direc-
+       tion of motion is reversed.  This mode can  be  especially
+       useful  when  there  are  no  capabilities for leftward or
+       upward motion, because those  capabilities  can  be  built
+       from  the  motion reversal capability and the rightward or
+       downward motion capabilities.  It is best to leave  it  up
+       to an application to build the leftward or upward capabil-
+       ities,  though,  and  not  enter  them  in  the   terminfo
+       database.   This  allows  several  reverse  motions  to be
+       strung together  without  intervening  wasted  steps  that
+       leave and reenter reverse mode.
+
+       --------------------------------------------
+       Entering/Exiting Reverse Modes
+       --------------------------------------------
+       slm     Reverse sense of horizontal motions
+       rlm     Restore sense of horizontal motions
+       sum     Reverse sense of vertical motions
+       rum     Restore sense of vertical motions
+       While sense of horizontal motions reversed:
+       mcub1   Move 1 step right
+       mcuf1   Move 1 step left
+       mcub    Move N steps right
+       mcuf    Move N steps left
+       cub1    Move 1 column right
+       cuf1    Move 1 column left
+       cub     Move N columns right
+       cuf     Move N columns left
+       While sense of vertical motions reversed:
+       mcuu1   Move 1 step down
+       mcud1   Move 1 step up
+       mcuu    Move N steps down
+       mcud    Move N steps up
+       cuu1    Move 1 line down
+       cud1    Move 1 line up
+       cuu     Move N lines down
+       cud     Move N lines up
+
+       The  reverse  motion  modes should not affect the mvpa and
+       mhpa absolute motion capabilities.  The  reverse  vertical
+       motion  mode  should,  however, also reverse the action of
+       the line ``wrapping'' that  occurs  when  a  character  is
+       printed  in  the  right-most position.  Thus printers that
+       have the standard terminfo capability  am  defined  should
+       experience  motion  to  the beginning of the previous line
+       when a character is printed  in  the  right-most  position
+
+                                                               37
+
+()                                                             ()
+
+       under reverse vertical motion mode.
+
+       The  action when any other motion capabilities are used in
+       reverse motion modes is not defined; thus,  programs  must
+       exit  reverse motion modes before using other motion capa-
+       bilities.
+
+       Two miscellaneous capabilities complete the  list  of  new
+       motion  capabilities.  One of these is needed for printers
+       that move the current position to the beginning of a  line
+       when  certain control characters, such as ``line-feed'' or
+       ``form-feed,'' are used.  The other is used for the  capa-
+       bility of suspending the motion that normally occurs after
+       printing a character.
+
+       -----------------------------------------------------------------
+       Miscellaneous Motion Strings
+       -----------------------------------------------------------------
+       docr    List of control characters causing cr
+       zerom   Prevent auto motion after printing next single character
+
+   MMaarrggiinnss
+       terminfo provides two strings for setting margins on  ter-
+       minals:  one  for  the  left and one for the right margin.
+       Printers, however, have two additional  margins,  for  the
+       top  and  bottom  margins of each page.  Furthermore, some
+       printers require not using motion strings to move the cur-
+       rent  position  to  a  margin  and  then fixing the margin
+       there, but require the specification  of  where  a  margin
+       should  be  regardless of the current position.  Therefore
+       terminfo offers six additional strings for  defining  mar-
+       gins with printers.
+
+       -------------------------------------------
+       Setting Margins
+       -------------------------------------------
+       smgl    Set left margin at current column
+       smgr    Set right margin at current column
+       smgb    Set bottom margin at current line
+       smgt    Set top margin at current line
+       smgbp   Set bottom margin at line N
+       smglp   Set left margin at column N
+       smgrp   Set right margin at column N
+       smgtp   Set top margin at line N
+
+       The  last four strings are used with one or more arguments
+       that give the position of the margin or  margins  to  set.
+       If  both  of  smglp and smgrp are set, each is used with a
+       single argument, N, that gives the column  number  of  the
+       left and right margin, respectively.  If both of smgtp and
+       smgbp are set, each is used to set the top and bottom mar-
+       gin,  respectively:  smgtp is used with a single argument,
+       N, the line number of the top margin;  however,  smgbp  is
+       used  with  two  arguments,  N  and  M, that give the line
+
+                                                               38
+
+()                                                             ()
+
+       number of the bottom margin, the first counting  from  the
+       top  of  the page and the second counting from the bottom.
+       This accommodates the two styles of specifying the  bottom
+       margin  in different manufacturers' printers.  When coding
+       a terminfo entry for a printer that has a settable  bottom
+       margin, only the first or second parameter should be used,
+       depending on the printer.   When  writing  an  application
+       that  uses  smgbp to set the bottom margin, both arguments
+       must be given.
+
+       If only one of smglp and smgrp is set,  then  it  is  used
+       with  two  arguments,  the  column  number of the left and
+       right margins, in that order.  Likewise, if  only  one  of
+       smgtp and smgbp is set, then it is used with two arguments
+       that give the top  and  bottom  margins,  in  that  order,
+       counting  from  the  top  of the page.  Thus when coding a
+       terminfo entry for a printer that  requires  setting  both
+       left  and  right or top and bottom margins simultaneously,
+       only one of smglp and smgrp or smgtp and smgbp  should  be
+       defined;  the other should be left blank.  When writing an
+       application that uses these string capabilities, the pairs
+       should  be first checked to see if each in the pair is set
+       or only one is set, and should then be used accordingly.
+
+       In counting lines or columns, line zero is  the  top  line
+       and column zero is the left-most column.  A zero value for
+       the second argument with smgbp means the  bottom  line  of
+       the page.
+
+       All margins can be cleared with mgc.
+
+   SShhaaddoowwss,, IIttaalliiccss,, WWiiddee CChhaarraacctteerrss,, SSuuppeerrssccrriippttss,, SSuubbssccrriippttss
+       Five new sets of strings are used to describe the capabil-
+       ities printers have of enhancing printed text.
+
+       -----------------------------------------------------
+       Enhanced Printing
+       -----------------------------------------------------
+       sshm    Enter shadow-printing mode
+       rshm    Exit shadow-printing mode
+       sitm    Enter italicizing mode
+       ritm    Exit italicizing mode
+       swidm   Enter wide character mode
+       rwidm   Exit wide character mode
+       ssupm   Enter superscript mode
+       rsupm   Exit superscript mode
+       supcs   List of characters available as superscripts
+       ssubm   Enter subscript mode
+       rsubm   Exit subscript mode
+       subcs   List of characters available as subscripts
+
+       If a printer requires the  sshm  control  sequence  before
+       every  character  to be shadow-printed, the rshm string is
+       left blank.  Thus programs that find a control sequence in
+
+                                                               39
+
+()                                                             ()
+
+       sshm but none in rshm should use the sshm control sequence
+       before every character to  be  shadow-printed;  otherwise,
+       the  sshm  control sequence should be used once before the
+       set of characters to be shadow-printed, followed by  rshm.
+       The   same   is  also  true  of  each  of  the  sitm/ritm,
+       swidm/rwidm, ssupm/rsupm, and ssubm/ rsubm pairs.
+
+       Note that terminfo also  has  a  capability  for  printing
+       emboldened text (bold).  While shadow printing and embold-
+       ened printing are similar  in  that  they  ``darken''  the
+       text,  many  printers  produce these two types of print in
+       slightly different ways.  Generally,  emboldened  printing
+       is  done  by  overstriking  the same character one or more
+       times.  Shadow printing likewise  usually  involves  over-
+       striking, but with a slight movement up and/or to the side
+       so that the character is ``fatter.''
+
+       It is assumed that enhanced printing modes are independent
+       modes,  so  that  it  would  be possible, for instance, to
+       shadow print italicized subscripts.
+
+       As mentioned earlier, the amount of  motion  automatically
+       made  after  printing  a wide character should be given in
+       widcs.
+
+       If only a subset of the printable ASCII characters can  be
+       printed  as  superscripts  or  subscripts,  they should be
+       listed in supcs or subcs strings,  respectively.   If  the
+       ssupm  or ssubm strings contain control sequences, but the
+       corresponding supcs or
+       subcs strings are empty, it is assumed that all  printable
+       ASCII  characters  are  available  as superscripts or sub-
+       scripts.
+
+       Automatic motion made after printing a superscript or sub-
+       script  is  assumed  to be the same as for regular charac-
+       ters.  Thus, for example, printing any  of  the  following
+       three  examples  will  result in equivalent motion: Bi  Bi
+       Bi
+
+       Note that the existing msgr boolean  capability  describes
+       whether  motion  control  sequences  can  be used while in
+       ``standout mode.''  This capability is extended  to  cover
+       the  enhanced  printing  modes added here.  msgr should be
+       set for those printers  that  accept  any  motion  control
+       sequences  without  affecting shadow, italicized, widened,
+       superscript, or subscript printing.  Conversely,  if  msgr
+       is  not  set,  a  program  should  end  these modes before
+       attempting any motion.
+
+   SSeeccttiioonn 22--55:: AAlltteerrnnaattee CChhaarraacctteerr SSeettss
+       In addition  to  allowing  you  to  define  line  graphics
+       (described  in  Section  1-12),  terminfo  lets you define
+       alternate  character  sets.   The  following  capabilities
+
+                                                               40
+
+()                                                             ()
+
+       cover  printers  and terminals with multiple selectable or
+       definable character sets.
+
+       ----------------------------------------------------------
+       Alternate Character Sets
+       ----------------------------------------------------------
+       scs     Select character set N
+       scsd    Start definition of character set N, M characters
+       defc    Define character A, B dots wide, descender D
+       rcsd    End definition of character set N
+       csnm    List of character set names
+       daisy   Printer has manually changed print-wheels
+
+       The scs, rcsd, and csnm strings are  used  with  a  single
+       argument,  N,  a  number  from 0 to 63 that identifies the
+       character set.  The scsd string  is  also  used  with  the
+       argument  N and another, M, that gives the number of char-
+       acters in the set.  The defc string  is  used  with  three
+       arguments:  A  gives the ASCII code representation for the
+       character, B gives the width of the character in dots, and
+       D  is  zero or one depending on whether the character is a
+       ``descender'' or not.  The defc string is also followed by
+       a  string  of  ``image-data''  bytes that describe how the
+       character looks (see below).
+
+       Character set 0 is the default character set present after
+       the  printer  has been initialized.  Not every printer has
+       64 character sets, of course; using scs with  an  argument
+       that  doesn't  select  an  available  character set should
+       cause a null result from tparm.
+
+       If a character set has to be  defined  before  it  can  be
+       used,  the  scsd  control  sequence  is  to be used before
+       defining the character set, and the rcsd  is  to  be  used
+       after.   They  should  also cause a null result from tparm
+       when used with an argument N that  doesn't  apply.   If  a
+       character  set  still  has  to  be  selected  after  being
+       defined, the scs control sequence should follow  the  rcsd
+       control  sequence.  By examining the results of using each
+       of the scs, scsd, and rcsd strings with  a  character  set
+       number  in  a call to tparm, a program can determine which
+       of the three are needed.
+
+       Between use of the scsd and rcsd strings, the defc  string
+       should  be  used  to  define each character.  To print any
+       character on printers covered by terminfo, the ASCII  code
+       is sent to the printer.  This is true for characters in an
+       alternate set as well as ``normal'' characters.  Thus  the
+       definition  of  a  character  includes the ASCII code that
+       represents it.  In addition, the width of the character in
+       dots  is  given,  along  with an indication of whether the
+       character should descend below the print line (such as the
+       lower  case  letter  ``g''  in  most character sets).  The
+       width of the character in dots also indicates  the  number
+
+                                                               41
+
+()                                                             ()
+
+       of  image-data  bytes  that  will  follow the defc string.
+       These image-data bytes indicate where in a dot-matrix pat-
+       tern  ink should be applied to ``draw'' the character; the
+       number of these bytes and their  form  are  defined  below
+       under ``Dot-Mapped Graphics.''
+
+       It's  easiest for the creator of terminfo entries to refer
+       to each character set by number;  however,  these  numbers
+       will  be  meaningless  to  the application developer.  The
+       csnm string alleviates this problem by providing names for
+       each number.
+
+       When  used with a character set number in a call to tparm,
+       the csnm string will produce the equivalent  name.   These
+       names  should be used as a reference only.  No naming con-
+       vention is implied, although anyone who creates a terminfo
+       entry  for  a printer should use names consistent with the
+       names found in user documents for the  printer.   Applica-
+       tion developers should allow a user to specify a character
+       set by number (leaving it up to the user  to  examine  the
+       csnm  string to determine the correct number), or by name,
+       where the application examines the csnm string  to  deter-
+       mine the corresponding character set number.
+
+       These  capabilities  are  likely to be used only with dot-
+       matrix printers.  If they are not available,  the  strings
+       should  not  be  defined.  For printers that have manually
+       changed print-wheels or font cartridges, the boolean daisy
+       is set.
+
+   SSeeccttiioonn 22--66:: DDoott--MMaattrriixx GGrraapphhiiccss
+       Dot-matrix  printers  typically  have  the  capability  of
+       reproducing ``raster-graphics'' images.  Three new numeric
+       capabilities and three new string capabilities can
+       help  a program draw raster-graphics images independent of
+       the type of dot-matrix printer or the number  of  pins  or
+       dots the printer can handle at one time.
+       --------------------------------------------------------
+       Dot-Matrix Graphics
+       --------------------------------------------------------
+       npins    Number of pins, N, in print-head
+       spinv    Spacing of pins vertically in pins per inch
+       spinh    Spacing of dots horizontally in dots per inch
+       porder   Matches software bits to print-head pins
+       sbim     Start printing bit image graphics, B bits wide
+       rbim     End printing bit image graphics
+
+       The  sbim  sring  is  used  with a single argument, B, the
+       width of the image in dots.
+
+       The model of dot-matrix or raster-graphics  that  terminfo
+       presents  is  similar  to the technique used for most dot-
+       matrix printers: each pass of the printer's print-head  is
+       assumed  to produce a dot-matrix that is N dots high and B
+
+                                                               42
+
+()                                                             ()
+
+       dots wide.  This is typically a wide, squat, rectangle  of
+       dots.  The height of this rectangle in dots will vary from
+       one printer to the  next;  this  is  given  in  the  npins
+       numeric  capability.   The  size of the rectangle in frac-
+       tions of an inch will also vary; it can  be  deduced  from
+       the  spinv  and  spinh  numeric  capabilities.  With these
+       three values an application can
+       divide a complete raster-graphics image into several hori-
+       zontal  strips,  perhaps interpolating to account for dif-
+       ferent dot spacing vertically and horizontally.
+
+       The sbim and rbim strings are used to start and end a dot-
+       matrix  image, respectively.  The sbim string is used with
+       a single argument that gives the width of  the  dot-matrix
+       in  dots.   A sequence of ``image-data bytes'' are sent to
+       the printer after the sbim  string  and  before  the  rbim
+       string.  The number of bytes is a integral multiple of the
+       width of the dot-matrix; the multiple and the form of each
+       byte  is  determined  by  the  porder  string as described
+       below.
+
+       The porder string is a comma separated list of pin numbers
+       optionally  followed  by an numerical offset.  The offset,
+       if given, is separated from the  list  with  a  semicolon.
+       The position of each pin number in the list corresponds to
+       a bit in an 8-bit data byte.  The pins are  numbered  con-
+       secutively  from  1  to  npins,  with 1 being the top pin.
+       Note that the term ``pin'' is used  loosely  here;  ``ink-
+       jet'' dot-matrix printers don't have pins, but can be con-
+       sidered to have an equivalent method of applying a  single
+       dot  of  ink to paper.  The bit positions in porder are in
+       groups of 8, with the first position  in  each  group  the
+       most  significant bit and the last position the least sig-
+       nificant bit.  An application produces 8-bit bytes in  the
+       order of the groups in porder.
+
+       An  application computes the ``image-data bytes'' from the
+       internal image, mapping vertical  dot  positions  in  each
+       print-head  pass into 8-bit bytes, using a 1 bit where ink
+       should be applied and 0 where no ink  should  be  applied.
+       This  can be reversed (0 bit for ink, 1 bit for no ink) by
+       giving a negative pin number.  If a position is skipped in
+       porder,  a  0 bit is used.  If a position has a lower case
+       `x' instead of a pin number,  a  1  bit  is  used  in  the
+       skipped  position.   For consistency, a lower case `o' can
+       be used to represent a 0 filled, skipped bit.  There  must
+       be  a  multiple  of  8  bit  positions  used or skipped in
+       porder; if not, 0 bits are used to fill the last  byte  in
+       the  least  significant  bits.   The  offset, if given, is
+       added to each data byte; the offset can be negative.
+
+       Some examples may help  clarify  the  use  of  the  porder
+       string.   The  AT&T 470, AT&T 475 and C.Itoh 8510 printers
+       provide eight pins for graphics.  The pins are  identified
+
+                                                               43
+
+()                                                             ()
+
+       top to bottom by the 8 bits in a byte, from least signifi-
+       cant to most.  The porder strings for these printers would
+       be  8,7,6,5,4,3,2,1.   The  AT&T 478 and AT&T 479 printers
+       also provide eight pins for graphics.  However,  the  pins
+       are  identified  in the reverse order.  The porder strings
+       for these printers would  be  1,2,3,4,5,6,7,8.   The  AT&T
+       5310,  AT&T 5320, DEC LA100, and DEC LN03 printers provide
+       six pins for graphics.  The pins  are  identified  top  to
+       bottom by the decimal values 1, 2, 4, 8, 16 and 32.  These
+       correspond to the low six bits in an 8-bit byte,  although
+       the  decimal  values  are  further offset by the value 63.
+       The  porder   string   for   these   printers   would   be
+       ,,6,5,4,3,2,1;63, or alternately o,o,6,5,4,3,2,1;63.
+
+   SSeeccttiioonn 22--77:: EEffffeecctt ooff CChhaannggiinngg PPrriinnttiinngg RReessoolluuttiioonn
+       If  the control sequences to change the character pitch or
+       the line pitch are  used,  the  pin  or  dot  spacing  may
+       change:
+       ------------------------------------
+       Dot-Matrix Graphics
+       Changing the Character/Line Pitches
+       ------------------------------------
+       cpi     Change character pitch
+       cpix    If set, cpi changes spinh
+       lpi     Change line pitch
+       lpix    If set, lpi changes spinv
+
+       Programs  that  use  cpi or lpi should recalculate the dot
+       spacing:
+       -----------------------------------------------------------
+       Dot-Matrix Graphics
+       Effects of Changing the Character/Line Pitches
+       -----------------------------------------------------------
+       Before                       After
+       -----------------------------------------------------------
+       Using cpi with cpix clear:
+
+              spinh'                       spinh
+
+              Using cpi with cpix set:
+
+              spinh'                       spinh = spinh' x (orhi/orhi')
+
+              Using lpi with lpix clear:
+
+              spinv'                       spinv
+
+              Using lpi with lpix set:
+
+              spinv'                       spinv = spinv' x (orhi/orhi')
+
+              Using chr:
+
+                                                               44
+
+()                                                             ()
+
+              spinh'                       spinh
+
+              Using cvr:
+
+              spinv'                       spinv
+
+       orhi' and orhi are the values of the horizontal resolution
+       in  steps  per inch, before using cpi and after using cpi,
+       respectively.  Likewise, orvi' and orvi are the values  of
+       the  vertical  resolution  in steps per inch, before using
+       lpi and after using lpi, respectively.  Thus, the  changes
+       in  the  dots  per inch for dot-matrix graphics follow the
+       changes in steps per inch for printer resolution.
+
+   SSeeccttiioonn 22--88:: PPrriinntt QQuuaalliittyy
+       Many dot-matrix printers can  alter  the  dot  spacing  of
+       printed  text  to produce near ``letter quality'' printing
+       or ``draft quality'' printing.  Usually it is important to
+       be  able  to  choose  one or the other because the rate of
+       printing generally falls  off  as  the  quality  improves.
+       There  are  three new strings used to describe these capa-
+       bilities.
+
+       --------------------------------------
+       Print nuality
+       --------------------------------------
+       snlq    Set near-letter quality print
+       snrmq   Set normal quality print
+       sdrfq   Set draft quality print
+
+       The capabilities are listed in decreasing levels of  qual-
+       ity.   If  a printer doesn't have all three levels, one or
+       two of the strings should be left blank as appropriate.
+
+   SSeeccttiioonn 22--99:: PPrriinnttiinngg RRaattee aanndd BBuuffffeerr SSiizzee
+       Because there is no standard protocol that can be used  to
+       keep  a  program  synchronized with a printer, and because
+       modern printers can buffer data before printing it, a pro-
+       gram  generally cannot determine at any time what has been
+       printed.  Two new numeric capabilities can help a  program
+       estimate what has been printed.
+
+       -----------------------------------------------------
+       Print Rate/Buffer Size
+       -----------------------------------------------------
+       cps      Nominal print rate in characters per second
+       bufsz    Buffer capacity in characters
+
+       cps  is  the  nominal or average rate at which the printer
+       prints characters; if this value is not  given,  the  rate
+       should be estimated at one-tenth the prevailing baud rate.
+       bufsz is  the  maximum  number  of  subsequent  characters
+       buffered  before  the  guaranteed  printing  of an earlier
+       character, assuming proper flow control has been used.  If
+
+                                                               45
+
+()                                                             ()
+
+       this  value  is  not  given it is assumed that the printer
+       does not buffer characters, but prints them  as  they  are
+       received.
+
+       As  an  example, if a printer has a 1000-character buffer,
+       then sending the letter ``a'' followed by 1000  additional
+       characters  is  guaranteed  to  cause  the letter ``a'' to
+       print.  If the same printer prints  at  the  rate  of  100
+       characters  per  second, then it should take 10 seconds to
+       print all the characters in the buffer, less if the buffer
+       is not full.  By keeping track of the characters sent to a
+       printer, and knowing the print rate  and  buffer  size,  a
+       program can synchronize itself with the printer.
+
+       Note that most printer manufacturers advertise the maximum
+       print rate, not the nominal print rate.  A good way to get
+       a  value  to  put in for cps is to generate a few pages of
+       text, count the number of printable characters,  and  then
+       see how long it takes to print the text.
+
+       Applications  that  use  these values should recognize the
+       variability in the print rate.  Straight  text,  in  short
+       lines,  with  no  embedded control sequences will probably
+       print at close to the advertised print rate  and  probably
+       faster  than the rate in cps.  Graphics data with a lot of
+       control sequences, or very long lines of text, will  print
+       at  well  below  the advertised rate and below the rate in
+       cps.  If the application is using cps to decide  how  long
+       it  should  take  a  printer to print a block of text, the
+       application should pad the estimate.  If  the  application
+       is  using  cps  to  decide  how much text has already been
+       printed, it should shrink the estimate.   The  application
+       will  thus err in favor of the user, who wants, above all,
+       to see all the output in its correct place.
+
+FFiilleess
+       compiled terminal description database  tab  settings  for
+       some  terminals,  in  a format appropriate to be output to
+       the terminal (escape sequences that set margins and tabs)
+
+RReeffeerreenncceess
+NNoottiicceess
+       The most effective way to prepare a  terminal  description
+       is  by  imitating the description of a similar terminal in
+       terminfo and to build up a  description  gradually,  using
+       partial  descriptions  with a screen oriented editor, such
+       as vi, to check that they are correct.  To easily  test  a
+       new terminal description the environment variable TERMINFO
+       can be set to the pathname of a directory  containing  the
+       compiled  description, and programs will look there rather
+       than in /usr/share/lib/terminfo.
+
+                                                               46
+

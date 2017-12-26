@@ -1,0 +1,284 @@
+
+
+fur(1)                                                     fur(1)
+
+SSyynnooppssiiss
+       fur -o order-file|-l list-of-functions-file [-W]
+           [-O var1=val1 var2=val2 ...] [-k|-K keep-file]
+           relocatable-object
+
+       fur [-W] [-O var1=val1 var2=val2 ...] [-k|-K keep-file]
+           [-B block-insertion-code] [-b all|flow|listfile]
+           [-P prologue-insertion-code] [-p all|listfile]
+           [-E epilogue-insertion-code] [-e all|listfile]
+           [-c compile-command] relocatable-object
+
+       fur  -r  [-W  ]  [-O var1=val1 var2=val2 ...] [-k|-K keep-
+       file]
+           [-m] [-v] -f block-log-file... [-o order-file]
+           [-l function-file] relocatable-object
+
+       mkblocklog [-p prefix]  number-of-blocks  name  number-of-
+       functions
+
+       mkproflog number-of-blocks name number-of-functions
+
+DDeessccrriippttiioonn
+       fur  is  used  for  three related purposes: Reordering the
+       functions and blocks of the  designated  relocatable  file
+       Inserting  profiling  code into the designated relocatable
+       file Analyzing block profiles relating to  the  designated
+       relocatable file
+
+       In its first form, fur rearranges the code based on one of
+       two specifications: an order-file or a  list-of-functions-
+       file.   An order-file is completely superior to a list-of-
+       functions-file, but is more  complicated  to  produce.   A
+       list-of-functions-file  is a file that contains an ordered
+       list of function names.  fur will reorder the functions in
+       the  relocatable file to suit this ordering; any functions
+       not listed in the file will be placed in the file in their
+       (relative) original order.  A list-of-functions is usually
+       produced by using flow-profiling and the tool
+
+       An order-file is more detailed.  It  lists  the  functions
+       and  an  ordering  for them, but it also shows an ordering
+       for the blocks within each function (a block is a piece of
+       straight-line code -- no branches).  This file is produced
+       by fur itself by analyzing block profiles (see below).
+
+       In its second form, fur inserts code into the first  block
+       of  each  function,  every  block of each function or each
+       block that executes a "return" instruction.  Optionally, a
+       compile-command will also be executed (intended to be used
+       to build associated code).  The number  of  blocks  and  a
+       shortened  name of the relocatable-object will be appended
+       to the compile-command and then this command is  executed.
+       This can be used to take a relocatable file and profile it
+       without  having  to  recompile  the   code.    To   create
+
+                                                                1
+
+fur(1)                                                     fur(1)
+
+       profilable  objects:  fur  -P  prof.o  -c mkproflog -p all
+       relocatable-object To create profilable  objects:  fur  -p
+       all  -e  all relocatable-object There is currently no sup-
+       port for making relocatable-object's.
+
+       There is a fourth  type  of  profiling,  block  profiling.
+       This  form  has  similar  functionality  to  but is better
+       suited to the task of locality tuning  and  ill-suited  to
+       human readability.  This command: fur -b all -c mkblocklog
+       relocatable-object will insert block profiling  code  into
+       each  block and produce a relocatable-object log.basename-
+       of-relocatable-object.o to be linked into the final object
+       (see ``Examples'').  This form of logging produces an out-
+       put file for each relocatable file that it is run  against
+       (and  for  each  process  it  is  linked into) by the name
+       block.basename-of-relocatable-object.num  (where  num   is
+       incremented  until a unique name is found).  This can then
+       be given as the block-log-file option to fur (see  below).
+       If  -b  flow  is  used in place of -ball, code is inserted
+       into only enough blocks such  that  the  flow  of  control
+       through  the program can be recognized.  For example, code
+       will not be inserted at the only  target  of  an  uncondi-
+       tional  jump, since whenever the source executes, the tar-
+       get executes.
+
+       Note that one can write one's own code to be inserted into
+       the  relocatable  file  at the designated points.  One can
+       give a relocatable file that meets the following  restric-
+       tions as the block-insertion-code, prologue-insertion-code
+       or epilogue-insertion-code parameters to fur: The relocat-
+       able  file may not define any symbols The relocatable file
+       may not have any data sections and only one  text  section
+       If   there   is  an  undefined  reference  to  the  symbol
+       block_number in the relocatable file, the  number  of  the
+       block  will  be substituted for the data item.  Similarly,
+       the number of the enclosing function  is  substituted  for
+       references  to  function_number  in  the relocatable file.
+       This allows one to differentiate between each copy of  the
+       code.   Any undefined symbol that begins __FILENAME__ will
+       have its name changed.  This substring will be replaced by
+       a short version of the filename of the relocatable-object,
+       suitable for use in the name of a variable.  For  example,
+       if    the    filename   of   the   relocatable-object   is
+       /tmp/xxx/yyy.o, the substituted string will be yyy.
+
+       The easiest way to meet these restrictions is to make  the
+       inserted  code  be  a  call to a function and compile that
+       function separately.
+
+       In its third form, fur analyzes block-logs.  The -r (read-
+       only)  option tells fur to not change the relocatable file
+       (if the -r is not present, the file will be tuned based on
+       the  information  contained in the block-log-file's).  The
+       -v option tells fur to present a "view"  of  the  log;  it
+
+                                                                2
+
+fur(1)                                                     fur(1)
+
+       will  output  the  information  in the log.  The -m option
+       asks fur to output metrics that will describe how much the
+       code  would  be improved by transforming the code based on
+       the information contained in the logs.  Four types of data
+       are  presented:  Gives an idea of how much the data can be
+       trusted - the code needs to be sufficiently  exercised  to
+       be  useful  Code  can  be  changed to reduce the number of
+       jumps it takes, this statistic tells you  what  percentage
+       of  the original jumps will still be taken in the new ver-
+       sion of the code.  The lower this number is, the more tun-
+       ing  will  help  the code.  Gives a sense for how well the
+       code fits in memory and cache  before  and  after  tuning.
+       The best a program can do is to have 100% efficiency.
+
+       If  the  order-file  option is present, an ordering of the
+       blocks that best fits the data in the log will be  written
+       to  the  file (which can then be given to fur as an option
+       in the first form, as described above).  If  the  list-of-
+       functions-file  option  is present, the order of the func-
+       tions written to the order-file will be that presented  in
+       this  file,  while  the ordering of the blocks within each
+       function will be ordered based  on  the  information  con-
+       tained in the block-log-file's.
+
+       The  keep-file  option  is used to store information about
+       the relocatable-object for subsequent executions  of  fur.
+       If  keep-file  does not exist, it is created from informa-
+       tion about the relocatable-object.  If  keep-file  exists,
+       then  fur  is  saved  a  great deal of time in reading the
+       relocatable-object.  When -k is specified,  and  keep-file
+       does  not  match the relocatable object, fur fails.  If -K
+       is specified and keep-file does not match the relocatable-
+       object,  it  is treated as if keep-file did not exist (the
+       object is read and the  information  is  stored  in  keep-
+       file).
+
+       Optional  variables  may  be specified on the command line
+       (if an order-file is created, the parameters will also  be
+       stored  therein).   They  may  also  be set as environment
+       variables.  These variables are: Specifies how many  func-
+       tions  should  be  aligned, counting from the beginning of
+       the reordered code.  The default is for all  functions  to
+       be  aligned.   Specifies what value the beginning of func-
+       tions should be aligned to.  The default is  16.   Defines
+       how  many  iterations  fur  should  consider  a  loop.  By
+       default, fur considers a block to be the  beginning  of  a
+       loop  if  the block executes 50 times more than its prede-
+       cessor.  Specifies  what  value  the  beginning  of  loops
+       should be aligned to.  The default is 16.  If this parame-
+       ter is not zero, all blocks in a  function  will  be  kept
+       together  when  the  code  is rearranged.  This will, most
+       likely, hinder  fur's  ability  to  speed  up  code.   The
+       default  is 0.  If this variable is not set to 0, fur will
+       issue warnings if  an  order-file  references  a  function
+
+                                                                3
+
+fur(1)                                                     fur(1)
+
+       which  is  not  contained  in the relocatable-object.  The
+       default value is 1.  If a single order-file  is  used  for
+       multiple  objects,  the  order-file  is  likely to contain
+       information that is not relevant to each object.  In  this
+       case it may be preferable to turn off these warnings.  Two
+       optional  variables  control  the   amount   of   inlining
+       attempted  by  fur.   Only  calls that match both criteria
+       below and are  otherwise  acceptable  are  inlined.   This
+       variable   controls   the  amount  of  inlining  that  fur
+       attempts.  The values range from 0 to 100, where  0  means
+       that  no functions are inlined and 100 means that fur will
+       attempt to inline every function call possible.   A  value
+       of  10  means that fur will attempt to inline the function
+       call points that account for the first 10% of  the  calls.
+       The  default  value  is 0, which means that no inlining is
+       attempted.  This variable  also  controls  the  amount  of
+       inlining that fur attempts.  The concept behind this vari-
+       able is that it is wasteful to  inline  a  function  at  a
+       point  if  that  particular  call to the function does not
+       account for a significant amount of the calls to the func-
+       tion.   A  value  of  10  means  that a function call that
+       accounts for at least 10% of the calls to a given function
+       will be attempted to be inlined.  The default is 50.  Note
+       that  if  INLINE_CRITERIA  is  set  to  0   (no   inlining
+       attempted),   any   value  set  for  INLINE_CALL_RATIO  is
+       ignored.
+
+       The -W option suppresses warning messages from fur.
+
+       mkblocklog and mkproflog are utility programs used by fur.
+       They  should  only  be used as part of a command line sup-
+       plied  using  the  -c  option.   Since  fur  automatically
+       appends  the  number-of-blocks,  a name and the number-of-
+       functions, no options are necessary.   The  -p  option  is
+       used  to  specify where log files are written (a number is
+       appended to the prefix); by  default,  block.name  is  the
+       prefix.   mkblocklog  produces  log.name.o,  which must be
+       linked with the original relocatable to  perform  logging.
+       mkproflog produces prof.name.o.
+
+NNoottiicceess
+       The  keep-file option is presented as a convenience; there
+       is no guarantee that the  format  of  the  file  will  not
+       change between versions of the tool.  It is also not guar-
+       anteed that the format of block-log-file will not  change.
+
+       This  command has been updated to handle Intel Pentium III
+       Streaming SIMD instructions;  see for more information.
+
+EExxaammpplleess
+       You can profile code without recompiling.  If you used  to
+       compile for profiling like this: cc -p -c x.c cc -p -c y.c
+       cc -p -o z x.o y.o now, you can do this: cc -c x.c  cc  -c
+       y.c fur -P prof.o -c mkproflog -p all x.o fur -P prof.o -p
+
+                                                                4
+
+fur(1)                                                     fur(1)
+
+       all y.o cc -p -o z x.o y.o prof.x.o  prof.y.o  Here  is  a
+       sample  session  with  block-logging.  If you compile your
+       program like this: cc -c prog1.c cc -c prog2.c cc -o  prog
+       prog1.o  prog2.o  Change  it  to this: cc -c prog1.c cc -c
+       prog2.c ld -r -o prog.o prog1.o prog2.o cc -o prog  prog.o
+       Between steps 3 and 4, you can do any amount of tuning you
+       wish. For example, cp prog.o hold.o fur -c  mkblocklog  -b
+       all  prog.o cc -o prog prog.o log.prog.o prog [options] cp
+       hold.o prog.o fur -r -o prog.order -f block.prog.00 prog.o
+       fur -o prog.order prog.o cc -o prog prog.o
+
+WWaarrnniinngg
+       fur  is  guaranteed  to  produce  working code only if the
+       relocatable file was created using the UnixWare C Compila-
+       tion System.  If assembly code or code produced by another
+       compiler is used, there is  a  very  unlikely  possibility
+       that  the  object  code  will not work properly.  This can
+       only occur under one of these two circumstances:  Informa-
+       tion  that  is not legal instructions appears in the .text
+       section of the object.  This can occur if one puts data in
+       the  .text  section.   Arithmetic  is  performed  on  text
+       addresses.  Since fur moves code, any hard-coding  of  the
+       relative  positioning  of code in assembly code (it is not
+       legal in C) will cause problems.  For example, if one  has
+       two  labels  in one's assembly code and subtracts one from
+       the other; then this information is used later to  perform
+       a  jump  (or  call), fur will not recognize this situation
+       and may change the code incompatibly.   This  practice  is
+       very rare (it is often used when a compiler produces posi-
+       tion-independent-code - but fur recognizes such cases) and
+       should not be of concern to most users.
+
+DDiiaaggnnoossttiiccss
+       fur  fails if: relocatable-object is not a relocatable ELF
+       object  block-insertion-code,  prologue-insertion-code  or
+       epilogue-insertion-code is not a relocatable ELF object or
+       violates the rules stated above keep-file does  not  match
+       relocatable-object  block-log  does not match relocatable-
+       object
+
+RReeffeerreenncceess
+
+                                                                5
+

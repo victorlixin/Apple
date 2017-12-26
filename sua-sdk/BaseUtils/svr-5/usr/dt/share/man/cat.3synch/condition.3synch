@@ -1,0 +1,170 @@
+
+
+condition(3synch)                               condition(3synch)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <synch.h>
+
+       int cond_init(cond_t *cond, int type, void *arg);
+
+       int cond_signal(cond_t *cond);
+
+       int cond_broadcast(cond_t *cond);
+
+       int cond_wait(cond_t *cond, mutex_t *mutex);
+
+       int    cond_timedwait(cond_t    *cond,   mutex_t   *mutex,
+       timestruc_t *abstime);
+
+       int cond_destroy(cond_t *cond);
+
+DDeessccrriippttiioonn
+       A condition variable is a user-level synchronization mech-
+       anism  used to communicate information between cooperating
+       threads, making it possible for a thread  to  suspend  its
+       execution  while  waiting  for an event or condition.  For
+       example, the consumer  in  a  producer-consumer  algorithm
+       might need to wait for the producer.
+
+       A condition variable is always associated with some shared
+       variables protected by a mutex and a predicate (or  condi-
+       tion)  based on those shared variables.  A thread acquires
+       the mutex and evaluates the predicate.  If  the  predicate
+       is false, the thread calls cond_wait (with the mutex as an
+       argument) to wait for notification that the condition  has
+       changed.   cond_wait  blocks  the  caller and releases the
+       mutex.
+
+       While the first thread  is  blocked,  another  thread  may
+       acquire  the mutex and change the shared variables so that
+       the predicate is now true.  That thread  can  either  call
+       cond_signal to notify one thread or call cond_broadcast to
+       notify all waiting threads, then it releases the mutex.
+
+       When  a  waiting  thread   receives   notification   using
+       cond_signal   or   cond_broadcast  that  a  condition  has
+       changed, cond_wait will unblock the thread and  re-acquire
+       the  mutex.   When  the  thread returns from cond_wait, it
+       will hold the mutex.  It must  reevaluate  the  predicate,
+       which might have become false again.
+
+       Unlike  other  user synchronization mechanisms, which have
+       variables that can be locked or unlocked, condition  vari-
+       ables  are  stateless.   In  addition, condition variables
+       allow a thread either to signal one  waiting  thread  that
+       the  condition has changed or to broadcast a signal to all
+       waiting threads that a condition has changed.
+
+                                                                1
+
+condition(3synch)                               condition(3synch)
+
+   PPaarraammeetteerrss
+       pointer to condition variable to be initialized, signaled,
+       waited  for,  or  destroyed  USYNC_THREAD or USYNC_PROCESS
+       NULL (reserved for future use) pointer to a  locked  mutex
+       absolute time to at which to time out
+
+   ccoonndd__iinniitt
+       cond_init initializes the condition variable pointed to by
+       cond to be of type type.  Once created, the condition cond
+       can  be  used any number of times without being reinitial-
+       ized.
+
+   ccoonndd__ssiiggnnaall
+       cond_signal wakes up a single thread, if one exists, wait-
+       ing  on  the  condition  cond.  If more than one thread is
+       waiting, the choice of which to release from  the  blocked
+       group is scheduling policy-specific for bound threads, and
+       may be dependent on scheduling parameters for  multiplexed
+       threads.
+
+       cond_signal  has no effect if there are no threads waiting
+       on cond.
+
+       A cond_signal will be  more  reliable  if  the  associated
+       mutex used by waiters is held across the call.
+
+   ccoonndd__bbrrooaaddccaasstt
+       cond_broadcast  wakes up all threads waiting on the condi-
+       tion cond.  If more than one thread is waiting, the  order
+       of  release  from  the blocked group is scheduling policy-
+       specific for bound threads,  and  might  be  dependent  on
+       scheduling parameters for multiplexed threads.
+
+       cond_broadcast has no effect if there are no threads wait-
+       ing on cond.
+
+       A cond_broadcast will be more reliable if  the  associated
+       mutex used by waiters is held across the call.
+
+   ccoonndd__wwaaiitt
+       cond_wait blocks the calling thread at the condition vari-
+       able pointed to by cond to wait for the  occurrence  of  a
+       condition.  The calling thread must lock the mutual exclu-
+       sion lock (mutex)  pointed  to  by  mutex  before  calling
+       cond_wait, otherwise the behavior is unpredictable.
+
+       cond_wait  automatically  releases the mutex, and waits on
+       the condition variable cond.  When the condition  is  sig-
+       naled or the wait is interrupted, cond_wait reacquires the
+       mutex and returns to the caller.  If the  wait  is  inter-
+       rupted, mutex is reacquired before a signal handler or any
+       other user code can be executed.
+
+       The calling thread can resume execution when the condition
+
+                                                                2
+
+condition(3synch)                               condition(3synch)
+
+       is  signaled or broadcast, or when interrupted.  The logi-
+       cal condition should be checked on  return,  as  a  return
+       might not have been caused by a change in the condition.
+
+   ccoonndd__ttiimmeeddwwaaiitt
+       cond_timedwait,  similar  to cond_wait, blocks the calling
+       thread at the condition variable pointed to  by  cond,  to
+       wait  for  the occurrence of a condition.  However, if the
+       absolute time denoted by abstime has passed and the  indi-
+       cated  condition  is  not signaled, cond_timedwait returns
+       ETIME to the caller.  The calling  thread  must  lock  the
+       mutual  exclusion  lock (mutex) pointed to by mutex before
+       calling cond_timedwait, otherwise the behavior  is  unpre-
+       dictable.
+
+       cond_timedwait automatically releases the mutex, and waits
+       on the condition variable cond.   When  the  condition  is
+       signaled,  the  time  expires, or the wait is interrupted,
+       cond_timedwait reacquires the mutex  and  returns  to  the
+       caller.   If  the wait is interrupted, mutex is reacquired
+       before a signal handler or any other user code can be exe-
+       cuted.
+
+       User-visible   timers  are  not  affected  by  a  call  to
+       cond_timedwait.
+
+       The calling thread can resume execution when the condition
+       is signaled or broadcast, a timeout occurs, or when inter-
+       rupted.   The  logical  condition  should  be  checked  on
+       return,  as  a return may not have been caused by a change
+       in the condition.
+
+   ccoonndd__ddeessttrrooyy
+       cond_destroy destroys the condition variable  cond.   This
+       includes  invalidating  cond  and  freeing  any associated
+       implementation-allocated dynamic resources.
+
+   UUSSYYNNCC__TTHHRREEAADD aanndd UUSSYYNNCC__PPRROOCCEESSSS ccoonnddiittiioonn vvaarriiaabblleess
+       Condition variables are  initialized  to  be  one  of  two
+       types: USYNC_THREAD or USYNC_PROCESS.  USYNC_THREAD condi-
+       tion variables are available only to  threads  within  the
+       current process.  USYNC_PROCESS condition variables can be
+       used by threads in different processes.
+
+RReeffeerreenncceess
+
+                                                                3
+

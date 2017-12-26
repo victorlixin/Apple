@@ -1,0 +1,463 @@
+
+
+Set(3C++)                                               Set(3C++)
+
+SSyynnooppssiiss
+       #include  <set.h>  #include  <set_of_p.h> #include <bag.h>
+       #include  <setio.h>   #include   <set_of_pio.h>   #include
+       <bagio.h> namespace SCO_SC {
+
+       class ostream; //  Auxiliary types typedef
+           implementation_dependent_integral_type
+           Set_or_Bag_hashval; //  Template classes for Bag_pair,
+       Bag, Set, and Set_of_p:
+           template <class T> struct Bag_pair{
+               T value;
+               unsigned count;
+           };
+           template <class T> class Bag{
+           public:
+           //  Constructors, destructor
+               Bag();
+               Bag(const T& t1);
+               Bag(const T& t1, const T& t2);
+               Bag(const T& t1, const T& t2, const T& t3);
+               Bag(const T& t1, const T& t2, const T& t3,
+                     const T& t4);
+               ~Bag();
+           //  Copy and assign
+               Bag(const Bag<T>& b);
+               Bag<T>& operator=(const Bag<T>& b);
+           //  Length
+               unsigned size()const;
+               unsigned size_unique()const;
+               operator const void*()const;
+           //  Membership
+               const Bag_pair<T>* contains(const T& t)const;
+               unsigned count(const T& t)const;
+           //  Select an arbitrary element
+               const Bag_pair<T>* select()const;
+           //  Insert and remove elements
+               const Bag_pair<T>* insert(const T& t,
+                     int count = 1);
+               unsigned remove(const T& t, int count=1);
+               unsigned remove_all(const T& t);
+               unsigned remove_all();
+           //  Relations
+               int operator==(const Bag<T>& b)const;
+               int operator!=(const Bag<T>& b)const;
+               int operator<=(const Bag<T>& b)const;
+               int operator<(const Bag<T>& b)const;
+               int operator>=(const Bag<T>& b)const;
+               int operator>(const Bag<T>& b)const;
+           //  Algebra
+               Bag<T> operator|(const Bag<T>& b)const;
+               Bag<T> operator&(const Bag<T>& b)const;
+               Bag<T> operator-(const Bag<T>& b)const;
+               Bag<T> operator^(const Bag<T>& b)const;
+               Bag<T>& operator|=(const Bag<T>& b);
+
+                                                                1
+
+Set(3C++)                                               Set(3C++)
+
+               Bag<T>& operator&=(const Bag<T>& b);
+               Bag<T>& operator-=(const Bag<T>& b);
+               Bag<T>& operator^=(const Bag<T>& b);
+           //  Performance analysis
+               void histogram(
+                     Map<Set_or_Bag_hashval,unsigned>& m)const;
+           //  Very simple hash function
+               static Set_or_Bag_hashval hash(const T&);
+           };
+           //  Stream insertion
+           template <class T>
+           ostream& operator<<(ostream& os, const Bag<T>& b);
+           template <class T> class Bagiter{
+           public:
+               Bagiter<T>(const Bag<T>& b);
+               const Bag_pair<T>* next();
+               int next(const Bag_pair<T>*& p);
+               void reset();
+               const Bag<T>* the_bag()const;
+           };
+           template <class T> class Set{
+           public:
+               // Similar to Bag<T>
+           };
+           template <class T> class Setiter{
+           public:
+               Setiter(const Set<T>& s);
+               const T* next();
+               int next(const T*& p);
+               void reset();
+               const Set<T>* the_set()const;
+           };
+           template <class T> class Set_of_p{
+           public:
+               // Similar to Set<T>
+           };
+           template <class T> class Set_of_piter{
+           public:
+               Set_of_piter(const Set_of_p<T>& s);
+               T* next();
+               int next(T*& p);
+               void reset();
+               const Set_of_p<T>* the_set_of_p()const;
+           }; }
+
+DDeessccrriippttiioonn
+       A Bag<T> is an unordered homogeneous collection whose ele-
+       ments  are  objects of type T.  A Set<T> is a Bag in which
+       no two elements are equal.  In either case, T can  be  any
+       type  having: T() T(T&) operator== defining an equivalence
+       relation on T operator= A Set_of_p<T>,  also  known  as  a
+       pointer  set,  is  a  set whose elements are uninterpreted
+       pointers to objects of type T.  T can be any type that  is
+       guaranteed  to be aligned on even byte boundaries and, the
+
+                                                                2
+
+Set(3C++)                                               Set(3C++)
+
+       objects pointed to are not involved in pointer set  opera-
+       tions.   For example, if an object pointed to by a pointer
+       set element is deleted, the pointer  set  operations  will
+       continue   to   function   as  if  nothing  had  happened.
+       Set_of_p<T> offers  a  more  efficient  implementation  of
+       pointer  sets  than Set<T> when T is a pointer type.  Each
+       of these classes has  a  companion  iterator  class  whose
+       instances  may  be  used  for  iterating  over elements in
+       unspecified order.
+
+       The implementation of Set<T> and Bag<T> is based on  hash-
+       ing.  To optimize time complexity, a perfect hash function
+       (a function for which different arguments yield  different
+       results)  should be used (see Complexity).  To integrate a
+       user-defined hash function into a Set  or  Bag  structure,
+       the  function should be defined as either Set_or_Bag_hash-
+       val   Set<T>::hash(const   T&)    or    Set_or_Bag_hashval
+       Bag<T>::hash(const T&).  If there is no such hash function
+       provided, a default hash  function  which  always  returns
+       zero will be used and it will result in all elements being
+       stored internally in a single list.
+
+   AAuuxxiilliiaarryy ttyyppeess
+       typedef             implementation_dependent_integral_type
+       Set_or_Bag_hashval; This type denotes an unsigned integral
+       type which for UnixWare and most other implementations  is
+       unsigned  long but may be shorter or longer in some imple-
+       mentations.  It is used as the return type of user-defined
+       hash functions.
+
+       Mapdeclare<Set_or_Bag_hashval,unsigned>  Defines  the type
+       Map<Set_or_Bag_hashval,unsigned> which is returned by  the
+       function histogram().  See Map(3C++).
+
+ssttrruucctt BBaagg__ppaaiirr<<TT>>
+       Some Bag operations (and Bag iterators---see below) return
+       pointers to constant objects of this type.
+
+       T value; The element value.
+
+       unsigned count; The number of occurrences.
+
+ccllaassss BBaagg<<TT>>
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Bag();
+
+       Bag(const T& t1);
+
+       Bag(const T& t1, const T& t2);
+
+       Bag(const T& t1, const T& t2, const T& t3);
+
+       Bag(const T& t1, const T& t2, const T& t3,
+           const T& t4); Constructors for Bags of zero, one, two,
+
+                                                                3
+
+Set(3C++)                                               Set(3C++)
+
+       three, or four elements, respectively.
+
+       ~Bag();  Destructor.   All iterators currently attached to
+       the Bag will be informed of  the  Bag's  destruction  (see
+       Bagiter<T>::the_bag()).
+
+   CCooppyy aanndd aassssiiggnn
+       Bag(const Bag<T>& b);
+
+       Bag<T>& operator=(const Bag<T>& b); Copying or assigning a
+       Bag<T> creates a copy of its value.
+
+   LLeennggtthh
+       unsigned size()const; The number of elements  in  the  Bag
+       (counting multiple occurrences).
+
+       unsigned size_unique()const; The number of unique elements
+       in the Bag.
+
+       operator const void*()const; Returns non-zero if  the  Bag
+       contains  one  or  more elements.  Most useful in contexts
+       where implicit conversion will take  place,  for  example,
+       while(b)....
+
+   MMeemmbbeerrsshhiipp
+       const  Bag_pair<T>*  contains(const T& t)const; If an ele-
+       ment t is in the Bag, returns a pointer to the correspond-
+       ing Bag_pair; otherwise, returns zero.
+
+       unsigned  count(const  T&  t)const;  Returns the number of
+       elements with the value t.
+
+   SSeelleecctt aann aarrbbiittrraarryy eelleemmeenntt
+       const Bag_pair<T>* select()const; Returns a pointer to  an
+       arbitrary Bag_pair.
+
+   IInnsseerrtt aanndd rreemmoovvee eelleemmeennttss
+       const  Bag_pair<T>*  insert(const  T&  t,  int count = 1);
+       Inserts count elements with the  value  t  into  the  Bag.
+       Returns  a  pointer  to  the  Bag_pair if the Bag actually
+       changed and zero otherwise (no change will occur if  count
+       is nonpositive).
+
+       unsigned  remove(const  T&  t, int count=1); Removes count
+       elements with the value t from the Bag.  If the number  of
+       elements with this value is less than count, then all such
+       elements are removed.   Returns  the  number  of  elements
+       actually removed.
+
+       unsigned remove_all(const T& t); Removes all elements with
+       the value t from the Bag.  Returns the number of  elements
+       actually removed.
+
+       unsigned  remove_all();  Removes  all elements in the Bag.
+
+                                                                4
+
+Set(3C++)                                               Set(3C++)
+
+       Returns non-zero if the Bag actually  changed  (no  change
+       will occur for an empty Bag).
+
+   RReellaattiioonnss
+       All  of  the  following  operators  return non-zero if the
+       relation is true.
+
+       int operator==(const Bag<T>& b)const;
+
+       int  operator!=(const  Bag<T>&   b)const;   Equality   and
+       inequality  relations.  Two Bags are equal if they contain
+       exactly the same elements.
+
+       int operator<=(const Bag<T>&  b)const;  Sub-bag  relation.
+       True if all of the elements of this Bag are also contained
+       in b.
+
+       int operator<(const Bag<T>& b)const; Proper sub-bag  rela-
+       tion.   True  if  all of the elements of this Bag are also
+       contained in b and, in addition, b has other elements.
+
+       int operator>=(const Bag<T>& b)const; Super-bag  relation.
+       True  if  all  of  the elements of b are also contained in
+       this Bag.
+
+       int  operator>(const  Bag<T>&  b)const;  Proper  super-bag
+       relation.   True  if  all  of the elements b are also con-
+       tained in this Bag and, in addition, this  Bag  has  other
+       elements.
+
+   AAllggeebbrraa
+       Bag<T>  operator|(const  Bag<T>&  b)const;  Bag union (the
+       elements that are in this Bag or in b).
+
+       Bag<T> operator&(const Bag<T>& b)const;  Bag  intersection
+       (the elements that are in both this Bag and b).
+
+       Bag<T>  operator-(const  Bag<T>&  b)const;  Bag difference
+       (the elements that are in this Bag but not in b).
+
+       Bag<T> operator^(const Bag<T>& b)const; Bag symmetric dif-
+       ference (the elements that are in this Bag or in b, but in
+       not both).
+
+       Bag<T>& operator|=(const Bag<T>& b);
+
+       Bag<T>& operator&=(const Bag<T>& b);
+
+       Bag<T>& operator-=(const Bag<T>& b);
+
+       Bag<T>& operator^=(const Bag<T>& b);  Assignment  versions
+       of the above.
+
+                                                                5
+
+Set(3C++)                                               Set(3C++)
+
+   SSttrreeaamm iinnsseerrttiioonn
+       ostream&  operator<<(ostream& os,const Bag<T>& b); Inserts
+       an ASCII representation of b into ostream os.  The  repre-
+       sentation  has  the form {(n1,t1)(n2,t2)(n3,t3) ...} where
+       ti is an element value and ni is its multiplicity.
+
+   PPeerrffoorrmmaannccee aannaallyyssiiss
+       void histogram(Map<Set_or_Bag_hashval,unsigned>&  m)const;
+       Returns  (via the argument m) a Map(3C++) from hash values
+       to collision list lengths.  The shape of this  "histogram"
+       indicates  the  goodness of the hash function; for perfect
+       hash functions, collision list lengths are  never  greater
+       than 1.
+
+ccllaassss BBaaggiitteerr<<TT>>
+       For  every class Bag<T>, there is a class Bagiter<T> whose
+       objects, called iterators, are  used  for  iterating  over
+       elements.   The order in which elements are returned by an
+       iterator is purposely unspecified.  Several iterators  may
+       be active simultaneously over a single Bag.  If an element
+       is inserted into a Bag, it may or may not be  seen  by  an
+       active  iterator.  The behavior of all iterator operations
+       except the_bag() is undefined when the Bag  to  which  the
+       iterator is attached ceases to exist.
+
+       Bagiter(const  Bag<T>& b); Creates a Bagiter<T> to iterate
+       over the elements of b.
+
+       const Bag_pair<T>* next(); Returns a pointer to  the  next
+       Bag_pair<T>; returns 0 if all pairs have been returned.
+
+       int  next(const Bag_pair<T>*& p); Assigns a pointer to the
+       next Bag_pair<T> (if there is one) to p and  returns  non-
+       zero if the value of p is meaningful.
+
+       void  reset();  Resets  the  iterator  so  that  it can be
+       reused.
+
+       const Bag<T>* the_bag()const; Returns a pointer to the Bag
+       being iterated over, or zero if there is no such Bag (this
+       can happen if the Bag is destroyed).
+
+ccllaassss SSeett<<TT>>,, ccllaassss SSeettiitteerr<<TT>>
+       The description of Bag<T>  and  Bagiter<T>  hold,  mutatis
+       mutandis,  for  Set<T>  and  Setiter<T> with the following
+       exceptions:     The     functions      Set<T>::contains(),
+       Set<T>::select(),  Set<T>::insert(),  and the two versions
+       of Setiter<T>::next() return const T*  rather  than  const
+       Bag_pair<T>*.   If n>1, Set<T>::insert(e,n) gives the same
+       result     as      Set<T>::insert(e,1).       If      n>1,
+       Set<T>::remove(e,n)    gives    the    same    result   as
+       Set<T>::remove(e,1).  Set<T>::remove_all(t) gives the same
+       result  as Set<T>::remove(t).  Set<T>::size_unique() gives
+       the same result as  Set<T>::size().   The  format  of  the
+
+                                                                6
+
+Set(3C++)                                               Set(3C++)
+
+       ASCII  representation  produced  by  the  stream insertion
+       operator has the form { t1,t2,t3,... } where ti is an ele-
+       ment value.
+
+ccllaassss SSeett__ooff__pp<<TT>>,, ccllaassss SSeett__ooff__ppiitteerr<<TT>>
+       The  description  of  Set<T>  and Setiter<T> hold, mutatis
+       mutandis, for Set_of_p<T> and  Set_of_piter<T>,  with  the
+       following  exceptions:  A  Set_of_p  cannot contain a null
+       pointer  (inserting  the  null  pointer  has  no  effect).
+       Set_of_p<T>::contains(),            Set_of_p<T>::select(),
+       Set_of_p<T>::insert(),   and   the   two    versions    of
+       Set_of_piter<T>::next()  return  T*  rather than const T*.
+       If a Set function takes an argument of type const T&,  the
+       corresponding  Set_of_p  or Set_of_piter function takes an
+       argument of type const T*.  Since hashing is not used, all
+       remarks concerning hashing can be ignored.  In particular,
+       the function histogram() is not available.  The format  of
+       the  ASCII representation produced by the stream insertion
+       operator is identical to that produced  by  Set<T>::opera-
+       tor<< (the elements are de-referenced for printing).
+
+CCoommpplleexxiittyy
+       Set<T>,  Bag<T>,  and Set_of_p<T> were designed to achieve
+       minimum across-the-board order estimates for time complex-
+       ity.   Naturally,  speed  was achieved at a cost of space.
+       Even so, space complexity for all  three  classes  remains
+       O(N).   Operations are further accelerated by cacheing the
+       results of each search of  the  internal  data  structure.
+       Thus, for example, testing for containment and then delet-
+       ing an element requires only a single search.   Similarly,
+       iteration  is  accelerated  by cacheing.  In view of this,
+       expect degraded performance if you do anything to  destroy
+       the utility of the cache, for example
+           if(x.contains(a) && x.contains(b)) x.remove(a);
+
+       Similarly,  iterators  maintain  private caches, but these
+       are invalidated by operations that modify  the  object  to
+       which the iterator is attached.
+
+       Set_of_p<T> Time complexity of operations involving a sin-
+       gle element (for example, insert(), remove(),  contains())
+       is  O(1);  the  time for operations involving all the ele-
+       ments in the set (for example, iteration) is O(N), where N
+       is the size of the set.  The time for operations involving
+       two sets (for example, the algebraic and relational opera-
+       tions)  is  O(N+M), where N and M are the sizes of the two
+       sets.  Space complexity is approximately O(N).
+
+       Set<T> Time complexity depends on the  average  length  of
+       collision  lists.   For a perfect hash function (one which
+       hashes unique keys to unique hash values), time complexity
+       is  O(1),  O(N),  and  O(N+M)  (as above), with a somewhat
+       higher constant multiplier, owing,  for  example,  to  the
+       copying  overhead  of operations like insert.  For a less-
+
+                                                                7
+
+Set(3C++)                                               Set(3C++)
+
+       than-perfect hash function, the time  complexity  must  be
+       multiplied  by the average length of collision lists; if L
+       is the average list length,  then  average  complexity  is
+       O(L),  O(N*L),  and  O(L*(N+M)), respectively.  Space com-
+       plexity is also O(N), also with a somewhat higher constant
+       multiplier.
+
+       Bag<T> Time complexity is roughly equal to that of Set<T>.
+       Space complexity is O(N), where N is the number of  unique
+       elements (multiple occurrences are not actually stored).
+
+NNootteess
+       Iterators   for  certain  other  container  classes,  like
+       List(3C++), yield pointers to their elements, allowing the
+       elements  to be modified in place.  Bag and Set iterators,
+       on the other hand, yield pointers to constants because  it
+       is  dangerous to modify their elements in place (since the
+       location of an element within the internal data  structure
+       is  a  function  of its hash value, changing an element in
+       place corrupts the data structure).  The only time  it  is
+       safe  to cast away the constant is when default hash func-
+       tion is used, since an element's storage location in  such
+       a Set or Bag is independent of its value.
+
+       If  you  need  integer  sets, Bits(3C++) may be more effi-
+       cient, both in time and space, than Set<int>.   For  small
+       sets  where  linear time complexity is not a problem, con-
+       sider using  Block  Algorithms  (see  Array_alg(3C++)  and
+       Block(3C++)).
+
+BBuuggss
+       The  elements  pointed  to by a pointer set must reside on
+       even byte boundaries.  (That is,  the  low  order  bit  of
+       every  pointer  in a pointer set must be zero.)  Violating
+       this restriction will result  in  unpredictable  behavior.
+       Since  character  pointers  do not in general satisfy this
+       restriction, pointer sets can not be used to keep track of
+       arbitrary  character  strings.   However, pointer sets can
+       always be used to  keep  track  of  dynamically  allocated
+       objects   (including   dynamically   allocated   character
+       strings), since pointers obtained from operator new always
+       are  guaranteed  to  satisfy  the most stringent alignment
+       restrictions.
+
+RReeffeerreenncceess
+
+                                                                8
+

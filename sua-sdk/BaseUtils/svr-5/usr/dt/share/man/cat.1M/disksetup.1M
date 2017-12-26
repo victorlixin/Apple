@@ -1,0 +1,170 @@
+
+
+disksetup(1M)                                       disksetup(1M)
+
+SSyynnooppssiiss
+   IInnssttaallll pprriimmaarryy ddiisskk
+       /usr/sbin/disksetup  -I[e]  -B [-d defaults-file] -b boot-
+       file raw-device [-s]
+
+   IInnssttaallll aaddddiittiioonnaall ddiisskk
+       /usr/sbin/disksetup -I[e]  [-d  defaults-file]  raw-device
+       [-s]
+
+   WWrriittee bboooott ccooddee ttoo ddiisskk
+       /usr/sbin/disksetup -b boot-file raw-device [-s]
+
+DDeessccrriippttiioonn
+       disksetup  performs  the  low level activities required to
+       install the primary drive or additional drives.  The tasks
+       required  for disk setup include surface analysis, assist-
+       ing you to create the layout of slices (either  through  a
+       set of defaults or by asking you for details), writing the
+       pdinfo, VTOC and alternates tables out to the drive, issu-
+       ing  needed  mkfs  calls,  creating mount points, mounting
+       filesystems, and updating the /etc/vfstab file.
+
+       The disksetup command cannot be used to enable large  file
+       support.   If  you  need  to enable large file support for
+       files greater than 2GB on a vxfs filesystem,  use  Directs
+       the  raw-device  to  be  installed, performing the surface
+       analysis, creation/writing the pdinfo,  VTOC,  and  alter-
+       nates  tables (for non-SCSI drives).  When e is specified,
+       more than 16 slices can be created; the maximum number  of
+       slices  is  184.   Denotes that the raw-device will be the
+       system boot device.  Passes in a default  layout  for  the
+       raw-device.   The  information  from  the defaults file is
+       used to generate the default slices for the  System parti-
+       tion.   The  layout of the file is described later in this
+       manual page.  Denotes that the  disksetup  command  should
+       operate  without  returning  any  queries, information, or
+       error messages (silent mode).  This option can  be  useful
+       for  automatic installation.  Write the boot code found in
+       the boot file into the boot slice of  the   System  parti-
+       tion.   The boot code can be in either ELF or COFF format.
+       Only the required sections/segments will be  loaded.   The
+       boot  file  provided  with  the  system is /etc/boot.  The
+       required raw-device  argument  is  the  character  special
+       device  for  the  accessed  disk drive.  It should use the
+       slice 0 device to represent the entire device  (for  exam-
+       ple, /dev/rdsk/0s0 or /dev/rdsk/c0b0t0d0s0).
+
+FFiilleess
+UUssaaggee
+       If you do not specify a defaults-file, you are asked first
+       which slices you want to create, and then  what  size  you
+       want  them  to  be  (you  must  ultimately  confirm  these
+       choices, and you can repeat the above  steps  if  you  are
+       unsatisfied  with  your  selections.)   If  you  provide a
+
+                                                                1
+
+disksetup(1M)                                       disksetup(1M)
+
+       defaults-file, a default layout of slices will be created,
+       based  on  the  defaults-file.   If you select the default
+       layout, a VTOC representing the default layout is  written
+       to  the  drive.   If you do not select the default layout,
+       you are then given the opportunity to  specify  the  sizes
+       for slices defined in the defaults-file.
+
+       Here is a sample layout of slices:
+       -----------------------------------------------------------------
+       slice #   slicename         FStype   FSblksz   slicesize   minsz
+       -----------------------------------------------------------------
+       1         /                 s5       1024      35M         12
+       2         /dev/swap         -        -         2m          8
+       3         /home             ufs      4096      60W         26
+       5         /home2            ufs      4096      40W         3
+       10        /stand            bfs      512       5M *        5
+       13        /dev/volpublic    -        -         20M         0
+       14        /dev/volprivate   -        -         256K        128
+
+       The /stand slice cannot exceed 128 MB in size.
+
+       Use  the  -d  defaults-file  option  to  specify  your own
+       default  layout  in  defaults-file.   Each  entry  in  the
+       defaults-file  defines  a slice, and must contain the fol-
+       lowing tab-separated fields: slice # slicename File System
+       type  File System blocksize slicesize slicesize specifica-
+       tion minimum slicesize Required flag (optional)
+
+       The slicesize is an integer value greater than  zero.   It
+       must  be  immediately followed by the slicesize specifica-
+       tion.  The minsz denotes the minimum slicesize.  It can be
+       immediately followed by the optional character R to denote
+       a required slice.
+
+       Either the M, m, W or K  are  required  in  the  slicesize
+       specification.   The  slice  number  is  the entry in VTOC
+       where the slice will be located.
+
+       Slice name is the mount point if the slice is a filesystem
+       or  descriptive  name  if no file system is to be created.
+       FStype is the file system type for the  slice,  where  s5,
+       ufs,  and  bfs denote that particular type of mkfs command
+       is to be issued; a dash  in  the  FStype  field  instructs
+       disksetup  to  issue  no  mkfs  command  for  this  slice.
+       FSblksz is the primary block size for the  specified  file
+       system.
+
+       The M size specifier character denotes a size in megabytes
+       (MB), so for example, 35M specifies a 35  MB  slice  size.
+       The  K size specifier works much the same way, but denotes
+       a size in kilobytes (KB).  The K  specifier  can  only  be
+       used  in the slicesize parameter.  If the K size specifier
+       follows the slicesize parameter, the unit for  minsz  must
+       be  specified  in kilobytes, otherwise, the unit for minsz
+
+                                                                2
+
+disksetup(1M)                                       disksetup(1M)
+
+       is in megabytes.  The m size specifier defines a file sys-
+       tem  size  in terms of the amount of memory in the system,
+       with m defining a multiple of memory.  For example,  given
+       a  system  with 4 MB of memory, 2m specifies an 8 MB slice
+       size.
+
+       The W size specifier character requests a weighted propor-
+       tion.   To  calculate  a  weighted  proportion of xW, x is
+       divided by the sum of the W requests, and then that  value
+       is  multiplied  with the remaining disk space (after all M
+       and m type requests are handled) to define the slice size.
+       For  a  system  with a 100 MB disk and 4 MB of memory, the
+       example defaults file provided here would yield:  slice  1
+       35M  = 35 MB size slice 2 2m = (2 * 4MB) = 8 MB size slice
+       3 60W = (60/100 * 52 MB) =  31  MB  size  slice  5  40W  =
+       (40/100 * 52 MB) = 21 MB size slice 10 5M = 5 MB size
+
+WWaarrnniinnggss
+       If  you  install a hard disk using incorrect disk hardware
+       description parameters (for example, in system  CMOS),  in
+       many  cases,  system  diagnostics will not inform you that
+       you have made a mistake.  In addition, system installation
+       will  not be affected, and the system will appear to func-
+       tion  normally.   However,  several   commands   will   be
+       affected;  specifically,  any  command that deals with the
+       physical space values on the disk  will  report  incorrect
+       values.
+
+       To  correct  this situation, you must not only correct the
+       CMOS or firmware setting, but you should  also  perform  a
+       low level format of the affected partition, and then rein-
+       stall the system.  If you cannot  perform  the  low  level
+       format,  you  should move the  partition up a cylinder and
+       then reinstall the system.
+
+RReeffeerreenncceess
+NNoottiicceess
+       If you use disksetup to add a drive, and request a surface
+       analysis,  normally  the  surface  analysis is performed a
+       track at a time.  However, on some SCSI drives,  including
+       IBM  models, the SCSI Mode Sense command fails, preventing
+       disksetup from obtaining the track  size  parameters.   If
+       this  happens,  disksetup  will provide you the options of
+       performing the disk surface analysis, but do so one sector
+       at a time, or to skip the surface analysis entirely.
+
+                                                                3
+

@@ -1,0 +1,93 @@
+
+
+cd_getdevmap(3X)                                 cd_getdevmap(3X)
+
+SSyynnooppssiiss
+       cc [flag . . . ] file . . . -lcdfs -lgen [library] . . .
+
+       #include <sys/cdrom.h>
+
+       int cd_getdevmap(const char *path, int pathlen, int index,
+            int *new_major, int *new_minor);
+
+DDeessccrriippttiioonn
+       cd_getdevmap gets the major and  minor  numbers  currently
+       assigned to a device file on the mounted CD-ROM.  (See the
+       command to  see  how  to  change  the  major/minor  number
+       assignments.)   Points  to a device file within the CD-ROM
+       file hierarchy.  Specifies the  maximum  length  of  path.
+       When  the  major and minor number of a device file are set
+       (reassigned) using  the  cd_setdevmap  function,  the  new
+       major  and  minor  number  values are recorded in a table.
+       Each line in the table has a number  associated  with  it.
+       The  first entry in the table is referred to as index num-
+       ber one, the second entry is index number two, and so  on.
+       index specifies which entry to look up in the table.  If a
+       major/minor number assignment of a device  file  is  unset
+       (using the cd_setdevmap function), the entry for the spec-
+       ified device file is deleted from the table.
+
+       index is specified as follows: If index is zero, the major
+       and  minor number of the device file pointed to by path is
+       returned.  The value of pathlen is not used.  If index  is
+       non-zero,  index  specifies  which  entry  in the table to
+       return.  The major and minor number, and the  pathname  of
+       the device file are returned.  Identifies the memory loca-
+       tion where the major number  is  stored.   Identifies  the
+       memory location where the minor number is stored.
+
+RReettuurrnn vvaalluueess
+       If the major and minor number of the specified device file
+       is successfully returned, cd_getdevmap returns the  length
+       of path.
+
+       If  the  length  of  the  pathname  for the device file is
+       longer than pathlen, the pathname returned in path will be
+       truncated   to   pathlen  length  and  will  not  be  NULL
+       terminated.  Also, the return value will  be  larger  than
+       pathlen.
+
+       If  no major and minor number assignment for the specified
+       device file is found, zero is returned.
+
+       In case of error, -1 is returned and errno is set to indi-
+       cate the error as follows:
+
+       Search  permission  is  denied for a component of the path
+       prefix.  Read permission on the device file pointed to  by
+       path  is  denied.   The  address  of  path,  new_major, or
+
+                                                                1
+
+cd_getdevmap(3X)                                 cd_getdevmap(3X)
+
+       new_minor is invalid.  A  signal  was  caught  during  the
+       cd_getdevmap  function.   The value of index or pathlen is
+       invalid.  The path argument points to a device  file  that
+       is not within the CD-ROM file hierarchy.  The file pointed
+       to by path is not a device file.  Too many  file  descrip-
+       tors  are  currently  open  in  the  calling process.  The
+       length of the path string exceeds MAXPATHLEN.  A  pathname
+       component  is longer than MAXNAMELEN while _POSIX_NO_TRUNC
+       is in effect.  The system file table is full.  A component
+       of  path  does  not exist.  The path argument points to an
+       empty string.  A component of the path  prefix  is  not  a
+       directory.   The CD-ROM is not in the drive.  A read error
+       occurred.
+
+RReeffeerreenncceess
+       Rock Ridge Interchange Protocol from the Rock Ridge  Tech-
+       nical Working Group
+
+NNoottiicceess
+       The  index  numbers  from 1 to n (where n is the number of
+       the last device file reassignment) are  always  guaranteed
+       to have an associated device file.  So, to write an appli-
+       cation  that  successively   deletes   all   device   file
+       major/minor  number  reassignments  one  at  a  time, call
+       cd_getdevmap with index equal to 1, then call cd_setdevmap
+       with  CD_UNSETDMAP,  in a loop, until cd_getdevmap returns
+       zero.
+
+                                                                2
+

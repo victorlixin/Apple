@@ -1,0 +1,145 @@
+
+
+idinstall(1M)                                       idinstall(1M)
+
+SSyynnooppssiiss
+       /etc/conf/bin/idinstall    [-adugGM]    [-ekN]    [-msopt-
+       nirhCTbDFO]
+            [-R  rootdir]  [-f  major-list]  [-P  pkg_name]  mod-
+       ule_name
+
+DDeessccrriippttiioonn
+       One of the ID/TP kernel configuration tools, idinstall, is
+       called by a Driver  Software  Package  (DSP)  installation
+       script  or removal script to add (-a), delete (-d), update
+       (-u), or get (-g or -G) device driver/kernel  module  con-
+       figuration  data.  It can also be run from a kernel source
+       makefile to make (-M) driver/module configuration data.
+
+       idinstall expects to find driver/module component files in
+       the  current  directory.  When components are installed or
+       updated with -a or -u option, they are copied into  subdi-
+       rectories of the /etc/conf directory and then deleted from
+       the current directory, unless the -k flag is used.
+
+   OOppttiioonnss
+       The options for idinstall are:  Add  the  DSP  components.
+       Update  the  DSP  components.   Remove the DSP components.
+       Get the DSP components (print to stdout).  If you use  the
+       -g  option,  the component configuration file specified is
+       output using the  configuration  file's  original  format,
+       unconverted by idinstall.  If you use the -G option, idin-
+       stall converts the file output to appear in the most  cur-
+       rent configuration file format.  If the component configu-
+       ration is already in the most current format at  the  time
+       it  is installed, these two options provide identical out-
+       put.  Add or update any DSP components  that  are  out-of-
+       date (modified more recently than the installed copy).  If
+       no component is specified, the default is  all  components
+       present in the current directory.  However, when using the
+       -g or -G option, a  single  component  must  be  specified
+       explicitly.
+
+       Master   component  System  component  Driver.o  component
+       Space.c component Stubs.c component  Node  (special  file)
+       component  inittab  component (Init) System startup script
+       (Rc) System shutdown script (Sd) Autotune component  Mtune
+       component Modstub.o component Drvmap component Ftab compo-
+       nent firmware.o component Disable free disk space check on
+       add  or  update.   Keep  files (do not remove from current
+       directory) on add or update.  Use rootdir as the  root  of
+       the   configuration   directory   structure   instead   of
+       /etc/conf.  Use major_list file as the reserved major num-
+       bers  list.   Do not invoke to update the Resource Manager
+       database.  Used with the -a or -u option.  Update the con-
+       tents file with the package name specified.
+
+UUssaaggee
+       In  the simplest case of installing a new DSP, the command
+
+                                                                1
+
+idinstall(1M)                                       idinstall(1M)
+
+       syntax  used  by  the  DSP's  Install  script  should  be:
+       /etc/conf/bin/idinstall  -a  module-name In this case, the
+       command requires and installs the  DSP  Driver.o,  Master,
+       and  System  components, and optionally installs any other
+       components whose files are present in the  current  direc-
+       tory.
+
+       Alternatively,  individual  components can be installed by
+       using appropriate options.  The Dtune  and  *.bcfg  compo-
+       nents  have  no  corresponding option letters and are only
+       installed in the default case.
+
+       The Driver.o, Modstub.o, Space.c, and  Stubs.c  components
+       are  moved  to  a directory named /etc/conf/pack.d/module-
+       name.  The remaining components are stored in  directories
+       under /etc/conf, which are organized by component type, in
+       files named module-name.  For example, the Node file would
+       be moved to /etc/conf/node.d/module-name.  Driver packages
+       should not directly access /etc/conf files.
+
+       When the Driver.o component is installed,  looks  for  any
+       filename  that  matches the pattern Driver*.o and installs
+       each file.  This allows the DSP to install multiple driver
+       binaries that can be dynamically selected by
+
+       idinstall  -a  requires  that  the module specified is not
+       currently installed.
+
+       idinstall -u allows an Update DSP (one  that  replaces  an
+       existing  device  driver  component)  to be installed.  It
+       overlays the files of the old DSP with the  files  of  the
+       new  DSP.  idinstall -u requires that the module specified
+       is currently installed.
+
+       idinstall -M works whether or not the module is  currently
+       installed.   It  copies into the configuration directories
+       any component files which are not  yet  installed  or  are
+       newer than the installed versions.  In any case, the files
+       in the current directory are not removed.
+
+       When the -a or -u options are used, unless the  -e  option
+       is  used as well, idinstall attempts to verify that enough
+       free disk space is available to start the  reconfiguration
+       process.   This is done by calling the command.  idinstall
+       will fail if there is not enough space and will exit  with
+       a non-zero return code.
+
+       When  the  -a  or  -u options are used to install hardware
+       drivers (the Master file has an h in  the  characteristics
+       field), idinstall calls idresadd to add a default Resource
+       Manager database entry based on  the  information  in  the
+       System  file  of  the  DSP,  unless the -N or -R option is
+       used.
+
+                                                                2
+
+idinstall(1M)                                       idinstall(1M)
+
+       When the -d option is used with  a  hardware  driver,  any
+       default  resource  manager  entries for the driver will be
+       removed.  Non-default  entries  will  have  their  MODNAME
+       parameter removed.  See
+
+EExxiitt ccooddeess
+       An  exit  value  of  zero  indicates success.  If an error
+       occurs, idinstall exits with a non-zero value and  reports
+       an  error  message.  The error messages are designed to be
+       self-explanatory.   Typical  error  messages  reported  by
+       idinstall  can include: Device package already exists Can-
+       not make the driver package directory Cannot remove driver
+       package  directory  Local  directory  does  not  contain a
+       Driver object (Driver.o) file  Local  directory  does  not
+       contain  a  Master file Local directory does not contain a
+       System file Cannot remove driver entry If a  module  fails
+       to   install   during   a  kernel  reconfiguration  (using
+       idbuild), a message is displayed indicating  the  failure,
+       then the reconfiguration continues.
+
+RReeffeerreenncceess
+
+                                                                3
+

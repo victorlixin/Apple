@@ -1,0 +1,205 @@
+
+
+lprof(1)                                                 lprof(1)
+
+SSyynnooppssiiss
+       lprof  [-CPSVflpsx]  [-F  func]  [-I dir] [-c cntfile] [-o
+       prog] [-r srcfile]
+
+       lprof [-T] -d destfile [-m cntfile] [cntfile ...]
+
+DDeessccrriippttiioonn
+       lprof reports the execution characteristics of  a  program
+       on  a  (source)  line  by line basis.  This is useful as a
+       means to determine which and how  often  portions  of  the
+       code were executed.
+
+       lprof interprets a profile file (prog.cnt by default) pro-
+       duced by the profiled program  prog  (a.out  by  default).
+       prog creates a profile file if it has been loaded with the
+       -ql option of or The profile information is  computed  for
+       functions in a source file if the -ql option was used when
+       the source file was compiled.
+
+       A shared object may also be  profiled  by  specifying  -ql
+       when  the  shared  object  is created.  When a dynamically
+       linked executable is run, one profile file is produced for
+       each  profiled  shared  object  linked  to the executable.
+       This feature is useful in building a single report  cover-
+       ing multiple and disparate executions of a common library.
+       For example, if programs prog1  and  prog2  both  use  the
+       archive  library  libx.a,  running these profiled programs
+       will produce two profile files, prog1.cnt  and  prog2.cnt,
+       which  cannot be combined.  However, if libx is built as a
+       profiled shared object, libx.so, and prog1 and  prog2  are
+       built  as  profiled  dynamically  linked executables, then
+       running these programs with the merge option will  produce
+       three  profile  files; one of them, libx.so.cnt, will con-
+       tain the libx profile information from both runs.
+
+       By default, lprof prints a listing of  source  files  (the
+       names  of which are stored in the symbol table of the exe-
+       cutable file), with each line preceded by its line  number
+       (in  the source file) and the number of times the line was
+       executed.  As described below, lprof also provides a merg-
+       ing operation.
+
+   PPrriinnttiinngg ddaattaa ooppttiioonnss
+       The  following  options  cannot  be combined with the data
+       file merging options (-T, -d, and -m).  Demangle C++ func-
+       tion symbols when explicitly named, such as in the summary
+       output or when presenting inlined code.  Print a different
+       listing  format  which  reflects  the  raw execution count
+       data.   The  output  consists  of  each  file  name   (not
+       indented),  followed by its functions (indented one step),
+       which are each followed by pairs of numbers (indented  two
+       steps).   Each  pair  is  a  line number and the number of
+       times that line was executed.  Cannot be combined with  -s
+       or  -x.   Change  the  output to consider each source file
+
+                                                                1
+
+lprof(1)                                                 lprof(1)
+
+       separately.  When not present, lprof prints source ``frag-
+       ments''  for  code  that is included in the current source
+       file (for example, by inlining)  just  after  the  current
+       source  file.   If -S is specified, all inclusions of code
+       from any source file are summed, and the  entire  included
+       source file is listed once separately.  Print, on standard
+       error, the version information for lprof.  No further pro-
+       cessing  takes place.  Insert a formfeed character between
+       each source  file's  information.   This  is  useful  when
+       lprof's  output  is  sent  through  Specifies  the default
+       source file listing format, in contrast to -x, with  which
+       it  cannot be combined.  Specifies the default source file
+       listing format with execution  counts.   Can  be  combined
+       with  -s  to  print  both  a  summary and source listings.
+       Print summary information of percentage lines of code exe-
+       cuted  per  function.  Cannot be combined with -P.  Speci-
+       fies a ``coverage''  output  format  in  which  unexecuted
+       lines  are  marked  with  a  [U].  No execution counts are
+       printed for any lines.  Restricts output to  the  function
+       func.   Multiple  -F  options  can be used to specify more
+       than one function.  Look in the directory dir  for  source
+       files.   Generally  this  is only needed when sources have
+       been moved since the instrumented program was built.  Mul-
+       tiple  -I  options  can  be  used to specify more than one
+       directory.  Use cntfile instead of prog.cnt as  the  input
+       profile  data  file.   Use the program prog instead of the
+       name found in the profile data file.  Restricts output  to
+       the  source file srcfile.  Multiple -r options can be used
+       to specify more than one source file.
+
+   MMeerrggiinngg ddaattaa ffiilleess
+       lprof can also be used to merge profile data  files.   The
+       -d  option  must be present, as well as at least two input
+       data files.  These input data files can be listed  in  the
+       form -m cntfile or as a list of cntfiles.  The result will
+       be written to destfile.
+
+       Merging takes place by summing the  execution  counts  per
+       line,  so  that data from several runs can be accumulated.
+       The time stamps recorded in the  profile  data  files  are
+       checked  against the executables (shared libraries and the
+       program), and normally the merge will fail if they do  not
+       match.   The  -T  option  causes lprof to continue merging
+       even when time stamps mismatch.
+
+CCoonnttrroolllliinngg tthhee eennvviirroonnmmeenntt
+       The environment variable PROFOPTS provides  run-time  con-
+       trol  over  profiling.  When a profiled program (or shared
+       object) is about to terminate, it examines  the  value  of
+       PROFOPTS  to  determine  how  the profiling data are to be
+       handled.  A terminating shared  object  will  honor  every
+       PROFOPTS option except file=filename.
+
+       The  environment  variable  PROFOPTS  is a comma-separated
+
+                                                                2
+
+lprof(1)                                                 lprof(1)
+
+       list of options interpreted by the program being profiled.
+       If  PROFOPTS  is  not defined in the environment, then the
+       default action is taken:  The profiling data are saved  in
+       a  file  (with  the default name, prog.cnt) in the current
+       directory.  If PROFOPTS is set to the null string, no pro-
+       filing  data  are  saved.  The following are the available
+       options: If msg=y is specified,  a  message  stating  that
+       profile  data  are  being  saved is printed to stderr.  If
+       msg=n is specified, only the profiling error messages  are
+       printed.   The default is msg=y.  If merge=y is specified,
+       the data files will be merged after successive  runs.   If
+       merge=n  is specified, the data files are not merged after
+       successive runs, and the data file  is  overwritten  after
+       each  execution.   The  merge will fail if the program has
+       been recompiled, and the data file will be left in TMPDIR.
+       The  default  is merge=n.  If pid=y is specified, the name
+       of the data file will include the process ID of  the  pro-
+       filed program.  Inclusion of the process ID allows for the
+       creation of different  data  files  for  programs  calling
+       fork.   If  pid=n  is specified, the default name is used.
+       The default is pid=n.  For lprof to generate its profiling
+       report,  the -c option must be specified with lprof other-
+       wise the default will fail.  The data file  is  placed  in
+       the directory dirname if this option is specified.  Other-
+       wise, the data file is created in the  directory  that  is
+       current  at the end of execution.  filename is used as the
+       name of the data file in dir created by the profiled  pro-
+       gram  if this option is specified.  Otherwise, the default
+       name is used.  For lprof to generate its profiling report,
+       the  -c  option  must  be specified with lprof if the file
+       option has been used  at  execution  time;  otherwise  the
+       default will fail.
+
+FFiilleess
+       profile data usually /var/tmp but can be redefined by set-
+       ting the environment variable TMPDIR (see tempnam in
+
+NNoottiicceess
+       The full pathname of prog.cnt as recorded in the data file
+       is limited.  Thus, sometimes a -o option will be needed.
+
+       For  the  -d option, if destfile exists, its previous con-
+       tents are destroyed.
+
+       Optimized code cannot be profiled;  if  both  optimization
+       and  line  profiling  are requested, profiling usually has
+       precedence.
+
+       Different parts of one line of a source file may  be  exe-
+       cuted  different  numbers  of  times (for example, the for
+       loop below); the count corresponds to the  first  part  of
+       the line.
+
+       For  example,  in  the  following  for  loop  SOURCE FILE:
+
+                                                                3
+
+lprof(1)                                                 lprof(1)
+
+       /home/user/main.c
+
+                       #include <stdio.h>
+
+                       void sub(int a)
+             5 [4]     {
+             5 [5]             printf("a is %d\n", a);
+             5 [6]     }
+
+                       int main(void)
+             1 [9]     {
+                               int i;
+
+             1 [12]            for (i = 0; i < 5; i++)
+             5 [13]                    sub(i);
+             1 [14]            return 0;
+             1 [15]    } line 12 consists of  three  parts.   The
+       line  count  listed,  however,  is  for the initialization
+       part, that is, i = 0.
+
+RReeffeerreenncceess
+
+                                                                4
+

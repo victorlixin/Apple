@@ -1,0 +1,48 @@
+
+
+ldap_set_rebind_proc(3ldap)           ldap_set_rebind_proc(3ldap)
+
+SSyynnooppssiiss
+       #include <lber.h> #include <ldap.h>
+
+       void ldap_set_rebind_proc(LDAP *ld,
+            int  (*rebindproc)(LDAP *ld, char **dnp, char **pass-
+       wdp,
+                                 int *authmethodp, int freeit));
+
+DDeessccrriippttiioonn
+       ldap_set_rebind_proc is an extension to the  LDAP  API  of
+       RFC  1823,  that  provides  a mechanism for obtaining bind
+       credentials while  chasing  referrals.  The  routine  with
+       option LDAP_OPT_REBIND_FN provides the preferred mechanism
+       for this functionality.
+
+       The rebindproc parameter supplies a routine that  will  be
+       called  back  to  obtain  bind credentials used when a new
+       server is contacted during the following of an LDAP refer-
+       ral.
+
+       The  following  of  referrals  will  only  take  place  if
+       LDAP_OPT_REFERRALS is set  to  LDAP_OPT_ON  (this  is  the
+       default).  If  ldap_set_option  is  never  called  to  set
+       LDAP_OPT_REBIND_FN,  or  if  it  is  called  with  a  NULL
+       invalue.  parameter,  an  unauthenticated simple LDAP bind
+       will always be done when chasing referrals.
+
+       The LDAP library will first call this  rebindproc  routine
+       to  obtain  the  referral bind credentials, and the freeit
+       parameter will be zero.  If the rebindproc routine returns
+       LDAP_SUCCESS,   referral  processing  continues,  and  the
+       rebindproc routine will  be  called  a  second  time  with
+       freeit  non-zero to give your application a chance to free
+       any memory allocated in the previous call.
+
+       If anything but LDAP_SUCCESS is returned by the first call
+       to  the  rebindproc  routine,  then referral processing is
+       stopped and that error code is returned for  the  original
+       LDAP operation.
+
+RReeffeerreenncceess
+
+                                                                1
+

@@ -1,0 +1,97 @@
+winpath2unix(2)                                         winpath2unix(2)
+
+  wwiinnppaatthh22uunniixx(())
+
+  NNAAMMEE
+
+    winpath2unix() - convert a Windows pathname to Subsystem for UNIX-based Applications syntax
+
+  SSYYNNOOPPSSIISS
+
+    #include <interix/interix.h>
+
+    int winpath2unix(const char *path, int flags, char *buf, size_t buflen)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _ww_ii_nn_pp_aa_tt_hh_22_uu_nn_ii_xx(2) call converts a Windows pathname to an equivalent
+    Subsystem for UNIX-based Applications pathname.
+
+    If the Windows pathname is a drive-relative pathname such as "\foo", then
+    the current working directory is translated to Windows syntax using
+    _uu_nn_ii_xx_pp_aa_tt_hh_22_ww_ii_nn(2). If this translation fails with EWINPATH, then
+    _ww_ii_nn_pp_aa_tt_hh_22_uu_nn_ii_xx(2) also fails with EWINPATH. Otherwise, the root part of the
+    Windows translation of the current working directory is extracted, which
+    will be a string such as "C:\" or "\\host\share", and this string is
+    prepended to the drive-relative pathname. Then the resultant absolute
+    Windows pathname is translated.
+
+    A Windows pathname such as "C:foo" will be interpreted as if it were "C:
+    \foo". That's the best we can do, since Subsystem for UNIX-based Applications processes do not have a
+    notion of a current working directory for each mounted drive.
+
+    The Windows pathname is not required to name an existing file. However, if
+    possible, the _ww_ii_nn_pp_aa_tt_hh_22_uu_nn_ii_xx(2) call will find the longest prefix of the
+    Windows pathname that names an existing file which is accessible to the
+    effective user, and it will convert that prefix to canonical case. This
+    conversion is necessary because Windows pathname lookups are case
+    insensitive, while Subsystem for UNIX-based Applications pathname lookups are case sensitive.
+
+    If the PATH_NONSTRICT bit of the flags argument is set, then the following
+    rules apply:
+    *     An empty string maps to an empty string instead of failing with an
+          ENOENT error.
+    *     A dot (.) maps to a dot, not to the absolute pathname of the current
+          working directory of the current process.
+    *     Dot-relative path names are converted by translating \ to / so that
+          the result is a relative path name. No attempt is made to convert
+          the path name to the correct case.
+    *     Syntactically incorrect pathnames such as \\\ and \\ are converted
+          to /?untranslated?/// and /?untranslated?// instead of failing with
+          an ENOENT error.
+    *     The only possible error is ERANGE (output buffer too small).
+    (The PATH_NONSTRICT bit is generally used to convert Windows path
+    environment variables to UNIX syntax, and is the only bit in flags that
+    can be set; setting any other bit in flags produces an error.)
+
+  RREETTUURRNN VVAALLUUEE
+
+    On success, _ww_ii_nn_pp_aa_tt_hh_22_uu_nn_ii_xx(2) returns 0 and stores a null-terminated
+    pathname in buf. On failure, it returns -1 and sets errno.
+
+  EERRRROORRSS
+
+    The _ww_ii_nn_pp_aa_tt_hh_22_uu_nn_ii_xx(2) call may fail if:
+
+    [ENOENT]
+        The path argument points to a string which is not a syntactically
+        correct Windows pathname. Examples include "" and "\\".
+
+    [EWINPATH]
+        The current working directory cannot be translated to a Windows
+        pathname, and the value of the current working directory was required
+        to complete the translation.
+
+    [EINVAL]
+        An invalid flags value was passed, such as flags & ~(PATH_NONSTRICT).
+
+    [ERANGE]
+        The resultant Subsystem for UNIX-based Applications pathname contains more than PATH_MAX characters.
+
+    [ERANGE]
+        The resultant Subsystem for UNIX-based Applications pathname is too large to store in buf.
+
+    [ENOMEM]
+        The client program or the Subsystem for UNIX-based Applications could not allocate enough
+        memory to complete the operation.
+
+  SSEEEE AALLSSOO
+
+    _u_n_i_x_p_a_t_h_2_w_i_n(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The wwiinnppaatthh22uunniixx function is thread safe.
+
+    The wwiinnppaatthh22uunniixx function is not async-signal safe.
+

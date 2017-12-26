@@ -1,0 +1,221 @@
+
+
+lfmt(3C)                                                 lfmt(3C)
+
+SSyynnooppssiiss
+       #include <pfmt.h>
+
+       int  lfmt(FILE *stream, long flags, char *format, . . . /*
+       args */);
+
+       #include <stdarg.h> #include <pfmt.h>
+
+       int vlfmt(FILE *stream, long flags, char *format,  va_list
+       ap);
+
+DDeessccrriippttiioonn
+   llffmmtt
+       lfmt retrieves a format string from a locale-specific mes-
+       sage database (unless MM_NOGET is specified) and  uses  it
+       for  printf  style formatting of args.  The output is dis-
+       played on stream.  If stream is NULL, no  output  is  dis-
+       played.   lfmt  encapsulates  the  output  in the standard
+       error message format (unless  MM_NOSTD  is  specified,  in
+       which case the output is simply printf-like).
+
+       lfmt  forwards  its  output  to the logging and monitoring
+       facility, even if stream is null.  lfmt will also  display
+       the  output  on  the  console, with a date and time stamp,
+       when MM_CONSOLE is specified (see below).
+
+       If the printf format string is to be retrieved from a mes-
+       sage database, the format argument must have the following
+       structure: [catalog:]msgnum:defmsg.
+
+       If MM_NOGET is specified, only the  defmsg  part  must  be
+       specified.
+
+       catalog  indicates  the message database that contains the
+       localized version of the format string.  catalog  must  be
+       limited  to  14  characters.   These  characters  must  be
+       selected from a set of all character values, excluding  \0
+       (null) and the ASCII codes for / (slash) and : (colon).
+
+       msgnum  must be a positive number that indicates the index
+       of the string into the message database.
+
+       If catalog does not exist in the locale (specified by  the
+       last  call  to  setlocale  using the LC_ALL or LC_MESSAGES
+       categories), or if the message number is  out  of  bounds,
+       lfmt  attempts  to retrieve the message from the C locale.
+       If this second retrieval fails, lfmt uses the defmsg  part
+       of the format argument.
+
+       If  catalog  is  omitted,  lfmt  attempts  to retrieve the
+       string from the default catalog specified by the last call
+       to setcat.  In this case, the format argument has the fol-
+       lowing structure: msgnum:defmsg.
+
+                                                                1
+
+lfmt(3C)                                                 lfmt(3C)
+
+       lfmt outputs Message not found!!\n
+
+       as the format string if:
+
+       catalog is not a valid catalog name as  defined  above  no
+       catalog  is  specified  (either  explicitly or via setcat)
+       msgnum is not a positive number if  no  message  could  be
+       retrieved  from the message databases and defmsg was omit-
+       ted
+
+       The flags determine the type of output (that  is,  whether
+       the  format should be interpreted as is or encapsulated in
+       the standard message format), and the  access  to  message
+       catalogs  to  retrieve a localized version of format.  The
+       flags are composed of several groups,  and  can  take  the
+       following values (one from each group):
+
+       do  not  use the standard message format, interpret format
+       as a printf format.  Only catalog  access  control  flags,
+       console display control, and logging information should be
+       specified if MM_NOSTD is used; all  other  flags  will  be
+       ignored.    output   using  the  standard  message  format
+       (default, value 0).  do not retrieve a  localized  version
+       of format.  In this case, only the defmsg part of the for-
+       mat is specified.  retrieve a localized version of format,
+       from  the catalog, using msgnum as the index and defmsg as
+       the default message (default, value 0).
+
+       generates a localized version of HALT.  generates a local-
+       ized  version  of  ERROR  (default, value 0).  generates a
+       localized version of WARNING.  generates a localized  ver-
+       sion of INFO.
+
+       Additional  severities  can be defined.  Add-on severities
+       can be defined with number-string pairs with numeric  val-
+       ues  from  the range [5-255], using The numeric value ORed
+       with other flags will generate the specified severity.
+
+       If the severity is not defined, lfmt uses the string SEV=N
+       where  N  is replaced by the integer severity value passed
+       in flags.
+
+       Multiple severities passed in flags will not  be  detected
+       as an error.  Any combination of severities will be summed
+       and the numeric value will cause the display of  either  a
+       severity string (if defined) or the string SEV=N (if unde-
+       fined).
+       specifies an action message.  Any severity value is super-
+       seded and replaced by a localized version of TO FIX.  dis-
+       play the message to the console in addition to the  speci-
+       fied stream.  do not display the message to the console in
+       addition to  the  specified  stream  (default,  value  0).
+       identifies  the source of the condition.  Identifiers are:
+       (hardware), (software), and  (firmware).   identifies  the
+
+                                                                2
+
+lfmt(3C)                                                 lfmt(3C)
+
+       type of software in which the problem is spotted.  Identi-
+       fiers are: (application), (utility), and  (operating  sys-
+       tem).
+
+   SSttaannddaarrdd eerrrroorr mmeessssaaggee ffoorrmmaatt
+       lfmt  displays  error  messages  in  the following format:
+       label: severity: text
+
+       If no label was defined by a call to setlabel, the message
+       is displayed in the format: severity: text
+
+       If  lfmt is called twice to display an error message and a
+       helpful action or recovery message, the  output  can  look
+       like: label: severity: text label: TO FIX: text
+
+   vvllffmmtt
+       vlfmt  is  the  same  as lfmt except that instead of being
+       called with a variable number of arguments, it  is  called
+       with  an  argument  list as defined by the stdarg.h header
+       file.
+
+       The stdarg.h header file defines the type  va_list  and  a
+       set  of  macros  for advancing through a list of arguments
+       whose number and types may vary.  The argument ap to vlfmt
+       is  of  type  va_list.   This  argument  is  used with the
+       stdarg.h header file macros va_start,  va_arg  and  va_end
+       [see  va_start,  va_arg,  and  va_end in The USAGE section
+       below show their use.
+
+       The macro va_alist is used as  the  parameter  list  in  a
+       function definition as in the function called error in the
+       example below.  The macro va_start(ap, )
+
+       where ap is of type va_list, must  be  called  before  any
+       attempt  to  traverse and access unnamed arguments.  Calls
+       to va_arg(ap, atype)
+
+       traverse the argument  list.   Each  execution  of  va_arg
+       expands  to  an  expression with the value and type of the
+       next argument in the list ap, which  is  the  same  object
+       initialized  by  va_start.  The argument atype is the type
+       that  the  returned  argument  is  expected  to  be.   The
+       va_end(ap)  macro  must  be invoked when all desired argu-
+       ments have been accessed.  [The argument list in ap can be
+       traversed again if va_start is called again after va_end.]
+       In the example below, va_arg is executed first to
+       retrieve the format string passed to error.  The remaining
+       error  arguments, arg1, arg2, . . ., are given to vlfmt in
+       the argument ap.
+
+   RReettuurrnn vvaalluueess
+       On success, lfmt and vlfmt  return  the  number  of  bytes
+       transmitted.  On failure, they return a negative value.
+
+                                                                3
+
+lfmt(3C)                                                 lfmt(3C)
+
+   EErrrroorrss
+       write  error  to  stream cannot log and/or display at con-
+       sole.
+
+UUssaaggee
+   llffttmmtt eexxaammppllee 11
+       setlabel("UX:test");     lfmt(stderr,     MM_ERROR|MM_CON-
+       SOLE|MM_SOFT|MM_UTIL,
+                  "test:2:Cannot    open    file:   %s\n",   str-
+       error(errno));
+
+       displays the message to stderr  and  to  the  console  and
+       makes  it  available  for  logging: UX:test: ERROR: Cannot
+       open file: No such file or directory
+
+   llffttmmtt eexxaammppllee 22
+       setlabel("UX:test"); lfmt(stderr, MM_INFO|MM_SOFT|MM_UTIL,
+              "test:23:test facility is enabled\n");
+
+       displays  the message to stderr and makes it available for
+       logging: UX:test: INFO: test facility enabled
+
+   vvllffmmtt eexxaammppllee
+       The following demonstrates how  vlfmt  could  be  used  to
+       write   an  errlog  routine:  #include  <pfmt.h>  #include
+       <stdarg.h> . . .  /*
+        *   errlog should be called like
+        *         errlog(log_info, format, arg1, ...);
+        */ void errlog(long log_info, const char *format, ...)
+
+       {
+           va_list ap;
+
+           va_start(ap, format);
+           (void) vlfmt(stderr, log_info|MM_ERROR, format, ap);
+           va_end(ap);
+           (void) abort(); }
+
+RReeffeerreenncceess
+
+                                                                4
+

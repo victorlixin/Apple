@@ -1,0 +1,285 @@
+el_push(3)                                                   el_push(3)
+
+  eeddiittlliinnee
+
+  NNAAMMEE
+
+    el_init(), el_end(), el_reset(), el_gets(), el_getc(), el_push(),
+    el_parse(), el_set(), el_source(), el_resize(), el_line(), el_insertstr(),
+    el_deletestr(), history_init(), history_end(), history() - line editor and
+    history functions
+
+  SSYYNNOOPPSSIISS
+
+    #include <histedit.h>
+
+    EditLine * el_init(const char *prog, FILE *fin, FILE *fout);
+
+    void el_end(EditLine *e);
+
+    void el_reset(EditLine *e);
+
+    const char * el_gets(EditLine *e, int *count);
+
+    int el_getc(EditLine *e, char *ch);
+
+    void el_push(EditLine *e, const char *str);
+
+    int el_parse(EditLine *e, int argc, char *argv[]);
+
+    int el_set(EditLine *e, int op, ...);
+
+    int el_source(EditLine *e, const char *file);
+
+    void el_resize(EditLine *e);
+
+    const LineInfo * el_line(EditLine *e);
+
+    int el_insertstr(EditLine *e, char *str);
+
+    void el_deletestr(EditLine *e, int count);
+
+    History * history_init();
+
+    void history_end(History *h);
+
+    HistEvent * history(History *h, int op, ...);
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The eeddiittlliinnee library provides generic line editing and history functions,
+    similar to those found in _ss_hh(1).
+
+    These functions are available in the lliibbeeddiitt library (which needs the
+    lliibbccuurrsseess library). Programs should be linked with --lleeddiitt --llccuurrsseess.
+
+  LLiinnee--eeddiittiinngg ffuunnccttiioonnss
+
+    The line editing functions use a common data structure, editline, which is
+    created by eell__iinniitt() and freed by eell__eenndd().
+
+    The following functions are available:
+
+    eell__iinniitt()
+        Initialize the line editor, and return a data structure to be used by
+        all other line editing functions. prog is the name of the invoking
+        program, used when reading the _ee_dd_ii_tt_rr_cc(5) file to determine which
+        settings to use. fin and fout are the input and output streams
+        (respectively) to use. In this documentation, references to "the tty"
+        are actually to this input/output stream combination.
+    eell__eenndd()
+        Clean up and finish with e, assumed to have been created with
+        eell__iinniitt().
+    eell__rreesseett()
+        Reset the tty and the parser. This should be called after an error
+        which may have upset the tty's state.
+    eell__ggeettss()
+        Read a line from the tty. count is modified to contain the number of
+        characters read. Returns the line read if successful, or NULL if no
+        characters were read or if an error occurred.
+    eell__ggeettcc()
+        Read a character from the tty. ch is modified to contain the character
+        read. Returns the number of characters read if successful, -
+        1 otherwise.
+    eell__ppuusshh()
+        Pushes str back onto the input stream. This is used by the macro
+        expansion mechanism. Refer to the description of bbiinndd --ss in eeddiittrrcc(5)
+        for more information.
+    eell__ppaarrssee()
+        Parses the argv array (which is argc elements in size) to execute
+        built-in eeddiittlliinnee commands. If the command is prefixed with "prog:
+        " then eell__ppaarrssee() will only execute the command if "prog" matches the
+        prog argument supplied to eell__iinniitt(). The return value is -1 if the
+        command is unknown, 0 if there was no error or "prog" didn't match, or
+        1 if the command returned an error. Refer to eeddiittrrcc(5) for more
+        information. NOTE: argv[0] may be modified by eell__ppaarrssee(). The colon
+        between "prog" and the command, command, will be replaced with a NUL
+        ("\0").
+    eell__sseett()
+        Set eeddiittlliinnee parameters. op determines which parameter to set, and
+        each operation has its own parameter list. The following values for op
+        are supported, along with the required argument list:
+        EL_PROMPT, char *(*f)(EditLine *)
+            Define prompt printing function as f, which is to return a string
+            that contains the prompt.
+        EL_TERMINAL, const char *type
+            Define terminal type of the tty to be type, or to TERM if type is
+            NULL.
+        EL_EDITOR, const char *mode
+            Set editing mode to mode, which must be one of "emacs" or "vi".
+        EL_SIGNAL, int flag
+            If flag is non-zero, eeddiittlliinnee will install its own signal handler
+            for the following signals when reading command input: SIGCONT,
+            SIGHUP, SIGINT, SIGQUIT, SIGSTOP, SIGTERM, SIGTSTP, and SIGWINCH.
+            Otherwise, the current signal handlers will be used.
+
+        EL_BIND, const char *, ..., NULL
+            Perform the bbiinndd built-in command. Refer to eeddiittrrcc(5) for more
+            information.
+
+        EL_ECHOTC, const char *, ..., NULL
+            Perform the eecchhoottcc built-in command. Refer to eeddiittrrcc(5) for more
+            information.
+
+        EL_SETTC, const char *, ..., NULL
+            Perform the sseettttcc built-in command. Refer to eeddiittrrcc(5) for more
+            information.
+
+        EL_SETTY, const char *, ..., NULL
+            Perform the sseettttyy built-in command. Refer to eeddiittrrcc(5) for more
+            information.
+
+        EL_TELLTC, const char *, ..., NULL
+            Perform the tteellllttcc built-in command. Refer to eeddiittrrcc(5) for more
+            information.
+        EL_ADDFN, const char *name, const char *help, unsigned char
+        (*func)(EditLine *e, int ch)
+            Add a user defined function, ffuunncc(), referred to as name which is
+            invoked when a key which is bound to name is entered. help is a
+            description of name. At invocation time, ch is the key which
+            caused the invocation. The return value of func() should be one
+            of:
+
+            CC_NORM
+                Add a normal character.
+
+            CC_NEWLINE
+                End of line was entered.
+
+            CC_EOF
+                EOF was entered.
+
+            CC_ARGHACK
+                Expecting further command input as arguments, do nothing
+                visually.
+
+            CC_REFRESH
+                Refresh display.
+
+            CC_CURSOR
+                Cursor moved, so update and perform CC_REFRESH.
+
+            CC_REDISPLAY
+                Redisplay entire input line. This is useful if a key binding
+                outputs extra information.
+
+            CC_ERROR
+                An error occurred. Beep, and flush tty.
+
+            CC_FATAL
+                Fatal error, reset tty to known state.
+        EL_HIST, History *(*func)(History *, int op, ...), const char *ptr
+            Defines which history function to use, which is usually hhiissttoorryy().
+            ptr should be the value returned by hhiissttoorryy__iinniitt().
+    eell__ssoouurrccee()
+        Initialize eeddiittlliinnee by reading the contents of file. eell__ppaarrssee() is
+        called for each line in file. If file is NULL, try $PWD/.editrc then
+        $HOME/.editrc. Refer to eeddiittrrcc(5) for details on the format of file.
+    eell__rreessiizzee()
+        Must be called if the terminal size changes. If EL_SIGNAL has been set
+        with eell__sseett(), then this is done automatically. Otherwise, it's the
+        responsibility of the application to call eell__rreessiizzee() on the
+        appropriate occasions.
+    eell__lliinnee()
+        Return the editing information for the current line in a lineinfo
+        structure, which is defined as follows:
+        typedef struct lineinfo {
+           const char *buffer; /* address of buffer */
+           const char *cursor; /* address of cursor */
+           const char *lastchar; /* address of last character */
+        } LineInfo;
+    eell__iinnsseerrttssttrr()
+        Insert str into the line at the cursor. Returns -1 if str is empty or
+        won't fit, and 0 otherwise.
+    eell__ddeelleetteessttrr()
+        Delete num characters before the cursor.
+
+  HHiissttoorryy ffuunnccttiioonnss
+
+    The history functions use a common data structure, history, which is
+    created by hhiissttoorryy__iinniitt() and freed by hhiissttoorryy__eenndd().
+
+    The following functions are available:
+    hhiissttoorryy__iinniitt()
+        Initialize the history list, and return a data structure to be used by
+        all other history list functions.
+    hhiissttoorryy__eenndd()
+        Clean up and finish with h, assumed to have been created with
+        hhiissttoorryy__iinniitt().
+    hhiissttoorryy()
+        Perform operation op on the history list, with optional arguments as
+        needed by the operation. The following values for op are supported,
+        along with the required argument list:
+        H_EVENT, int size
+            Set size of history to size elements.
+
+        H_END
+            Cleans up and finishes with h, assumed to be created with
+            hhiissttoorryy__iinniitt().
+
+        H_CLEAR
+            Clear the history.
+        H_FUNC, void *ptr, history_gfun_t first, history_gfun_t next,
+        history_gfun_t last, history_gfun_t prev, history_gfun_t curr,
+        history_vfun_t clear, history_efun_t enter, history_efun_t add
+            Define functions to perform various history operations. ptr is the
+            argument given to a function when it's invoked.
+
+        H_FIRST
+            Return the first element in the history.
+
+        H_LAST
+            Return the last element in the history.
+
+        H_PREV
+            Return the previous element in the history.
+
+        H_NEXT
+            Return the next element in the history.
+
+        H_CURR
+            Return the current element in the history.
+        H_ADD, const char *str
+            Append str to the current element of the history, or create an
+            element with H_ENTER if there isn't one.
+        H_ENTER, const char *str
+            Add str as a new element to the history, and, if necessary,
+            removing the oldest entry to keep the list to the created size.
+        H_PREV_STR, const char *str
+            Return the closest previous event that starts with str.
+        H_NEXT_STR, const char *str
+            Return the closest next event that starts with str.
+        H_PREV_EVENT, int e
+            Return the previous event numbered e.
+        H_NEXT_EVENT, int e
+            Return the next event numbered e.
+        H_LOAD, const char *file
+            Load the history list stored in file.
+        H_SAVE, const char *file
+            Save the history list to file.
+
+  SSEEEE AALLSSOO
+
+    _s_h(1)
+
+    _s_i_g_n_a_l(2)
+
+    _t_e_r_m_c_a_p(3)
+
+    _e_d_i_t_r_c(5)
+
+  HHIISSTTOORRYY
+
+    The eeddiittlliinnee library first appeared in 4.4BSD.
+
+  AAUUTTHHOORRSS
+
+    The eeddiittlliinnee library was written by Christos Zoulas, and this manual was
+    written by Luke Mewburn.
+
+  UUSSAAGGEE NNOOTTEESS
+
+    None of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

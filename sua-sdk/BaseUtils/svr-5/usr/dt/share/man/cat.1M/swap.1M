@@ -1,0 +1,171 @@
+
+
+swap(1M)                                                 swap(1M)
+
+SSyynnooppssiiss
+       /usr/sbin/swap -a swapname [ [swaplow] swaplen]
+       /usr/sbin/swap -c [filename]
+       /usr/sbin/swap -d swapname [swaplow]
+       /usr/sbin/swap -l
+       /usr/sbin/swap -s
+
+DDeessccrriippttiioonn
+       swap provides a method of adding, deleting, and monitoring
+       the system swap areas used by the memory manager.
+
+   CCoommmmaanndd ooppttiioonnss
+       This option can only be used by a privileged user.
+
+       Add the specified swap area.  swapname is the name of  the
+       block  special  partition,  for example, /dev/dsk/*, where
+       the value of * is machine dependent, or  a  regular  file.
+       swaplow  is  the offset in 512-byte blocks into the parti-
+       tion where the swap area should begin.
+
+       swaplow gives the starting offset of the  portion  of  the
+       file to be used as swap (in 512 byte block units).
+
+       swaplen  gives  the  length of the file to be used as swap
+       (in 512 byte block units).
+
+       If both swaplow and swaplen are omitted, then  the  entire
+       file is used for swap space.  If a single number is speci-
+       fied on the  command  line,  then  it  is  taken  to  mean
+       swaplen.   In  this case swaplow defaults to 0 (the begin-
+       ning of the file).  If two numbers are  specified  on  the
+       command  line,  then  the first is used as swaplow and the
+       second is used as swaplen.
+
+       The actual area  used  by  the  operating  system  may  be
+       slightly  smaller  due  to  filesystem page-size rounding.
+       This option can only be used by a privileged user.
+
+       Configure the swap area by adding all the  devices  listed
+       in  filename  as  swap  devices.  If no filename option is
+       given, /etc/swaptab is  used  as  the  input  file.   This
+       option can only be used by a privileged user.
+
+       Delete  the  specified swap area.  swapname is the name of
+       block special partition, for  example,  /dev/dsk/*,  where
+       the value of * is machine dependent, or a regular file.
+
+       swaplow  is  the offset in 512-byte blocks into the parti-
+       tion specifying the beginning  of  the  swap  area  to  be
+       deleted.   If  swaplow  is  omitted,  an offset of zero is
+       assumed.  While the delete operation is  in  process,  the
+       swap  area  is  marked  as  INDEL (in the process of being
+       deleted).  A concurrently executed swap -l  command  could
+       observe  the  INDEL  state and report it at the end of the
+
+                                                                1
+
+swap(1M)                                                 swap(1M)
+
+       line listing the swap area.  The system will not  allocate
+       any  new  blocks  from the area, and will try to free swap
+       blocks from it.  The area will remain  in  use  until  all
+       blocks  from  it  are  freed.   When the swap command com-
+       pletes, the deletion is also complete.  List the status of
+       all the swap areas.  The output has five columns: The path
+       name for the swap area.  The major/minor device number  in
+       decimal  if it is a block special device; zeros otherwise.
+       The swaplow value for the area in  512-byte  blocks.   The
+       swaplen value for the area in 512-byte blocks.  The number
+       of free 512-byte blocks in the area.  This number does not
+       include  physical  memory  allocated  to swapping.  If the
+       swap area is being deleted, the word INDEL will be printed
+       to the right of this number.  Print the following informa-
+       tion about total swap space  usage:  The  amount  of  swap
+       space  (in  512-byte  blocks)  allocated to private pages.
+       The amount of swap space (in 512-bytes  blocks)  not  cur-
+       rently allocated, but claimed by memory mappings that have
+       not yet created private pages, or have  created  them  but
+       have  not  swapped  them  out.   The  total amount of swap
+       space, in 512-byte blocks, that  is  either  allocated  or
+       reserved.   The total swap space, in 512-byte blocks, that
+       is currently available for future reservation and  alloca-
+       tion.   This  number includes physical swap memory that is
+       available (that is, the total swap memory less the  amount
+       currently  in use).  The sum of used and available will be
+       larger than the sum of the swap slices because main memory
+       may be used as effective swap space.
+
+UUssaaggee
+       Swap   areas   are   normally   added   by  modifying  the
+       /etc/swaptab file to include the list of swap files.   For
+       example:    #swapname                  offset(in   blocks)
+       size(in      blocks)       /dev/swap                     0
+       -    /dev/dsk/c0b0t1d0s2       0                         -
+       /dev/dsk/c0b0t2d0s2         0                            -
+       /dev/dsk/c0b0t3d0s2          0                           -
+       /dev/dsk/c0b0t4d0s2         0                            -
+       /dev/dsk/c0b0t5d0s3          0                           -
+       /dev/dsk/c0b0t6d0s2     0                       -
+
+       For good performance, try to construct the swap space  out
+       of  disk  slices  rather  than  files.  When multiple disk
+       slices are used, they should be equal in size, and  placed
+       on  separate  disks.   See  for information on configuring
+       disk slices.  Should you wish to change the  slice  struc-
+       ture on a disk following setup, you can use and
+
+       If  you  have licensed the VERITAS advanced Volume Manager
+       product, an alternative to  using  many  slices  for  swap
+       might  be to use a Volume Manager based volume.  For exam-
+       ple:     #swapname                   offset(in     blocks)
+       size(in  blocks)  /dev/vx/dsk/swapvol                 63,1
+       0 881280 811128
+
+                                                                2
+
+swap(1M)                                                 swap(1M)
+
+       It may not always be possible to find an  extra  slice  to
+       solve  a  swap problem.  In that case, a file can be used.
+       To create the swap space, you need to create a file as big
+       as  the  intended  swap space.  It is not enough to simply
+       create a zero-length file; it must  be  as  large  as  the
+       intended swap space.
+
+       To  do this, you can use the command, as shown in the fol-
+       lowing example (which creates  32MB  of  swap  space):  dd
+       if=/dev/null of=/swapfile oseek=32 bs=1024k
+
+       Then add the following line to /etc/swaptab: /swapfile 0 -
+
+       Then issue this command: swap -c
+
+       The system will use the new swap file following  the  next
+       reboot, because swap -c is run from /etc/inittab at system
+       start time.
+
+   DDiiaaggnnoossttiiccss
+       The command swap -d will fail if the result of  the  dele-
+       tion  would  result  in insufficient swap space to support
+       the currently executing workload.  In this case  the  mes-
+       sage will be SC_REMOVE failed
+
+EExxaammppllee
+       The  following  swap  example  requests  10K  of swap area
+       (twenty 512-byte blocks) on the device  /dev/dsk/*,  where
+       the value of * is machine dependent.  swap -a /dev/dsk/* 0
+       20
+
+RReeffeerreenncceess
+NNoottiicceess
+       Privileged use of this command is  restricted  to  mainte-
+       nance  mode.   See the system administration documentation
+       for a description of maintenance mode.
+
+       No check is done to see if a swap area being  added  over-
+       laps with an existing filesystem.
+
+       Files in general are not recommended for use as swap stor-
+       age (disk slices or Volume Manager volumes are preferred).
+       Should  use  of  a file be needed, disk based file systems
+       are preferred over NFS.  Failure to follow these recommen-
+       dations can result in poor performance or system instabil-
+       ity.
+
+                                                                3
+

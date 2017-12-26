@@ -1,0 +1,116 @@
+
+
+curs_window(3ocurses)                       curs_window(3ocurses)
+
+SSyynnooppssiiss
+       cc [flag . . .] file -locurses [library . . .]
+
+       #include <ocurses.h>
+
+       WINDOW  *newwin(int  nlines,  int  ncols, int begin_y, int
+       begin_x); int delwin(WINDOW *win); int mvwin(WINDOW  *win,
+       int  y,  int  x); WINDOW *subwin(WINDOW *orig, int nlines,
+       int ncols, int begin_y,      int  begin_x);  WINDOW  *der-
+       win(WINDOW  *orig,  int  nlines,  int  ncols, int begin_y,
+            int begin_x); int mvderwin(WINDOW  *win,  int  par_y,
+       int par_x); WINDOW *dupwin(WINDOW *win); void wsyncup(WIN-
+       DOW *win); int syncok(WINDOW *win, bool bf); void wcursyn-
+       cup(WINDOW *win); void wsyncdown(WINDOW *win);
+
+DDeessccrriippttiioonn
+       The  newwin routine creates and returns a pointer to a new
+       window  with  the  given  number  of  lines,  nlines,  and
+       columns,  ncols.  The upper left-hand corner of the window
+       is at line begin_y, column begin_x.  If either  nlines  or
+       ncols  is  zero, they default to LINES -- begin_y and COLS
+       -- begin_x.  A new full-screen window is created by  call-
+       ing newwin(0,0,0,0).
+
+       The  delwin  routine deletes the named window, freeing all
+       memory associated with it.   Subwindows  must  be  deleted
+       before the main window can be deleted.
+
+       The mvwin routine moves the window so that the upper left-
+       hand corner is at position (x,  y).   If  the  move  would
+       cause  the window to be off the screen, it is an error and
+       the window is not moved.  Moving  subwindows  is  allowed,
+       but should be avoided.
+
+       The  subwin routine creates and returns a pointer to a new
+       window  with  the  given  number  of  lines,  nlines,  and
+       columns,  ncols.   The  window  is  at  position (begin_y,
+       begin_x) on the screen.  (This position is relative to the
+       screen,  and  not to the window orig.)  The window is made
+       in the middle of the window orig, so that changes made  to
+       one window will affect both windows.  The subwindow shares
+       memory with the window orig.  When using this routine,  it
+       is  necessary to call touchwin or touchline on orig before
+       calling wrefresh on the subwindow.
+
+       The derwin routine is the  same  as  subwin,  except  that
+       begin_y and begin_x are relative to the origin of the win-
+       dow orig rather than the screen.  There is  no  difference
+       between the subwindows and the derived windows.
+
+       The mvderwin routine moves a derived window (or subwindow)
+       inside its parent window.  The screen-relative  parameters
+       of  the  window  are not changed.  This routine is used to
+       display different parts of the parent window at  the  same
+
+                                                                1
+
+curs_window(3ocurses)                       curs_window(3ocurses)
+
+       physical position on the screen.
+
+       The  dupwin routine creates an exact duplicate of the win-
+       dow win.
+
+       Each curses window  maintains  two  data  structures:  the
+       character  image  structure and the status structure.  The
+       character image structure is shared among all  windows  in
+       the window hierarchy (that is, the window with all subwin-
+       dows).  The status structure, which  contains  information
+       about individual line changes in the window, is private to
+       each window.  The routine wrefresh uses  the  status  data
+       structure  when  performing screen updating.  Since status
+       structures are not shared, changes made to one  window  in
+       the hierarchy may not be properly reflected on the screen.
+
+       The routine wsyncup  causes  the  changes  in  the  status
+       structure of a window to be reflected in the status struc-
+       tures of its ancestors.  If syncok is called  with  second
+       argument  TRUE  then wsyncup is called automatically when-
+       ever there is a change in the window.
+
+       The routine wcursyncup updates the current cursor position
+       of  all the ancestors of the window to reflect the current
+       cursor position of the window.
+
+       The routine wsyncdown updates the status structure of  the
+       window  to reflect the changes in the status structures of
+       its ancestors.   Applications  seldom  call  this  routine
+       because it is called automatically by wrefresh.
+
+   RReettuurrnn vvaalluuee
+       Routines  that  return  an  integer return the integer ERR
+       upon failure and an integer value other than ERR upon suc-
+       cessful completion.
+
+       delwin  returns  the  integer ERR upon failure and OK upon
+       successful completion.
+
+       Routines that return pointers return NULL on error.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The  header  file  ocurses.h  automatically  includes  the
+       header files stdio.h and unctrl.h.
+
+       If  many small changes are made to the window, the wsyncup
+       option could degrade performance.
+
+       Note that syncok may be a macro.
+
+                                                                2
+

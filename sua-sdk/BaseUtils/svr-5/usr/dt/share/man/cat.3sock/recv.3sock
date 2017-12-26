@@ -1,0 +1,149 @@
+
+
+recv(3sock)                                           recv(3sock)
+
+SSyynnooppssiiss
+       cc  [options]  file  -lsocket -lnsl #include <sys/types.h>
+       #include <sys/socket.h>
+
+       ssize_t  recv(int  socket,  void  *buf,  size_t  len,  int
+       flags);
+
+       ssize_t  recvfrom(int  socket,  void *buf, size_t len, int
+       flags,      struct sockaddr *from, size_t *fromlen);
+
+       ssize_t  recvmsg(int  socket,  struct  msghdr  *msg,   int
+       flags);
+
+DDeessccrriippttiioonn
+       socket  is  a socket file descriptor that has been created
+       using socket.  recv, recvfrom, and  recvmsg  are  used  to
+       receive  messages  from  another socket.  recv may be used
+       only on a connected socket (see while recvfrom and recvmsg
+       may be used to receive data on a socket whether it is in a
+       connected state or not.  recvfrom is  commonly  used  with
+       connectionless   sockets  because  it  allows  the  source
+       address to be extracted from received data.
+
+       If from is not a NULL pointer, the source address  of  the
+       message  is  filled in.  fromlen is a value-result parame-
+       ter, initialized to the size of the buffer associated with
+       from,  and  modified on return to indicate the actual size
+       of the address stored there.  The length of the message is
+       returned.  If a message is too long to fit in the supplied
+       buffer, excess bytes may be  discarded  depending  on  the
+       type of socket the message is received from (see
+
+       For message-based sockets such as SOCK_DGRAM and SOCK_SEQ-
+       PACKET, the entire message must be read in a single opera-
+       tion.   If  a  message  is too long to fit in the supplied
+       buffer, and MSG_PEEK is not set in flags, excess bytes are
+       discarded.   For stream-based sockets such as SOCK_STREAM,
+       message boundaries are ignored.  As  soon  as  it  becomes
+       available,  data is returned to the user.  No data is dis-
+       carded in this case.
+
+       If no messages are available at the socket and  O_NONBLOCK
+       is  not set on its file descriptor, the receive call waits
+       for a message to arrive, unless the socket is  nonblocking
+       (see  in which case -1 is returned with the external vari-
+       able errno set to EWOULDBLOCK.
+
+       The select call may be used to determine  when  more  data
+       arrives.
+
+       The  flags parameter is formed by ORing one or more of the
+       following: Read any out-of-band data present on the socket
+       rather  than  the  regular in-band data.  Peek at the data
+       present on the socket;  the  data  is  returned,  but  not
+
+                                                                1
+
+recv(3sock)                                           recv(3sock)
+
+       consumed,  so that a subsequent receive operation will see
+       the same data.  Block until the full amount  of  requested
+       data can be returned.  May return a smaller amount of data
+       if a signal is caught, the connection is terminated or  an
+       error is pending for the socket.
+
+       The  recvmsg  call uses a msghdr structure to minimize the
+       number of directly supplied parameters.  This structure is
+       defined  in  sys/socket.h  and includes the following mem-
+       bers: void  *  msg_name;         /*  optional  address  */
+       size_t msg_namelen;     /* size of address */ struct iovec
+       * msg_iov; /* scatter/gather array */  int     msg_iovlen;
+       /*  number of elements in msg_iov */ void * msg_accrights;
+       /* access rights sent/received */ int    msg_accrightslen;
+       void    *    msg_control;    size_t   msgcontrollen;   int
+       msg_flags; msg_name and  msg_namelen  specify  the  source
+       address  if  the  socket  is  unconnected; msg_name may be
+       given as a  NULL  pointer  if  no  names  are  desired  or
+       required.   The  msg_iov and msg_iovlen describe the scat-
+       ter-gather locations, as described in read.  A  buffer  to
+       receive  any  access rights sent along with the message is
+       specified in msg_accrights, which has length msg_accright-
+       slen.
+
+FFiilleess
+       /usr/lib/locale/locale/LC_MESSAGES/uxnsl
+
+RReettuurrnn vvaalluueess
+       These  calls return the number of bytes received, or -1 if
+       an error occurred.  recv returns 0 if the  peer  has  per-
+       formed  an  orderly shutdown and no messages are available
+       to be received.
+
+   EErrrroorrss
+       The calls fail if: socket is an  invalid  descriptor.   No
+       socket  was  open to the peer for a previous send.  A con-
+       nection was forcibly closed by a peer.  The peer was  down
+       for  a  previous send.  socket is a descriptor for a file,
+       not a socket.  The operation was interrupted  by  delivery
+       of  a signal before any data was available to be received.
+       MSG_OOB is set and there is no available out-of-band data.
+       A  receive  is  attempted  on a connection-oriented socket
+       that is not connected.  The socket is marked  non-blocking
+       and  the  requested  operation would block.  The specified
+       flags are not supported for this socket type or  protocol.
+       The connection timed out during connection or because of a
+       transmission timeout on active connection.  An  I/O  error
+       occurred while reading to or writing from the file system.
+       System resources were insufficient to perform  the  opera-
+       tion.   There  was  insufficient user memory available for
+       the  operation  to  complete.   There  were   insufficient
+       STREAMS resources available for the operation to complete.
+
+                                                                2
+
+recv(3sock)                                           recv(3sock)
+
+RReeffeerreenncceess
+       RFC 2133
+
+NNoottiicceess
+       The type of  address  structure  passed  to  recvfrom  and
+       recvmsg depends on the address family.
+        domain  sockets  (address family AF_UNIX) require a sock-
+       addr_un structure as defined in sys/un.h; Internet  domain
+       IPv4  sockets  (address  family  AF_INET) require a struct
+       sockaddr_in structure as defined in netinet/in.h; Internet
+       domain  IPv6  sockets  (address family AF_INET6) require a
+       struct sockaddr_in6 structure as defined in  netinet/in.h.
+       Other  address families may require other structures.  Use
+       the structure appropriate to the address family; cast  the
+       structure  address  to  a  struct sockaddr* in the call to
+       recvfrom and pass the size of the structure in the fromlen
+       argument. If you are using recvmsg, set msghdr.msg_name to
+       point to the appropriate structure and  msghdr.msg_namelen
+       to the length of the structure.
+
+       In &geminiREL; the sockaddr structure has been modified to
+       support variable length sockets. The net  result  of  this
+       modification  is that the family member has been shortened
+       to 8 bits and a new 8-bit member inserted before it called
+       len.  For more information on the new sockaddr structures,
+       see: and
+
+                                                                3
+

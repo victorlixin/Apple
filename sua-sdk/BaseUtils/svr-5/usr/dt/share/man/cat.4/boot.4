@@ -1,0 +1,385 @@
+
+
+boot(4)                                                   boot(4)
+
+DDeessccrriippttiioonn
+       Parameters  for  the boot program can be set or changed in
+       /stand/boot.  Their current values can  be  displayed  and
+       changed  using  the  Boot  Command Processor (BCP) command
+       described on When you use the BCP during the Initial  Sys-
+       tem  Load  (ISL), the changes you make to these parameters
+       are permanent.  When you use the BCP during  reboots,  the
+       changes you make apply to that boot session only.
+
+       In  the parameters listed below, device can be prefixed to
+       any filename to override  the  default  device.   Standard
+       values  for  device,  except in the CONSOLE parameter take
+       the following forms: specifies the floppy disk, drive num-
+       ber  unit  specifies  the  hard  disk,  drive  number unit
+       (starting at zero), partition number partition, and  slice
+       number slice.  partition can also be specified as an oper-
+       ating  system  type  name  (UNIX,  DOS,  (DOS_12,  DOS_16,
+       DOS_32,  or  DOS_EXT),  NT,  or OS2).  If partition is not
+       defined, it defaults to UNIX.  slice specifies  the  slice
+       number  for  the root filesystem, allowing the possibility
+       of backup roots.
+
+       All parameters, whether recognized by  boot  or  not,  are
+       passed to the kernel.
+
+   PPaarraammeetteerrss rreeccooggnniizzeedd bbyy bboooott
+       The  following  parameters  are recognized by boot and are
+       also passed to the kernel for further processing.   Define
+       this  parameter  to indicate the alignment requirement, in
+       bytes, for FILES  images.   Normally,  this  parameter  is
+       specified  by  the  kernel: it should not be changed manu-
+       ally.  Define this parameter to indicate whether  boot  is
+       to  load  the kernel, then either start booting it immedi-
+       ately (or after a defined amount of time),  or  enter  the
+       BCP  (an  interactive  boot  session).  YES means the boot
+       will begin immediately upon  completion  of  loading.   NO
+       means  enter  the BCP immediately upon completion of load-
+       ing.  num specifies the minimum time (in seconds) to  wait
+       after  the  start  of  loading BOOTPROG to begin the boot.
+       AUTOBOOT is set to 5 by default.  Define this parameter to
+       indicate  the Bootstrap Loadable Modules to be loaded into
+       boot.  BLM files are loaded from STARTDEV, unless filename
+       specifies  a  device.   Setting  this parameter causes the
+       specified BLM(s) to be immediately  loaded.   Define  this
+       parameter  to  name  the  device  BOOTPROG is loaded from.
+       Define this parameter to change the  name  of  the  kernel
+       file  to boot.  As delivered, the default is unix.  During
+       a user-initiated interactive session, the current value of
+       BOOTPROG is the default file used when boot times out.
+
+       For  example,  BOOTPROG=myunix directs the boot program to
+       load the /stand/myunix file.  The kernel  file  is  loaded
+       from  BOOTDEV  unless filename specifies a device.  Define
+       this parameter to override the  kernel's  default  console
+
+                                                                1
+
+boot(4)                                                   boot(4)
+
+       device (used by the boot program for kernel messages, ker-
+       nel debugger  I/O,  /dev/sysmsg,  and  the  console  login
+       prompt).   CONSOLE  defaults to the console-capable device
+       configured with the highest order  number  (see  Typically
+       this is kd.
+
+       If  CONSOLE is defined, device specifies the device to use
+       and minor specifies the minor number for that device.
+
+       If device is a console-capable device configured into  the
+       kernel,  the  kernel  will use it for its default console.
+       If device is one of the following, boot will  use  it  for
+       its  console:  the  standard PC console (at minor 0) minor
+       can be 0 through 15.
+
+       iasy supports the serial port device.   The  minor  number
+       indicates  the same device variant as it would under unix,
+       however, because it is interpreted by boot, there  may  be
+       other  restrictions  on its value.  Hence, the only allow-
+       able values for the iasy device minor are  0  through  15,
+       which specify various degrees of flow and modem control on
+       COM1, COM2, COM3, and COM4 serial ports.  at minor 0.
+
+       mirrorcon is the  special  console  pseudo-device  driver,
+       useful  for  remote  administration  and debugging.  It is
+       found in the Advanced  Commands  package.   The  parameter
+       string  for mirrorcon is a list of console device specifi-
+       cations, each in the form described above and separated by
+       plus signs: device(minor[,params])
+
+       All  console  output will be sent to each of the specified
+       devices, and any input entered on any of the devices  will
+       be  used as console input.  The minor number for mirrorcon
+       must always be zero.
+
+       The effect of mirrorcon does not  extend  to  the  console
+       login prompt or use of /dev/console in general.  /dev/con-
+       sole can only be a single  device.   Whichever  device  is
+       first  in  the parameter string for mirrorcon will be used
+       for /dev/console.
+
+       The optional parameter string, params, is  passed  to  the
+       console  device driver.  Its interpretation is driver-spe-
+       cific.  The parameter string  params  is  device-specific.
+       The  device  kd does not accept params.  For iasy and mir-
+       rorcon, params is used to specify baud  rate,  data  bits,
+       and  parity,  in the following syntax: Bbaud|Cdata|Pparity
+       baud  can  be  115200,  57600,  38400,  19200,  9600  (the
+       default), 4800, 2400, 1200, 600, 300, or 110.
+
+       data  can be any combination of 7, 8, or T.  7 and 8 spec-
+       ify the number of data bits (8 is the default).  T  speci-
+       fies 2 stop bits (1 is the default).
+
+                                                                2
+
+boot(4)                                                   boot(4)
+
+       parity  defaults  to none, and can be set to O (odd), or E
+       (even).
+
+       Note that successful use of higher baud rates (above 9600)
+       depends  on the UART hardware in the machine and cannot be
+       guaranteed: characters may be lost if flow control is  not
+       adhered to by the remote input device (terminal or modem).
+
+       For example, the following definition sets the console  to
+       iasy minor 0, the COM1 port using modem control (tests the
+       state of the DCD line) and software flow control, the baud
+       rate  to  1200,  the data bits to 7 (with 1 stop bit), and
+       the parity to odd: CONSOLE=iasy(0,B1200|C7|PO)
+
+       The following definition sets the console to  COM2,  using
+       no  flow  control, at 38400 baud, with no parity checking,
+       and 1 stop bit: CONSOLE=iasy(5,B38400)
+
+       The following definition sets the console to the  PC  con-
+       sole keyboard (the default): CONSOLE=kd(0)
+
+       The  following  definition  uses mirrorcon for two devices
+       named kd and  iasy,  redirecting  the  data  to  and  from
+       /dev/console  to  the  PC console and keyboard, and to the
+       serial port at minor 2.  That is, COM1 with no  flow  con-
+       trol and no modem control (/dev/tty00t), at a baud rate of
+       19200, with 8 data bits, 2 stop  bits,  and  even  parity:
+       console=mirrorcon(0,kd(0)+iasy(2,  B19200|C8T|PE)) Enables
+       32-bit  PCI  BIOS  call  support.   Disabled  by  default.
+       Instructs  the  operating  system  to enable the processor
+       serial number (PSN) feature, present on Pentium  III  sys-
+       tems.  If enabled, the PSN can be read by applications via
+       calls to the cpuid instruction.  By  default,  &geminiREL;
+       disables  the PSN.  Define this parameter to name the aux-
+       iliary files to be loaded when BOOTPROG  is  loaded.   The
+       memory  used  to  load each file will appear in the MEMORY
+       parameter as a single range with use set to name.  If name
+       is omitted here, use will be set to filename in the MEMORY
+       parameter.
+
+       Auxiliary files are loaded from  BOOTDEV  unless  filename
+       specifies  a  device.   Define  this  parameter  to enable
+       debugging output for the ISL scripts.  If num is 1,  debug
+       output  is  enabled.  All other values are ignored and are
+       equivalent to  not  setting  the  parameter  at  all  (the
+       default).  Log files are in /tmp/log during the process of
+       installing the system.  They are in /isl after the  system
+       has  rebooted.  Note that this parameter is effective only
+       during ISL, not after the  installation  process  is  com-
+       plete.   Define  this  parameter  to name a file to use as
+       input to /sbin/init  (default  is  /etc/inittab).   Define
+       this  parameter to override memory.  range is specified in
+       the form low_address-high_address.  Addresses are in deci-
+       mal,  and can be specified in bytes, or suffixed with K to
+
+                                                                3
+
+boot(4)                                                   boot(4)
+
+       indicate kilobytes (1024 bytes), M to indicate  megabytes,
+       or  G to indicate gigabytes.  Addresses can not exceed 4G.
+
+       A range that is prefixed with +  is  added  to  the  known
+       ranges so far; a range that begins with a - is subtracted.
+       Ranges are applied in left-to-right order.  If  the  first
+       range  has  neither a + nor a -, all known ranges are dis-
+       carded and replaced by the specified range.   In  general,
+       memory  that is already in use is never discarded.  Define
+       this parameter to load  another  boot  parameter  file  in
+       addition  to  /stand/boot.   Setting this parameter causes
+       the specified filename to  be  immediately  loaded.   Boot
+       parameter  files  are loaded from STARTDEV unless filename
+       specifies a device.  If boot is waiting for input from the
+       user and TIMEOUT is set, it waits for number seconds, then
+       boots the kernel file defined by BOOTPROG.  The default is
+       0,  which means to wait forever.  Once any key is pressed,
+       boot will wait forever for additional input.
+
+   RReeaadd--oonnllyy ppaarraammeetteerrss ggeenneerraatteedd bbyy bboooott
+       These parameters are used to pass information to the  ker-
+       nel,  such as details of the hardware configuration.  They
+       are generated by boot and cannot be changed by you.   Con-
+       sole  I/O  routines for use by BOOTPROG.  Media stamp from
+       boot device  (BOOTDEV).   I/O  bus  type  name(s).   BIOS-
+       reported  geometry  for  first  hard  disk.  BIOS-reported
+       geometry for second  hard  disk.   BOOTPROG  symbol  table
+       information.  Lists available memory and in-use memory.
+
+       range  is  specified in the form low_address-high_address.
+       Addresses are in decimal, and can be specified  in  bytes,
+       or  suffixed  with K to indicate kilobytes (1024 bytes), M
+       to  indicate  megabytes,  or  G  to  indicate   gigabytes.
+       Addresses  can  not  exceed 4G.  Specifies the device from
+       which the bootstrap itself was loaded.  Specifies  parame-
+       ters that you set or modified manually.
+
+   PPaarraammeetteerrss rreeccooggnniizzeedd bbyy tthhee kkeerrnneell
+       The  following  parameters  are  processed  by  the kernel
+       rather than by boot.  Set this parameter  to  specify  the
+       size  of the L1 cache line (in bytes) of whichever proces-
+       sor cache has the greatest cache line size.   Its  purpose
+       is  to  segregate the bin locks into separate cache lines.
+       The default, 128, is taken from cache information provided
+       by  the  processor itself.  It may improve advantageous to
+       adjust this value if an external cache  of  greater  cache
+       line  size  is used, or if a new processor, unknown to the
+       kernel, is used.  Set this parameter to YES to disable use
+       of  internal  and external memory caches on i486 and above
+       CPUs.  Set this parameter to YES to disable use of the PGE
+       (Page Global Enable) optimization.  Otherwise, PGE will be
+       used on all CPUs that  support  it.   You  must  set  this
+       parameter  to  YES to enable detection of memory above 4GB
+       (either using the BIOS call E820 or, alternatively,  using
+
+                                                                4
+
+boot(4)                                                   boot(4)
+
+       whatever mechanism a custom PSM chooses to use).  Set this
+       parameter to specify a maximum value,  in  megabytes,  for
+       general  purpose  memory.  The default is 8192 (8GB).  Any
+       memory above this value can be used as dedicated memory by
+       setting  the DEDICATED_MEMORY parameter.  Set this parame-
+       ter to YES to ignore hardware  machine  check  conditions.
+       On  some  systems,  external  circuitry  delivers spurious
+       machine check  conditions  to  the  CPU.   This  parameter
+       allows  such machine checks to be ignored rather than dis-
+       abling the system.  Define this parameter to  specify  the
+       system  state  to  enter after booting.  This parameter is
+       passed to /sbin/init and overrides the system state speci-
+       fied  on  the  initdefault  line in the /etc/inittab file.
+       The value of sysstate can be 0-6, s, or S.
+
+       This parameter is particularly useful if a problem  causes
+       your  system  to  fail before it reaches networking state.
+       For example, if you have selected the wrong video  driver,
+       the  graphical  login  will not start.  If you interrupt a
+       reboot, and define INITSTATE to be s, you can boot to sin-
+       gle-user  state,  and  correct  the  problem.  Define this
+       parameter to specify devices that should not  be  accessed
+       beyond  LUN 0.  The argument c specifies the controller, b
+       specifies the bus, t the target, and  l  the  LUN  of  the
+       device  causing  problems.   The parentheses are required,
+       but any of the arguments can be omitted.  If omitted,  all
+       valid values for that argument are matched.
+
+       The  following  example shows that on controller 0, bus 0,
+       the device at target 3 should be accessed only at  LUN  0,
+       and all devices on controller 1 should be accessed only at
+       LUN 0.  LUNSEARCH=(0:0,3),(1)
+
+       The following example limits device searching to LUN 0 for
+       all devices: LUNSEARCH=() Set this paramter to specify the
+       number of separate bins from which free  pages  are  allo-
+       cated.   Its  purpose  is to optimize allocation of pages.
+       The minimum value is 32, the default is 128, and is  taken
+       from  cache  information provided by the processor itself.
+       It may be advantageous to  raise  the  value  if  a  large
+       external  cache is used, or if a new processor, unknown to
+       the kernel, is used.  The  proper  formula  for  computing
+       this  should  be:  MAX  [cachesize/PAGESIZE/associativity]
+       (over all caches) Set this parameter to YES to enable SCSI
+       command  timeouts  that trigger SCSI device and bus recov-
+       ery.  Otherwise, SCSI commands will not time out and  SCSI
+       device  and  bus  hangs  can  only  be cleared by a system
+       reboot.  Setting this parameter to NO is  useful  when  an
+       unreasonable  timeout  value  has been set for a SCSI com-
+       mand.  The system can boot without using the timeout  val-
+       ues,  and  then the unreasonable timeout value can be cor-
+       rected using the command.  Define this parameter to  force
+       all  PSMs except name to be ignored.  Under normal circum-
+       stances, the kernel tries each  PSM  until  one  succeeds.
+
+                                                                5
+
+boot(4)                                                   boot(4)
+
+       The  fallback PSM is atup.  Specifies an alternative file-
+       name for /stand/resmgr.  This parameter should be used  in
+       conjunction  with  FILES  to  load an alternative resource
+       manager database.   For  example,  FILES=resmgr:resmgr.sav
+       RESMGR=resmgr.save  This  parameter  overrides the default
+       root filesystem type built into the kernel from the ROOTF-
+       STYPE  tunable  parameter.   The  root  filesystem will be
+       assumed to be of type fstype instead  (ufs  or  vxfs,  for
+       example).   If  fstype is blank, all configured filesystem
+       types will be tried until one  succeeds  in  mounting  the
+       root filesystem (the default).
+
+   PPaarraammeetteerrss tthhaatt ddeeffiinnee bboooott mmeessssaaggeess
+       The  following  parameters  permit you to override default
+       messages that are stored  in  /stand/bootmsgs.   Of  these
+       parameters,   only   BOOTMSG1,   BOOTMSG2,  BOOTMSG3,  and
+       BOOTMSG4 are recognized by boot, but all are passed to the
+       kernel.   Define  this  parameter  to  change  the message
+       issued when an automatic reboot is about  to  occur.   The
+       default  message  that  this  parameter,  if defined, will
+       override  is  "Automatic  Boot  Procedure."   Define  this
+       parameter  to  change  the default boot message to string.
+       The default message that this parameter, if defined,  will
+       override  is  "Starting  UnixWare...."   This parameter is
+       recognized by boot.  Define this parameter to  change  the
+       default  boot string, used to indicate the beginning of an
+       interactive boot session.  The standard setting  for  this
+       message,  as defined in /stand/bootmsgs is: Bootstrap Com-
+       mand Processor Ready for boot commands . . . [? for  help]
+       This parameter is recognized by boot.  Define this parame-
+       ter to change the default string displayed at  the  begin-
+       ning  of  the command line.  The default string is [boot].
+       This parameter is recognized by boot.  Define this parame-
+       ter  to  change  the default string displayed when boot is
+       waiting to display more.  The default  string  is  [MORE].
+       This parameter is recognized by boot.  Define this parame-
+       ter to change the default  copyright  line(s)  to  string.
+       This  parameter can be defined multiple times, to accommo-
+       date copyright notices that are more than one  line  long.
+       The  default  setting  for  this  string,  as  defined  in
+       /stand/bootmsgs is: Copyright 1997 SCO, Inc.   All  Rights
+       Reserved.\  U.S. Pat. No. 5,349,642\ Define this parameter
+       to list the devices attached to the SCSI bus.  string is a
+       comma-separated list of SCSI device names.  It defaults to
+       the        following:        HBA,DISK,TAPE,PRINTER,PROCES-
+       SOR,WORM,CDROM,SCANNER,\ OPTICAL,CHANGER,COMMUNICATION
+
+       The  order  of  devices  in  this list must be maintained.
+       Only the first 13 characters of any device name are  used.
+       Define  this parameter to change the message issued when a
+       user requests a reboot.  If defined, this  parameter  will
+       override   the   default   message,   "Press  any  key  to
+       reboot...."  Define this parameter to change the last mes-
+       sage  issued  before  user  processes  are  started.   The
+
+                                                                6
+
+boot(4)                                                   boot(4)
+
+       default message that  this  parameter,  if  defined,  will
+       override is The system is coming up. Please wait..  Define
+       this parameter to  change  the  default  product  name  to
+       string.   The  string  can  contain  % tokens that will be
+       replaced by information available from the system call  as
+       shown   in  the  following  list:  SI_ARCHITECTURE  string
+       SI_INITTAB_NAME  string  SI_MACHINE  string   (uname   -m)
+       SI_HOSTNAME string (uname -n) SI_RELEASE string (uname -r)
+       SI_SYSNAME string (uname -s) SI_VERSION string (uname  -v)
+       a percent sign
+
+       For example, the following string might be used:
+        System V Release %r Version %v for the %a Family
+
+       This  parameter can be defined multiple times, to accommo-
+       date product names that are more than one line long.   The
+       default   setting   for   this   string,   as  defined  in
+       /stand/bootmsgs is: UnixWare %v for Intel IA-32 Processors
+       All  other  lines of the form variable=value are passed to
+       the kernel.
+
+FFiilleess
+       /stand/boot /stand/bootmsgs
+
+RReeffeerreenncceess
+
+                                                                7
+

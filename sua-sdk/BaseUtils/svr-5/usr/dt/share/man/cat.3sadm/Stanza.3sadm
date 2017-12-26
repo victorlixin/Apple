@@ -1,0 +1,165 @@
+
+
+Stanza(3sadm)                                       Stanza(3sadm)
+
+SSyynnooppssiiss
+       CC ... -lsysadm -lvtcl -ltclx -ltcl -lsocket -lgen -lm
+
+       #include <scoadmin/stanza.h>
+
+       stanza_cl * StanzaHandle(void);
+
+       void StanzaHandleFree(stanza_cl       *sfp);
+
+       #define  StanzaNew StanzaHandle #define StanzaDelete Stan-
+       zaHandleFree
+
+       bool_t StanzaOpen(stanza_cl        *sfp,
+                  char             *stanzaFileName,
+                  stanzaMode_t      openMode,
+                  errStatus_cl     *errStatus);
+
+       bool_t StanzaClose(stanza_cl        *sfp,
+                   errStatus_cl     *errStatus);
+
+       const char * StanzaFilename(stanza_cl        *sfp);
+
+       bool_t StanzaGetAttrs(stanza_cl        *sfp,
+                      const char       *sectName,
+                      const char     ***attrs,
+                      errStatus_cl     *errStatus);
+
+       bool_t StanzaGetSects(stanza_cl        *sfp ,
+                      const char     ***sects,
+                      errStatus_cl     *errStatus);
+
+       bool_t StanzaGetVals(stanza_cl        *sfp,
+                     const char       *sectName,
+                     const char       *attrName,
+                     const char     ***vals,
+                     errStatus_cl     *errStatus);
+
+       bool_t StanzaPrint(stanza_cl        *sfp,
+                   errStatus_cl     *errStatus);
+
+       bool_t StanzaAddSect(stanza_cl         *sfp,
+                     const char       *sectName,
+                     errStatus_cl     *errPtr);
+
+       bool_t StanzaDelSect(stanza_cl         *sfp,
+                     const char        *sectName,
+                     errStatus_cl      *errPtr);
+
+       bool_t StanzaModSect(stanza_cl         *sfp,
+                     const char        *sectName,
+                     const char        *newName,
+                     errStatus_cl      *errPtr);
+
+       bool_t StanzaAddAttr(stanza_cl         *sfp,
+
+                                                                1
+
+Stanza(3sadm)                                       Stanza(3sadm)
+
+                     const char        *sectName,
+                     const char        *attrName,
+                     errStatus_cl      *errPtr);
+
+       bool_t StanzaDelAttr(stanza_cl         *sfp,
+                     const char        *sectName,
+                     const char        *attrName,
+                     errStatus_cl      *errPtr);
+
+       bool_t StanzaModAttr(stanza_cl         *sfp,
+                     const char        *sectName,
+                     const char        *attrName,
+                     const char        *newName,
+                     errStatus_cl      *errPtr);
+
+       bool_t StanzaAddValue(stanza_cl        *sfp,
+                      const char       *sectName,
+                      const char       *attrName,
+                      const char       *valName,
+                      errStatus_cl     *errPtr);
+
+       bool_t StanzaDelValue(stanza_cl        *sfp,
+                      const char       *sectName,
+                      const char       *attrName,
+                      const char       *valName,
+                      errStatus_cl     *errPtr);
+
+       bool_t StanzaModValue(stanza_cl        *sfp,
+                      const char       *sectName,
+                      const char       *attrName,
+                      const char       *valName,
+                      const char       *newName,
+                      errStatus_cl     *errPtr);
+
+       bool_t StanzaModIdxValue(stanza_cl        *sfp,
+                         const char       *sectName,
+                         const char       *attrName,
+                         const int         valIdx,
+                         const char       *valName,
+                         errStatus_cl     *errPtr);
+
+       bool_t StanzaReplaceValue(stanza_cl        *sfp,
+                          const char       *sectName,
+                          const char       *attrName,
+                          const int         valueCount,
+                          const char      **values,
+                          errStatus_cl     *errPtr);
+
+       bool_t StanzaSync(stanza_cl        *sfp,
+                  errStatus_cl     *errPtr);
+
+DDeessccrriippttiioonn
+       The C interface to the stanza  database  library  provides
+       functionality equivalent to that of the Tcl interface with
+
+                                                                2
+
+Stanza(3sadm)                                       Stanza(3sadm)
+
+       a  few  language-dependent  changes.  For  the  functional
+       description of the stanza library, see
+
+       The  differences  between  the C and Tcl interfaces are as
+       follows: Before opening a stanza file, a stanza handle  of
+       type  stanza_cl  must  be  allocated with the StanzaHandle
+       function, which is not required by the Tcl interface. This
+       handle  is  used  as  the  first argument of all the other
+       stanza functions. The handle allocated by StanzaNew can be
+       freed  after  use  with the StanzaHandleFree function.  In
+       the case where a list of strings needs to be passed  to  a
+       stanza function (StanzaReplaceValue), the caller must pass
+       a pointer to an array of character  pointers,  along  with
+       the  count  of  strings in the array.  An example follows:
+       stanza_cl  *stzfile;  char  **valuelist  =   {   "value1",
+       "value2", "value3" }; errStatus_cl err;
+
+       StanzaReplaceValue(stzfile,   "section",  "attribute",  3,
+       valuelist, &err); In the cases where  a  list  of  strings
+       needs  to  be  returned to the caller of a stanza function
+       (StanzaGetSects,   StanzaGetAttrs,   StanzaGetVals),   the
+       address  of a pointer to a list of character pointers must
+       be  passed,  which  is  declared  as  a  triple  character
+       pointer.  The location addressed by this pointer is filled
+       in with a pointer to a static,  null-terminated  array  of
+       character  pointers.  This  array  is only valid until the
+       next call  of  the  same  function.  An  example  follows:
+       stanza_cl  *stzfile; char **valuelist, **valueptr; errSta-
+       tus_cl err;
+
+       StanzaGetVals(stzfile, "section", "attribute", &valuelist,
+       &err);  for (valueptr = valuelist; *valueptr != NULL; val-
+       ueptr++)
+           printf("%s\n", *valueptr); A pointer to an error stack
+       must be passed as the last parameter of every stanza func-
+       tion,  except  StanzaHandle  and  StanzaHandleFree.   This
+       error  stack  will be filled in with information about any
+       error that occurs during the stanza function.
+
+RReeffeerreenncceess
+
+                                                                3
+

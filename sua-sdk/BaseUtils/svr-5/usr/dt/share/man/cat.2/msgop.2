@@ -1,0 +1,137 @@
+
+
+msgop(2)                                                 msgop(2)
+
+SSyynnooppssiiss
+       #include   <sys/types.h>   #include  <sys/ipc.h>  #include
+       <sys/msg.h>
+
+       int msgsnd(int msqid, const void *msgp,      size_t msgsz,
+       int msgflg);
+
+       int  msgrcv(int msqid, void *msgp,      size_t msgsz, long
+       msgtyp, int msgflg);
+
+DDeessccrriippttiioonn
+       msgsnd sends a message to the queue  associated  with  the
+       message  queue identifier specified by msqid.  msgp points
+       to a user defined buffer that must contain first  a  field
+       of  type  long  integer  that will specify the type of the
+       message, and then a data portion that will hold  the  text
+       of  the  message.   The following is an example of members
+       that might be in a user defined buffer.  long mtype;    /*
+       message type */ char mtext[];  /* message text */
+
+       mtype  is  a  positive  integer  that  can  be used by the
+       receiving process for message  selection.   mtext  is  any
+       text  of  length msgsz bytes.  msgsz can range from 0 to a
+       system imposed maximum.
+
+       msgflg specifies the action to be taken if one or more  of
+       the following are true: The number of bytes already on the
+       queue is equal to msg_qbytes [see The total number of mes-
+       sages  on  all  queues system-wide is equal to the system-
+       imposed limit.
+
+       These actions are as follows:  If  (msgflg&IPC_NOWAIT)  is
+       true, the message is not sent and the caller returns imme-
+       diately.  If (msgflg&IPC_NOWAIT) is false, the caller sus-
+       pends  execution  until  one  of the following occurs: The
+       condition responsible for the suspension no longer exists,
+       in  which case the message is sent.  msqid is removed from
+       the system [see When this occurs, errno is set  to  EIDRM,
+       and a value of -1 is returned.  The caller receives a sig-
+       nal that is to be caught.  In this case the message is not
+       sent  and  the caller resumes execution in the manner pre-
+       scribed in
+
+       On success, the following actions are taken  with  respect
+       to  the data structure associated with msqid [see msg_qnum
+       is  incremented  by  1.   msg_lspid  ID  of  the   caller.
+       msg_stime is set to the current time.
+
+       msgrcv  reads a message from the queue associated with the
+       message queue identifier specified by msqid and places  it
+       in  the  user  defined  structure pointed to by msgp.  The
+       structure must contain a message type  field  followed  by
+       the  area  for  the  message text (see the structure mymsg
+       above).  mtype is the received message's type as specified
+
+                                                                1
+
+msgop(2)                                                 msgop(2)
+
+       by the sending process.  mtext is the text of the message.
+       msgsz specifies the size in bytes of mtext.  The  received
+       message  is  truncated to msgsz bytes if it is larger than
+       msgsz and (msgflg&MSG_NOERROR)  is  true.   The  truncated
+       part of the message is lost and no indication of the trun-
+       cation is given to the calling process.
+
+       msgtyp specifies the type of message requested as follows:
+       If  msgtyp  is  0,  the  first  message  on  the  queue is
+       received.  If msgtyp is greater than 0, the first  message
+       of type msgtyp is received.  If msgtyp is less than 0, the
+       first message of the lowest type  that  is  less  than  or
+       equal to the absolute value of msgtyp is received.
+
+       msgflg  specifies  the  action to be taken if a message of
+       the desired type is not on the queue.  These are  as  fol-
+       lows:  If  (msgflg&IPC_NOWAIT) is true, the caller returns
+       immediately with a return value of -1 and  sets  errno  to
+       ENOMSG.   If (msgflg&IPC_NOWAIT) is false, the caller sus-
+       pends execution until one of the following occurs: A  mes-
+       sage of the desired type is placed on the queue.  msqid is
+       removed from the system.  When this occurs, errno  is  set
+       to  EIDRM,  and  a  value  of  -1 is returned.  The caller
+       receives a signal that is to be caught.  In  this  case  a
+       message  is  not received and the caller resumes execution
+       in the manner prescribed in
+
+       On success, the following actions are taken  with  respect
+       to  the  data  structure  associated with msqid [see intro
+       (2)].  msg_qnum is decremented by 1.  msg_lrpid is set  to
+       the  process  ID  of  the caller.  msg_rtime is set to the
+       current time.
+
+   RReettuurrnn vvaalluueess
+       On success: msgsnd returns 0.  msgrcv returns  the  number
+       of bytes actually placed into mtext.
+
+       On  failure,  msgsnd and msgrcv return -1 and set errno to
+       identify the error.
+
+   EErrrroorrss
+       In the following conditions, msgsnd and  msgrcv  fail  and
+       set errno to: msgsnd or msgrcv returned due to the receipt
+       of a signal.  msgsnd or msgrcv returned due to removal  of
+       msqid from the system.
+
+       In  the  following conditions, msgsnd fails and sets errno
+       to: msqid is not a valid message queue identifier.   Write
+       permission  is  denied  to the caller.  [see mtype is less
+       than 1.  The message cannot be sent for one of the reasons
+       cited  above  and  (msgflg&IPC_NOWAIT)  is true.  msgsz is
+       less than zero or greater than the  system-imposed  limit.
+       msgp points to an illegal address.
+
+                                                                2
+
+msgop(2)                                                 msgop(2)
+
+       In  the  following conditions, msgrcv fails and sets errno
+       to: msqid is not a valid message queue  identifier.   Read
+       permission is denied to the caller.  msgsz is less than 0.
+       The  length  of  mtext   is   greater   than   msgsz   and
+       (msgflg&MSG_NOERROR) is false.  The queue does not contain
+       a message of the desired type and  (msgtyp&IPC_NOWAIT)  is
+       true.  msgp points to an illegal address.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       While  one thread is blocked, siblings might still be exe-
+       cuting.
+
+                                                                3
+

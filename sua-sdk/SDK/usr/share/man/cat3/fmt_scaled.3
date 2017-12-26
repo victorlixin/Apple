@@ -1,0 +1,56 @@
+fmt_scaled(3)                                                    fmt_scaled(3)
+
+NNAAMMEE
+     ffmmtt__ssccaalleedd, ssccaann__ssccaalleedd - handle numbers with a human-readable scale
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<uuttiill..hh>>
+
+     _i_n_t
+     ssccaann__ssccaalleedd(_c_h_a_r _*_n_u_m_b_e_r___w___s_c_a_l_e, _l_o_n_g _l_o_n_g _*_r_e_s_u_l_t);
+
+     _i_n_t
+     ffmmtt__ssccaalleedd(_l_o_n_g _l_o_n_g _n_u_m_b_e_r, _c_h_a_r _*_r_e_s_u_l_t);
+
+DDEESSCCRRIIPPTTIIOONN
+     The ssccaann__ssccaalleedd() function scans the given number and looks for a termi-
+     nal scale multiplier of B, K, M, G, T, P or E (in either upper or lower
+     case) for Byte, Kilobyte, Megabyte, Gigabyte, Terabyte, Petabyte, Exabyte
+     (computed using powers of two, i.e., Megabyte = 1024*1024).  The number
+     can have a decimal point, as in 1.5K, which returns 1536 (1024+512).  If
+     no scale factor is found, B is assumed.
+
+     The ffmmtt__ssccaalleedd() function formats a number for display using the same
+     "human-readable" format, that is, a number with one of the above scale
+     factors.  Numbers will be printed with a maximum of four digits (preceded
+     by a minus sign if the value is negative); values such as 0B, 100B,
+     1023B, 1K, 1.5K, 5.5M, and so on, will be generated.  The "result" buffer
+     must be allocated with at least FMT_SCALED_STRSIZE bytes.  The result
+     will be left-justified in the given space, and null-terminated.
+
+RREETTUURRNN VVAALLUUEESS
+     The ssccaann__ssccaalleedd() and ffmmtt__ssccaalleedd() functions return 0 on success.  In
+     case of error, they return -1, leave _*_r_e_s_u_l_t as is, and set _e_r_r_n_o to one
+     of the following values: EFAULT if an input pointer is NULL.  ERANGE if
+     the input string represents a number that is too large to represent.
+     EINVAL if an unknown character was used as scale factor, or if the input
+     to ssccaann__ssccaalleedd() was malformed, e.g., too many '.' characters.
+
+EEXXAAMMPPLLEESS
+           char *cinput = "1.5K";
+           long long result;
+           if (scan_scaled(cinput, &result) != 0)
+                   printf("%s -> %ld\n", cinput, result);
+           else
+                   fprintf(stderr, "%s - invalid\n", cinput);
+
+           char buf[FMT_SCALED_STRSIZE];
+           long long ninput = 10483892;
+           if (fmt_scaled(ninput, buf) == 0)
+                   printf("%lld -> %s\n", ninput, buf);
+           else
+                   fprintf(stderr, "fmt scaled failed (errno %d)", errno);
+
+SSEEEE AALLSSOO
+     printf(3), scanf(3)
+

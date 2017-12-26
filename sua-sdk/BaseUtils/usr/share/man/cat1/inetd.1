@@ -1,0 +1,264 @@
+inetd(1)                                                       inetd(1)
+
+  iinneettdd
+
+  NNAAMMEE
+
+    inetd - internet super-server
+
+  SSYYNNOOPPSSIISS
+
+    inetd [[-ds]] [[-L seconds]] [[-R rate]] [[configuration_file]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The iinneettdd(1) program listens for connections on certain internet sockets.
+    When a connection is found on one of its sockets, it decides what service
+    the socket corresponds to and invokes a program to service the request.
+    The server program is invoked with the service socket as its standard
+    input, output, and error descriptors. After the program is finished,
+    iinneettdd(1) continues to listen on the socket (except in some cases that will
+    be described later in this topic). The iinneettdd(1) program allows running one
+    daemon to invoke several others, reducing load on the system.
+
+    The iinneettdd(1) daemon is run by _ii_nn_ii_tt(1) shortly after Subsystem for UNIX-based Applications starts.
+
+    The options available for iinneettdd(1) are:
+
+    --dd
+        Turn on debugging.
+    --LL seconds
+        Set time lock-out period to seconds. This is a security feature to
+        mitigate denial-of-service attacks. When the invocation rate of a
+        service is exceeded (see --RR), the service becomes unavailable for this
+        many seconds. The default setting is 180 (three minutes); the minimum
+        value for seconds is 30.
+    --RR rate
+        Specify the maximum number of times a service can be invoked in one
+        minute; the default is 1000.
+
+    --ss
+        Run as a service (do not fork upon startup). This option is required
+        to run iinneettdd(1) as a Windows service.
+
+    Upon execution, iinneettdd(1) reads its configuration information from a
+    configuration file; if the configuration_file argument is omitted,
+    information is taken from //eettcc//iinneettdd..ccoonnff. There must be an entry for each
+    field of the configuration file, with entries for each field separated by
+    a tab or a space. Comments are denoted by a number sign (##) at the
+    beginning of a line. There must be an entry for each field. The fields of
+    the configuration file are as follows:
+
+    [ccaammpp--]name sock_type protocol wait user serv_prog serv_prog_args
+
+    The ccaammpp-- disables the service identified by name, but blocks access to
+    the default port used by the service. Use this to prevent a trojan horse
+    program from using the port.
+
+    There are two types of services that iinneettdd(1) can start: standard and
+    TCPMUX. A standard service has a well known port assigned to it. It can be
+    either a service that implements an official Internet standard or a
+    Berkeley Software Distribution (BSD)-specific service. As described in RFC
+    1078, TCPMUX services are nonstandard services that do not have a well
+    known port assigned to them. They are invoked from iinneettdd(1) when a program
+    connects to the tcpmux well known port and specifies the service name.
+    This feature is useful for adding locally developed servers.
+
+    name
+        The service-name entry is the name of a valid service in the file
+        %%WWIINNDDIIRR%%//ssyysstteemm3322//ddrriivveerrss//eettcc//sseerrvviicceess, where %%WWIINNDDIIRR%% is the Windows
+        installation directory. For internal services (discussed later in this
+        topic), the service name must be the official name of the service
+        (that is, the first field in the entry in %%WWIINNDDIIRR%%//ssyysstteemm3322//ddrriivveerrss//
+        eettcc//sseerrvviicceess). For TCPMUX services, the value of the service-name
+        field consists of the string tcpmux followed by a slash and the
+        locally chosen service name. The service names listed in %%WWIINNDDIIRR%%//
+        ssyysstteemm3322//ddrriivveerrss//eettcc//sseerrvviicceess and the name help are reserved. Try to
+        choose unique names for your TCPMUX services by prefixing them with
+        your organization's name and suffixing them with a version number.
+
+    sock_type
+        The socket-type should be stream, dgram, raw, rdm, or seqpacket,
+        depending on whether the socket is a stream, datagram, raw, reliably
+        delivered message, or sequenced packet socket. TCPMUX services must
+        use stream.
+
+    protocol
+        The protocol must be a valid protocol as given in %%WWIINNDDIIRR%%//ssyysstteemm3322//
+        ddrriivveerrss//eettcc//pprroottooccoollss, for example, TCP or UDP (transmission control
+        protocol and user datagram protocol, respectively). TCPMUX services
+        must use TCP.
+
+    wait
+        The wait/nowait entry specifies whether the server that is invoked by
+        iinneettdd(1) will take over the socket associated with the service access
+        point, and thus whether iinneettdd(1) should wait for the server to exit
+        before listening for new service requests. Datagram servers must use
+        wait, as they are always invoked with the original datagram socket
+        bound to the specified service address. These servers must read at
+        least one datagram from the socket before exiting. If a datagram
+        server connects to its peer, freeing the socket so iinneettdd(1) can
+        received further messages on the socket, it is said to be a multi-
+        threaded server; it should read one datagram from the socket and
+        create a new socket connected to the peer. It should fork, and the
+        parent should then exit to allow iinneettdd(1) to check for new service
+        requests to spawn new servers. Datagram servers that process all
+        incoming datagrams on a socket and eventually time out are said to be
+        single-threaded. Both bbiiffff(1) and nnttaallkkdd(1) are examples of the latter
+        type of datagram server; ttffttppdd(1) is an example of a multi-threaded
+        datagram server.
+        Servers using stream sockets generally are multi-threaded and use the
+        nowait entry. Connection requests for these services are accepted by
+        iinneettdd(1), and the server is given only the newly accepted socket
+        connected to a client of the service. Most stream-based services
+        operate in this manner. Stream-based servers that use wait are started
+        with the listening service socket, and must accept at least one
+        connection request before exiting. Such a server would normally accept
+        and process incoming connection requests until a time-out. TCPMUX
+        services must use nowait.
+
+    user
+        Historically, the user entry should contain the user name of the user
+        under whose account the server should run. This allows for servers to
+        be given less permission than root. In Subsystem for UNIX-based Applications, this field is always
+        set to the string NULL and is ignored. The iinneettdd(1) should always run
+        as a low-privilege user (for example, a global user named inetd with
+        only Local Logon Privilege).
+
+    serv_prog
+        The server-program entry should contain the path name of the program
+        that is to be executed by iinneettdd(1) when a request is found on its
+        socket. This path name is relative to the installation directory for
+        Subsystem for UNIX-based Applications ($$IINNTTEERRIIXX__RROOOOTT). Do nnoott give the path represented by
+        $$IINNTTEERRIIXX__RROOOOTT. For example, if the program is //bbiinn//ffttppdd, the path name
+        should read //bbiinn//ffttppdd. If iinneettdd(1) provides this service internally,
+        this entry should be internal.
+
+    serv_prog_args
+        The server program arguments should be just as arguments normally are,
+        starting with argv[0], which is the name of the program. If the
+        service is provided internally, the word "internal" should take the
+        place of this entry.
+
+    The iinneettdd(1) program provides several trivial services internally by use
+    of routines within itself. These services are eecchhoo, ddiissccaarrdd, cchhaarrggeenn
+    (character generator), ddaayyttiimmee (human readable time), and ttiimmee (machine
+    readable time, in the form of the number of seconds since midnight,
+    January 1, 1900). All of these services are TCP based. For details of
+    these services, consult the appropriate RFC from the Network Information
+    Center.
+
+    The iinneettdd(1) program rereads its configuration file when it receives a
+    hangup signal, SIGHUP. Services can be added, deleted, or modified when
+    the configuration file is reread.
+
+  TTCCPPMMUUXX
+
+    RFC 1078 describes the TCPMUX protocol:
+
+    "A TCP client connects to a foreign host on TCP port 1. It sends the
+    service name, followed by a carriage-return line-feed <CRLF>. The service
+    name is never case sensitive. The server replies with a single character
+    indicating positive (++) or negative (--) acknowledgment, immediately
+    followed by an optional message of explanation, terminated with a <CRLF>.
+    If the reply was positive, the selected protocol begins; otherwise, the
+    connection is closed."
+
+    The TCP connection is passed to the program as file descriptors 0 and 1.
+
+    If the TCPMUX service name begins with a plus sign (++), iinneettdd(1) returns
+    the positive reply for the program. This allows you to invoke programs
+    that use stdin/stdout without putting any special server code into them.
+
+    The special service name help causes iinneettdd(1) to list TCPMUX services in
+    iinneettdd..ccoonnff.
+
+  EEXXAAMMPPLLEESS
+
+    Here are several example service entries for the various types of
+    services:
+
+    ftp           stream  tcp   nowait root  /usr/libexec/ftpd       ftpd -l
+    ntalk         dgram   udp   wait   root  /usr/libexec/ntalkd     ntalkd
+    tcpmux/+date  stream  tcp   nowait guest /bin/date               date
+    tcpmux/phonebook stream tcp nowait guest /usr/local/bin/phonebook
+    phonebook
+
+  EERRRROORR MMEESSSSAAGGEESS
+
+    The iinneettdd(1) server logs error messages using _ss_yy_ss_ll_oo_gg(3); you might want to
+    start ssyyssllooggdd(1). Important error messages and their explanations are:
+
+    service/protocol server failing (looping), service terminated.
+        The number of requests for the specified service in the past minute
+        exceeded the limit. The limit exists to prevent a broken program or a
+        malicious user from swamping the system. This message can occur for
+        several reasons:
+        *     Many hosts are requesting the service within a short time
+              period.
+        *     A malfunctioning client program is requesting the service too
+              frequently.
+        *     A malicious user is running a program to invoke the service in a
+              "denial of service" attack.
+        *     The invoked service program has an error that causes clients to
+              retry quickly. Use the --RR option described previously in this
+              topic to change the rate limit. When the limit is reached, the
+              service will be reenabled automatically in 10 minutes.
+    service/protocol No such user 'user'; service ignored
+    service/protocol: getpwnam: user: No such user
+        No entry for user exists in the password database. The first message
+        occurs when iinneettdd(1) reads or rereads the configuration file. The
+        second message occurs when the service is invoked.
+    service: can't set uid number
+    service: can't set gid number
+        The user or group identifier (ID) for the entry's user is invalid.
+
+  NNOOTTEESS
+
+    Win32 programs fail when inetd is restarted from within a ksh session. 
+	This occurs because the inetd daemon doesn't start in session 0 upon 
+	restart. Do one of the following to work around this issue:
+	
+	*  Restart inetd in an rsh session (inetd will start in session 0).
+	
+	-or-
+	
+	*  Restart the computer.
+
+    The tteellnneettdd(1) daemon must be started with the --ii option to run from
+    iinneettdd(1).
+
+    By default, the Subsystem for UNIX-based Applications tteellnneettdd and ffttppdd daemons are disabled because
+    equivalent services are available as Windows services. Before running the
+    Subsystem for UNIX-based Applications daemons, you must stop the equivalent Windows services.
+
+  SSEEEE AALLSSOO
+
+    _i_n_e_t_d_._c_o_n_f(5)
+
+    _f_i_n_g_e_r_d(1)
+
+    _f_t_p_d(1)
+
+    _n_t_a_l_k_d(1)
+
+    _r_e_x_e_c_d(1)
+
+    _r_l_o_g_i_n_d(1)
+
+    _r_s_h_d(1)
+
+    _s_e_r_v_i_c_e(1)
+
+    _t_e_l_n_e_t_d(1)
+
+    _a_c_c_e_p_t(2)
+
+    _b_i_n_d(2)
+
+    _c_o_n_n_e_c_t(2)
+
+    _l_i_s_t_e_n(2)
+
+    _s_o_c_k_e_t(2)
+

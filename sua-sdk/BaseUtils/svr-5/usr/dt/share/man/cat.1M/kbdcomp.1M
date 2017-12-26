@@ -1,0 +1,455 @@
+
+
+kbdcomp(1M)                                           kbdcomp(1M)
+
+SSyynnooppssiiss
+       kbdcomp [-vrR] [-o outfile] [infile]
+
+DDeessccrriippttiioonn
+       The kbdcomp command compiles tables for use with the iconv
+       utility and with the  kbd  (see  STREAMS  module,  a  pro-
+       grammable string-translation module.  Both the iconv util-
+       ity and the kbd STREAMS module  have  two  separate  func-
+       tions,  each of which may be used alone or in combination.
+
+       The lookup function is that of performing simple substitu-
+       tion  of bytes in an input stream.  This function is based
+       on a simple 256-entry lookup table (as there are 256  pos-
+       sible bit combinations for a byte).  As input is received,
+       each byte is looked up in the translation table,  and  the
+       table  value  for that byte is substituted in place of the
+       original byte.  The process is quick, and can be performed
+       on  each STREAMS message with no message copying or dupli-
+       cation.
+
+       The  second  function,  mapping,  provides  searching  for
+       occurrences  of  specified strings of bytes (or individual
+       bytes) in an input stream, and substituting other  strings
+       (or  bytes)  for  them  as they are recognized.  There are
+       three kinds of mapping  that  are  differentiated  by  the
+       relationship  between the number of bytes in the input and
+       the number of bytes in the output.  One to many mapping is
+       substituting  many  bytes  for  a given byte in the input.
+       Many to one mapping is substituting many bytes for a given
+       input  byte.   Many to many mapping includes the other two
+       types as a proper subset, but also  includes  substitution
+       of  many  bytes  in  the  input with many bytes of output.
+       Both iconv and kbd can perform all three types of mapping.
+       The  lookup  function  (that  is, one to one mapping) is a
+       common special case useful enough  to  be  included  sepa-
+       rately.   By using combinations of both lookup and mapping
+       instead of either one  alone,  a  larger  class  of  input
+       translation and conversion problems can be solved.
+
+       During  operation,  processing occurs in two major passes:
+       the lookup table pass always precedes string mapping.  The
+       string  mapping  procedure  is  non-recursive  for a given
+       table and there is no feedback mechanism (that  is,  input
+       is  scanned in order received and output is not re-scanned
+       for occurrences of recognizable  input  strings).   As  an
+       example  of  mapping,  suppose  you  want to translate all
+       occurrences of the string this in an input stream into the
+       string  there.   Both  utility  and  module  recognize and
+       buffer occurrences of the  string  th  (as  each  byte  is
+       received);  if  the following character is i, it will also
+       be buffered, but if x is then received, a mismatch is rec-
+       ognized  and no translation occurs.  Assuming thi has been
+       buffered, if the next character seen is s, a match is rec-
+       ognized,  the buffer containing this is discarded, and the
+
+                                                                1
+
+kbdcomp(1M)                                           kbdcomp(1M)
+
+       string there replaces it.
+
+       Both input and output  strings  can  be  of  any  non-zero
+       length  (see  below  for  limitations).  Each string to be
+       recognized and translated must be unique, and no  complete
+       input  string  may constitute the leading substring of any
+       other (for example, one may not define abc and ab simulta-
+       neously, but may so define abc, abd, and abxy).
+
+       Given  a  filename  (or  standard input if no name is sup-
+       plied), kbdcomp will compile tables into the  output  file
+       specified  by the -o option.  If the -o option is not sup-
+       plied, output is to the file kbd.out.
+
+       The -v option causes parsing and verification, that is, no
+       output  file  is  produced.   If  no  error  messages  are
+       printed, then the input  file  is  syntactically  correct.
+       The  -r option causes the compiler to check for and report
+       on byte values that cannot be generated in  a  table  (see
+       the  description  below).   The option -R is equivalent to
+       the option -r but it tries to print  printable  characters
+       as themselves rather than in octal format.
+
+   IInnppuutt llaanngguuaaggee
+       Source  files  for  kbdcomp are a series of table declara-
+       tions.  Within each table declaration there are  a  number
+       of  definitions and functions.  A table declaration can be
+       the map, link, or extern form: map type ( name ) { expres-
+       sions }
+
+       link ( string )
+
+       extern  (  string  ) First the map form is described, then
+       the link and extern forms.  The name of a map  must  be  a
+       simple token not containing any colons, commas, quotes, or
+       spaces.  (For our purposes, a simple token is  a  sequence
+       of alphabetic or numeric characters with no embedded punc-
+       tuation, white space, or special symbols.)  The type field
+       is  an  optional  field that may be either of the keywords
+       full or sparse.  If omitted, the type defaults to  sparse.
+       The  effect  of  this  field  is  described in more detail
+       below.  The expressions contained in the  map  declaration
+       are  one  of  the  following forms.  Reserved keywords are
+       printed in constant width, variables in italics: keylist (
+       string  string  )  define ( word  value ) word ( extension
+       result ) string ( word word ) strlist (  string  string  )
+       error  (  string  ) timed The keylist form is for defining
+       lookup table entries while the  remaining  forms  are  the
+       separate string functions.
+
+       The  definition  form (define) allows a mnemonic word (the
+       first argument) to be associated with a string (the second
+       argument).    It   is  useful  for  replacing  complicated
+       sequences (for example, those containing  special  symbols
+
+                                                                2
+
+kbdcomp(1M)                                           kbdcomp(1M)
+
+       or  control  characters) with mnemonic words to facilitate
+       the design and readability of tables.
+
+       Using the word form  (where  word  must  be  a  previously
+       defined  sequence)  in  a way similar to a C function call
+       results in the  value  of  word  being  concatenated  with
+       extension;  when  the  combination  is  recognized,  it is
+       mapped to result.  The value may be a string of characters
+       or  a  single byte.  The following is an illustration (not
+       intended   to   be   complete):   map   (some_accents)   {
+            define(acute    '\047')        define(grave   '`'   )
+            acute(a  '\341')        #  same   as   string("\047a"
+       "\341")        grave(a   '\340')       #  ...et  cetera...
+            keylist("zyZY" "yzYZ") } This map defines the  single
+       quote  and  reverse quote keys as dead-keys that when fol-
+       lowed by a produce a character from the  ISO  8859-1  code
+       set.   It  is not necessary for the definition, extension,
+       or result to be a  single  byte;  they  can  be  arbitrary
+       strings.
+
+       Strings  in  definitions  and  arguments  can  be  entered
+       between double quotes or without the  quotes.   Byte  con-
+       stants  can  be  entered  without quotes or between single
+       quotes.  Double quotes are required when a string contains
+       parentheses, spaces, tab characters, or other special sym-
+       bols.  The language makes no distinction between byte con-
+       stants and string constants; both are treated as null-ter-
+       minated strings.  You can choose to  use  a  one-character
+       string  or  a  byte constant; it is your preference.  Most
+       quoting conventions of C are recognized, except that octal
+       constants  must  be  three digits.  Octal constants may be
+       used in strings, also.  In the example  above,  the  argu-
+       ments to keylist need not be quoted, since they contain no
+       special  symbols.   The  following  example  shows   where
+       strings  must be quoted: string(abc "two words")    # lit-
+       eral space keylist("[{}]" "(())")     # brackets/parenthe-
+       ses  define(esc_seq  "\033\t(")   #  tab  and  parenthesis
+       define(space '  ')           #  literal  space  string(abc
+       "keylist")       #  keyword  used  as argument Comments in
+       files (inside or  outside  of  map  declarations)  may  be
+       entered  in  the same way as for that is, after a # at the
+       end of a line, or on a line beginning with #, as shown  in
+       the above examples.
+
+       The keylist form allows single bytes to be mapped to other
+       single bytes; it defines actions that are treated  in  the
+       lookup table (that is, are performed before mapping).  Any
+       byte  value  that  is  not  explicitly  changed  by  being
+       included  in  a  keylist  form  will  be  unchanged; if no
+       keylist forms appear in a  map  definition,  then  kbdcomp
+       does  not  generate  a  lookup  table for the map, and the
+       lookup phase is skipped  during  module  operation.   Each
+       byte  in the first string argument to keylist is mapped to
+       the byte  at  the  same  position  in  the  second  string
+
+                                                                3
+
+kbdcomp(1M)                                           kbdcomp(1M)
+
+       argument.   That  is,  given  two strings X and Y as argu-
+       ments: X(i) maps to Y(i), X(j) maps to Y(j), and so forth.
+       The two arguments must, after evaluation, be found to con-
+       tain the same number of bytes.
+
+       The string form has a function similar to  mnemonic  forms
+       defined  with  define and may be used for any type of many
+       to many mapping.  The first argument to string  is  mapped
+       to  the second argument (see the comment in the sample map
+       above).
+
+       Mappings using both keylist and string or any define forms
+       may  be combined: if i is mapped to a with a keylist form,
+       and a is used in the sequence `a, then when the user types
+       `i,  the sequence `a is seen by the string mapping process
+       (because lookup is done first) and translated accordingly.
+
+       The keylist form is intended mainly for use in simple key-
+       board  re-arrangement  and  case-conversion  applications;
+       string  is  for  one  to  many  mapping  or  for  isolated
+       instances of many to many mapping;  the  define  form  and
+       words defined with it are intended for more general use in
+       groups of related sequences.  Sometimes, while  a  one  to
+       one  mapping  with  keylist  may be an obvious choice, the
+       same effect may be achieved with  string  forms  to  avoid
+       having  a contradictory mapping.  For example, suppose one
+       wants, simultaneously, to translate x into y  and  y  into
+       abc.   If  x  is  mapped  to y via a keylist form and y is
+       mapped to abc via a string form, then it may be impossible
+       to  obtain  y itself (unless defined in another sequence),
+       even though that was not the intention--the intention  was
+       to obtain y whenever the user enters x.  This is a contra-
+       dictory mapping: keylist(x y) string(y abc)  # "y"  itself
+       cannot be generated There are cases where the intention is
+       that y not be generated, but most often the  intention  is
+       to  generate  it.   This problem (a common one in code set
+       mapping) can be solved by using a string form to map x  to
+       y initially rather than using a keylist form.  This allows
+       both y and abc to be generated: string(x y) string(y  abc)
+       Entering a large number of one to one mappings with string
+       can be somewhat  tedious.   To  make  things  easier,  the
+       strlist  form  is  provided.   The two string arguments to
+       strlist  are  interpreted  similar  to  arguments  to  the
+       keylist  form  (that  is,  they  are one to one mappings),
+       except that they are processed as string  mappings  rather
+       than with the lookup table.  In the following example, the
+       first three string  definitions  can  be  reduced  to  the
+       strlist form that follows: string(a b)
+       string(c d)
+       string(e f)
+
+       strlist(ace  bdf) It is important to recognize the differ-
+       ence between string and strlist.   With  string,  the  two
+       arguments  are a single mapping definition (that can be of
+
+                                                                4
+
+kbdcomp(1M)                                           kbdcomp(1M)
+
+       any type) whereas with strlist, one or  more  one  to  one
+       string mappings are defined simultaneously.  A set of map-
+       pings defined with a combination of string and strlist  do
+       not  exhibit  the  same  type of incompatibility described
+       above between keylist and string.
+
+       Some further aspects of module processing can now be  pre-
+       sented.   When  a  partial  match  in an input sequence is
+       detected during string processing, it is buffered.  If  at
+       some point the match no longer succeeds, the first byte of
+       the matched buffer is normally  sent  to  the  neighboring
+       module.   The  rest of the input is left in the buffer and
+       scanned again to  see  if  it  matches  the  beginning  of
+       another  sequence.   The  error entry allows you to send a
+       string (or byte) constant (called  a  fallback  character)
+       instead of the byte that began the previous sequence; this
+       is particularly useful in code set mapping and  conversion
+       applications  where the character that failed to be trans-
+       lated might be one that does not occur or has  some  other
+       meaning  in  the target code set.  The following (somewhat
+       contrived) example illustrates use of the  error  form:  #
+       turn  arrow  keys  into  vi  commands       map (vi_map) {
+                 string("\033[A"         k)         #          up
+                 string("\033[B"  j)  # down           error("!")
+            } Given input of the ESC character followed by [A  or
+       [B,  a  single  character  (j or k) is generated.  If pre-
+       sented with the sequence ESC[Q, the  module  will  produce
+       the sequence ![Q.  The error string ! replaces ESC because
+       the sequence failed to match when  Q  was  received.   The
+       remaining  characters  are re-scanned, and neither [ nor Q
+       is found to begin a recognized sequence.
+
+       One to one mapping with strings  or  other  defined  forms
+       (rather than via a keylist lookup table) is generally done
+       with a linear search operation when looking for bytes that
+       begin  sequences.  However, if the table is specified as a
+       full table, it is initially indexed rather  than  searched
+       linearly,  and thus processed much more quickly when there
+       are a large number of entries.  This  should  be  kept  in
+       mind  in  code  set  mapping applications where nearly all
+       characters are mapped, and many (or most) are one  to  one
+       mappings.  If only a few characters are mapped with string
+       functions, you must decide whether to trade a  small  gain
+       in  processing  speed  for  the  space needed to store the
+       index if a table is made full.
+
+       The link form, is used to produce a  composite  table.   A
+       composite  table  is  really a form of linkage that allows
+       several tables to be used together in sequence as  if  the
+       sequence were a single table.  The string argument to link
+       is of  the  following  form:  composite:component_1,compo-
+       nent_2,  .  . . , component_n The target composite name is
+       followed by a colon, and the  ordered  component  list  is
+       comma-separated.   If  the string argument contains spaces
+
+                                                                5
+
+kbdcomp(1M)                                           kbdcomp(1M)
+
+       or special characters, it must be quoted.  (This string is
+       not interpreted by kbdcomp, but is left intact in the out-
+       put file; it is interpreted by the module  at  run  time.)
+       When  a  composite table is used, the effect is similar to
+       pushing more than one instance of the kbd  module  in  the
+       sense  that  the  component  tables function sequentially.
+       However, it is done within a single instance of  the  mod-
+       ule.   As  output is produced by processing with one table
+       in the composite, the data is  subsequently  processed  by
+       the  next  component  and  so  on  until  the final result
+       emerges at the end of the sequence.  (There is no restric-
+       tion  on  the  use  of  any combination of full and sparse
+       tables in a composite.)
+
+       Composite tables are useful for simplifying  complex  map-
+       pings  by  modularizing  the processing and for increasing
+       the re-usability of tables for different mapping  applica-
+       tions.   Tables  primarily  implementing code set mappings
+       can be linked to other tables primarily implementing  com-
+       pose-  or  dead-key sequences.  With a single table imple-
+       menting a  common  code  set  mapping,  several  different
+       tables  implementing  combinations of code set mapping and
+       compose-key layouts may be built.  A typical configuration
+       might use one table for mapping from an external to inter-
+       nal code set, then use one or more separate tables working
+       in  the  internal code set to provide compose- or dead-key
+       functionality, as in the following  example.   One  table,
+       646Sp-8859 maps from an ISO 646 variant (Spanish) external
+       code set to ISO 8859-1; this is combined  with  two  other
+       tables   respectively   implementing  8859-1  by  compose-
+       sequences,   and   by   dead-key   sequences:   link("com-
+       posed:646Sp-8859,8859-1-cmp")                  link("dead-
+       key:646Sp-8859,8859-1-dk") Composite tables  can  also  be
+       built while the module is running from the kbdload command
+       line; details are  in  the  manual  page.   The  component
+       tables  are linked and processed in the given order (left-
+       to-right).  Because the link argument is  actually  parsed
+       at  run time by kbd module, it is not an error to refer to
+       tables that are not contained in the file currently  being
+       compiled.   An  error  will  be generated when the file is
+       loaded if any component of a link is not present in memory
+       at that time.
+
+       The  extern  form can be used to declare an external func-
+       tion managed by the alp module.   External  functions  are
+       managed  in  a  list by that module, and are available for
+       use as if they were simple tables in kbd.  External  func-
+       tions  are  not downloaded, but are resident in the kernel
+       and merely accessed by the kbd module (see for more infor-
+       mation).   Such functions also can be declared dynamically
+       when required (see
+
+       The directive timed may appear any place within a map dec-
+       laration.  If used, it causes the table within which it is
+
+                                                                6
+
+kbdcomp(1M)                                           kbdcomp(1M)
+
+       defined to be interpreted in timeout mode.  In this  mode,
+       string mappings are considered not to match if more than a
+       specified amount of time  elapses  after  receipt  of  the
+       first  byte of a sequence without its being fully received
+       and mapped.  For example, suppose that abc is to be mapped
+       to  xyz  and the timeout value is 30; if the user types ab
+       and then waits for longer than 30 time units before typing
+       c,  the  entire sequence will not be translated.  Then the
+       sequence is treated as any other mismatch would be:  a  is
+       passed  to the neighboring module, and b is checked to see
+       if it begins a sequence.  The timer is reset when  a  mis-
+       match occurs, so that if bc is defined and c has just been
+       received, it will be  mapped  as  expected.   The  default
+       timeout  is  typically  1/5  to  1/3  of a second (see for
+       details).
+
+       Timeout mode is generally useful in cases  where  terminal
+       function   keys  are  being  interpreted,  to  distinguish
+       between a string typed by the  user  and  a  function  key
+       string  sent  by  the terminal; it is not intended for use
+       with batch applications such as the iconv command (see nor
+       generally  in  pipelines  (see  In a composite table, some
+       components may be timed and some not, making the mode use-
+       ful  for combinations of code set mapping and function key
+       mapping.
+
+       Timing depends  on  several  factors,  including  terminal
+       baud-rate,  system  load, and the user's typing speed.  If
+       the timeout value is too long, then typed  sequences  that
+       happen to be the same as function keys will be erroneously
+       mapped; if the value is too short, then function keys  may
+       be  missed  under  a  heavy  system load or with low speed
+       devices.  See for information on how to change the timeout
+       value,  and  for  information  on how an administrator may
+       change the default timeout value.  This  directive  should
+       never  be  used in tables that implement code set mapping,
+       as it makes the results unpredictable.  Long timeouts,  on
+       the order of seconds, may be useful in some contexts.
+
+   BBuuiillddiinngg aanndd ddeebbuuggggiinngg
+       Users  who  intend to build their own tables may study the
+       source tables supplied with the distribution in the direc-
+       tory /usr/lib/kbd.
+
+       If  characters  other  than  alphanumerics are to be used,
+       quoted strings are preferred to unquoted  strings;  quota-
+       tion  is required for some characters, as mentioned above.
+       Map names and the first  arguments  of  define  should  be
+       alphanumeric tokens.
+
+       The  report  generated  by the -r option may be useful for
+       debugging complex tables.  The report (produced  on  stan-
+       dard  error)  consists  of two octal lists.  One list con-
+       tains byte values that cannot be generated from the lookup
+
+                                                                7
+
+kbdcomp(1M)                                           kbdcomp(1M)
+
+       table  (if  keylist  forms are used).  The other list con-
+       tains byte values that cannot be  generated  in  any  way,
+       that  is, values that are neither parts of ``result text''
+       (products of string mappings) nor generated by the  lookup
+       table  (if there is one), but are used in other sequences.
+       The report does not exhaustively list  unreachable  paths,
+       but may show whether they exist and help locate them.
+
+   OOuuttppuutt ffiilleess
+       The  files  produced  by kbdcomp begin with a header.  The
+       magic string is  kbd!map  with  a  version  number.   This
+       header is immediately followed by one or more tables.  The
+       lines below can be added to the /etc/magic  file  for  the
+       command   to   recognize   kbd   files.    0        string
+       kbd!map         kbd map file  >8       byte             >0
+       Ver  %d:  >10      short           >0              with %d
+       table(s)
+
+   LLiimmiittaattiioonnss
+       The maximum length for input strings is 128 bytes, and 256
+       bytes  for output strings.  The total amount of space con-
+       sumed by a single table is limited to about 65,000  bytes.
+       Versions  are  incompatible;  object  tables  are machine-
+       dependent in their byte order and structure  size.   Thus,
+       while  source files are portable, the output of kbdcomp is
+       not.  This implies that when using remote devices across a
+       network  between  heterogeneous  machines,  tables must be
+       loaded on the machine where the module is actually  pushed
+       (that is, the remote side).
+
+FFiilleess
+       directory  containing  system  standard map files.  source
+       for some system map files.
+
+RReeffeerreenncceess
+
+                                                                8
+

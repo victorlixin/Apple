@@ -1,0 +1,393 @@
+
+
+ios(3C++)                                               ios(3C++)
+
+SSyynnooppssiiss
+       #include <iostream.h>
+
+       class  ios  { public:      enum io_state { goodbit=0, eof-
+       bit, failbit,                badbit };      enum open_mode
+       {  in,  out,  ate,  app,  trunc,  nocreate,  noreplace  };
+            enum seek_dir { beg, cur, end };       /*  flags  for
+       controlling  format  */       enum { skipws=01,
+       left=02,   right=04,  internal=010,               dec=020,
+       oct=040,   hex=0100,                 showbase=0200,  show-
+       point=0400,  uppercase=01000,  showpos=02000,
+       scientific=04000,    fixed=010000,                   unit-
+       buf=020000, stdio=040000 };      static const  long  base-
+       field;                             /*    dec|oct|hex    */
+            static        const         long         adjustfield;
+                                /*     left|right|internal     */
+            static         const         long         floatfield;
+                                /*  scientific|fixed  */  public:
+                 ios(streambuf*);
+
+            int  bad();           static      long    bitalloc();
+            void clear(int     state     =0);         int  eof();
+            int  fail();      char fill();       char fill(char);
+            long flags();                       long flags(long);
+            int  good();                    long&     iword(int);
+            int  operator!();               operator     void*();
+            int  precision();                int  precision(int);
+            streambuf*     rdbuf();        void*  &   pword(int);
+            int  rdstate();       long setf(long  setbits,   long
+       field);               long setf(long);              static
+       void    sync_with_stdio();                ostream*  tie();
+            ostream*  tie(ostream*);           long unsetf(long);
+            int  width();         int  width(int);         static
+       int     xalloc();        protected:                 ios();
+                 init(streambuf*); private:            ios(ios&);
+            void operator=(ios&)     ; };
+
+            /*  Manipulators */ ios& dec(ios&) ; ios& hex(ios&) ;
+       ios& oct(ios&)    ;    ostream&  endl(ostream&    i)     ;
+       ostream&  ends(ostream&  i)  ; ostream&  flush(ostream&) ;
+       istream&  ws(istream&) ;
+
+DDeessccrriippttiioonn
+       The stream classes derived from class ios provide  a  high
+       level  interface  that supports transferring formatted and
+       unformatted information into and out of streambufs.   This
+       manual  page describes the operations common to both input
+       and output.
+
+       Several enumerations are declared in class ios, open_mode,
+       io_state,  seek_dir,  and format flags, to avoid polluting
+       the global name space.  The  io_states  are  described  on
+       this  manual  page  under  ``Error  States.''   The format
+       fields  are   also   described   on   this   page,   under
+
+                                                                1
+
+ios(3C++)                                               ios(3C++)
+
+       ``Formatting.''  The open_modes are described in detail in
+       under  open().   The  seek_dirs  are  described  in  under
+       seekoff().
+
+       In the following descriptions assume:
+       -- s and s2 are ioss.
+       -- sr is an ios&.
+       -- sp is a ios*.
+       -- i, oi, j, and n are ints.
+       -- l, f, and b are longs.
+       -- c and oc are chars.
+       -- osp and oosp are ostream*s.
+       -- sb is a streambuf*.
+       -- pos is a streampos.
+       -- off is a streamoff.
+       -- dir is a seek_dir.
+       -- mode is an int representing an open_mode.
+       -- fct is a function with type ios& (*)(ios&).
+       -- vp is a void*&.
+
+   CCoonnssttrruuccttoorrss aanndd aassssiiggnnmmeenntt::
+       The  streambuf denoted by sb becomes the streambuf associ-
+       ated with the constructed ios.  If sb is null, the  effect
+       is undefined.  Copying of ioss is not well-defined in gen-
+       eral, therefore the constructor and  assignment  operators
+       are  private  so  that  the  compiler  will complain about
+       attempts  to  copy  ios  objects.   Copying  pointers   to
+       iostreams  is  usually what is desired.  Because class ios
+       is now inherited as a virtual base  class,  a  constructor
+       with  no  arguments  must  be  used.   This constructor is
+       declared protected.   Therefore  ios::init(streambuf*)  is
+       declared  protected and must be used for initialization of
+       derived classes.
+
+   EErrrroorr ssttaatteess
+       An ios has an internal error state (which is a  collection
+       of  the  bits  declared as io_states).  Members related to
+       the error state are:  Returns  the  current  error  state.
+       Stores  i  as  the error state.  If i is zero, this clears
+       all bits except ios::hardfail (this bit is not for  public
+       access).   To  set  a  bit without clearing previously set
+       bits    requires    something    like    s.clear(ios::bad-
+       bit|s.rdstate()).  Returns non-zero if the error state has
+       no bits set, zero otherwise.  Returns non-zero  if  eofbit
+       is  set in the error state, zero otherwise.  Normally this
+       bit is set when an end-of-file has been encountered during
+       an extraction.  Returns non-zero if either badbit or fail-
+       bit is set in the error state, zero  otherwise.   Normally
+       this  indicates  that  some  extraction  or conversion has
+       failed, but the stream is still usable.  That is, once the
+       failbit  is  cleared,  I/O  on  s  can  usually  continue.
+       Returns non-zero if badbit is set in the error state, zero
+       otherwise.   This usually indicates that some operation on
+       s.rdbuf() has failed, a severe error, from which  recovery
+
+                                                                2
+
+ios(3C++)                                               ios(3C++)
+
+       is  probably  impossible.   That  is,  it will probably be
+       impossible to continue I/O operations on s.
+
+   OOppeerraattoorrss
+       Two operators are defined to allow convenient checking  of
+       the  error  state  of  an  ios:  operator!()  and operator
+       void*().  The latter converts an ios to a pointer so  that
+       it  can be compared to zero.  The conversion will return 0
+       if failbit or badbit is set in the error state,  and  will
+       return  a  pointer  value  otherwise.  This pointer is not
+       meant to be used.  This allows one  to  write  expressions
+       such as:
+       if ( cin ) ...
+
+       if ( cin >> x ) ...
+
+       The  !  operator  returns non-zero if failbit or badbit is
+       set in the error state, which allows expressions like  the
+       following to be used: if ( !cout ) ...
+
+   FFoorrmmaattttiinngg
+       An  ios has a formatstate that is used by input and output
+       operations to control the  details  of  formatting  opera-
+       tions.   For other operations the format state has no par-
+       ticular effect and its components may be set and  examined
+       arbitrarily  by  user  code.   Most formatting details are
+       controlled by using the flags, setf, and unsetf  functions
+       to  set the following flags, which are declared in an enu-
+       meration in class ios.  Three other components of the for-
+       mat  state  are  controlled  separately with the functions
+       fill, width, and precision.  If skipws is set,  whitespace
+       will  be skipped on input.  This applies to scalar extrac-
+       tions.  When skipws is not set, whitespace is not  skipped
+       before  the extractor begins conversion.  If skipws is not
+       set and a zero length field is encountered, the  extractor
+       will   signal  an  error.   Additionally,  the  arithmetic
+       extractors will signal an error if skipws is not set and a
+       whitespace   is  encountered.   These  flags  control  the
+       padding of a value.  When left is set, the value is  left-
+       adjusted,  that  is, the fill character is added after the
+       value.  When right is set, the  value  is  right-adjusted,
+       that  is,  the  fill  character is added before the value.
+       When internal is set, the fill character  is  added  after
+       any leading sign or base indication, but before the value.
+       Right-adjustment is the default if none of these flags  is
+       set.   These  fields  are  collectively  identified by the
+       static member, ios::adjustfield.  The  fill  character  is
+       controlled  by  the  fill()  function,  and  the  width of
+       padding is controlled by the width() function.
+       These flags control the conversion base of a  value.   The
+       conversion  base is 10 (decimal) if dec is set, but if oct
+       or hex is set, conversions are done in octal or  hexadeci-
+       mal,  respectively.   If  none of these is set, insertions
+       are in decimal, but extractions are interpreted  according
+
+                                                                3
+
+ios(3C++)                                               ios(3C++)
+
+       to  the  C++  lexical  conventions for integral constants.
+       These fields are collectively  identified  by  the  static
+       member,  ios::basefield.   The  manipulators hex, dec, and
+       oct can also be used  to  set  the  conversion  base;  see
+       ``Built-in  Manipulators''  below.   If  showbase  is set,
+       insertions will be converted to an external form that  can
+       be read according to the C++ lexical conventions for inte-
+       gral constants.  showbase is unset by default.  If showpos
+       is  set, then a ``+'' will be inserted into a decimal con-
+       version of a positive integral  value.   If  uppercase  is
+       set, then an upper case ``X'' will be used for hexadecimal
+       conversion when showbase is set, or an  upper  case  ``E''
+       will be used to print floating point numbers in scientific
+       notation.  If showpoint is set, trailing zeros and decimal
+       points  appear  in  the result of a floating point conver-
+       sion.  These flags control the format to which a  floating
+       point  value is converted for insertion into a stream.  If
+       scientific is set, the value is converted using scientific
+       notation,  where  there  is  one  digit before the decimal
+       point and the number of digits after it is  equal  to  the
+       precision  (see below), which is six by default.  An upper
+       case ``E'' will introduce the  exponent  if  uppercase  is
+       set,  a  lower case ``e'' will appear otherwise.  If fixed
+       is set, the value is converted to  decimal  notation  with
+       precision  digits  after  the  decimal  point,  or  six by
+       default.  If neither scientific nor fixed is set, then the
+       value  will  be converted using either notation, depending
+       on the value;  scientific notation will  be  used  if  the
+       exponent  resulting from the conversion is less than -4 or
+       greater than or equal to precision digits.  Otherwise  the
+       value will be converted to decimal notation with precision
+       digits total.  If showpoint is not  set,  trailing  zeroes
+       are  removed  from  the result and a decimal point appears
+       only if it is followed by a digit.  scientific  and  fixed
+       are   collectively   identified   by   the  static  member
+       ios::floatfield.   When  set,  a  flush  is  performed  by
+       ostream::osfx() after each insertion.  Unit buffering pro-
+       vides a compromise between buffered output and  unbuffered
+       output.   Performance  is better under unit buffering than
+       unbuffered output, which makes  a  system  call  for  each
+       character  output.  Unit buffering makes a system call for
+       each insertion operation, and doesn't require the user  to
+       call  ostream::flush().   When  set, stdout and stderr are
+       flushed by ostream::osfx() after each insertion.  However,
+       the  flush  will  not  be  in  effect  without  a  call to
+       ios::sync_with_stdio().
+
+       The following functions use and set the format  flags  and
+       variables.  Sets the ``fill character'' format state vari-
+       able to c and returns the previous value.  c will be  used
+       as  the  padding  character,  if  one  is  necessary  (see
+       width(), below).  The default fill or padding character is
+       a  space.  The positioning of the fill character is deter-
+       mined by the right, left, and internal flags;  see  above.
+
+                                                                4
+
+ios(3C++)                                               ios(3C++)
+
+       A  parameterized  manipulator,  setfill, is also available
+       for setting the fill character;  see  Returns  the  ``fill
+       character''  format  state  variable.  Returns the current
+       format flags.  Resets all the format flags to those speci-
+       fied  in  f  and  returns the previous settings.  Sets the
+       precision format state variable to i and returns the  pre-
+       vious value.  This variable controls the number of signif-
+       icant digits inserted by the floating point inserter.  The
+       default  is 6.  A parameterized manipulator, setprecision,
+       is also available for setting the precision;  see  Returns
+       the  precision  format  state variable.  Turns on in s the
+       format flags marked in b and  returns  the  previous  set-
+       tings.  A parameterized manipulator, setiosflags, performs
+       the same function; see Resets in s only the  format  flags
+       specified  by  f  to the settings marked in b, and returns
+       the previous settings.  That is, the format  flags  speci-
+       fied  by f are cleared in s, then reset to be those marked
+       in b.  For example, to change the conversion base in s  to
+       be  hex, one could write: s.setf(ios::hex,ios::basefield).
+       ios::basefield specifies the conversion base bits as  can-
+       didates  for change, and ios::hex specifies the new value.
+       s.setf(0,f) will clear all the bits  specified  by  f,  as
+       will   a  parameterized  manipulator,  resetiosflags;  see
+       Unsets in s the bits set in b  and  returns  the  previous
+       settings.   Sets  the field width format variable to i and
+       returns the previous value.  When the field width is  zero
+       (the  default), inserters will insert only as many charac-
+       ters as necessary to represent the value  being  inserted.
+       When  the  field  width  is  non-zero,  the inserters will
+       insert at least that many characters, using the fill char-
+       acter  to  pad  the  value,  if  the  value being inserted
+       requires fewer than field-width characters  to  be  repre-
+       sented.   However,  the  numeric  inserters never truncate
+       values, so if the value being inserted  will  not  fit  in
+       field-width  characters,  more than field-width characters
+       will be output.  The field width is always interpreted  as
+       a  minimum number of characters; there is no direct way to
+       specify a maximum number of characters.   The  field-width
+       format  variable is reset to the default (zero) after each
+       insertion or extraction, and in this sense it behaves as a
+       parameter for insertions and
+       extractions.   A  parameterized manipulator, setw, is also
+       available for setting the width; see  Returns  the  field-
+       width format variable.
+
+   UUsseerr--ddeeffiinneedd ffoorrmmaatt ffllaaggss
+       Class  ios can be used as a base class for derived classes
+       that require additional format flags  or  variables.   The
+       iostream  library  provides  several functions to do this.
+       The  two   static   member   functions   ios::xalloc   and
+       ios::bitalloc,  allow  several  such  classes  to  be used
+       together without interference.  Returns a long with a sin-
+       gle,  previously  unallocated, bit set.  This allows users
+       who need an additional flag to acquire one, and pass it as
+
+                                                                5
+
+ios(3C++)                                               ios(3C++)
+
+       an argument to ios::setf(), for example.  If it returns 0,
+       all allocatable bits have been used.  Returns a previously
+       unused  index  into an array of words available for use as
+       format state variables by derived classes.  If it  returns
+       a  negative value, all the indices have been used.  When i
+       is an index allocated by ios::xalloc,  iword()  returns  a
+       reference  to  the  ith  user-defined  word.  When i is an
+       index allocated by ios::xalloc, pword() returns  a  refer-
+       ence to the ith user-defined word.  pword() is the same as
+       iword() except that it is typed differently.
+
+   OOtthheerr mmeemmbbeerrss::
+       Returns a pointer to the streambuf associated with s  when
+       s was constructed.  Solves problems that arise when mixing
+       stdio and iostreams.  The first time it is called it  will
+       reset the standard iostreams (cin, cout, cerr, clog) to be
+       streams using  stdiobufs.  After that,  input  and  output
+       using  these  streams  may  be mixed with input and output
+       using the corresponding FILEs (stdin, stdout, and  stderr)
+       and  will  be  properly  synchronized.   sync_with_stdio()
+       makes cout and cerr unit buffered  (see  ios::unitbuf  and
+       ios::stdio  above).   Invoking  sync_with_stdio() degrades
+       performance a variable amount, depending on the length  of
+       the strings being inserted (shorter strings incur a larger
+       performance hit).  Sets  the  tie  variable  to  osp,  and
+       returns  its previous value.  This variable supports auto-
+       matic ``flushing'' of ioss.  If the tie variable  is  non-
+       null and an ios needs more characters or has characters to
+       be consumed, the ios pointed at by  the  tie  variable  is
+       flushed.   By  default,  cin  is tied initially to cout so
+       that attempts to get more characters from  standard  input
+       result in
+       flushing standard output.  Additionally, cerr and clog are
+       tied to cout by default.  For other ioss, the tie variable
+       is set to zero by default.  Returns the tie variable.
+
+   BBuuiilltt--iinn mmaanniippuullaattoorrss::
+       Some convenient manipulators (functions that take an ios&,
+       an istream&, or an ostream& and return their argument; see
+       are:
+
+       These  set  the  conversion base format flag to 10.  These
+       set the conversion base format flag to 16.  These set  the
+       conversion  base  format  flag  to 8.  Extracts whitespace
+       characters.  See Ends a line by inserting a newline  char-
+       acter and flushing.  See Ends a string by inserting a null
+       (0) character.  See Flushes outs.  See
+
+       Several parameterized manipulators  that  operate  on  ios
+       objects  are  described  in  setw,  setfill, setprecision,
+       setiosflags, and resetiosflags.
+
+       The streambuf associated with an ios may be manipulated by
+       other   methods   than  through  the  ios.   For  example,
+
+                                                                6
+
+ios(3C++)                                               ios(3C++)
+
+       characters may be stored in a queuelike streambuf  through
+       an  ostream  while  they  are  being  fetched  through  an
+       istream.  Or for efficiency some part  of  a  program  may
+       choose  to  do  streambuf  operations directly rather than
+       through the ios.  In most cases the program does not  have
+       to  worry  about  this  possibility,  because an ios never
+       saves information about the internal state of a streambuf.
+       For  example,  if  the  streambuf  is repositioned between
+       extraction operations the extraction (input) will  proceed
+       normally.
+
+NNoottiicceess
+       The  need  for  sync_with_stdio is a wart.  The old stream
+       package did this as a default, but in the iostream package
+       unbuffered   stdiobufs  are  too  inefficient  to  be  the
+       default.
+
+       The stream package had a constructor  that  took  a  FILE*
+       argument.  This is now replaced by stdiostream.  It is not
+       declared  even  as  an  obsolete  form  to  avoid   having
+       iostream.h depend on stdio.h.
+
+       The  old  stream package allowed copying of streams.  This
+       is disallowed by the iostream package.   However,  objects
+       of   type   istream_withassign,   ostream_withassign,  and
+       iostream_withassign can be assigned to.   Old  code  using
+       copying  can usually be rewritten to use pointers or these
+       classes.  (The standard streams cin, cout, cerr, and  clog
+       are  members  of  ``withassign''  classes,  so they can be
+       assigned to, as in cin = inputfstream.)
+
+RReeffeerreenncceess
+
+                                                                7
+

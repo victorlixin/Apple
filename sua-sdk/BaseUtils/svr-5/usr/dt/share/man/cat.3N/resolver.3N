@@ -1,0 +1,156 @@
+
+
+resolver(3N)                                         resolver(3N)
+
+SSyynnooppssiiss
+       cc   [options]   file  -lresolv  -lsocket  -lnsl  #include
+       <sys/types.h>    #include      <netinet/in.h>     #include
+       <arpa/nameser.h> #include  <resolv.h>
+
+       int  res_mkquery(op,  dname,  class,  type, data, datalen,
+       newrr, buf, buflen) int op; const char *dname; int  class,
+       type;  const  u_char  *data;  int  datalen;  const  u_char
+       *newrr; u_char *buf; int buflen;
+
+       int res_query(dname, class, type,  answer,  anslen)  const
+       char *dname; int class, type; u_char *answer; int anslen;
+
+       int  res_search(dname,  class, type, answer, anslen) const
+       char *dname; int class, type; u_char *answer; int anslen;
+
+       int res_send(msg, msglen,  answer,  anslen)  const  u_char
+       *msg; int msglen; u_char *answer; int anslen;
+
+       int res_init()
+
+       int  dn_comp(exp_dn,  comp_dn,  length, dnptrs, lastdnptr)
+       const char *exp_dn; u_char *comp_dn;  int  length;  u_char
+       **dnptrs, **lastdnptr;
+
+       int dn_expand(msg, eomorig, comp_dn, exp_dn, length) const
+       u_char *msg; const u_char *eomorig; const u_char *comp_dn;
+       char *exp_dn; int length;
+
+DDeessccrriippttiioonn
+       These  routines  are  used for making, sending, and inter-
+       preting query and reply messages with Internet domain name
+       servers.   Global configuration and state information that
+       is used by the resolver routines is kept in the  structure
+       _res.  Most of the values have reasonable defaults and can
+       be ignored.  Options stored in _res.options are defined in
+       resolv.h and are as follows.  Options are stored as a sim-
+       ple bit mask containing the  bitwise  or  of  the  options
+       enabled.   True  if  the  initial  name server address and
+       default domain name are initialized (for example, res_init
+       has  been called).  Print debugging messages.  Cause geth-
+       ostbyname and gethostbyaddr to query /etc/hosts  prior  to
+       querying  the  DNS.   Accept  authoritative  answers only.
+       With this option, res_send should continue until it  finds
+       an authoritative answer or finds an error.  Currently this
+       is not  implemented.   Use  TCP  connections  for  queries
+       instead of UDP datagrams.  Used with RES_USEVC to keep the
+       TCP connection open between queries.  This is useful  only
+       in programs that regularly do many queries.  UDP should be
+       the normal mode used.  Unused currently (ignore truncation
+       errors,  for  example,  do  not  retry with TCP).  Set the
+       recursion-desired bit in queries.  This  is  the  default.
+       (res_send  does  not  do iterative queries and expects the
+       name server to handle recursion.)  If set, res_search will
+
+                                                                1
+
+resolver(3N)                                         resolver(3N)
+
+       append  the  default domain name to single-component names
+       (those that do not contain a dot).  This option is enabled
+       by default.  If this option is set, res_search will search
+       for hostnames in the current domain and in parent domains;
+       see  This is used by the standard host lookup routine This
+       option is enabled by default.  This option turns  off  the
+       user  level aliasing feature controlled by the HOSTALIASES
+       environment variable.  Network  daemons  should  set  this
+       option.   The  res_init  routine  reads the initialization
+       file, if any, (see to get the default domain name,  search
+       list,   and   the  Internet  address  of  the  local  name
+       server(s).  If no server is configured, the  host  running
+       the resolver is tried.  The current domain name is defined
+       by the hostname command if not specified in the configura-
+       tion  file;  it can be overridden by the environment vari-
+       able LOCALDOMAIN.  This environment variable  may  contain
+       several blank-separated tokens if you wish to override the
+       search list on a per-process basis.  This  is  similar  to
+       the  search  command  in  the configuration file.  Another
+       environment variable (RES_OPTIONS) can be set to  override
+       certain  internal resolver options which are otherwise set
+       by changing fields in the _res structure or are  inherited
+       from the configuration file's options command.  The syntax
+       of the RES_OPTIONS environment variable  is  explained  in
+       Initialization normally occurs on the first call to one of
+       the other resolver routines.
+
+       The res_query function provides an interface to the server
+       query  mechanism.   It constructs a query, sends it to the
+       local server, awaits a  response,  and  makes  preliminary
+       checks  on  the  reply.  The query requests information of
+       the specified type and class for the specified fully-qual-
+       ified domain name dname.  The reply message is left in the
+       answer buffer with length anslen supplied by the caller.
+
+       The res_search routine makes a query and awaits a response
+       like res_query, but in addition, it implements the default
+       and  search  rules  controlled  by  the  RES_DEFNAMES  and
+       RES_DNSRCH  options.   It  returns  the  first  successful
+       reply.
+
+       The remaining routines are lower-level  routines  used  by
+       res_query.  The res_mkquery function constructs a standard
+       query message and places it in buf.  It returns  the  size
+       of  the  query  or  -1 if the query is larger than buflen.
+       The query type op is usually QUERY, but can be any of  the
+       query  types defined in <arpa/nameser.h>.  The domain name
+       for the query is  given  by  dname.   newrr  is  currently
+       unused but is intended for making update messages.
+
+       The  res_send  routine  sends  a  pre-formatted  query and
+       returns an answer.  It will call res_init if  RES_INIT  is
+       not set, send the query to the local name server, and han-
+       dle timeouts and retries.  The length of the reply message
+
+                                                                2
+
+resolver(3N)                                         resolver(3N)
+
+       is returned or -1 if there were errors.
+
+       The dn_comp function compresses the domain name exp_dn and
+       stores it in comp_dn.  The size of the compressed name  is
+       returned  or  -1  if  there  were errors.  The size of the
+       array pointed to by comp_dn is given by length.  The  com-
+       pression uses an array of pointers, dnptrs, to previously-
+       compressed  names  in  the  current  message.   The  first
+       pointer  points  to  the  beginning of the message and the
+       list ends with NULL.  The limit to the array is  specified
+       by  lastdnptr.   A side effect of dn_comp is to update the
+       list of pointers for labels inserted into the  message  as
+       the  name  is compressed.  If dnptr is NULL, names are not
+       compressed.  If lastdnptr is NULL, the list of  labels  is
+       not updated.
+
+       The  dn_expand  entry  expands  the compressed domain name
+       comp_dn to a full domain name.   The  compressed  name  is
+       contained in a query or reply message; msg is a pointer to
+       the beginning of the message.  The  uncompressed  name  is
+       placed in the buffer indicated by exp_dn, which is of size
+       length.  The size of compressed name is returned or -1  if
+       there was an error.
+
+FFiilleess
+RReeffeerreenncceess
+       RFC 974, RFC 1032, RFC 1033, RFC 1034, RFC 1035, RFC 1123
+
+NNoottiicceess
+       Linking  against  libresolv  before  libsocket  and libnsl
+       forces DNS resolution only to be used for host lookups.
+
+                                                                3
+

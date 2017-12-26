@@ -1,0 +1,99 @@
+
+
+asyc(7)                                                   asyc(7)
+
+DDeessccrriippttiioonn
+       The asyc driver supports both the system board serial port
+       and an additional serial adapter simultaneously.  While up
+       to  four  serial  ports  are supported, the system default
+       enables two serial ports.  If an adapter for a port is not
+       installed,  an attempt to open it will fail.  Depending on
+       your system processor type and UART, the port can be  pro-
+       grammed  for  a  range  of  speeds from 50 to 115200 baud,
+       character length, and parity.  Output speed is always  the
+       same as input speed.  The port behaves as described in
+
+       The  asynchronous port is a character-at-a-time device for
+       both input and output.  This  characteristic  both  limits
+       the bandwidth that can be achieved over a serial line, and
+       increases the interrupt loading on the central  processor.
+       Applications  like and PPP may be able to function well at
+       speeds greater than 9600 baud, depending  on  your  system
+       processor type and UART.
+
+       The  serial  port adapter's programmable baud rates do not
+       correspond exactly with system baud rates.   Specifically,
+       setting  B0 will cause a disconnect, setting EXTA will set
+       19200 baud, and setting EXTB will set 38400 baud.
+
+       The asyc driver supports both 16450 and  16550  UARTs  and
+       equivalents.
+
+FFiilleess
+       The  serial  device  nodes  are  provided as a shortcut to
+       assist applications in using the serial  ports.  They  are
+       equivalent  to  opening  a port with and then calling with
+       the TCGET and TCSET (see commands to set the  node  behav-
+       ior.
+
+       The  behavior  of  serial device nodes in both &everest;tm
+       and &uw; are supported.  The ttyna and ttynA nodes  behave
+       identically to the &everest; nodes.
+       -----------------------------------------------------------
+       Equivalent    Default     settings Behavior and use
+       device nodes  when opened
+       -----------------------------------------------------------
+       /dev/term/0n  B9600 CS8 CREAD      Software  flow  control
+       /dev/term/0ns ~CLOCAL IXON IXOFF   (XON/XOFF)     enabled.
+       /dev/tty0ns   ~RTSXOFF ~CTSXON     Use when data integrity
+       /dev/tty0n                         is  not  crucial,   for
+                                          example,   with   mice.
+                                          The modem control line,
+                                          Data   Carrier   Detect
+                                          (DCD), is  required  to
+                                          be asserted
+
+                                                                1
+
+asyc(7)                                                   asyc(7)
+
+       /dev/term/0nh B9600 CS8 CREAD      Hardware  flow  control
+       /dev/tty0nh   ~CLOCAL ~IXON        (RTS/CTS) enabled.  DCD
+                     ~IXOFF RTSXOFF       is   required   to   be
+                     CTSXON               asserted
+
+       /dev/term/0nm B9600 CS8 CREAD      Modem  node.  No   flow
+       /dev/tty0nm   ~CLOCAL ~IXON        control  initially when
+       /dev/tty(n+1)A~IXOFF ~RTSXOFF      opened.      DCD     is
+                     ~CTSXON              required to be asserted
+
+       /dev/term/0nt B9600 CS8 CREAD      Terminal node. No  flow
+       /dev/tty0nt   CLOCAL ~IXON         control  initially when
+       /dev/tty(n+1)a~IXOFF ~RTSXOFF      opened.   Allows  ports
+                     ~CTSXON              to  be opened without a
+                                          DCD line, and allows to
+                                          be  used  on  an uncon-
+                                          nected port.  Used with
+                                          3-wire  serial  connec-
+                                          tions (TD, RD and SG)
+
+UUssaaggee
+       To activate additional ports use  the  /sbin/dcu  command;
+       see  Apply  the  changes and exit dcu.  You need to reboot
+       the system for the additional ports to work.
+
+       The order of entries in  the  DCU  and  the  corresponding
+       entries  in  the asyc driver's space.c file must be in the
+       same order for serial consoles to work correctly.
+
+DDiiaaggnnoossttiiccss
+       When using dcu to activate  additional  ports  that  share
+       interrupts,  if  you  notice  a message like IRQ conflicts
+       with an interrupt vector which cannot  be  shared...,  you
+       need  to  change  the  ITYPE field to 3; apply the change,
+       exit dcu and reboot the system.
+
+RReeffeerreenncceess
+
+                                                                2
+

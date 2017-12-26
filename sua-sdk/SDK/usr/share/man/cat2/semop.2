@@ -1,0 +1,159 @@
+semop(2)                                                       semop(2)
+
+  sseemmoopp(())
+
+  NNAAMMEE
+
+    semop() - operate on a set of semaphores
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/sem.h>
+
+    int semop(int semid, struct sembuf *sops, size_t nsops)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _ss_ee_mm_oo_pp(2) function performs atomic actions on the set of semaphores
+    associated with the semaphore identified by semid. The operations are
+    specified in sops, a user-defined array of semaphore operation structures
+    ((sembuf structures). The argument nsops specifies the number of structures
+    in the array.
+
+    The structure sseemmbbuuff contains the following members:
+
+    struct sembuf {
+       unsigned short int sem_num   /* semaphore number */
+       short int sem_op             /* semaphore operation */
+       short int sem_flg            /* operation flags */
+    };
+
+    There are really only three semaphore operations (specified by sem_op
+    although the conditions under which each occurs can be difficult to
+    understand. The three semaphore operations are:
+
+    *     Reduce the value of semval by the absolute value of semop.
+    *     Return immediately rather than wait for a synchronization event.
+    *     Suspend execution of the process until a synchronization event. What
+          constitutes a synchronization event depends upon whether sem_op is
+          positive or negative.
+
+    The actual operation performed depends upon the permissions of the calling
+    process, the value of sem_op the value of semval (in the sseemmbbuuff
+    structure), and the value of sem_flg
+
+   1.     semop is nneeggaattiivvee and the calling process has aalltteerr ppeerrmmiissssiioonn
+          *     If semval (from the sseemmbbuuff structure) is greater than or equal
+                to the absolute value of sem_op the absolute value of sem_op
+                is ssuubbttrraacctteedd from semval
+                The calling process' semadj value may be incremented by the
+                absolute value of sem_op
+          *     If semval is less than the absolute value of sem_op and
+                (sem_flg & IPC_NOWAIT) is non-zero, then _ss_ee_mm_oo_pp(2) returns
+                immediately.
+          *     If semval is less than the absolute value of sem_op and
+                (sem_flg & IPC_NOWAIT) is 0, _ss_ee_mm_oo_pp(2) increments the semncnt
+                associated with the semaphore and waits for one of these
+                synchronization events:
+                *     The value of semval becomes greater than or equal to the
+                      absolute value of sem_op Then the value of semncnt
+                      associated with the semaphore is decremented, the
+                      absolute value of sem_op semval and the calling process'
+                      semadj value may be increased by the absolute value of
+                      sem_op
+                *     The semid is removed from the system. This is an error;
+                      errno is set to [EIDRM] and the function return -1.
+                *     The calling process catches a signal. The value of
+                      semncnt associated with the semaphore is decremented and
+                      the calling process resumes execution as described by
+                      _ss_ii_gg_aa_cc_tt_ii_oo_nn(2).
+   2.     Semop is ppoossiittiivvee and the calling process has aalltteerr ppeerrmmiissssiioonn
+          *     Sem_op is added to semval
+                The calling process' semadj value may be decreased by the
+                value of sem_op.
+   3.     Semop is zzeerroo and the calling process has rreeaadd ppeerrmmiissssiioonn
+          *     If semval is 0, _ss_ee_mm_oo_pp(2) returns immediately.
+          *     If semval is non-zero, and (sem_flg & IPC_NOWAIT) is non-zero,
+                _ss_ee_mm_oo_pp(2) returns immediately.
+          *     If semval is non-zero and (sem_flg & IPC_NOWAIT) is 0,
+                _ss_ee_mm_oo_pp(2) increments the semzcnt associated with the semaphore
+                and waits for one of these synchronization events:
+                *     The value of semval is zero; then the value of semzcnt
+                      associated with the semaphore is decremented.
+                *     The semid is removed from the system. This is an error;
+                      errno is set to [EIDRM] and the function return -1.
+                *     The calling process catches a signal. The value of
+                      semncnt associated with the semaphore is decremented and
+                      the calling process resumes execution as described by
+                      _ss_ii_gg_aa_cc_tt_ii_oo_nn(2).
+
+    Some operations adjust the value of semadj a per-process variable stored
+    in the process table. This happens if (semflg & SEM_UNDO) is non-zero.
+
+    The header file <<ssyyss//sseemm..hh>> includes <<ssyyss//iippcc..hh>>.
+
+  RREETTUURRNN VVAALLUUEE
+
+    On success, _ss_ee_mm_oo_pp(2) returns 0. for each semaphore in the array pointed to
+    by sops, the value of sempid is set to the process ID of the calling
+    process.
+
+    On failure, _ss_ee_mm_oo_pp(2) returns -1 and sets errno to indicate the error.
+
+  EERRRROORRSS
+
+    The _ss_ee_mm_oo_pp(2) call can fail for any of these reasons:
+
+    [E2BIG]
+        The value of nsops is too large.
+
+    [EACCES]
+        The calling process did not have permission to perform the operation.
+        Although a semaphore identifier exists for key, its permissions were
+        not compatible with the low-order 9 bits of semflg.
+
+    [EAGAIN]
+        Although the call would suspend the calling process, the value of
+        (sem_flg & IPC_NOWAIT) was non-zero
+
+    [EFBIG]
+        The value of sem_num was outside the range 0 to (number of semaphores
+        in the set associated with semid-1).
+
+    [EIDRM]
+        The semaphore identifier semid was removed from the system.
+
+    [EINTR]
+        An interrupt occurred.
+
+    [EINVAL]
+        Semid was not a valid semaphore identifier.
+
+    [EINVAL]
+        The number of semaphores for which the process requested a SEM_UNDO
+        exceeded the system maximum.
+
+    [ENOSPC]
+        The number of semaphores for which the process requested a SEM_UNDO
+        exceeded the process maximum.
+
+    [ERANGE]
+        The operation would cause a semval to overflow the system limit, or
+        the operation would cause a semadj to overflow the system limit.
+
+  SSEEEE AALLSSOO
+
+    _e_x_e_c(1)
+
+    _f_o_r_k(2)
+
+    _s_e_m_c_t_l(2)
+
+    _s_e_m_g_e_t(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The sseemmoopp function is thread safe.
+
+    The sseemmoopp function is not async-signal safe.
+

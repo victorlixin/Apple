@@ -1,0 +1,85 @@
+
+
+auditctl(2)                                           auditctl(2)
+
+SSyynnooppssiiss
+       #include <sys/types.h> #include <audit.h>
+
+       int auditctl(int cmd, struct actl *actlp, int size);
+
+DDeessccrriippttiioonn
+       The  auditctl system call fills the appropriate audit con-
+       trol structures or reports the status of auditing, depend-
+       ing  on  the  values of cmd.  Three values of cmd are sup-
+       ported: AUDITON, AUDITOFF, and ASTATUS.
+
+       When the specified cmd is  AUDITON,  the  auditctl  system
+       call performs the following actions: It copies in the off-
+       set in seconds from Greenwich Mean Time  (GMT).   It  ini-
+       tializes  the  vnode  for  the primary audit log file.  It
+       initializes the audit buffer and log  control  structures.
+       It  exempts  system resident processes and /sbin/init from
+       auditing.  It writes a machine-specific header record.  It
+       sets the auditon flag to 1.
+
+       When  the  specified  cmd is AUDITOFF, the auditctl system
+       call sets the auditon field to  zero;  frees  all  process
+       audit  structures;  and  locks,  flushes, and releases the
+       audit buffers.
+
+       When the specified cmd is  ASTATUS,  the  auditctl  system
+       call returns the current status of auditing.  A zero value
+       for auditon in the actl structure indicates that  auditing
+       is disabled, and a value of one indicates that auditing is
+       enabled.
+
+       The actlp argument points to a structure of type actl that
+       contains the following elements: struct actl {
+           int  auditon;                 /* audit status variable
+       */
+           char   version[ADT_VERLEN];     /*    audit    version
+       */
+           long  gmtsecoff;              /* UTC offset in seconds
+       */ }
+
+       The size argument is used to verify the size of  the  actl
+       structure  being passed to determine the version of audit-
+       ing.
+
+       Auditing must be installed on the system for  this  system
+       call  to  be  used.   The  use of the auditctl system call
+       requires the appropriate privilege(P_AUDIT).
+
+   RReettuurrnn vvaalluueess
+       On success, auditctl  returns  0.   On  failure,  auditctl
+       returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, auditctl fails and sets errno
+
+                                                                1
+
+auditctl(2)                                           auditctl(2)
+
+       to: All the possible log files exist  when  attempting  to
+       enable  auditing.   The cmd is AUDITON and the actlp argu-
+       ment is invalid.  The cmd is ASTATUS and the  actlp  argu-
+       ment  is  invalid.  The size of actl is not equal to size.
+       An attempt was made  to  disable  auditing  while  it  was
+       already  disabled.       An  attempt  was  made  to enable
+       auditing while  it  was  already  enabled.    The  cmd  is
+       invalid.   The  cmd  is  AUDITON and it is not possible to
+       initialize the audit buffers.  The cmd is AUDITOFF and  it
+       is  not possible to lock the audit buffers, because audit-
+       ing is already disabled.  It is not possible to access the
+       primary  event  log  path.   The invoking subject does not
+       have  the  appropriate  privilege(P_AUDIT).   The  primary
+       audit  log  file  resides  within  a  file  system that is
+       mounted read-only.  An I/O error occurred while performing
+       a  write  to the audit log file.  The audit package is not
+       installed.
+
+RReeffeerreenncceess
+
+                                                                2
+

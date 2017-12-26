@@ -1,0 +1,237 @@
+
+
+getrlimit(2)                                         getrlimit(2)
+
+SSyynnooppssiiss
+       #include <sys/time.h> #include <sys/resource.h>
+
+       int getrlimit(int resource, struct rlimit *rlp);
+
+       int getrlimit64(int resource, struct rlimit64 *rlp);
+
+       int setrlimit(int resource, const struct rlimit *rlp);
+
+       int setrlimit64(int resource, const struct rlimit64 *rlp);
+
+DDeessccrriippttiioonn
+       Limits on the consumption of a variety of system resources
+       by  a  process and each process it creates may be obtained
+       with getrlimit and set with setrlimit.
+
+       Each call to either getrlimit or  setrlimit  identifies  a
+       specific  resource  to  be  operated  upon  as  well  as a
+       resource limit.  A resource limit is a pair of values: one
+       specifying  the  current (soft) limit, the other a maximum
+       (hard) limit.  Soft limits may be changed by a process  to
+       any value that is less than or equal to the hard limit.  A
+       process may (irreversibly) lower its  hard  limit  to  any
+       value  that  is  greater  than or equal to the soft limit.
+       Only a process with appropriate privilege  (P_SYSOPS)  can
+       raise  a  hard  limit.   Both  hard and soft limits can be
+       changed in a single call to setrlimit subject to the  con-
+       straints described above.
+
+       For getrlimit, if a resource limit can be represented cor-
+       rectly in an object of type rlim_t then its representation
+       is  returned.   Otherwise,  if   the value of the resource
+       limit is equal to that of  the  corresponding  saved  hard
+       limit, the value returned is RLIM_SAVED_MAX, otherwise the
+       value returned is RLIM_SAVED_CUR.
+
+       For setrlimit, if the requested new limit is RLIM_INFINITY
+       the new limit will be no limit, otherwise if the requested
+       new limit is RLIM_SAVED_MAX, the new  limit  will  be  the
+       corresponding   saved   hard  limit.   Otherwise,  if  the
+       requested new limit is RLIM_SAVED_CUR the new  limit  will
+       be  the  corresponding saved soft limit, otherwise the new
+       limit will be the requested value.  In  addition,  if  the
+       corresponding  saved limit can be represented correctly in
+       an object of type rlim_t then it will be overwritten  with
+       the new limit.
+
+       The  result  of  setting  a  limit  to  RLIM_SAVED_MAX  or
+       RLIM_SAVED_CUR is unspecified unless a  previous  call  to
+       getrlimit  returned  that  value as the soft or hard limit
+       for the corresponding resource limit.
+
+       A limit that can be represented correctly in an object  of
+       type  rlim_t is either no limit, which is represented with
+
+                                                                1
+
+getrlimit(2)                                         getrlimit(2)
+
+       RLIM_INFINITY, or  RLIM_SAVED_MAX  or  RLIM_SAVED_CUR  and
+       which  can  be  represented correctly in an object of type
+       rlim_t and which meets any additional  implementation-spe-
+       cific criteria for correct representation.
+
+       The determination of whether a limit can be correctly rep-
+       resented in an object of type  rlim_t  is  implementation-
+       dependent.   For  example,  some  implementations permit a
+       limit whose value is greater than RLIM_INFINITY and others
+       do not.
+
+       Limits may have an infinite value of RLIM_INFINITY.
+
+       For  getrlimit  and  setrlimit, rlp is a pointer to struct
+       rlimit    that    includes    the    following    members:
+            rlim_t    rlim_cur; /*   current   (soft)   limit  */
+            rlim_t    rlim_max; /* hard limit */
+
+       For getrlimit64 and  setrlimit64,  rlp  is  a  pointer  to
+       struct  rlimit64  that  includes  the  following  members:
+            rlim64_t  rlim_cur; /*  current   (soft)   limit   */
+            rlim64_t  rlim_max; /* hard limit */
+
+       In  addition,  getrlimit64 and setrlimit64 return the fol-
+       lowing values, which are defined in the header.   A  value
+       of  type  rlim64_t  indicating  no limit.  A value of type
+       rlim64_t indicating an unrepresentable saved  hard  limit.
+       A  value  of  type  rlim64_t indicating an unrepresentable
+       saved soft limit.
+
+       rlim_t is an arithmetic data type to which objects of type
+       int,  size_t, and off_t can be cast without loss of infor-
+       mation.
+
+       The  possible  resources,  their  descriptions,  and   the
+       actions  taken  when current limit is exceeded, are summa-
+       rized in the table below:
+       -----------------------------------------------------
+       Resources     Description         Action
+       -----------------------------------------------------
+       _RR_LL_II_MM_II_TT____CC_OO_RR_EE   The maximum size    The writing of a
+                     of a core file in   core file will
+                     bytes that may be   terminate at this
+                     created by a pro-   size.
+                     cess.  A limit of
+                     0 will prevent
+                     the creation of a
+                     core file.
+
+                                                                2
+
+getrlimit(2)                                         getrlimit(2)
+
+              _RR_LL_II_MM_II_TT____CC_PP_UU    The maximum         SIGXCPU is sent
+                            amount of CPU       to the process.
+                            time in seconds     If the process is
+                            used by a pro-      holding or ignor-
+                            cess.               ing SIGXCPU, the
+                                                behavior is
+                                                scheduling class
+                                                defined.
+
+              _RR_LL_II_MM_II_TT____DD_AA_TT_AA   The maximum size    will fail with
+                            of a process's      errno set to
+                            heap in bytes.      ENOMEM.
+       -------------------------------------------------------
+       Resources       Description         Action
+       -------------------------------------------------------
+       _RR_LL_II_MM_II_TT____FF_SS_II_ZZ_EE    The maximum size    SIGXFSZ is sent
+                       of a file in        to the process.
+                       bytes that may be   If the process is
+                       created by a pro-   holding or ignor-
+                       cess.               ing SIGXFSZ, con-
+                                           tinued attempts
+                                           to increase the
+                                           size of a file
+                                           beyond the limit
+                                           will fail with
+                                           errno set to
+                                           EFBIG.
+
+              _RR_LL_II_MM_II_TT____NN_OO_FF_II_LL_EE   The maximum num-    Functions that
+                              ber of open file    create new file
+                              descriptors that    descriptors will
+                              the process can     fail with errno
+                              have.               set to EMFILE.
+
+                                                                3
+
+getrlimit(2)                                         getrlimit(2)
+
+              _RR_LL_II_MM_II_TT____SS_TT_AA_CC_KK    The maximum size    SIGSEGV is sent
+                              of a process's      to the offending
+                              single autogrow     thread.  If that
+                              stack in bytes.     thread is holding
+                              The system will     SIGSEGV or if the
+                              not automatically   containing pro-
+                              grow the stack      cess is ignoring
+                              beyond this         SIGSEGV or is
+                              limit.              catching SIGSEGV
+                                                  and the underly-
+                                                  ing LWP has not
+                                                  made arrangements
+                                                  to use an alter-
+                                                  nate stack [see
+                                                  the disposition
+                                                  of SIGSEGV will
+                                                  be set to SIG_DFL
+                                                  before it is
+                                                  sent.  Conse-
+                                                  quently, the con-
+                                                  taining process
+                                                  is terminated.
+
+              _RR_LL_II_MM_II_TT____VV_MM_EE_MM     The maximum size    and functions
+                              of a process's      will fail with
+                              mapped address      errno set to
+                              space in bytes.     ENOMEM.
+
+       Because  limit  information  is  stored in the per-process
+       information, the shell builtin ulimit must  directly  exe-
+       cute  this  system call if it is to affect all future pro-
+       cesses created by the shell.
+
+       The value of the current limit of the following  resources
+       affect these implementation defined constants:
+       ------------------------------------------------
+       Limit           Implementation Defined Constant
+       ------------------------------------------------
+       _RR_LL_II_MM_II_TT____FF_SS_II_ZZ_EE    _FF_CC_HH_RR____MM_AA_XX
+       _RR_LL_II_MM_II_TT____NN_OO_FF_II_LL_EE   _OO_PP_EE_NN____MM_AA_XX
+
+   RReettuurrnn vvaalluueess
+       On  success,  getrlimit  returns 0.  On failure, getrlimit
+       returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       Under the following conditions,  the  functions  getrlimit
+       and  setrlimit  fail and set errno to: An invalid resource
+       was specified; or in a setrlimit call,  the  new  rlim_cur
+       exceeds  the  new  rlim_max.  The limit specified to setr-
+       limit would have raised the maximum limit  value  and  the
+       calling   process  does  not  have  appropriate  privilege
+       (P_SYSOPS).
+
+                                                                4
+
+getrlimit(2)                                         getrlimit(2)
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       These resource limits are an attribute of  the  containing
+       process and are shared by sibling threads.
+
+       Also, see description of RLIMIT_STACK above.
+
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       Few,  if  any,  programs  will need to refer explicitly to
+       RLIM_SAVED_MAX or RLIM_SAVED_CUR.  Those  that  do  should
+       not  use them in C language switch cases, because they may
+       have the same value.  Typically, they also have  the  same
+       value as RLIM_INFINITY.  See for their definitions.
+
+       Large  files  (larger  than  2GB)  are  supported  in this
+       release.  However, file size limits  are  only  discretely
+       settable  up  to 2GB (more precisely, 2GB - 1 byte).  Set-
+       ting a file size limit greater than or equal to  2GB  -  1
+       has  the  equivalent effect to setting the file size limit
+       to  unlimited.   unlimited   is   currently   defined   as
+       RLIM_INFINITY (see resource.h).
+
+                                                                5
+

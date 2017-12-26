@@ -1,0 +1,305 @@
+
+
+ipcstream(3C++)                                   ipcstream(3C++)
+
+SSyynnooppssiiss
+       #include  <ipcstream.h>  class  ipc_attachment{ public: //
+       Constructors, destructor
+           ipc_attachment(const String& name);
+           ipc_attachment(const char* name);
+           ~ipc_attachment(); //  Copy and assign
+           private:
+               ipc_attachment(const ipc_attachment& a);
+               ipc_attachment&  operator=(const   ipc_attachment&
+       a);
+           public: //  Test state
+           operator const void*()const;
+           int operator!()const;
+           int fail()const;
+           int bad()const;
+           int good()const; //  Wait for a connection
+           void listen(); //  Info about requester
+           const char* username();
+           int uid();
+           int gid(); //  Respond to request
+           ipcstream accept();
+           void  reject(int err_no, const char* reason); //  Pro-
+       ject identifier
+           static char  ftok_id;  };  class  ipcstream  :  public
+       iostream { public: //  Constructors, destructor
+           ipcstream(const String& name);
+           ipcstream(const char* name);
+           ipcstream(ipc_attachment& att);
+           ~ipcstream(); //  Project identifier
+           static char ftok_id; //  Reason for rejection
+           int remote_errno;
+           String remote_reason; };
+
+DDeessccrriippttiioonn
+       The  above classes are used for interprocess communication
+       (IPC) between servers and clients.  Each server  may  have
+       several  clients.   The  server makes itself accessible to
+       clients by creating an ipc_attachment with a name  like  a
+       filename.   A  client  creates  an  IPC  connection to the
+       server by creating an ipcstream with the  same  name.   An
+       ipcstream  accesses an IPC connection in much the same way
+       that an fstream(iostream(3C++)) accesses  a  file,  except
+       that  reading  and writing on one end of an IPC connection
+       are cross-connected to the other end: that is, data  writ-
+       ten by the client are available for reading by the server,
+       and vice versa.  Also, there is no seek  operation  on  an
+       ipcstream.
+
+       When  a  client requests an IPC connection, it waits until
+       the request is acted upon by  the  server.   The  client's
+       username,  uid,  and  gid (see getuid(2)) are available to
+       the server through the  correspondingly-named  ipc_attach-
+       ment member functions; if no request is outstanding, these
+       functions wait for  one.   The  server  may  reject()  the
+
+                                                                1
+
+ipcstream(3C++)                                   ipcstream(3C++)
+
+       request,  in  which  case  the would-be client's ipcstream
+       becomes invalid and  its  data  members  remote_errno  and
+       remote_reason  are  set  to the values supplied by server.
+       Otherwise, the server establishes a connection by creating
+       an  ipcstream  of its own, using the ipc_attachment as the
+       constructor argument.  The  server  may  then  listen  for
+       requests from other clients.
+
+iippcc__aattttaacchhmmeenntt
+       Only servers create and manipulate ipc_attachments.
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       ipc_attachment(const String& name);
+
+       ipc_attachment(const  char* name); An ipc_attachment whose
+       name is is name, given as either a String or a null-termi-
+       nated  character  array.   If the supplied string is empty
+       (or the character  pointer  is  zero),  the  default  name
+       "ipcattachment" will be used.  If the number of characters
+       in name is greater than or equal to the System  V  maximum
+       filename  length  (14 characters), it will be truncated to
+       one less than the maximum.
+
+       ~ipc_attachment(); Destructor.  Existing clients  will  be
+       able  to  continue  IPC with server, but clients with out-
+       standing requests will see a failure  return  (similar  to
+       rejection).
+
+   CCooppyy aanndd aassssiiggnn
+       An ipc_attachment cannot be copied or assigned.
+
+   TTeesstt ssttaattee
+       operator const void*()const;
+
+       int operator!()const;
+
+       int fail()const;
+
+       int bad()const;
+
+       int  good()const;  These  functions  test the state of the
+       attachment.  There is no distinction between fail and bad:
+       the names are copied from ios(iostream(3C++)).
+
+   WWaaiitt ffoorr aa ccoonnnneeccttiioonn
+       void  listen(); Waits for a request.  Each request must be
+       accepted or rejected in turn, so a call to listen  when  a
+       request is already outstanding will have no effect.
+
+   IInnffoo aabboouutt rreeqquueesstteerr
+       const char* username();
+
+       int uid();
+
+                                                                2
+
+ipcstream(3C++)                                   ipcstream(3C++)
+
+       int  gid();  These  functions wait for a request if one is
+       not currently  outstanding  and  then  return  information
+       about the requester.  They rely on the requester's honesty
+       for their security.
+
+   RReessppoonndd ttoo rreeqquueesstt
+       ipcstream accept(); Waits for a request if one is not cur-
+       rently outstanding and then returns an ipcstream connected
+       to the requester.  The resulting ipcstream will be  cross-
+       connected  to  the  corresponding ipcstream in the client.
+       Works by calling ipcstream(ipc_attachment&(*this)).
+
+       void reject(int err_no, const char* reason); Waits  for  a
+       request  if  one  is  not  currently  outstanding and then
+       rejects it, giving err_no and reason as reasons for rejec-
+       tion.   These  values  are  subsequently  available to the
+       requester through its ipcstream data members (see  below).
+
+   PPrroojjeecctt iiddeennttiiffiieerr
+       static   char   ftok_id;  The  current  implementation  of
+       ipc_attachment uses a semaphore to ensure  that  only  one
+       process at a time tries to make a connection.  The key for
+       the semaphore is obtained by  calling  ftok(3C)  with  the
+       ipc_attachment name and the character 'z' as the
+        'project  identifier,'  unless  ftok_id  is set, in which
+       case its value is used as the project identifier.  If  the
+       server  sets  ftok_id, its clients must set the same value
+       in their ipcstream::ftok_id.
+
+iippccssttrreeaamm
+       Both servers and clients create and manipulate ipcstreams.
+       Some operations are used only by the server, some are used
+       only by clients, and some are  used  by  both  server  and
+       clients.  These are indicated below.
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       ipcstream(const String& name);
+
+       ipcstream(const char* name); Used by clients.  Generates a
+       request to the server holding the ipc_attachment with  the
+       same name (for the rules concerning names, see ipc_attach-
+       ment::ipc_attachment).  If  no  such  server  exists,  the
+       request  fails immediately.  Otherwise, the request blocks
+       until the request is accepted or rejected by  the  server.
+       The  client should determine the outcome of the request by
+       testing the ipcstream error bits (see  ios(iostream(3C++))
+       and  the Example).  If the request failed or was rejected,
+       error bits will be set.  If the request was accepted,  the
+       error  bits will be clear and the ipcstream will be cross-
+       connected to the corresponding ipcstream in the server.
+
+       ipcstream(ipc_attachment& att); Used by  server.   Accepts
+       the  current request, or waits for a request if one is not
+       currently outstanding.  The resulting  ipcstream  will  be
+
+                                                                3
+
+ipcstream(3C++)                                   ipcstream(3C++)
+
+       cross-connected  to  the  corresponding  ipcstream  in the
+       client.
+
+       ~ipcstream(); Used by servers  and  clients.   Destructor.
+       The  cross-connected  ipcstream (whether server or client)
+       will test as null.
+
+   PPrroojjeecctt iiddeennttiiffiieerr
+       static char ftok_id; Used  by  clients.   See  ipc_attach-
+       ment::ftok_id.
+
+   RReeaassoonn ffoorr rreejjeeccttiioonn
+       int remote_errno;
+
+       String  remote_reason;  Used  by  clients to determine the
+       reason  for  rejection  of  a  request  (see   ipc_attach-
+       ment::reject()).
+
+NNootteess
+       In  the current implementation data is transmitted between
+       server and client over named pipes (FIFOs)  which  have  a
+       maximum   buffering   capacity  of  5120  characters.   An
+       ipc_attachment is represented by a file, a semaphore,  and
+       two  named  pipes.   Each  ipcstream  adds  two more named
+       pipes.  The pathname (see intro(2)) of  the  file  is  the
+       same  as  the  ipc_attachment  name;  the pathnames of the
+       pipes are formed by adding one-letter suffixes  'a',  'b',
+       ...  to the ipc_attachment name.  The semaphore identifier
+       is obtained by passing a key  to  semget(2);  the  key  is
+       obtained   using   ftok(3C)   (see   the   description  of
+       ipc_attachment::ftok_id).
+
+       Since there is a limit of 20 open files, a server is  lim-
+       ited to approximately 5 simultaneous clients.
+
+       It  is  usually  not  necessary  to  change  the  value of
+       ftok_id.
+
+WWaarrnniinnggss
+       Since communication is buffered, there is no guarantee  of
+       when  data  written  to  an  ipcstream will be read by the
+       other process or in fact if it will be read at all.  Since
+       buffering is finite, deadlock is possible.
+
+BBuuggss
+       All  operations  other  than writing data are synchronous.
+       There is no way to select among ipcstreams or  ipc_attach-
+       ments according to which has available data.
+
+       Certain  error conditions in a server or client may result
+       in the signal SIGPIPE (see signal(2)) being  sent  to  the
+       other.
+
+       If   a  server  or  client  terminates  without  executing
+
+                                                                4
+
+ipcstream(3C++)                                   ipcstream(3C++)
+
+       destructors for its ipcstreams and ipc_attachments, pipes,
+       files, and/or semaphores may be left behind and may inter-
+       fere with the  operation  of  other  ipcstream  processes.
+       Users  must find and remove these manually.  See Notes for
+       information on file and pipe naming conventions; these can
+       be  removed  in  the usual way with rm(1).  The semaphore,
+       which has neither a name nor a  directory,  can  be  found
+       using  ipcs(1)  and  removed  with  ipcrm(1) by specifying
+       either the semaphore's key or its identifier.
+
+EExxaammppllee
+       The following example illustrates  IPC  among  three  pro-
+       cesses:  a server and two clients (server reads an integer
+       from client1 and passes it to client2).  It relies on pro-
+       grams  being  started  in  the  following  order:  server,
+       client1, client2.
+           server.c
+               main(){
+                   ipc_attachment att("x");
+                   if(!att)exit(1);
+                   ipcstream s1(att);
+                   ipcstream s2(att);
+                   while(1){
+                       int i;
+                       s1 >> i;
+                       s2 << i << endl;
+                       if (i < 0)
+                           break;
+                   }
+               }
+           client1.c
+               main(){
+                   char next[20];
+                   ipcstream s("x");
+                   if(!s)exit(1);
+                   for(int i = 0; i<10; i++){
+                       s << i << endl;
+                       sleep(2);
+                   }
+                   gets(next);
+                   if (next[0] == 'y') {
+                       s << -1 << endl;
+                       break;
+                   }
+               }
+           client2.c
+               main(){
+                   ipcstream s("x");
+                   if(!s)exit(1);
+                   while (1){
+                       int i;
+                       s >> i;
+                       if (i < 0)
+                           break;
+
+                                                                5
+
+ipcstream(3C++)                                   ipcstream(3C++)
+
+                   }
+               }
+
+RReeffeerreenncceess
+
+                                                                6
+

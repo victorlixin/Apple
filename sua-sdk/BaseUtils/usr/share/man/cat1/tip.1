@@ -1,0 +1,294 @@
+tip(1)                                                           tip(1)
+
+  ttiipp
+
+  NNAAMMEE
+
+    tip - connect to a remote system
+
+  SSYYNNOOPPSSIISS
+
+    tip [[-nv]] -speed system-name
+    tip [[-nv]] -speed phone-number
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ttiipp(1) command establishes a full-duplex connection to another
+    computer, giving the appearance of being logged in directly on the remote
+    CPU. You must have a login on the computer (or equivalent) to which you
+    want to connect.
+
+    The options are as follows:
+
+    --vv
+        Set verbose mode.
+
+    --nn
+        No escape (disable tilde).
+
+    Typed characters are usually transmitted directly to the remote computer
+    (which does the echoing as well). A tilde (~) appearing as the first
+    character of a line is an escape signal; the following are recognized:
+
+    ~~^^DD oorr ~~..
+        Drop the connection and exit (you can still be logged in on the remote
+        computer).
+    ~~cc [name]
+        Change directory to name (no argument implies change to your home
+        directory).
+
+    ~~!!
+        Escape to a shell (exiting the shell will return you to ttiipp(1)).
+
+    ~~>>
+        Copy file from local to remote. The ttiipp(1) command prompts for the
+        name of a local file to transmit.
+
+    ~~<<
+        Copy file from remote to local. The ttiipp(1) command prompts first for
+        the name of the file to be sent, then for a command to be executed on
+        the remote computer.
+    ~~pp from [to]
+        Send a file to a remote UNIX host. The ppuutt command causes the remote
+        UNIX system to run the command string ccaatt >> to, while ttiipp(1) sends it
+        the from file. If the to file name is not specified the from file name
+        is used. This command is actually a UNIX-specific version of the ~>
+        command.
+    ~~tt from [to]
+        Take a file from a remote UNIX host. As with the ppuutt command, the to
+        file name defaults to the from file name if it is not specified. The
+        remote host executes the command string ccaatt from;;eecchhoo ^^AA to send the
+        file to ttiipp(1).
+
+    ~~||
+        Pipe the output from a remote command to a local UNIX process. The
+        command string sent to the local UNIX system is processed by the
+        shell.
+
+    ~~$$
+        Pipe the output from a local UNIX process to the remote host. The
+        command string sent to the local UNIX system is processed by the
+        shell.
+
+    ~~CC
+        Fork a child process on the local system to perform special protocols,
+        such as XMODEM. The child program will be run with the following
+        somewhat unusual arrangement of file descriptors:
+        0 <-> local tty in
+        1 <-> local tty out
+        2 <-> local tty out
+        3 <-> remote tty in
+        4 <-> remote tty out
+
+    ~~##
+        Send a BREAK to the remote system. For systems that do not support the
+        necessary _i_o_c_t_l(2) call, the break is simulated by a sequence of line-
+        speed changes and DEL characters.
+
+    ~~ss
+        Set a variable (see the discussion later in this topic).
+
+    ~~^^ZZ
+        Stop ttiipp(1) (only available with job control).
+
+    ~~^^YY
+        Stop only the local side of ttiipp(1) (only available with job control);
+        the remote side of ttiipp(1), that is, the side that displays output from
+        the remote host, is left running.
+
+    ~~??
+        Get a summary of the tilde (~)escapes.
+
+    The ttiipp(1) command uses the file //eettcc//rreemmoottee to determine how to reach a
+    particular system and to then determine how it should operate while
+    talking to the system; see rreemmoottee for a full description. Each system has
+    a default baud rate with which to establish a connection. If this value is
+    not suitable, the baud rate to be used can be specified on the command
+    line; for example, ttiipp --330000 mmddss.
+
+    When ttiipp(1) establishes a connection, it sends out a connection message to
+    the remote system; the default value, if any, is defined in //eettcc//rreemmoottee
+    (see rreemmoottee).
+
+    When ttiipp(1) prompts for an argument (for example, during setup of a file
+    transfer) the line typed can be edited with the standard erase and kill
+    characters. A null line in response to a prompt, or an interrupt, will
+    abort the dialogue and return you to the remote computer.
+
+    The ttiipp(1) command guards against multiple users connecting to a remote
+    system by opening modems and terminal lines with exclusive access, and by
+    honoring the locking protocol used by uuuucciiccoo.
+
+    During file transfers, ttiipp(1) provides a running count of the number of
+    lines transferred. When using the ~> and ~< commands, the eofread and
+    eofwrite variables are used to recognize end-of-file when reading, and
+    specify end-of-file when writing (see below). File transfers normally
+    depend on tandem mode for flow control. If the remote system does not
+    support tandem mode, echocheck can be set to indicate ttiipp(1) should
+    synchronize with the remote system on the echo of each transmitted
+    character.
+
+    When ttiipp(1) must dial a phone number to connect to a system, it will print
+    various messages indicating its actions. The ttiipp(1) command supports the
+    DEC DN Ns-11 and Racal-Vadic 831 auto-call-units; the DEC DF02 and DF03,
+    Ventel 212+, Racal-Vadic 3451, and Bizcomp 1031 and 1032 integral call
+    unit/modems.
+
+  VVAARRIIAABBLLEESS
+
+    The ttiipp(1) command maintains a set of variables which controls its
+    operation. Some of these variables are read-only to normal users (root is
+    allowed to change anything of interest). Variables can be displayed and
+    set through the s escape. The syntax for variables is patterned after
+    _v_i(1) and _m_a_i_l(1). Supplying all as an argument to the sseett command
+    displays all variables readable by the user. Alternatively, the user can
+    request a display of a particular variable by attaching a ? to the end.
+    For example, escape? displays the current escape character.
+
+    Variables are numeric, string, character, or boolean values. Boolean
+    variables are set merely by specifying their name; they can be reset by
+    prepending a ! to the name. Other variable types are set by concatenating
+    an = and the value. The entire assignment must not contain any blanks. A
+    single set command can be used to interrogate as well as set a number of
+    variables. Variables can be initialized at run time by placing set
+    commands (without the ~~ss prefix in a file ..ttiipprrcc in one's home directory).
+    The --vv option causes ttiipp(1) to display the sets as they are made.
+
+    Certain common variables have abbreviations. The following is a list of
+    common variables, their abbreviations, and their default values:
+
+    beautify
+        (bool) Discard unprintable characters when a session is being
+        scripted; abbreviated be.
+
+    baudrate
+        (num) The baud rate at which the connection was established;
+        abbreviated ba.
+
+    dialtimeout
+        (num) When dialing a phone number, the time (in seconds) to wait for a
+        connection to be established; abbreviated dial.
+
+    echocheck
+        (bool) Synchronize with the remote host during file transfer by
+        waiting for the echo of the last character transmitted; default is
+        off.
+
+    eofread
+        (str) The set of characters that signify an end-of-transmission during
+        a ~< file transfer command; abbreviated eofr.
+
+    eofwrite
+        (str) The string sent to indicate end-of-transmission during a ~> file
+        transfer command; abbreviated eofw.
+
+    eol
+        (str) The set of characters that indicate an end-of-line. The ttiipp(1)
+        command will recognize escape characters only after an end-of-line.
+
+    escape
+        (char) The command prefix (escape) character; abbreviated es; default
+        value is ~.
+
+    exceptions
+        (str) The set of characters that should not be discarded due to the
+        beautification switch; abbreviated ex; default value is \t\n\f\b.
+
+    force
+        (char) The character used to force literal data transmission;
+        abbreviated fo; default value is ^P.
+
+    framesize
+        (num) The amount of data (in bytes) to buffer between file system
+        write operations when receiving files; abbreviated fr.
+
+    host
+        (str) The name of the host to which you are connected; abbreviated ho.
+
+    prompt
+        (char) The character that indicates an end-of-line on the remote host;
+        abbreviated pr; default value is \n. This value is used to synchronize
+        during data transfers. The count of lines transferred during a file
+        transfer command is based on receipt of this character.
+
+    raise
+        (bool) Uppercase mapping mode; abbreviated ra; default value is off.
+        When this mode is enabled, all lowercase letters will be mapped to
+        uppercase by ttiipp(1) for transmission to the remote computer.
+
+    raisechar
+        (char) The input character used to toggle uppercase mapping mode;
+        abbreviated rc; default value is ^A.
+
+    record
+        (str) The name of the file in which a session script is recorded;
+        abbreviated rec; default value is tip.record.
+
+    script
+        (bool) Session scripting mode; abbreviated sc; default is off. When
+        script is true, ttiipp(1) will record everything transmitted by the
+        remote computer in the script record file specified in record. If the
+        beautify switch is on, only printable ASCII characters will be
+        included in the script file (those characters between 040 and 0177).
+        The variable exceptions is used to indicate characters that are an
+        exception to the normal beautification rules.
+
+    tabexpand
+        (bool) Expand tabs to spaces during file transfers; abbreviated tab;
+        default value is false. Each tab is expanded to eight spaces.
+
+    verbose
+        (bool) Verbose mode; abbreviated verb; default is true. When verbose
+        mode is enabled, ttiipp(1) prints messages while dialing, shows the
+        current number of lines transferred during a file transfer operations,
+        and more.
+
+  EENNVVIIRROONNMMEENNTT
+
+    SHELL
+        (str) The name of the shell to use for the ~~!! command; default value
+        is //bbiinn//sshh, or taken from the environment.
+
+    HOME
+        (str) The home directory to use for the ~~cc command; default value is
+        taken from the environment.
+
+    HOST
+        Check for a default host if none specified.
+
+    The variables ${REMOTE} and ${PHONES} are also exported.
+
+  FFIILLEESS
+
+    //eettcc//rreemmoottee
+        Global system descriptions
+
+    //eettcc//pphhoonneess
+        Global phone number database
+
+    ${REMOTE}
+        Private system descriptions
+
+    ${PHONES}
+        Private phone numbers
+
+    ~~//..ttiipprrcc
+        Initialization file
+
+    ttiipp..rreeccoorrdd
+        Record file
+
+    //vvaarr//lloogg//aaccuulloogg
+        Line access log
+    //vvaarr//ssppooooll//lloocckk//LLCCKK....*
+        Lock file to avoid conflicts with uucp
+
+  HHIISSTTOORRYY
+
+    The tip appeared command in 4.2BSD.
+
+  BBUUGGSS
+
+    The full set of variables is undocumented and should probably be pared
+    down.
+

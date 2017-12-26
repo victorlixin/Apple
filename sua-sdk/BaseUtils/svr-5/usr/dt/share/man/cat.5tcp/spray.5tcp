@@ -1,0 +1,60 @@
+
+
+spray(5tcp)                                           spray(5tcp)
+
+SSyynnooppssiiss
+       #include <rpcsvc/spray.h>
+
+DDeessccrriippttiioonn
+       The  spray  protocol  sends  packets to a given machine to
+       test the speed and reliability of communications with that
+       machine.
+
+       The  spray protocol is not a C function interface, per se,
+       but can be accessed using  the  generic  remote  procedure
+       calling  interface  clnt_call  (see  The  protocol sends a
+       packet to the called host.  The host acknowledges  receipt
+       of the packet.  The protocol counts the number of acknowl-
+       edgments and can return that count.
+
+       The spray protocol currently supports the following proce-
+       dures,  which  should  be  called in the order given: This
+       procedure clears the counter.  This  procedure  sends  the
+       packet.   This  procedure returns the count and the amount
+       of time since the last SPRAYPROC_CLEAR.
+
+       The  XDR  routines  xdr_sprayarr  and  xdr_spraycumul  are
+       available in librpcsvc.
+
+RReeffeerreenncceess
+EExxaammpplleess
+       The  following  code  fragment  demonstrates how the spray
+       protocol   is   used:   #include   <rpc/rpc.h>    #include
+       <rpcsvc/spray.h>              spraycumul     spray_result;
+       sprayarr  spray_data;  char      buf[100];      /*   arbi-
+       trary  data  */  int       loop  =  1000; CLIENT    *clnt;
+       struct timeval timeout0 = {0, 0}; struct timeval timeout25
+       = {25, 0};
+
+       spray_data.sprayarr_len   =  (u_int)100;  spray_data.spra-
+       yarr_val = buf;
+
+       clnt = clnt_create("somehost", SPRAYPROG, SPRAYVERS, "net-
+       path");  if (clnt == (CLIENT *)NULL) {      /* handle this
+       error */ }
+
+       if (clnt_call(clnt, SPRAYPROC_CLEAR,      xdr_void,  NULL,
+       xdr_void,  NULL,  timeout25))  {            /* handle this
+       error */ } while (loop-- > 0) {       if  (clnt_call(clnt,
+       SPRAYPROC_SPRAY,              xdr_sprayarr,   &spray_data,
+       xdr_void, NULL, timeout0)) {                /* handle this
+       error  */       }  }  if  (clnt_call(clnt,  SPRAYPROC_GET,
+            xdr_void, NULL, xdr_spraycumul, &spray_result,  time-
+       out25))   {             /*   handle   this   error   */  }
+       printf("Acknowledged %ld of 1000 packets  in  %d  secs  %d
+       usecs\n",                            spray_result.counter,
+            spray_result.clock.sec,
+            spray_result.clock.usec);
+
+                                                                1
+

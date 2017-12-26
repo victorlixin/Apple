@@ -1,0 +1,106 @@
+
+
+nbtpi(7tcp)                                           nbtpi(7tcp)
+
+SSyynnooppssiiss
+       cc ... -lxti #include <xti.h>
+
+       fd = t_open("/dev/nbcots", O_RDWR, &info);
+
+       fd = t_open("/dev/nbclts", O_RDWR, &info);
+
+DDeessccrriippttiioonn
+       The  drivers  nbcots  and  nbclts  provide an interface to
+       using the Transport Provider Interface (TPI) STREAMS  pro-
+       tocol  and  the  X/Open  Transport Interface (XTI) library
+       (libxti.so). This interface to  is primarily  provided  to
+       support  the  Advanced  File and Print Server (AFPS) soft-
+       ware, but is available for use by any user application.
+
+       Using these drivers, the  service  is  accessed  with  the
+       routines in the XTI library. Connection-oriented (session)
+       service is obtained by opening /dev/nbcots, while  connec-
+       tionless   (datagram)   service  is  obtained  by  opening
+       /dev/nbclts. Note that nbcots provides  the  service  type
+       T_COTS -- the orderly release facility is not supported.
+
+       Before  an  endpoint  can  be  used, it must be bound to a
+       transport address. In this case, the ``address'' bound  to
+       is  actually a  name. The name which is bound to is regis-
+       tered at this time if it has not already  been  registered
+       locally  (binding  to  a name that has already been regis-
+       tered locally is not allowed). A flag given with the  name
+       specifies  whether  the  name  should  be  registered as a
+       unique name or a group name. A user may also specify  that
+       an  endpoint  should  be  bound  to receive only broadcast
+       datagrams. If the requested name cannot be bound (the name
+       is  in  use  on another machine, or the name is registered
+       locally with a different type than that specified, or  the
+       name  is  in  conflict),  t_bind fails with t_errno set to
+       TNOADDR. If a NULL address is bound, the endpoint is bound
+       to the permanent node name.
+
+       Binding  a  connectionless  endpoint  implies  a desire to
+       receive datagrams sent to the  bound  name  (or  broadcast
+       datagrams  if  the endpoint is so bound -- see below). All
+       endpoints bound to a given name will  receive  a  copy  of
+       each datagram received for that name.
+
+       When  a connection-oriented endpoint is bound, if the con-
+       nection queue length (qlen field of the t_bind  structure)
+       is greater than zero, the endpoint is set up to listen for
+       connections on the bound name. Although it is  permissible
+       for  more  than one endpoint to be bound to the same name,
+       only one may be listening (qlen > 0).
+
+       If  a  second  bind  with  a  non-zero  queue  length   is
+       attempted,  it  will fail with t_errno set to TNOADDR. The
+       maximum allowed value of qlen is 4.
+
+                                                                1
+
+nbtpi(7tcp)                                           nbtpi(7tcp)
+
+       The address format used with the t_ primitives is given by
+       the  nbaddr  structure: #define NB_NAMELEN              16
+       /* size of NetBIOS name */
+
+       struct nbaddr {      char nb_type;            /* name type
+       (see  below) */      char nb_name[NB_NAMELEN];     /* Net-
+       BIOS name */ };
+
+       /*
+        * the following are used in the nb_type field
+        */ #define NB_UNIQUE   0    /* name is  unique*/  #define
+       NB_GROUP    1    /*  name  is  a group name */ The nb_type
+       field is only meaningful in  the  context  of  the  t_bind
+       primitive  - it is ignored by all other primitives. If the
+       NB_GROUP bit is set in nb_type, the name is registered  as
+       a group name.
+
+       t_sndudata  sends  a broadcast datagram if the destination
+       name begins with an asterisk (*).
+
+       The following table shows the values of the t_info  fields
+       returned by nbcots and nbclts:
+       -----------------------------------------------------------
+       Field                      nbcots                   nbclts
+       -----------------------------------------------------------
+       addr                       18                       18
+       options                    -2                       -2
+       tsdu                       65535                    512
+       etsdu                      -2                       -2
+       connect                    -2                       -2
+       discon                     -2                       -2
+       servtype                   T_COTS                   T_CLTS
+
+FFiilleess
+       device  node  for  connection-oriented  (session)  service
+       device node for connectionless (datagram) service same  as
+       /dev/nbcots  (used  by  LM/X) same as /dev/nbclts (used by
+       LM/X)
+
+RReeffeerreenncceess
+
+                                                                2
+

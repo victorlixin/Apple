@@ -1,0 +1,139 @@
+t_alloc(3)                                                   t_alloc(3)
+
+  tt__aalllloocc(())
+
+  NNAAMMEE
+
+    t_alloc - allocate a library structure
+
+  SSYYNNOOPPSSIISS
+
+    #include <xti.h>
+
+    void *t_alloc(
+        int fd,
+        int struct_type,
+        int fields)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The tt__aalllloocc(3) function dynamically allocates memory for the various
+    transport function argument structures as specified below. The function
+    allocates memory for the specified structure and for buffers referenced by
+    the structure.
+
+    PPaarraammeetteerrss      BBeeffoorree ccaallll     AAfftteerr ccaallll
+
+    fd              x               /
+
+    struct_type     x               /
+
+    fields          x               /
+
+    The structure to allocate, which is specified by struct_type, must be one
+    of the following. Each of these structures may subsequently be used as an
+    argument to one or more transport functions.
+
+    t_bind       struct     t_bind
+    t_call       struct     t_call
+    t_optmgmt    struct     t_optmgmt
+    t_dis        struct     t_discon
+    t_unitdata   struct     t_unitdata
+    t_uderror    struct     t_uderr
+    t_info       struct     t_info
+
+    Each of the above structures, except t_info, contains at least one field
+    of type struct netbuf. For each field of this type, the user may specify
+    that the buffer for that field should be allocated as well. The length of
+    the buffer allocated will be equal to or greater than the appropriate size
+    as returned in the info argument of _tt____oo_pp_ee_nn(3) or _tt____gg_ee_tt_ii_nn_ff_oo(3). The
+    relevant fields of the info argument are described in the following list.
+    The fields argument specifies which buffers to allocate, where the
+    argument is the bitwise-or of any of the following:
+
+    T_ADDR
+        The addr field of the t_bind, t_call, t_unitdata or t_uderr
+        structures.
+
+    T_OPT
+        The opt field of the t_optmgmt, t_call, t_unitdata or t_uderr
+        structures.
+
+    T_UDATA
+        The udata field of the t_call, t_discon or t_unitdata structures.
+
+    T_ALL
+        All relevant fields of the given structure. Fields which are not
+        supported by the transport provider specified by fd will not be
+        allocated.
+
+    For each relevant field specified in fields, tt__aalllloocc(3) will allocate
+    memory for the buffer associated with the field, and initialize the len
+    field to zero and the buf pointer and maxlen field accordingly. Irrelevant
+    or unknown values passed in fields are ignored. Since the length of the
+    buffer allocated will be based on the same size information that is
+    returned to the user on a call to _tt____oo_pp_ee_nn(3) and _tt____gg_ee_tt_ii_nn_ff_oo(3), fd must
+    refer to the transport endpoint through which the newly allocated
+    structure will be passed. In the case where a t_info structure is to be
+    allocated, fd may be set to any value. In this way the appropriate size
+    information can be accessed. If the size value associated with any
+    specified field is T_INVALID (see _tt____oo_pp_ee_nn(3) or _tt____gg_ee_tt_ii_nn_ff_oo(3)), tt__aalllloocc(3)
+    will be unable to determine the size of the buffer to allocate and will
+    fail, setting t_errno to [TSYSERR] and errno to [EINVAL]. If the size
+    value associated with any specified field is T_INFINITE (see _tt____oo_pp_ee_nn(3) or
+    _tt____gg_ee_tt_ii_nn_ff_oo(3)), then the behavior of tt__aalllloocc(3) is implementation-defined.
+    For any field not specified in fields, buf will be set to the null pointer
+    and len and maxlen will be set to zero.
+
+    The pointer returned if the allocation succeeds is suitably aligned so
+    that it can be assigned to a pointer to any type of object and then used
+    to access such an object or array of such objects in the space allocated.
+
+    Use of tt__aalllloocc(3) to allocate structures will help ensure the
+    compatibility of user programs with future releases of the transport
+    interface functions.
+
+  VVAALLIIDD SSTTAATTEESS
+
+    ALL - apart from T_UNINIT
+
+  EERRRROORRSS
+
+    On failure, t_errno is set to one of the following values:
+
+    [TBADF]
+        struct_type is other than T_INFO and the specified file descriptor
+        does not refer to a transport endpoint.
+
+    [TNOSTRUCTYPE]
+        Unsupported struct_type requested. This can include a request for a
+        structure type which is inconsistent with the transport provider type
+        specified, that is, connection-mode or connectionless-mode.
+
+    [TPROTO]
+        This error indicates that a communication problem has been detected
+        between XTI and the transport provider for which there is no other
+        suitable XTI error (t_errno).
+
+    [TSYSERR]
+        A system error has occurred during execution of this function.
+
+  RREETTUURRNN VVAALLUUEE
+
+    On successful completion, tt__aalllloocc(3) returns a pointer to the newly
+    allocated structure. On failure, a null pointer is returned.
+
+  SSEEEE AALLSSOO
+
+    _tt____ff_rr_ee_ee(3)
+
+    _tt____gg_ee_tt_ii_nn_ff_oo(3)
+
+    _tt____oo_pp_ee_nn(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The tt__aalllloocc function is not thread safe.
+
+    The tt__aalllloocc function is not async-signal safe.
+

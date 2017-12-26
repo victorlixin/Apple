@@ -1,0 +1,163 @@
+
+
+getrusage(3C)                                       getrusage(3C)
+
+SSyynnooppssiiss
+       #include <sys/time.h> #include <sys/resource.h>
+
+       int getrusage(int who, struct rusage *r_usage);
+
+DDeessccrriippttiioonn
+       The  getrusage function provides measures of the resources
+       used by the current process or its terminated and  waited-
+       for child processes.
+
+       If  the value of the who argument is RUSAGE_SELF, informa-
+       tion is returned about resources used by the current  pro-
+       cess.   If  the  value of the who argument is RUSAGE_CHIL-
+       DREN, information is returned about resources used by  the
+       terminated and waited-for children of the current process.
+       If the child is never waited for  (for  instance,  if  the
+       parent  has  SA_NOCLDWAIT set or sets SIGCHLD to SIG_IGN),
+       the resource information for the  child  process  is  dis-
+       carded  and  not included in the resource information pro-
+       vided by getrusage.
+
+       The r_usage argument is a pointer to  an  object  of  type
+       struct rusage in which the returned information is stored.
+       struct  rusage {
+               struct timeval ru_utime;        /* user time  used
+       */
+               struct  timeval  ru_stime;         /*  system time
+       used */
+               long         ru_maxrss;      #define      ru_first
+       ru_ixrss
+               long    ru_ixrss;               /* XXX: 0 */
+               long     ru_idrss;                /*  XXX:  sum of
+       rm_asrss */
+               long    ru_isrss;               /* XXX: 0 */
+               long    ru_minflt;              /* any page faults
+       not requiring I/O */
+               long    ru_majflt;              /* any page faults
+       requiring I/O */
+               long    ru_nswap;               /* swaps */
+               long     ru_inblock;              /*  block  input
+       operations */
+               long     ru_oublock;              /*  block output
+       operations */
+               long    ru_msgsnd;              /*  messages  sent
+       */
+               long       ru_msgrcv;                /*   messages
+       received */
+               long      ru_nsignals;               /*    signals
+       received */
+               long     ru_nvcsw;               /* voluntary con-
+       text switches */
+               long     ru_nivcsw;               /*   involuntary
+       context switches */ #define ru_last         ru_nivcsw };
+
+                                                                1
+
+getrusage(3C)                                       getrusage(3C)
+
+       The fields are interpreted as follows: The total amount of
+       time spent executing in user mode.  Time is given in  sec-
+       onds  and  microseconds.   The  total amount of time spent
+       executing in system mode.  Time is given  in  seconds  and
+       microseconds.   The  maximum  resident  set size.  Size is
+       given in pages (the size of a page, in bytes, is given  by
+       the  system  call).   Also,  see  ``Notices''.   Currently
+       returns 0.
+       An integral value indicating the amount of memory  in  use
+       by  a process while the process is running.  This value is
+       the sum of the resident set sizes of the  process  running
+       when  a  clock  tick  occurs.  The value is given in pages
+       times clock ticks.  Note: it does not  take  sharing  into
+       account.  Also, see ``Notices''.
+       Currently  returns  0.  The number of page faults serviced
+       which did not require any physical  I/O  activity.   Also,
+       see ``Notices''.  The number of page faults serviced which
+       required physical I/O activity.  This could  include  page
+       ahead  operations  by  the kernel.  Also, see ``Notices''.
+       The number of times a process was swapped out of main mem-
+       ory.   The  number of times the file system had to perform
+       input in servicing a request.  The  number  of  times  the
+       file  system had to perform output in servicing a request.
+       The number of messages sent over sockets.  The  number  of
+       messages  received  from  sockets.   The number of signals
+       delivered.  The number of times a context switch  resulted
+       due  to  a  process  voluntarily  giving  up the processor
+       before its time slice  was  completed  (usually  to  await
+       availability  of  a resource).  The number of times a con-
+       text switch resulted due  to  a  higher  priority  process
+       becoming  runnable or because the current process exceeded
+       its time slice.
+
+RReettuurrnn vvaalluueess
+       If successful, the r_usage structure is filled in and 0 is
+       returned.   If  the call fails, a -1 is returned and errno
+       is set to indicate the error.
+
+EErrrroorrss
+       getrusage will fail if: The who argument is  not  a  valid
+       value.   The  address  specified by the rusage argument is
+       not in a valid portion of the process's address space.
+
+       An invalid address for the r_usage argument may result  in
+       a core dump as opposed to returning EFAULT.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Only  the timeval fields of struct rusage are supported in
+       this implementation.
+
+       The numbers ru_inblock and  ru_oublock  account  only  for
+       real I/O, and are approximate measures at best.  Data sup-
+       plied by the caching mechanism  is  charged  only  to  the
+
+                                                                2
+
+getrusage(3C)                                       getrusage(3C)
+
+       first  process  to  read and the last process to write the
+       data.
+
+       The way resident set size is calculated is  an  approxima-
+       tion, and could misrepresent the true resident set size.
+
+       Page faults can be generated from a variety of sources and
+       for a variety of reasons.  The customary cause for a  page
+       fault is a direct reference by the program to a page which
+       is not in memory.  Now, however, the kernel  can  generate
+       page  faults on behalf of the user, for example, servicing
+       and system calls.  Also, a page fault can be caused by  an
+       absent  hardware  translation  to  a page, even though the
+       page is in physical memory.
+
+       In addition to hardware detected page faults,  the  kernel
+       may  cause  pseudo  page  faults  in order to perform some
+       housekeeping.  For example, the kernel may  generate  page
+       faults,  even  if  the  pages exist in physical memory, in
+       order to lock down pages involved in a raw I/O request.
+
+       By definition, major page  faults  require  physical  I/O,
+       while  minor page faults do not require physical I/O.  For
+       example, reclaiming the page  from  the  free  list  would
+       avoid I/O and generate a minor page fault.  More commonly,
+       minor page faults occur during process startup  as  refer-
+       ences  to pages which are already in memory.  For example,
+       if an address space faults on some ``hot''  executable  or
+       shared library, this results in a minor page fault for the
+       address space.  Also, any one doing a or to something that
+       is  in  the  page  cache will get a minor page fault(s) as
+       well.
+
+       There is no way to obtain information about a  child  pro-
+       cess which has not yet terminated.
+
+SSttaannddaarrddss ccoonnffoorrmmaannccee
+       This  routine  conforms  to  X/Open  System Interfaces and
+       Headers, Issue 4, Version 2.
+
+                                                                3
+

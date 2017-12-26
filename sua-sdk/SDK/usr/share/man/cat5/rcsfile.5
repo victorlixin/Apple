@@ -1,0 +1,172 @@
+rcsfile(5)                                                   rcsfile(5)
+
+  rrccssffiillee
+
+  NNAAMMEE
+
+    rcsfile - format of a Revision Control System (RCS) file
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    A Revision Control System (RCS) file's contents are described by the
+    grammar below.
+
+    The text is free format: space, backspace, tab, newline, vertical tab,
+    form feed, and carriage return (collectively, white space) have no
+    significance except in strings. White space cannot appear within an iidd,
+    nnuumm, or ssyymm, however, and an RCS file must end with a newline.
+
+    Strings are enclosed by @@. If a string contains a @@, it must be doubled;
+    otherwise, strings can contain arbitrary binary data.
+
+    The meta syntax uses the following conventions: || (vertical bar) separates
+    alternatives; {{ and }} enclose optional phrases; {{ and }}** enclose phrases
+    that can be repeated zero or more times; {{ and }}++ enclose phrases that
+    must appear at least once and can be repeated; terminal symbols are in
+    bboollddffaaccee; nonterminal symbols are in italics.
+
+    rcstext   ::=  admin {delta}* desc {deltatext}*
+
+    admin     ::=  hheeaadd      {num};;
+                   { bbrraanncchh  {num};; }
+                   aacccceessss    {id}*;;
+                   ssyymmbboollss   {sym :: num}*;;
+                   lloocckkss     {id :: num}*;;  {ssttrriicctt ;;}
+                   { ccoommmmeenntt {string};; }
+                   { eexxppaanndd  {string};; }
+                   { newphrase }*
+
+    delta     ::=  num
+                   ddaattee     num;;
+                   aauutthhoorr   id;;
+                   ssttaattee    {id};;
+                   bbrraanncchheess {num}*;;
+                   nneexxtt     {num};;
+                   { newphrase }*
+
+    desc      ::=  ddeesscc string
+
+    deltatext ::=  num
+                   lloogg  string
+                   { newphrase }*
+                   tteexxtt string
+
+    num       ::=  {digit | ..}+
+
+    digit     ::=  00 | 11 | 22 | 33 | 44 | 55 | 66 | 77 | 88 | 99
+
+    id        ::=  {num} idchar {idchar | num}*
+
+    sym       ::=  {digit}* idchar {idchar | digit}*
+
+    idchar    ::=  any visible graphic character except special
+
+    special   ::=  $$ | ,, | .. | :: | ;; | @@
+
+    string    ::=  @@{any character, with @@ doubled}*@@
+
+    newphrase ::=  id word* ;;
+
+    word      ::=  id | num | string | ::
+
+    Identifiers are case sensitive. Keywords are in lowercase only. The sets
+    of keywords and identifiers can overlap. In most environments, RCS uses
+    the ISO 8859/1 encoding: visible graphic characters are codes 041-176 and
+    240-377, and white-space characters are codes 010-015 and 040.
+
+    Dates, which appear after the ddaattee keyword, are of the form
+    Y..mm..dd..hh..mm..ss, where Y is the year, mm the month (01-12), dd the day
+    (01-31), hh the hour (00-23), mm the minute (00-59), and ss the second
+    (00-60). Y contains just the last two digits of the year for years from
+    1900 through 1999, and all the digits of years thereafter. Dates use the
+    Gregorian calendar; times use coordinated universal time (UTC).
+
+    The newphrase productions in the grammar are reserved for future
+    extensions to the format of RCS files. No newphrase will begin with any
+    keyword already in use.
+
+    The delta nodes form a tree. All nodes whose numbers consist of a single
+    pair (such as 2.3, 2.1, 1.3) are on the trunk, and are linked through the
+    nneexxtt field in order of decreasing numbers. The hheeaadd field in the admin
+    node points to the head of that sequence (that is, it contains the highest
+    pair). The bbrraanncchh node in the admin node indicates the default branch (or
+    revision) for most RCS operations. If empty, the default branch is the
+    highest branch on the trunk.
+
+    All delta nodes whose numbers consist of 2n fields (n>=2) (such as,
+    3.1.1.1, 2.1.2.2, and so on) are linked as follows. All nodes whose first
+    2n-1 number fields are identical are linked through the nneexxtt field in
+    order of increasing numbers. For each such sequence, the delta node whose
+    number is identical to the first 2n-2 number fields of the deltas on that
+    sequence is called the branchpoint. The bbrraanncchheess field of a node contains
+    a list of the numbers of the first nodes of all sequences for which it is
+    a branchpoint. This list is ordered in increasing numbers.
+
+    The following diagram shows an example of an RCS file's organization.
+
+                                  Head
+                                    |
+                                    |
+                                    v                        / \
+                                ---------                   /   \
+          / \          / \      |       |      / \         /     \
+         /   \        /   \     |  2.1  |     /   \       /       \
+        /     \      /     \    |       |    /     \     /         \
+       /1.2.1.3\    /1.3.1.1\   |       |   /1.2.2.2\   /1.2.2.1.1.1\
+       ---------    ---------   ---------   ---------   -------------
+           ^            ^           |           ^             ^
+           |            |           |           |             |
+           |            |           v           |             |
+          / \           |       ---------      / \            |
+         /   \          |       \  1.3  /     /   \           |
+        /     \         ---------\     /     /     \-----------
+       /1.2.1.1\                  \   /     /1.2.2.1\
+       ---------                   \ /      ---------
+           ^                        |           ^
+           |                        |           |
+           |                        v           |
+           |                    ---------       |
+           |                    \  1.2  /       |
+           ----------------------\     /---------
+                                  \   /
+                                   \ /
+                                    |
+                                    |
+                                    v
+                                ---------
+                                \  1.1  /
+                                 \     /
+                                  \   /
+                                   \ /
+
+  IIDDEENNTTIIFFIICCAATTIIOONN
+
+    Author: Walter F. Tichy, Purdue University, West Lafayette, IN, 47907.
+
+    Manual Page Revision: 1.5; Release Date: 1999/08/27.
+
+    Copyright (c) 1982, 1988, 1989 Walter F. Tichy.
+
+    Copyright (c) 1990, 1991, 1992, 1993, 1994, 1995 Paul Eggert.
+
+  SSEEEE AALLSSOO
+
+    _r_c_s_i_n_t_r_o(5)
+
+    _c_i(1)
+
+    _c_o(1)
+
+    _i_d_e_n_t(1)
+
+    _r_c_s(1)
+
+    _r_c_s_d_i_f_f(1)
+
+    _r_c_s_m_e_r_g_e(1)
+
+    _r_l_o_g(1)
+
+    "RCS--A System for Version Control," Walter F. Tichy, Software--Practice &
+    Experience 15, 7 (July 1985), 637-654.
+

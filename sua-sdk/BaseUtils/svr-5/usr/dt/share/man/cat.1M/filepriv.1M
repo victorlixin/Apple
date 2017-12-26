@@ -1,0 +1,279 @@
+
+
+filepriv(1M)                                         filepriv(1M)
+
+SSyynnooppssiiss
+       filepriv [-f priv[, . . .]]  [-i priv[, . . .]] file . . .
+
+       filepriv -d file . . .
+
+DDeessccrriippttiioonn
+       filepriv is used to set, delete, or display the  privilege
+       information associated with a file.
+
+   CCoommmmaanndd ooppttiioonnss
+       used  to  delete  the privileges associated with the named
+       file; also used to  delete  non-existent  files  from  the
+       Privilege  Data  File  (PDF).   used  to specify the fixed
+       privileges associated with the named file.  used to  spec-
+       ify  the  inheritable privileges associated with the named
+       file.  The following describes the privileges that may  be
+       specified: priv [ +|-priv_name . . . ] set_name  [ . . . ]
+       For each set_name, priv sets or  displays  the  privileges
+       contained  in  that privilege set.  set_name may be either
+       max for the maximum privilege set or work for the  working
+       set.  priv_name is the name of a privilege.  If priv_names
+       are supplied, priv scans the list  and  turns  off  thoses
+       privileges  that are preceded by a minus sign and turns on
+       those that are preceded by a plus sign in each of the sets
+       listed.   If  no priv_names are supplied, the priv command
+       prints the current list of  privileges  for  each  of  the
+       requested sets.
+
+       The  values  for  priv_name  are:  Represents all possible
+       privileges.  Required to  manipulate  the  security  audit
+       mechanisms.  Required to write miscellaneous audit records
+       to the audit trail.  Overrides specific restrictions  that
+       are imposed solely for the confinement of covert channels.
+       Required to dump a core image of a process that is  either
+       privileged,  setuid,  or  setgid.   This  privilege is not
+       required to dump the core image of a process that does not
+       meet the above conditions.  Overrides Discretionary Access
+       Control (DAC) restrictions but only for operations that do
+       not alter objects (that is, read and execute permissions).
+       See  ``Access  permissions''.    Overrides   Discretionary
+       Access  Control  restrictions but only for operations that
+       alter objects (that is, write permission).   See  ``Access
+       Permissions''.   Required  to  set  or get device security
+       attributes to change the device level when it is  in  pri-
+       vate  state,  and to access a device when it is in private
+       state.  This privilege is also used for special ioctl  for
+       window  management  and  to download trusted software to a
+       terminal  driver.   Provides  compatibility  with   device
+       drivers developed by third party vendors.  It is used when
+       a sensitive operation needs to be limited to a  privileged
+       process.  Required for privileged operations on a filesys-
+       tem that have relatively low  sensitivity,  including  the
+       creation  of  links  to directories, setting the effective
+       root  directory,  and  making  special  files.    Override
+
+                                                                1
+
+filepriv(1M)                                         filepriv(1M)
+
+       filesystem range restrictions.  Required to perform selec-
+       tive operations associated with loadable  modules.   Over-
+       rides Mandatory Access Control (MAC) restrictions but only
+       for certain operations that do  not  alter  objects.   See
+       ``Access  permissions''.   Overrides Mandatory Access Con-
+       trol restrictions that involve the alteration  of  objects
+       or  other  MAC-related  attributes.   See ``Access permis-
+       sions''.  Allows processes to upgrade (change the existing
+       level  to a new dominating level) files.  Mount or unmount
+       a filesystem or  set  and  get  the  ceiling  level  of  a
+       filesystem.   Required for creation of multilevel directo-
+       ries.  Required to change the attributes of a  file  (that
+       is,  information  kept  in  the  file's inode) that is not
+       owned by the effective uid of the  calling  process.   See
+       ``Access  permissions''.   Required  to  lock a process in
+       memory.  Required by processes that  do  real-time  opera-
+       tions.   Required  to change the security level of objects
+       (for block or character special files that are in the pub-
+       lic  state  only), subject to some restrictions.  Required
+       to change the security level of a process  (including  the
+       process's   own  level),  subject  to  some  restrictions.
+       Administrative privilege required to set  the  inheritable
+       and  fixed  privileges on files.  This privilege overrides
+       access and ownership restrictions.  Required in  order  to
+       set  the  real  and effective user and group IDs of a pro-
+       cess.  Privilege required for  an  otherwise  unprivileged
+       process  to  set the inheritable and fixed privileges on a
+       file.  This privilege does not override access  or  owner-
+       ship  restrictions.   Required  to perform several general
+       system operations that have only minor  security  implica-
+       tions.   Required  to raise the priority of a time sharing
+       process or to set the  user  priority  limit  to  a  value
+       greater than 0.
+
+   AAcccceessss ppeerrmmiissssiioonnss
+       Access  permissions  are  associated  with  the  priv_name
+       entries.  Access checking is performed whenever a  subject
+       (such  as  a process) tries to access an object (such as a
+       file or directory).  Permission to  access  an  object  is
+       granted  or  denied  on the basis of mode bits.  mode bits
+       and Access Control Lists (ACLs); mode bits, Access Control
+       Lists  (ACLs),  and Mandatory Access Control (MAC) levels;
+       ACLs ACLs and Mandatory Access  Control  levels  are  sup-
+       ported   only  if  the  Enhanced  Security  Utilities  are
+       installed and running, and only if the filesystem on which
+       the object to be accessed resides is of type sfs.
+
+       ACLs and mode bits are collectively known as Discretionary
+       Access Control (DAC).  The mode bits are known as  Discre-
+       tionary  Access  Control  (DAC).  Mandatory Access Control
+       (MAC) privileges are defined; however,  they  may  not  be
+       supported on the system you are using.
+
+       Starting   with  the  leftmost  component  of  the  file's
+
+                                                                2
+
+filepriv(1M)                                         filepriv(1M)
+
+       pathname, first MAC levels are checked.  The kernel checks
+       MAC  levels  based  on a ``read-down, write-equal'' access
+       policy:
+
+       If read or execute/search access is requested on  a  file,
+       and  the  MAC  level of the calling process dominates (see
+       definition below) the MAC level of the file (or  the  pro-
+       cess has the macread privilege in its working set), access
+       is granted; otherwise EACCES is returned.  If the file  is
+       a  pipe,  then the level of the calling process must equal
+       the level of the pipe (or the process must  have  macwrite
+       in its working set).
+
+       If  write access is requested on a file, and the MAC level
+       of the calling process equals the MAC level  of  the  file
+       (or  the process has the macwrite privilege in its working
+       set), access is granted; otherwise EACCES is returned.
+
+        After MAC checks, the The standard file access permission
+       bit  checks  are  performed  to  determine  if the process
+       requesting access to the object has permission  to  access
+       it  in  the  manner  (read,  write, and/or execute/search)
+       requested.  Each access mode requested  is  checked  sepa-
+       rately  using  the  following  algorithm: If the effective
+       user ID of the process is equal to  the  user  ID  of  the
+       owner  of  the  file, and the requested access mode bit is
+       set in the ``owner'' bits of the mode, access is  granted;
+       otherwise  access  checking  continues.   If the effective
+       user ID of the process matches the user ID in  a  ``user''
+       ACL entry, and the requested access mode bit is set in the
+       ``group'' bits of the mode and in the matching ACL  entry,
+       access  is  granted;  otherwise,  or if no ACL is present,
+       access checking continues.  If the effective group ID  (or
+       any of the supplementary group IDs of the process) matches
+       the owning group of the file group  ID  specified  in  any
+       ``group''  ACL  entry (or the owning group of the file, if
+       no ACL is present), and the requested access mode  bit  is
+       set  in  the  ``group''  bits of the mode, mode and in the
+       matching ACL entry, access is granted;  otherwise,  access
+       checking  continues.   If  the  above checks fail, and the
+       requested access mode bit is set in the ``other'' bits  of
+       the  mode,  access is granted; otherwise, access is denied
+       (EACCES is returned).  (Note that if a process's  user  ID
+       matches  a ``user'' ACL entry and the group ID matches one
+       or more ``group'' entries, only the ``user'' ACL entry  is
+       used  to determine access.)  These checks are performed on
+       every component of  the  pathname,  including  the  object
+       itself.   If any of the checks fail, the privileges of the
+       calling process are examined to determine if  the  calling
+       process   has  the  appropriate  privilege  for  the  mode
+       requested (dacread for  read  and  execute/search  access,
+       dacwrite  for  write  access).  The following example adds
+       owner and audit privileges and deletes  dacread  privilege
+       from  the  working  set:  priv +owner +audit -dacread work
+
+                                                                3
+
+filepriv(1M)                                         filepriv(1M)
+
+       Privilege information is stored in the Privilege Data File
+       (PDF) located in /etc/security/tcb/privs.
+
+       filepriv  must  have  the P_SETSPRIV and P_SETUPRIV privi-
+       leges when setting or deleting file privileges,  otherwise
+       permission is denied.
+
+       The  argument  priv is defined as a process privilege name
+       (see The argument allprivs can be used to  set  or  delete
+       all  the  process privileges available.  The file argument
+       must be an absolute pathname of an  executable  file  when
+       setting  or  deleting  file  privileges.  There must be at
+       least one file  argument  specified;  otherwise,  filepriv
+       exits with an error.
+
+       filepriv  calls  the  realpath routine to resolve symbolic
+       links.  In this way, when new privileges are entered  into
+       the Privilege Data File for a symbolic link on a file that
+       already exists in the PDF, the privileges  are  associated
+       correctly.
+
+       When  setting  file  privileges, all fixed and inheritable
+       privileges on the specified file are removed before  those
+       privileges specified by the -f and -i options are applied.
+       Also, filepriv will set only  privileges  allowed  by  the
+       maximum  set  of  privileges  on  the  process  calling as
+       defined by the Privilege Data File.
+
+       The filepriv command exits with an error if the -f and  -i
+       options  are  specified  and  the same privilege exists in
+       both.
+
+       When deleting privilege information from a  file,  the  -d
+       option  is  used.   However, the -d option is also used to
+       remove a non-existent file from  the  privilege  database.
+       If the file exists, then the -d option deletes privileges.
+       If the file does not exist because it is a  spurious  file
+       or  has been removed from the system without the knowledge
+       of the privilege administrator, then the -d option removes
+       this file from the privilege database.
+
+       When no options are specified, filepriv displays the priv-
+       ileges associated with the named file(s).
+
+   DDeeffaauullttss
+       The  file  /etc/default/privcmds  contains  the  parameter
+       GEN_CKSUM.   If the value of GEN_CKSUM is ``No'', filepriv
+       will not generate a check sum value for the Privilege Data
+       File   (PDF)   located  in  /etc/security/tcb/privs;  this
+       results in faster performance compared to  generating  the
+       check  sum  value  each  time  the command is run.  If the
+       value of this parameter  is  anything  other  than  ``No''
+       (including  NULL, the default), filepriv generates a check
+       sum each time it is run.
+
+                                                                4
+
+filepriv(1M)                                         filepriv(1M)
+
+EExxaammpplleess
+       The following is an example of the output when filepriv is
+       executed  with one file: fixed     priv,priv, . . .  inher
+       priv,priv, . . .  If no  fixed  privileges  exist  on  the
+       file,  the  fixed  privilege line is not displayed.  If no
+       inheritable privileges exist on the file, the inher privi-
+       lege  line is not displayed.  The space between the privi-
+       lege type and privileges is a single tab (\t) character.
+
+       If more than one file is specified,  then  the  file  name
+       followed  by  a  colon  (:) and space character is printed
+       before   the   privileges   as   follows:   file1:   fixed
+       priv,priv,  .  .  .   file1:  inher      priv,priv,  . . .
+       file2:  fixed      priv,priv,  .   .   .    file2:   inher
+       priv,priv,  .  .  .   file3:  fixed      priv,priv,  . . .
+       file3: inher     priv,priv, . . .
+
+FFiilleess
+       Privilege Data File defaults file
+
+DDiiaaggnnoossttiiccss
+       filepriv exits with a return code  of  0  upon  successful
+       completion.
+
+       If  filepriv detects errors, the following messages may be
+       displayed: undefined process  privilege  priv  cannot  use
+       priv as both fixed and inheritable privilege cannot access
+       file file file is not an executable file permission denied
+       file  is  not  an  absolute  pathname incompatible options
+       specified no such file or directory for file file filepriv
+       system call not in operation Bad entry found in /etc/secu-
+       rity/tcb/privs the file file was not found in  the  privi-
+       lege   data   file   cannot  create  lock  for  /etc/secu-
+       rity/tcb/privs
+
+RReeffeerreenncceess
+
+                                                                5
+

@@ -1,0 +1,157 @@
+crontab(5)                                                   crontab(5)
+
+  ccrroonnttaabb
+
+  NNAAMMEE
+
+    crontab - tables for driving Subsystem for UNIX-based Applications cron
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    A ccrroonnttaabb file contains instructions to the ccrroonn(1) daemon of the general
+    form: run this command at this time on this date. Each user who has been
+    assigned ccrroonn privileges has his or her own ccrroonnttaabb file.
+
+    Blank lines and leading spaces and tabs are ignored. Lines whose first
+    non-space character is a pound sign (##) are comments, and are ignored.
+    Note that comments are not allowed on the same line as ccrroonn commands
+    because they will be taken to be part of the command. Similarly, comments
+    are not allowed on the same line as environment variable settings.
+
+    An active line in a ccrroonnttaabb will be either an environment setting or a
+    ccrroonn command. An environment setting is of the form,
+
+    name = value
+
+    where the spaces around the equal sign (==) are optional, and any
+    subsequent non-leading spaces in value will be part of the value assigned
+    to name. The value string can be placed in quotes (single or double, but
+    matching) to preserve leading or trailing blanks. Setting environment
+    variables is supported by the Subsystem for UNIX-based Applications ccrroonn(1) daemon; it is not supported
+    by the Windows-based Cron service.
+
+    Several environment variables are set up automatically by the ccrroonn(1)
+    daemon. SUA_ROOT is set to the directory in which Subsystem for UNIX-based Applications is
+    installed. SYSTEMROOT is the path name (in Windows syntax) of the
+    directory in which Windows is installed; it is used by some Win32
+    programs. TZ is the time zone; it is used by ddaattee(1) and a few other
+    Subsystem for UNIX-based Applications utilities. SHELL is set to //bbiinn//sshh. PATH is set to //bbiinn. LOGNAME
+    and HOME are set from the Windows user database. All of these variables
+    can be overridden by settings in the crontab, except for LOGNAME.
+
+    In addition to LOGNAME, HOME, and SHELL, ccrroonn(1) will look at MAILTO if it
+    has any reason to send mail as a result of running commands in the
+    ccrroonnttaabb. If MAILTO is defined (and non-empty), mail is sent to the user so
+    named. If MAILTO is defined but empty (MAILTO=""), no mail will be sent.
+    Otherwise, mail is sent to the owner of the ccrroonnttaabb. Mail is sent using
+    mmaaiillxx(1).
+
+    The format of a ccrroonn command is very much the V7 standard, with a number
+    of upward-compatible extensions. Each line has five time-and-date fields,
+    followed by a command. Commands are executed by ccrroonn(1) when the minute,
+    hour, and month of year fields match the current time, and when at least
+    one of the two day fields (day of month, or day of week) match the current
+    time (see Note later in this topic). The ccrroonn(1) utility examines ccrroonn
+    entries once every minute.
+
+    The time and date fields are:
+
+    FFiieelldd            AAlllloowweedd vvaalluueess
+
+    minute           0-59
+
+    hour             0-23
+
+    day of month     1-31
+
+    month            1-12 (or names, see below)
+
+    day of week      0-7 (0 or 7 is Sun, or use names)
+
+    A field can be an asterisk (**), which always stands for first-last.
+
+    Ranges of numbers are allowed. Ranges are two numbers separated with a
+    hyphen (--). The specified range is inclusive. For example, 8-11 for an
+    hours entry specifies execution at hours 8, 9, 10 and 11.
+
+    Lists are allowed. A list is a set of numbers (or ranges) separated by
+    commas. Examples: 1,2,5,9, 0-4,8-12.
+
+    Step values can be used in conjunction with ranges. Following a range with
+    /<number> specifies skips of the number's value through the range. For
+    example, 0-23/2 can be used in the hours field to specify command
+    execution every other hour (the alternative in the V7 standard is
+    0,2,4,6,8,10,12,14,16,18,20,22). Steps are also permitted after an
+    asterisk, so if you want to specify every two hours, use */2.
+
+    Names can also be used for the month and day-of-week fields. Use the first
+    three letters of the particular day or month (it is not case sensitive).
+    Ranges or lists of names are not allowed.
+
+    The sixth field (the rest of the line) specifies the command to be run.
+    The entire command portion of the line, up to a newline or %% character,
+    will be executed by //bbiinn//sshh or by the shell specified in the SHELL
+    variable of the cronfile. Percent signs (%%) in the command, unless escaped
+    with backslash (\\), will be changed into newline characters, and all data
+    after the first %% will be sent to the command as standard input.
+
+    Note: The day of a command's execution can be specified by two fields -
+    - day of month, and day of week. If both fields are restricted (that is,
+    are not **), the command will be run when either field matches the current
+    time.
+
+    For example,
+
+    30 4 1,15 * 5
+
+    would cause a command to be run at 4:30 am on the first and fifteenth of
+    each month, plus every Friday.
+
+  NNOOTTEE
+
+    Jobs that are run by the Subsystem for UNIX-based Applications ccrroonn(1) daemon do not inherit the user's
+    file mode creation mask (umask) settings. Consequently, permissions for
+    files that are created by such jobs are set to 0666 by default. To set the
+    umask for a ccrroonn(1) job, use the _uu_mm_aa_ss_kk(1) command in the job script
+    itself.
+
+  EEXXAAMMPPLLEE CCRROONN FFIILLEE
+
+    # mail any output to `paul', even if this crontab is run as
+    `Administrator'
+    MAILTO=paul
+    #
+    # run five minutes after midnight, every day
+    5 0 * * *       $HOME/bin/daily.job >> $HOME/tmp/out 2>&1
+    # run at 2:15pm on the first of every month -- output mailed to paul
+    15 14 1 * *     $HOME/bin/monthly
+    # run at 10 pm on weekdays, annoy Joe
+    0 22 * * 1-5   mail -s "It's 10pm" joe%Joe,%%Where are your kids?%
+    23 0-23/2 * * * echo "run 23 minutes after midn, 2am, 4am ..., everyday"
+    5 4 * * sun     echo "run at 5 after 4 every sunday"
+
+  EEXXTTEENNSSIIOONNSS
+
+    When specifying day of week, both day 0 and day 7 will be considered
+    Sunday. BSD and ATT seem to disagree about this.
+
+    Lists and ranges can coexist in the same field. "1-3,7-9" would be
+    rejected by ATT or BSD cron; they want to see "1-3" or "7,8,9" ONLY.
+
+    Ranges can include steps, so "1-9/2" is the same as "1,3,5,7,9".
+
+    Names of months or days of the week can be specified by name.
+
+    Environment variables can be set in the ccrroonnttaabb.
+
+    Command output is mailed to the ccrroonnttaabb owner (BSD cannot do this), can be
+    mailed to a person other than the ccrroonnttaabb owner (SysV cannot do this), or
+    the feature can be turned off and no mail will be sent at all (SysV cannot
+    do this, either).
+
+  SSEEEE AALLSSOO
+
+    _c_r_o_n(1)
+
+    _c_r_o_n_t_a_b(1)
+

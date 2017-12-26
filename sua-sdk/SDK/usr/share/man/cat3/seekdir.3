@@ -1,0 +1,173 @@
+seekdir(3)                                                   seekdir(3)
+
+  ooppeennddiirr(())
+
+  NNAAMMEE
+
+    opendir(), wcs_opendir(), readdir(), readdir_r(), rewinddir(), closedir(),
+    telldir(), seekdir(), dirfd() - directory operations
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/types.h>
+    #include <dirent.h>
+
+    DIR * opendir (const char *filename)
+    DIR * wcs_opendir (const wchar_t *filename)
+    struct dirent * readdir (DIR *dirp)
+    int readdir_r (DIR *dirp, struct dirent *entry,
+           struct dirent **result);
+    void rewinddir (DIR *dirp)
+    int closedir (DIR *dirp)
+    long telldir (DIR *dirp)
+    void seekdir (DIR *dirp, long loc)
+    int dirfd (DIR *dirp)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ooppeennddiirr(3) and wwccss__ooppeennddiirr(3) functions are identical, except that
+    wwccss__ooppeennddiirr(3) accepts wide characters in the filename argument.
+
+    These calls create, remove, read, and search directories. They make use of
+    the DDIIRR type, defined in the header <<ddiirreenntt..hh>>, which represents a
+    directory stream A directory stream is an ordered sequence of all the
+    directory entries in a particular directory. Each directory entry
+    represents a file.
+
+    The ooppeennddiirr(3) or wwccss__ooppeennddiirr(3) function opens the directory named by
+    filename, associates a directory stream with it and returns a pointer to
+    be used to identify the directory stream in subsequent operations. The
+    rreeaaddddiirr(2) function returns NULL if filename cannot be accessed, or if it
+    cannot _mm_aa_ll_ll_oo_cc(3) enough memory to hold the whole thing.
+
+    The rreeaaddddiirr(2) function returns a pointer to the next directory entry. It
+    returns NULL upon reaching the end of the directory. If entries for dot or
+    dot-dot exist, one entry will be returned for dot and one entry will be
+    returned for dot-dot; otherwise they will not be returned.
+
+    The reentrant rreeaaddddiirr__rr(3) function initializes the ddiirreenntt structure
+    identified by the entry argument to represent the directory entry at the
+    current position in the directory stream identified by dirp, stores a
+    pointer to this structure at the location identified by result, and
+    positions the directory stream at the next entry.
+
+    The storage pointed to by entry must be large enough for a ddiirreenntt with an
+    array of cchhaarr d_name members containing at least {NAME_MAX}+1 elements.
+
+    Upon successful return, the pointer returned at *result has the same value
+    as the argument entry. Upon reaching the end of the directory stream, this
+    pointer is NULL.
+
+    The rreeaaddddiirr__rr(3) function does not return directory entries containing
+    empty names.
+
+    The rreewwiinnddddiirr(3) function resets the position of the named directory
+    stream to the beginning of the directory.
+
+    The cclloosseeddiirr(3) function closes the named directory stream and frees the
+    structure associated with the dirp pointer, returning 0 on success.
+
+    The tteellllddiirr(3) call returns the current location associated with the
+    directory stream indicated by dirp.
+
+    The sseeeekkddiirr(3) function sets the position of the next rreeaaddddiirr(2) operation
+    on the directory stream. The new position reverts to the one associated
+    with the directory stream when the tteellllddiirr(3) operation was performed.
+    Values returned by tteellllddiirr(3) are good only for the lifetime of the DDIIRR
+    pointer, dirp, from which they are derived. If the directory is closed and
+    then reopened, the tteellllddiirr(3) value may be invalidated due to undetected
+    directory compaction. It is safe to use a previous tteellllddiirr(3) value
+    immediately after a call to ooppeennddiirr(3) or wwccss__ooppeennddiirr(3) and before any
+    calls to rreeaaddddiirr(2).
+
+    The ddiirrffdd(3) function returns the integer file descriptor associated with
+    the named directory stream, see _oo_pp_ee_nn(2).
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The ooppeennddiirr(3) or wwccss__ooppeennddiirr(3) function returns a pointer to a DDIIRR on
+    success. On failure, it returns NULL and sets errno
+
+    rreeaaddddiirr(2) returns a pointer to a ssttrruucctt ddiirreenntt on success; when it
+    reaches the end of the directory, it returns NULL and doesn't set errno.
+    On failure, it returns NULL and does set errno.
+
+    If successful, the rreeaaddddiirr__rr(3) function returns zero; otherwise, an error
+    number is returned to indicate the error.
+
+    cclloosseeddiirr(3) and ddiirrffdd(3) return 0 on success; on error, they return -1 and
+    set errno.
+
+    rreewwiinnddddiirr(3) and sseeeekkddiirr(3) don't return a value.
+
+    On success, tteellllddiirr(3) returns the current location of the directory
+    stream.
+
+  EEXXAAMMPPLLEE
+
+    To search the current directory for the entry name:
+
+    dirp = opendir(".");
+    while ((dp = readdir(dirp)) != NULL)
+         if (!strcmp(dp->d_name, name)) {
+              (void)closedir(dirp);
+              return FOUND;
+         }
+    (void)closedir(dirp);
+    return NOT_FOUND;
+
+  EERRRROORRSS
+
+    The ooppeennddiirr(3) or wwccss__ooppeennddiirr(3) function can set errno to the following
+    values:
+
+    [EACCES]
+        The process doesn't have search permission for a component of the path
+        filename, or it doesn't have read permission for the directory itself.
+
+    [EMFILE]
+        The process has too many file descriptors open.
+
+    [ENFILE]
+        The system has too many file descriptors open.
+
+    [ENAMETOOLONG]
+        A component of filename exceeded {NAME_MAX} characters, or the entire
+        pathname exceeded {PATH_MAX} characters.
+
+    [ENOENT]
+        The directory named by filename doesn't exist, or filename is an empty
+        string.
+
+    [ENOTDIR]
+        Some component of filename isn't a directory.
+
+    The cclloosseeddiirr(3), ddiirrffdd(3) and rreeaaddddiirr(2) functions can set errno to the
+    following value:
+
+    [EBADF]
+        Dirp doesn't refer to an open directory stream.
+
+    The readdir_r(3) function may fail if:
+
+    [EBADF]
+        The dirp argument does not refer to an open directory stream.
+
+  SSEEEE AALLSSOO
+
+    _o_p_e_n(2)
+
+    _c_l_o_s_e(2)
+
+    _l_s_e_e_k(2)
+
+    _r_e_a_d(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The ooppeennddiirr,, cclloosseeddiirr,, ddiirrffdd,, rreeaaddddiirr__rr,, rreewwiinnddddiirr,, sseeeekkddiirr,, tteellllddiirr,,
+    wwccss__ooppeennddiirr functions are thread safe. The following function is not
+    thread safe: rreeaaddddiirr.
+
+    None of these functions are async-signal safe.
+

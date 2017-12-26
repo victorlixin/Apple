@@ -1,0 +1,106 @@
+
+
+Intro(3dshm)                                         Intro(3dshm)
+
+SSyynnooppssiiss
+       #include <dshm.h>
+
+DDeessccrriippttiioonn
+       The  Dynamically  Mapped  Shared  Memory  (DSHM)  facility
+       allows single-instance databases to use very large (multi-
+       GigaByte) main memory on ix86tm family systems.
+
+       Some  Pentium   processors  (Pentium Pro and up) support a
+       36-bit physical address space, up to 64 GB of main memory.
+       However,  the  ix86  instruction  set is limited to 32-bit
+       logical addresses.  Most database  implementations  assume
+       that  all  of  main memory can be accessed directly within
+       the user address space, and  that  processes  within  each
+       instance of a database share a buffer pool.  Without soft-
+       ware changes, the buffer pool cannot exceed 4  GB.   On  a
+       system  with  a large number of processors, database work-
+       loads would thrash in this size buffer pool.
+
+       DSHM enables a single-instance database  to  overcome  the
+       ix86  logical  addressing  barrier.  Instead of statically
+       mapping the  entire  shared  buffer  pool  into  its  user
+       address  space,  database processes share a set of dynami-
+       cally managed mappings (map slots) from the  user  address
+       space  onto  the  buffer  cache.   The  DSHM object is the
+       buffer cache; that is, it is  divided  into  a  number  of
+       fixed-size  buffers.   In  order  to  access a buffer, the
+       application must first request that the system establish a
+       mapping  to it.  The system chooses an available map slot,
+       establishes the mapping, and returns the  address  of  the
+       slot  where  the buffer can be accessed.  The pointer used
+       to return the buffer address is shared with all  users  of
+       the  object.   Due to the limited number of map slots, the
+       application must unmap the buffer when it is finished with
+       it.
+
+       At  the kernel interface, DSHM extends the &gemini; shared
+       memory model.  The  database  buffer  pool  resides  in  a
+       shared  memory  object  limited  in size only by available
+       main memory--each DSHM object is locked  in  main  memory.
+       All  processes sharing a DSHM object attach it to the same
+       range of logical addresses.  This  address  range  is  the
+       DSHM  map,  a  region of shared address space.  The map is
+       divided into a number of fixed-size slots.   A  user-level
+       library  manages the assignment of individual map slots to
+       buffers within the DSHM object.  The  library  caches  map
+       slot  assignments to minimize the overhead associated with
+       dynamic mapping.  Any change to a map slot is  visible  to
+       all  processes  that  have attached the map.  Although the
+       kernel implements this shared address space  region,  per-
+       formance considerations require that the user library man-
+       age  the  coherency  of  hardware  Translation   Lookaside
+       Buffers (TLBs) for access to recently changed map slots.
+
+                                                                1
+
+Intro(3dshm)                                         Intro(3dshm)
+
+   AApppplliiccaattiioonn ccoonnssttrraaiinnttss
+       DSHM  places the following constraints on the application:
+       To access a buffer, the application must have a mapping to
+       it.   Mapping  by  one  process is not sufficient to allow
+       access by another process.  Each process must map its  own
+       buffers.   There  is  one  exception:  in  special circum-
+       stances, a process can invoke  to  use  another  process's
+       preexisting  mappings.  See the information about applica-
+       tion-based threads below.  The logical address range for a
+       DSHM  map must be the same for each address space attached
+       to the segment.  The shared buffer pointers for an  appli-
+       cation  must exist at the same (statically mapped) logical
+       address  space  attached  to  the  segment.   The  logical
+       address  range for a DSHM map must be an exact multiple of
+       4 MB.  The buffers making up a DSHM object must all be the
+       same  size.   The  buffer  size must be a power of 2.  The
+       minimum map slot size is one page.  No multi-LWP processes
+       can  use DSHM.  Application-based threads multiplexed onto
+       single-LWP processes can use DSHM  if  they  follow  these
+       rules:  All  processes which can schedule the threads must
+       attach to the DSHM segment(s).  Threads cannot be resched-
+       uled between processes while executing DSHM functions.  If
+       a thread is rescheduled to another process  while  it  has
+       outstanding mappings, the TLB used by the new process must
+       first be updated for those mappings.  To update  the  TLB,
+       you  can replicate the mappings within the new process, or
+       use to invalidate  all  TLB  entries  for  the  segment(s)
+       within  the  new process.  Each map operation must eventu-
+       ally be balanced by an unmap operation.  One  process  can
+       perform  the  unmap operation that balances the map opera-
+       tion of another process.  Each DSHM object  is  locked  in
+       main  memory,  so  creating a DSHM segment requires P_LOCK
+       privilege.   The  aggregate  number  of  buffers  actively
+       mapped  by the application (that is, the number of buffers
+       having a non-zero slot reference count) for a segment must
+       never exceed the number of map slots in the map.
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoommpplliiaannccee
+       These  routines  do  not  conform  to any current industry
+       standard.
+
+                                                                2
+

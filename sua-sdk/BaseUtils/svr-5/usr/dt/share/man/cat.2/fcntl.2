@@ -1,0 +1,383 @@
+
+
+fcntl(2)                                                 fcntl(2)
+
+SSyynnooppssiiss
+       #include  <sys/types.h>  #include  <sys/fcntl.h>  #include
+       <unistd.h>
+
+       int fcntl(int fildes, int cmd, ...  /* arg */);
+
+DDeessccrriippttiioonn
+       fcntl provides for control over open files.  fildes is  an
+       open file descriptor (see
+
+       fcntl  may  take  a  third argument, arg, whose data type,
+       value and use depend upon the value of cmd.  cmd specifies
+       the  operation  to be performed by fcntl and may be one of
+       the following: Return a new file descriptor with the  fol-
+       lowing  characteristics:  Lowest  numbered  available file
+       descriptor greater than or  equal  to  the  integer  value
+       given  as the third argument.  Same open file (or pipe) as
+       the original file.  Same file pointer as the original file
+       (that  is,  both file descriptors share one file pointer).
+       Same access mode (read, write, or read/write) as the orig-
+       inal  file.  Shares any locks associated with the original
+       file descriptor.  Same file status flags  (that  is,  both
+       file  descriptors share the same file status flags) as the
+       original file.  The close-on-exec flag (see F_GETFD) asso-
+       ciated  with the new file descriptor is set to remain open
+       across system calls.  Will atomically  close  fildes2  and
+       replace  it with a duplicate of fildes.  The operation can
+       be invoked as fcntl(fildes, F_DUP2,  fildes2).   (See  Get
+       the  close-on-exec  flag  associated  with fildes.  If the
+       low-order bit is 0, the file will remain open across exec.
+       Otherwise, the file will be closed upon execution of exec.
+       Set the close-on-exec flag associated with fildes  to  the
+       low-order  bit  of  the  integer  value given as the third
+       argument (0 or 1 as above).  Get fildes status flags.  Set
+       fildes  status  flags  to  the  integer value given as the
+       third argument.  Only certain flags can be set  (see  Free
+       storage  space  associated  with a section of the ordinary
+       file fildes.  The section is specified by  a  variable  of
+       data  type  struct  flock pointed to by the third argument
+       arg.  The  data  type  struct  flock  is  defined  in  the
+       sys/fcntl.h  header  file  (see and contains the following
+       members: l_whence is 0, 1, or 2 to indicate that the rela-
+       tive offset l_start will be measured from the start of the
+       file, the current  position,  or  the  end  of  the  file,
+       respectively.   l_start  is  the  offset from the position
+       specified in l_whence.  l_len is the size of the  section.
+       F_FREESP  is  only supported with an l_len of 0, and frees
+       up to the end of the file.  The end of file (that is, file
+       size)  is  set  to the beginning of the section freed.  If
+       the beginning of the segment specified by the flock struc-
+       ture  is beyond the current end of the file, then the file
+       size is increased.  Any data previously written into  this
+       section is no longer accessible.  Free storage space asso-
+       ciated with a section of the ordinary  file  fildes.   The
+
+                                                                1
+
+fcntl(2)                                                 fcntl(2)
+
+       section  is  specified  by  a variable of data type struct
+       flock64 pointed to by the third argument  arg.   The  data
+       type  struct  flock64 is defined in the sys/fcntl.h header
+       file (see and contains the following members: l_whence  is
+       0,  1,  or  2 to indicate that the relative offset l_start
+       will be measured from the start of the file,  the  current
+       position,  or  the end of the file, respectively.  l_start
+       is the offset from the  position  specified  in  l_whence.
+       l_len is the size of the section.  F_FREESP64 is only sup-
+       ported with an l_len of 0, and frees up to the end of  the
+       file.   The end of file (that is, file size) is set to the
+       beginning of the section freed.  If the beginning  of  the
+       segment  specified  by  the  flock structure is beyond the
+       current end of the file, then the file size is  increased.
+       Any data previously written into this section is no longer
+       accessible.  If fildes refers to a socket, get the process
+       or  process  group  id specified to receive SIGURG signals
+       when out-of-band data is available.  Positive values indi-
+       cate  a process id, negative values other than -1 indicate
+       a process group id.  if fildes does not refer to a socket,
+       the  results  are  unspecified.   If  fildes  refers  to a
+       socket, set the process group id specified to receive SIG-
+       URG  signals when out-of-band data is available, using the
+       value of arg taken as type int.  Positive values  indicate
+       a  process  id,  negative  values other than -1 indicate a
+       process group id.  if fildes does not refer to  a  socket,
+       the  results are unspecified.  Get the default advice that
+       will be assumed by the system when the file  is  accessed.
+       The  return value of the function will be the value of the
+       advice parameter, which will  not  be  negative.  Possible
+       values  are: Specifies that system default policies apply.
+       Specifies that the file will be accessed in readonly fash-
+       ion and replication of pages at each CPU-Group in a parti-
+       tioned system is appropriate.   Specifies  that  the  file
+       will  be  accessed  read/write,  or readonly but such that
+       replication at each CPU-Group in a partitioned  system  is
+       not desired. It is expected that the file will be accessed
+       from many CPU-Groups, so it  is  appropriate  to  allocate
+       physical  memory  so  as  to spread it evenly across these
+       CPU-Groups.  Specifies that the memory for the file should
+       be  preferentially  allocated  from  just  one  CPU-Group.
+       Specifies that the memory for the file should be preferen-
+       tially  allocated on the CPU-Group where it was first ref-
+       erenced.  Set default advice to the system to take  effect
+       when the file is accessed.  The third argument is an inte-
+       ger that passes the advice, encoded by  the  values  given
+       for  F_GETADV,  possibly  modified  by  a  bitwise or with
+       F_MIGRATE. If F_BALANCED is set  explicitly,  the  set  of
+       CPU-Groups  used for balanced allocation is the entire set
+       of online CPU-Groups.  If F_CPUGROUP is set then the  CPU-
+       Groups  to  be  used  for  allocation is the one where the
+       caller is currently executing. If F_MIGRATE  is  set,  the
+       advice  should  apply to current allocations as well as to
+       future ones.
+
+                                                                2
+
+fcntl(2)                                                 fcntl(2)
+
+       The  system  advice  given  via  F_SETADV  may   influence
+       accesses made by other processes in the system. It remains
+       current until the last close of the file or  until  it  is
+       changed by a further use of F_SETADV.
+
+       The persistence of the advice given via F_SETADV after the
+       last close of the file is undefined.  The  effect  on  the
+       current advice for a particular process of another process
+       giving system advice  via  F_SETADV  is  undefined.   Text
+       files  mapped by follow the fcntl specified placement pol-
+       icy.  Get the CPU-Group that is to be used for  allocation
+       when  F_GETCPUGROUP  is set. The return value of the func-
+       tion will be the value of the CPU-Group identifier,  which
+       will  not  be  negative.  Should  F_GETCPUGROUP  not be in
+       effect, the return value will  be  NOCGID.   Instruct  the
+       system  that allocations for the file are to be taken from
+       a particular CPU-Group. The third parameter  contains  the
+       CPU-Group identifier. This call implicitly sets the advice
+       to F_CPUGROUP.  Get the granularity to be  used  for  bal-
+       anced  placement.  (This  is akin to stripe size, but does
+       not require a particular  allocation  pattern).   Set  the
+       granularity to be used for balanced placement.
+
+       The following commands are used for record-locking.  Locks
+       may be placed on an entire file or on segments of a  file.
+       Set  or  clear  a file segment lock according to the flock
+       structure that arg points to (see The cmd F_SETLK is  used
+       to  establish read (F_RDLCK) and write (F_WRLCK) locks, as
+       well as remove either type of lock (F_UNLCK).  If  a  read
+       or write lock cannot be set, fcntl will return immediately
+       with an error value of -1.  Set or clear  a  file  segment
+       lock according to the flock64 structure that arg points to
+       (see F_SETLK64 is used to  establish  read  (F_RDLCK)  and
+       write  (F_WRLCK)  locks,  as well as remove either type of
+       lock (F_UNLCK).  If a read or write lock  cannot  be  set,
+       fcntl  will  return immediately with an error value of -1.
+       This cmd is the same as F_SETLK except that if a  read  or
+       write  lock  is  blocked  by other locks, fcntl will block
+       until the segment is free to be locked.  This cmd  is  the
+       same  as  F_SETLK64 except that if a read or write lock is
+       blocked by other locks, fcntl will block until the segment
+       is free to be locked.  Get the first lock which blocks the
+       lock description pointed to by  the  third  argument  arg,
+       taken as a pointer to the type struct flock.  The informa-
+       tion retrieved overwrites the information passed to  fcntl
+       in  the  structure  flock.  If no lock is found that would
+       prevent this lock from being  created,  the  structure  is
+       left  unchanged  except  for the lock type which is set to
+       F_UNLCK.
+
+       If the lock request described by the flock structure  that
+       arg  points  to  could  be  created, then the structure is
+       passed back unchanged except that the lock type is set  to
+       F_UNLCK and the l_whence field will be set to SEEK_SET.
+
+                                                                3
+
+fcntl(2)                                                 fcntl(2)
+
+       This command never creates a lock; it tests whether a par-
+       ticular lock could be created.  Get the first  lock  which
+       blocks  the lock description pointed to by the third argu-
+       ment arg, taken as a pointer to the  type  struct  flock64
+       (see  The information retrieved overwrites the information
+       passed to fcntl in the structure flock64.  If no  lock  is
+       found that would prevent this lock from being created, the
+       structure is left unchanged except for the lock type which
+       is set to F_UNLCK.
+
+       If  the  lock  request  described by the flock64 structure
+       that arg points to could be created, then the structure is
+       passed  back unchanged except that the lock type is set to
+       F_UNLCK and the l_whence field will be set to SEEK_SET.
+
+       This command never creates a lock; it tests whether a par-
+       ticular  lock  could be created.  Used by the network lock
+       daemon, to communicate with the NFS server kernel to  han-
+       dle  locks on NFS files.  Used by the network lock daemon,
+       to communicate with the NFS server kernel to handle  locks
+       on  NFS files.  Used by the network lock daemon, to commu-
+       nicate with the NFS server kernel to handle locks  on  NFS
+       files.   Used  by  the network lock daemon, to communicate
+       with the NFS server kernel to handle locks on  NFS  files.
+       Used  by  the network lock daemon, to communicate with the
+       NFS server kernel to handle locks on NFS files.   Used  by
+       the  network  lock  daemon,  to  communicate  with the NFS
+       server kernel to handle locks on NFS files.
+
+       F_RSETLK, F_RSETLK64, F_RSETLKW F_RSETLKW64  F_RGETLK  and
+       F_RGETLK64 are used by the fslock daemon and should not be
+       used by regular applications.
+
+       A read lock prevents any other process from write  locking
+       the protected area.  More than one read lock may exist for
+       a given segment of a file  at  a  given  time.   The  file
+       descriptor  on which a read lock is being placed must have
+       been opened with read access.
+
+       A write lock prevents any other process from read  locking
+       or  write locking the protected area.  Only one write lock
+       and no read locks may exist for a given segment of a  file
+       at  a  given  time.   The file descriptor on which a write
+       lock is being placed must  have  been  opened  with  write
+       access.
+
+       The   flock  and  flock64  structures  describe  the  type
+       (l_type),  starting  offset  (l_whence),  relative  offset
+       (l_start), size (l_len), process ID (l_pid), and system ID
+       (l_sysid) of the segment of the file to be affected.   The
+       process  ID  and  system  ID fields are used only with the
+       F_GETLK cmd to return the  values  for  a  blocking  lock.
+       Locks  may  start  and  extend beyond the current end of a
+       file, but may not be negative relative to the beginning of
+
+                                                                4
+
+fcntl(2)                                                 fcntl(2)
+
+       the  file.   A lock may be set to always extend to the end
+       of file by setting l_len to 0.  If such a  lock  also  has
+       l_whence  and  l_start  set  to  0, the whole file will be
+       locked.  Changing or unlocking a segment from  the  middle
+       of  a larger locked segment leaves two smaller segments at
+       either end.  Locking a segment that is already  locked  by
+       the calling process causes the old lock type to be removed
+       and the new lock type to take effect.  All  locks  associ-
+       ated  with  a  file for a given process are removed when a
+       file descriptor for that file is closed by that process or
+       the  process  holding  that  file  descriptor  terminates.
+       Locks are not inherited by a child  process  in  a  system
+       call.
+
+       When mandatory file and record locking is active on a file
+       (see and system calls issued on the file will be  affected
+       by the record locks in effect.
+
+RReettuurrnn vvaalluueess
+       On  success,  fcntl returns a value that depends on cmd: A
+       new file descriptor.  A new  file  descriptor.   Value  of
+       flag  (only  the  low-order  bit  is defined).  The return
+       value will not be negative.  Value other than  -1.   Value
+       of  0.  Value of file status flags.  The return value will
+       not be negative.  Value  other  than  -1.   Value  of  the
+       socket  owner  process  or process group; this will not be
+       -1.  Value other than -1.  Value  other  than  -1.   Value
+       other than -1.  Value other than -1.
+
+       On  failure,  fcntl  returns -1 and sets errno to identify
+       the error.
+
+   EErrrroorrss
+       In the following conditions, fcntl fails  and  sets  errno
+       to: cmd is F_SETLK or F_SETLK64, the type of lock (l_type)
+       is a read lock (F_RDLCK) and the segment of a file  to  be
+       locked  is already write locked by another process, or the
+       type is a write lock (F_WRLCK) and the segment of  a  file
+       to  be  locked  is already read or write locked by another
+       process.  cmd is  F_SETFD,  F_DETFL,  F_SETLK,  F_SETLK64,
+       F_SETLKW,  or  F_SETLKW64,  and either write permission on
+       fildes is denied or fildes is already  open  for  writing.
+       cmd is F_SETLK, F_SETLK64, F_SETLKW, or F_SETLKW64, manda-
+       tory file locking bit is set for the file, and the file is
+       currently  being  mapped  to  virtual  memory  via mmap or
+       mmap64 (see  cmd  is  F_FREESP  or  F_FREESP64,  the  file
+       exists,  mandatory  file/record  locking is set, and there
+       are outstanding record locks on the file.  cmd is F_SETLK,
+       F_SETLK64, F_SETLKW, or F_SETLKW64, mandatory file locking
+       bit is set for the file, and the file is  currently  being
+       mapped to virtual memory via mmap or mmap64 (see fildes is
+       not  a  valid  open  file  descriptor.   cmd  is  F_SETLK,
+       F_SETLK64,  F_SETLKW,  or  F_SETLKW64,  the  type  of lock
+       (l_type) is a read lock (F_RDLCK), and  fildes  is  not  a
+
+                                                                5
+
+fcntl(2)                                                 fcntl(2)
+
+       valid  file  descriptor open for reading.  cmd is F_SETLK,
+       F_SETLK64,  F_SETLKW  or  F_SETLKW64,  the  type  of  lock
+       (l_type)  is  a  write lock (F_WRLCK), and fildes is not a
+       valid file descriptor open for writing.  cmd  is  F_FREESP
+       or  F_FREESP64,  and fildes is not a valid file descriptor
+       open for writing.  cmd is F_SETLKW or F_SETLKW64, the lock
+       is blocked by some lock from another process, and if fcntl
+       blocked the calling  process  waiting  for  that  lock  to
+       become  free,  a deadlock would occur.  cmd is F_FREESP or
+       F_FREESP64, mandatory record locking is enabled,  O_NDELAY
+       and  O_NONBLOCK  are  clear  and  a deadlock condition was
+       detected.  cmd is F_FREESP or F_FREESP64,  and  the  value
+       pointed  to  by  the  third  argument  arg  resulted in an
+       address outside the  process's  allocated  address  space.
+       cmd  is  F_GETLK,  F_GETLK64, F_SETLK, F_SETLK64, F_SETLKW
+       or F_SETLKW64 and the value pointed to by the third  argu-
+       ment  resulted  in  an address outside the program address
+       space.  A signal was caught during execution of the  fcntl
+       system  call.  An I/O error occurred while reading from or
+       writing to the file system.  cmd is F_DUPFD and the number
+       of  file descriptors currently open in the calling process
+       is the configured value for the  maximum  number  of  open
+       file  descriptors  allowed  each  user.  cmd is F_DUPFD or
+       F_DUP2 and the  third  argument  is  either  negative,  or
+       greater than or equal to the configured value for the max-
+       imum number of open file descriptors  allowed  each  user.
+       cmd  is  F_SETCPUGROUP  and  the  third parameter is not a
+       valid CPU-Group identifier.  cmd is  not  a  valid  value.
+       cmd  is  F_GETLK, F_GETLK64, F_SETLK, F_SETLK64, F_SETLKW,
+       or F_SETLKW64 and the third argument or the data it points
+       to  is not valid, or fildes refers to a file that does not
+       support locking.  cmd is F_SETLK, F_SETLK64, F_SETLKW,  or
+       F_SETLKW64,  the type of lock is a read or write lock, and
+       there are no more record locks available  (too  many  file
+       segments  locked)  because  the  system  maximum  has been
+       exceeded.  fildes is on a remote machine and the  link  to
+       that  machine  is  no  longer  active.  cmd is F_FREESP or
+       F_FREESP64, the file is on a remote machine, and the  link
+       to  that  machine  is no longer active.  cmd is F_GETLK or
+       F_GETLK64 and the process ID of the  process  holding  the
+       requested  lock  is  too  large  to be stored in the l_pid
+       field.  cmd is  F_GETLK,  F_SETLK,  or  F_SETLKW  and  the
+       smallest,  or if l_len is non-zero, the largest, offset of
+       any byte in the requested segment  cannot  be  represented
+       correctly  in  an object of type off_t.  One of the values
+       to be returned cannot be represented  correctly.   cmd  is
+       F_GETADV,  F_SETADV, F_SETCPUGROUP, F_GETGRAN or F_SETGRAN
+       and the system does not support  placement  directives  on
+       the file specified by fildes.
+
+RReeffeerreenncceess
+NNoottiicceess
+   FFuuttuurree ddiirreeccttiioonnss
+       In  the  future,  the variable errno will be set to EAGAIN
+
+                                                                6
+
+fcntl(2)                                                 fcntl(2)
+
+       rather than EACCES when a section of  a  file  is  already
+       locked  by  another process.  Therefore, portable applica-
+       tion programs should expect and test for either value.
+
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Open file descriptors are a process resource and available
+       to  any  sibling  thread; if used concurrently, actions by
+       one thread can interfere with those of a sibling.
+
+       File and record locks are  based  on  process  ID;  conse-
+       quently,  all  siblings share locks.  It is possible for a
+       record lock placed by one thread to  be  overlaid  with  a
+       lock  by  a  sibling.   Other mechanisms should be used to
+       coordinate concurrent access by multiple threads.  See
+
+       New commands for fine grain shared memory  placement  have
+       been  added.   See  the descriptions of: F_GETADV F_SETADV
+       F_GETCPUGROUP F_SETCPUGROUP F_SETGRAN F_GETGRAN
+
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       fcntl supports large files.  For  details  on  programming
+       for large file capable applications, see in intro(2).
+
+                                                                7
+

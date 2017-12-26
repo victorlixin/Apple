@@ -1,0 +1,114 @@
+
+
+                                                                1
+
+dnssec-signkey(1Mtcp)                       dnssec-signkey(1Mtcp)
+
+SSYYNNOOPPSSIISS
+       dnssec-signkey -h -s start-time -e end-time -c class -p -r
+       randomdev -v level keyset keyfile ...
+
+DDEESSCCRRIIPPTTIIOONN
+       dnssec-signkey is used to sign a key set for a child zone.
+       Typically  this  would be provided by a keyset file gener-
+       ated by This provides a mechanism for a DNSSEC-aware  zone
+       to  sign  the  keys  of any DNSSEC-aware child zones.  The
+       child zone's key set gets signed with the  zone  keys  for
+       its parent zone.  keyset will be the pathname of the child
+       zone's keyset file.  Each keyfile argument will be  a  key
+       identification  string as reported by for the parent zone.
+       This allows the child's keys to be signed by more than one
+       parent zone key.
+
+       The  -h  option makes dnssec-signkey print a short summary
+       of its command line options and arguments.
+
+       By default, the  validity  period  of  the  generated  SIG
+       records is copied from that of the signatures in the input
+       key set.  This  may  be  overriden  with  the  -s  and  -e
+       options,  both of which must be present if either is.  The
+       start of the validity period  is  specified  with  the  -s
+       option.   start-time can either be an absolute or relative
+       date.  An absolute start time is indicated by a number  in
+       YYYYMMDDHHMMSS  notation:  20000530144500 denotes 14:45:00
+       UTC on May 30th, 2000.  A relative start time is  supplied
+       when start-time is given as +N: N seconds from the current
+       time.  If no -s option is supplied, the current  date  and
+       time is used for the start time of the SIG records.
+
+       The  expiry  date for the SIG records can be set by the -e
+       option.  Note that in this context, the expiry date speci-
+       fies  when  the  SIG records are no longer valid, not when
+       they are deleted from caches on  name  servers.   end-date
+       also represents an absolute or relative date.  YYYYMMDDHH-
+       MMSS notation is used as before to  indicate  an  absolute
+       date and time.  When end-date is +N, it indicates that the
+       SIG records will expire in N  seconds  after  their  start
+       date.   If  end-date  is written as now+N, the SIG records
+       will expire in N seconds after the current time.
+
+       The -c option specifies that the KEY records in the  input
+       and  output  key  sets  should  have  the  specified class
+       instead of IN.
+
+       dnssec-signkey may need random numbers in the  process  of
+       generating  keys.  If the system does not have a /dev/ran-
+       dom device that can be used for generating random numbers,
+       dnssec-signkey  will prompt for keyboard input and use the
+       time intervals between keystrokes to  provide  randomness.
+       The  -r  option  overrides  this behaviour, making dnssec-
+       signkey use randomdev as a source of random data.
+
+                                                                1
+
+dnssec-signkey(1Mtcp)                       dnssec-signkey(1Mtcp)
+
+       The -p option instructs dnssec-signkey to use  pseudo-ran-
+       dom  data when signing the keys.  This is faster, but less
+       secure, than using  genuinely  random  data  for  signing.
+       This  option  may be useful when there are many child zone
+       keysets to sign or if the entropy source is  limited.   It
+       could  also  be  used  for short-lived keys and signatures
+       that don't require as much protection against  cryptanaly-
+       sis, such as when the key will be discarded long before it
+       could be compromised.
+
+       The -v option can be used to make dnssec-signkey more ver-
+       bose.   As  the  debugging/tracing  level level increases,
+       dnssec-signkey  generates  increasingly  detailed  reports
+       about what it is doing.  The default level is zero.
+
+       When dnssec-signkey completes successfully, it generates a
+       file called signedkey-nnnn.  containing  the  signed  keys
+       for  child zone nnnn .  The keys from the keyset file will
+       have been signed by the parent zone's key  or  keys  which
+       were  supplied  as keyfile arguments.  This file should be
+       sent to the DNS administrator of  the  child  zone.   They
+       arrange  for its contents to be incorporated into the zone
+       file when it next gets signed with A copy of the generated
+       signedkey  file  should  be  kept by the parent zone's DNS
+       administrator, since it will be needed  when  signing  the
+       parent zone.
+
+EEXXAAMMPPLLEE
+       The  DNS  administrator  for a DNSSEC-aware zone would use
+       the following command to make dnssec-signkey sign the key-
+       set  file  for example.com created in the example shown in
+       the man  page  for  #  dnssec-signkey  keyset-example.com.
+       Kcom.+003+51944
+
+       where  Kcom.+003+51944  was a key file identifier that was
+       produced when generated a key for the zone.
+
+       dnssec-signkey will produce a file called  signedkey-exam-
+       ple.com.  which has the keys for example.com signed by the
+       com zone's zone key.
+
+FFIILLEESS
+       /dev/random
+
+SSEEEE AALLSSOO
+       RFC2535,
+
+                                                                2
+

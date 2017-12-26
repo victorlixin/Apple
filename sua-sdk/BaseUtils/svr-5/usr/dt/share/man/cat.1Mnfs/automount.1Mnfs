@@ -1,0 +1,305 @@
+
+
+automount(1Mnfs)                                 automount(1Mnfs)
+
+SSyynnooppssiiss
+       /usr/lib/nfs/automount  [-nTv]  [-D name=value] [-M mount-
+       directory] [-f master-file]  [-t  sub-options]  [directory
+       map [-mount-options]] . . .
+
+DDeessccrriippttiioonn
+       automount is a daemon that automatically and transparently
+       mounts an  filesystem as needed. It monitors  attempts  to
+       access  directories  that are associated with an automount
+       map, along with any directories or files that reside under
+       them. When a file is to be accessed, the daemon mounts the
+       appropriate  filesystem.
+
+       automount uses  a  map  to  locate  an  appropriate   file
+       server,  exported  filesystem,  and  mount options, for an
+       automatically  mounted  resource.  It  then   mounts   the
+       filesystem   in   a  temporary  location  (/tmp_mnt),  and
+       replaces the filesystem entry for the directory or  subdi-
+       rectory  with  a  symbolic link to the temporary location.
+       If the filesystem is not accessed  within  an  appropriate
+       interval  (five  minutes  by default), the daemon unmounts
+       the filesystem and removes the symbolic link. If the indi-
+       cated  directory  (/tmp_mnt) has not already been created,
+       the daemon creates it, and then removes it upon exiting.
+
+   OOppttiioonnss
+       automount takes the  following  options:  Disable  dynamic
+       mounts. With this option, references through the automount
+       daemon only succeed when the target  filesystem  has  been
+       previously  mounted.  This can be used to prevent  servers
+       from cross-mounting each other.  Trace. Expand each   call
+       and  display it on the standard output.  Verbose. Log sta-
+       tus messages to the console.  Assign value  to  the  indi-
+       cated automount (environment) variable.  Specify all argu-
+       ments in master-file and instruct the daemon to look in it
+       for  instructions.   Mount  temporary  filesystems  in the
+       named directory, instead of /tmp_mnt.  Specify sub-options
+       as a comma-separated list that contains any combination of
+       the following: Specify a  duration,  in  seconds,  that  a
+       filesystem  is  to  remain  mounted  when  not in use. The
+       default is 300 seconds.  Specify an interval, in  seconds,
+       between  attempts to mount a filesystem. The default is 30
+       seconds.  Specify a duration, in seconds,  that  automount
+       will  wait  for  a response from the server to a ping when
+       deciding if it can mount a filesystem. The default  is  15
+       seconds.    Specify   an  interval,  in  seconds,  between
+       attempts to unmount filesystems that have  exceeded  their
+       cached times. The default is 60 seconds.
+
+   EEnnvviirroonnmmeenntt vvaarriiaabblleess
+       Environment variables can be used within an automount map.
+       For instance, if $HOME appeared within  a  map,  automount
+       would  expand  it  to its current value for the HOME vari-
+       able.
+
+                                                                1
+
+automount(1Mnfs)                                 automount(1Mnfs)
+
+       If a reference needs to be protected from affixed  charac-
+       ters, enclose the variable name within braces.
+
+   DDiirreecctt//iinnddiirreecctt mmaapp eennttrryy ffoorrmmaatt
+       A  simple  map  entry  (mapping) takes the form: directory
+       [-mount-options] location ...  where directory is the full
+       pathname  of  the directory to mount when used in a direct
+       map, or the basename of a subdirectory in an indirect map.
+       mount-options  is a comma-separated list of mount options,
+       and location specifies a remote file system from which the
+       directory  may  be  mounted.  In the simple case, location
+       takes the form: host:pathname
+
+   RReepplliiccaatteedd ffiilleessyysstteemmss
+       Multiple location fields can be specified, in  which  case
+       automount  sends multiple mount requests; automount mounts
+       the filesystem from the first host  that  replies  to  the
+       mount request. This request is first made to the local net
+       or subnet. If there is no response, any  connected  server
+       may respond.
+
+       If  location  is  specified  in the form: host:path:subdir
+       host is the name of the host from which to mount the  file
+       system,  path  is  the pathname of the directory to mount,
+       and subdir, when supplied, is the name of  a  subdirectory
+       to  which  the  symbolic link is made. This can be used to
+       prevent duplicate mounts when multiple directories in  the
+       same  remote  filesystem  may  be accessed. With a map for
+       /home    such    as:     able homebody:/home/homebody:able
+       baker     homebody:/home/homebody:baker    and    a   user
+       attempting to  access  a  file  in  /home/able,  automount
+       mounts  homebody:/home/homebody,  but  creates  a symbolic
+       link called /home/able to the  able  subdirectory  in  the
+       temporarily  mounted  filesystem.   If  a user immediately
+       tries to access a file  in  /home/baker,  automount  needs
+       only  to  create  a symbolic link that points to the baker
+       subdirectory; /home/homebody is already mounted. With  the
+       following      map:      able homebody:/home/homebody/able
+       baker     homebody:/home/homebody/baker  automount   would
+       have to mount the filesystem twice.
+
+       Requests  for  a  server  may  be weighted by appending an
+       integer weighing factor, within parenthesis, to the server
+       name.  The higher the weighing factor value, the lower the
+       chance that the server  will  be  selected.   Servers  for
+       which  no weighing factor is specified are assumed to have
+       a value of zero (most likely to be selected). In the exam-
+       ple:   able  -ro  alpha,bravo,charlie(1),delta(4):/usr/man
+       hosts alpha and bravo have the highest selection priority,
+       while  host  delta has the lowest.  Server proximity takes
+       priority over weighing factors  during  server  selection.
+       In  the  example above, if the server delta is on the same
+       network segment as  the  client,  and  the  other  servers
+       reside  on  other  network  segments, then automount would
+
+                                                                2
+
+automount(1Mnfs)                                 automount(1Mnfs)
+
+       select delta (ignoring delta's high weighing  factor).  In
+       cases where servers have the same network proximity, their
+       weighing factors are taken into account during  selection.
+
+       In  cases  where each server has a different export point,
+       you can still assign weighing factors. For  example:  able
+       -ro     alpha:/usr/man    bravo,charlie(1):/usr/share/man\
+       delta(4):/export/man A mapping  can  be  continued  across
+       input lines by escaping the NEWLINE with a backslash. Com-
+       ments begin with a # and end at the subsequent NEWLINE.
+
+   MMaapp kkeeyy ssuubbssttiittuuttiioonn
+       The & character is expanded to the value of the  directory
+       field  for  the  entry  in  which it occurs. In this case:
+       able homebody:/home/homebody:& the & expands to able.
+
+   WWiillddccaarrdd kkeeyy
+       The * character, when supplied as the directory field,  is
+       recognized  as the catch-all entry. Such an entry resolves
+       to any entry not previously matched. For instance, if  the
+       following  entry  appeared  in the indirect map for /home:
+       *    &:/home/& this would allow automatic mounts in  /home
+       of  any  remote file system whose location could be speci-
+       fied as: hostname:/home/hostname
+
+   HHiieerraarrcchhiiccaall mmaappppiinnggss
+       A hierarchical mapping takes the form: directory [/[subdi-
+       rectory]]  [-mount-options] location . . .       [/[subdi-
+       rectory] [-mount-options] location . . . ] . . .  The ini-
+       tial  /[subdirectory]  is  optional for the first location
+       list and mandatory for all subsequent lists. The  optional
+       subdirectory is taken as a filename relative to the direc-
+       tory. If subdirectory is omitted in the first  occurrence,
+       the / refers to the directory itself.
+
+       Given    the    direct   map   entry:   /arch/src    \   /
+       -ro,intr  arch:/arch/src           alt:/arch/src   \  /1.0
+       -ro,intr   alt:/arch/src/1.0        arch:/arch/src/1.0   \
+       /1.0/man          -ro,intr          arch:/arch/src/1.0/man
+       alt:/arch/src/1.0/man  automount would automatically mount
+       /arch/src, /arch/src/1.0 and /arch/src/1.0/man, as needed,
+       from either arch or alt, whichever host responded first.
+
+   DDiirreecctt mmaappss
+       A  direct map contains mappings for any number of directo-
+       ries. Each directory listed in the  map  is  automatically
+       mounted  as needed. The direct map as a whole is not asso-
+       ciated with any single directory.
+
+   IInnddiirreecctt mmaappss
+       An indirect map allows you to  specify  mappings  for  the
+       subdirectories you wish to mount under the directory indi-
+       cated on the command line.  It also obscures local  subdi-
+       rectories  for  which  no  mapping  is  specified.   In an
+
+                                                                3
+
+automount(1Mnfs)                                 automount(1Mnfs)
+
+       indirect map, each directory field consists of  the  base-
+       name  of  a  subdirectory  to  be  mounted as needed.  The
+       directory associated with an indirect map shows only  cur-
+       rently  mounted  entries.   This is a deliberate policy to
+       avoid inadvertent mounting of every entry in a map  via  a
+       ls -l of the directory.
+
+   SSppeecciiaall mmaappss
+       Three  special maps are currently available: Use the host-
+       name resolution facilities  available  on  the  system  to
+       locate a remote host when the hostname is specified.  This
+       map specifies mounts of all exported filesystems from  any
+       host.  For instance, if the following automount command is
+       already in effect: automount /net -hosts then a  reference
+       to  /net/hermes/usr  would  initiate an automatic mount of
+       all filesystems from hermes that automount can mount; ref-
+       erences to a directory under /net/hermes will refer to the
+       corresponding directory on hermes.  When indicated on  the
+       command  line,  cancel  a  previous  map for the directory
+       indicated.  For example, it can be used to  cancel  a  map
+       given  in  auto.master.   Use  the  database to attempt to
+       locate the home directory of a user.  For instance, if the
+       following  automount  command  is already in effect: auto-
+       mount /homes -passwd then if the home directory for a user
+       has  the  form /dir/server/username and server matches the
+       host system on which  that  directory  resides,  automount
+       will  mount the user's home directory as: /homes/username.
+
+       For this map, the tilde character (~) is recognized  as  a
+       synonym for the username.
+
+   IInncclluuddiinngg NNIISS mmaappss
+       The  contents  of  a Network Information Service (NIS) map
+       can be included in an automounter map using  an  entry  of
+       the  form  +mapname  in  the  automounter  map  on the NIS
+       client, where mapname is the name of the  NIS  map  to  be
+       included at that point in the automounter map.
+
+       For  example, to include the contents of the map auto.mas-
+       ter on the NIS master server within the automounter master
+       map  on  an  NIS  client,  add  an  entry  that  specifies
+       +auto.master in  the  /etc/auto.master  file  on  the  NIS
+       client.  To include the contents of the NIS map auto.home,
+       add  an   entry   that   specifies   +auto.home   in   the
+       /etc/auto.home file on the NIS client.
+
+FFiilleess
+       default  master  map file default direct/indirect map file
+       default parent directory for dynamically mounted  filesys-
+       tems
+
+UUssaaggee
+       You  can  assign  a map to a directory using an entry in a
+       direct automount map, by specifying a  master-map  on  the
+
+                                                                4
+
+automount(1Mnfs)                                 automount(1Mnfs)
+
+       command line, or by specifying an indirect map.
+
+       If  you  specify  the dummy directory /-, automount treats
+       the map argument that follows as the name of a direct map.
+       In  a  direct map, each entry associates the full pathname
+       of a mount point with a remote filesystem to mount.
+
+       If the directory argument is a pathname, the map  argument
+       points  to  a file called an indirect map. An indirect map
+       contains a list of the subdirectories contained within the
+       indicated  directory.  With  an  indirect map, it is these
+       subdirectories that are  mounted  automatically.  The  map
+       argument must be a full pathname.
+
+       You  can modify the automounter maps at any time. However,
+       observe the following when doing so: master map
+
+       Changes and additions will not take effect until you  kill
+       and restart the automounter.  direct map
+
+       You  can  modify entries in this map but cannot add to it.
+       If you add entries, these entries will not become  visible
+       until you restart the automounter.  indirect map
+
+       You  can change and add entries in this map without having
+       to restart the automounter.  The -mount-options  argument,
+       when  supplied, is a comma-separated list of options, pre-
+       ceded by a hyphen -. If mount options are specified in the
+       indicated  map, however, those in the map take precedence.
+
+       Only a privileged user can execute this command.
+
+WWaarrnniinnggss
+       automount must not be terminated with the  SIGKILL  signal
+       (kill -9). Without an opportunity to unmount itself, auto-
+       mount's mount points will appear to the kernel as  belong-
+       ing  to  a  non-responding  server. The recommended way to
+       terminate automount services is to send  a  SIGTERM  (kill
+       -15,  the  default  signal) to the daemon. This allows the
+       automounter to catch the signal, and to unmount  not  only
+       the  mount  points associated with its daemon, but also to
+       unmount any mounts in /tmp_mnt.  Any  mounts  in  /tmp_mnt
+       that are busy will not be unmounted.  Mount points used by
+       automount are not recorded in /etc/mnttab.  on such  mount
+       points  will  fail,  saying mount point busy, although the
+       mount point is not in /etc/mnttab.
+
+       Shell filename expansion does not  apply  to  objects  not
+       currently mounted.
+
+RReeffeerreenncceess
+NNoottiicceess
+       By  default, automount will first try and mount a filesys-
+       tem using NFSv3.  If  unsuccessful,  it  will  then  retry
+
+                                                                5
+
+automount(1Mnfs)                                 automount(1Mnfs)
+
+       using  NFSv2.   If  necessary,  you can use the vers mount
+       option (see to specify  that  automount  should  only  use
+       NFSv2 or NFSv3.
+
+                                                                6
+

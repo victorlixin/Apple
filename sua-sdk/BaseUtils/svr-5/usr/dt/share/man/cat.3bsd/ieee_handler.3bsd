@@ -1,0 +1,93 @@
+
+
+ieee_handler(3bsd)                             ieee_handler(3bsd)
+
+SSyynnooppssiiss
+       /usr/ucb/cc [flag . . . ] file . . .
+
+       #include <fp.h>
+
+       int    ieee_handler(char   action[],   char   exception[],
+            sigfpe_handler_type hdl);
+
+DDeessccrriippttiioonn
+       This function provides easy exception handling to  exploit
+       ANSI/IEEE  Std  754-1985  arithmetic  in a C program.  All
+       arguments are pointers to strings.  Results  arising  from
+       invalid  arguments  and invalid combinations are undefined
+       for efficiency.
+
+       There are three types of  action:  get,  set,  and  clear.
+       There are five types of exception: division by zero excep-
+       tion all five  exceptions  above  invalid,  overflow,  and
+       division exceptions
+
+       Note: all and common only make sense with set or clear
+
+       hdl  contains  the  address  of a signal-handling routine.
+       fp.h defines sigfpe_handler_type.
+
+       get will get the location of the current  handler  routine
+       for  exception  in hdl .  set will set the routine pointed
+       at by hdl to be the handler routine and at the  same  time
+       enable   the   trap  on  exception,  except  when  hdl  ==
+       SIGFPE_DEFAULT or SIGFPE_IGNORE;  then  ieee_handler  will
+       disable  the trap on exception.  When hdl == SIGFPE_ABORT,
+       any trap on exception will dump core using clear all  dis-
+       ables trapping on all five exceptions.
+
+       Two steps are required to intercept an IEEE-related SIGFPE
+       code with ieee_handler: Set up a  handler  with  ieee_han-
+       dler.   Perform  a floating-point operation that generates
+       the intended IEEE exception.
+
+       Unlike ieee_handler also adjusts  floating-point  hardware
+       mode   bits  affecting  IEEE  trapping.   For  clear,  set
+       SIGFPE_DEFAULT, or set SIGFPE_IGNORE, the hardware trap is
+       disabled.   For  any  other  set,  the  hardware  trap  is
+       enabled.
+
+       SIGFPE signals can be handled using or ieee_handler.  In a
+       particular  program,  to  avoid confusion, use only one of
+       these interfaces to handle SIGFPE signals.
+
+ vvaalluueess
+       ieee_handler normally returns 0.  In the case  of  set,  1
+       will  be  returned  if  the  action  is not available (for
+       instance, not supported in hardware).
+
+                     BSD System Compatibility                   1
+
+ieee_handler(3bsd)                             ieee_handler(3bsd)
+
+EExxaammpplleess
+       A user-specified signal handler might look like this: void
+       sample_handler(int  sig,  int code,      struct sigcontext
+       *scp,  char *addr);      /* sig  ==  SIGFPE  always  */  {
+            /*           Sample user-written sigfpe code handler.
+               Prints a message and  continues.            struct
+       sigcontext   is   defined   in   <signal.h>.            */
+            printf("ieee exception code %x occurred at pc %X \n",
+             code,scp->sc_pc); }
+
+       and  it might be set up like this: extern void sample_han-
+       dler; main {      sigfpe_handler_type  hdl,  old_handler1,
+       old_handler2;  /* * save current overflow and invalid han-
+       dlers */      ieee_handler("get","overflow",old_handler1);
+            ieee_handler("get","invalid", old_handler2); /* * set
+       new overflow handler  to  sample_handler  and  set  new  *
+       invalid  handler  to  SIGFPE_ABORT  (abort  on invalid) */
+            hdl    =    (sigfpe_handler_type)     sample_handler;
+            if(ieee_handler("set","overflow",hdl)      !=      0)
+                 printf("ieee_handler can't  set  overflow  \n");
+            if(ieee_handler("set","invalid",SIGFPE_ABORT)  !=  0)
+                 printf("ieee_handler  can't  set  invalid  \n");
+            ...   /*  * restore old overflow and invalid handlers
+       */        ieee_handler("set","overflow",    old_handler1);
+            ieee_handler("set","invalid", old_handler2); }
+
+FFiilleess
+RReeffeerreenncceess
+
+                     BSD System Compatibility                   2
+

@@ -1,0 +1,334 @@
+
+
+Path(3C++)                                             Path(3C++)
+
+SSyynnooppssiiss
+       #include <Path.h> namespace SCO_SC {
+
+       class Path{ public: //  Enumerations
+           enum completion{
+               no_completion=0,
+               unique_completion,
+               several_completions
+           }; //  Objections
+           static Objection no_wd; //  Constructors
+           Path();
+           Path(const char* s);
+           Path(const String& s);
+           Path(const List<Path>& p);
+           Path(const char* dirs,const char* base);
+           Path(const char* dirs,const char* base,
+               const char* ext); //  Copy and assign
+           Path(const Path& p);
+           Path&  operator=(const Path& p); //  Conversion to and
+       from strings
+           operator const char*()const;
+           operator String()const; //  Length
+           int length()const;
+           int ncomponents()const; //  Component manipulators
+           Path dirname()const;
+           String basename()const;
+           String basename(const char* suffix)const;
+           void explode(List<Path>& ret)const; //  Concatenation
+           friend Path operator/(const Path& s,const Path& t);
+           Path& operator/=(const Path& p); //  Absolute and rel-
+       ative versions of Paths
+           int is_absolute()const;
+           int is_relative()const;
+           Path absolute_version()const;
+           Path relative_version()const;
+           Path relative_version(
+               const  Path&  with_respect_to)const;  //  Wildcard
+       and tilde expansion
+           void expand_wildcards(List<Path>& ret)const;
+           int expand_tilde(); //  File name completion
+           completion complete(String& s)const; //  Comparison
+           friend int operator==(const Path& p,const Path& q);
+           friend int operator!=(const Path& p,const Path& q);
+           friend int componentwise_prefix(const Path & p,
+               const Path & q); //  Stream insertion and  extrac-
+       tion
+           friend ostream& operator<<(ostream& os,const Path& p);
+           friend istream& operator>>(istream&  is,Path&  p);  //
+       Miscellaneous
+           int is_wd()const;
+           int truncate_components(int maxlen); }; }
+
+DDeessccrriippttiioonn
+       A Path represents a UNIX path name, that is, a sequence of
+
+                                                                1
+
+Path(3C++)                                             Path(3C++)
+
+       slash-separated components.  The components  in  "foo/bar"
+       are  "foo"  and  "bar";  in "/foo/bar" are "/", "foo", and
+       "bar"; and in "../foo/bar" are  "..",  "foo",  and  "bar".
+       Further,  the  path  "/"  consists of the single component
+       "/", and the path "." has no components.
+
+       The facilities of Path(3C++) contain most of the function-
+       ality  users  need  when  manipulating UNIX path names and
+       UNIX search paths.  Functionality includes: automatic path
+       canonicalization, path relativization, wildcard expansion,
+       path  completion,   and   searching   in   search   paths.
+       Path(3C++)  also  contains  a replacement for the assorted
+       temporary path name construction facilities of  mktemp(3),
+       tempnam(3),  and  tmpnam(3).  Finally, Path(3C++) provides
+       an interface to the  Korn  shell  test(1)  predicate  that
+       works  regardless  of whether the user is running the Korn
+       shell.
+
+       There are four manual entries:
+
+       Path(3C++) Introduces the  Path  component  and  describes
+       class  Path3C++. UNIX path names.  Automatic canonicaliza-
+       tion, path relativization, wildcard expansion,  path  com-
+       pletion.
+
+       Search_path(3C++)   Constructing  and  searching  in  UNIX
+       search paths.
+
+       Tmppath(3C++) A replacement for mktemp(3), tempnam(3), and
+       tmpnam(3).
+
+       ksh_test(3C++)  Interface to the Korn shell test(1) predi-
+       cate.  Works regardless of whether or not the user is run-
+       ning ksh(1).
+
+       A Path need not correspond to an actual file in the under-
+       lying file system: it merely represents a  possible  file;
+       it  is  up to the user to arrange (if so desired) that the
+       file and all directories leading up to it exist.
+
+       Paths are always kept in  canonical  form.   In  canonical
+       form, "." components are stripped (except for the path "."
+       itself, which is the relative path representing  the  cur-
+       rent  working  directory),  ".."  components are collapsed
+       where possible (i.e., other than in an initial ".." series
+       in a relative path), multiple consecutive '/'s are reduced
+       to a single '/', and trailing '/'s are removed.  Thus, for
+       example, the following code fragment
+               Path p("../x//a");
+               p /= "../b/";
+               cout << p;
+
+       will print out ../x/b.
+
+                                                                2
+
+Path(3C++)                                             Path(3C++)
+
+       Where  it makes sense to do so, the behavior of Path func-
+       tions matches that of the Korn shell (see ksh(1)).  Notice
+       that the user need not be running ksh(1) in order for this
+       to occur; in particular,  even  if  the  user  is  running
+       another shell, the behavior of the Path library will still
+       match ksh(1).
+
+   EEnnuummeerraattiioonnss
+       enum completion{
+
+           no_completion=0,
+
+           unique_completion,
+
+           several_completions
+
+       };
+
+       Return value of complete().  The completion of a  Path  is
+       defined the same as in ksh(1).  That is, the completion of
+       a Path P is the longest common prefix of the Paths in  the
+       set  resulting  from an expansion of the Path P*, where P*
+       is the Path formed by concatenating (with  no  intervening
+       "/")  the  "*"  wildcard  onto  the  end  of P.  The value
+       no_completion  means  the   resulting   set   was   empty,
+       unique_completion  means  the  set had a singleton element
+       (which is therefore the completion),  and  several_comple-
+       tions means the set had more than one element.
+
+   OObbjjeeccttiioonnss
+       static Objection no_wd; Indicates a return value of 0 from
+       getwd(3C).  The default action is to abort with  an  error
+       message.   The  recovery action in every place this Objec-
+       tion is raised is to use "/" as the working directory.
+
+   CCoonnssttrruuccttoorrss
+       Path(); Equivalent to Path(".").
+
+       Path(const char* s);
+
+       Path(const String& s); The Path represented by s.
+
+       Path(const List<Path>& p); The  Path  represented  by  the
+       given list of components.
+
+       Path(const  char*  dirs,const  char*  base); The Path con-
+       structed by first appending a trailing slash onto dirs  if
+       dirs does not already have a trailing slash, then concate-
+       nating base onto the result.
+
+       Path(const char* dirs,const char* base,const  char*  ext);
+       The  Path  constructed by first appending a trailing slash
+       onto dirs if dirs does not already have a trailing  slash,
+       then concatenating base and ext onto the result.
+
+                                                                3
+
+Path(3C++)                                             Path(3C++)
+
+   CCooppyy aanndd aassssiiggnn
+       Path(const Path& p);
+
+       Path&  operator=(const  Path&  p); Paths have value seman-
+       tics.  That is, copying or assigning a Path creates a copy
+       of its value.
+
+   CCoonnvveerrssiioonn ttoo aanndd ffrroomm ssttrriinnggss
+       operator const char*()const;
+
+       operator  String()const; Conversions to character pointers
+       and Strings.
+
+   LLeennggtthh
+       int length()const; Returns the number of characters in the
+       path.
+
+       int  ncomponents()const;  Returns the number of components
+       in the path.
+
+   CCoommppoonneenntt mmaanniippuullaattoorrss
+       Path dirname()const; Equivalent to
+
+       String basename()const;
+
+       String basename(const char*  suffix)const;  Equivalent  to
+       basename(1).   Notice  that this function returns a String
+       and not a Path, since a basename can be the empty  string,
+       whereas a Path must contain at least one character.
+
+       void  explode(List<Path>&  ret)const; Sets ret to the list
+       whose elements are the individual components of the  Path.
+       Notice  that if the Path is absolute, the first element of
+       the list will be "/", and if the Path  is  ".",  the  list
+       will  be  empty.   The  current  position of ret is at the
+       beginning of the List.
+
+   CCoonnccaatteennaattiioonn
+       friend  Path  operator/(const  Path&  s,const  Path&  t);"
+       Returns Path(String(s) + '/' + String(t)).
+
+       Path&  operator/=(const  Path&  p);  Assignment version of
+       above.
+
+   AAbbssoolluuttee aanndd rreellaattiivvee vveerrssiioonnss ooff PPaatthhss
+       int is_absolute()const;
+
+       int is_relative()const; Returns true or  false,  depending
+       on  whether  the Path is absolute (starts with a slash) or
+       relative (does not start with a slash).
+
+       Path absolute_version()const; If  the  Path  is  relative,
+       returns  the  absolute  version  of it with respect to the
+       current working directory, raising no_wd if necessary.  If
+
+                                                                4
+
+Path(3C++)                                             Path(3C++)
+
+       the Path is absolute, simply returns it unchanged.
+
+       Path relative_version()const; Returns the relative version
+       of the Path with respect to the current working directory,
+       raising no_wd if necessary.
+
+       Path  relative_version(const  Path& with_respect_to)const;
+       Similar to the above, but uses with_respect_to rather than
+       the  current  working  directory  as  the  directory  with
+       respect  to  which  the  Path  is   made   relative.    If
+       with_respect_to  is  itself  relative,  it is first inter-
+       preted with respect  to  the  current  working  directory,
+       raising no_wd if necessary.
+
+   WWiillddccaarrdd aanndd ttiillddee eexxppaannssiioonn
+       void  expand_wildcards(List<Path>&  ret)const; Sets ret to
+       the list whose elements are the Paths  representing  those
+       files  in the underlying file system which match the given
+       Path according to the ksh(1) pattern matching rules.
+
+       int expand_tilde(); If the first (or  only)  component  of
+       the  Path  is  "~",  then replaces that component with the
+       current value of $HOME, and returns 1; if HOME is not set,
+       then  returns  0 without affecting the Path.  If the first
+       (or only) component of the Path is of  the  form  "~name",
+       then  replaces that component with the login directory for
+       user "name" (as found in getpwnam(name)->pw_dir; see getp-
+       wnam(3C)),  and  returns  1; if there is no password entry
+       for "name" (getpwnam returns 0), then  returns  0  without
+       affecting  the  Path.   If  the Path does not begin with a
+       '~', then returns 1 without affecting the Path.  See  also
+       the Warnings section below.
+
+   FFiillee nnaammee ccoommpplleettiioonn
+       completion complete(String& s)const; Sets s to the comple-
+       tion of the Path with respect to the files in the underly-
+       ing  file  system.   Notice  that  s is a String and not a
+       Path, since a completion can be the empty string,  whereas
+       a  Path  must contain at least one character.  Returns the
+       appropriate value of completion (see above).
+
+   CCoommppaarriissoonn
+       friend int operator==(const Path& p,const Path& q);"
+
+       friend  int  operator!=(const  Path&  p,const  Path&  q);"
+       Equality  and  inequality.  Paths P and Q are equal if and
+       only if (String)P == (String)Q.
+
+       friend int componentwise_prefix(const Path & p,
+             const Path & q); Returns -1, 1, or  0  depending  on
+       whether p is a componentwise prefix of q, q is a componen-
+       twise prefix of p, or neither is a componentwise prefix of
+       the  other.  If p == q then returns 1.  A Path is a compo-
+       nentwiseprefix of another if the list of components of the
+
+                                                                5
+
+Path(3C++)                                             Path(3C++)
+
+       first  is  a  (possibly  non-proper) prefix of the list of
+       components of the second, except that the Path "."  (which
+       has no components) is only considered a componentwise pre-
+       fix of every relative Path.  Note that the Path "/" is  by
+       definition  a componentwise prefix of every absolute Path.
+
+   SSttrreeaamm iinnsseerrttiioonn aanndd eexxttrraaccttiioonn
+       friend ostream& operator<<(ostream& os,const Path& p);"
+
+       friend istream& operator>>(istream& is,Path&  p);"  Repre-
+       sentation is as in UNIX, i.e., a slash-separated string of
+       components.
+
+   MMiisscceellllaanneeoouuss
+       int is_wd()const; Returns true if the Path is "."  or  the
+       absolute  path  name  of  the  current  working directory.
+       Raises no_wd if necessary.
+
+       int truncate_components(int maxlen); Truncates every  com-
+       ponent  in the Path to a maximum of maxlen characters.  If
+       maxlen is less than 2, it is treated as 2.  Returns  0  if
+       no  truncation occurred (i.e., if every component was less
+       than or equal to maxlen characters long).
+
+WWaarrnniinnggss
+       On some machines with symbolic links,  it  is  not  always
+       true  that  /a/b/..  is equal to /a in the underlying file
+       system.  (Doing a ".." back  across  a  link  follows  the
+       actual  hard  link,  even  if  you got there by a symbolic
+       link.)  The Path "a/b/..", however, will still be  canoni-
+       calized to "a".
+
+RReeffeerreenncceess
+
+                                                                6
+

@@ -1,0 +1,144 @@
+
+
+fnmatch(3C)                                           fnmatch(3C)
+
+SSyynnooppssiiss
+       #include <fnmatch.h>
+
+       int  fnmatch(const  char *pattern, const char *string, int
+       flags);
+
+       int _fnmcomp(fnm_t *pfnm, const  unsigned  char  *pattern,
+       int flags);
+
+       int _fnmexec(fnm_t *pfnm, const unsigned char *string);
+
+       void _fnmfree(fnm_t *pfnm);
+
+DDeessccrriippttiioonn
+       fnmatch  checks  string  to  see if it matches the pattern
+       specified by pattern.  It is essentially equivalent  to  a
+       call  to  _fnmcomp,  which, if that succeeds, is then fol-
+       lowed by a call to _fnmexec and then _fnmfree.  Its return
+       value is the same as _fnmcomp if that function fails; oth-
+       erwise its return value is that of _fnmexec.
+
+   DDaattaa ttyyppee
+       The data type fnm_t is a structure containing at least the
+       following members:
+       size_t  fnm_nsub;             /* number of subexpressions */
+       ssize_t fnm_so[FNM_NSUBEXPR]; /* (sub)expression starting offsets */
+       ssize_t fnm_eo[FNM_NSUBEXPR]; /* (sub)expression ending offsets */
+       These  structure  members  are set by _fnmcomp or _fnmexec
+       and only when the  FNM_SUBEXPR  flag  is  set;  otherwise,
+       their  values are indeterminate.  FNM_NSUBEXPR is at least
+       10 so that back references \1 through \9 can be handled.
+
+   FFllaaggss
+       flags is the bitwise inclusive OR of zero or more  of  the
+       flags  defined  in  the fnmatch.h header.  It modifies the
+       interpretation of pattern and string.  The following flags
+       can  be  set: If set, a slash (/) character in string must
+       be matched by an explicit slash in pattern, and  will  not
+       be  matched  by  meta  characters such as an asterisk.  If
+       FNM_PATHNAME is not set, the slash character is treated as
+       an  ordinary  character.  If set, a backslash character is
+       treated as an ordinary character.  If FNM_NOESCAPE is  not
+       set,  a backslash character in pattern will match the next
+       character as an ordinary character unless the next charac-
+       ter  is  the  null  character,  or  is  a slash and either
+       FNM_PATHNAME or FNM_COMPONENT is set, or is  a  digit  and
+       FNM_EXTENDED  is  set.  In particular, ``\\'' will match a
+       backslash in string.  If set, a leading period  in  string
+       must be matched by an explicit period in pattern where the
+       location of ``leading''  is  indicated  by  the  value  of
+       FNM_PATHNAME:  If FNM_PATHNAME is set, a period is leading
+       if it is the first character in string or  if  it  immedi-
+       ately  follows  a  slash.   If  FNM_PATHNAME is not set, a
+       period is leading only if it is  the  first  character  of
+
+                                                                1
+
+fnmatch(3C)                                           fnmatch(3C)
+
+       string.   If FNM_PERIOD is not set, a period is treated as
+       an ordinary character.   If  set,  an  out-of-order  range
+       within  brackets will silently be taken as if only the end
+       points were specified (so a [m-a] will behave like  [ma]);
+       otherwise, the pattern will fail to compile and FNM_BADPAT
+       will be returned.  If set, all ksh pattern matching exten-
+       sions  will  be  accepted;  otherwise, just the basic meta
+       characters of *, ?, and brackets will be  special.   These
+       extensions  include  back  references,  so  a pattern like
+       a@(xyz)b\1c will match the string axyzbxyzc, assuming that
+       FNM_NOESCAPE  is  not  set.   If  set,  backslashes within
+       brackets will quote the next character;  otherwise,  back-
+       slashes  are  not  special  within  brackets.  If set, the
+       fnm_t structure whose address is passed to  _fnmcomp  must
+       have  been  set  by a previous call to _fnmcomp without an
+       intervening call to _fnmfree.   This  allows  for  greater
+       efficiency when compiling and matching against a series of
+       patterns.  If FNM_REUSE is not set, the fnm_t structure is
+       assumed to be uninitialized.  If set, a slash character in
+       pattern will end the pattern to be  matched  against,  the
+       same  as  if  the terminating null character were reached.
+       Otherwise, slash characters do not end  the  pattern.   If
+       set,  the match need not include the start of string; oth-
+       erwise, it must.  If either of these is set, a  successful
+       match does not have to reach the end of the string; other-
+       wise, a successful match  must  include  the  end  of  the
+       string.   These  two differ in that FNM_RETMIN will return
+       after finding the shortest valid match,  while  FNM_RETMAX
+       will return with the longest.  If either of these are set,
+       the length of the matched portion of string  is  returned,
+       which  can  be  zero.   When  neither is set, a successful
+       match is always indicated by a zero return from  _fnmexec.
+       In all cases, a negative return from _fnmexec indicates an
+       unsuccessful match.  Note  that  combining  FNM_UNANCHORED
+       with  either  FNM_RETMIN  or FNM_RETMAX severely restricts
+       the utility of the length-of-match return value.  If  set,
+       after  a  successful  _fnmcomp, fnm_nsub will indicate the
+       number of subexpressions found in the pattern, and after a
+       successful  match,  the  fnm_so  and  fnm_eo arrays in the
+       fnm_t structure will be set to indicate the start and  end
+       offsets  into  the  matched  string  for  the entire match
+       (index zero) and the first FNM_NSUBEXPR-1  pattern  subex-
+       pressions (indices one through FNM_NSUBEXPR-1).  Note that
+       there  are  only  subexpressions  in  the   pattern   when
+       FNM_EXTENDED  is  set  and  that  the  array elements with
+       indices greater than fnm_nsub have  indeterminate  values.
+       An offset value of zero indicates the start of the string;
+       a negative offset value indicates a failure to match  that
+       subexpression.   If  FNM_SUBEXPR  is not set, the value of
+       fnm_nsub and the values in these arrays are indeterminate,
+       even after a successful compile or match.
+
+   RReettuurrnn vvaalluueess
+       fnmatch  and  _fnmexec return zero (or a nonnegative value
+
+                                                                2
+
+fnmatch(3C)                                           fnmatch(3C)
+
+       if FNM_RETMIN or FNM_RETMAX was set) if string matches the
+       compiled  pattern.   If  there  is no match, they return a
+       negative value: FNM_NOMATCH.
+
+       _fnmcomp returns zero if it successfully compiled pattern;
+       otherwise  it  returns a negative value such as FNM_BADPAT
+       which indicates a malformed pattern.
+
+UUssaaggee
+       The name fnmatch indicates that this function is  intended
+       to  match filenames rather than pathnames.  With FNM_PATH-
+       NAME, fnmatch matches pathnames, but without tilde  expan-
+       sion, or parameter expansion.
+
+       Applications  that  make  heavy  use  of fnmatch will most
+       likely run much more efficiently by using  the  underlying
+       separate compile and match functions.
+
+RReeffeerreenncceess
+
+                                                                3
+

@@ -1,0 +1,89 @@
+
+
+pthread_key_create(3pthread)         pthread_key_create(3pthread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <pthread.h>
+
+       int pthread_key_create(pthread_key_t *key, void (*destruc-
+       tor) (void *));
+
+DDeessccrriippttiioonn
+       pthread_key_create creates a thread-specific data key vis-
+       ible  to  all threads in the process.  Key values provided
+       by pthread_key_create are opaque objects  used  to  locate
+       thread-specific  data.   A thread can then bind a value to
+       key with Although the same key identifier can be  used  by
+       different   threads,  the  values  bound  to  the  key  by
+       pthread_setspecific are maintained on a  per-thread  basis
+       and  persist  for the life of the calling thread, or until
+       explicitly replaced.
+
+       pthread_key_create sets the initial value of  the  key  in
+       all  active and subsequently created threads to NULL.  The
+       caller must ensure that creation and use of this  key  are
+       synchronized (see
+
+       Normally,  the  value bound to a key by a thread will be a
+       pointer to dynamically allocated storage.  When  a  thread
+       terminates,  per-thread context is automatically destroyed
+       and, if a binding exists, the  reference  to  the  key  is
+       released.   If  the  key  has a destructor (see destructor
+       parameter), the destructor is called with the bound value.
+
+       There is no fixed limit on the number of keys per process.
+
+       The key parameter is a  pointer  to  a  pthread_key_t,  in
+       which pthread_key_create will store the newly created key.
+
+       The destructor parameter can be NULL or a  pointer  to  an
+       optional  destructor  function  to be associated with key.
+       When a thread terminates, if it has a non-NULL  destructor
+       function  and  a  non-NULL  value associated with key, the
+       destructor function will be called with the bound value as
+       an  argument.   If  the value associated with key is NULL,
+       the destructor is not called.  Destructors are intended to
+       free any dynamically allocated storage associated with the
+       bound value.
+
+       If  destructor  functions  call   pthread_setspecific   or
+       pthread_getspecific,  it  might not be possible to destroy
+       all bindings for a terminating thread.
+
+       The order of destructor calls is unspecified if more  than
+       one destructor exists for a thread when it exits.
+
+       If,  after  all  the  destructors have been called for all
+
+                                                                1
+
+pthread_key_create(3pthread)         pthread_key_create(3pthread)
+
+       non-NULL values with  associated  destructors,  there  are
+       still  some  non-NULL  values with associated destructors,
+       then the process will  be  repeated  until  no  more  than
+       PTHREAD_DESTRUCTOR_ITERATIONS   iterations  of  destructor
+       calls have occurred.
+
+RReettuurrnn vvaalluueess
+       pthread_key_create returns zero on success.  Otherwise, an
+       error number is returned.
+
+DDiiaaggnnoossttiiccss
+       pthread_key_create returns the following value if the cor-
+       responding  condition  is  detected:  Insufficient  memory
+       exists to create the key.
+
+SSttaannddaarrddss CCoommpplliiaannccee
+       The  Single UNIX Specification, Version 2; The Open Group.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Although there is no fixed limit on the number of keys  in
+       a  process, a large number of keys will consume memory and
+       slow thread exit performance.
+
+                                                                2
+

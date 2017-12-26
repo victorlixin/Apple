@@ -1,0 +1,111 @@
+
+
+processor_exbind(2)                           processor_exbind(2)
+
+SSyynnooppssiiss
+       #include  <sys/types.h>  #include <sys/procset.h> #include
+       <sys/processor.h>
+
+       int processor_exbind(idtype_t idtype,  id_t  *idlist,  int
+       list_size,       processorid_t  processorid, processorid_t
+       *obind);
+
+DDeessccrriippttiioonn
+       The processor_exbind call binds processes, an  LWP,  or  a
+       set of LWPs to a specific processor.
+
+       processorid  is  the ID of a processor.  This is an exclu-
+       sive binding; the processor is precluded from running LWPs
+       that are not exclusively bound.
+
+       idtype  and idlist are used to identify a set of LWPs.  If
+       obind is not NULL, it points to a variable  in  which  the
+       previous binding is returned.  idtype must be set to P_PID
+       and idlist is a process ID list specifying the LWPs to  be
+       bound.
+
+       To  exclusively  bind  or unbind a process or LWP, both of
+       these conditions must be met:  The  calling  process  must
+       have  the P_BIND privilege.  The real or effective user ID
+       of the caller must match the real or saved user  ID  [from
+       of  the process being bound or unbound, or the caller must
+       have the P_OWNER privilege.
+
+       The valid values for idtype and corresponding  interpreta-
+       tions  of  idlist  are  as follows: idlist is a process ID
+       list specifying a single LWP, within the same  process  as
+       the caller, to which the operation shall apply.  idlist is
+       a process ID list.  The operation shall apply to all  LWPs
+       currently associated with the specified processes.
+
+       When  the LWP identified by idlist has been bound, it will
+       execute only on the  processor  specified  by  processorid
+       (even  if other processors are available), except briefly,
+       if the LWP requires a resource that only another processor
+       can  provide.  Once one or more LWPs are exclusively bound
+       to a processor with a single call to processor_exbind, all
+       subsequent  requests  fail  with EBUSY, unless the current
+       exclusive binding to the processor is undone or those LWPs
+       exit.   The  processor  so bound will not schedule any LWP
+       that is not exclusively bound.  The system imposes a limit
+       on the number of processors that can be exclusively bound.
+
+       The processor_exbind call is not  guaranteed  to  be  syn-
+       chronous with the binding operation.  If the binding oper-
+       ation cannot be completed immediately, the call may return
+       before  the  operation  completes.   Any delay between the
+       return of the function and the completion of the operation
+       will, typically, be of very short duration.
+
+                                                                1
+
+processor_exbind(2)                           processor_exbind(2)
+
+       If   processorid  is  PBIND_NONE,  the  specified  LWP  is
+       unbound; that is, it is made free to run on any processor.
+
+       If  the  LWP(s)  specified by idlist is already bound to a
+       different processor, the binding  for  that  LWP  will  be
+       changed  to  the  processor  specified by processorid.  If
+       obind is not NULL and the LWP is currently bound to a pro-
+       cessor, that processorid is returned by obind.
+
+       The processor binding is inherited by any children created
+       by a call, or and does not change across a call to
+
+       To bind or unbind an LWP the real or effective user ID  of
+       the  caller  must match the real or saved [from user ID of
+       the process being bound or unbound,  or  the  caller  must
+       have appropriate privileges.
+
+   RReettuurrnn vvaalluueess
+       On  success,  processor_exbind returns 0.  If obind is not
+       NULL, the previous binding of the specified LWP  shall  be
+       returned in the location pointed to by obind.  If obind is
+       not NULL and idtype and idlist specify more than one  LWP,
+       the  previous  binding  shall be returned for a random LWP
+       within the specified set.  The previous binding  shall  be
+       the  processor  ID  of  the processor to which the LWP was
+       bound, or PBIND_NONE if the LWP was previously unbound.
+
+       On failure, processor_exbind returns a negative value  and
+       sets errno to identify the error.
+
+   EErrrroorrss
+       In  the  following  conditions, processor_exbind fails and
+       sets errno to: The calling process does not have appropri-
+       ate  privilege  for one or more of the specified LWPs.  An
+       invalid idtype or processorid was specified, or the speci-
+       fied  processor  is currently offline.  None of the speci-
+       fied LWPs exist or idtype was P_LWPID and idlist specified
+       an  LWP  that was not within the caller's process.  A pro-
+       cess specified by idlist is bound exclusively  to  another
+       processor  or  there are already LWPs exclusively bound to
+       the processor specified by processorid.  obind is not NULL
+       and points to an invalid address.  The specified processor
+       is not operational.
+
+RReeffeerreenncceess
+
+                                                                2
+

@@ -1,0 +1,90 @@
+
+
+routing(4tcp)                                       routing(4tcp)
+
+DDeessccrriippttiioonn
+       The  network  facilities  provide  general packet routing.
+       Routing table maintenance may be implemented  in  applica-
+       tions processes.
+
+FFiilleess
+UUssaaggee
+       A  simple  set  of  data  structures  compose  a ``routing
+       table'' used in selecting the appropriate  network  inter-
+       face  when  transmitting  packets.   This table contains a
+       single entry for each route to a specific network or host.
+       The  routing table was designed to support routing for the
+       Internet Protocol (IP), but its implementation is protocol
+       independent and thus it may serve other protocols as well.
+       User programs may manipulate this data base with  the  aid
+       of  two commands, SIOCADDRT and SIOCDELRT.  These commands
+       allow the addition and deletion of a single routing  table
+       entry, respectively.  Routing table manipulations may only
+       be carried out by privileged user.
+
+       A routing table entry has the following form,  as  defined
+       in /usr/include/net/route.h: struct rtentry {
+           u_long  rt_hash;     /* to speed lookups */
+           struct  sockaddr rt_dst;  /* key */
+           struct  sockaddr rt_gateway;   /* value */
+           short   rt_flags;    /* up/down?, host/net */
+           short   rt_refcnt;   /* # held references */
+           u_long   rt_use; /*  raw # packets forwarded */ #ifdef
+       STRNET
+           struct  ip_provider *rt_prov;  /* the answer: provider
+       to use */ #else
+           struct   ifnet *rt_ifp;    /* the answer: interface to
+       use */ #endif /* STRNET */ }; with rt_flags defined  from:
+       #define    RTF_UP         0x1   /* route usable */ #define
+       RTF_GATEWAY    0x2    /*  destination  is  a  gateway   */
+       #define   RTF_HOST      0x4  /* host entry (net otherwise)
+       */ Routing table entries come in three flavors: for a spe-
+       cific  host,  for all hosts on a specific network, for any
+       destination not matched by entries of the first two  types
+       (a  wildcard  route).   Each  network interface installs a
+       routing table entry when it is initialized.  Normally  the
+       interface  specifies  the route through it is a ``direct''
+       connection to the destination host  or  network.   If  the
+       route  is direct, the transport layer of a protocol family
+       usually requests the packet be sent to the same host spec-
+       ified  in  the  packet.   Otherwise,  the interface may be
+       requested to address the packet  to  an  entity  different
+       from  the  eventual recipient (that is, the packet is for-
+       warded).
+
+       Routing table entries installed by a user process may  not
+       specify  the  hash,  reference  count,  use,  or interface
+       fields; these are filled in by the routing routines.  If a
+       route  is  in  use  when  it is deleted (rt_refcnt is non-
+
+                                                                1
+
+routing(4tcp)                                       routing(4tcp)
+
+       zero), the  resources  associated  with  it  will  not  be
+       reclaimed until all references to it are removed.
+
+       User   processes  read  the  routing  tables  through  the
+       /dev/kmem device.
+
+       rt_use contains the  number  of  packets  sent  along  the
+       route.  This value is used to select among multiple routes
+       to the same destination.  When multiple routes to the same
+       destination exist, the least used route is selected.
+
+       A wildcard routing entry is specified with a zero destina-
+       tion address value.  Wildcard routes are  used  only  when
+       the  system  fails to find a route to the destination host
+       and network.  The combination of wildcard routes and rout-
+       ing  redirects  can  provide  an  economical mechanism for
+       routing traffic.
+
+DDiiaaggnnoossttiiccss
+       A request was made to  duplicate  an  existing  entry.   A
+       request was made to delete a non-existent entry.  Insuffi-
+       cient resources were available to install a new route.
+
+RReeffeerreenncceess
+
+                                                                2
+

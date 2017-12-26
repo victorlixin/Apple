@@ -1,0 +1,305 @@
+
+
+Systems(4bnu)                                       Systems(4bnu)
+
+DDeessccrriippttiioonn
+       The  /etc/uucp/Systems  file  describes the remote systems
+       with which your computer can communicate using  the  Basic
+       Networking  Utilities  (BNU).   Each  entry in the Systems
+       file contains the information that the  Connection  Server
+       daemon  needs  to  establish  a communication link between
+       your computer and a particular remote computer.
+
+       The Systems file entries determine your computer's ability
+       to  communicate  with remote systems both in its role as a
+       client and server machine.  Any remote system not  defined
+       in  the  Systems  file  will not be able to log in to your
+       machine to establish a communication link.  Likewise, if a
+       remote  system  is  not  defined in the Systems file, your
+       machine will not be able to log in to the  remote  machine
+       to establish a communication link.
+
+       More than one entry can be defined in the Systems file for
+       an individual remote  computer.   The  additional  entries
+       represent  alternative  communication  paths to the remote
+       system that will be tried in sequential order.
+
+       Blank lines, and lines that begin with white space, a tab,
+       or a hash sign (#) are ignored.
+
+       Each  entry  in  the  Systems  file contains the following
+       fields in the order shown: Contains the node name  of  the
+       remote  computer.  Specifies when the remote system can be
+       accessed.  Time contains a string that specifies both  the
+       day of the week and the time of day when the remote system
+       can be called.  The format of  the  Time  field  is:  day-
+       time[;retry]  The  day  portion of the daytime string is a
+       list containing some of the following: for individual days
+       for  any  weekday (Mo, Tu, We, Th or Fr) for any day for a
+       passive arrangement with the remote computer.  This  means
+       that your local computer will never initiate a call to the
+       remote computer: the call must be initiated by the  remote
+       computer.   In other words, your local computer is passive
+       with respect to the remote computer.  See
+
+       Any and Never are the most common values used in the  Time
+       field.
+
+       The time portion of the daytime string is a range of times
+       specified in 24-hour  notation.   For  example,  0830-1230
+       represents  the  times of day from 8:30 A.M. to 12:30 P.M.
+       If the time is not specified, any time of day  is  assumed
+       to  be  a valid time to call.  Note that a time range that
+       spans 0000 hours is  permitted.   For  example,  0800-0600
+       means  all  times  are  allowed other than times between 6
+       A.M. and 8 A.M.
+
+       The following is a sample  Time  entry:  Wk1700-0800,Sa,Su
+       This  example  allows  calls  from  5:00 P.M. to 8:00 A.M.
+
+                                                                1
+
+Systems(4bnu)                                       Systems(4bnu)
+
+       Monday through Friday, and calls  any  time  Saturday  and
+       Sunday.   The  example  illustrates  a typical way you can
+       permit calls to be made only when telephone rates are low.
+
+       The optional value, retry, specifies the minimum amount of
+       time (in minutes)  that  should  wait  before  retrying  a
+       transmission attempt that fails.  The default wait is five
+       minutes.  A semicolon (;) is used to separate this  value.
+
+       For  example,  Any;9  specifies a call that can be made at
+       any time.  If this call fails then it may  be  retried  by
+       uusched  (via /var/spool/cron/crontabs/uucp) after waiting
+       for at least nine minutes.  Specifies the type  of  device
+       to  be  used  to  establish  a communication link with the
+       remote computer.  The value  of  this  field  is  used  to
+       access  the entry defined for the device type in the file.
+       The Type entry is matched against the first field  of  the
+       Devices file entries.
+
+       The  protocol  to be used to contact the remote system can
+       be specified by adding a protocol identifier to  the  Type
+       field  value.  For example, if the Type field specifies CS
+       and the protocol identifier in the Devices file  specifies
+       that  the  e or g protocol should be used for CS, then the
+       Type field entry would be: CS,eg Using the protocol infor-
+       mation  from the Devices file as part of the Type entry in
+       the Systems file is optional, but it is often done to make
+       entries  in  both  files easier to understand.  The device
+       type and the protocols must be  comma-separated.   In  the
+       following Systems file example, the g protocol is attached
+       to the device type ACU: #Systems file #  eagle  Any  ACU,g
+       38400 3251 ogin: nuucp ssword: password
+
+       #Devices file # ACU term/01m,M - 38400 28-8_Data_Fax_Modem
+       Specifies the transfer speed of the device to be  used  in
+       establishing  the communication link.  This field may con-
+       tain a letter and speed (for  example,  C1200,  D1200)  to
+       differentiate  between  classes  of dialers.  Some devices
+       can be used at any speed.  In this case  the  keyword  Any
+       may be used.
+
+       The  Class  field of the Systems file must match the Class
+       field in the associated file entry.  If information is not
+       required for the Class field, a dash (-) must be placed in
+       the field as a placeholder.  Specifies  a  colon-separated
+       list  of  telephone  numbers  or  network addresses of the
+       remote computer.  If a number in the list fails (for exam-
+       ple,  hardware  failure,  line  busy)  then the Connection
+       Server tries the next number in the list.  Each connection
+       request  starts  from  the current position in the list of
+       numbers, rather than from the beginning each time.   Pref-
+       erence  ordering  (for example, local numbers before long-
+       distance numbers) is not assummed.  Each telephone  number
+       is  made  up  of an optional alphabetic abbreviation and a
+
+                                                                2
+
+Systems(4bnu)                                       Systems(4bnu)
+
+       numeric part.  If an abbreviation is used, it must be  one
+       that  is listed in the file.  For example: #Systems file #
+       eagle Any ACU D1200 NY3251 ogin: nuucp ssword: password
+
+       #Dialcodes file # NY 9=1-212635 In this string, the  equal
+       sign  (=)  tells the ACU to wait for a secondary dial tone
+       before dialing the remaining digits.  The dash (-) in  the
+       string  instructs  the  ACU  to  pause four seconds before
+       dialing the next digit.
+
+       If your computer is connected to a  LAN  switch,  you  may
+       access  other computers that are connected to that switch.
+       The Systems file entries for these computers will not have
+       a telephone number in the Phone field.  Instead, the Phone
+       field will contain the token that must be  passed  to  the
+       switch  so  that it will know which computer your computer
+       wishes to communicate with (this is usually just the  sys-
+       tem  name).  The associated Devices file entry should have
+       a \D at the end of the entry to ensure that this field  is
+       not translated using the Dialcodes file.
+
+       If  the  Type  entry  is  CS, any information in the Phone
+       field is passed to the routine.  In this case,  the  Phone
+       field  may consist of: system,service where either or both
+       subfields may contain a dash, or the Phone field may  con-
+       tain a single dash.
+
+       If  neither  system  nor  service is specified, the system
+       name (the first field in the entry) and the  service  name
+       (uucico  or  cu)  will  be  passed as parameters to dials.
+       Contains the chat script to be  used  to  log  in  to  the
+       remote  system,  given as a series of fields and subfields
+       of the format: expect send where expect is the string that
+       is  received  and  send  is  the  string  that  is sent in
+       response to receiving the expect string.
+
+       The expect string is of the form:  expect[-send-expect]...
+       where send is sent if the prior expect is not successfully
+       read and  the  expect  following  the  send  is  the  next
+       expected  string.   For  example,  with ogin:--ogin:, uucp
+       will expect login.  If uucp gets ogin:, it will go  on  to
+       the  next  field.   If it does not get ogin:, it will send
+       nothing followed by a newline, then look for  ogin  again.
+       If  no  characters  are initially expected from the remote
+       computer, then the null string should be used in the first
+       expect field.  Note that all send fields will be sent fol-
+       lowed by a newline, unless the send string  is  terminated
+       with a \c.
+
+       Note  that  the  l  and other initial characters are often
+       omitted from chat scripts since chat scripts are case-sen-
+       sitive:  some  systems  capitalize  the  first  letter  of
+       prompts while others do not.
+
+                                                                3
+
+Systems(4bnu)                                       Systems(4bnu)
+
+       This is an example of a Systems file entry  that  uses  an
+       expect-send  string:  owl  Any  ACU 1200 Chicago6013 "" \r
+       ogin:-BREAK-ogin: \ uucpx word: xyzzy This  example  says:
+       don't wait, just send a carriage-return and wait for ogin:
+       (that is, for Login:).  If you  don't  get  ogin,  send  a
+       BREAK.   When you do get ogin:, send the login name uucpx,
+       then when you get word: (for Password:), send the password
+       xyzzy.
+
+       There  are  several  escape characters that cause specific
+       actions when they are a part of a string sent  during  the
+       login  sequence.  The following escape characters are use-
+       ful when  using  BNU  communications:  Send  or  expect  a
+       backspace  character  If  at the end of a string, suppress
+       the newline that is  normally  sent.   Ignored  otherwise.
+       Delay  two  seconds before sending or reading more charac-
+       ters Pause for approximately 1/4 to 1/2 second Start  echo
+       checking.   (From  this  point on, whenever a character is
+       transmitted, it will wait for the character to be received
+       before  doing anything else.)  Echo check off Turn on CLO-
+       CAL flag Turn off CLOCAL flag  Send  a  newline  character
+       Send  or  expect  a carriage-return Send or expect a space
+       character Send or expect a tab character Send or expect  a
+       \  character  Send  or  expect a BREAK character Telephone
+       number or token  without  Dialcodes  translation  Send  or
+       expect  EOT  newline  twice Same as BREAK Send or expect a
+       null character (ASCII NUL) Telephone number or token  with
+       Dialcodes translation Collapse the octal digits ddd into a
+       single character Specify the timeout by  appending  nn  to
+       the  expect string, where nn is the timeout period in sec-
+       onds.
+
+       The Login field may contain the keyword INVOKE followed by
+       white  space  followed  by  the  name of an authentication
+       scheme.  This pair may appear several times in  the  Login
+       field of a Systems file entry if more than one authentica-
+       tion step is expected to take place.  The following is  an
+       example  of  a Systems file entry that specifies more than
+       one authentication step: sysX Any ACU 1200 95551234 INVOKE
+       "inap  -r"  \ INVOKE "cr1 -r" where sysX is a valid system
+       name.
+
+       If the expect string consists of the keyword  ABORT,  then
+       the string after it is used to arm an ABORT trap.  If that
+       string is subsequently received any time prior to the com-
+       pletion  of  the  entire  expect-send  script, then uucico
+       aborts, as it would if the script had timed out.  This  is
+       useful  for  trapping  error  messages  --  such  as  Host
+       Unavailable or System is Down -- from  port  selectors  or
+       front-end processors.  Note that in an expect-send script,
+       the format in which the ABORT appears is  backward:  ABORT
+       expect  instead of expect ABORT Note also, that the entire
+       Login field is ignored for cu  and  ct  service  requests,
+       since  the  user  is  expected to enter the proper connect
+
+                                                                4
+
+Systems(4bnu)                                       Systems(4bnu)
+
+       sequence manually.  This means  that  login  chat  scripts
+       that include an INVOKE statement will also be ignored when
+       the service being requested is cu or ct.
+
+FFiilleess
+UUssaaggee
+       To use BNU, the system administrator must manually  create
+       the  entries in the Systems file; the system-supplied Sys-
+       tems file contains only comment lines.  The  Systems  file
+       works  closely  with the and files.  Note that a change to
+       an entry in one file may require a  change  to  a  related
+       entry in another file.
+
+       /usr/lib/uucp/remote.unknown is a binary program that exe-
+       cutes when a machine not found in any of  the  entries  in
+       your  computer's  Systems  file starts a conversation with
+       your machine.  It will log the  conversation  attempt  and
+       drop the connection.  Its function is similar to that of a
+       daemon.  Note that if you change the  permissions  of  the
+       remote.unknown file so it cannot execute, your system will
+       accept connections from any system.
+
+       If a remote system supports machine authentication and  is
+       not  connected  via  a  Connection  Server connection, the
+       entry in the Systems file for this  machine  must  include
+       the appropriate INVOKE-scheme pair or pairs to enforce the
+       use of an authentication scheme.   If  the  authentication
+       scheme is not included in the Systems file, passwords will
+       be passed between machines in clear text.
+
+       To enforce the use of an authentication scheme, the  entry
+       in  the  Systems file should be: INVOKE "cr1 -r" More than
+       one file can be defined as a Systems  file  by  using  the
+       Sysfiles file (see
+
+       Systems  files  from  previous  releases  may be installed
+       without  change.   This  provides  backward  compatibility
+       without the administrative overhead involved in setting up
+       the Connection Server and cr1.
+
+   TThhee SSyysstteemmss..ttccpp ffiillee aanndd pprree-- SSVVRR44..00 ssyysstteemmss
+       When using TCP/IP with machines that are pre- SVR4.0,  the
+       /etc/uucp/Systems.tcp  file requires updating.  In  SVR4.0
+       machines (and later), the port  number  0ACE  is  used  by
+       default,  whereas  the  port  number  0401 is used in pre-
+       SVR4.0 machines.
+
+       If you are going to be communicating with  a  pre-  SVR4.0
+       system,   you   must   change  that  system's  address  in
+       /etc/uucp/Systems.tcp so that  the  0401  port  number  is
+       used.   For  example,  if  you had the following entry for
+       machine downtown in your /etc/uucp/Systems.tcp file: down-
+       town  Any  TcpCico10103  - \x00020aceAE026e50 and downtown
+       was running pre- SVR4.0, you  would  have  to  change  the
+
+                                                                5
+
+Systems(4bnu)                                       Systems(4bnu)
+
+       entry  for  downtown  to  the following: downtown Any Tcp-
+       Cico10103 - \x00020401AE026e50
+
+RReeffeerreenncceess
+
+                                                                6
+

@@ -1,0 +1,86 @@
+
+
+_lwp_makecontext(2)                           _lwp_makecontext(2)
+
+SSyynnooppssiiss
+       #include  <types.h>  #include  <sys/lwp.h> #include <ucon-
+       text.h>
+
+       void _lwp_makecontext(ucontext_t *ucp,  void  (*start_rou-
+       tine)(void  *arg),       void *arg, void *private, caddr_t
+       stackbase, size_t stacksize);
+
+   PPaarraammeetteerrss
+       pointer to the context (to be filled) pointer to  function
+       to be called on creation of the LWP pointer to argument to
+       start_routine pointer to initial value  for  private  data
+       pointer pointer to stack area size of stack area
+
+DDeessccrriippttiioonn
+       _lwp_makecontext fills in a context for a lightweight pro-
+       cess (LWP).  The storage for the context is  allocated  by
+       the  user.   This interface is provided to fill in a ucon-
+       text to pass to _lwp_create, allowing library implementors
+       full  flexibility  in  setting  up  the  abstractions they
+       implement, while ensuring that they start with a  coherent
+       minimal set of information to execute an LWP.
+
+       If  the  LWP, when created, returns from its start_routine
+       this is treated as an implicit _lwp_exit.
+
+       The ucontext_t object is  returned  with  the  appropriate
+       system information based on the parameters from _lwp_make-
+       context.
+
+   uuccpp ppaarraammeetteerr
+       _lwp_makecontext  fills  in  the   uninitialized   context
+       pointed to by ucp.
+
+   ssttaarrtt__rroouuttiinnee ppaarraammeetteerr
+       start_routine  is the function to be called on creation of
+       the LWP; it establishes the program counter for  the  con-
+       text.
+
+   aarrgg ppaarraammeetteerr
+       arg is the argument to start_routine.
+
+   pprriivvaattee ppaarraammeetteerr
+       private  is the initial value for the private data pointer
+       (this is likely to be the address of the  user  level  LWP
+       descriptor in many implementations).
+
+   ssttaacckkbbaassee ppaarraammeetteerr
+       stackbase is the pointer to a user-allocated stack area.
+
+   ssttaacckkssiizzee ppaarraammeetteerr
+       stacksize is the size of the user-allocated stack area.
+
+                                                                1
+
+_lwp_makecontext(2)                           _lwp_makecontext(2)
+
+   RReettuurrnn vvaalluueess
+       The  values  set  in  ucp  are  intended  to  be passed to
+       _lwp_create.
+
+   EErrrroorrss
+       If any of the following conditions is detected, thr_create
+       returns  the  appropriate  value:  One  or  more  of  ucp,
+       start_routine,  arg,  or  private  point  to  an   illegal
+       address.   (This error may not be detected; a SIGSEGV sig-
+       nal may be posted  to  the  faulting  LWP  if  an  illegal
+       address is used.)
+
+UUssaaggee
+       Unlike  threads, the start function called for _lwp_create
+       returns void.  This means that there is  no  return  value
+       available  through  _lwp_wait,  and  that less information
+       from an LWP context needs to be retained past _lwp_exit.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Lightweight processes (LWPs) are internal  interfaces  and
+       are subject to change.  Their use should be avoided.
+
+                                                                2
+

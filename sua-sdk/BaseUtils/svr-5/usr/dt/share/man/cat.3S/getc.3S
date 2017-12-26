@@ -1,0 +1,100 @@
+
+
+getc(3S)                                                 getc(3S)
+
+SSyynnooppssiiss
+       #include <stdio.h>
+
+       int getc(FILE *stream);
+
+       int getc_unlocked(FILE *stream);
+
+       int getchar(void);
+
+       int getchar_unlocked(void);
+
+       int fgetc(FILE *stream);
+
+       int getw(FILE *stream);
+
+DDeessccrriippttiioonn
+       getc and getc_unlocked return the next character (that is,
+       byte) from the named input stream [see as an unsigned char
+       converted  to  an int.  It also moves the file pointer, if
+       defined,  ahead  one  character  in  stream.   getchar  is
+       defined as getc(stdin).
+
+       getc_unlocked  and getchar_unlocked provide unsynchronized
+       character I/O that require explicit synchronization around
+       their use when multiple threads are performing I/O.  These
+       two are defined as macros when is invoked  with  -Kthread.
+       getchar_unlocked is defined as getc_unlocked(stdin).  They
+       may be used safely in a multi-threaded application if  and
+       only  if  they  are  called  while  the calling thread has
+       exclusive access to stream for getc_unlocked and stdin for
+       getchar_unlocked.   Exclusive  access is granted using the
+       lockfile or ftrylockfile functions.
+
+       fgetc behaves like getc, but is a function rather  than  a
+       macro.   fgetc  runs  more  slowly than getc, but it takes
+       less space per invocation and its name can be passed as an
+       argument to a function.
+
+       getw  returns  the  next  word (that is, integer) from the
+       named input stream.  getw increments the  associated  file
+       pointer,  if defined, to point to the next word.  The size
+       of a word is the  size  of  an  integer  and  varies  from
+       machine  to machine.  getw assumes no special alignment in
+       the file.
+
+   EErrrroorrss
+       If the stream is at EOF, the EOF indicator for the  stream
+       is  set  and getc and getc_unlocked return EOF.  If a read
+       error occurs, the error indicator for the stream  is  set,
+       getc  and  getc_unlocked return EOF and set errno to iden-
+       tify the error.
+
+       Under  the  following  conditions,  the  functions   getc,
+       getchar,  fgetc  and  getw  fail  and set errno to: if the
+
+                                                                1
+
+getc(3S)                                                 getc(3S)
+
+       O_NONBLOCK flag is set for the underlying file  descriptor
+       and  the process would have blocked in the read operation.
+       if the underlying file descriptor  is  not  a  valid  file
+       descriptor  open for reading.  if a signal was caught dur-
+       ing the getc, getchar, fgetc or getw call, and no data was
+       transferred.  if a physical I/O error has occurred, or the
+       process is in a background process group and is attempting
+       to read from its controlling terminal, and either the pro-
+       cess is ignoring or blocking the  SIGTTIN  signal  or  the
+       process  group of the process is orphaned.  The process is
+       tryping to read at or beyond the offset maximum associated
+       with the corresponding stream.
+
+RReeffeerreenncceess
+NNoottiicceess
+       If the integer value returned by all of the above routines
+       except getw is stored into a character variable  and  then
+       compared  against the integer constant EOF, the comparison
+       may never succeed, because sign-extension of  a  character
+       on widening to integer is implementation dependent.
+
+       The macro version of getc evaluates a stream argument more
+       than once and may treat side effects incorrectly.  In par-
+       ticular,  getc(*f++)  does  not  work sensibly.  Use fgetc
+       instead.
+
+       Because of possible differences in word  length  and  byte
+       ordering,  files  written  using  putw  are implementation
+       dependent, and may not be read using getw on  a  different
+       processor.
+
+       Functions  exist for all the above-defined macros.  To get
+       the function form, the macro name must be  undefined  (for
+       example, #undef getc).
+
+                                                                2
+

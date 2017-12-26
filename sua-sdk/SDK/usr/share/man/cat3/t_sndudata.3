@@ -1,0 +1,153 @@
+t_sndudata(3)                                             t_sndudata(3)
+
+  tt__ssnndduuddaattaa(())
+
+  NNAAMMEE
+
+    t_sndudata - send a data unit
+
+  SSYYNNOOPPSSIISS
+
+    #include <xti.h>
+
+    int t_sndudata(
+        int fd,
+        const struct t_unitdata *unitdata)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The tt__ssnnddddaattaa(3) function is used in connectionless-mode to send a data
+    unit to another transport user.
+
+    PPaarraammeetteerrss     BBeeffoorree ccaallll      AAfftteerr ccaallll
+
+    fd             x                /
+
+    unitdata->     addr.maxlen      =
+
+    unitdata->     addr.len         x
+
+    unitdata->     addr.buf         x(x)
+
+    unitdata->     opt.maxlen       =
+
+    unitdata->     opt.len          x
+
+    unitdata->     opt.buf          ?(?)
+
+    unitdata->     udata.maxlen     =
+
+    unitdata->     udata.len        x
+
+    unitdata->     udata.buf        x(x)
+
+    The argument fd identifies the local transport endpoint through which data
+    will be sent, and unitdata points to a t_unitdata structure containing the
+    following members:
+
+    struct netbuf addr;
+    struct netbuf opt;
+    struct netbuf udata;
+
+    In unitdata, addr specifies the protocol address of the destination user,
+    opt identifies options that the user wants associated with this request,
+    and udata specifies the user data to be sent. The user may choose not to
+    specify what protocol options are associated with the transfer by setting
+    the len field of opt to zero. In this case, the provider uses the option
+    values currently set for the communications endpoint.
+
+    If the len field of udata is zero, and sending of zero octets is not
+    supported by the underlying transport service, the tt__ssnndduuddaattaa(3) will
+    return -1 with t_errno set to [TBADDATA].
+
+    By default, tt__ssnndduuddaattaa(3) operates in synchronous mode and may wait if
+    flow control restrictions prevent the data from being accepted by the
+    local transport provider at the time the call is made. However, if
+    O_NONBLOCK is set (through _tt____oo_pp_ee_nn(3) or _ff_cc_nn_tt_ll(3)), tt__ssnndduuddaattaa(3) will
+    execute in asynchronous mode and will fail under such conditions. The
+    process can arrange to be notified of the clearance of a flow control
+    restriction through either _tt____ll_oo_oo_kk(3) or the EM interface.
+
+    If the amount of data specified in udata exceeds the TSDU size as returned
+    in the tsdu field of the info argument of _tt____oo_pp_ee_nn(3) or _tt____gg_ee_tt_ii_nn_ff_oo(3), a
+    [TBADDATA] error will be generated. If tt__ssnndduuddaattaa(3) is called before the
+    destination user has activated its transport endpoint (see _tt____gg_ee_tt_ii_nn_ff_oo(3)),
+    the data unit may be discarded.
+
+    If it is not possible for the transport provider to immediately detect the
+    conditions that cause the errors [TBADDADDR] and [TBADOPT], these errors
+    will alternatively be returned by _tt____rr_cc_vv_uu_dd_ee_rr_rr(3). Therefore, an application
+    must be prepared to receive these errors in both of these ways.
+
+    If the call is interrupted, tt__ssnndduuddaattaa(3) will return [EINTR] and the
+    datagram will not be sent.
+
+  VVAALLIIDD SSTTAATTEESS
+
+    T_IDLE
+
+  EERRRROORRSS
+
+    On failure, t_errno is set to one of the following:
+
+    [TBADADDR]
+        The specified protocol address was in an incorrect format or contained
+        illegal information.
+
+    [TBADDATA]
+        Illegal amount of data. A single send was attempted specifying a TSDU
+        greater than that specified in the info argument, or a send of a zero
+        byte TSDU is not supported by the provider.
+
+    [TBADF]
+        The specified file descriptor does not refer to a transport endpoint.
+
+    [TBADOPT]
+        The specified options were in an incorrect format or contained illegal
+        information.
+
+    [TFLOW]
+        O_NONBLOCK was set, but the flow control mechanism prevented the
+        transport provider from accepting any data at this time.
+
+    [TLOOK]
+        An asynchronous event has occurred on this transport endpoint.
+
+    [TNOTSUPPORT]
+        This function is not supported by the underlying transport provider.
+
+    [TOUTSTATE]
+        The communications endpoint referenced by fd is not in one of the
+        states in which a call to this function is valid.
+
+    [TPROTO]
+        This error indicates that a communication problem has been detected
+        between XTI and the transport provider for which there is no other
+        suitable XTI error (t_errno).
+
+    [TSYSERR]
+        A system error has occurred during execution of this function.
+
+  RREETTUURRNN VVAALLUUEE
+
+    Upon successful completion, a value of 0 is returned. Otherwise, a value
+    of -1 is returned and t_errno is set to indicate an error.
+
+  SSEEEE AALLSSOO
+
+    _ff_cc_nn_tt_ll(3)
+
+    _tt____aa_ll_ll_oo_cc(3)
+
+    _tt____oo_pp_ee_nn(3)
+
+    _tt____rr_cc_vv_uu_dd_aa_tt_aa(3)
+
+    _tt____rr_cc_vv_uu_dd_ee_rr_rr(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The tt__ssnndduuddaattaa function is not thread safe.
+
+    The tt__ssnndduuddaattaa function is not async-signal safe.
+

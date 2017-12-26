@@ -1,0 +1,235 @@
+
+
+ctrace(1)                                               ctrace(1)
+
+SSyynnooppssiiss
+       ctrace [options] [file]
+
+DDeessccrriippttiioonn
+       The  ctrace command allows the user to monitor the sequen-
+       tial execution of a C program as  each  program  statement
+       executes.  The effect is similar to executing a shell pro-
+       cedure with the -x option.  ctrace reads the C program  in
+       file  (or from standard input if the user does not specify
+       file), inserts statements to print the text of  each  exe-
+       cutable  statement  and the values of all variables refer-
+       enced or modified, and writes the modified program to  the
+       standard output.  The output of ctrace must be placed into
+       a temporary file because the command does  not  allow  the
+       use  of  a  pipe.  This file can then be compiled and exe-
+       cuted.
+
+       As each statement in the  program  executes,  it  will  be
+       listed  at the terminal, followed by the name and value of
+       any variables referenced or  modified  in  the  statement;
+       these  variable  names  and values will be followed by any
+       output from the statement.  Loops in the trace output  are
+       detected  and  tracing is stopped until the loop is exited
+       or a different sequence of statements within the  loop  is
+       executed.   A  warning  message is printed after each 1000
+       loop cycles to help the user detect infinite  loops.   The
+       trace  output  goes to the standard output so the user can
+       put it into a file for examination with an editor  or  the
+       or commands.
+
+       The options commonly used are: Trace only these functions.
+       Trace all but these functions.
+
+       The user may want to add to the default formats for print-
+       ing  variables.   Long  and  pointer  variables are always
+       printed as signed integers.  Pointers to character  arrays
+       are  also printed as strings if appropriate.  char, short,
+       and int variables are also printed as signed integers and,
+       if  appropriate,  as  characters.  float, double, and long
+       double variables are printed as floating point numbers  in
+       scientific  notation.  The user can request that variables
+       be printed in additional  formats,  if  appropriate,  with
+       these options: Octal Hexadecimal Unsigned Floating point
+
+       These options are used only in special circumstances:
+
+       Check  n  consecutively  executed  statements  for looping
+       trace output, instead of the default of 20.  Use 0 to  get
+       all the trace output from loops.  Suppress redundant trace
+       output from simple assignment statements and  string  copy
+       function  calls.  This option can hide a bug caused by use
+       of the = operator in place of the ==  operator.   Trace  n
+       variables  per statement instead of the default of 10 (the
+       maximum number is 20).  The diagnostics  section  explains
+
+                                                                1
+
+ctrace(1)                                               ctrace(1)
+
+       when  to  use  this  option.   Preprocess the input before
+       tracing it.  The user can also use  the  -D,  -I,  and  -U
+       options.  Change the trace print function from the default
+       of printf.  For example, fprintf(stderr,  would  send  the
+       trace  to  the standard error output.  Use file f in place
+       of the runtime.c trace function package.  This replacement
+       lets the user change the entire print function, instead of
+       just the name and leading arguments (see the  -p  option).
+       Prints  version information on the standard error.  If arg
+       is y, identification  information  about  ctrace  will  be
+       added  to  the output files.  This can be useful for soft-
+       ware administration.  Giving n for arg explicitly asks for
+       no such information, which is the default behavior.
+
+EExxaammpplleess
+       If the file lc.c contains this C program:
+        1 #include <stdio.h>
+        2 main() /* count lines in input */
+        3 {
+        4   int c, nl;
+        5
+        6   nl = 0;
+        7   while ((c = getchar()) != EOF)
+        8        if (c = '\n')
+        9             ++nl; 10   printf("%d\n", nl); 11 }
+
+       these  commands and test data are entered: cc lc.c a.out 1
+       -d
+
+       the program will be compiled and executed.  The output  of
+       the  program  will  be  the  number  2, which is incorrect
+       because there is only one line  in  the  test  data.   The
+       error  in this program is common, but subtle.  If the user
+       invokes ctrace with these commands: ctrace lc.c >temp.c cc
+       temp.c a.out
+
+       the output will be:
+        2 main()
+        6   nl = 0;
+            /* nl == 0 */
+        7   while ((c = getchar()) != EOF)
+
+       The  program is now waiting for input.  If the user enters
+       the same test data as before, the output will be:
+            /* c == 49 or '1' */
+         8             if (c = '\n')
+                       /* c  == 10 or '\n' */
+         9                     ++nl;
+                               /* nl == 1 */
+         7     while ((c = getchar()) != EOF)
+               /* c  == 10 or '\n' */
+         8             if (c = '\n')
+                       /* c  == 10 or '\n' */
+         9                     ++nl;
+
+                                                                2
+
+ctrace(1)                                               ctrace(1)
+
+                               /* nl == 2 */
+           /* repeating */
+
+       Once the end-of-file character (-d) is entered, the  final
+       output will be:
+           /* repeated < 1 time */
+         7     while ((c = getchar()) != EOF)
+               /* c  == -1 */
+        10     printf("%d\n", nl);
+               /* nl == 2 */2
+
+           /* return */
+
+       Note  the  information printed out at the end of the trace
+       line for the nl variable following line 10.  Also note the
+       return  comment  added  by  ctrace at the end of the trace
+       output.  This shows the implicit return at the terminating
+       brace in the function.
+
+       The  trace  output  shows  that variable c is assigned the
+       value 1 in line 7, but in line 8  it  has  the  value  \n.
+       Once  user  attention is drawn to this if statement, he or
+       she will probably realize that the assignment operator (=)
+       was  used  in  place  of the equality operator (==).  This
+       error can easily be missed during code reading.
+
+   EExxeeccuuttiioonn--ttiimmee ttrraaccee ccoonnttrrooll
+       The default operation for ctrace is to  trace  the  entire
+       program  file,  unless  the  -f  or -v options are used to
+       trace specific functions.  The default operation does  not
+       give  the user statement-by-statement control of the trac-
+       ing, nor does it let the user turn the tracing off and  on
+       when executing the traced program.
+
+       The  user  can  do  both  of  these by adding ctroff() and
+       ctron() function calls to the program to turn the  tracing
+       off  and  on, respectively, at execution time.  Thus, com-
+       plex criteria can be arbitrarily coded for  trace  control
+       with  if  statements, and this code can even be condition-
+       ally included because ctrace defines the CTRACE preproces-
+       sor  variable.   For  example: #ifdef CTRACE      if (c ==
+       '!' && i > 1000)           ctron(); #endif
+
+       These functions can also be called from if they  are  com-
+       piled  with  the -g option.  For example, to trace all but
+       lines 7 to 10 in the main  function,  enter:  debug  a.out
+       debug>  stop  lc.c  @7  {set ctroff();} EVENT [1] assigned
+       debug> stop lc.c @11  {set ctron();}  EVENT  [2]  assigned
+       debug> run
+
+       The trace can be turned off and on by setting static vari-
+       able tr_ct_ to 0 and 1, respectively.  This on/off  option
+       is  useful if a user is using a debugger that can not call
+       these functions directly.
+
+                                                                3
+
+ctrace(1)                                               ctrace(1)
+
+FFiilleess
+       /usr/ccs/lib/ctrace/runtime.c      run-time trace package
+
+RReeffeerreenncceess
+DDiiaaggnnoossttiiccss
+       This section contains diagnostic messages from both ctrace
+       and  since the traced code often gets some cc warning mes-
+       sages.  The user can get cc error messages  in  some  rare
+       cases, all of which can be avoided.
+
+   ccttrraaccee ddiiaaggnnoossttiiccss
+       Only 10 variables are traced in a statement to prevent the
+       C compiler "out of tree space; simplify expression" error.
+       Use the -t option to increase this number.  This statement
+       is over 400 characters long.  Make sure that tabs are used
+       to indent the code, not spaces.  This is usually caused by
+       #ifdef/#endif preprocessor statements in the middle of a C
+       statement,  or by a semicolon at the end of a #define pre-
+       processor statement.  Split the sequence  by  removing  an
+       else from the middle.  Use the -P option to preprocess the
+       ctrace input, along with any appropriate -D,  -I,  and  -U
+       preprocessor options.
+
+NNoottiicceess
+       Defining  a  function with the same name as a system func-
+       tion may cause a syntax error if the number  of  arguments
+       is changed.  Just use a different name.
+
+       ctrace  assumes  that  BADMAG is a preprocessor macro, and
+       that EOF and NULL are #defined constants.   Declaring  any
+       of these to be variables, for example,
+       "int EOF;", will cause a syntax error.
+
+       Pointer values are always treated as pointers to character
+       strings.
+
+       ctrace does not know about the  components  of  aggregates
+       like  structures,  unions, and arrays.  It cannot choose a
+       format to print all the components of an aggregate when an
+       assignment  is  made  to the entire aggregate.  ctrace may
+       choose to print the address of an  aggregate  or  use  the
+       wrong  format  (for example, 3.149050e-311 for a structure
+       with two integer members) when printing the  value  of  an
+       aggregate.
+
+       The  loop  trace output elimination is done separately for
+       each file of a multi-file program.  Separate output elimi-
+       nation  can  result  in functions called from a loop still
+       being traced, or the elimination of trace output from  one
+       function  in  a  file  until  another  in the same file is
+       called.
+
+                                                                4
+

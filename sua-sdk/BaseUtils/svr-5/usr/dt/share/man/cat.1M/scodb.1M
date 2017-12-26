@@ -1,0 +1,858 @@
+
+
+scodb(1M)                                               scodb(1M)
+
+DDeessccrriippttiioonn
+       &geminiREL;  supports  SCODB debugger as an alternative to
+       the debugger.  For information about using SCODB on &ever-
+       est; systems, see the &everest; documentation .
+
+       When  SCODB  is  awaiting input, it displays the following
+       prompt: debugn:m> is a number indicating the  entry  level
+       in  the  debugger.  In general, the entry level will be 0;
+       if SCODB is reentered or  a  panic  occurs  while  in  the
+       debugger,  the entry level will be incremented.  The level
+       is decremented when quitting the debugger.  indicates  the
+       engine number.
+
+       SCODB  has a history mechanism similar to that of Pressing
+       puts the current input line into edit mode, where vi-style
+       editing can be used.
+
+CCoonnffiigguurriinngg SSCCOODDBB
+       SCODB  is an unconfigured pseudo-device driver in the ker-
+       nel.  Note that the debugger must also  be  configured  in
+       order to run scodb.
+
+       To  configure  scodb:  Compile  the driver or other kernel
+       source module with the -DDEBUG option and  install  it  in
+       the  kernel.  Load the scodb and kdb drivers into the ker-
+       nel with the following commands: modadmin -l kdb  modadmin
+       -l scodb Be sure that the driver you are debugging is also
+       linked into the kernel.  Do not edit the  file  to  stati-
+       cally  configure  the scodb driver.  For &gemini; Releases
+       7.0.0, 7.0.1, and 7.1,  a  kernel  with  scodb  statically
+       linked does not boot.
+
+IInnvvookkiinngg SSCCOODDBB
+       Invoke  the  kernel debugger by pressing D on the console,
+       or by entering kdb on the command line (kdb comes up first
+       by default).  Issue the newdebug command at the kdb prompt
+       to change to scodb and exit kdb by issuing the q or D com-
+       mand.
+
+       The  newdebug  command  can  also  be issued in the kdb.rc
+       file, which will cause  scodb  to  automatically  come  up
+       first when you enter the debugger.
+
+       Any  of  the  described can now be executed, including the
+       newterm command which allows the input/output device to be
+       switched.  The following command switches the input/output
+       device to COM1: newterm 0  iasy  Likewise,  the  following
+       command switches input/output control back to the console:
+       newterm 0 kd
+
+QQuuiittttiinngg SSCCOODDBB
+       Quit SCODB by using the following commands: If address  is
+       given,  execution  resumes  there,  otherwise the debugger
+
+                                                                1
+
+scodb(1M)                                               scodb(1M)
+
+       makes a normal function return back to its calling  point.
+       If  expression  then  quit.   If expression evaluates to a
+       non-zero value, control returns to the kernel as in q.
+
+SSCCOODDBB ccoommmmaannddss
+       After SCODB is invoked,  the  following  commands  can  be
+       issued.
+
+       Note  the  following  about  issuing commands: Errors made
+       while entering a command can be corrected.  Use the delete
+       key  to  kill  the input line, or backspace to correct the
+       error.  Some commands, such as bp, use the  SCODB  editing
+       facilities for input on several lines at once.  When using
+       the vi edit mode, editing is entered in insert mode if the
+       list  is  empty  and  in  command  mode if the list is not
+       empty.  See for more information  on  using  the  vi  edit
+       mode.  Commands can be aliased.  See
+
+       The  *  argument  is used to clear all breakpoints.  Debug
+       registers are cleared with the DRn argument where n  is  0
+       to 3.
+
+       Display  process  status.  Optionally, quit to the address
+       specified.  unalias can be used with an argument of  *  to
+       unset all aliases.
+
+EExxpprreessssiioonnss
+       SCODB  accepts  a  variety  of expression types, including
+       those which involve  all  C  language  operators.   If  an
+       expression  is  given  at  the  SCODB prompt, its value is
+       printed (in hexadecimal, by default).   If  the  value  is
+       near  a  symbol's  address,  the  symbol will also be dis-
+       played.
+
+       The simplest expressions that can be given  to  SCODB  are
+       hexadecimal numbers: debug0:1> D012 D012 Decimal input may
+       be given by preceding  the  number  with  a  dollar  sign:
+       debug0:2>  $128  80 Octal input may be given by the number
+       with a leading zero: debug0:3> 040 20
+
+SSyymmbboollss
+       After SCODB has been loaded into the kernel,  symbol  data
+       is  automatically available.  The address of a symbol, and
+       its segment type (data or text) can always be found  using
+       the  C  address-of  operator  (&):  debug0:4>  &u E0000000
+       u      data debug0:5> &read D00A46D0         read     text
+       If not in the kstruct file, data symbols are assumed to be
+       of type int, and text symbols are assumed to  be  of  type
+       (function  returning  an integer).  This type can be modi-
+       fied using the declare command (see or by the symbol being
+       present in the kstruct file.
+
+       The  value  of a symbol with a value type (in other words,
+
+                                                                2
+
+scodb(1M)                                               scodb(1M)
+
+       not a structure or union) can be  obtained  quite  simply:
+       debug0:6> sysdump_selective 1
+
+DDiissppllaayyiinngg ssyymmbbooll aanndd eexxpprreessssiioonn ttyyppeess
+       Use  the type command to display the type of an expression
+       or the declared type of a symbol.   Use  the  declare  (or
+       dcl) and undeclare (or undcl) commands to display the type
+       modified or reset: type  expression               /*  Show
+       type    of    expression    */    declare    |    dcl    C
+       declaration        /* Give a system  variable  a  type  */
+       undeclare  |  undcl [*|variable...]    /* Undeclare system
+       variables */ It can be useful to determine the type of  an
+       expression  in case there is some question.  For instance,
+       if a symbol is not defined in the kstruct  file,  it  will
+       hold  a  default type: debug0:1> type u "u" is int But, if
+       it is defined in the kstruct file, it is  shown  with  the
+       proper  type:  debug0:2>  type u "u" is struct user If the
+       type of a symbol is not defined in the kstruct file and it
+       would  be  useful  to  use  the  symbol  properly, use the
+       declare command to override the original type assigned  to
+       the   symbol:   debug0:3>  type  cdevsw  "cdevsw"  is  int
+       debug0:4> declare struct cdevsw cdevsw[3C] debug0:5>  type
+       cdevsw  "cdevsw" is struct cdevsw [3C] It is not necessary
+       to specify the number of elements when declaring an array.
+
+       Use undeclare to return the type of a symbol to its origi-
+       nal state, if it is not in  the  kstruct  file:  debug0:6>
+       undeclare  cdevsw  debug0:7>  type  cdevsw "cdevsw" is int
+       This is usually done to  free  space  in  the  declaration
+       table.
+
+       undeclare  can also be used to prevent SCODB from printing
+       the return value after  a  function  call.   For  example:
+       debug0:8>   patch_nop(&main)   1  debug0:9>  declare  void
+       patch_nop() debug0:10> patch_nop(&main) debug0:11>
+
+OOppeerraattoorrss
+       SCODB accepts expressions  that  involve  all  C  language
+       operators,  in  proper  precedence  and  evaluation order:
+       debug0:7> 1+2 3 debug0:8> (1+2)*3 9 Unlike in  C,  pointer
+       arithmetic is no different than integer arithmetic.
+
+       The C pseudo-function sizeof is available and supports all
+       integral data types.
+
+       If, given its type, a symbol is a C type lvalue, the  sym-
+       bol  may  appear on the left side of an assignment expres-
+       sion, and the increment/decrement operators can be used on
+       it.   For example: debug0:9> debugkey = 0 0 debug0:10> i++
+       0 debug0:11> ++i 2 Types are not checked on assignment.
+
+       SCODB treats expressions of  void  type  the  same  as  it
+       treats  those of int type, except that if given an expres-
+       sion of void type, no value is printed.
+
+                                                                3
+
+scodb(1M)                                               scodb(1M)
+
+DDeebbuuggggeerr vvaarriiaabblleess
+       Use the var and unvar commands  to  set  special  debugger
+       variables:  var [name initial value]      /* Create debug-
+       ger variables */ unvar  [*|variable...]         /*  Remove
+       debugger  variables */ When debugging, certain values come
+       up time and time again, and  re-entering  the  value  each
+       time  it is needed can be tedious and gives great opportu-
+       nity for error.
+
+       Use the var command to create a variable with  an  initial
+       value and type: debug0:1> var ino (struct inode *)D01401A0
+       debug0:2> d $ino Variables are also  useful  for  counting
+       iterations  in  breakpoint  commands:  debug0:3>  var  x 0
+       debug0:4> $x 0 debug0:5> ++$x 1 debug0:5> ++$x 2 The  num-
+       ber  of  variables  available is a configurable parameter.
+       To reuse variables, unset them using  the  unvar  command:
+       debug0:9>  unvar  x  debug0:10> $x Error: Unknown variable
+       unvar may be given the * argument, which clears all  vari-
+       ables currently set.
+
+AAcccceessssiinngg ddeebbuuggggeerr vvaarriiaabblleess,, bbrreeaakkppooiinntt aaddddrreesssseess,, aanndd rreeggiisstteerrss
+       Debugger variables can be accessed by using a dollar  sign
+       ($),   and   are   considered  lvalues:  debug0:14>  $x  0
+       debug0:15> ++$x 1
+
+       The address of a can be obtained by using  a  hash  symbol
+       (#).   Though breakpoint addresses are considered lvalues,
+       be extremely careful when modifying their values.
+
+       Registers can be accessed by using a percent (%) in  front
+       of  the  register name, and are considered lvalues (though
+       extreme care should be used in modifying them): debug0:12>
+       %eax FFFFFFFF debug0:13> %eax = 0 0 The registers are:
+       ----------------------------------------------------------------------------
+       General registers
+       ----------------------------------------------------------------------------
+       eax                                    function return value
+       ebx                                    general use
+       ecx                                    general use, counter
+       edx                                    general use
+       ebp                                    stack frame base pointer
+       esp                                    kernel stack pointer
+       uesp                                   user process stack pointer
+       esi                                    general use, source index
+       edi                                    general use, destination index
+
+       ----------------------------------------------------------------------------
+       Segment registers
+       ----------------------------------------------------------------------------
+       cs                                     code
+       ds                                     data
+       es                                     extra data
+       fs                                     extra data
+
+                                                                4
+
+scodb(1M)                                               scodb(1M)
+
+       gs                                     extra data
+       ss                                     stack
+
+       ----------------------------------------------------------------------------
+       Memory management registers
+       ----------------------------------------------------------------------------
+       gdtr                                   Global Descriptor Table Register
+       ldtr                                   Local Descriptor Table Register
+       idtr                                   Interrupt Descriptor Table Register
+       tr                                     Task register
+
+       ----------------------------------------------------------------------------
+       Control registers
+       ----------------------------------------------------------------------------
+       cr0                                    system control flags
+       cr1                                    unused
+       cr2                                    page fault linear address
+       cr3                                    page directory base
+
+       ----------------------------------------------------------------------------
+       Other registers and pseudo-registers
+       ----------------------------------------------------------------------------
+       eip                                    location processor is executing code
+       efl                                    flags
+       trap                                   system trap number
+       proc                                   processor running on
+       ----------------------------------------------------------------------------
+
+       The  stack segment register, memory-management and control
+       registers, as well as the pseudo-registers trap and  proc,
+       are not considered lvalues.
+
+DDiissppllaayyiinngg rreeggiisstteerrss
+       Use   the   r  command  to  display  kernel  registers:  r
+       [-t][address]                                                            /*
+       Display registers */
+
+       Specifying  the  -t  option  toggles between two different
+       forms of register display.
+
+OOuuttppuutt mmooddiiffiiccaattiioonn
+       By default, output values are  in  hexadecimal,  and  four
+       bytes worth of value (a long) is printed out.
+
+       If an expression is of type char, unsigned char, short, or
+       unsigned short, the appropriate amount of  information  is
+       printed.
+
+       To  modify  output, a calculator input line is preceded by
+       an open-curly-bracket ({), which is followed by a list  of
+       specifiers  and  ended  with  a  close-curly-bracket  (}).
+       Strings may also be given to output before  or  after  the
+       value  is  given;  normal character escapes as accepted by
+       are allowed.  The specifiers are:
+
+                                                                5
+
+scodb(1M)                                               scodb(1M)
+
+       ?   list output modifiers
+       >   no value output
+       b   output value as a byte
+       s   output value as a short
+       2   output value in binary
+       o   output value in octal
+       d   output value in decimal
+       :   output string
+       For instance, to preface output with the string Value  and
+       to  have  the  string  ok output after the value, with the
+       value in decimal: debug0:24> {d:Value:ok}value Value 10 ok
+       Note  that  expressions of type void have an output length
+       of zero (no value is given).
+
+BBrreeaakkppooiinnttss
+       Breakpoints are used to  suspend  execution  when  certain
+       conditions are met.
+
+       Breakpoints are normally set in code, so that when a given
+       instruction is reached, execution  is  suspended  and  the
+       debugger  is  called.   The  breakpoint  occurs before the
+       instruction is executed.  These  breakpoints  are  set  by
+       replacing  the first byte of the instruction at the break-
+       point address with an INT 3 instruction (0xCC),  remember-
+       ing the replaced byte.  When a breakpoint occurs, the byte
+       is restored so that the instruction can be executed.
+
+       Breakpoints can also be set such that the debugger will be
+       invoked on a data reference.  In this case, the breakpoint
+       happens after the data reference.  Data  reference  break-
+       points  are  implemented  using the processor's four debug
+       registers, and may not be used  when  an  ICE  (In-Circuit
+       Emulator) is in use on the system.
+
+       Commands  may be given to the debugger to be executed when
+       a breakpoint is encountered.  If the debugger is  in  con-
+       trol  after the breakpoint (in other words, the breakpoint
+       commands did not call quit),  the  debugger  displays  the
+       breakpoint value and name.
+
+       Use  the breakpoint commands listed here to set, list, and
+       clear  breakpoints  (see   bc   addr|*|DRn              /*
+       Breakpoint  clear  */ bl [name]                  /* Break-
+       point list  */  bp  [[rwi][b|s|l]|x]]  address  [condition
+       value]/*  Breakpoint  set */ bp mod address             /*
+       Modify     breakpoint     commands     */     bp      name
+       address            /*  Breakpoint  set  with  name  */  bp
+       [en|dis] address   /* (En)able or (Dis)able previously set
+       breakpoint */
+
+   SSeettttiinngg bbrreeaakkppooiinnttss
+       Use bp to set breakpoints and to modify the commands asso-
+       ciated with a breakpoint.  For code breakpoints, the  sim-
+       ple  form:  bp  address  is  used  to  set a breakpoint at
+
+                                                                6
+
+scodb(1M)                                               scodb(1M)
+
+       address, unless address is in ROM, in which case the  data
+       breakpoint  form  must  be used: bp x address See for more
+       information on breakpoint addresses.
+
+       When setting data  reference  breakpoints,  call  bp  with
+       arguments  that  specify  read (r) and/or write (w) refer-
+       ences of a byte (b), short (s), or long (l).  For example,
+       to  trap  on  references  to  write  a  long  at F00F072C:
+       debug0:7> bp wl F00F072C This specifies that all  accesses
+       to  location  F00F072C will cause an entry into the debug-
+       ger.  If desired, data breakpoints can be set up to  break
+       only  when  the  location is written with a certain value:
+       debug0:7> bp wl &lbolt == 1200 This causes an  entry  into
+       the  debugger  when  lbolt is written with the value 1200.
+       In this example, the optional condition is (==) and  value
+       is 1200.  condition can be one of the following:
+       ==   equal
+       !=   not equal
+       >=   greater than or equal
+       <=   less than or equal
+       &    logical-and
+
+       The logical-and condition evaluates true when the location
+       AND-ed with value is non-zero.  value  can  be  any  SCODB
+       expression; its value is only calculated once.
+
+       If  name is used to set a breakpoint (for example: bp name
+       read+1), the debugger prompts for a  descriptive  name  to
+       associate  with the breakpoint.  This descriptive name can
+       be used as an alternative  to  reference  the  breakpoint.
+       This is done by prefixing the descriptive name with a hash
+       sign (#) (for example, bc #testpoint).  The name can be up
+       to  31  characters  long.   The  default  action is not to
+       prompt for this name, but to use in its place the  expres-
+       sion  that  the  user  typed  to  specify  the  breakpoint
+       address.  When the bp name form is used  on  a  breakpoint
+       that  already  exists,  it  changes  only  the name of the
+       breakpoint.
+
+       Specify the mod argument to make bp prompt for commands to
+       execute  when the breakpoint occurs.  Commands are entered
+       in an editing mode very similar to vi.  In vi mode,  enter
+       Q  to  stop entering commands.  Note that vi mode comes up
+       in insert mode, and empty lines are automatically deleted.
+       These  commands are normal debugger commands, and are exe-
+       cuted sequentially until there are no more commands  or  a
+       quit  command occurs: debug0:8> bp mod read Enter commands
+       to execute at breakpoint: [1] quitif ++$x != 4 [2] r [3] :
+       :q  The  above example, assuming that $x is initialized as
+       0, causes the first three breakpoints at  read  to  go  by
+       unnoticed,  while  the fourth will print the register con-
+       tents and drop into the debugger.  These commands  can  be
+       later  modified by using the mod argument to bp in exactly
+       the same way.
+
+                                                                7
+
+scodb(1M)                                               scodb(1M)
+
+   LLiissttiinngg bbrreeaakkppooiinnttss
+       Use the bl  command  to  list  the  breakpoints.   If  the
+       optional  name  is  given, the commands to be executed for
+       the breakpoint name are also printed: debug0:9> bl
+              D00A6B6F read+3       read debug0:10> bl read
+              D00A6B6F read+3       read
+              quitif ++$x != 4
+              r When using  bl  to  list  breakpoints,  they  are
+       listed  in  the order they were input, which is not neces-
+       sarily alphabetic.
+
+   CClleeaarriinngg bbrreeaakkppooiinnttss
+       Use bc to clear breakpoints.  Use the wildcard character *
+       to clear all breakpoints.  For data reference breakpoints,
+       call bc with either DRn, (where n is 0, 1,  2,  or  3)  to
+       denote  which  breakpoint it is, or the breakpoint's name.
+       The following two examples are equivalent, with the break-
+       points set in the debug0:11> bc DR0 debug0:12> bc &u.u_uid
+       A simple method of clearing a code breakpoint  immediately
+       after  it  occurs  is:  debug0:13>  bc  %eip This clears a
+       breakpoint at the current eip.  Other breakpoints  can  be
+       cleared by giving either the name of the breakpoint or its
+       address.  For example: debug0:14> bc s5readi
+
+   BBrreeaakkppooiinntt eexxaammppllee
+       The following example illustrates: setting a  code  break-
+       point  at  the  function s5readi setting a data breakpoint
+       for references to u.u_uid setting a  data  breakpoint  for
+       write  references  to  lbolt  cause  its  value  to become
+       greater than or equal to 1000.   listing  the  breakpoints
+       that  are set clearing the s5readi breakpoint clearing the
+       data reference breakpoint DR0 clearing the data  reference
+       breakpoint  DR1  debug0:1>  bp  s5readi  debug0:2>  bp  wl
+       &u.u_uid debug0:3> bp wl &lbolt >= 1000 debug0:4> bl
+              F00620EF s5readi+3: s5readi
+              E00010EA u+10EA: DR0: write long u.u_uid
+              F0117660 lbolt: DR1: write long lbolt  >=  00001000
+       debug0:5>  bc  s5readi  debug0:6>  bc DR0 debug0:7> bc DR1
+       debug0:8> bl No breakpoints.
+
+DDuummppiinngg mmeemmoorryy
+       The d  commands  are  used  to  examine  memory  contents.
+       Depending on the mode of the d command selected, memory is
+       shown grouped as bytes (db), shorts (ds), longs  (dl),  or
+       symbols (dn).  If no mode is specified with the d command,
+       memory    is    displayed    grouped    as    longs:     d
+       address                 /*  Dump  memory  as  longs  */ db
+       address                /*  Dump  memory  as  bytes  */  ds
+       address                /*  Dump  memory  as  shorts  */ dl
+       address                /*  Dump  memory  as  longs  */  dn
+       address                /*  Dump  memory  as  symbols */ If
+       address is given that is known by SCODB to be a  structure
+       or  union,  SCODB automatically dumps it member by member.
+       This can be overridden by typecasting address to (char *).
+
+                                                                8
+
+scodb(1M)                                               scodb(1M)
+
+       For  example:  debug0:1>  d  (char *)&u The ASCII value of
+       each byte is displayed on the right of the screen, with  a
+       dot (.) denoting a non-printable character or white space,
+       as in Note that the bytes are displayed in the ASCII  dump
+       from  low  to  high memory, while the memory dump displays
+       memory in possibly larger memory groups  which  are  byte-
+       reversed.
+
+       After  each line of memory is displayed, the user may move
+       around the dump using the following movement keys:  j,  k,
+       l, h,
+        ,  and   .   The   key acts as a quit character and exits
+       from the dump.
+
+       The  following  are  some  examples  of  dumping   memory:
+       debug0:2>  d  &init_tbl  init_tbl       D0089368  D009C544
+       D007E09C D0085CBC h...D..........  init_tbl+10    D0083F3C
+       D008265C  D00863A8  D00826C8  <?.....c...&..  debug0:3> ds
+       &dmapage dmapage       0087 0083 0081 0082 0000 008B  0089
+       008A  ................   debug0:4>  db  &maptab  maptab+60
+       00 41 42 43 44 45 46 47 48 49 4A 4B 4C 4D  4E  4F  .ABCDE-
+       FGHIJKLMNO  maptab+70     50 51 52 53 54 55 56 57 58 59 5A
+       00 00 00 00 00 PQRSTUVWXYZ.....  debug0:5> dn &u+d00 u+D00
+       selwait 0000011A u+E34 sysent+2B8
+
+CChhaannggiinngg mmeemmoorryy
+       Use  the  memory  change  commands  to  change  memory:  c
+       address                 /* Change memory as  longs  */  cb
+       address                /*  Change  memory  as  bytes */ cs
+       address                /* Change memory as shorts */
+
+   CChhaannggiinngg aarrbbiittrraarryy mmeemmoorryy
+       If an address is given that is known  by  SCODB  to  be  a
+       structure  or union, it will automatically change it field
+       by field.  This  can  be  overridden  by  typecasting  the
+       address  to (char *).  For example: debug0:1> c (char *)&u
+       Commands can be given to change location and value of mem-
+       ory:
+       ------------------------------------------------------------------------
+       Key                      Action
+       ------------------------------------------------------------------------
+                                move right one digit in field
+       j                        move to next line
+       k                        move to previous line
+       h                        move to previous field
+       l,                       move to next field
+                                move left one digit in field, or to last field
+       hexadecimal digit        change current digit
+                                enter calculator-input mode
+       u                        undo last digit-change
+       U                        undo all changes to current field
+        or   quit   character   exit change mode
+       (other than )
+       Hexadecimal input will  change  the  digit  on  which  the
+
+                                                                9
+
+scodb(1M)                                               scodb(1M)
+
+       cursor  is  located, advancing the cursor until the end of
+       the cell.  The most significant or left-most digit of  the
+       cell is changed first.
+
+       Pressing  the   key  allows  the user to give input to the
+       SCODB calculator so that complex address  expressions  can
+       be   evaluated  and  entered  as  value  for  that  field:
+       debug0:2> c  &init_tbl  init_tbl        D0089368  D009C544
+       D007E09C D0085CBC h...D..........  init_tbl+10    D0083F3C
+       D008265C D00863A8 D00826C8 <?.....c...&..  Value: To  exit
+       the  change  mode, enter a newline or quit character (such
+       as the delete key)  other than .
+
+       A  advances the cursor to the next cell, while a   entered
+       at  the beginning (left) of a cell causes the cursor to go
+       to the beginning of the previous cell.
+
+       A space advances to the next digit, up to the end  of  the
+       cell  (the  right  side), with no modification to the con-
+       tents.  Incorrect entry is signaled by a bell.
+
+   CChhaannggiinngg mmeemmoorryy aass ssttrruuccttuurreess
+       If the address is given  with  a  known  structure-pointer
+       type, the c command gives the user memory to be changed on
+       a field-by-field basis.
+
+       Use the j and k commands to go to the  next  and  previous
+       fields, respectively.
+
+       On  a  numeric  field  (1, 2, or 4-byte, including pointer
+       types) , hexadecimal input can  be  given  to  modify  the
+       value  of the field.  An  can be given to enter calculator
+       mode.
+
+       On an array, bit field, structure or union field, a prompt
+       will be given: debug0:3> c &u
+               0000   0E84  char  u_stack[E84]             Change
+       [ynq]?  If y (for ``yes'') is entered, the  memory  region
+       to change is given.  Modification of memory past the range
+       given (in this case, 0xE84 bytes) is not permitted, and  a
+       beep to signals the error.
+
+       Modification  of  bit fields is not currently guarded: use
+       the calculator features of SCODB for  changing  bit  field
+       values.
+
+SSttaacckk bbaacckkttrraaccee
+       Use   the  stack  command  to  print  a  stack  backtrace:
+       stack                                                                  /*
+       Print        stack        backtrace        */        stack
+       address                                                          /*
+       Start backtrace at address */ stack [stack_addr | -p pid |
+       -p proc_addr]                              /* Print  back-
+       trace for process */
+
+                                                               10
+
+scodb(1M)                                               scodb(1M)
+
+       Stack  backtraces,  which  are indispensable in debugging,
+       are obtained by examining the stack.  Refer to the  manual
+       page for details of the stack command output.
+
+DDiissaasssseemmbbllyy
+       Use the dis or u (unassemble) command to disassemble code:
+       Disassemble from address.
+
+       Following is an  example  of  unassembly  of  a  function:
+       debug0:1>  u open open                  pushl  %edi open+1
+       movl       8(%esp),%edi     open+5                    mov1
+       C(%esp),%edx   open+9                 pushl   %edx  open+A
+       mov1    8(%edi),%ecx  open+D                 pushl    %ecx
+       open+E                movl   4(%edi),%eax
+
+       The  following vi-style keys can be used for movement when
+       in the disassembly mode:
+       ----------------------------
+       Key   Action
+       ----------------------------
+       , j   forward one line
+       d     forward half a screen
+
+SSiinnggllee--sstteeppppiinngg
+       Use the s or step command to resume execution  in  single-
+       step  mode:  s  [-r]                     /* Single-step */
+       Single-stepping is used when precise control over instruc-
+       tion  execution  is required.  As each instruction is exe-
+       cuted, control is passed back to the debugger, which  dis-
+       assembles  the  next instruction to be executed.  The user
+       must give input at this point before execution  will  con-
+       tinue.
+
+       SCODB  can  dump the system registers at each instruction;
+       Specifying the -r option toggles on and off the  automatic
+       displaying  of registers during the single-stepping.  This
+       mode is useful for observing register value  changes  from
+       each instruction.
+
+   UUsseerr iinnppuutt
+       Enter  a   to execute the displayed instruction, or a quit
+       character to return to the debugger; an r can be given  to
+       cause  SCODB  to  finish  executing  the current function,
+       stopping   after   a   return:    debug0:1>    s    read+3
+       inc     sysinfo+5C  read+9                 pushb  1 r sys-
+       trap+207           cmpl    &aud_cont+1,0  q  If  the  next
+       instruction  is  a  call,  the user is prompted for input:
+       debug0:2> s read+B                call   rdwr [ejr]? q The
+       call  can  be  jumped  over  by  entering a j: debug0:3> s
+       read+B                 call    rdwr   [ejr]?   j   read+10
+       leave  read+11               ret q The function called can
+       be  entered  by  entering  an  e:   debug0:4>   s   read+B
+       call    rdwr  [ejr]?  e  rdwr                  pushl  %ebp
+
+                                                               11
+
+scodb(1M)                                               scodb(1M)
+
+       rdwr+1                    movl       %ebp,%esp      rdwr+3
+       subl   %esp,1C rdwr+6                pushl  %ebx r read+10
+       leave q Other instructions are executed by  entering  a  .
+       The e and j keys are aliases to
+        and  also cause the displayed instruction to be executed.
+       When held down and used in a repeat  fashion,  these  keys
+       allow continuous single-stepping without interruptions for
+       call instructions.
+
+       The C key causes instructions to be  single-stepped  until
+       the next control transfer instruction is encountered (that
+       is, up until the next jmp/call/ret instruction).
+
+       No breakpoints are in effect while single-stepping.
+
+   DDiissppllaayy ooff ccoonnddiittiioonnaall jjuummpp iinnssttrruuccttiioonnss iinn ssiinnggllee--sstteepp mmooddee
+       When a conditional jump instruction is encountered  during
+       single-stepping,  SCODB  prints either [yes] or [no] after
+       the instruction, stating whether or not the jump  will  be
+       taken:  debug0:4>  s rdwr+22               je     rdwr+339
+       [no]
+
+   WWhheenn nnoott ttoo ssiinnggllee--sstteepp
+       Single-stepping should not be performed on the  transition
+       between kernel and user mode.
+
+       Using  the  r  command to return from the current function
+       will have unexpected results in the  rare  case  that  the
+       function does not have an explicit return instruction (for
+       example, which uses a jump to return control).
+
+   IImmpplleemmeennttaattiioonn
+       Single stepping over calls  is  implemented  using  normal
+       breakpoints;  note that this will not work on code in ROM.
+       Stepping through other instructions is  implemented  using
+       the Trap Flag (bit 8 of the EFLAGS register in the 80386).
+
+SSttrruuccttuurree mmeemmbbeerrss
+       Use the struct command to print structure  member  values,
+       offsets, and declarations: struct stname [-> member] [mem-
+       ber...] address   /* Show structure field  values  */  The
+       stname (structure name) argument does not have to be given
+       if the type of address can be determined.
+
+       The following  example  illustrates  dumping  memory  from
+       address   &u  (the  user  structure)  as  a  struct  user:
+       debug0:1> struct user &u struct user size = 1390 bytes  &u
+       = E0000000:
+               0000  0E84 char u_stack[E84]
+               0E84  00F8 union u_fps u_fps
+               10EA  0002 unsigned short u_uid        0304
+               10EC  0002 unsigned short u_gid        000A
+               1148  0018 int u_arg[6]
+
+                                                               12
+
+scodb(1M)                                               scodb(1M)
+
+       Bit  fields of a structure are printed in the format: off-
+       set  declaration                 hexval  =  binaryval  For
+       example:  0010    unsigned  int  a_base0015:16      0000 =
+       0000000000000000 Other fields in the structure are printed
+       in     the     format:     offset     size     declaration
+       value   <symbol> For example: 10EA   0002  unsigned  short
+       u_uid        0304 For bit fields, offset is the offset, in
+       bits, from the beginning of  the  structure  (in  the  bit
+       field  example,  10 (hexadecimal) bits offset).  For other
+       fields, offset is given in bytes (in this case, 10EA).
+
+       size is the size of the field (in the example,  2  bytes).
+       The  size  of  a bit field is given in its declaration, in
+       decimal (in the first example above, 16 bits).
+
+       declaration is the declaration of the field as given in  C
+       (in  the  example, unsigned short u_uid).  If the debugger
+       does not know the name of a structure pointer  field,  the
+       declaration  field  reads as struct ??? fieldname.  A type
+       cast may be used to access the structure field.
+
+       Two values are given for bit fields, hexval and binaryval.
+       binvaryval  is printed with the least significant bit (bit
+       0) to the right.  For other fields, value is given for  1,
+       2,  and  4  byte-sized fields (here, 0304) in hexadecimal.
+       If value is near a  symbol,  the  symbol  and  offset  are
+       printed.   Fields of other sizes can be dumped using the d
+       command  (for  example,  to  dump  the  u.u_arg  array:  d
+       u.u_arg).
+
+       By default, struct starts printing structures at addr, and
+       continues incrementing addresses by the size of the struc-
+       ture until the user issues a quit command.
+
+   FFoolllloowwiinngg lliinnkkeedd lliissttss
+       Use the -> field argument to specify that the structure is
+       a linked list, with field given as the  ``next''  pointer.
+       In  this  case, struct prints a structure at address, then
+       another at *(address+(field offset)), and so on.
+
+       For example, to dump the STREAMS data block freelist as  a
+       linked  list  following  the db_freep member of the struc-
+       ture: debug0:2> struct datab ->  db_freep  &dbfreelist  If
+       structure  fields  are  given (other than that required by
+       the -> argument, if present), only those  members  of  the
+       structure  are  printed.   (In  this  example, db_freep is
+       listed twice in the command, once to  declare  it  as  the
+       ``next''  pointer,  once  to  have  it printed): debug0:3>
+       struct datab  ->  db_freep  db_freep  db_base  &dbfreelist
+       struct datab size = 10 bytes D00F072C:
+               0000  0000 struct datab *db_freep   D00EFB18
+               0004  0004 unsigned char *db_base   D00EEB18
+
+       D00EFB18:
+
+                                                               13
+
+scodb(1M)                                               scodb(1M)
+
+               0000  0000 struct datab *db_freep   00000000
+               0004   0004  unsigned char *db_base   D12D5BFC End
+       of list reached.
+              .
+
+CCoommmmaanndd aalliiaassiinngg
+       Use the alias and unalias commands to display  or  set  up
+       and  unset aliases: alias [word [new command...]]/* Set or
+       list aliases */ unalias aliases...         /* Unset  alias
+       */  Aliases allow the user to customize the SCODB environ-
+       ment by simplifying the use of commonly-used complex  com-
+       mands.   When  SCODB  is  given  a command by the user, it
+       checks the command against the list  of  aliases.  If  the
+       command  matches  word  of  an alias, substitution is per-
+       formed.  When  performing  alias  substitution  of  simple
+       aliases  (those  without argument substitution), the first
+       word of the user's command is substituted  by  the  entire
+       alias,  with  the arguments to the user's command appended
+       to the end.  Aliases may reference other aliases, as  long
+       as no loop results.  Loops are detected by restricting the
+       number of alias substitutions per command.
+
+       unalias is used to unset aliases.  Given an argument of *,
+       unalias clears all aliases; otherwise it clears only those
+       listed.
+
+       alias used with  no  arguments  lists  the  currently  set
+       aliases.   Given  one  argument, alias lists the alias for
+       that word.  An example of a simple alias: debug0:1>  alias
+       dbp   bp   wl  debug0:2>  alias  dbp                bp  wl
+       debug0:3>  dbp  &u.u_error  debug0:4>   alias   dbpe   dbp
+       &u.u_error    debug0:5>    alias   dbpe                dbp
+       &u.u_error dbp               bp  wl  debug0:6>  dbpe  More
+       complex  aliases  can  be  made that will perform argument
+       substitution by replacing part of the alias with  a  given
+       argument  to  that  alias.   Argument substitution is done
+       when a ! is found inside an alias:
+       0-9   argument number
+       ^     first argument (same as !1)
+       $     last argument
+       *     all arguments (^ through $, inclusive)
+       The character following determines which argument is  sub-
+       stituted.   When  resolving  complex  aliases, the command
+       arguments are used only in argument substitution, and  are
+       not appended to the resultant command: debug0:7> unalias *
+       Clear all aliases? Yes debug0:8> alias dbp bp wl  &!1  All
+       alias  information  is lost when the computer reboots.  To
+       configure aliases to be present  automatically  in  SCODB,
+       modify   the   alias  table  in  the  SCODB  space.c  file
+       (/etc/conf/pack.d/scodb/space.c).
+
+       As released,  the  alias  table  is  empty:  struct  alias
+       dbalias[NDBALIAS];  To  add,  for  example,  the following
+       alias: debug0:11> alias dbp bp wl &!1 Modify the table to:
+
+                                                               14
+
+scodb(1M)                                               scodb(1M)
+
+       struct alias dbalias[NDBALIAS] = {
+               {  "dbp",  "bp wl &!1" }, }; SCODB does not neces-
+       sarily detect errors in such a configured table, so  exer-
+       cise  caution when modifying the configuration.  Note that
+       the NDBALIAS constant is a tunable  parameter  and  should
+       not be modified inside the space.c file.
+
+SSttrruuccttuurree//uunniioonn aanndd vvaarriiaabbllee ddeeffiinniittiioonn ffiilleess
+       SCODB can be manually configured to accommodate new struc-
+       ture definitions.  In order to add new  structure  defini-
+       tions  to scodb, do the following: Generate an object mod-
+       ule (a .o file) which #include's the structures of  inter-
+       est.  This must be compiled with the cc -g -W0,-d1 command
+       to generate DWARF I format debugging information.   Ensure
+       that   you  build  the  object  with  flags  matching  the
+       DEBUG/non-DEBUG UNIPROC/non-UNIPROC status of  the  kernel
+       in  which  scodb  is  installed.   Do not use the filename
+       kstruct.o for this module, as this file already exists and
+       contains  the core kernel structure definitions.  Copy the
+       new object  module  into  the  /etc/conf/pack.d/scodb/info
+       directory.   At this point, the structure definitions will
+       be automatically added to scodb.
+
+FFiilleess
+       alias table can be modified within this  file  new  object
+       module  gets  copied  into  this directory newdebug can be
+       issued in this file to bring scodb  up  first  by  default
+       includes file definitions and types
+
+RReeffeerreenncceess
+
+                                                               15
+

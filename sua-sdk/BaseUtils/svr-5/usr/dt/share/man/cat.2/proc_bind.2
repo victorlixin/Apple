@@ -1,0 +1,113 @@
+
+
+processor_bind(2)                               processor_bind(2)
+
+SSyynnooppssiiss
+       #include  <sys/types.h>  #include <sys/procset.h> #include
+       <sys/processor.h>
+
+       int processor_bind(idtype_t idtype, id_t id,       proces-
+       sorid_t processorid, processorid_t *obind);
+
+DDeessccrriippttiioonn
+       The  processor_bind  call  binds a process (or one or more
+       Light-Weight Processes) to a specific processor.
+
+       idtype specifies whether the  id  argument  is  the  Light
+       Weight  Process  ID  (LWP  ID) for a single LWP within the
+       caller's process, or a process ID (PID).  If id is a  PID,
+       then the operation applies to all the LWPs associated with
+       the given process.  To bind or unbind a  process  or  LWP,
+       the real or effective user ID of the caller must match the
+       real or saved user ID [from of the process being bound  or
+       unbound, or the caller must have the P_OWNER privilege.
+
+       processorid  is  the  ID of a processor to which the given
+       PID or LWP ID is to be bound.
+
+       If obind is not NULL, it points to a variable in which the
+       previous binding is returned.
+
+       The  valid values for idtype and corresponding interpreta-
+       tions of id are as follows: id is a process ID.  The oper-
+       ation  shall  apply  to all LWPs currently associated with
+       the specified process (if any).  id is an LWP ID  specify-
+       ing  a  single LWP, within the same process as the caller,
+       to which the operation shall apply.
+
+       When the process identified by id has been bound, it  will
+       execute  only  on  the  processor specified by processorid
+       (even if other processors are available), except  briefly,
+       if  the process requires a resource that only another pro-
+       cessor can provide.  The processor  may  continue  to  run
+       other  processes.  in addition to the one specified by id.
+       The processor_bind call will fail if the process specified
+       by  id  is  bound  exclusively  to another processor or if
+       there are already processes exclusively bound to the  pro-
+       cessor specified by processorid.
+
+       The  processor_bind  call  is  not  guaranteed  to be syn-
+       chronous with the binding operation.  If the binding oper-
+       ation cannot be completed immediately, the call may return
+       before the operation completes.   Any  delay  between  the
+       return of the function and the completion of the operation
+       will, typically, be of very short duration.
+
+       If processorid is PBIND_NONE,  the  specified  process  is
+       unbound; that is, it is made free to run on any processor.
+
+                                                                1
+
+processor_bind(2)                               processor_bind(2)
+
+       Using a processorid of PBIND_QUERY queries the binding  of
+       a  process  without  changing  it.   This  action requires
+       P_OWNER privilege if  the  target  process  UID  does  not
+       match.
+
+       If  the process specified by id is already bound to a dif-
+       ferent processor, the binding for  that  process  will  be
+       changed  to  the  processor  specified by processorid.  If
+       obind is not NULL and the process is currently bound to  a
+       processor, that processorid is returned by obind.
+
+       The processor binding is inherited by any children created
+       by a call, or and does not change across a call to
+
+   RReettuurrnn vvaalluueess
+       On success, processor_bind returns 0.   if  obind  is  not
+       NULL,  the  previous binding of the specified LWP shall be
+       returned in the location pointed to by obind.  If obind is
+       not  NULL  and  idtype and id specify a PID with more than
+       one associated LWP, the previous binding shall be returned
+       for  a  random LWP within the specified set.  The previous
+       binding shall be the processor  ID  of  the  processor  to
+       which the LWP was bound, or PBIND_NONE if the LWP was pre-
+       viously unbound.
+
+       On failure, processor_bind returns a  negative  value  and
+       sets errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, processor_bind fails and sets
+       errno to: The calling process does not have P_OWNER privi-
+       lege.   An invalid idtype or processorid was specified, or
+       the specified processor is currently offline.  None of the
+       specified  LWPs  exist or idtype was P_LWPID and id speci-
+       fied an LWP that was not within the caller's process.  The
+       process  specified  by  id is bound exclusively to another
+       processor or there are already processes  or  LWPs  exclu-
+       sively  bound  to  the processor specified by processorid.
+       obind is not NULL and points to an invalid  address.   The
+       specified processor is not operational.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr lliigghhttwweeiigghhtt pprroocceesssseess
+       In  addition  to  binding  processes  to  a processor, the
+       P_LWPID idtype (see DESCRIPTION) can be used by a  process
+       to  bind individual LWPs in that process.  There is no way
+       for a process to bind LWPs in another process.
+
+                                                                2
+

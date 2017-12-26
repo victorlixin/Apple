@@ -1,0 +1,172 @@
+tr(1)                                                             tr(1)
+
+  ttrr
+
+  NNAAMMEE
+
+    tr - translate characters
+
+  SSYYNNOOPPSSIISS
+
+    tr [[-cs]] string1 string2
+    tr [[-c]] -d string1
+    tr [[-c]] -s string1
+    tr [[-c]] -ds string1 string2
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ttrr(1) utility copies the standard input to the standard output with
+    substitution or deletion of selected characters.
+
+    The following options are available:
+
+    --cc
+        Complements the set of characters in string1; that is, --cc aabb includes
+        every character except for a and b.
+
+    --dd
+        The --dd option causes characters to be deleted from the input.
+
+    --ss
+        The --ss option squeezes multiple occurrences of the characters listed
+        in the last operand (either string1 or string2) in the input into a
+        single instance of the character. This occurs after all deletion and
+        translation is completed.
+
+    In the first synopsis form, the characters in string1 are translated into
+    the characters in string2. The first character in string1 is translated
+    into the first character in string2 and so on. If string1 is longer than
+    string2, the last character found in string2 is duplicated until string1
+    is exhausted.
+
+    In the second synopsis form, the characters in string1 are deleted from
+    the input.
+
+    In the third synopsis form, the characters in string1 are compressed as
+    described for the --ss option.
+
+    In the fourth synopsis form, the characters in string1 are deleted from
+    the input, and the characters in string2 are compressed as described for
+    the --ss option.
+
+    The following conventions can be used in string1 and string2 to specify
+    sets of characters:
+
+    c
+        Any character c not described by one of the following conventions
+        represents itself.
+    \\octal
+        A backslash followed by 1, 2, or 3 octal digits represents a character
+        with that encoded value. To follow an octal sequence with a digit as a
+        character, left zero-pad the octal sequence to the full 3 octal
+        digits.
+    \\character
+        A backslash followed by certain special characters maps to special
+        values.
+        \\aa     Alert character
+
+        \\bb     Backspace
+
+        \\ff     Form-feed
+
+        \\nn     Newline
+
+        \\rr     Carriage return
+
+        \\tt     Tab
+
+        \\vv     Vertical tab
+
+    A backslash followed by any other character maps to that character.
+
+    c--c
+        Represents the range of characters between the range endpoints,
+        inclusively.
+    [::class::]
+        Represents all characters belonging to the defined character class.
+        Class names are:
+        aallnnuumm      Alphanumeric characters
+
+        aallpphhaa      Alphabetic characters
+
+        ccnnttrrll      Control characters
+
+        ddiiggiitt      Numeric characters
+
+        ggrraapphh      Graphic characters
+
+        lloowweerr      Lowercase alphabetic characters
+
+        pprriinntt      Printable characters
+
+        ppuunncctt      Punctuation characters
+
+        ssppaaccee      Space characters
+
+        uuppppeerr      Uppercase characters
+
+        xxddiiggiitt     Hexadecimal characters
+        With the exception of the upper and lower classes, characters in the
+        classes are in unspecified order. In the upper and lower classes,
+        characters are entered in ascending order.
+    [==equiv==]
+        Represents all characters or collating (sorting) elements belonging to
+        the same equivalence class as equiv. If there is a secondary ordering
+        within the equivalence class, the characters are ordered in ascending
+        sequence. Otherwise, they are ordered after their encoded values. An
+        example of an equivalence class might be c and ch in Spanish; English
+        has no equivalence classes.
+    [c**n]
+        Represents n repeated occurrences of the character represented by c.
+        This expression is only valid when it occurs in string2. If n is
+        omitted or is zero, it is interpreted as large enough to extend
+        string2 sequence to the length of string1. If n has a leading zero, it
+        is interpreted as an octal value; otherwise, it is interpreted as a
+        decimal value.
+
+    The ttrr(1) utility exits 0 on success, and >0 if an error occurs.
+
+  EEXXAAMMPPLLEESS
+
+    The following examples are shown as given to the shell:
+
+    Create a list of the words in file1, one per line, where a word is taken
+    to be a maximal string of letters:
+
+    tr -cs [:alpha:] \n < file1
+
+    Translate the contents of file1 to uppercase:
+
+    tr [:lower:] [:upper:] < file1
+
+    Strip out non-printable characters from file1:
+
+    tr -cd [:print:] < file1
+
+    Perform (or undo) a rot13 transformation on text in file1:
+
+    tr [A-Ma-mN-Zn-z] [N-Zn-zA-Ma-m] < file1
+
+  CCOOMMPPAATTIIBBIILLIITTYY
+
+    System V has historically implemented character ranges using the syntax
+    [c-c] instead of the c-c used by historic Berkeley Software Distribution
+    (BSD) implementations and standardized by POSIX. System V shell scripts
+    should work under this implementation as long as the range is intended to
+    map in another range. That is, the command tr [a-z] [A-Z] will work, as it
+    will map the [ character in string1 to the [ character in string2. If the
+    shell script is deleting or squeezing characters, however, as in the
+    command tr -d [a-z], the characters [ and ] will be included in the
+    deletion or compression list which would not have happened under an
+    historic System V implementation. Additionally, any scripts that depended
+    on the sequence a-z to represent the three characters a, - and z will have
+    to be rewritten as a\-z.
+
+    The ttrr(1) utility has historically not permitted the manipulation of NUL
+    bytes in its input and, additionally, stripped NUL's from its input
+    stream. This implementation has removed this behavior as a bug.
+
+    The ttrr(1) utility has historically been extremely forgiving of syntax
+    errors, for example, the --cc and --ss options were ignored unless two strings
+    were specified. This implementation will not permit illegal syntax.
+

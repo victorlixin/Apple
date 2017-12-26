@@ -1,0 +1,229 @@
+mknod(2)                                                       mknod(2)
+
+  mmkknnoodd(())
+
+  NNAAMMEE
+
+    mknod(), wcs_mknod() - create a regular file, special file, or directory
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/stat.h>
+
+    int mknod(const char *path, mode_t mode, dev_t dev)
+    int wcs_mknod(const wchar_t *path, mode_t mode, dev_t dev)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The mmkknnoodd(2) and wwccss__mmkknnoodd(2) functions are identical, except that
+    wwccss__mmkknnoodd(2) accepts wide characters in the path argument.
+
+    The mmkknnoodd(2) and wwccss__mmkknnoodd(2) functions create a new file named by the
+    path name to which the argument path points.
+
+    The file type for path is OR-ed into the mode argument, and must be
+    selected from one of the following symbolic constants:
+
+    NNaammee        DDeessccrriippttiioonn
+
+    S_IFIFO     FIFO-special
+
+    S_IFCHR     Character-special
+
+    S_IFDIR     Directory
+
+    S_IFBLK     Block-special
+
+    S_IFREG     Regular
+
+    The permissions for the new file are OR-ed into the mode argument, and may
+    be selected from any combination of the following symbolic constants:
+
+    NNaammee        DDeessccrriippttiioonn
+
+    S_ISUID     Set user ID on execution.
+
+    S_ISGID     Set group ID on execution.
+
+    S_IRWXU     Read, write or execute (search) by owner.
+
+    S_IRUSR     Read by owner.
+
+    S_IWUSR     Write by owner.
+
+    S_IXUSR     Execute (search) by owner.
+
+    S_IRWXG     Read, write or execute (search) by group.
+
+    S_IRGRP     Read by group.
+
+    S_IWGRP     Write by group.
+
+    S_IXGRP     Execute (search) by group.
+
+    S_IRWXO     Read, write or execute (search) by others.
+
+    S_IROTH     Read by others.
+
+    S_IWOTH     Write by others.
+
+    S_IXOTH     Execute (search) by others.
+
+    S_ISVTX     On directories, restricted deletion flag.
+
+    The dev argument is a 32-bit integer that identifies the device. It is
+    constructed using the mmkkddeevv() macro using the following syntax:
+
+    mmkkddeevv((major,, minor))
+
+    The minor argument is the ordinal number of the device, if more than one
+    device of the specified type is present. The major argument specifies the
+    device type, and must be one of the following values:
+
+    DDeevviiccee TTyyppee        VVaalluuee     PPaatthh
+
+    tty-type devices
+
+    S_DEV_TTY          1         /dev/ttyn([0-5][0-9]|6[0-3])
+
+    S_DEV_CONSOLE      2         /dev/console
+
+    S_DEV_CTRL_TTY     3         /dev/tty
+
+    S_DEV_PTM          4         /dev/pty[p-zA-E][0-9a-f]
+
+    S_DEV_PTS          5         /dev/tty[p-zA-E][0-9a-f]
+
+    S_DEV_PTMX         6         /dev/ptmx
+
+    S_DEV_SERIAL       7         /dev/tty[01][0-9a-f]
+
+    Stream-type devices
+
+    S_DEV_TAPE         17        /dev/tapen
+
+    S_DEV_PIPE         18        User created FIFO
+
+    S_DEV_SOCKET       19        User created socket
+
+    S_DEV_XTI          20        User created
+
+    Char/block special file types
+
+    S_DEV_SPECIAL      48        /dev/full
+                                 /dev/null
+                                 /dev/random
+                                 /dev/urandom
+                                 /dev/zero
+
+    In the case of tape drives, a bit (0x100) is set to indicate that the
+    device does not rewind when it is closed and is cleared to indicate that
+    the drive rewinds when closed. To set this bit, use the bitwise-OR
+    operation when calling mmkkddeevv(), as shown:
+
+    mmkkddeevv((SS__DDEEVV__TTAAPPEE,, 00xx110000 || minor))
+
+    The dev argument is used only when S_IFCHR or S_IFBLK is set in mode;
+    otherwise, it should be set to 0.
+
+    The user ID of the file is initialized to the effective user ID of the
+    process. The group ID of the file is initialized to either the effective
+    group ID of the process or the group ID of the parent directory.
+
+    The owner, group, and other permission bits of mode are modified by the
+    file mode creation mask of the process. The mmkknnoodd(2) or wwccss__mmkknnoodd(2)
+    function clears each bit whose corresponding bit in the file mode creation
+    mask of the process is set.
+
+    Upon successful completion, mmkknnoodd(2) or wwccss__mmkknnoodd(2) marks for update the
+    st_atime, st_ctime and st_mtime fields of the file. Also, the st_ctime and
+    st_mtime fields of the directory that contains the new entry are marked
+    for update.
+
+    Upon successful completion, mmkknnoodd(2) or wwccss__mmkknnoodd(2) returns 0. Otherwise,
+    it returns -1, the new file is not created, and errno is set to indicate
+    the error.
+
+    You must be logged on as a member of the Administrators group to call
+    mmkknnoodd(2) or wwccss__mmkknnoodd(2), otherwise the utility returns -1 and sets eerrrrnnoo
+    to [EPERM].
+
+    Interix recognizes the files created by mmkknnoodd(2) and wwccss__mmkknnoodd(2) as
+    unique. Superficially identical files created through means other than
+    mmkknnoodd(1), mmkknnoodd(2), wwccss__mmkknnoodd(2), and mmaakkeeddeevv(1) (for example, through
+    backup and restore) will not be treated as device files by Interix, and
+    attempts to open devices through such files with fail with the error code
+    ENXIO.
+
+  RREETTUURRNN VVAALLUUEESS
+
+  EERRRROORRSS
+
+    The mmkknnoodd(2) or wwccss__mmkknnoodd(2) function will fail if:
+
+    [EPERM]
+        The invoking process does not have appropriate privileges and the file
+        type is not FIFO-special.
+
+    [ENOTDIR]
+        A component of the path prefix is not a directory.
+
+    [ENOENT]
+        A component of the path prefix specified by path does not name an
+        existing directory or path is an empty string.
+
+    [EACCES]
+        A component of the path prefix denies search permission, or write
+        permission is denied on the parent directory.
+
+    [EROFS]
+        The directory in which the file is to be created is located on a read-
+        only file system.
+
+    [EEXIST]
+        The named file exists.
+
+    [EIO]
+        An I/O error occurred while accessing the file system.
+
+    [EINVAL]
+        An invalid argument exists.
+
+    [ENOSPC]
+        The directory that would contain the new file cannot be extended or
+        the file system is out of file allocation resources.
+
+    [ELOOP]
+        Too many symbolic links were encountered in resolving path.
+
+    [ENAMETOOLONG]
+        The length of a pathname exceeds {PATH_MAX}, or pathname component is
+        longer than {NAME_MAX}.
+
+    [EFTYPE]
+        The target file system cannot securely contain a device special file.
+
+    The mmkknnoodd(2) or wwccss__mmkknnoodd(2) function may fail if:
+
+    [ENAMETOOLONG]
+        Pathname resolution of a symbolic link produced an intermediate result
+        whose length exceeds {PATH_MAX}.
+
+  AAPPPPLLIICCAATTIIOONN UUSSAAGGEE
+
+    For portability to implementations conforming to earlier versions of this
+    specification, _m_k_f_i_f_o(2) is preferred over this function for making FIFO
+    special files.
+
+  SSEEEE AALLSSOO
+
+    _m_a_k_e_d_e_v(1)
+
+    _m_k_f_i_f_o(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

@@ -1,0 +1,137 @@
+XtCreateManagedWidget(3X11R5)             XtCreateManagedWidget(3X11R5)
+
+  XXttCCrreeaatteeWWiiddggeett(())
+
+  NNAAMMEE
+
+    XtCreateWidget(), XtCreateManagedWidget(), XtDestroyWidget() - create and
+    destroy widgets
+
+  SSYYNNOOPPSSIISS
+
+    Widget XtCreateWidget (String name, WidgetClass widget_class,
+                           Widget parent, ArgList args,
+                           Cardinal num_args)
+    Widget XtCreateManagedWidget (String name, WidgetClass widget_class,
+                                  Widget parent, ArgList args,
+                                  Cardinal num_args)
+    void XtDestroyWidget (Widget w)
+
+  AARRGGUUMMEENNTTSS
+
+    args
+        Specifies the argument list to override the resource defaults.
+
+    name
+        Specifies the resource name for the created widget, which is used for
+        retrieving resources and, for that reason, should not be the same as
+        any other widget that is a child of same parent.
+
+    num_args
+        Specifies the number of arguments in the argument list.
+
+    parent
+        Specifies the parent widget.
+
+    w
+        Specifies the widget.
+
+    widget_class
+        Specifies the widget class pointer for the created widget.
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _XX_tt_CC_rr_ee_aa_tt_ee_WW_ii_dd_gg_ee_tt(3X11R5) function performs much of the boilerplate
+    operations of widget creation:
+    *     Checks to see if the class_initialize procedure has been called for
+          this class and for all superclasses and, if not, calls those
+          necessary in a superclass-to-subclass order.
+    *     Allocates memory for the widget instance.
+    *     If the parent is a subclass of constraintWidgetClass, it allocates
+          memory for the parent's constraints and stores the address of this
+          memory into the constraints field.
+    *     Initializes the core nonresource data fields (for example, parent
+          and visible).
+    *     Initializes the resource fields (for example, background_pixel) by
+          using the resource lists specified for this class and all
+          superclasses.
+    *     If the parent is a subclass of constraintWidgetClass, it initializes
+          the resource fields of the constraints record by using the
+          constraint resource list specified for the parent's class and all
+          superclasses up to constraintWidgetClass.
+    *     Calls the initialize procedures for the widget by starting at the
+          Core initialize procedure on down to the widget's initialize
+          procedure.
+    *     If the parent is a subclass of compositeWidgetClass, it puts the
+          widget into its parent's children list by calling its parent's
+          insert_child procedure. For further information, see Section 3.5.
+    *     If the parent is a subclass of constraintWidgetClass, it calls the
+          constraint initialize procedures, starting at constraintWidgetClass
+          on down to the parent's constraint initialize procedure.
+
+    Note that you can determine the number of arguments in an argument list by
+    using the _XX_tt_NN_uu_mm_bb_ee_rr(3X11R5) macro. For further information, see Section
+    11.1.
+
+    The _XX_tt_CC_rr_ee_aa_tt_ee_MM_aa_nn_aa_gg_ee_dd_WW_ii_dd_gg_ee_tt(3X11R5) function is a convenience routine that
+    calls _XX_tt_CC_rr_ee_aa_tt_ee_WW_ii_dd_gg_ee_tt(3X11R5) and _XX_tt_MM_aa_nn_aa_gg_ee_CC_hh_ii_ll_dd(3X11R5).
+
+    The _XX_tt_DD_ee_ss_tt_rr_oo_yy_WW_ii_dd_gg_ee_tt(3X11R5) function provides the only method of
+    destroying a widget, including widgets that need to destroy themselves. It
+    can be called at any time, including from an application callback routine
+    of the widget being destroyed. This requires a two-phase destroy process
+    in order to avoid dangling references to destroyed widgets.
+
+    In phase one, _XX_tt_DD_ee_ss_tt_rr_oo_yy_WW_ii_dd_gg_ee_tt(3X11R5) performs the following:
+    *     If the being_destroyed field of the widget is True, it returns
+          immediately.
+    *     Recursively descends the widget tree and sets the being_destroyed
+          field to True for the widget and all children.
+    *     Adds the widget to a list of widgets (the destroy list) that should
+          be destroyed when it is safe to do so.
+
+    Entries on the destroy list satisfy the invariant that if w2 occurs after
+    w1 on the destroy list then w2 is not a descendent of w1. (A descendant
+    refers to both normal and pop-up children.)
+
+    Phase two occurs when all procedures that should execute as a result of
+    the current event have been called (including all procedures registered
+    with the event and translation managers), that is, when the current
+    invocation of _XX_tt_DD_ii_ss_pp_aa_tt_cc_hh_EE_vv_ee_nn_tt(3X11R5) is about to return or immediately if
+    not in _XX_tt_DD_ii_ss_pp_aa_tt_cc_hh_EE_vv_ee_nn_tt(3X11R5).
+
+    In phase two, _XX_tt_DD_ee_ss_tt_rr_oo_yy_WW_ii_dd_gg_ee_tt(3X11R5) performs the following on each entry
+    in the destroy list:
+    *     Calls the destroy callback procedures registered on the widget (and
+          all descendants) in post-order (it calls children callbacks before
+          parent callbacks).
+    *     If the widget's parent is a subclass of compositeWidgetClass and if
+          the parent is not being destroyed, it calls _XX_tt_UU_nn_mm_aa_nn_aa_gg_ee_CC_hh_ii_ll_dd(3X11R5)
+          on the widget and then calls the widget's parent's delete_child
+          procedure (see Section 3.4).
+    *     If the widget's parent is a subclass of constraintWidgetClass, it
+          calls the constraint destroy procedure for the parent, then the
+          parent's superclass, until finally it calls the constraint destroy
+          procedure for constraintWidgetClass.
+    *     Calls the destroy methods for the widget (and all descendants) in
+          post-order. For each such widget, it calls the destroy procedure
+          declared in the widget class, then the destroy procedure declared in
+          its superclass, until finally it calls the destroy procedure
+          declared in the Core class record.
+    *     Calls _XX_DD_ee_ss_tt_rr_oo_yy_WW_ii_nn_dd_oo_ww(3X11R5) if the widget is realized (that is, has
+          an X window). The server recursively destroys all descendant
+          windows.
+    *     Recursively descends the tree and deallocates all pop-up widgets,
+          constraint records, callback lists and, if the widget is a subclass
+          of compositeWidgetClass, children.
+
+  SSEEEE AALLSSOO
+
+    _X_t_A_p_p_C_r_e_a_t_e_S_h_e_l_l()
+
+    _X_t_C_r_e_a_t_e_P_o_p_u_p_S_h_e_l_l()
+
+    X Toolkit Intrinsics - C Language Interface
+
+    Xlib - C Language X Interface
+

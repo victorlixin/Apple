@@ -1,0 +1,138 @@
+SEND(2) 		  FreeBSD System Calls Manual		       SEND(2)
+
+NAME
+     send, sendto, sendmsg -- send a message from a socket
+
+LIBRARY
+     Standard C Library (libc, -lc)
+
+SYNOPSIS
+     #include <sys/types.h>
+     #include <sys/socket.h>
+
+     ssize_t
+     send(int s, const void *msg, size_t len, int flags);
+
+     ssize_t
+     sendto(int s, const void *msg, size_t len, int flags,
+	 const struct sockaddr *to, socklen_t tolen);
+
+     ssize_t
+     sendmsg(int s, const struct msghdr *msg, int flags);
+
+DESCRIPTION
+     The sseenndd() function, and sseennddttoo() and sseennddmmssgg() system calls are used to
+     transmit a message to another socket.  The sseenndd() function may be used
+     only when the socket is in a connected state, while sseennddttoo() and
+     sseennddmmssgg() may be used at any time.
+
+     The address of the target is given by to with tolen specifying its size.
+     The length of the message is given by len.  If the message is too long to
+     pass atomically through the underlying protocol, the error EMSGSIZE is
+     returned, and the message is not transmitted.
+
+     No indication of failure to deliver is implicit in a sseenndd().  Locally
+     detected errors are indicated by a return value of -1.
+
+     If no messages space is available at the socket to hold the message to be
+     transmitted, then sseenndd() normally blocks, unless the socket has been
+     placed in non-blocking I/O mode.  The select(2) system call may be used
+     to determine when it is possible to send more data.
+
+     The flags argument may include one or more of the following:
+
+     #define MSG_OOB	     0x00001 /* process out-of-band data */
+     #define MSG_PEEK	     0x00002 /* peek at incoming message */
+     #define MSG_DONTROUTE   0x00004 /* bypass routing, use direct interface */
+     #define MSG_EOR	     0x00008 /* data completes record */
+     #define MSG_EOF	     0x00100 /* data completes transaction */
+     #define MSG_NOSIGNAL    0x20000 /* do not generate SIGPIPE on EOF */
+
+     The flag MSG_OOB is used to send ``out-of-band'' data on sockets that
+     support this notion (e.g. SOCK_STREAM); the underlying protocol must also
+     support ``out-of-band'' data.  MSG_EOR is used to indicate a record mark
+     for protocols which support the concept.  MSG_EOF requests that the
+     sender side of a socket be shut down, and that an appropriate indication
+     be sent at the end of the specified data; this flag is only implemented
+     for SOCK_STREAM sockets in the PF_INET protocol family, and is used to
+     implement Transaction TCP (see ttcp(4)).  MSG_DONTROUTE is usually used
+     only by diagnostic or routing programs.  MSG_NOSIGNAL is used to prevent
+     SIGPIPE generation when writing a socket that may be closed.
+
+     See recv(2) for a description of the msghdr structure.
+
+RETURN VALUES
+     The call returns the number of characters sent, or -1 if an error
+     occurred.
+
+ERRORS
+     The sseenndd() function and sseennddttoo() and sseennddmmssgg() system calls fail if:
+
+     [EBADF]		An invalid descriptor was specified.
+
+     [EACCES]		The destination address is a broadcast address, and
+			SO_BROADCAST has not been set on the socket.
+
+     [ENOTSOCK] 	The argument s is not a socket.
+
+     [EFAULT]		An invalid user space address was specified for an
+			argument.
+
+     [EMSGSIZE] 	The socket requires that message be sent atomically,
+			and the size of the message to be sent made this
+			impossible.
+
+     [EAGAIN]		The socket is marked non-blocking and the requested
+			operation would block.
+
+     [ENOBUFS]		The system was unable to allocate an internal buffer.
+			The operation may succeed when buffers become avail-
+			able.
+
+     [ENOBUFS]		The output queue for a network interface was full.
+			This generally indicates that the interface has
+			stopped sending, but may be caused by transient con-
+			gestion.
+
+     [EHOSTUNREACH]	The remote host was unreachable.
+
+     [EISCONN]		A destination address was specified and the socket is
+			already connected.
+
+     [ECONNREFUSED]	The socket received an ICMP destination unreachable
+			message from the last message sent.  This typically
+			means that the receiver is not listening on the remote
+			port.
+
+     [EHOSTDOWN]	The remote host was down.
+
+     [ENETDOWN] 	The remote network was down.
+
+     [EPERM]		The process using a SOCK_RAW socket was jailed and the
+			source address specified in the IP header did not
+			match the IP address bound to the prison.
+
+     [EPIPE]		The socket is unable to send anymore data
+			(SBS_CANTSENDMORE has been set on the socket).	This
+			typically means that the socket is not connected.
+
+SEE ALSO
+     fcntl(2), getsockopt(2), recv(2), select(2), socket(2), write(2)
+
+HISTORY
+     The sseenndd() function appeared in 4.2BSD.
+
+BUGS
+     Because sseennddmmssgg() does not necessarily block until the data has been
+     transferred, it is possible to transfer an open file descriptor across an
+     AF_UNIX domain socket (see recv(2)), then close() it before it has actu-
+     ally been sent, the result being that the receiver gets a closed file
+     descriptor.  It is left to the application to implement an acknowledgment
+     mechanism to prevent this from happening.
+
+
+USAGE NOTES
+
+     The sseenndd function is thread safe.
+     The sseenndd function is nnoott async-signal safe.
+

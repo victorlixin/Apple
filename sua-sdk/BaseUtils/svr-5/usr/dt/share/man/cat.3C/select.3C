@@ -1,0 +1,109 @@
+
+
+select(3C)                                             select(3C)
+
+SSyynnooppssiiss
+       #include   <sys/time.h>  #include  <sys/types.h>  #include
+       <sys/select.h>
+
+       int select(int nfds, fd_set  *readfds,  fd_set  *writefds,
+       fd_set *exceptfds,
+             struct timeval *timeout);
+
+       void FD_SET(int fd, fd_set *fdset);
+
+       void FD_CLR(int fd, fd_set *fdset);
+
+       int FD_ISSET(int fd, fd_set *fdset);
+
+       void FD_ZERO(fd_set *fdset);
+
+DDeessccrriippttiioonn
+       select  examines  the  I/O descriptor sets whose addresses
+       are passed in readfds, writefds, and exceptfds to  see  if
+       any  of their descriptors are ready for reading, are ready
+       for writing, or have  an  exceptional  condition  pending,
+       respectively.  nfds is the number of bits to be checked in
+       each bit mask  that  represents  a  file  descriptor;  the
+       descriptors  from  0  to nfds-1 in the descriptor sets are
+       examined.  On return, select replaces the given descriptor
+       sets with subsets consisting of those descriptors that are
+       ready for the requested operation.  The return value  from
+       the call to select() is the number of ready descriptors.
+
+       The  descriptor sets are stored as bit fields in arrays of
+       integers.  The following macros are provided  for  manipu-
+       lating  such descriptor sets: initializes a descriptor set
+       fdset to the null set.  includes a  particular  descriptor
+       fd  in fdset.  removes fd from fdset.  is nonzero if fd is
+       a member of fdset, zero otherwise.
+
+       The behavior of these macros is undefined if a  descriptor
+       value  is  less  than  zero  or  greater  than or equal to
+       FD_SETSIZE.   FD_SETSIZE  is   a   constant   defined   in
+       sys/select.h.   In  &geminiREL;  and  previous releases of
+       &gemini;, its value was 1024.  FD_SETSIZE was increased to
+       4096 in &uw701long;.  See ``Notices''.
+
+       If  timeout  is not a NULL pointer, it specifies a maximum
+       interval to wait for the selection to complete.  If  time-
+       out is a NULL pointer, the select blocks indefinitely.  To
+       affect a poll, the timeout argument should be  a  non-NULL
+       pointer, pointing to a zero-valued timeval structure.
+
+       Any  of  readfds,  writefds, and exceptfds may be given as
+       NULL pointers if no descriptors are of interest.
+
+   RReettuurrnn vvaalluueess
+       select returns the number of ready  descriptors  contained
+
+                                                                1
+
+select(3C)                                             select(3C)
+
+       in the descriptor sets or -1 if an error occurred.  If the
+       time limit expires, then select returns 0.
+
+   EErrrroorrss
+       An error return from select  indicates:  One  of  the  I/O
+       descriptor  sets  specified  an invalid I/O descriptor.  A
+       signal was delivered before any  of  the  selected  events
+       occurred,  or  the time limit expired.  A component of the
+       pointed-to time limit is outside the acceptable  range:  0
+       <= tv_sec < 10^8 0 <= tv_usec < 10^6 File descriptors must
+       not refer to a STREAM  or  multiplexer  linked  downstream
+       from a multiplexer.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The  default  value  for  FD_SETSIZE  (currently 4096) can
+       cause unexpected stack overflow problems in multi-threaded
+       applications  that  use  select.   This  can  typically be
+       worked around by re-defining FD_SETSIZE to a smaller value
+       (as in cc ... -D FD_SETSIZE=1024).
+
+       In  future  versions  of the system, select may return the
+       time remaining from the original timeout, if any, by modi-
+       fying  the  time  value  in  place.   It is thus unwise to
+       assume that the timeout value will be  unmodified  by  the
+       select call.
+
+       The descriptor sets are always modified on return, even if
+       the call returns as the result of a timeout.
+
+       A file descriptor for a socket that is listening for  con-
+       nections  will,  when  connections are available, indicate
+       that it is ready for reading.  A  file  descriptor  for  a
+       socket that is connecting asynchronously will, when a con-
+       nection has been established, indicate that  it  is  ready
+       for writing.
+
+       A  connection  failure  on  a file descriptor for a socket
+       sets exceptfds for the file descriptor.
+
+       When a socket is shut down or closed for read  operations,
+       the  setting  of  bits  in  exceptfds is determined by the
+       value of the ss_selectrdband parameter set by
+
+                                                                2
+

@@ -1,0 +1,108 @@
+
+
+t_snddis(3xti)                                     t_snddis(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       int t_snddis(int fd, struct t_call *call):
+
+DDeessccrriippttiioonn
+       This function is a TLI/XTI connection release routine used
+       to initiate a release on an already established connection
+       with a responding transport endpoint, specified by fd.  It
+       may also be issued to reject a connect request.
+
+       The values pointed to by  call  have  different  semantics
+       that vary with the context of the call.
+
+       This  function  is  a service of connection-mode transport
+       providers and is supported only if the  provider  returned
+       service  type T_COTS or T_COTS_ORD on t_open or t_getinfo.
+
+   PPaarraammeetteerrss
+       the file descriptor for the transport endpoint  where  the
+       connection  exits.  points to the t_call structure associ-
+       ated with information about the connection.
+
+   SSttrruuccttuurree ddeeffiinniittiioonnss
+       The call argument points to a t_call structure  that  con-
+       tains   the  following  members:  struct  netbuf  addr; /*
+       address     */  struct  netbuf   opt;  /*   options     */
+       struct    netbuf    udata;     /*   user   data   */   int
+       sequence;  /* sequence number */ netbuf is described in
+
+       When rejecting a connect request, call  must  be  non-NULL
+       and contain a valid value of sequence to identify uniquely
+       the rejected connect indication to the transport provider.
+       The addr and opt fields of call are ignored.
+
+       In  all  other  cases, call need only be used when data is
+       being sent with the disconnect request.   The  addr,  opt,
+       and  sequence  fields of the t_call structure are ignored.
+       If the user does not want to send data to the remote user,
+       the value of call may be NULL.
+
+       udata  specifies  the  user  data to be sent to the remote
+       user.  The amount of user data must not exceed the  limits
+       supported  by  the  transport  provider as returned in the
+       discon field of the info argument of t_open or  t_getinfo.
+       If the len field of udata is zero, no data will be sent to
+       the remote user.
+
+   SSttaattee ttrraannssiittiioonnss
+       t_snddis  may  be  issued  from  any  valid  state  except
+       T_UNINIT,  T_UNBND,  or  T_IDLE.  Valid states on exit are
+       T_IDLE (successful) and T_INCON (successful but there  are
+       connect indications outstanding).
+
+                                                                1
+
+t_snddis(3xti)                                     t_snddis(3xti)
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+UUssaaggee
+       After issuing t_snddis, the user may  not  send  any  more
+       data over the connection.  However, a user may continue to
+       receive data if a disconnect request has not been received
+       (see t_rcvdis).
+
+RReettuurrnn vvaalluueess
+       t_snddis  returns  0  on  success  and  -1  on failure and
+       t_errno is set to indicate the error.
+
+   EErrrroorrss
+       On failure, t_errno may be set to one  of  the  following:
+       The  specified  file descriptor does not refer to a trans-
+       port endpoint.  The  function  was  issued  in  the  wrong
+       sequence.   The transport provider's outgoing queue may be
+       flushed, so data may be lost.  The  amount  of  user  data
+       specified  was  not  within  the  bounds  supported by the
+       transport provider as returned in the discon field of  the
+       info  argument  of  t_open  or  t_getinfo.   The transport
+       provider's outgoing queue will be flushed, so data may  be
+       lost.  An invalid sequence number was specified, or a NULL
+       call structure was  specified  when  rejecting  a  connect
+       request.   The transport provider's outgoing queue will be
+       flushed, so data may be lost.  An asynchronous  event  has
+       occurred  on  the  transport  endpoint specified by fd and
+       requires immediate attention.  This function is  not  sup-
+       ported  by  the  underlying  transport provider.  A system
+       error has occurred during execution of this  function.   A
+       communication problem has been detected with the transport
+       provider and  there  is  no  other  value  of  t_errno  to
+       describe the error condition.
+
+WWaarrnniinnggss
+       When  executed,  t_snddis  causes  an abortive disconnect,
+       which may result in a loss of data sent by t_snd  but  not
+       yet  received.   The  return of an error does not preclude
+       loss of data.
+
+RReeffeerreenncceess
+
+                                                                2
+

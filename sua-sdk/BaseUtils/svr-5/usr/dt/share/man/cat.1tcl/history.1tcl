@@ -1,0 +1,108 @@
+
+
+history(1tcl)                                       history(1tcl)
+
+SSyynnooppssiiss
+       history [option] [arg arg ...]
+
+DDeessccrriippttiioonn
+       The  history  command  performs  one of several operations
+       related to recently-executed commands recorded in  a  his-
+       tory  list. Each of these recorded commands is referred to
+       as an ``event''. When specifying an event to  the  history
+       command,  the  following  forms  may be used: A number: if
+       positive, it refers to the event  with  that  number  (all
+       events are numbered starting at 1). If the number is nega-
+       tive, it selects an event relative to  the  current  event
+       (-1  refers  to  the  previous event, -2 to the one before
+       that, and so on).  A string: selects the most recent event
+       that  matches  the string. An event is considered to match
+       the string either if the string is the same as  the  first
+       characters  of  the  event,  or  if the string matches the
+       event in the sense of the string match command.  The  his-
+       tory  command can take any of the following forms: Same as
+       history info, described below.  Adds the command  argument
+       to  the  history list as a new event. If exec is specified
+       (or abbreviated) then the command is also executed and its
+       result  is returned. If exec isn't specified then an empty
+       string is returned as  the  result.   Replaces  the  value
+       recorded  for  an event with newValue. event specifies the
+       event to replace, and defaults to the current  event  (not
+       event  -1).   This command is intended for use in commands
+       that implement new forms of history substitution and  wish
+       to  replace the current event (which invokes the substitu-
+       tion) with the command created through substitution.   The
+       return value is an empty string.  Returns the value of the
+       event given by event.  event defaults to -1. This  command
+       causes  history  revision to occur: see below for details.
+       Returns a formatted string (intended for humans  to  read)
+       giving  the  event  number  and  contents  for each of the
+       events in the history list except the  current  event.  If
+       count  is specified then only the most recent count events
+       are returned.  This command may be used to change the size
+       of  the history list to count events. Initially, 20 events
+       are retained in the history list. This command returns  an
+       empty  string.  Returns the number of the next event to be
+       recorded in the history list. It is useful for things like
+       printing  the  event  number in command-line prompts.  Re-
+       executes the command indicated by  event  and  return  its
+       result. event defaults to -1. This command results in his-
+       tory revision: see below for details.  Retrieves the  com-
+       mand  given  by event (-1 by default), replaces any occur-
+       rences of old by new in the command (only simple character
+       equality  is  supported;  no  wild  cards),  executes  the
+       resulting command, and returns the result of  that  execu-
+       tion.  This command results in history revision: see below
+       for details.  Retrieves from the command  given  by  event
+       (-1  by  default)  the words given by selector, and return
+       those words in a string separated by spaces. The  selector
+
+                                                                1
+
+history(1tcl)                                       history(1tcl)
+
+       argument has three forms: if it is a single number then it
+       selects the word given by that number (0 for  the  command
+       name, 1 for its first argument, and so on). If it consists
+       of two numbers separated by a dash, then  it  selects  all
+       the  arguments  between  those two.  Otherwise selector is
+       treated as a pattern; all words matching that pattern  (in
+       the  sense  of  string match) are returned. In the numeric
+       forms $ may be used to select the last word of a  command.
+       For  example,  suppose the most recent command in the his-
+       tory list is format {%s  is  %d  years  old}  Alice  [expr
+       $ageInMonths/12]  Below  are some history commands and the
+       results they would  produce:  history  words  $      [expr
+       $ageInMonths/12] history words 1-2   {%s is %d years  old}
+       Alice    history words *a*o* {%s is %d  years  old}  [expr
+       $ageInMonths/12]  history  words  results in history revi-
+       sion: see below for details.
+
+   HHiissttoorryy rreevviissiioonn
+       The history options event,  redo,  substitute,  and  words
+       result  in ``history revision''. When one of these options
+       is invoked then the current event is modified to eliminate
+       the  history command and replace it with the result of the
+       history command. For example, suppose that the most recent
+       command  in the history list is set a [expr $b+2] and sup-
+       pose that the next command invoked is one of the  ones  on
+       the  left  side  of the table below.  The command actually
+       recorded in the history event will  be  the  corresponding
+       one  on  the  right  side  of  the  table.   history  redo
+       set a [expr $b+2] history s  a  b            set  b  [expr
+       $b+2]  set  c  [history w 2]     set c [expr $b+2] History
+       revision is needed because event specifiers  like  -1  are
+       only  valid  at  a particular time:  once more events have
+       been added to the history list a different event specifier
+       would  be  needed.  History revision occurs even when his-
+       tory is invoked indirectly from  the  current  event  (for
+       example,  a user types a command that invokes a Tcl proce-
+       dure that invokes history):  the top-level  command  whose
+       execution  eventually  resulted  in  a  history command is
+       replaced.  If you wish to  invoke  commands  like  history
+       words  without history revision, you can use history event
+       to save the current history event  and  then  use  history
+       change to restore it later.
+
+                                                                2
+

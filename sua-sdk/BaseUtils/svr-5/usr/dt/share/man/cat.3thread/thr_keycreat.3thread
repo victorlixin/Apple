@@ -1,0 +1,99 @@
+
+
+thr_keycreate(3thread)                     thr_keycreate(3thread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <thread.h>
+
+       int   thr_keycreate(thread_key_t   *key,  void  (*destruc-
+       tor)(void *));
+
+DDeessccrriippttiioonn
+       thr_keycreate creates a key visible to all threads in  the
+       process.   The  key  plays the role of identifier for per-
+       thread data.  A thread can then bind a value to  key  with
+       Although  the same key identifier can be used by different
+       threads, the values bound to the key are maintained  on  a
+       per-thread  basis  and persist for the life of the calling
+       thread, or until explicitly replaced.
+
+       thr_keycreate sets the initial value of  the  key  in  all
+       active  and  subsequently  created  threads to NULL.  When
+       thr_keycreate returns successfully the new key  is  stored
+       in the location pointed to by key.  The caller must ensure
+       that creation and use of this key are synchronized (see
+
+       Normally, the value bound to a key by a thread will  be  a
+       pointer  to  dynamically allocated storage.  When a thread
+       terminates, per-thread context is automatically  destroyed
+       and,  if  a  binding  exists,  the reference to the key is
+       released.  If the key has a destructor (see  "key  parame-
+       ter"), the destructor is called with the bound value.
+
+       There is no fixed limit on the number of keys per process.
+
+   PPaarraammeetteerrss
+       pointer to  the  new  thread-specific  data  key  (set  by
+       thr_setspecific)  pointer  to  function  to  be  called at
+       thread exit, or NULL
+
+   kkeeyy ppaarraammeetteerr
+       key points to the thread_key_t in which thr_keycreate will
+       store the newly created key.
+
+   ddeessttrruuccttoorr ppaarraammeetteerr
+       destructor points to an optional destructor function to be
+       associated with key.  destructor can also be NULL.  When a
+       thread  terminates,  if it has a non-NULL destructor func-
+       tion  and  a  non-NULL  value  associated  with  key,  the
+       destructor function will be called with the bound value as
+       an argument.  If the value associated with  key  is  NULL,
+       the destructor is not called.  Destructors are intended to
+       free any dynamically allocated storage associated with the
+       bound value.
+
+       If  destructor  functions call thr_setspecific or thr_get-
+       specific, it might not be possible to destroy all bindings
+
+                                                                1
+
+thr_keycreate(3thread)                     thr_keycreate(3thread)
+
+       for a terminating thread.  The order in which the destruc-
+       tor functions are called is unspecified.
+
+RReettuurrnn vvaalluueess
+       thr_keycreate returns zero for success and an error number
+       for failure.
+
+   EErrrroorrss
+       If  any  of the following conditions is detected, thr_key-
+       create returns the corresponding value: Insufficient  mem-
+       ory exists to create the key.
+
+   PPeerrffoorrmmaannccee ccoonnssiiddeerraattiioonnss
+       Although  there is no fixed limit on the number of keys in
+       a process, a large number of keys will consume memory  and
+       slow thread exit performance.
+
+RReeffeerreenncceess
+EExxaammpplleess
+       This  example  shows  the use of thread-specific data in a
+       function that can be called  from  more  than  one  thread
+       without  special initialization.  For the sake of simplic-
+       ity, no error checking is done.  static  mutex_t  keylock;
+       static thread_key_t key; static int once = 0;
+
+       void func() {      void *ptr;
+
+            (void)   mutex_lock(&keylock);        if   (!once)  {
+                 (void)        thr_keycreate(&key,         free);
+                 once++;       }       (void)  mutex_unlock(&key-
+       lock);      (void) thr_getspecific(key,  (void  *)  &ptr);
+            if  (ptr  ==  NULL)  {            ptr = malloc(SIZE);
+                 (void) thr_setspecific(key, ptr);      } }
+
+                                                                2
+

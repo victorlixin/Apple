@@ -1,0 +1,190 @@
+
+
+System(4dsp)                                         System(4dsp)
+
+DDeessccrriippttiioonn
+       A  System  file  is  one of the Installable Driver/Tunable
+       Parameters kernel configuration files that contains infor-
+       mation  needed  to  incorporate a particular kernel module
+       into the next system configuration.  General configuration
+       information about the module type is described in the Mas-
+       ter file.  When the System component of a module's  Driver
+       Software  Package  (DSP) is installed, stores the module's
+       System  file  information  in  /etc/conf/sdevice.d/module-
+       name, where the file module-name is the name of the module
+       being installed.  Never access /etc/conf/sdevice.d/module-
+       name directly; use
+
+       Blank  lines in System files and lines beginning with # or
+       * are considered comments and are ignored.
+
+       The first non-comment line should be: $version 2
+
+       Older System file versions are supported by idinstall (see
+       Compatibility Considerations).
+
+       Optionally,  following  the  $version  line, the following
+       line can appear:      $static
+
+       The presence of the $static line  in  the  file  indicates
+       that  the module should be statically configured (directly
+       linked into the kernel image) even if  it  is  capable  of
+       being loadable.
+
+       Following these lines are one or more lines in the follow-
+       ing format:
+
+       module-name configure unit ipl itype ivec sioa eioa scma ecma dmachan [cpu]
+
+       These lines contain  configuration  information  for  each
+       instance  of the module.  For example, if two instances of
+       a device are to be configured, two lines  of  System  file
+       definitions are required for the device.
+
+       Each  of  these  configuration  lines  contains  11  or 12
+       fields, with the twelfth field (cpu) being optional.  Each
+       field  must  be  delimited  by  white  space and specify a
+       value.  Note that, except for the first two  fields  (mod-
+       ule-name and configure), the remaining fields on this line
+       are used for  hardware-related  modules  only.   That  is,
+       these fields apply only to modules that have the h charac-
+       teristics flag set in the associated Master file.  When  a
+       field does not apply to the module--regardless of the mod-
+       ule type--the  unused  field  must  contain  the  value  0
+       (except  for  dmachan,  which  if  unused must contain the
+       value -1).  Identifies the internal name  of  the  module.
+       The  field  value  must match the module name specified in
+       the module's Master file.   Indicates  (Y  or  N)  whether
+       should  configure  this  instance  of  the module into the
+
+                                                                1
+
+System(4dsp)                                         System(4dsp)
+
+       system.  Note that this field can  be  used  to  configure
+       statically  linked  modules  or  to  configure dynamically
+       loadable modules.   Specifies  the  number  of  subdevices
+       attached  to  a controller or pseudo device, or this field
+       can be  used  to  encode  an  arbitrary,  module-dependent
+       numeric  value.   When  this  field is not used, it should
+       contain the value 0.   Specifies  the  interrupt  priority
+       level  for  the  device  controlled by this module and the
+       priority at which the module's interrupt handler will run.
+       Valid  values  are:  Used  if the module is not a hardware
+       module or does not have  an  interrupt  handler.   (lowest
+       priority);  used for software interrupts and should not be
+       used for hardware drivers Used for SDI HBA devices.   Used
+       for  network  adapter  cards  and  other  STREAMS devices.
+       Reserved for  the  clock  tick  interrupt.   Reserved  for
+       serial  ports  (asyc).   Indicates  the  type of interrupt
+       sharing (if any)  this  hardware  module  supports.   Note
+       that,  if a module supports a number of interrupt sources,
+       it requires multiple lines in the System  file,  and  each
+       line may specify a different itype field value.
+
+       Valid values are: This instance of the device does not use
+       interrupts.  This instance of the  device  uses  an  edge-
+       triggered interrupt vector that cannot be shared, not even
+       with another instance of the same module.   This  instance
+       of the device uses an edge-triggered interrupt vector that
+       can be shared with another instance of  the  same  module,
+       but  can  not be shared with other modules.  This instance
+       of the device uses an edge-triggered interrupt vector that
+       can  be  shared with any instance of any hardware modules.
+       This instance of the device uses a level-sensitive  inter-
+       rupt  vector  that  can be shared with any instance of any
+       hardware module.  PCI devices must have this value and  be
+       able to share interrupts.
+
+       Each interrupt is programmed individually according to the
+       settings  for  each  device.   The  driver  specifies  the
+       default  settings,  but  these  may  be overridden by BIOS
+       information or user overrides.
+
+       When this field is not used, it must contain the value  0.
+       Specifies   the  interrupt  vector  number  used  by  this
+       instance of the device.  Valid values are a decimal number
+       from  1  through the value of the highest interrupt vector
+       number supported by the system.
+
+       Note that more than one device can share an interrupt vec-
+       tor  number  if  the devices use the same itype interrupt,
+       and that interrupt is of a type that can be shared.   Note
+       also  that  every  instance of every module that shares an
+       interrupt vector number must specify the same ipl  values.
+
+       When  this  field is not used, it should contain the value
+       0.  Start I/O address.   Specifies  the  lowest  I/O  port
+
+                                                                2
+
+System(4dsp)                                         System(4dsp)
+
+       address through which the device communicates.  Valid val-
+       ues are a hexadecimal number from  0  through  FFFF.   For
+       non-hardware  modules  or  devices without I/O ports, this
+       field should contain the value 0.  End I/O address.  Spec-
+       ifies  the  highest  (inclusive)  I/O port address through
+       which the device communicates.  Valid values  are  a  hex-
+       adecimal  number from 1 through FFFF.  Note that the value
+       of the eioa field must be greater than  or  equal  to  the
+       value  of  the  sioa  field.   For non-hardware modules or
+       devices without I/O ports, this field should  contain  the
+       value  0.  Start memory controller address.  Specifies the
+       lowest address in memory through which the device communi-
+       cates.   Valid  values are a hexadecimal number from 10000
+       through FFFFFFFF.  For  non-hardware  drivers  or  devices
+       without  controller  memory, this field should contain the
+       value 0.  End memory controller  address.   Specifies  the
+       highest  (inclusive)  address  in memory through which the
+       device communicates.  Valid values are a hexadecimal  num-
+       ber  from  10000 through FFFFFFFF.  Note that the value of
+       the ecma field must be greater than or equal to the  value
+       of  the  scma  field.  For non-hardware modules or devices
+       without controller memory, this field should  contain  the
+       value  0.   For  hardware  modules  that use DMA channels,
+       specifies the DMA channel number.  Valid values are a dec-
+       imal number from 0 through 7.  For non-hardware modules or
+       devices that do not use channelized DMA, this field should
+       contain  the  value  -1.   Optional field.  Specifies on a
+       multiprocessor system a CPU number  to  which  the  module
+       should  be  bound (driver code will run only on the speci-
+       fied CPU).  This binding only applies  to  interrupt  han-
+       dlers  and DDI entry points as described in Currently, the
+       same CPU number must be given on all System  lines  for  a
+       module.
+
+WWaarrnniinnggss
+       Package scripts should never access System files directly;
+       only the and commands should be used.
+
+RReeffeerreenncceess
+BBaacckkwwaarrdd ccoommppaattiibbiilliittyy
+   CCoommppaattiibbiilliittyy ccoonnssiiddeerraattiioonnss
+       For compatibility with existing add-on DSP packages, idin-
+       stall  also accepts the old (version 0 and version 1) Sys-
+       tem file formats, and converts them to the current version
+       2 format.
+
+       Because  some fields moved between the Master file and the
+       System file, version 0 and version  1  Master  and  System
+       files  must  be installed together, using a single invoca-
+       tion of the idinstall command.  This allows  idinstall  to
+       move the fields between the files during conversion.
+
+       Version 0 System files are not supported for exec modules.
+
+                                                                3
+
+System(4dsp)                                         System(4dsp)
+
+       The older formats had fewer fields.  In version 1, the cpu
+       field  was  in the Master file instead of the System file.
+       In version 0, the dmachan field was  in  the  Master  file
+       instead of the System file and there was no cpu field.
+
+       The  older  formats  had  no $static line; Version 1 had a
+       similar but inverted $loadable module-name.
+
+                                                                4
+

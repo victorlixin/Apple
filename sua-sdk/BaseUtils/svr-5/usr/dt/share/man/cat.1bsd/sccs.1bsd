@@ -1,0 +1,202 @@
+
+
+sccs(1bsd)                                             sccs(1bsd)
+
+SSyynnooppssiiss
+       /usr/ucb/sccs  [-r]  [-dprefixpath]  [-pfinalpath] command
+       [SCCS-flags . . .]       [file . . .]
+
+DDeessccrriippttiioonn
+       The sccs command is a front end to the utility programs of
+       the Source Code Control System (SCCS).
+
+       sccs normally prefixes each file, or the last component of
+       each file, with the string `SCCS/s.', because you normally
+       keep  your SCCS database files in a directory called SCCS,
+       and each database file starts with an  `s.'   prefix.   If
+       the  environment  variable  PROJECTDIR  is  set, and is an
+       absolute pathname (that is, begins with a slash) sccs will
+       search for SCCS files in the directory given by that vari-
+       able.  If it is a relative pathname  (that  is,  does  not
+       begin  with a slash), it is treated as the name of a user,
+       and sccs will search in that user's home directory  for  a
+       directory  named  src  or  source.   If  that directory is
+       found, sccs will search for SCCS files  in  the  directory
+       given by that variable.
+
+       sccs  program options must appear before the command argu-
+       ment.  Flags to be  passed  to  the  actual  SCCS  command
+       (utility  program) must appear after the command argument.
+       These flags are specific to the command being used.
+
+       sccs also includes the capability to run ``set  user  ID''
+       to another user to provide additional protection.  Certain
+       commands (such as cannot be run ``set  user  ID''  by  all
+       users,  since this would allow anyone to change the autho-
+       rizations.  Such commands are always run as the real user.
+
+   OOppttiioonnss
+       Run  sccs  as the real user rather than as whatever effec-
+       tive user sccs is ``set user ID'' to.  Define  the  prefix
+       portion  of the pathname for the SCCS database files.  The
+       default prefix portion of  the  pathname  is  the  current
+       directory.  prefixpath is prefixed to the entire pathname.
+       See EXAMPLES.
+
+       This flag overrides any directory specified  by  the  PRO-
+       JECTDIR  environment variable.  Define the name of a lower
+       directory in which the SCCS files will be found;  SCCS  is
+       the  default.  finalpath is appended before the final com-
+       ponent of the pathname.  See EXAMPLES.
+
+UUssaaggee
+   AAddddiittiioonnaall ssccccss ccoommmmaannddss
+       Several ``pseudo-commands'' are available in  addition  to
+       the  usual  SCCS commands.  These are: create is used when
+       creating new s.  files.  For example,  given  a  C  source
+       language file called `obscure.c', create would perform the
+       following  actions:  (1)  create  the  `s.'   file  called
+
+                     BSD System Compatibility                   1
+
+sccs(1bsd)                                             sccs(1bsd)
+
+       `s.obscure.c' in the SCCS directory; (2) rename the origi-
+       nal source file to `,obscure.c';
+       (3) do an `sccs get' on `obscure.c'.  Compared to the SCCS
+       admin  command,  create  does more of the startup work for
+       you and should be used in preference to admin.   enter  is
+       just  like  create,  except  that it does not do the final
+       `sccs get'.  It is usually used if an `sccs edit' is to be
+       performed  immediately  after  the  enter.  Get a file for
+       editing.  Perform a delta on the named files and then  get
+       new versions.  The new versions have ID keywords expanded,
+       and so cannot be edited.  Same as delget, but produces new
+       versions suitable for editing.  deledit is useful for mak-
+       ing  a  ``checkpoint''  of  your  current  editing  phase.
+       Remove  the named delta, but leaves you with a copy of the
+       delta with the changes that were in it.  fix must be  fol-
+       lowed  by  a -r flag.  fix is useful for fixing small com-
+       piler bugs, and so on.  Since fix  does  not  leave  audit
+       trails, use it carefully.  Remove everything from the cur-
+       rent directory that can  be  recreated  from  SCCS  files.
+       clean  checks  for  and  does  not  remove any files being
+       edited.  If `clean -b' is used, branches are  not  checked
+       to  see  if  they are currently being edited.  Note: -b is
+       dangerous if you are keeping  the  branches  in  the  same
+       directory.   ``Undo'' the last edit or `get -e' and return
+       a file to its previous condition.  If you  unedit  a  file
+       being  edited, all changes made since the beginning of the
+       editing session are lost.  Display a  list  of  all  files
+       being edited.  If the -b flag is given, branches (that is,
+       SID's with two or fewer components) are ignored.   If  the
+       -u  flag  is given (with an optional argument), only files
+       being edited by you (or the named user) are listed.  Check
+       for  files  currently being edited, like info, but returns
+       an exit code rather than a listing: nothing is printed  if
+       nothing  is  being  edited,  and a non-zero exit status is
+       returned if anything is being edited.  check may  thus  be
+       included  in an ``install'' entry in a makefile, to ensure
+       that everything is included in an SCCS file before a  ver-
+       sion  is  installed.  Display a list of files being edited
+       on the standard output.  Filenames are separated  by  NEW-
+       LINE  characters.   Take the -b and -u flags like info and
+       check.  Compare (in diff-like format) the current  version
+       of  the  program you have out for editing and the versions
+       in SCCS format.  diffs accepts the same arguments as diff,
+       except  that  the -c flag must be specified as -C instead,
+       because the -c flag is taken as a flag to  get  indicating
+       which  version is to be compared with the current version.
+       Print verbose information about the  named  files.   print
+       does  an  `sccs prs -e' followed by an `sccs get -p -m' on
+       each file.
+
+EExxaammpplleess
+       The command: sccs  -d/usr/include  get sys/inode.h
+
+       converts to: get  /usr/include/sys/SCCS/s.inode.h
+
+                     BSD System Compatibility                   2
+
+sccs(1bsd)                                             sccs(1bsd)
+
+       The  intent  here  is   to   create   aliases   such   as:
+       alias  syssccs  sccs  -d/usr/src
+
+       which will be used as: syssccs  get  cmd/who.c
+
+       The command: sccs  -pprivate  get  usr/include/stdio.h
+
+       converts to: get  usr/include/private/s.stdio.h
+
+       To  put a file called myprogram.c into SCCS format for the
+       first time, assuming also that there is no SCCS  directory
+       already existing: $ mkdir SCCS $ sccs create myprogram.c $
+       myprogram.c: 1.1 14 lines $
+
+       To get a copy of myprogram.c for editing, edit that  file,
+       then  place  it  back  in  the  SCCS database: $ sccs edit
+       myprogram.c 1.1 new delta 1.2 14 lines  $  vi  myprogram.c
+       your  editing  session $ sccs delget myprogram.c comments?
+       Added responses for compatibility 1.2 7 inserted 7 deleted
+       7 unchanged 1.2 14 lines $
+
+       To    get    a   file   from   another   directory:   sccs
+       -p/usr/src/sccs/  get cc.c
+
+       or: sccs get /usr/src/sccs/cc.c
+
+       To make a delta of a large number of files in the  current
+       directory: sccs delta *.c
+
+       To  get  a  list  of  files  being  edited that are not on
+       branches: sccs info -b
+
+       To delta everything that you are  editing:  $  sccs  delta
+       `sccs tell -u`
+
+       In a makefile, to get source files from an SCCS file if it
+       does not already exist: SRCS  =  <list  of  source  files>
+       $(SRCS):      sccs get $(REL) $@
+
+   RReegguullaarr ssccccss ccoommmmaannddss
+       The  ``regular''  SCCS commands are described very briefly
+       below.  It is unlikely that you ever  need  to  use  these
+       commands because the user interface is so complicated, and
+       the sccs front end command does 99.9% of  the  interesting
+       tasks  for you.  Create new SCCS files and changes parame-
+       ters of existing SCCS files.  You can use `sccs create' to
+       create  new  SCCS  files,  or use `sccs admin' to do other
+       things.  Change the commentary material in an SCCS  delta.
+       Combine SCCS deltas and reconstructs the SCCS files.  Per-
+       manently introduces changes that were made to a file  pre-
+       viously  retrieved  using  `sccs  get'.  You can use `sccs
+       delget' as the more useful version of this  command  since
+       `sccs  delget'  does  all  of  the  useful  work and more.
+       Extract  a  file  from  the  SCCS  database,  either   for
+
+                     BSD System Compatibility                   3
+
+sccs(1bsd)                                             sccs(1bsd)
+
+       compilation,  or  for  editing when the -e option is used.
+       Use `sccs get' if you really need it,  but  `sccs  delget'
+       will  normally  have done this job for you.  Use sccs edit
+       instead of get with the -e option.  Supposed to  help  you
+       interpret  SCCS error messages.  Display information about
+       what is happening in an SCCS file.  Remove a delta from an
+       SCCS  file.  Compare two versions of an SCCS file and gen-
+       erates the differences between the two  versions.   Deter-
+       mine  if  a  given SCCS file meets specified criteria.  If
+       you use the sccs command, you should not need to use  val,
+       because  its user interface is unbelievable.  Display SCCS
+       identification information.
+
+FFiilleess
+RReeffeerreenncceess
+NNoottiicceess
+       The help command usually just parrots SCCS error  messages
+       and is generally not considered very helpful.
+
+                     BSD System Compatibility                   4
+

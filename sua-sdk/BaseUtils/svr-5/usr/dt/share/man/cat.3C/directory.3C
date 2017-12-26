@@ -1,0 +1,158 @@
+
+
+directory(3C)                                       directory(3C)
+
+SSyynnooppssiiss
+       #include <dirent.h>
+
+       DIR *opendir(const char *filename);
+
+       struct dirent *readdir(DIR *dirp);
+
+       struct dirent64 *readdir64(DIR *dirp);
+
+       int readdir_r(DIR *dirp, struct dirent *buf, struct dirent
+       **resp);
+
+       int readdir64_r(DIR *dirp, struct  dirent64  *buf,  struct
+       dirent64 **resp;
+
+       long telldir(DIR *dirp);
+
+       void seekdir(DIR *dirp, long loc);
+
+       void rewinddir(DIR *dirp);
+
+       int closedir(DIR *dirp);
+
+DDeessccrriippttiioonn
+       opendir  opens the directory named by filename and associ-
+       ates a  directory  stream  with  it.   opendir  returns  a
+       pointer  to  be  used  to identify the directory stream in
+       subsequent operations.  The directory stream is positioned
+       at  the  first entry.  A null pointer is returned if file-
+       name cannot be accessed or is not a directory,  or  if  it
+       cannot  malloc  enough memory to hold a DIR structure or a
+       buffer for the directory entries.
+
+       readdir and readdir_r return pointers to the  next  active
+       directory  entry  and position the directory stream (dirp)
+       at the next entry.  Both functions will not  return  inac-
+       tive  directory  entries.   NULL is returned upon reaching
+       the end of the directory.  resp is a pointer to a  pointer
+       to  a  dirent structure which readdir_r uses to return the
+       directory entry information.   If  a  directory  entry  is
+       found,  resp will be set to point to the structure pointed
+       to by buf.  Since the  size  of  the  structure  may  vary
+       depending  on  the  length  of d_name, one should provide,
+       through buf, a struct  dirent  with  at  least  {NAME_MAX}
+       bytes  for  d_name.   On  successful completion, readdir_r
+       returns zero.  A non-zero return indicates an error and is
+       set to the appropriate errno.  readdir and readdir_r typi-
+       cally buffer several directory  entries  per  actual  read
+       operation;  both  functions  mark  for update the st_atime
+       field of the directory each time the directory is actually
+       read.   They  return  zero with resp set to a null pointer
+       when the end of the directory is reached.
+
+       The readdir64 and readdir64_r functions are  identical  to
+
+                                                                1
+
+directory(3C)                                       directory(3C)
+
+       their counterparts, except that they handle large files.
+
+       telldir  returns  the current location associated with the
+       named directory stream.
+
+       seekdir sets the position of the next  read  operation  on
+       the  directory  stream.   The  new position reverts to the
+       position associated with the directory stream at the  time
+       the  telldir  operation  that  provides loc was performed.
+       Values returned by telldir are valid only if the directory
+       has  not changed because of compaction or expansion.  This
+       situation is not a problem with System V, but it may be  a
+       problem with some file system types.
+
+       rewinddir  resets  the  position  of  the  named directory
+       stream to the beginning of the directory.  It also  causes
+       the  directory stream to refer to the current state of the
+       corresponding directory, as a call to opendir would.
+
+       closedir closes the named directory stream and  frees  the
+       DIR structure.
+
+RReettuurrnn vvaalluueess
+       The following errors can occur as a result of these opera-
+       tions.
+
+       opendir returns NULL on failure and sets errno to  one  of
+       the following values:
+
+       A  component  of filename is not a directory.  A component
+       of filename denies search permission.  Read permission  is
+       denied  on the specified directory.  The maximum number of
+       file descriptors are  currently  open.   The  system  file
+       table  is  full.   filename  points  outside the allocated
+       address space.  Too many symbolic links  were  encountered
+       in translating filename.  The length of the filename argu-
+       ment exceeds {PATH_MAX}, or the length of a filename  com-
+       ponent  exceeds  {NAME_MAX}  while {_POSIX_NO_TRUNC} is in
+       effect.  A component of filename does not exist  or  is  a
+       null pathname.
+
+       Under  the  following conditions readdir, readdir64, read-
+       dir_r and readdir64_r return one of the  following  values
+       on  failure: The current file pointer for the directory is
+       not located at a valid entry.  The file descriptor  deter-
+       mined  by  the DIR stream is no longer valid.  This result
+       occurs if the DIR stream has been closed.
+
+       Under the following condition readdir fails and sets errno
+       to  One of the values in the structure to be returned can-
+       not be represented correctly.
+
+       closedir returns -1 on failure and sets errno to the  fol-
+       lowing value:
+
+                                                                2
+
+directory(3C)                                       directory(3C)
+
+       The  file  descriptor  determined  by the DIR stream is no
+       longer valid.  This results if the  DIR  stream  has  been
+       closed.
+
+RReeffeerreenncceess
+NNoottiicceess
+       rewinddir  is  implemented  as  a  macro,  so its function
+       address cannot be taken.
+
+       These functions overwrite a buffer per DIR as  needed,  so
+       applications should copy data or use readdir_r to preserve
+       it.
+
+       The older  readdir_r  interface:  struct  dirent    *read-
+       dir_r(DIR  *dirp,  struct  dirent  *buf);  is available if
+       _SIMPLE_R is defined.
+
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       readdir64 end readdir64_r support  large  files,  but  are
+       otherwise  identical  to  readdir and readdir64_r, respec-
+       tively.  For details on programming for large file capable
+       applications, see on intro(2).
+
+EExxaammpplleess
+       Here  is a sample program that prints the names of all the
+       files  in  the  current  directory:   #include   <stdio.h>
+       #include <dirent.h>
+
+       main() {      DIR *dirp;      struct dirent *direntp;
+
+            dirp  =  opendir(".");       while  ((direntp = read-
+       dir(dirp))   !=    NULL)              (void)printf("%s\n",
+       direntp->d_name);      closedir(dirp);      return (0); }
+
+                                                                3
+

@@ -1,0 +1,110 @@
+#!/bin/ksh
+#
+# Copyright (c) Microsoft Corporation.  All rights reserved
+# 
+# usage:   runwin32 cmd [args]
+#          cmd [args]
+# 
+function errmsg
+{
+    print "\
+ERROR: $1 will not run. No access to the displayable Windows station.
+       (eg) Win32 GUI apps won't run in a telnet session.";
+   exit 1
+}
+
+
+function printerr
+{
+   # print all args to stderr
+   print "$*" 1>&2
+}
+
+function doscmd
+{	typeset CMDEXE, command
+
+	command=$1;
+	shift 1		# remove $1 - just leave the rest of the args
+	CMDEXE=$(ntpath2posix -c ${_SYS32}/cmd.exe)
+	[ ! -f "${CMDEXE}" ] && \
+	   { printerr "$progname: ERROR: could not find program $CMDEXE"; exit 1;}
+	export PATH="${_SYS32}:${_SYSTEMROOT}:$PATH"
+	"${CMDEXE}" /c $command "$@"
+	return $?
+}
+
+#
+# check that either SYSTEMROOT or WINDIR are defined
+#
+if [ "${SYSTEMROOT}" = "" ] ; then
+    # in case SYSTEMROOT doesn't exit, then try WINDIR
+    #
+    SYSTEMROOT="${WINDIR}"
+    if [ "${SYSTEMROOT}" = "" ] ; then
+	printerr "ERROR: neither SYSTEMROOT or WINDIR env. variable defined"
+	exit 1
+    fi
+fi
+
+# now set _SYS32 and _SYSTEMROOT to correct case
+#
+_SYS32=$(ntpath2posix -c ${SYSTEMROOT}/system32)
+_SYSTEMROOT=$(ntpath2posix -c ${SYSTEMROOT})
+
+
+# check to make sure _SYSTEMROOT directory exists
+#
+if [ ! -d "${_SYSTEMROOT}" ] ; then
+    printerr "ERROR: SYSTEMROOT directory '${SYSTEMROOT}' does not exist"
+    exit 1
+fi
+
+# check to see if current working directory has an equivalent
+# windows pathname.  This is required otherwise exec() of a windows
+# program will fail.
+#
+unixpath2win . > /dev/null 2>&1
+if [ $? != 0 ]; then
+    printerr "ERROR: Windows programs cannot be run from this directory.\n" \
+             "       Choose another directory and try again."
+    exit 1
+fi
+
+
+__CMDNAME=syskey
+
+progname=${0##*/}	# strip of directory name components (basename $0)
+
+if [ "$progname" = "runwin32" ]; then
+    [ $# = 0 ] && { printerr "usage:  runwin32 cmd [ args ]" ; exit 2; }
+    cmd=$1; shift 1
+else
+    cmd="${__CMDNAME:-$progname}"
+fi
+
+export PATH="$PATH:${_SYS32}"
+
+case "${cmd}" in 
+    date|color)
+	case "$(tty)" in
+	    *tty[0-9p]*) errmsg $cmd;;
+	esac ;;
+   assoc|dir|edit|type|rd|rmdir|mkdir|del|erase|ftype\
+        |ren|rename|print|set|path|format)
+	doscmd ${cmd} "$@"
+	exit $?;;
+esac
+
+PROG="$(ntpath2posix -c ${_SYS32}/${cmd}.exe)"
+[ ! -f "${PROG}" ] && PROG="$(ntpath2posix -c ${_SYSTEMROOT}/${cmd}.exe)"
+
+case "$(file $PROG)" in
+ *Windows-GUI*)
+	wvisible || errmsg "${PROG}"
+	${PROG} "$@" & ;;
+ *Windows-CUI*|*NT-native*)
+	${PROG} "$@" ;;
+  *)
+	doscmd ${cmd} "$@" ;;
+esac
+exit $?

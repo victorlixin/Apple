@@ -1,0 +1,91 @@
+
+
+semctl(2)                                               semctl(2)
+
+SSyynnooppssiiss
+       #include   <sys/types.h>   #include  <sys/ipc.h>  #include
+       <sys/sem.h>
+
+       union semun {
+            int val;
+            struct semid_ds *buf;
+            ushort *array; };
+
+       int semctl(int semid, int semnum, int cmd, . . . /*  union
+       semun arg */);
+
+DDeessccrriippttiioonn
+       semctl  provides a variety of semaphore control operations
+       as specified by cmd.
+
+       The following  cmds  are  executed  with  respect  to  the
+       semaphore  specified by semid and semnum: Return the value
+       of semval [see {READ} Set the value of semval to  arg.val.
+       {ALTER}.   When this command is successfully executed, the
+       semadj value corresponding to the specified  semaphore  in
+       all  processes is cleared.  Return the value of (int) sem-
+       pid.  {READ} Return the value of semncnt.   {READ}  Return
+       the value of semzcnt.  {READ}
+
+       The  following  cmds  return  and set, respectively, every
+       semval in the set of semaphores.  Place semvals into array
+       pointed  to by arg.array.  {READ} Set semvals according to
+       the array pointed to by arg.array.   {ALTER}.   When  this
+       cmd  is  successfully  executed,  the semadj values corre-
+       sponding to each specified semaphore in all processes  are
+       cleared.
+
+       The  following  cmds are also available: Place the current
+       value of each member of the data structure associated with
+       semid  into the structure pointed to by arg.buf.  The con-
+       tents of this structure are  defined  in  {READ}  Set  the
+       value of the following members of the data structure asso-
+       ciated with semid to the corresponding value found in  the
+       structure pointed to by arg.buf: sem_perm.uid sem_perm.gid
+       sem_perm.mode /* only access permission bits */
+
+       This command can be executed only by a process that has an
+       effective  user  ID equal to the value of sem_perm.cuid or
+       sem_perm.uid in the data structure associated with  semid,
+       or  by  a  process that has the P_OWNER privilege.  Remove
+       the semaphore identifier specified by semid from the  sys-
+       tem  and  destroy the set of semaphores and data structure
+       associated with it.  This command can be executed only  by
+       a process that has an effective user ID equal to the value
+       of sem_perm.cuid or sem_perm.uid  in  the  data  structure
+       associated  with  semid,  or  by  a  process  that has the
+       P_OWNER privilege.
+
+                                                                1
+
+semctl(2)                                               semctl(2)
+
+   RReettuurrnn vvaalluueess
+       On success, semctl returns a value that depends on cmd:
+
+       the value of semval the value of (int) sempid the value of
+       semncnt the value of semzcnt a value of 0
+
+       On  failure,  semctl returns -1 and sets errno to identify
+       the error.
+
+   EErrrroorrss
+       In the following conditions, semctl fails and  sets  errno
+       to:  Operation permission is denied to the calling process
+       [see semid is not a valid semaphore identifier.  semnum is
+       less than 0 or greater than sem_nsems.  cmd is not a valid
+       command.  cmd is IPC_SET and sem_perm.uid or  sem_perm.gid
+       is not valid.  cmd is IPC_STAT and uid or gid is too large
+       to be stored in the structure pointed to by arg.buf.   cmd
+       is SETVAL or SETALL and the value to which semval is to be
+       set is greater than the system imposed  maximum.   cmd  is
+       equal  to IPC_RMID or IPC_SET and the effective user ID of
+       the  calling  process  is  not  equal  to  the  value   of
+       sem_perm.cuid  or sem_perm.uid in the data structure asso-
+       ciated with semid and the calling process  does  not  have
+       P_OWNER  privilege.  arg.buf points to an illegal address.
+
+RReeffeerreenncceess
+
+                                                                2
+

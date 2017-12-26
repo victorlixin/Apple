@@ -1,0 +1,109 @@
+
+
+kbdload(1M)                                           kbdload(1M)
+
+SSyynnooppssiiss
+       kbdload [-p] filename
+       kbdload -u table
+       kbdload -l string
+       kbdload -L string
+       kbdload -e string
+
+DDeessccrriippttiioonn
+       Tables  included  in  file are loaded into the kbd STREAMS
+       module that must already have been pushed into  the  stan-
+       dard  input  stream.  (In this context loaded means copied
+       from a disk file into main  memory  within  the  operating
+       system.)   This  program  is  intended both to provide for
+       loading and linking of both shared or  public  tables  and
+       private  tables  implementing user-specific functionality.
+       New users should refer to and for a general description of
+       the module's capabilities.
+
+       Files  are  searched for only by the name specified on the
+       command line; no search path is implied.  Tables loaded by
+       a privileged user with the -p option from an absolute path
+       beginning at /usr/lib/kbd are made publicly available  and
+       permanently  resident.   Otherwise  the  loaded tables are
+       available  only  to  the  caller,  and  are  automatically
+       unloaded when the kbd module is popped from the stream.
+
+       The  -u option can be used to unload private tables and by
+       a privileged user to remove public tables.  Tables may  be
+       unloaded  only  if they are not currently in use.  (Tables
+       that are members of composite tables always have  non-zero
+       reference counts since they are ``used'' in the composite;
+       all composites that refer to them must be unloaded first.)
+
+       The -L and -l options are used for making composite tables
+       on the fly.  The -L option, when executed by a  privileged
+       user  causes  the composite to be made publicly available;
+       otherwise, it is private and equivalent to -l.  The string
+       argument is constructed in the same way as the link state-
+       ment (see in  the  compiler.   If  any  component  of  the
+       intended composite is not presently loaded in memory or if
+       a component of a public table is not also public, an error
+       message  is  printed and the linkage fails.  More than one
+       composite may be created in a single invocation  by  using
+       either option sequentially.
+
+       The  -e  option  with  a string argument causes kbdload to
+       declare to the kbd  module  a  subroutine  called  string,
+       which  is assumed to be a subroutine managed by and regis-
+       tered with the alp module (see These ``external''  subrou-
+       tines  may be used exactly as any other loaded table; they
+       may participate as members of composite tables, and so on.
+
+   SSeeccuurriittyy iissssuueess
+       Allowing users other than a privileged user to load public
+
+                                                                1
+
+kbdload(1M)                                           kbdload(1M)
+
+       tables is a security risk and  is  thus  disallowed.   (In
+       general,  any  manipulation of a module instance by a user
+       who is neither a privileged user nor the user  who  origi-
+       nally pushed it is disallowed.)  The library directory and
+       all files contained in it should  be  protected  by  being
+       unwritable.   Administrators  are  encouraged  to remember
+       that the kbd system can be used to arbitrarily re-map  the
+       entire  keyboard of a terminal, as well as the entire out-
+       put stream; thus in  extremely  hostile  environments,  it
+       might be prudent to remove execution permissions from kbd-
+       load for non-administrative users  (for  example,  setting
+       the owner to bin or root and giving it a mode of 0500).
+
+       The  kbdload command checks to insure that the real uid of
+       the invoker is the same as  the  owner  of  both  standard
+       input  and  standard  output files, unless the real uid of
+       the invoking user is the privileged user.  Paths to public
+       tables  are  scrutinized for legitimacy.  The kbdload com-
+       mand refuses to work as a setuid program.
+
+FFiilleess
+       directory containing system standard map files.
+
+DDiiaaggnnoossttiiccss
+       Exit status is 0 if all tables can be loaded and all oper-
+       ations  succeeded.  If there is an I/O error (for example,
+       attempting to load a table  with  the  same  name  as  one
+       already loaded and accessible to the caller) or failure to
+       load a table, exit status is 1 and a  message  is  printed
+       showing the error.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Composite  tables  may be unloaded while they are actually
+       in use without affecting current users.  New users may  no
+       longer  attach  to  the tables, since composite tables are
+       copied and expanded when they are attached.  This is  done
+       to  keep  state information related to the attaching user.
+       The original composite always has a zero reference  count,
+       and  is  never  itself  attached.  This is an anomaly; the
+       effect on the user  is  that  a  composite  table  may  be
+       attached and functional, yet not appear in the output of a
+       query.
+
+                                                                2
+

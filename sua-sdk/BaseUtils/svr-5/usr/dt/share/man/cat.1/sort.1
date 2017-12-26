@@ -1,0 +1,230 @@
+
+
+sort(1)                                                   sort(1)
+
+SSyynnooppssiiss
+       sort  [-m]  [-o  output]  [-bdfiMnru]  [-t  x] [-T tmpdir]
+       [-ykmem] [-zrecsz] [-k keydef] ...  [file ... ]
+
+       sort -c [-bdfiMnru] [-t x] [-T tmpdir] [-ykmem]  [-zrecsz]
+       [-k keydef] ...  [file]
+
+DDeessccrriippttiioonn
+       The  sort  command  sorts  lines  of  all  the named files
+       together and writes the result  on  the  standard  output.
+       The  standard  input is read if - is used as a filename or
+       no input files are named.
+
+       Comparisons are based on one or more sort  keys  extracted
+       from  each  line  of input.  By default, there is one sort
+       key, the entire input line, and ordering is  lexicographic
+       by bytes in machine collating sequence.
+
+       sort  processes  characters according to the locale speci-
+       fied in the LC_CTYPE, LC_COLLATE, and LC_NUMERIC  environ-
+       ment  variables  (see LANG on Multibyte characters are not
+       processed by some of the options.
+
+       The following options alter the  default  behavior:  Check
+       that  the  input  file is sorted according to the ordering
+       rules.  If posix2 is set, give no output and only vary the
+       exit  status.   Merge  only,  the  input files are already
+       sorted.  Unique: suppress all but one in each set of lines
+       having  equal  keys.  The argument given is the name of an
+       output file to use instead of the standard  output.   This
+       file  may be the same as one of the inputs.  The sort com-
+       mand uses /var/tmp to store temporary  files,  unless  you
+       specify another directory using either the -T option or by
+       setting the environment variable TMPDIR in the environment
+       of  the  invoking process.  Sorting large files, for exam-
+       ple, may exhaust the available space in /var/tmp.  In this
+       case,  you  must  specify an alternate temporary directory
+       that has more free space, as shown in these examples:
+       +--------------------------------------------------------+------------------------+
+       |TMPDIR=tmpdir export TMPDIR sort largefile              | sort -T tmpdir  large- |
+       |                                                        | file                   |
+       +--------------------------------------------------------+------------------------+
+       |                                                        |                        |
+       |If the tmpdir you specify does not exist, sort will use |                        |
+       +--------------------------------------------------------+------------------------+
+       |/tmp to store temporary files.                          |                        |
+       +T-h-e---a-m-o-u-n-t--o-f--m-a-i-n--m-e-m-o-r-y--u-s-e-d--b-y--s-o-r-t--h-a-s--a--l-a-r-g-e--i-m-p-a-c+t------------------------+
+       on its performance.  Sorting  a  small  file  in  a  large
+       amount  of  memory is a waste.  If this option is omitted,
+       sort begins using a system default memory size,  and  con-
+       tinues  to  use  more  space as needed.  If this option is
+       presented with a value (kmem), sort will start using  that
+       number  of  kilobytes of memory, unless the administrative
+       minimum  or  maximum  is  violated,  in  which  case   the
+
+                                                                1
+
+sort(1)                                                   sort(1)
+
+       corresponding extremum will be used.  Thus, -y0 is guaran-
+       teed to start with  minimum  memory.   By  convention,  -y
+       (with  no  argument) starts with maximum memory.  The size
+       of the longest line read is recorded in the sort phase  so
+       buffers  can  be allocated during the merge phase.  If the
+       sort phase is omitted via the -c or -m options, a  popular
+       system  default  size will be used.  Lines longer than the
+       buffer size will cause sort to terminate abnormally.  Sup-
+       plying  the  actual number of bytes in the longest line to
+       be merged (or some larger  value)  will  prevent  abnormal
+       termination.   If  the sort phase is not omitted, then the
+       maximum line size is calculated and  used  as  the  recsz,
+       overriding  the  value of -z.  Thus, the -z option is sig-
+       nificant only when used with -c or -m.
+
+       The following options override the default ordering rules.
+       Dictionary  order:  only alphanumeric and space characters
+       (as specified by the locale in LC_CTYPE)  are  significant
+       in  comparisons.   This option is silently enforced in all
+       locales except the C  locale  and  cannot  be  overridden.
+       Fold lowercase letters into uppercase (as specified by the
+       locale in LC_CTYPE).  This option is silently enforced  in
+       all  locales except the C locale and cannot be overridden.
+       Ignore  non-printable  characters  (as  specified  by  the
+       locale  in LC_CTYPE).  Compare as months.  The full abbre-
+       viation for the given locale is used,  regardless  of  the
+       size  of  the  abbreviation.   Month  names  are processed
+       according to the locale specified in the LC_TIME  environ-
+       ment  variable  (see  LANG  on  For example, in an English
+       locale the sorting order would be ``JAN'' <  ``FEB''  <  <
+       ``DEC.''   Invalid  fields compare low to ``JAN.''  The -M
+       option implies the -b  option  (see  below).   An  initial
+       numeric string, consisting of optional blanks, an optional
+       minus sign, and zero or more digits with an optional deci-
+       mal  point,  is sorted by arithmetic value.  The -n option
+       implies the -b option (see below).  The -b option is  only
+       effective  when  restricted sort key specifications are in
+       effect.  Reverse the sense of comparisons.  When  ordering
+       options  appear before restricted sort key specifications,
+       the requested ordering rules are applied globally  to  all
+       sort   keys.    When  attached  to  a  specific  sort  key
+       (described below), the specified ordering options override
+       all global ordering options for that key.
+
+       The  notation  -k  pos1,pos2  restricts  a sort key to one
+       beginning at pos1 and ending at pos2.  The  characters  at
+       position  pos1 and pos2 are included in the sort key (pro-
+       vided that pos2 does not precede pos1).  A  missing  ,pos2
+       means the end of the line.
+
+       The  obsolescent notation +pos1 and -pos2 restricts a sort
+       key to one beginning at pos1 and ending just before  pos2.
+       The  characters  at position pos1 and just before pos2 are
+       included in the sort key,  provided  that  pos2  does  not
+
+                                                                2
+
+sort(1)                                                   sort(1)
+
+       precede  pos1.   So: +m.n -o.p is equivalent to: if p == 0
+                                                               -k
+       m+1.n+1,o.0           if           p          >          0
+                                                               -k
+       m+1.n+1,o+1.p All uses of -k pos1,pos2 below apply equally
+       well to +pos1 -pos2 using the above mapping, including the
+       flags usable in m and n.  See the Example section for fur-
+       ther clarification.
+
+       Specifying pos1 and pos2 involves the notion of a field, a
+       minimal sequence of characters followed by a field separa-
+       tor or a newline.  By default, the first blank  (space  or
+       tab)  of a sequence of blanks acts as the field separator.
+       All blanks in a sequence of blanks are  considered  to  be
+       part  of  the  next  field; for example, all blanks at the
+       beginning of a line are considered to be part of the first
+       field.   The  treatment of field separators can be altered
+       using the options: Ignore leading blanks when  determining
+       the  starting  and  ending  positions of a restricted sort
+       key. (Single-byte blanks only.)  If the -b option is spec-
+       ified  before the first -k argument, it will be applied to
+       all  those  arguments.   Otherwise,  the  b  flag  may  be
+       attached  independently to each posn in -k pos1,pos2 argu-
+       ment (see below).  Use x as the field separator character;
+       x is not considered to be part of a field (although it may
+       be included in a sort key).  Each occurrence of x is  sig-
+       nificant (for example, xx delimits an empty field).  x may
+       be a supplementary code set character.  pos1 and pos2 each
+       have  the  form  m.n optionally followed by one or more of
+       the flags bdfiMnr.  A starting position  specified  by  -k
+       m.n  is  interpreted  to mean the nth character in the mth
+       field A missing .n means .1 indicating the first character
+       of the mth field.  If the b flag is in effect n is counted
+       from the first non-blank in the mth field; -k m.1b  refers
+       to the first non-blank character in the mth field.
+
+       A  last position specified by -k . . . ,m.n is interpreted
+       to mean the nth character (including  separators)  of  the
+       mth  field.   A  missing  .n means .0, indicating the last
+       character of the mth field.  If the b flag is in effect  n
+       is counted from the character after the last leading blank
+       in the mth field; -k . . . ,m.1b refers to the first  non-
+       blank in the mth field.
+
+       The  b  flag affects only the posn that it is attached to.
+       The other flags (dfiMnr) can be attached to either pos1 or
+       pos2 or both, and always affect both specifiers.
+
+       When there are multiple sort keys, later keys are compared
+       only after all earlier keys  compare  equal.   Lines  that
+       otherwise compare equal are ordered with all bytes signif-
+       icant.
+
+                                                                3
+
+sort(1)                                                   sort(1)
+
+EExxaammpplleess
+       Sort the contents of infile with the second field  as  the
+       sort  key:  sort -k 2,2 infile Sort, in reverse order, the
+       contents of infile1 and infile2,  placing  the  output  in
+       outfile  and using the first character of the second field
+       as the sort key: sort -r -o  outfile  -k  2.1,2.1  infile1
+       infile2  Sort,  in  reverse order, the contents of infile1
+       and infile2 using the first  non-blank  character  of  the
+       second field as the sort key: sort -r -k 2.1b,2.1b infile1
+       infile2 Print the password file ( sorted  by  the  numeric
+       user  ID  (the  third colon-separated field): sort -t : -k
+       3,3n /etc/passwd Sort the contents of  the  password  file
+       using  the group ID (fourth field) as the primary sort key
+       and the user ID (third field) as the secondary  sort  key:
+       sort -t : -k 4,4 -k 3,3 /etc/passwd Print the lines of the
+       already sorted file infile, suppressing all but the  first
+       occurrence  of  lines  having  the  same  third field (the
+       options -um with just one input file make the choice of  a
+       unique  representative  from  a  set  of  equal lines pre-
+       dictable): sort -um -k 3,3 infile
+
+FFiilleess
+       temporary sort files;  see  ``Notices''  language-specific
+       message file (See LANG on
+
+RReeffeerreenncceess
+NNoottiicceess
+       sort  comments  and exits with non-zero status for various
+       trouble conditions (for example, when input lines are  too
+       long), and for disorder discovered under the -c option.
+
+       When  the  last line of an input file is missing a newline
+       character, sort appends one, prints a warning message, and
+       continues.   sort does not guarantee preservation of rela-
+       tive line ordering on equal keys.
+
+       The +pos and -pos options are  becoming  obsolete  due  to
+       POSIX. Application writers should avoid using them.
+
+       Use  the POSIX2 environment variable to get POSIX.2 behav-
+       ior. This behvior is inconsistent with existing  System  V
+       behavior.
+
+       In  the  United States, when installing a &gemini; system,
+       be sure to set LANG= to the default C. If  it  is  set  to
+       United States, corruption of scripts occurs and the output
+       of alphabetic sort commands (such as sort or  ls)  becomes
+       case sensitive.
+
+                                                                4
+

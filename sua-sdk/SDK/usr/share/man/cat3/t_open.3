@@ -1,0 +1,204 @@
+t_open(3)                                                     t_open(3)
+
+  tt__ooppeenn(())
+
+  NNAAMMEE
+
+    t_open - establish a transport endpoint
+
+  SSYYNNOOPPSSIISS
+
+    #include <xti.h> #include <fcntl.h>
+
+    int t_open(
+        const char *name,
+        int oflag,
+        struct t_info *info)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The tt__ooppeenn(3) function must be called as the first step in the
+    initialisation of a transport endpoint. This function establishes a
+    transport endpoint by supplying a transport provider identifier that
+    indicates a particular transport provider (that is, transport protocol)
+    and returning a file descriptor that identifies that endpoint.
+
+    PPaarraammeetteerrss     BBeeffoorree ccaallll     AAfftteerr ccaallll
+
+    namex          x               =
+
+    oflag          x               =
+
+    info->         addr            /
+
+    info->         options         /
+
+    info->         tsdu            /
+
+    info->         etsdu           /
+
+    info->         connect         /
+
+    info->         discon          /
+
+    info->         servtype        /
+
+    info->         flags           /
+
+    The argument name points to a transport provider identifier and oflag
+    identifies any open flags (as in _oo_pp_ee_nn((22))). The argument oflag is
+    constructed from O_RDWR optionally bitwise inclusive-OR'ed with
+    O_NONBLOCK. These flags are defined by the header <fcntl.h>. The file
+    descriptor returned by tt__ooppeenn() will be used by all subsequent functions
+    to identify the particular local transport endpoint.
+
+    This function also returns various default characteristics of the
+    underlying transport protocol by setting fields in the t_info structure.
+    This argument points to a t_info which contains the following members:
+
+    t_scalar_t addr;      /* max size of the transport protocol address */
+    t_scalar_t options;   /* max number of bytes of                     */
+                          /* protocol-specific options                  */
+    t_scalar_t tsdu;      /* max size of a transport service data       */
+                          /* unit (TSDU)                                */
+    t_scalar_t etsdu;     /* max size of an expedited transport         */
+                          /* service data unit (ETSDU)                  */
+    t_scalar_t connect;   /* max amount of data allowed on              */
+                          /* connection establishment functions         */
+    t_scalar_t discon;    /* max amount of data allowed on              */
+                          /* t_snddis() and t_rcvdis() functions        */
+    t_scalar_t servtype;  /* service type supported by the              */
+                          /* transport provider                         */
+    t_scalar_t flags;     /* other info about the transport provider    */
+
+    The values of the fields have the following meanings:
+
+    addr
+        A value greater than zero (T_NULL) indicates the maximum size of a
+        transport protocol address and a value of -2 (T_INVALID) specifies
+        that the transport provider does not provide user access to transport
+        protocol addresses.
+
+    options
+        A value greater than zero (T_NULL) indicates the maximum number of
+        bytes of protocol-specific options supported by the provider, and a
+        value of -2 (T_INVALID) specifies that the transport provider does not
+        support user-settable options.
+
+    tsdu
+        A value greater than zero (T_NULL) specifies the maximum size of a
+        transport service data unit (TSDU); a value of zero (T_NULL) specifies
+        that the transport provider does not support the concept of TSDU,
+        although it does support the sending of a data stream with no logical
+        boundaries preserved across a connection; a value of -1 (T_INFINITE)
+        specifies that there is no limit to the size of a TSDU; and a value of
+        -2 (T_INVALID) specifies that the transfer of normal data is not
+        supported by the transport provider.
+
+    etsdu
+        A value greater than zero (T_NULL) specifies the maximum size of an
+        expedited transport service data unit (ETSDU); a value of zero
+        (T_NULL) specifies that the transport provider does not support the
+        concept of ETSDU, although it does support the sending of an expedited
+        data stream with no logical boundaries preserved across a connection;
+        a value of -1 (T_INFINITE) specifies that there is no limit on the
+        size of an ETSDU; and a value of -2 (T_INVALID) specifies that the
+        transfer of expedited data is not supported by the transport provider.
+        Note that the semantics of expedited data may be quite different for
+        different transport providers (see and ).
+
+    connect
+        A value greater than zero (T_NULL) specifies the maximum amount of
+        data that may be associated with connection establishment functions,
+        and a value of -2 (T_INVALID) specifies that the transport provider
+        does not allow data to be sent with connection establishment
+        functions.
+
+    discon
+        If the T_ORDRELDATA bit in flags is clear, a value greater than zero
+        (T_NULL) specifies the maximum amount of data that may be associated
+        with the _tt____ss_nn_dd_dd_ii_ss(3) and _tt____rr_cc_vv_dd_ii_ss(3) functions, and a value of -
+        2 (T_INVALID) specifies that the transport provider does not allow
+        data to be sent with the abortive release functions. If the
+        T_ORDRELDATA bit is set in flags, a value greater than zero (T_NULL)
+        specifies the maximum number of octets that may be associated with the
+        _tt____ss_nn_dd_dd_ii_ss(3) and _tt____rr_cc_vv_dd_ii_ss(3) functions.
+
+    servtype
+        This field specifies the service type supported by the transport
+        provider, as described below.
+
+    flags
+        This is a bit field used to specify other information about the
+        communications provider. If the T_ORDRELDATA bit is set, the
+        communications provider supports user data to be sent with an orderly
+        release. If the T_SENDZERO bit is set in flags, this indicates the
+        underlying transport provider supports the sending of zero-length
+        TSDUs. See for a discussion of the separate issue of zero-length
+        fragments within a TSDU.
+
+    If a transport user is concerned with protocol independence, the above
+    sizes may be accessed to determine how large the buffers must be to hold
+    each piece of information. Alternatively, the _tt____aa_ll_ll_oo_cc(3) function may be
+    used to allocate these buffers. An error will result if a transport user
+    exceeds the allowed data size on any function.
+
+    The servtype field of info specifies one of the following values on
+    return:
+
+    T_COTS
+        The transport provider supports a connection-mode service but does not
+        support the optional orderly release facility.
+
+    T_COTS_ORD
+        The transport provider supports a connection-mode service with the
+        optional orderly release facility.
+
+    T_CLTS
+        The transport provider supports a connectionless-mode service. For
+        this service type, tt__ooppeenn() will return -2 (T_INVALID) for etsdu,
+        connect and discon.
+
+    A single transport endpoint may support only one of the above services at
+    one time.
+
+    If info is set to a null pointer by the transport user, no protocol
+    information is returned by tt__ooppeenn().
+
+  VVAALLIIDD SSTTAATTEESS
+
+    T_UNINIT
+
+  EERRRROORRSS
+
+    On failure, t_errno is set to the following:
+
+    [TBADFLAG]
+        An invalid flag is specified.
+
+    [TBADNAME]
+        Invalid transport provider name.
+
+    [TPROTO]
+        This error indicates that a communication problem has been detected
+        between XTI and the transport provider for which there is no other
+        suitable XTI error (t_errno).
+
+    [TSYSERR]
+        A system error has occurred during execution of this function.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    A valid file descriptor is returned upon successful completion. Otherwise,
+    a value of -1 is returned and t_errno is set to indicate an error.
+
+  SSEEEE AALLSSOO
+
+    _oo_pp_ee_nn(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The tt__ooppeenn function is not thread safe.
+
+    The tt__ooppeenn function is not async-signal safe.
+

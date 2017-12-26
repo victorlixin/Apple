@@ -1,0 +1,109 @@
+
+
+Objection(3C++)                                   Objection(3C++)
+
+SSyynnooppssiiss
+       #include <Objection.h> namespace SCO_SC {
+
+       //   Handlers  and  default  actions  typedef  int  Objec-
+       tion_action(const char* message); class Objection{ public:
+       //  Constructors, destructor
+           Objection();
+           Objection(Objection_action* default_action);
+           ~Objection(); //  Copy and assign
+           Objection(const Objection& o);
+           Objection&  operator=(const  Objection&  o); //  Raise
+       the Objection
+           int raise(const char* message = ");  //   Designate  a
+       handler
+           Objection_action* appoint(Objection_action* hdlr=0);
+           Objection_action* ignore(); }; }
+
+DDeessccrriippttiioonn
+       Objections  provide a simple error-handling facility simi-
+       lar to UNIX(R) signals  (see  Several  library  components
+       (e.g.,  Fsm(3C++))  use  Objections  to  report  errors to
+       clients.
+
+       An Objection is normally associated with a single error or
+       class  of  errors.   Consider  the sequence of events that
+       occurs when  an  error  associated  with  Objection  x  is
+       detected.    To   signal  that  the  error  has  occurred,
+       x.raise() is called.  raise(), in turn, calls the  handler
+       associated with Objection x.  A handler is associated with
+       Objection x by calling x.appoint() with the address of the
+       handler.   If x.appoint() is not called, a default handler
+       will be used (see below).  A handler is expected  to  per-
+       form  some  appropriate  action and then return an integer
+       value; by convention, 1 indicates success and 0  indicates
+       failure  in  handling  the  error.  A default handler does
+       nothing except  return  0.   Next,  assuming  the  handler
+       returns  0  AND  a  default  action was specified when the
+       Objection was created, the default  action  will  be  per-
+       formed.   Finally,  control will be returned to the caller
+       (the one who called raise()).  The value returned  to  the
+       caller is precisely the value returned by raise().
+
+   HHaannddlleerrss aanndd ddeeffaauulltt aaccttiioonnss
+       typedef  int Objection_action(const char* message); Serves
+       as the type for both handlers and default  actions.   Han-
+       dlers  return an integer; by convention, 0 indicates fail-
+       ure and 1 indicates success.  A default action returns  an
+       integer, but the integer has no meaning.
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Objection(); An Objection whose default handler does noth-
+       ing except return 0.  No default  action  is  defined  for
+       this Objection.
+
+                                                                1
+
+Objection(3C++)                                   Objection(3C++)
+
+       Objection(Objection_action*  default_action); An Objection
+       whose default handler does nothing  except  return  0  and
+       whose default action is default_action.  If default_action
+       is 0, the Objection is equivalent to one created using the
+       parameterless constructor.
+
+       ~Objection(); Destructor.
+
+   CCooppyy aanndd aassssiiggnn
+       Objection(const Objection& o);
+
+       Objection&   operator=(const  Objection&  o);  Copying  or
+       assigning an Objection creates a copy of its value.
+
+   RRaaiissee tthhee OObbjjeeccttiioonn
+       int raise(const char* message =  %%);  Calls  the  handler
+       associated  with  this  Objection, passing the string mes-
+       sage.  If the handler returns zero and  a  default  action
+       has  been  defined,  the default action will be performed.
+       Returns the value returned by the handler.
+
+   DDeessiiggnnaattee aa hhaannddlleerr
+       Objection_action*    appoint(Objection_action*    hdlr=0);
+       Changes  the  handler  associated  with  this Objection to
+       hdlr.  If the argument is omitted,  a  handler  that  does
+       nothing  except  return 0 will be used.  Returns a pointer
+       to the previous handler.
+
+       Objection_action* ignore(); Changes the handler associated
+       with this Objection to one that does nothing except return
+       1.  Returns a pointer to the previous handler.
+
+NNootteess
+       Ideally, exception-handling  facilities  should  be  built
+       into  a  programming language.  Exceptions have quite com-
+       plex semantics that cannot be simulated by function calls.
+       Objections  are  not  a substitute for exceptions, nor are
+       they upward-compatible with exceptions.
+
+BBuuggss
+       There should probably be two typedefs,  one  for  handlers
+       and one for default actions.
+
+RReeffeerreenncceess
+
+                                                                2
+

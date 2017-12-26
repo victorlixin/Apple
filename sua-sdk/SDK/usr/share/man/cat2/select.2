@@ -1,0 +1,119 @@
+select(2)                                                     select(2)
+
+  sseelleecctt(())
+
+  NNAAMMEE
+
+    select() - synchronous I/O multiplexing
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/types.h>
+    #include <sys/time.h>
+    #include <unistd.h>
+
+    int select (int nfds, fd_set *readfds, fd_set *writefds,
+                fd_set *exceptfds, struct timeval *timeout)
+    FD_SET (fd, &fdset)
+    FD_CLR (fd, &fdset)
+    FD_ISSET (fd, &fdset)
+    FD_ZERO (&fdset)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _ss_ee_ll_ee_cc_tt(2) function examines the I/O descriptor sets whose addresses
+    are passed in readfds, writefds, and exceptfds to see if some of their
+    descriptors are ready for reading, are ready for writing, or have an
+    exceptional condition pending, respectively. The first nfds descriptors
+    are checked in each set; that is, the descriptors from 0 through nfds-1 in
+    the descriptor sets are examined. On return, _ss_ee_ll_ee_cc_tt(2) replaces the given
+    descriptor sets with subsets consisting of those descriptors that are
+    ready for the requested operation. The _ss_ee_ll_ee_cc_tt(2) function returns the
+    total number of ready descriptors in all the sets.
+
+    The descriptor sets are stored as bit fields in arrays of integers. The
+    following macros are provided for manipulating such descriptor sets:
+    FFDD__ZZEERROO (&fdsetx)
+        initializes a descriptor set fdset to the null set.
+    FFDD__SSEETT(fd, &fdset)
+        includes a particular descriptor fd in fdset.
+    FFDD__CCLLRR(fd, &fdset)
+        removes fd from fdset.
+    FFDD__IISSSSEETT(fd, &fdset)
+        is non-zero if fd is a member of fdset, zero otherwise.
+
+    The behavior of these macros is undefined if a descriptor value is less
+    than zero or greater than or equal to FD_SETSIZE, which is normally the
+    maximum number of descriptors supported by the system or greater. In this
+    implementation, FD_SETSIZE is the maximum number of descriptors supported
+    by the system (the value of {OPEN_MAX}).
+
+    If timeout is a non-nil pointer, it specifies a maximum interval to wait
+    for the selection to complete. If timeout is a nil pointer, the select
+    blocks indefinitely. To effect a poll, the timeout argument should be non-
+    nil, pointing to a zero-valued timeval structure.
+
+    Any of readfds, writefds, and exceptfds may be given as nil pointers if no
+    descriptors are of interest.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The _ss_ee_ll_ee_cc_tt(2) function returns the number of ready descriptors that are
+    contained in the descriptor sets, or -1 if an error occurred. If the time
+    limit expires, _ss_ee_ll_ee_cc_tt(2) returns 0. If _ss_ee_ll_ee_cc_tt(2) returns with an error,
+    including one due to an interrupted call, the descriptor sets will be
+    unmodified.
+
+  EERRRROORRSS
+
+    An error return from _ss_ee_ll_ee_cc_tt(2) indicates:
+
+    [EBADF]
+        One of the descriptor sets specified an invalid descriptor.
+
+    [EINTR]
+        A signal was delivered before the time limit expired and before any of
+        the selected events occurred.
+
+    [EINVAL]
+        The specified time limit is invalid. One of its components is negative
+        or too large.
+
+  SSEEEE AALLSSOO
+
+    _a_c_c_e_p_t(2)
+
+    _c_o_n_n_e_c_t(2)
+
+    _g_e_t_d_t_a_b_l_e_s_i_z_e(3)
+
+    _g_e_t_t_i_m_e_o_f_d_a_y(3)
+
+    _r_e_a_d(2)
+
+    _r_e_c_v(2)
+
+    _s_e_n_d(2)
+
+    _w_r_i_t_e(2)
+
+  BBUUGGSS
+
+    User programs cannot be written independent of the limit on the number of
+    open files, and the dimension of a sufficiently large bit field for select
+    remains a problem. The default size FD_SETSIZE is the current maximum
+    number of open files ({OPEN_MAX}). In this implementation, you cannot open
+    more files than {OPEN_MAX} with _ss_ee_ll_ee_cc_tt(2) so there is no reason to change
+    the value of FD_SETSIZE.
+
+    The _ss_ee_ll_ee_cc_tt(2) function should probably return the time remaining from the
+    original time-out, if any, by modifying the time value in place. This may
+    be implemented in future versions of the system. Thus, it is unwise to
+    assume that the time-out value will be unmodified by the _ss_ee_ll_ee_cc_tt(2) call.
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The sseelleecctt function is thread safe.
+
+    The sseelleecctt function is async-signal safe.
+

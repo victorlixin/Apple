@@ -1,0 +1,107 @@
+
+
+fs_cdfs(4)                                             fs_cdfs(4)
+
+SSyynnooppssiiss
+       #include <sys/fs/iso9660.h> #include <sys/fs/cdfs_fs.h>
+
+DDeessccrriippttiioonn
+       The cdfs file system supports the ISO-9660 and High Sierra
+       file system format specifications.  In a cdfs file system,
+       sectors  0-15 are reserved for boot information (this area
+       is not used).  The Volume Descriptor list begins at sector
+       16. The Volume Descriptor list contains the Primary Volume
+       Descriptor (PVD) (which is known  as  the  super-block  in
+       other  types  of  file  systems).  Directory and file data
+       make up the rest of the file system.
+
+       The PVD contains information such as: The location of  the
+       root  directory  The  size  of the file system (in logical
+       blocks) Various identification strings and time stamps
+
+       For each cdfs file system that is mounted, an in-core data
+       structure  is  used  to store the relevant portions of the
+       PVD.  This data structure, called the cdfs structure, also
+       stores  the  other  file system specific information.  The
+       cdfs structure is defined in the  cdfs_fs.h  header  file.
+       The  ISO-9660  and  High  Sierra  PVD's are defined in the
+       iso9660.h header file.
+
+       The format of the cdfs file system  structure  is:  struct
+       cdfs  {       uint_t    cdfs_Flags;    /*  State flags for
+       this  FS  */       struct   pathname     cdfs_MntPnt;   /*
+       Pathname      of      mount-point      */           struct
+       pathname     cdfs_DevNode;  /* Pathname of device node  */
+            struct  vnode   *cdfs_DevVnode;     /* 'specfs' vnode
+       for        the        device        */              struct
+       cdfs_inode   *cdfs_RootInode;    /*  Inode  of  CDFS  root
+       directory  */       struct  cdfs_fid     cdfs_RootFid;  /*
+       FID of Root Inode */      enum cdfs_type cdfs_Type;     /*
+       File       system        type        (9660/Hi-S)        */
+            daddr_t   cdfs_PvdLoc;   /*  PVD location (Log Sector
+       #) */      uint_t    cdfs_LogSecSz; /* Logical sector size
+       (Bytes)  */       uint_t    cdfs_LogSecMask;    /* Convert
+       bytes        to        beg        of        Sect        */
+            uint_t    cdfs_LogSecShift;   /* Convert bytes to Log
+       Sect Num */      uint_t    cdfs_LogBlkMask;    /*  Convert
+       bytes         to        beg        of        Blk        */
+            uint_t    cdfs_LogBlkShift;   /* Convert bytes to Log
+       Blk Num */
+
+            /*           *  Relevant  PVD  Information         */
+            uint_t    cdfs_LogBlkSz; /*   Logical   block    size
+       (Bytes)  */       uint_t    cdfs_VolVer;   /* Version # of
+       Vol Descr struct */      uint_t    cdfs_FileVer;  /*  Ver-
+       sion      #      of      Dir      Rec/Path      Tbl     */
+            uint_t    cdfs_VolSetSz; /* Volume  Set  size  (#  of
+       discs)   */       uint_t    cdfs_VolSeqNum;     /*  Volume
+       Sequence          #          (Disc          #)          */
+
+                              CD-ROM                            1
+
+fs_cdfs(4)                                             fs_cdfs(4)
+
+            uint_t    cdfs_VolSpaceSz;    /*  Volume  Space  Size
+       (Bytes)  */        uint_t    cdfs_PathTabSz;     /*   Path
+       Table              size             (Bytes)             */
+            daddr_t   cdfs_PathTabLoc;    /* Path Table loc. (Log
+       Block   #)  */       timestruc_t    cdfs_CreateDate;    /*
+       Volume           Creation           date/time           */
+            timestruc_t    cdfs_ModDate;  /*  Volume Modification
+       date/time  */        timestruc_t    cdfs_ExpireDate;    /*
+       Volume           Expiration          date/time          */
+            timestruc_t    cdfs_EffectDate;    /*  Volume  Effec-
+       tive  date/time  */       uchar_t   cdfs_VolID[32];     /*
+       Volume ID string */       uint_t    cdfs_RootDirOff;    /*
+       PVD      offset      of      Root      Dir      Rec     */
+            uint_t    cdfs_RootDirSz;     /* Size (bytes) of Root
+       Dir Rec */
+
+            /*           *   XCDR   specific  fields.          */
+            struct cd_defs cdfs_Dflts;    /* Default  IDs,  perms
+       and  modes  */       uint_t    cdfs_NameConv; /* XCDR name
+       conversion          mode          */                struct
+       cd_uidmap    cdfs_UidMap[CD_MAXUMAP]; /* User ID map array
+       */       struct  cd_gidmap    cdfs_GidMap[CD_MAXGMAP];  /*
+       Group ID map array */
+
+            /*           *   SUSP   specific  fields.          */
+            uint_t    cdfs_SuspSkip; /* Value for finding SUFs in
+       SUA */
+
+            /*           *  RRIP  specific  field(s).          */
+            uint_t    cdfs_DevMap_Cnt;    /* Num of valid  Device
+       mappings*/                                          struct
+       cd_devmap    cdfs_DevMap[CD_MAXDMAP]; /* Device Node (Num-
+       ber) Map */ };
+
+RReeffeerreenncceess
+       cdfs-specific cdfs-specific
+
+       ISO 9660 Specification, Working paper for Information Pro-
+       cessing: Volume and File Structure of CD-ROM Information
+        Interchange" in  Optical  Information  Systems  magazine,
+       January/February 1987
+
+                              CD-ROM                            2
+

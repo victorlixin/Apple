@@ -1,0 +1,116 @@
+
+
+dshm_control(3dshm)                           dshm_control(3dshm)
+
+SSyynnooppssiiss
+       #include <dshm.h>
+
+       int  dshm_control(int  dshmid, int cmd, ... /* struct dsh-
+       mid_ds *buf */);
+
+DDeessccrriippttiioonn
+       dshm_control provides  a  variety  of  dynamically  mapped
+       shared memory control operations as specified by cmd.  The
+       following cmds are available:  Returns  information  about
+       the  segment  in  the  following  members of the structure
+       pointed to by buf.
+       struct ipc_perm   dshm_perm      operation   per-
+                                        mission   struc-
+                                        ture
+       pid_t             dshm_lpid      pid of the  last
+                                        dshm_attach   or
+                                        dshm_detach
+                                        caller
+       pid_t             dshm_cpid      pid  of the cre-
+                                        ator
+       unsigned long     dshm_nattach   number  of  cur-
+                                        rent attaches
+       time_t            dshm_atime     time   of   last
+                                        dshm_attach call
+       time_t            dshm_dtime     time   of   last
+                                        dshm_detach call
+       time_t            dshm_ctime     time   of   last
+                                        change        by
+                                        dshm_control
+       const void*       dshm_mapaddr   starting logical
+                                        address for map
+       size_t            dshm_mapsize   map   size    in
+                                        bytes
+       size_t            dshm_bufsize   individual
+                                        buffer  size  in
+                                        bytes
+       unsigned long     dshm_abufcnt   number of appli-
+                                        cation   buffers
+                                        in object (spec-
+                                        ified         by
+                                        buffer_count  at
+                                        dshm_get    cre-
+                                        ation time)
+       unsigned long     dshm_tbufcnt   total  number of
+                                        buffers       in
+                                        object
+                                        (dshm_abufcnt
+                                        plus     library
+                                        administrative
+                                        overhead)
+       Set  the value of the following members of the data struc-
+       ture associated with dshmid  to  the  corresponding  value
+       found  in  the  structure pointed to by buf: dshm_perm.uid
+
+                                                                1
+
+()                                                             ()
+
+       dshm_perm.gid dshm_perm.mode  /*  only  access  permission
+       bits */
+
+       This command can be executed only by a process that has an
+       effective user id equal to the value of dshm_perm.cuid  or
+       dshm_perm.uid  in  the data structure associated with dsh-
+       mid, or by a  process  that  has  the  P_OWNER  privilege.
+       Remove  the  dynamically  mapped  shared memory identifier
+       specified by dshmid from the system and destroy the dynam-
+       ically  mapped  shared  memory  segment and data structure
+       associated with it.  This command can be executed only  by
+       a process that has an effective user id equal to the value
+       of dshm_perm.cuid or dshm_perm.uid in the  data  structure
+       associated  with  dshmid,  or  by  a  process that has the
+       P_OWNER privilege.
+
+RReettuurrnn vvaalluueess
+       On success, dshm_control returns 0.
+
+       On failure, dshm_control returns  -1  and  sets  errno  to
+       identify the error.
+
+   EErrrroorrss
+       In  the  following conditions, dshm_control fails and sets
+       errno to: cmd is equal to IPC_STAT  and  {READ}  operation
+       permission  is  denied  to the calling process.  dshmid is
+       not a valid shared memory identifier.  cmd is not a  valid
+       command.     cmd   is   IPC_SET   and   dshm_perm.uid   or
+       dshm_perm.gid is not valid.  cmd is DSHM_SETPLACE and  one
+       or  more  of the values in dshmid_ds is incorrect.  cmd is
+       IPC_STAT and uid or gid is too large to be stored  in  the
+       structure  pointed to by buf.  cmd is equal to IPC_RMID or
+       IPC_SET and the effective user is not equal to  the  value
+       of  dshm_perm.cuid  or  shm_perm.uid in the data structure
+       associated with dshmid and the process does not  have  the
+       P_OWNER  privilege.  cmd is equal to DSHM_SETPLACE and the
+       effective user is not equal to the value of dshm_perm.cuid
+       or  dshm_perm.uid  in  the  data structure associated with
+       dshmid and the process does not have  the  P_OWNER  privi-
+       lege.   cmd  is  DSHM_SETPLACE  and the call failed due to
+       resource constraints within the kernel.  cmd is  DSHM_SET-
+       PLACE and the system does not support the requested place-
+       ment style.  buf points to an illegal address.
+
+UUssaaggee
+       The user must explicitly remove dynamically mapped  shared
+       memory  segments after the last reference to them has been
+       removed.
+
+RReeffeerreenncceess
+
+                                                                2
+

@@ -1,0 +1,216 @@
+tput(1)                                                         tput(1)
+
+  ttppuutt
+
+  NNAAMMEE
+
+    tput - initialize a terminal or query terminfo database
+
+  SSYYNNOOPPSSIISS
+
+    tput [[-Ttype]] capname [[parms ... ]]
+    tput [[-Ttype]] init
+    tput [[-Ttype]] reset
+    tput [[-Ttype]] longname
+    tput -S  <<
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ttppuutt(1) utility uses the tteerrmmiinnffoo database to make the values of
+    terminal-dependent capabilities and information available to the shell
+    (see sshh(1)), to initialize or reset the terminal, or return the long name
+    of the requested terminal type. The ttppuutt(1) utility outputs a string if
+    the attribute capname (capability name) is of type string, or it outputs
+    an integer if the attribute is of type integer. If the attribute is of
+    type boolean, ttppuutt(1) simply sets the exit code (00 for TRUE if the
+    terminal has the capability, 11 for FALSE if it does not), and produces no
+    output. Before using a value returned on standard output, the user should
+    test the exit code ($$??; see sshh(1)) to be sure it is 00. (See the
+    DIAGNOSTICS and DIAGNOSTICS sections.) For a complete list of capabilities
+    and the capname associated with each, see tteerrmmiinnffoo(5). The ttppuutt(1) utility
+    accepts the following options:
+
+    --TTtype
+        Specifies the type of terminal. Normally this option is unnecessary
+        because the default is taken from the environment variable TERM. If --
+        TT is specified, ttppuutt(1) ignores the shell variables LINES and COLUMNS
+        and does not query the operating system for the actual screen size.
+
+    --SS
+        Allows more than one capability per invocation of ttppuutt(1). The
+        capabilities must be passed to ttppuutt(1) from the standard input instead
+        of from the command line (see example). Only one capname is allowed
+        per line. The --SS option changes the meaning of the 00 and 11 boolean and
+        string exit codes (see the DIAGNOSTICS section).
+
+    capname
+        Names the attribute from the tteerrmmiinnffoo database.
+
+    parms
+        If the attribute is a string that takes parameters, the arguments
+        parms will be instantiated into the string. An all-numeric argument
+        will be passed to the attribute as a number.
+
+    iinniitt
+        If the tteerrmmiinnffoo database is present and an entry for the user's
+        terminal exists (see --TT), the following will occur:
+       1.     If present, the terminal's initialization strings will be output
+              ((is1 iiss22, iiss33, iiff, iipprroogg).
+       2.     Any delays (such as newline) specified in the entry will be set
+              in the tty driver.
+       3.     Tabs expansion will be turned on or off according to the
+              specification in the entry.
+       4.     If tabs are not expanded, standard tabs will be set (every eight
+              spaces). If an entry does not contain the information needed for
+              any of the four above activities, that activity will silently be
+              skipped.
+
+    rreesseett
+        Instead of putting out initialization strings, the terminal's reset
+        strings will be output if present (rrss11 rrss22, rrss33, rrff). If the reset
+        strings are not present but initialization strings are, the
+        initialization strings will be output. Otherwise, rreesseett acts
+        identically to iinniitt.
+
+    lloonnggnnaammee
+        If the tteerrmmiinnffoo database is present and an entry for the user's
+        terminal exists (see --TT), the long name of the terminal will be put
+        out. The long name is the last name in the first line of the
+        terminal's description in the tteerrmmiinnffoo database (see tteerrmm(1)).
+
+  EEXXAAMMPPLLEESS
+
+    Initialize the terminal according to the type of terminal in the
+    environment variable TTEERRMM. This command should be included in everyone's
+    $$HHOOMMEE//..pprrooffiillee after the environment variable TERM has been exported.
+
+    tput init
+
+    Reset an AT&T 5620 terminal, overriding the type of terminal in the
+    environment variable TTEERRMM.
+
+    tput -T5620 reset
+
+    Send the sequence to move the cursor to row 00, column 00 (the upper left
+    corner of the screen, usually known as the "home" cursor position).
+
+    tput cup 0 0
+
+    Echo the clear-screen sequence for the current terminal.
+
+    tput clear
+
+    Print the number of columns for the current terminal.
+
+    tput cols
+
+    Print the number of columns for the 450 terminal.
+
+    tput -T450 cols
+
+    Set the shell variables bboolldd to begin stand-out mode sequence, and
+    ooffffbboolldd, to end standout mode sequence, for the current terminal. This
+    might be followed by a prompt: eecchhoo ""$${{bboolldd}}PPlleeaassee ttyyppee iinn yyoouurr nnaammee::
+    $${{ooffffbboolldd}}\\cc""
+
+    bold='tput smso' offbold='tput rmso'
+
+    Set exit code to indicate whether the current terminal is a hardcopy
+    terminal.
+
+    tput hc
+
+    Send the sequence to move the cursor to row 23, column 4.
+
+    tput cup 23 4
+
+    Print the long name from the tteerrmmiinnffoo database for the type of terminal
+    specified in the environmental variable TERM.
+
+    tput longname
+
+    This example shows ttppuutt(1) processing several capabilities in one
+    invocation. This example clears the screen, moves the cursor to position
+    10, 10, and turns on bold (extra bright) mode. The list is terminated by
+    an exclamation mark (!!) on a line by itself.
+
+    tput -S <<!
+    > clear
+    > cup 10 10
+    > bold
+    > !
+
+  FFIILLEESS
+
+    The ttppuutt(1) utility makes use of the following files:
+
+    TTEERRMMIINNFFOO
+        Compiled terminal description database.
+
+    //uussrr//iinncclluuddee//ccuurrsseess..hh
+        The _cc_uu_rr_ss_ee_ss(3) header file
+
+    //uussrr//iinncclluuddee//tteerrmm..hh
+        The tteerrmmiinnffoo(5) header file
+    //uussrr//lliibb//ttaabbsseett//*
+        Tab settings for some terminals, in a format appropriate to be output
+        to the terminal (escape sequences that set margins and tabs); for more
+        information, see the "Tabs and Initialization" section of _t_e_r_m_i_n_f_o(5)
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    The exit code depends upon the type of the capability, here given as
+    capname.
+
+    If capname is of type boolean, a value of 00 is set for TRUE and 11 for
+    FALSE unless the --SS option is used.
+
+    If capname is of type string, a value of 00 is set if the capname is
+    defined for this terminal type (the value of capname is returned on
+    standard output); a value of 11 is set if capname is not defined for this
+    terminal type (a null value is returned on standard output).
+
+    If capname is of type boolean or string and the --SS option is used, a value
+    of 00 is returned to indicate that all lines were successful. No indication
+    of which line failed can be given, so exit code 11 will never appear. Exit
+    codes 22, 33, and 44 retain their usual interpretation.
+
+    If capname is of type integer, a value of 00 is always set, whether or not
+    capname is defined for this terminal type. To determine whether capname is
+    defined for this terminal type, the user must test the value of standard
+    output. A value of --11 means that capname is not defined for this terminal
+    type.
+
+    Any other exit code indicates an error.
+
+    The ttppuutt(1) utility prints the following error messages and sets the
+    corresponding exit codes.
+
+    EExxiitt CCooddee     EErrrroorr MMeessssaaggee
+
+    0             Capname is a numeric variable that is not specified in the
+                  terminfo(5) database for this terminal type (such as ttppuutt --
+                  TT445500 lliinneess and ttppuutt --TT22662211 xxmmcc).
+
+    1             No error message is printed; see the EXIT CODES section.
+
+    2             Usage error.
+
+    3             Unknown terminal type or no tteerrmmiinnffoo database.
+
+    4             Unknown tteerrmmiinnffoo capability capname.
+
+  PPOORRTTAABBIILLIITTYY
+
+    The lloonnggnnaammee and --SS options, and the parameter-substitution features used
+    in the ccuupp example, are not supported in Berkeley Software Distribution
+    (BSD) curses or in AT&T/USL curses before SVr4.
+
+  SSEEEE AALLSSOO
+
+    _c_l_e_a_r(1)
+
+    _s_t_t_y(1)
+
+    _t_e_r_m_i_n_f_o(5)
+

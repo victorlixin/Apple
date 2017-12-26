@@ -1,0 +1,143 @@
+idlok(3)                                                       idlok(3)
+
+  ccuurrss__oouuttooppttss(())
+
+  NNAAMMEE
+
+    clearok(), idlok(), idcok(), immedok(), leaveok(), setscrreg(),
+    wsetscrreg(), scrollok(), nl(), nonl() - curses output options
+
+  SSYYNNOOPPSSIISS
+
+    #include <curses.h>
+
+    int clearok(WINDOW *win, bool bf);
+    int idlok(WINDOW *win, bool bf);
+    void idcok(WINDOW *win, bool bf);
+    void immedok(WINDOW *win, bool bf);
+    int leaveok(WINDOW *win, bool bf);
+    int setscrreg(int top, int bot);
+    int wsetscrreg(WINDOW *win, int top, int bot);
+    int scrollok(WINDOW *win, bool bf);
+    int nl(void);
+    int nonl(void);
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    These routines set options that change the style of output within ccuurrsseess
+    All options are initially FALSE, unless otherwise stated. It is not
+    necessary to turn these options off before calling _ee_nn_dd_ww_ii_nn(3).
+
+    If _cc_ll_ee_aa_rr_oo_kk(3) is called with TRUE as argument, the next call to
+    _ww_rr_ee_ff_rr_ee_ss_hh(3) with this window will clear the screen completely and redraw
+    the entire screen from scratch. This is useful when the contents of the
+    screen are uncertain, or in some cases for a more pleasing visual effect.
+    If the win argument to _cc_ll_ee_aa_rr_oo_kk(3) is the global variable ccuurrssccrr, the next
+    call to _ww_rr_ee_ff_rr_ee_ss_hh(3) with any window causes the screen to be cleared and
+    repainted from scratch.
+
+    If _ii_dd_ll_oo_kk(3) is called with TRUE as argument, ccuurrsseess considers using the
+    hardware insert/delete line feature of terminals so equipped. If disabled
+    (bf is FALSE), ccuurrsseess very seldom uses this feature. (The insert/delete
+    character feature is always considered.) This option should be enabled
+    only if the application needs insert/delete line, for example, for a
+    screen editor. It is disabled by default because insert/delete line tends
+    to be visually annoying when used in applications where it isn't really
+    needed. If insert/delete line cannot be used, _cc_uu_rr_ss_ee_ss(3) redraws the
+    changed portions of all lines.
+
+    If _ii_dd_cc_oo_kk(3) is called with TRUE as argument, ccuurrsseess considers using the
+    hardware insert/delete character feature of terminals so equipped. This is
+    enabled by default.
+
+    If _ii_mm_mm_ee_dd_oo_kk(3) is called with TRUE as argument , any change in the window
+    image, such as the ones caused by _ww_aa_dd_dd_cc_hh(3), _ww_cc_ll_rr_tt_oo_bb_oo_tt(3), _ww_ss_cc_rr_ll(3), etc.,
+    automatically cause a call to _ww_rr_ee_ff_rr_ee_ss_hh(3). However, it may degrade the
+    performance considerably, due to repeated calls to _ww_rr_ee_ff_rr_ee_ss_hh(3). It is
+    disabled by default.
+
+    Normally, the hardware cursor is left at the location of the window cursor
+    being refreshed. The _ll_ee_aa_vv_ee_oo_kk(3) option allows the cursor to be left
+    wherever the update happens to leave it. It is useful for applications
+    where the cursor is not used, since it reduces the need for cursor
+    motions. If possible, the cursor is made invisible when this option is
+    enabled.
+
+    The _ss_ee_tt_ss_cc_rr_rr_ee_gg(3) and _ww_ss_ee_tt_ss_cc_rr_rr_ee_gg(3) routines allow the application
+    programmer to set a software scrolling region in a window. top and bot are
+    the line numbers of the top and bottom margin of the scrolling region.
+    (Line 0 is the top line of the window.) If this option and _ss_cc_rr_oo_ll_ll_oo_kk(3) are
+    enabled, an attempt to move off the bottom margin line causes all lines in
+    the scrolling region to scroll one line in the direction of the first
+    line. Only the text of the window is scrolled. (Note that this has nothing
+    to do with the use of a physical scrolling region capability in the
+    terminal, like that in the VT100. If _ii_dd_ll_oo_kk(3) is enabled and the terminal
+    has either a scrolling region or insert/delete line capability, they will
+    probably be used by the output routines.)
+
+    The _ss_cc_rr_oo_ll_ll_oo_kk(3) option controls what happens when the cursor of a window
+    is moved off the edge of the window or scrolling region, either as a
+    result of a newline action on the bottom line, or typing the last
+    character of the last line. If disabled (bf is FALSE), the cursor is left
+    on the bottom line. If enabled (bf is TRUE), the window is scrolled up one
+    line (Note that in order to get the physical scrolling effect on the
+    terminal, it is also necessary to call _ii_dd_ll_oo_kk(3)).
+
+    The _nn_ll(3) and _nn_oo_nn_ll(3) routines control whether the underlying display
+    device translates the return key into newline on input, and whether it
+    translates newline into return and line-feed on output (in either case,
+    the call addch('\n') does the equivalent of return and line feed on the
+    virtual screen). Initially, these translations do occur. If you disable
+    them using _nn_oo_nn_ll(3), ccuurrsseess will be able to make better use of the line-
+    feed capability, resulting in faster cursor motion. Also, ccuurrsseess will then
+    be able to detect the return key.
+
+  RREETTUURRNN VVAALLUUEE
+
+    The functions _ss_ee_tt_ss_cc_rr_rr_ee_gg(3) and _ww_ss_ee_tt_ss_cc_rr_rr_ee_gg(3) return OK upon success and
+    ERR upon failure. All other routines that return an integer always return
+    OK.
+
+  PPOORRTTAABBIILLIITTYY
+
+    These functions are described in the XSI Curses standard, Issue 4.
+
+    The XSI Curses standard is ambiguous on the question of whether _rr_aa_ww(3)
+    should disable the CRLF translations controlled by _nn_ll(3) and _nn_oo_nn_ll(3). BSD
+    curses did turn off these translations; AT&T curses (at least as late as
+    SVr1) did not. We choose to do so, on the theory that a programmer
+    requesting raw input wants a clean (ideally 8-bit clean) connection that
+    the operating system does not mess with.
+
+    Some historic curses implementations had, as an undocumented feature, the
+    ability to do the equivalent of clearok(..., 1) by saying touchwin(stdscr)
+    or clear(stdscr). This will not work under ncurses.
+
+    Earlier System V curses implementations specified that with _ss_cc_rr_oo_ll_ll_oo_kk(3)
+    enabled, any window modification triggering a scroll also forced a
+    physical refresh. XSI Curses does not require this, and _nn_cc_uu_rr_ss_ee_ss(3) avoids
+    doing it in order to perform better vertical-motion optimization at
+    _ww_rr_ee_ff_rr_ee_ss_hh(3) time.
+
+  NNOOTTEESS
+
+    Note that _cc_ll_ee_aa_rr_oo_kk(3), _ll_ee_aa_vv_ee_oo_kk(3), _ss_cc_rr_oo_ll_ll_oo_kk(3), _ii_dd_cc_oo_kk(3), _nn_ll(3), _nn_oo_nn_ll(3)
+    and _ss_ee_tt_ss_cc_rr_rr_ee_gg(3) may be macros.
+
+    The _ii_mm_mm_ee_dd_oo_kk(3) routine is useful for windows that are used as terminal
+    emulators.
+
+  SSEEEE AALLSSOO
+
+    _c_u_r_s_e_s(3)
+
+    _c_u_r_s___a_d_d_c_h(3)
+
+    _c_u_r_s___c_l_e_a_r(3)
+
+    _c_u_r_s___i_n_i_t_s_c_r(3)
+
+    _c_u_r_s___s_c_r_o_l_l(3)
+
+    _c_u_r_s___r_e_f_r_e_s_h(3)
+

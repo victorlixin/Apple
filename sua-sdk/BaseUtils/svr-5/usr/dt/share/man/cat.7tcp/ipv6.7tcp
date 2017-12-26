@@ -1,0 +1,154 @@
+
+
+ipv6(7tcp)                                             ipv6(7tcp)
+
+SSyynnooppssiiss
+       Programmer's  interface:  #include  <sys/types.h> #include
+       <sys/socket.h> #include <netinet/in.h>
+
+       s = socket(AF_INET6, SOCK_DGRAM, 0); s =  socket(AF_INET6,
+       SOCK_STREAM, 0);
+
+       #include    <paths.h>    #include    <fcntl.h>    #include
+       <netinet/if.h> #include <netinet/ip_var.h>
+
+       fd = open(_PATH_UDPIPV6, flags); fd =  open(_PATH_TCPIPV6,
+       flags);
+
+DDeessccrriippttiioonn
+       IPv6  is  the  network layer protocol used by Version 6 of
+       the Internet protocol family. Options may be  set  at  the
+       IPv6  level  when  using  higher-level  protocols that are
+       based on IPv6 (such as  TCP  and  UDP).  It  may  also  be
+       accessed  through  a  raw socket or device when developing
+       new protocols or special purpose applications.
+
+       IPv6 options  are  set  with  and  examined  with  at  the
+       IPPROTO_IPV6 level.  (NOTE: IPv4 options are described in
+
+       Several  generic  options are supported at the IPv6 level:
+       Provide  socket  transformation  between  IPv4  and  IPv6,
+       enabling sockets to be passed between IPv4 and IPv6 appli-
+       cations.
+
+       Applications already developed using  IPv4  will  have  no
+       knowledge  of  this  socket  option; this implies that all
+       IPv4/IPv6 socket transformation should only  be  performed
+       by  IPv6  applications.   However,  during  the transition
+       between IPv4 and IPv6, you may still need to develop  pure
+       IPv4  applications.   Use  IPV6_ADDRFORM  to check, and if
+       necessary transform any incoming IPv6  sockets  into  IPv4
+       sockets.  This will ensure that that your application will
+       work effectively in a mixed  IPv4/IPv6  environment.   You
+       cannot  downgrade  an IPv6 socket to an IPv4 socket unless
+       all non-wildcard addresses  that  are  already  associated
+       with the IPv6 socket are IPv4-mapped IPv6 addresses.
+
+       IPV6_ADDRFORM  has  one  argument, a pointer to a value of
+       either PF_INET or PF_INET6.  The example below  shows  how
+       to  check  an open socket, and if necessary, convert it so
+       that subsequent system calls using that socket will return
+       IPv6  address structures (sockaddr_in6).  int addrform_in;
+       int addrform_out = PF_INET6; size_t len = sizeof(int);
+
+       /* Find out if the open socket is PF_INET or PF_INET6   */
+
+       if   (getsockopt(s,   IPPROTO_IP6,  IPV6_ADDRFORM,  &addr-
+       form_in,       &len)  ==  -1)        perror   ("getsockopt
+       IPV6_ADDRFORM");
+
+                                                                1
+
+ipv6(7tcp)                                             ipv6(7tcp)
+
+       /* If the open socket is PF_INET, convert it           */
+
+       if   (addrform_in   ==   PF_INET)       if  (setsockopt(s,
+       IPPROTO_IP6,      IPV6_ADDRFORM,            &addrform_out,
+       sizeof(addrform_out)) == -1)           perror ("setsockopt
+       IPV6_ADDFORM"); Control the hop limit  used  for  outgoing
+       unicast  IPv6  packets.  For  example,  the following code
+       could be used to set the hop limit to 10  for  all  subse-
+       quent unicast packets.  int hoplimit = 10;
+
+       if    (setsockopt(s,    IPPROTO_IPV6,   IPV6_UNICAST_HOPS,
+       &hoplimit,      sizeof(hoplimit)) == -1)      perror("set-
+       sockopt  IPV6_UNICAST_HOPS");  When  the IPV6_UNICAST_HOPS
+       option is set with the specified option value is  used  as
+       the  hop limit for all subsequent unicast packets sent via
+       that socket. If the option is not set, the system  selects
+       a  default  value.  The  integer hop limit value is inter-
+       preted as follows: Return an error  of  EINVAL.   Use  the
+       default kernel value.  Use value.  Return an error of EIN-
+       VAL.  It is also possible to use getsockopt  to  determine
+       the  hop  limit  value that the system will use for subse-
+       quent unicast packets sent via the socket.  int  hoplimit;
+       int len = sizeof(hoplimit);
+
+       if    (getsockopt(s,    IPPROTO_IPV6,   IPV6_UNICAST_HOPS,
+       &hoplimit,       &len)  ==   -1)        perror("getsockopt
+       IPV6_UNICAST_HOPS"); else      printf("Current hop limit :
+       %d\n",hoplimit); The following options are used to control
+       some  of  the parameters used when sending multicast pack-
+       ets: Control whether out-going multicast packets should be
+       echoed back to the local application. The argument to this
+       option is a pointer to an unsigned int.  If  the  argument
+       is  set  to  1,  all outgoing multicast packets are echoed
+       back to the local application.  If the argument is set  to
+       0,  the packets are not echoed back.  Set the interface to
+       use for outgoing multicast packets.  The argument to  this
+       option  is  a pointer to an unsigned int which defines the
+       index of the interface to be used (see Set the  hop  limit
+       for  outgoing  multicast  packets.   The  argument to this
+       option is a pointer to an unsigned int which  defines  the
+       hop  limit.   Join  a multicast group on a specified local
+       interface.  This option specifies that packets sent to the
+       multicast  address specified in a struct ipv6_mreq pointed
+       to by the option argument be delivered to this socket.  If
+       the  interface index is specified as 0, the kernel chooses
+       the local interface.  Leave a multicast group. This option
+       specifies that packets sent to the multicast address spec-
+       ified in a struct ipv6_mreq pointed to by the option argu-
+       ment no longer be delivered to this socket.  The format of
+       the ipv6_mreq structure is shown here: struct ipv6_mreq  {
+            struct  in6_addr ipv6mr_multiaddr;  /* IPv6 multicast
+       address  */       unsigned  int  ipv6mr_interface;      /*
+       interface  index  */ }; See for a description of interface
+       indexes.  To receive multicast datagrams, a  process  must
+
+                                                                2
+
+ipv6(7tcp)                                             ipv6(7tcp)
+
+       join  the  multicast  group and bind the UDP port to which
+       datagrams will be sent.  Some processes also bind the mul-
+       ticast  group  address  to  the socket, in addition to the
+       port, to prevent other datagrams  destined  to  that  same
+       port from being delivered to the socket.
+
+DDiiaaggnnoossttiiccss
+       A  socket  operation  may  fail  with one of the following
+       errors returned: when an  attempt  is  made  to  create  a
+       socket  with a network address for which no network inter-
+       face exists when trying to establish  a  connection  on  a
+       socket  which  already  has  one, or when trying to send a
+       datagram with the destination address  specified  and  the
+       socket  is  already  connected when the system runs out of
+       memory for an internal data structure when the system runs
+       out  of  STREAMS resources when trying to send a datagram,
+       but no destination address is specified,  and  the  socket
+       has  not  been  connected The following errors specific to
+       IPv4 may occur when setting or getting  IPv4  options:  an
+       unknown  socket  option name was given the IP option field
+       was improperly formed; an option field  was  shorter  than
+       the  minimum  value  or longer than the option buffer pro-
+       vided
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoommpplliiaannccee
+       ipv6 is based on:
+
+       RFC 1883, RFC 1884, RFC 1933, RFC 2133
+
+                                                                3
+

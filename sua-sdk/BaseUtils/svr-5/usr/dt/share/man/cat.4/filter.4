@@ -1,0 +1,270 @@
+
+
+filter(4)                                               filter(4)
+
+SSyynnooppssiiss
+       tag [ expression ]
+       . . .
+
+DDeessccrriippttiioonn
+       A  packet filter provides a means of limiting what packets
+       pass through, bringup or reset the idle timer  (if  appro-
+       priate) for a network interface.
+
+       Files named for an individual MDI network interface in the
+       directory hierarchy /etc/pf.d/protocol store packet filter
+       specifications  for that interface.  For example, the file
+       /etc/pf.d/IP/net0 would hold IP packet filter  definitions
+       for the net0 interface.
+
+       The  file /etc/pf.d/IP/ppp stores packet filter specifica-
+       tions for the Internet  protocols  running  over  the  PPP
+       serial-line protocol.
+
+       Packet  filters  for  a  LAN network adapter can be loaded
+       into the kernel using Separate filters may be used for the
+       incoming and outgoing streams of an interface, or the same
+       filter may be applied to both streams.
+
+       A filter file can contain several entries  which  must  be
+       identified  by  tags  which are unique to that file.  Each
+       entry specifies the characteristics of the  filter.   Only
+       packets  for  which  the  expression evaluates as true are
+       considered to meet the selection criteria.  If no  expres-
+       sion  is  present,  all packets are considered to meet the
+       selection criteria, and any existing filter for the inter-
+       face is unloaded.
+
+       Each  field  is  separated from others by white space or a
+       tab.  Each entry may consist of up to 8192 characters, and
+       can extend beyond a single line by ending each line of the
+       entry except the last  with  a  backslash  (\).   Comments
+       begin  with  a # and extend to the end of the line.  Blank
+       lines, or lines beginning with a #, are ignored.
+
+       For PPP interfaces, an IPCP entry in the PPP configuration
+       file  can  include  the  specifications  bringup,  keepup,
+       passin and passout to specify which filters should be con-
+       figured  when the link is established.  The filters may be
+       defined using the command, but they will not  take  effect
+       until the link is taken down and brought up again.
+
+       For SLIP interfaces, the -p option with a tag value as its
+       argument should be specified to the  command).   Each  PPP
+       and  SLIP  interface may specify its own filters or two or
+       more interfaces may share a filter.
+
+   EExxpprreessssiioonnss
+       An expression consists of  one  or  more  primitives,  and
+
+                                                                1
+
+filter(4)                                               filter(4)
+
+       should evaluate to true for packets that should be allowed
+       to traverse the interface (or bring up or keep  up  a  PPP
+       link).  and to false for packets that should be discarded.
+       Complex filter expressions may be built up  by  using  the
+       operators  and,  and or to combine primitives, and not (or
+       !)  to negate the sense of primitives, for  example:  host
+       foo  and  !port  ftp  and !port ftp-data This means ``pass
+       packets going to or coming from the host  named  foo  pro-
+       vided  that  they not going to or coming from the FTP con-
+       trol or data ports''.
+
+       Negation (not) has highest  precedence.  Alternation  (or)
+       and  concatenation (and) have equal precedence and associ-
+       ate  left  to  right.  Note  that  concatenation  requires
+       explicit and tokens, not just simple juxtaposition.  Prim-
+       itives may be grouped using parentheses. For example,  the
+       previous  expression  could  be  written  as: host foo and
+       !(port ftp or port ftp-data)  Note  that  alternation  and
+       concatenation  operators  obey  the usual conversion rules
+       with regard to the  placement  of  the  not  operator  and
+       parentheses: not A and not B is equivalent to not (A or B)
+       not A or not B is equivalent to not  (A  and  B)  Multiple
+       primitives  within the same entry which only differ by the
+       value of the primitive  variable  may  be  combined.   For
+       example,  the  following  expressions  are equivalent: dst
+       port ftp or dst port ftp-data dst  port  ftp  or  ftp-data
+       Both  these expressions mean ``pass packets that are bound
+       for the FTP control or data ports''.
+
+       The primitive expressions are: True if the  IP  source  or
+       destination  field  of  the  packet  is host, which may be
+       either an address or a host name.
+
+       If dst is specified, the expression is true  only  if  the
+       destination  field  is  host.  If  src  is  specified, the
+       expression is true only if the source field is host.  True
+       if  the  IP  source  or  destination  field  of the packet
+       includes a network number of net, which may be  either  an
+       address (without trailing 0 octets) or a network name.
+
+       If  dst  is  specified, the expression is true only if the
+       destination field includes a network number  of  net.   If
+       src  is  specified,  the  expression  is  true only if the
+       source field includes a network number of  net.   True  if
+       the  packet is IP/TCP or IP/UDP and has a source or desti-
+       nation port value of port, which can be a number or a name
+       defined  in  /etc/services.   If  a name is used, both the
+       port number and protocol  are  checked.  If  a  number  or
+       ambiguous  name  is used, only the port number is checked.
+       For example, dst port 513 will be true for both TCP rlogin
+       and  UDP  rwho  traffic,  and port domain will be true for
+       both TCP and UDP DNS traffic.
+
+       If dst is specified, the expression is true  only  if  the
+
+                                                                2
+
+filter(4)                                               filter(4)
+
+       destination  field  has  a destination port value of port.
+       If src is specified, the expression is true  only  if  the
+       source field has a destination port value of port.  Speci-
+       fying a protocol further limits the match.   protocol  can
+       one of icmp, tcp. or udp.  For example , tcp src port port
+       matches only TCP packets from  port  port.   True  if  the
+       packet  is  an IP broadcast packet. It checks for both the
+       all-zeroes and all-ones broadcast conventions and looks up
+       the local subnet mask.  True if the packet is an IP multi-
+       cast packet.  True if the packet is an IP packet of proto-
+       col  type  protocol, which can be a number or one of icmp,
+       udp, or tcp.  Equivalent to ip proto icmp.  Equivalent  to
+       ip  proto  tcp.   Equivalent to ip proto udp.  True if the
+       relation holds. The relational operator, relop, is one  of
+       >, <, >=, <=, ==, or !=.  expr is an arithmetic expression
+       composed of integer constants, the binary operators +,  -,
+       *,  /,  &,  |, <<, or >>, the unary operator -, the length
+       function (len), and special operators that can be used  to
+       access packet data.
+
+       To access data inside the packet, use one of the following
+       syntax forms: protocol[expr] protocol[expr:size]  protocol
+       is  one of ip, tcp, udp, or icmp, and indicates the proto-
+       col header to which the index operation will  be  applied.
+       expr  is  an  offset in bytes relative to the start of the
+       header.  size is optional  and  indicates  the  number  of
+       bytes  in the field of interest; it can be either 1, 2, or
+       4.  If not specified, the default size is 1 byte.
+
+       Tests on TCP segments and UDP datagrams,  such  as  tcp[0]
+       and  udp[0],  are always applied to the TCP or UDP header.
+       They are never applied to an intervening fragment.
+
+       The following table shows useful tests for IP headers.
+       --------------------------------------------------------------
+       Test                  Description
+       --------------------------------------------------------------
+       ip[0] & 0xf0 == 1024  Examine the protocol version, and match
+                             if this is 1024 (4<<8) for IPv4
+       ip[0] & 0xf > 5       Examine  the length of the header (num-
+                             ber of 32-bit words), and match all  IP
+                             datagrams that have options defined
+       ip[0]  &  0xf  > 5 andExamine the IP option header, and match
+       ip[20] == code        its  value against code. Example values
+                             are 0x7  for  record  route,  0x44  for
+                             timestamp,  0x83 for loose source rout-
+                             ing, and 0x89 for strict source routing
+       ip[1] & 0x10 != 0     Examine  the type-of-service field, and
+                             match if its ``Minimize delay'' flag is
+                             set
+       ip[2:2] > len         Examine  the  total length of the data-
+                             gram (in bytes), and match if  this  is
+                             greater than len
+
+                                                                3
+
+filter(4)                                               filter(4)
+
+       ip[6:2] & 0x1fff == 0 Examine  the  fragment  offset  of  the
+                             datagram (in  bytes),  and  match  only
+                             unfragmented   datagrams  and  fragment
+                             zero of fragmented IP datagrams
+       ip[6:2] & 0x2000 != 0 Match if the ``More fragments'' flag is
+                             set.   Unfragmented datagrams and final
+                             fragments do not set this
+       ip[6:2] & 0x3fff == 0 Match unfragmented datagrams only
+       ip[6:2] & 0x4000 != 0 Match if the ``Don't fragment'' flag is
+                             set
+       ip[9:1] == protocol   Examine  the  protocol field, and match
+                             its value  against  protocol.   Example
+                             values  are  1  for ICMP, 2 for IGMP, 6
+                             for TCP, and 17 for UDP
+       A generic test for ICMP message types is icmp[0] == type [
+       and  icmp[1]  ==  code  ].  The following table shows some
+       useful types and codes.
+       -------------------------------------------------------------------
+       TypeCodeDescription
+       -------------------------------------------------------------------
+       0   0   Echo reply (used by ping)
+       3   0-15Destination unreachable
+           0   Network unreachable
+           1   Host unreachable
+           3   Port unreachable
+           4   Fragmentation prevented by set ``Don't fragment'' bit
+           5   Source route failed
+           9   Destination network prohibited
+           10  Destination host prohibited
+           13  Communication prohibited by filtering
+       4   0   Source quench
+       5   0-3 Redirect
+           0   Redirect for network
+           1   Redirect for host
+       8   0   Echo request (used by ping)
+       9   0   Router advertisement
+       10  0   Router solicitation
+       11  0   Time-to-live fell to 0 during transit (used by traceroute)
+           1   Time-to-live fell to 0 during reassembly
+       12  0-1 Parameter problem
+       13  0   Timestamp request
+       14  0   Timestamp reply
+       17  0   Address mask request
+       18  0   Address mask reply
+       The following tests access the source and destination port
+       numbers defined in TCP and UDP headers.
+       -----------------------------------------------------------
+       Protocol           Source port            Destination port
+       -----------------------------------------------------------
+       TCP                tcp[0:2]               tcp[2:2]
+       UDP                udp[0:2]               udp[2:2]
+       A  generic test for flag bits being set in a TCP header is
+       tcp[13:1] & flag != 0 where flag can be any of the follow-
+       ing values ORed together:
+
+                                                                4
+
+filter(4)                                               filter(4)
+
+       -----------------------------------------------------------
+       Flag          Bit          Meaning if set
+       -----------------------------------------------------------
+       0x01          FIN          Finished sending data
+       0x02          SYN          Synchronize sequence numbers
+       0x04          RST          Reset a connection
+       0x08          PSH          Push the data to an application
+       0x10          ACK          Acknowledge a sequence number
+       0x20          URG          There is urgent data
+       A function that returns the length of the packet in bytes.
+       This function should be used in a relational expression to
+       return  a  true  or false value.  True if the packet has a
+       length less than or equal to length.  This  is  equivalent
+       to len <= length.  True if the packet has a length greater
+       than or equal to length.  This is  equivalent  to  len  >=
+       length.   Evaluate the truth of applying operator value to
+       the byte at offset index inside the packet. Possible oper-
+       ators  are & (bitwise and), | (bitwise or), < (less than),
+       > (greater than), and = (equals).  index  and  value  must
+       both be integer values.
+
+FFiilleess
+       filter  specification file for IP over PPP filter specifi-
+       cation file for IP over interface
+
+RReeffeerreenncceess
+       RFC 768, RFC 791, RFC 792, RFC 793, RFC  1060,  RFC  1122,
+       RFC 1579
+
+                                                                5
+

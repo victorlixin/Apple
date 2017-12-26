@@ -1,0 +1,159 @@
+
+
+thr_setscheduler(3thread)               thr_setscheduler(3thread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <thread.h>
+
+       int  thr_setscheduler(thread_t  tid,  const  sched_param_t
+       *param);
+
+DDeessccrriippttiioonn
+       thr_setscheduler sets the  scheduling  policy  and  corre-
+       sponding policy-specific parameters of tid to those speci-
+       fied by the sched_param_t structure pointed to by param.
+
+   EExxaammppllee
+       sched_param_t s; s.policy = SCHED_TS; (struct ts_param  *)
+       (s.policy_params)->prio = 63;
+
+   PPaarraammeetteerrss
+       target   thread  ID  pointer  to  a  structure  containing
+       scheduling policy parameters to be used
+
+   ttiidd ppaarraammeetteerr
+       tid is the  ID  of  the  thread  whose  scheduling  policy
+       thr_setscheduler will set.
+
+   ppaarraamm ppaarraammeetteerr
+       param  is  a pointer to a sched_param_t structure that has
+       been initialized to contain the scheduling policy and cor-
+       responding  parameters to which tid will be set.  The pri-
+       ority of the thread is the  only  corresponding  parameter
+       that can be set.
+
+       sched_param_t  includes:       id_t policy;      long pol-
+       icy_params[POLICY_PARAM_SZ];
+
+       The policy member of sched_param_t can be set  to  any  of
+       the following scheduling policies: Time-sharing scheduling
+       policy.   Both  bound  and  multiplexed  threads  can  use
+       SCHED_TS.   Multiplexed  threads  must use the SCHED_TS or
+       the SCHED_OTHER policy.
+
+       Bound threads using the SCHED_TS scheduling policy will be
+       bound  to  an  LWP  in  the kernel time-sharing scheduling
+       class.  However,  the  thread  scheduling  policy  has  no
+       effect  on  the kernel scheduling class of the LWPs in the
+       pool of LWPs used to run multiplexed  threads.   A  fixed-
+       priority  scheduling  policy.   Only bound threads can use
+       SCHED_FIFO.  Threads scheduled under this policy will  run
+       on  an  LWP  in the kernel fixed-priority scheduling class
+       with an infinite time quantum.  A fixed-priority  schedul-
+       ing policy.  Only bound threads can use SCHED_RR.  Threads
+       scheduled under this policy will run on an LWP in the ker-
+       nel  fixed-priority scheduling class with the time quantum
+
+                                                                1
+
+thr_setscheduler(3thread)               thr_setscheduler(3thread)
+
+       returned by An alias for SCHED_TS.
+
+       policy_params contains the priority to  which  the  thread
+       should  be  assigned.   policy_params  can  be  cast  to a
+       pointer to the parameter structure  corresponding  to  the
+       scheduling  policy.  Each of the parameter structures con-
+       tains a single member, the integer  prio.   The  parameter
+       structures are: for time-sharing scheduling parameters for
+       FIFO  scheduling  parameters  for  round-robin  scheduling
+       parameters
+
+       For  bound threads, the priority set with thr_setscheduler
+       is passed to the system scheduler; it is not maintained by
+       the  Threads Library.  For multiplexed threads, the prior-
+       ity set with  thr_setscheduler  is  used  by  the  Threads
+       Library  in scheduling multiplexed threads to run on LWPs.
+       The  priorities  for  multiplexed  threads  remain   fixed
+       (unless   explicitly   changed  with  thr_setscheduler  or
+       thr_setprio), and the Threads Library assigns higher  pri-
+       ority  threads  to  LWPs  before  lower  priority threads.
+       Therefore, although  multiplexed  threads  run  under  the
+       SCHED_TS  policy,  the  scheduling  algorithm more closely
+       resembles that of the kernel's  fixed-priority  scheduling
+       class  than  it  does the kernel's time-sharing scheduling
+       class.
+
+   PPrriioorriittyy rraannggee ffoorr mmuullttiipplleexxeedd tthhrreeaaddss
+       In  this  implementation,  the  priority  range  for   the
+       SCHED_TS  policy  for  multiplexed threads is from zero to
+       MAXINT-1.  However, for better performance,  we  recommend
+       using  a  maximum  priority  of 126 or lower.  The default
+       priority for multiplexed threads is 63.
+
+       In all scheduling policies supported by  this  implementa-
+       tion,  numerically  higher values represent higher priori-
+       ties.
+
+   PPrriioorriittyy rraannggee ffoorr bboouunndd tthhrreeaaddss
+       Bound threads running under any scheduling policy are sub-
+       ject  to the priority ranges set by the system.  Use or to
+       find what scheduling priorities are available on your sys-
+       tem.
+
+   SSeeccuurriittyy rreessttrriiccttiioonnss
+       No  privileges  or special permissions are required to use
+       thr_setscheduler to set the policy or priority of a multi-
+       plexed  thread.   Appropriate privilege is required to set
+       the policy of any  thread  or  process  to  SCHED_FIFO  or
+       SCHED_RR.   The following rules apply to changing the pri-
+       ority of bound threads: You can always lower the  priority
+       of any bound thread.  You can always raise the priority of
+       bound threads in the SCHED_FIFO and SCHED_RR classes.  You
+       must  have  privilege  to  raise  the  priority of a bound
+       thread in the SCHED_TS  class.   The  required  privileges
+
+                                                                2
+
+thr_setscheduler(3thread)               thr_setscheduler(3thread)
+
+       might vary across installations.
+
+   NNootteess
+       thr_setscheduler  for  bound  threads  is implemented as a
+       wrapper around Therefore, scheduling policy and  parameter
+       changes are subject to the restrictions and privileges set
+       by the operating system scheduler.  However, bound threads
+       should always use thr_setscheduler instead of calling pri-
+       ocntl directly.
+
+       Note that each multiplexed thread  run  by  a  lightweight
+       process  (LWP) will affect the priority of that LWP in the
+       system scheduler.  Over time, there  will  be  approximate
+       balance across the multiplexed threads in a process.
+
+UUssaaggee
+       thr_setscheduler  is  used  by  multithreaded applications
+       that need to control their scheduling.
+
+RReettuurrnn vvaalluueess
+       thr_setscheduler returns zero for  success  and  an  error
+       number for failure.
+
+   EErrrroorrss
+       If   any   of   the   following  conditions  is  detected,
+       thr_setscheduler returns the  corresponding  value:  param
+       points  to  a  structure  containing  parameters  that are
+       invalid for the requested policy.  tid is multiplexed (not
+       bound  to  an LWP), and the scheduling policy being set is
+       SCHED_FIFO  or  SCHED_RR.   Multiplexed  threads  must  be
+       SCHED_TS  or SCHED_OTHER.  The caller does not have appro-
+       priate privilege for the  operation.   No  thread  can  be
+       found in the current process with ID tid.
+
+RReeffeerreenncceess
+
+                                                                3
+

@@ -1,0 +1,70 @@
+
+
+getcontext(2)                                       getcontext(2)
+
+SSyynnooppssiiss
+       #include <ucontext.h>
+
+       int getcontext(ucontext_t *ucp);
+
+       int setcontext(const ucontext_t *ucp);
+
+DDeessccrriippttiioonn
+       These  functions,  along  with those defined in are useful
+       for implementing user level context switching between mul-
+       tiple threads of control within a process.
+
+       getcontext  initializes the structure pointed to by ucp to
+       the current user context of the calling thread".  The user
+       context  is  defined  by  and includes the contents of the
+       calling thread"'s machine registers, signal mask and  exe-
+       cution stack.
+
+       setcontext  restores  the  user context pointed to by ucp.
+       The call to setcontext does not return; program  execution
+       resumes  at  the  point specified by the context structure
+       passed to setcontext.  The context structure  should  have
+       been  one  created either by a prior call to getcontext or
+       makecontext or passed as the third argument  to  a  signal
+       handler [see If the context structure was one created with
+       getcontext, program execution continues as if  the  corre-
+       sponding  call  of  getcontext  had just returned.  If the
+       context structure was one created with  makecontext,  pro-
+       gram  execution  continues  with the function specified to
+       makecontext.
+
+   RReettuurrnn vvaalluueess
+       On success, setcontext  does  not  return  and  getcontext
+       returns  0.   On failure, setcontext and getcontext return
+       -1 and set errno to identify the error.
+
+RReeffeerreenncceess
+NNoottiicceess
+       When a signal handler is executed, the current  user  con-
+       text  is saved and a new context is created by the kernel.
+       If the thread" leaves the signal handler via longjmp  [see
+       the  original  context  will  not  be restored, and future
+       calls to getcontext will not be reliable.  Signal handlers
+       should use siglongjmp [see or setcontext instead.
+
+       An  equivalent  getcontext  routine is provided in libc to
+       handle floating point contexts for Pentium III processors;
+       the  behavior of setcontext has also been enhanced to han-
+       dle floating point context changes during signal handling.
+       See for more information.
+
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       setcontext  affects  the calling thread only; siblings are
+       not affected.
+
+                                                                1
+
+getcontext(2)                                       getcontext(2)
+
+   CCoonnssiiddeerraattiioonnss ffoorr lliigghhttwweeiigghhtt pprroocceesssseess
+       The Threads Library has a wrapper function for  setcontext
+       that  will set the thread's signal mask as well.  The sys-
+       tem call itself only modifies the underlying LWP.
+
+                                                                2
+

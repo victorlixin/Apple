@@ -1,0 +1,372 @@
+
+
+ftpaccess(4tcp)                                   ftpaccess(4tcp)
+
+DDeessccrriippttiioonn
+       The ftpaccess file is used to configure the operation of
+
+       The  following  access  capabilities  are  defined:  If an
+       anonymous user is a member of any of class, the FTP server
+       will perform a setegid to groupname. This allows access to
+       group and owner read-only files and directories to a  par-
+       ticular  class  of  anonymous  users. groupname is a valid
+       group from /etc/group.  Define the name of a class (class-
+       name)  of  users,  with source addresses of the form addr-
+       glob.  addrglob may be a globbed domain name or a  globbed
+       numeric  address.   Multiple  members  of classname may be
+       defined. There may  be  multiple  class  commands  listing
+       additional  members  of  the class. If multiple class com-
+       mands can apply to the  current  session,  the  first  one
+       listed  in  the  access  file is used. Failing to define a
+       valid class for a host will cause  access  to  be  denied.
+       typelist  is a comma-separated list of any of the keywords
+       anonymous,  guest  and  real.  If  the  real  keyword   is
+       included,  the  class  can match users using FTP to access
+       real accounts, and if the anonymous  keyword  is  included
+       the  class  can match users using anonymous FTP. The guest
+       keyword matches guest access accounts (see the  guestgroup
+       keyword  for  more  information).   Always  deny access to
+       host(s) matching addrglob and display message_file.  addr-
+       glob  may  be  a  globbed domain name or a globbed numeric
+       address.  If addrglob is !nameserved, access is denied  to
+       sites  whose  IP  address  cannot  be resolved to a domain
+       name.  The message_file can contain  magic  cookies.   See
+       for  more  information.  If a real user is a member of any
+       of groupname, the session is set up exactly as with anony-
+       mous  FTP.  In other words, a chroot is done, and the user
+       is no longer permitted to issue the  USER  and  PASS  com-
+       mands.  groupname is a valid group from /etc/group.
+
+       The  home  directory  field  of  a  guest  user's entry in
+       /etc/passwd is divided into two parts  separated  by  /./.
+       The first part is the pathname of the directory which will
+       become the guest group's root directory via a chroot call.
+       This  directory  must be set up in exactly the same way as
+       the root directory for anonymous FTP.  The second part  is
+       the  pathname  of the guest user's home directory relative
+       to the guest group's root directory.
+
+       For  example,  in  /etc/passwd,   the   real   entry   is:
+       guest1:x:100:92:Guest
+       Account:/home/guests/./guest1:/bin/true When  guest1  suc-
+       cessfully   logs   in,  the  FTP  server  will  chroot  to
+       /home/guests and then chdir to /guest1.   The  guest  user
+       will  only be able to access the directory structure under
+       /guest1 (which will look and act as / to guest1), just  as
+       an  anonymous FTP user would.  Note that for a guest login
+       to succeed, the user's shell (/bin/true in  this  example)
+       must  be listed in /etc/shells.  Limit class to n users at
+
+                                                                1
+
+ftpaccess(4tcp)                                   ftpaccess(4tcp)
+
+       the times specified by Times, displaying  message_file  if
+       user  is  denied access. Limit check is performed at login
+       time only. If multiple limit commands  can  apply  to  the
+       current session, the first applicable one is used. Failing
+       to define a valid limit, or a limit of -1,  is  equivalent
+       to   unlimited.   The   Times   field   has   the  format:
+       day[day...][times][|day[day...][times]]...  day is one  of
+       Su, Mo, Tu, We, Th, Fr, Sa, Wk for any weekday (Mo through
+       Fr), or Any for any day.
+
+       times defines a range of allowed times  in  24-hour  clock
+       notation.  For  example, 0800-1230 represents the times of
+       day from 8:00 A.M. to 12:30 P.M.  If the time is not spec-
+       ified, any time of day is matched.  Note that a time range
+       that  spans  0000  hours  is  permitted.    For   example,
+       0800-0600  means any time other than between 6:00 A.M. and
+       8:00 A.M.
+
+       Multiple day and times may be specified if separated by |.
+       For  example,  the  entry  ``Wk1700-0800|Sa|Su'' specifies
+       5:00 P.M. to 8:00 A.M., Monday  through  Friday,  and  any
+       time on Saturday and Sunday.
+
+       The  message_file can contain magic cookies.  See for more
+       information.  Terminate the FTP  connection  after  number
+       login  failures.   The connection is also terminated after
+       number consecutive unsuccessful attempts  to  become  a  a
+       member  of  an enhanced access group (using SITE GROUP and
+       SITE  GPASS).   The  default  value  is  5.   Always  deny
+       retrieve-ability of these files. If the files are an abso-
+       lute path specification (that is, begins with a /  charac-
+       ter)  then only those files are marked un-gettable, other-
+       wise all files matching the filename are refused transfer.
+       For  example: noretrieve /etc/passwd core specifies no one
+       will be able to get the file /etc/passwd whereas they will
+       be allowed to transfer a file passwd if it is not in /etc.
+       On the other hand no one will be able to get  files  named
+       core wherever they are.
+
+       No  globbing  is  done.  If set to yes, a user can use the
+       SITE GROUP and SITE GPASS commands to specify an  enhanced
+       access  group  and  associated password after they log in.
+       If the group name and password are valid, the user becomes
+       (via setegid) a member of the group specified in the group
+       access file  /etc/ftpgroups.   The  format  of  the  group
+       access file is described in
+
+       NOTE: For this option to work for anonymous FTP users, the
+       group access file is loaded into memory. This  means  that
+       the  necessary  passwords and access privileges granted to
+       users via SITE GROUP will be static for the duration of an
+       FTP session.  The following informational capabilities are
+       defined: Works similarly to the  message  command,  except
+       that  the  banner  is displayed before the user enters the
+
+                                                                2
+
+ftpaccess(4tcp)                                   ftpaccess(4tcp)
+
+       username/password. The path is relative to the real system
+       root, not the base of the anonymous FTP directory.
+
+       There  can be magic cookies in the file specified by path.
+       See for more information.
+
+       WARNING: This command can completely prevent non-compliant
+       FTP  clients  from  making use of the FTP server.  Not all
+       clients can handle multi-line responses (which is how  the
+       banner  is  displayed).   Defines the email address of the
+       FTP archive maintainer. This string will be printed  every
+       time the ``%E'' magic cookie is used.  See for more infor-
+       mation.  When doing long  replies  (multiline  responses),
+       for  anonymous users use command with argument to list the
+       contents of  a  directory  on  the  remote  machine.   The
+       default  command  is  /bin/ls with argument -la.  When not
+       doing long replies or for non anonymous users use  command
+       with  argument  to list the contents of a directory on the
+       remote machine. The default command is /bin/ls with  argu-
+       ment  -la.   Define  a  file with path such that ftpd will
+       display the contents of the file to the user at login time
+       or  upon  using  the change working directory command. The
+       when parameter may be LOGIN or CWD=dirglob.   If  when  is
+       CWD=dirglob,  dirglob specifies the pattern of a directory
+       which will trigger notification.  A dirglob of  *  matches
+       all directories.
+
+       The  optional class specification allows the message to be
+       displayed only to members of a particular class. More than
+       one class may be specified.
+
+       There  can be magic cookies in the file specified by path.
+       See for more information.
+
+       The message will only be displayed once to avoid  annoying
+       the  user. Remember that when messages are triggered by an
+       anonymous FTP user, path must be relative to the  base  of
+       the  anonymous  FTP directory tree.  For guest users, path
+       must be relative to their root directory.  Define  a  file
+       with pathglob such that ftpd will notify the user at login
+       time or upon using the change  working  directory  command
+       that  the  file  exists  and was modified on such-and-such
+       date.  The when parameter may be LOGIN or CWD=dirglob.  If
+       when  is  CWD=dirglob,  dirglob specifies the pattern of a
+       directory which will trigger the notification.  A  dirglob
+       of  *  matches  all directories.  The message will only be
+       displayed once, to avoid bothering  users.  Remember  that
+       when  readme  messages  are  triggered by an anonymous FTP
+       user, the pathglob must be relative to  the  base  of  the
+       anonymous FTP directory tree.
+
+       The  optional class specification allows the message to be
+       displayed only to members of a particular class. More than
+       one   class  may  be  specified.   The  following  logging
+
+                                                                3
+
+ftpaccess(4tcp)                                   ftpaccess(4tcp)
+
+       capabilities are defined: Enables  logging  of  individual
+       commands  by  users  to syslog.  typelist is a comma-sepa-
+       rated list of any of the  keywords  anonymous,  guest  and
+       real.   If  the  real keyword is included, logging will be
+       done for users using FTP to access real accounts,  and  if
+       the  anonymous  keyword  is included logging will done for
+       users using anonymous FTP. The guest keyword matches guest
+       access  accounts  (see  guestgroup  for more information).
+       Enables logging of  file  transfers  for  either  real  or
+       anonymous  FTP  users to xferlog.  Logging of transfers to
+       the server  (incoming)  can  be  enabled  separately  from
+       transfers from the server (outbound). typelist is a comma-
+       separated list of any of the keywords anonymous, guest and
+       real.   If  the  real keyword is included, logging will be
+       done for users using FTP to access real accounts,  and  if
+       the  anonymous  keyword  is included logging will done for
+       users using anonymous FTP. The guest keyword matches guest
+       access  accounts  (see  guestgroup  for more information).
+       directions is a comma-separated list of  any  of  the  two
+       keywords inbound and outbound, and will respectively cause
+       transfers to be logged for files sent to  the  server  and
+       sent  from  the server.  The following miscellaneous capa-
+       bilities are defined: Defines  an  alias,  string,  for  a
+       directory,  dir.   This  can be used to add the concept of
+       logical   directories.    For   example:   alias      rfc:
+       /pub/doc/rfc  would  allow the user to access /pub/doc/rfc
+       from any directory with the command cd rfc:. Aliases  only
+       apply  to the cd command.  Defines an entry in the cdpath.
+       This defines a search path  that  is  used  when  changing
+       directories.
+
+       For  example:  cdpath /pub/packages cdpath /.aliases would
+       allow the user to cd into  any  directory  directly  under
+       /pub/packages or /.aliases directories. The search path is
+       defined by the order the lines  appear  in  the  ftpaccess
+       file.
+
+       If the user were to give the command: cd foo The directory
+       will be searched for in  the  following  order:  an  alias
+       called  foo  /pub/packages/foo /.aliases/foo The cdpath is
+       only available with the cd command.  If you have  a  large
+       number  of  aliases  you  might  want to set up an aliases
+       directory with links to all of the areas you wish to  make
+       available to users.  If set to yes, enables compress capa-
+       bilities for any class  matching  any  of  classglob.  The
+       actual  conversions  are  defined  in  the  external  file
+       /etc/ftpconversions.   If  the  file  specified  by   path
+       exists, the server will check the file regularly to see if
+       the server is going to be shut  down.  If  a  shutdown  is
+       planned,  the user is notified, new connections are denied
+       after a specified time before shutdown and current connec-
+       tions are dropped at a specified time before shutdown. The
+       format of the file specified by path is:  year  month  day
+       hour  minute  deny_offset  disc_offset text ...  where any
+
+                                                                4
+
+ftpaccess(4tcp)                                   ftpaccess(4tcp)
+
+       year > 1970 integer in the range 0-11 integer in the range
+       1-31  integer  in the range 0-23 integer in the range 0-59
+       offset in hhmm format (hour and minute) before  the  shut-
+       down  time  that new connections will be denied offsets in
+       hhmm format (hour and minute)  before  the  shutdown  time
+       that  existing  connections will be disconnected displayed
+       to users logged into the FTP server to warn of  disconnec-
+       tion.   text  can  contain  magic  cookies.   See for more
+       information.  The following additional magic  cookies  are
+       available:  time  at  which  current  connections  will be
+       dropped time at which new connections will be denied  time
+       at which system is going to shut down
+
+       All times are in the form: ddd MMM DD hh:mm:ss YYYY
+
+       There  can  be only one shutdown command in the configura-
+       tion file.
+
+       The external program can be used to automate  the  process
+       of generating this file.
+
+       To configure shutdowns for anonymous users, the file spec-
+       ified by path must exist  relative  to  the  base  of  the
+       anonymous  FTP  directory tree. For guest users, path must
+       exist relative to their root directory.  If  set  to  yes,
+       enables  tar  capabilities  for  any class matching any of
+       classglob. The  actual  conversions  are  defined  in  the
+       external  file  /etc/ftpconversions.   Enables the virtual
+       FTP server capabilities.  address is the IP address of the
+       virtual  server.   The  second argument specifies that the
+       path is one of: The path to the root of the filesystem for
+       this  virtual  server.  This is used as the home directory
+       of anonymous users accessing the  virtual  server.   NOTE:
+       root  must be specified for the virtual server to be acti-
+       vated.  The message presented to the user when  connecting
+       to  a  virtual  server.   The  file  where  transfers  are
+       recorded for a virtual server.  If the  path  of  the  log
+       file    is   not   specified,   the   default   log   file
+       (/var/adm/xferlog) will be used.  All other message  files
+       and permissions as well as any other settings in this file
+       apply to all virtual servers.   The  following  permission
+       capabilities  are defined: Allows or disallows the ability
+       to perform the specified function  (changing  file  modes,
+       deleting files, overwriting files, renaming files, or set-
+       ting their umask).  By default, all users are  allowed  to
+       perform these functions.
+
+       typelist  is a comma-separated list of any of the keywords
+       anonymous, guest and real.  Defines the level and enforce-
+       ment of password checking done by the server for anonymous
+       FTP: No password checking is performed (default behavior).
+       Password  must  contain an @.  Password must be an RFC 822
+       compliant address.  Warn the user, and then log them  out.
+       Warn   the  user,  but  allow  them  to  log  in  (default
+
+                                                                5
+
+ftpaccess(4tcp)                                   ftpaccess(4tcp)
+
+       behavior).  For users in typelist, path-filter defines the
+       extended  regular expressions (see that control what file-
+       name can or cannot be specified.  typelist is a comma-sep-
+       arated  list  of any of the keywords anonymous, guest, and
+       real.  There may be multiple  disallowed  regular  expres-
+       sions.  If a filename is invalid because it does not match
+       the allowed regular expressions or because it matches  one
+       of  the  disallowed  regular expressions, the message file
+       (message_file) will be displayed to the user. For example:
+       path-filter  anonymous  /var/ftp/pathmsg ^[[:alnum:]-._]*$
+       ^[.-] specifies that all upload  filenames  for  anonymous
+       users  must  be  made  of only alphanumeric characters and
+       ._-, and may not begin with a . or a -.  If  the  filename
+       is  invalid,  /var/ftp/pathmsg  will  be  displayed to the
+       user.
+
+       For anonymous users, message_file must be specified  rela-
+       tive to the base of the anonymous FTP directory tree.  For
+       guest users, message_file must be  specified  relative  to
+       their root directory.
+
+       The  message_file can contain magic cookies.  See for more
+       information.  Define a directory with dirpattern that per-
+       mits  or denies uploads for users with a home directory of
+       home-dir.  A dirpattern of ``*'' matches  all  directories
+       to  any  level.   A  dirpattern  of ``/pub/*'' matches all
+       directories below /pub to any  level.  Note  that  for  an
+       anonymous  FTP  user, dirpattern is assumed to be relative
+       to home-dir.
+
+       If uploads are permitted, all uploaded files will be owned
+       by  owner  and  group  and will have their permissions set
+       according to mode.
+
+       Directories are matched on a best-match basis.  For  exam-
+       ple: upload  /home/ftp  *               no   nodirs upload
+       /home/ftp  /incoming       yes  ftp  daemon   0666  upload
+       /home/ftp   /incoming/gifs  yes  jlc  guest   0600  nodirs
+       This would only allow uploads into /incoming  and  /incom-
+       ing/gifs.  Files  that were uploaded to /incoming would be
+       owned by ftp:daemon and would have  permissions  of  0666.
+       File   uploaded   to  /incoming/gifs  would  be  owned  by
+       jlc:guest and have permissions of 0600.
+
+       The dirs and nodirs keywords can be specified to allow  or
+       disallow  the  creation or removal of subdirectories.  The
+       dirs keyword is assumed by default  if  neither  dirs  nor
+       nodirs  is  specified.  In the above example, creation and
+       removal of directories would only be allowed in /incoming.
+
+   MMaaggiicc ccooookkiieess
+       The  FTP  server replaces the following magic cookies with
+       the appropriate text  string:  current  working  directory
+       maintainer's  email  address  as defined in ftpaccess free
+
+                                                                6
+
+ftpaccess(4tcp)                                   ftpaccess(4tcp)
+
+       space in filesystem of CWD (in kilobytes) local host  name
+       maximum allowed number of users in this class current num-
+       ber of users in this class remote  host  name  local  time
+       (form Thu Nov 15 17:12:42 1990) username as determined via
+       RFC 931 authentication username given at login time
+
+FFiilleess
+       /etc/ftpaccess         /etc/ftpgroups          /etc/shells
+       /var/adm/ftp.pids-classname
+
+RReeffeerreenncceess
+
+                                                                7
+

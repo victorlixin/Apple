@@ -1,0 +1,91 @@
+#!/bin/ksh
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+#
+# srcId = $Id: userdel#1 2004/09/23 05:45:17 FAREAST\\ranas $
+# 
+
+
+NTROOT=//C/WINNT/system32
+DEFAULT_PROFILE=kljskldfjskldj
+POSIXHOMEROOT=//C/tmp
+DEFAULTHOME=$POSIXHOMEROOT/default
+DOSHOMEROOT=`posixpath2nt $POSIXHOMEROOT`
+CMD_NET=$NTROOT/net.exe
+CMD_CACLS=$NTROOT/cacls.exe
+D=FALSE
+TMPF=.ud.$$
+
+DEBUG=
+
+#
+# Huston, we have a
+problem()
+{
+	echo $*
+	rm -f ${TMPF}
+	usage
+	exit 1
+}
+#
+# Here's how you use me
+usage()
+{
+	echo "usage: userdel [-d] username"
+	echo ""
+}
+
+#
+# Collect the arguments, for this, we only have -d to remove
+# the users directory
+while getopts "d" opt; do
+	case "$opt" in
+		d) D="TRUE" ; shift ;;
+		*) echo "$opt"; problem ;;
+	esac
+done
+
+USER=${1}
+[ -z "$USER" ] && problem "Must have a user name"
+
+#
+# Make sure that the user exists
+${CMD_NET} USER ${USER} > ${TMPF} 2>&1
+[ $? != 0 ] && { problem "User \"${USER}\" does not exist"; }
+#
+# We will be removing the directories, so let's find
+# out what the directory is.
+if [ ${D} = "TRUE" ] # Remove directory and contents
+then
+	flip -u ${TMPF}
+	set -- `grep "Home directory" ${TMPF}`
+	DIR="`ntpath2posix ${3}`"
+	rm -f ${TMPF}
+	if [ -d ${DIR} ] 
+	then
+		# REALLY MAKE SURE YOU WANT TO DO THIS
+		echo "Remove all of ${DIR}? [y/n] (n) \c"
+		read ans
+		[ "${ans}" = "y" -o "${ans}" = "Y" ] && ${DEBUG} rm -rf ${DIR}
+	else
+		# oops, no directory, should we keep going?
+		echo "Directory ${DIR} does not exist"
+		echo "Continue to remove account? [y/n] (n) \c"
+		read ans
+		[ "${ans}" = "y" -o "${ans}" = "Y" ] || exit 0
+	fi
+fi
+${DEBUG} ${CMD_NET} USER ${USER} /DEL >/dev/null 2>.del.$$
+if [ $? != 0 ] 
+then
+	r=`cat .del.$$`
+	rm .del.$$
+	#
+	# double check, sometimes the win32 exec doesn't tell us
+	# the truth
+	#
+	${DEBUG} ${CMD_NET} ${USER} |grep "${USER}" > /dev/null 2>&1
+	[ $? = 0 ] && problem "Could not remove user ${USER}\n$r"; 
+fi
+echo "${USER} account removed"
+rm -f ${TMPF}

@@ -1,0 +1,716 @@
+
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+SSyynnooppssiiss
+       in.xntpd  [  -abdm ] [ -c conffile ] [ -e authdelay ] [ -f
+       driftfile ] [ -k keyfile ] [ -l logfile ] [ -p pidfile ] [
+       -r  broaddelay  ]  [ -s stats_dir ] [ -t trustedkey ] [ -v
+       variable ] [ -V Variable ]
+
+DDeessccrriippttiioonn
+       xntpd is a daemon which  sets  and  maintains  a  system's
+       time-of-day  in  agreement  with  Internet  standard  time
+       servers.  xntpd is a complete implementation of  the  Net-
+       work  Time  Protocol (NTP) version 3.4 standard as defined
+       by RFC 1305 and also retains compatibility with version  1
+       and 2 servers as defined by RFC 1059 and RFC 1119, respec-
+       tively.  xntpd does all computations in fixed point arith-
+       metic  and  is  entirely  free of floating-point code. The
+       computations done in the  protocol  and  clock  adjustment
+       code  are  carried out with high precision and with atten-
+       tion to the details which might introduce systematic  bias
+       into  the  integrations,  to  try  to maintain an accuracy
+       suitable for synchronizing  with  even  the  most  precise
+       external time source.
+
+       Ordinarily,  xntpd  reads its configuration from a file at
+       startup  time.   The   default   configuration   file   is
+       /etc/inet/ntp.conf, though this may be overridden from the
+       command line.  It is also possible to specify  a  working,
+       though  limited,  xntpd configuration entirely on the com-
+       mand line, obviating the need for  a  configuration  file.
+       This  may  be particularly appropriate when xntpd is to be
+       configured as a broadcast or multicast  client,  with  all
+       peers  being determined by listening to broadcasts at run-
+       time.  Various internal xntpd variables can be  displayed,
+       and  configuration  options  altered,  while the daemon is
+       running through use of the and programs.
+
+       The daemon can operate in any of several modes,  including
+       symmetric active/passive, client/server and broadcast/mul-
+       ticast. A  broadcast/multicast  client  can  automatically
+       discover  remote servers, compute one-way delay correction
+       factors and configure itself. This makes  it  possible  to
+       deploy  a  fleet of workstations without specifying a con-
+       figuration file or configuration details specific  to  its
+       environment.
+
+       The  following  command  line  arguments are understood by
+       xntpd (see the configuration file description for  a  more
+       complete  functional description): run in ``authenticate''
+       mode listen for broadcast NTP and sync to this  if  avail-
+       able  specify  an  alternate  configuration  file  specify
+       debugging options. This flag may  occur  more  than  once,
+       with  each  occurrence  indicating greater display detail.
+       specify the time (in seconds) it takes to compute the  NTP
+       encryption  field on this computer specify the location of
+       the drift file specify the  location  of  the  file  which
+
+                                                                1
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+       contains  the  NTP  authentication keys specify a log file
+       instead of logging to /usr/adm/syslog listen for multicast
+       messages  and synchronize to them, if possible specify the
+       location of the file in which to record the daemon's  pro-
+       cess  id  if  the calibration procedure fails, specify the
+       default round trip delay (in seconds) to be used when syn-
+       chronizing to broadcasts or multicasts specify a directory
+       to be used for creating statistics files add a key  number
+       to the trusted key list add a system variable add a system
+       variable listed by default
+
+   CCoonnffiigguurraattiioonn ffiillee ooppttiioonnss
+       xntpd's configuration file is  relatively  free  format  -
+       similar  to  other  UNIX  configuration  files.  Comments,
+       which may be freely inserted, begin with a # character and
+       extend  to  the end of the line.  Blank lines are ignored.
+       Configuration statements include an initial  keyword  fol-
+       lowed  by  white  space separated arguments, some of which
+       may be optional.  Configuration statements may not be con-
+       tinued  over multiple lines.  Arguments may be host names,
+       host addresses (which must be  written  in  numeric,  dot-
+       ted-quad  form),  integers,  floating-point  numbers (when
+       specifying times in seconds) and text  strings.   Optional
+       arguments  are  delimited  by [] in the following descrip-
+       tions, while alternatives are separated by |.
+
+       These three statements specify various time servers to  be
+       used and/or time services to be provided.  The peer state-
+       ment specifies that the given host  is  to  be  polled  in
+       ``symmetric  active''  mode,  that  is,  that  the host is
+       requested to provide time which you might  synchronize  to
+       and,  in  addition, indicates that you are willing to have
+       the remote host synchronize to your time if need be.   The
+       server  statement  specifies  that the given host is to be
+       polled in ``client'' mode,  that  is,  that  the  host  is
+       requested to provide time which you might synchronize with
+       but that you are unwilling to have the  remote  host  syn-
+       chronize  to  your  own  time.   The  broadcast  statement
+       requests your local daemon to transmit  broadcast  NTP  to
+       the  specified  address.  The latter is usually the broad-
+       cast address on one of your local network(s).
+
+       This broadcast specification usually applies only  to  the
+       local  server operating as a transmitter, for operation as
+       a broadcast client.  See the broadcastclient or multicast-
+       client  commands  elsewhere  in  this manual page. In this
+       mode the host_address is usually the broadcast address  on
+       (one  of)  the  local  network(s)  or  a multicast address
+       assigned  to  NTP.  NTP  has  been  assigned  the  address
+       224.0.1.1;  this  is presently the only number that should
+       be used.
+
+       The key option, when included, indicates that all  packets
+       sent  to  the address are to include authentication fields
+
+                                                                2
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+       encrypted using the specified key  number  (the  range  of
+       which  is that of an unsigned 32 bit integer). The default
+       is to not include an encryption field.  The version option
+       allows  one  to  specify the version number to be used for
+       outgoing NTP packets.   Versions  1,  2,  and  3  are  the
+       choices,  version  3  is  the  default.  The prefer option
+       marks the host as a  preferred  host.   All  other  things
+       being  equal, this host will be chosen for synchronization
+       among a set of correctly operating hosts. The  ttl  option
+       is  used  only  with  the broadcast mode. It specifies the
+       time-to-live (ttl) to use on multicast packets.  Selection
+       of  the proper value, which defaults to 127, must be coor-
+       dinated with the network administrator.  Directs the local
+       server  to listen for broadcast messages on the local net-
+       work to discover other servers on the same  subnet.   Upon
+       hearing  a broadcast message for the first time, the local
+       server measures the nominal network delay  using  a  brief
+       client/server exchange with the remote server, then enters
+       the "broadcastclient" mode in which  it  listens  for  and
+       synchronizes  to  succeeding broadcast messages. Note that
+       in order to avoid accidental or  malicious  disruption  in
+       this  mode  both the local and remote servers must operate
+       using authentication and the  same  trusted  key  and  key
+       identifier.   This  command is used in the same way as the
+       broadcastclient command, but operates using IP  multicast-
+       ing. Support for this function requires a multicast kernel
+       and the use of authentication. If one or more IP addresses
+       are  given,  the  server  joins  the  respective multicast
+       group(s). If none are given, the IP  address  assigned  to
+       NTP (224.0.1.1) is assumed.
+
+       Specifies  the  name  of the file used to record the drift
+       (or frequency error) value xntpd  has  computed.   If  the
+       file  exists  on startup, it is read and the value used to
+       initialize xntpd's internal value of the frequency  error.
+       The  file is then updated once every hour by replacing the
+       old file with a new one containing the  current  value  of
+       the  frequency  error.   Note  that the file is updated by
+       first writing the current drift  value  into  a  temporary
+       file  and  then  using  to  replace the old version.  This
+       implies that xntpd must  have  write  permission  for  the
+       directory the drift file is located in, and that file sys-
+       tem links,  symbolic  or  otherwise,  should  probably  be
+       avoided.   Indicates  whether the xntpd traffic monitoring
+       function should be enabled or  not.   When  enabled,  this
+       causes  the  origin address of each packet received by the
+       server to be recorded along with a limited amount of addi-
+       tional  information,  such  as the mode of the request and
+       whether it originated from an  NTP  server  port  or  not.
+       Traffic monitoring data may be inspected using the monlist
+       command.  The default is no, that is,  traffic  monitoring
+       should not be done.
+
+       Note  that  the  traffic monitoring facility will increase
+
+                                                                3
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+       the CPU used by xntpd, as well as increasing the  daemon's
+       memory  utilization by as much as 8.5KB.  This facility is
+       normally useful for the detection of peers  with  malfunc-
+       tioning  software  or which are sending bogus data.  It is
+       primarily intended for very popular servers which exchange
+       time  with  large  numbers of peers, though it may also be
+       useful for access monitoring of local servers if  you  are
+       willing  to accept the overhead.  Provides a way to enable
+       various server options.  Flags  not  mentioned  are  unaf-
+       fected.  The  auth  flag  causes the server to synchronize
+       with unconfigured peers only if the  peer  has  been  cor-
+       rectly  authenticated  using a trusted key and key identi-
+       fier. The default for this flag  is  disable  (off).   The
+       bclient  flag  causes  the  server to listen for a message
+       from a broadcast or multicast server, following  which  an
+       association is automatically created for that server.  The
+       default for this flag  is  disable  (off).  The  pll  flag
+       enables the server to adjust its local clock, with default
+       enable (on). If not set, the local clock free runs at  its
+       intrinsic  time  and frequency offset. This flag is useful
+       in case the local clock is controlled by some other device
+       or  protocol  and NTP is used only to provide synchroniza-
+       tion to other clients. The monitor flag enables the  moni-
+       toring  facility  with default enable (on). The stats flag
+       enables facility filegen with default enable  (on).   Pro-
+       vides  a  way to disable various server options. Flags not
+       mentioned are unaffected. The  flags  presently  available
+       are described under the enable command.
+
+   AAuutthheennttiiccaattiioonn OOppttiioonnss
+       Indicates  whether  the  local  server  should  operate in
+       authenticate mode  or  not.   If  yes,  only  peers  which
+       include  an authentication field encrypted with one of our
+       trusted keys (see below) will be considered as  candidates
+       for  synchronization.   The  default is no.  Indicates the
+       amount of time it takes to encrypt an  NTP  authentication
+       field  on  the local computer.  This value is used to cor-
+       rect transmit timestamps when the authentication  is  used
+       on  outgoing packets.  The value usually lies somewhere in
+       the range 0.0001 seconds to 0.003 seconds,  though  it  is
+       very dependent on the CPU speed of the host computer.  The
+       value is usually computed using Specifies the  name  of  a
+       file  which  contains  the encryption keys which are to be
+       used by xntpd.  The  format  of  this  file  is  described
+       below.   Allows  the  specification  of the encryption key
+       numbers which are trusted for the purposes of  determining
+       peers  suitable for time synchronization, when authentica-
+       tion is enabled.  Only peers using one of these  keys  for
+       encryption  of the authentication field, and whose authen-
+       ticity can be verified by successful decryption,  will  be
+       considered  as  synchronization candidates.  The arguments
+       are 32-bit unsigned integers.  Note, however, that NTP key
+       0  is fixed and globally known.  If meaningful authentica-
+       tion is to be performed, the 0 key should not be  trusted.
+
+                                                                4
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+       xntpd allows runtime reconfiguration to be performed using
+       the program.  The operation of the xntpd program  is  spe-
+       cific  to  this particular implementation of xntpd and can
+       be expected to work only with this and  previous  versions
+       of  the daemon.  Such requests must be authenticated.  The
+       requestkey statement allows the specification of a  32-bit
+       unsigned  integer key number to be used for authenticating
+       such requests.  Note that if no  requestkey  statement  is
+       included  in the configuration file the runtime reconfigu-
+       ration facility will be disabled.  Certain changes can  be
+       made  to  the xntpd server via mode 6 control messages, in
+       particular the setting of leap  second  indications  in  a
+       server with a radio clock.  The controlkey statement spec-
+       ifies an encryption key number to be used for authenticat-
+       ing  such  messages.   Omitting  this statement will cause
+       control messages which  would  change  the  state  of  the
+       server to be ignored.
+
+   AAcccceessss CCoonnttrrooll OOppttiioonnss
+       xntpd  implements a general purpose address-and-mask based
+       restriction list.  The list is sorted by  address  and  by
+       mask,  and the list is searched in this order for matches,
+       with the last match found defining the  restriction  flags
+       associated  with the incoming packets.  The source address
+       of incoming packets is used for the match, with the 32-bit
+       address  being  AND'ed  with  the mask associated with the
+       restriction entry  and  then  compared  with  the  entry's
+       address (which has also been AND'ed with the mask) to look
+       for   a   match.    The   mask   argument   defaults    to
+       255.255.255.255,  meaning  that  the address is treated as
+       the address  of  an  individual  host.   A  default  entry
+       (address  0.0.0.0,  mask  0.0.0.0) is always included and,
+       given the sort algorithm, is always the first entry in the
+       list.   Note  that,  while  address is normally given as a
+       dotted-quad address, the text string ``default'', with  no
+       mask option, may be used to indicate the default entry.
+
+       In  the  current  implementation,  flags  always  restrict
+       access, that is, an entry with  no  flags  indicates  that
+       free  access  to the server is to be given.  The flags are
+       not orthogonal, in that more restrictive flags will  often
+       make  less restrictive ones redundant.  The flags can gen-
+       erally  be  classed  into  two  categories,  those   which
+       restrict  time  service  and those which restrict informa-
+       tional queries and attempt to perform runtime reconfigura-
+       tion of the server.
+
+       One  or  more  of  the  following  flags may be specified:
+       Ignore all packets from hosts which match this entry.   If
+       this  flag  is  specified, neither queries nor time server
+       polls will be answered.  Ignore all NTP mode 6 and 7 pack-
+       ets   (that  is,  information  queries  and  configuration
+       requests) from the source.  Time service is not  affected.
+       Ignore  all  NTP  mode  6  and  7 packets which attempt to
+
+                                                                5
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+       modify the state of the server (that is, runtime reconfig-
+       uration).  Queries which return information are permitted.
+       Decline to provide mode 6 control message trap service  to
+       matching  hosts.   The  trap service is a subsystem of the
+       mode 6 control message protocol which is intended for  use
+       by  remote  event  logging programs.  Declare traps set by
+       matching hosts to be low priority.  The number of traps  a
+       server  can  maintain is limited (the current limit is 3).
+       Traps are usually assigned on a  first-come,  first-served
+       basis,  with  later  trap requesters being denied service.
+       This flag modifies the assignment  algorithm  by  allowing
+       low  priority traps to be overridden by later requests for
+       normal priority traps.  Ignore NTP packets whose  mode  is
+       other  than  6  or  7.  In effect, time service is denied,
+       though queries may still be permitted.  Provide  stateless
+       time  service  to  polling hosts, but do not allocate peer
+       memory resources to these hosts  even  if  they  otherwise
+       might be considered useful as future synchronization part-
+       ners.  Treat these hosts normally in other  respects,  but
+       never  use  them  as synchronization sources.  These hosts
+       are subject to limitation of number of  clients  from  the
+       same  net.  Net in this context refers to the IP notion of
+       net (class A, class B, class C, and so on). Only the first
+       "client_limit"  hosts that have shown up at the server and
+       that    have    been    active     during     the     last
+       "client_limit_period" seconds are accepted.  Requests from
+       other clients from the same net are rejected.   Only  time
+       request  packets  are taken into account. "Private", "con-
+       trol", and "broadcast" packets are not subject  to  client
+       limitation  and  therefore  are not contributing to client
+       count. History of clients is  kept  using  the  monitoring
+       capability  of  xntpd.  Thus, monitoring is active as long
+       as there is restriction entry with the "limited" flag. The
+       default  value  for "client limit" is 3. The default value
+       for "client_limit_period" is 3600 seconds.  This is  actu-
+       ally a match algorithm modifier, rather than a restriction
+       flag.  Its presence causes the  restriction  entry  to  be
+       matched only if the source port in the packet is the stan-
+       dard NTP UDP port (123).  Both ``ntpport'' and  non-``ntp-
+       port''  may  be  specified.  The ``ntpport'' is considered
+       more specific and is sorted later in the list.
+
+       Default restriction list entries, with the flags ``ignore,
+       ntpport'',   for   each  of  the  local  host's  interface
+       addresses are inserted into the table at startup  to  pre-
+       vent  the server from attempting to synchronize to its own
+       time.  A default entry is also always present,  though  if
+       it  is otherwise unconfigured no flags are associated with
+       the default entry (that is, everything  besides  your  own
+       NTP server is unrestricted).
+
+       The  restriction  facility  was added to allow the current
+       access policies of the time servers running on the  NSFnet
+       backbone to be implemented with xntpd as well.  While this
+
+                                                                6
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+       facility may be otherwise useful for keeping  unwanted  or
+       broken  remote  time  servers  from affecting your own, it
+       should not be considered an alternative  to  the  standard
+       NTP   authentication   facility.    Source  address  based
+       restrictions  are  easily  circumvented  by  a  determined
+       cracker.  Sets "clientlimit" to "limit", allows configura-
+       tion of client limitation policy.  This  variable  defines
+       the  number  of  clients  from  the  same network that are
+       allowed    to    use     the     server.      Sets     the
+       "client_limit_period", allows configuration of client lim-
+       itation policy. This variable specifies the number of sec-
+       onds  after which a client is considered inactive and thus
+       is no longer counted for client limit restriction.
+
+   MMoonniittoorriinngg OOppttiioonnss
+       Indicates the full path of a  directory  where  statistics
+       files  should  be created (see below). This keyword allows
+       the (otherwise constant) filegen  filename  prefix  to  be
+       modified  for file generation sets which are used for han-
+       dling  statistics  logs  (see  filegen  statement  below).
+       Enables  writing  of statistics records.  Currently, three
+       kinds of statistics are supported.  enables  recording  of
+       loop  filter  statistics  information.  Each update of the
+       local clock outputs a line of the following  form  to  the
+       file  generation  set named ``loopstats'': 48773 10847.650
+       0.0001307 17.3478 2 The first two  fields  show  the  date
+       (Modified  Julian Day) and time (seconds and fraction past
+       UTC midnight). The next three fields show time  offset  in
+       seconds,  frequency  offset  in parts-per-million and time
+       constant of the clock-discipline algorithm at each  update
+       of the clock.  enables recording of peer statistics infor-
+       mation. This includes statistics records of all  peers  of
+       an  NTP  server and of the 1-pps signal, where present and
+       configured. Each valid update appends a line of  the  fol-
+       lowing  form  to  the current element of a file generation
+       set named ``peerstats'': 48773 10847.650 127.127.4.1  9714
+       -0.001605  0.00000  0.00142  The first two fields show the
+       date (Modified Julian Day) and time (seconds and  fraction
+       past  UTC  midnight).  The  next  two fields show the peer
+       address in dotted-quad notation and status,  respectively.
+       The status field is encoded in hex in the format described
+       in Appendix A of the  NTP  specification  RFC  1305.   The
+       final  three fields show the offset, delay and dispersion,
+       all in seconds.  enables recording of clock driver statis-
+       tics information. Each update received from a clock driver
+       outputs a line of the following form to the  file  genera-
+       tion  set  named ``clockstats'': 49213 525.624 127.127.4.1
+       93 226 00:08:29.606  D The first two fields show the  date
+       (Modified  Julian Day) and time (seconds and fraction past
+       UTC midnight). The next field shows the clock  address  in
+       dotted-quad notation. The final field shows the last time-
+       code received from the  clock  in  decoded  ASCII  format,
+       where  meaningful.   In  some clock drivers a good deal of
+       additional information can be gathered  and  displayed  as
+
+                                                                7
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+       well. See information specific to each clock.
+
+       Statistic  files  are  managed  using file generation sets
+       (see filegen below). The information obtained by  enabling
+       statistics  recording  allows analysis of temporal proper-
+       ties of an xntpd server. It is usually only useful to pri-
+       mary servers.
+
+       filegen  name  [  file filename ] [ type typename ] [ flag
+       flagval ] [ link|nolink ] [  enable|disable  ]  Configures
+       setting of generation file set name.  Generation file sets
+       provide a means for handling files that  are  continuously
+       growing during the lifetime of a server. Server statistics
+       are a typical example for such files. Generation file sets
+       provide  access to a set of files used to store the actual
+       data. At any given time, one  element  at  most  is  being
+       written.   The  typename given specifies when and how data
+       will be directed to a new element of the  set.  This  way,
+       information stored in elements of a file set that are cur-
+       rently unused are available for administration without the
+       risk  of  disturbing the operation of xntpd.  (Most impor-
+       tantly, they can be removed to free  space  for  new  data
+       produced.)   Filenames of set members are built from three
+       elements.  This is a constant filename  path.  It  is  not
+       subject  to modifications via the filegen statement. It is
+       defined by the server, usually specified as a compile time
+       constant.  It may, however, be configurable for individual
+       file generation sets via other commands. For example,  the
+       prefix used with "loopstats" and  "peerstats" filegens can
+       be  configured  using  the  statsdir  statement  explained
+       above.  This string is directly concatenated to the prefix
+       mentioned above (no intervening slash (/)).  This  can  be
+       modified  using  the  ``file'' argument to the ``filegen''
+       statement. No  ``..'' elements are allowed in this  compo-
+       nent  to  prevent filenames referring to parts outside the
+       filesystem hierarchy denoted by   ``prefix''.   This  part
+       reflects  individual  elements of a file set. It is gener-
+       ated according to the type of  a  file  set  as  explained
+       below.
+
+       A  file  generation set is characterized by its type.  The
+       following types are supported: The file set is actually  a
+       single  plain  file.   One element of file set is used per
+       incarnation of an xntpd server. This type does not perform
+       any  changes  to file set members during runtime; however,
+       it provides an easy way of separating files  belonging  to
+       different xntpd server incarnations.  The set member file-
+       name is built by appending a dot (.) to concatenated  pre-
+       fix and filename strings, and appending the decimal repre-
+       sentation of the process id of the xntpd  server  process.
+       One  file  generation  set element is created per day. The
+       term day is based on UTC.  A day is defined as the  period
+       between  00:00  and 24:00 UTC.  The file set member suffix
+       consists of a dot .  and a day specification in  the  form
+
+                                                                8
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+       ``YYYYMMDD''.   YYYY is a 4 digit year number (e.g. 1992).
+       MM is a two digit month number.  DD is  a  two  digit  day
+       number.   Thus,  all information written at December 10th,
+       1992 would end  up  in  a  file  named  ``<prefix>  <file-
+       name>.19921210''.   Any  file  set  member  contains  data
+       related to a certain week of a year.   The  term  week  is
+       defined by computing ``day of year'' modulo 7. Elements of
+       such a file generation set are distinguished by  appending
+       the following suffix to the file set filename base: A dot,
+       a four digit year number, the letter W, and  a  two  digit
+       week number. For example, information from January 10 1992
+       would end up in a file with suffix ``.1992W1''.  One  gen-
+       eration file set element is generated per month.  The file
+       name suffix consists of a dot, a four digit  year  number,
+       and  a  two  digit  month.  One generation file element is
+       generated per year. The filename suffix consists of a  dot
+       and  a  4 digit year number.  This type of file generation
+       sets changes to a new element of the  file  set  every  24
+       hours of server operation. The filename suffix consists of
+       a dot, the letter a, and an eight digit number. This  num-
+       ber  is  taken  to  be the number of seconds the server is
+       running at the start of the corresponding 24 hour  period.
+
+       Information  is only written to a file generation set when
+       this set is enabled. Output  is  prevented  by  specifying
+       disabled. The default is enabled.
+
+       It  is convenient to be able to access the current element
+       of a file generation set by a fixed name. This feature  is
+       enabled  by specifying link and disabled using nolink.  If
+       link is specified, a hard link from the current  file  set
+       element to a file without suffix is created. When there is
+       already a file with this name and the number of  links  of
+       this  file is one, it is renamed appending a dot, the let-
+       ter C, and the pid of the xntpd server process.  When  the
+       number of links is greater than one, the file is unlinked.
+       This allows the current file to be accessed by a  constant
+       name. The default is link.
+
+   MMiisscceellllaanneeoouuss OOppttiioonnss
+       Indicates  the  precision of local timekeeping.  The value
+       is an integer which is approximately the base 2  logarithm
+       of the local timekeeping precision in seconds.  By default
+       this value is set to -6.
+
+       The precision declared by  an  implementation  can  affect
+       several  aspects of server operation, and can be used as a
+       tuning parameter  for  your  synchronization  subnet.   It
+       should  probably  not  be  changed from the default value,
+       however, unless there is a good  reason  to  do  so.   The
+       broadcast  and  multicast modes require a special calibra-
+       tion to determine the network delay between the local  and
+       remote servers.  Ordinarily, this is done automatically by
+
+                                                                9
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+       the initial  protocol  exchanges  between  the  local  and
+       remote  servers.  In some cases, the calibration procedure
+       may fail, perhaps, for example, due to network  or  server
+       access  controls. This command specifies the default delay
+       to be used under these circumstances. Typically, (for Eth-
+       ernet),  an  appropriate  delay is between 0.003 and 0.007
+       seconds.  When this command is not used,  the  default  is
+       0.004  seconds.   Configures  a trap receiver at the given
+       host address and port number, sending  messages  with  the
+       specified  local interface address.  If the port number is
+       unspecified, a value of 18447 is used.  If  the  interface
+       address  is  not  specified,  the  message  is sent with a
+       source address which is that of the  local  interface  the
+       message  is  sent through.  Note that on a multihomed host
+       the interface used may vary from time to time with routing
+       changes.
+
+       The  trap  receiver  will generally log event messages and
+       other information from the server in a  log  file.   While
+       such  monitor  programs  may  also  request their own trap
+       dynamically, configuring a trap receiver will ensure  that
+       no  messages  are  lost  when the server is started.  This
+       command is not normally required. xntpd can resolve  names
+       specified  in the configuration file to IP addresses with-
+       out the aid of a resolver helper.
+
+       If a standalone resolver is required, install  a  suitable
+       program  such  as  xntpres (not supplied), and specify the
+       full path to this program as the argument to the  resolver
+       command.   (Note  that as xntpres makes use of mode 7 run-
+       time reconfiguration, this facility must also  be  enabled
+       if  the  procedure  is to succeed.  See the requestkey and
+       keys statements above.)  This command adds  an  additional
+       system variable. These variables can be used to distribute
+       additional information such as the access policy.  If  the
+       variable of the form name=value is followed by the keyword
+       default, the variable  will  be  listed  as  part  of  the
+       default  system  variables (ntpq rv command).  These addi-
+       tional variables serve informational purposes only.   They
+       are  not  related  to  the protocol other than by the fact
+       that they can be listed. The known protocol variables will
+       always  override  any  variables  defined using the setvar
+       mechanism.
+
+       There are three special variables that contain  the  names
+       of all variables of the same group. The sys_var_list holds
+       the names of all system variables. The peer_var_list holds
+       the  names  of  all  peer variables and the clock_var_list
+       holds the names of the reference clock  variables.   These
+       commands  have  been  superseded by the enable and disable
+       commands. They are listed here  for  historical  purposes.
+       This  command allows control of the amount of output writ-
+       ten to syslog or the logfile. All output is turned  on  by
+       default.  All  config keywords can be prefixed with ``='',
+
+                                                               10
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+       ``+'', and ``-'' messages controlled by four classes (sys,
+       peer,  clock,  sync).  Within these classes, four types of
+       messages can be controlled. Informational messages  (info)
+       control   configuration   information.    Event   messages
+       (events) control logging of events (reachability, synchro-
+       nization,  alarm  conditions).  Statistical output is con-
+       trolled with the statistics keyword.   The  final  message
+       group,  status,  contains  messages that describe, for the
+       most part, synchronization status.
+
+       Configuration keywords are  formed  by  concatenating  the
+       message  class  with the event class. It is permissible to
+       use the all prefix in place of the message class.  A  mes-
+       sage  class  may  also  be followed by the all keyword and
+       means enable/disable the entire respective message  class.
+
+       A  minimal log configuration might look like this: logcon-
+       fig= syncstatus+sysevents.  This would list  the  synchro-
+       nization  state of xntp and the major system events. For a
+       simple reference server following minimum message configu-
+       ration,   the  following  may  be  useful:  logconfig=syn-
+       call+clockall. This configuration lists all clock and syn-
+       chronization  information.  All  other events and messages
+       about peers, system events, and so on, is suppressed.  Log
+       errors to filename rather than to syslog.
+
+   AAuutthheennttiiccaattiioonn kkeeyy ffiillee ffoorrmmaatt
+       The NTP standard specifies an extension allowing verifica-
+       tion of the authenticity of received NTP packets and  pro-
+       viding  an indication of authenticity in outgoing packets.
+       This is implemented in  xntpd  using  the  DES  encryption
+       algorithm.  The specification allows any one of a possible
+       4 billion keys, numbered with 32 bit unsigned integers, to
+       be  used  to  authenticate  an  association.   The servers
+       involved in an association must agree on the value of  the
+       key used to authenticate their data, though they must each
+       learn the key independently.  The  keys  are  64  bits  (8
+       bytes).
+
+       xntpd  reads  its  keys from a file specified using the -k
+       command line option or the keys statement in the  configu-
+       ration file.  While key number 0 is fixed by the NTP stan-
+       dard (as 56 zero bits) and may not be changed, one or more
+       of  the  keys numbered 1 through 15 may be arbitrarily set
+       in the keys file.
+
+       The key file uses the same comment conventions as the con-
+       figuration  file.   Key  entries use a fixed format of the
+       form: keyno  type  key where keyno is a positive  integer,
+       type  is  a  single character which defines the format the
+       key is given in, and key is the key itself.
+
+       The key may be given in the following format controlled by
+       the  type  character:  The key is a 1-to-8 character ASCII
+
+                                                               11
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+       string, using the MD5  authentication  scheme.   Only  MD5
+       authentication is currently supported by xntpd.
+
+       One of the keys may be chosen, by way of the configuration
+       file requestkey statement, to authenticate run  time  con-
+       figuration  requests  made  using the program.  The latter
+       program obtains the key from the terminal as  a  password,
+       so  it  is generally appropriate to specify the key chosen
+       to be used for this purpose in ASCII format.
+
+   LLooccaall cclloocckk ssuuppppoorrtt
+       xntpd supports a local clock driver to allow a  system  to
+       use its real-time clock as a reference clock.  The address
+       of the local clock driver is 127.127.1.unit where the unit
+       number  can  be  0,  1, 2, or 3. unit is usually set to 0.
+       The stratum of the driver is 3 by default but this is usu-
+       ally  changed  using  the fudge configuration command (or,
+       alternatively, xntpdc):
+
+       fudge 127.127.1.unit [time1 s] [time2 f]  [stratum  level]
+       [refid ID] [flag1 0|1] [flag2 0|1]
+
+       time1 specifies the time offset calibration factor in sec-
+       onds.  The default value is 0.0.
+
+       time2 specifies the frequency offset calibration factor in
+       parts per million. The default value is 0.0.
+
+       stratum  specifies  the  driver stratum level. The default
+       value is 3.  The suggested value is 10.
+
+       refid specifies the  driver  reference  identifier  as  an
+       ASCII  string  from  one  to  four characters. The default
+       value is ``LCL''.
+
+       flag1 specifies whether a leap seconds is to  be  inserted
+       at  the end of the current UTC day. The default value is 0
+       (no).
+
+       flag2 specifies whether a leap seconds is to be removed at
+       the  end  of  the  current UTC day. The default value is 0
+       (no).
+
+FFiilleess
+       the default name of the  configuration  file  the  conven-
+       tional name of the drift file the conventional name of the
+       key file
+
+EExxiitt ccooddeess
+       None.
+
+RReeffeerreenncceess
+       RFC 1059, RFC 1119, RFC 1128, RFC 1129, RFC 1305
+
+                                                               12
+
+xntpd(1Mtcp)                                         xntpd(1Mtcp)
+
+NNoottiicceess
+       DES authentication and hardware clocks are  not  currently
+       supported.
+
+                                                               13
+

@@ -1,0 +1,222 @@
+
+
+signal(5)                                               signal(5)
+
+SSyynnooppssiiss
+       #include <signal.h>
+
+DDeessccrriippttiioonn
+       A  signal  is an asynchronous notification of an event.  A
+       signal is said to be generated for (or sent to) a  process
+       when  the  event associated with that signal first occurs.
+       Examples of such events  include  hardware  faults,  timer
+       expiration  and  terminal activity, as well as the invoca-
+       tion of the kill or sigsend system calls.  In some circum-
+       stances,  the  same  event  generates signals for multiple
+       processes.  The receiver may request a detailed  notifica-
+       tion of the source of the signal and the reason why it was
+       generated [see
+
+       Each process may specify a system action to  be  taken  in
+       response  to  each  signal sent to it, called the signal's
+       disposition.  The set of system signal actions for a  pro-
+       cess  is  initialized  from  that  of its parent.  Once an
+       action is installed for  a  specific  signal,  it  usually
+       remains  installed until another disposition is explicitly
+       requested by a call to either sigaction, signal or sigset,
+       or  until the process execs [see and When a process execs,
+       all signals whose disposition has been set  to  catch  the
+       signal will be set to SIG_DFL.  Alternatively, on request,
+       the system will automatically reset the disposition  of  a
+       signal to SIG_DFL after it has been caught [see and
+
+       A  signal  is  said  to be delivered to a process when the
+       appropriate action for the process and  signal  is  taken.
+       During the time between the generation of a signal and its
+       delivery, the signal is said to be pending  [see  Ordinar-
+       ily,  this  interval cannot be detected by an application.
+       However, a signal can be blocked from delivery [see and If
+       the  action  associated  with a blocked signal is anything
+       other than to ignore the signal, and  if  that  signal  is
+       generated  for  the  process,  the  signal remains pending
+       until either it is unblocked or the  signal's  disposition
+       requests that the signal be ignored.  If the signal dispo-
+       sition of a blocked signal requests  that  the  signal  be
+       ignored,  and if that signal is generated for the process,
+       the signal is discarded immediately upon generation.
+
+       Each process has a signal mask that  defines  the  set  of
+       signals  currently  blocked  from  delivery to it [see The
+       signal mask for a process is initialized from that of  its
+       creator.
+
+       The  determination of which action is taken in response to
+       a signal is made at the  time  the  signal  is  delivered,
+       allowing  for  any  changes  since the time of generation.
+       This determination is independent of the  means  by  which
+       the signal was originally generated.
+
+                                                                1
+
+signal(5)                                               signal(5)
+
+       The  signals currently defined in sys/signal.h are as fol-
+       lows:
+
+                                                                2
+
+signal(5)                                               signal(5)
+
+       The  signal, sigset or sigaction system calls, can be used
+       to specify one of three dispositions for  a  signal:  take
+       the  default  action for the signal, ignore the signal, or
+       catch the signal.
+
+   DDeeffaauulltt aaccttiioonn:: SSIIGG__DDFFLL
+       A disposition of SIG_DFL  specifies  the  default  action.
+       The  default action for each signal is listed in the table
+       above and is selected from the following: When it gets the
+       signal, the receiving process is to be terminated with all
+       the consequences outlined in When it gets the signal,  the
+       receiving  process is to be terminated with all the conse-
+       quences outlined in In addition, a ``core image''  of  the
+       process  is  constructed in the current working directory.
+       When it gets the signal, the receiving process is to stop.
+       When  it  gets  the  signal,  the  receiving process is to
+       ignore it.  This is identical to setting  the  disposition
+       to SIG_IGN.
+
+   IIggnnoorree ssiiggnnaall:: SSIIGG__IIGGNN
+       A  disposition  of SIG_IGN specifies that the signal is to
+       be ignored.
+
+   CCaattcchh ssiiggnnaall:: ffuunnccttiioonn aaddddrreessss
+       A disposition that is a function address  specifies  that,
+       when  it gets the signal, the receiving process is to exe-
+       cute the signal handler at the  specified  address.   Nor-
+       mally,  the  signal handler is passed the signal number as
+       its only argument; if the disposition  was  set  with  the
+       sigaction  function  however,  additional arguments may be
+       requested  [see  When  the  signal  handler  returns,  the
+       receiving  process  resumes  execution at the point it was
+       interrupted,  unless  the  signal  handler   makes   other
+       arrangements.   If  an  invalid function address is speci-
+       fied, results are undefined.
+
+       If the disposition has been set with the sigset or  sigac-
+       tion  function, the signal is automatically blocked by the
+       system while  the  signal  catcher  is  executing.   If  a
+       longjmp [see is used to leave the signal catcher, then the
+       signal must be explicitly unblocked by the user [see and
+
+       If execution of the signal handler  interrupts  a  blocked
+       system  call,  the handler is executed and the interrupted
+       system call returns a -1 to the calling process with errno
+       set  to  EINTR. However, if the SA_RESTART flag is set the
+       system call will be transparently restarted.
+
+NNoottiicceess
+       The dispositions of the SIGKILL and SIGSTOP signals cannot
+       be  altered  from their default values.  The system gener-
+       ates an error if this is attempted.
+
+       The SIGKILL and SIGSTOP signals cannot  be  blocked.   The
+
+                                                                3
+
+signal(5)                                               signal(5)
+
+       system silently enforces this restriction.
+
+       Whenever  a  process receives a SIGSTOP, SIGTSTP, SIGTTIN,
+       or SIGTTOU signal,  regardless  of  its  disposition,  any
+       pending SIGCONT signal is discarded.  A process stopped by
+       the above four signals is said to  be  in  a  job  control
+       stop.
+
+       Whenever  a  process receives a SIGCONT signal, regardless
+       of its disposition, any pending SIGSTOP, SIGTSTP, SIGTTIN,
+       and  SIGTTOU  signals  are discarded.  In addition, if the
+       process was stopped, it is continued.
+
+       SIGPOLL is issued when a file descriptor corresponding  to
+       a STREAMS [see file has a ``selectable'' event pending.  A
+       process must specifically request that this signal be sent
+       using  the  I_SETSIG  ioctl  call.  Otherwise, the process
+       will never receive SIGPOLL.
+
+       If the disposition of the SIGCHLD signal has been set with
+       signal  or  sigset, or with sigaction and the SA_NOCLDSTOP
+       flag has been specified, it will only be sent to the call-
+       ing  process  when  its  children exit; otherwise, it will
+       also be sent  when  the  calling  process's  children  are
+       stopped or continued due to job control.
+
+       For  backward compatibility, the names SIGCLD, SIGIOT, and
+       SIGIO are defined in this header file.  SIGCLD  identifies
+       the  same  signal  as SIGCHLD.  SIGIOT identifies the same
+       signal as SIGABRT, and SIGIO identifies the same signal as
+       SIGPOLL.   However,  new  applications should use SIGCHLD,
+       SIGABRT, and SIGPOLL.
+
+       The disposition of signals that are inherited  as  SIG_IGN
+       should not be changed.
+
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Signal disposition (that is, to default or to ignore or to
+       trap by function a given signal type) is maintained at the
+       process level and is shared by all threads.  Signal masks,
+       on the other hand, are maintained per thread.
+
+       Depending on circumstances (outlined below),  caught  sig-
+       nals  are  handled either by a specific thread or an arbi-
+       trary thread.  Signals that are initiated  by  a  specific
+       thread  (for  example,  division  by zero, a request for a
+       SIGALRM signal, a reference to  an  invalid  address)  are
+       delivered  to  and  handled  by  that thread.  (Note: that
+       thread will use  the  common  handler  function  currently
+       defined for the containing process.)  Signals that are not
+       initiated by a specific thread (for example, a SIGINT sig-
+       nal from a terminal, a signal from another process via are
+       handled by an arbitrary thread of the process  that  meets
+       either of the following conditions.  The thread is blocked
+
+                                                                4
+
+signal(5)                                               signal(5)
+
+       in a system call whose argument does include the  type  of
+       the caught signal.  The thread has a signal mask that does
+       not include the type of the caught signal.
+
+       A caught signal will be delivered to only one thread of  a
+       process.   Applications  cannot  predict  which of several
+       eligible threads will receive a caught  signal.   If  this
+       behavior is undesirable, applications should maintain only
+       a single eligible thread per signal type.
+
+       Signal handling occurs only when a thread is scheduled  to
+       run.  That latency can be reduced by having signals caught
+       by (permanently) bound threads.
+
+       The Threads Library disallows changes to  the  disposition
+       of SIGLWP and SIGWAITING signal types.  Those signal types
+       are important to the functioning of the Threads Library.
+
+   CCoonnssiiddeerraattiioonnss ffoorr lliigghhttwweeiigghhtt pprroocceesssseess
+       Internally, signal masks are maintained per LWP.   When  a
+       thread  is  bound  to  an  LWP  for  execution the Threads
+       Library synchronizes the signal mask of the thread to that
+       of  the  LWP.   Thus, there is some additional overhead (a
+       system call) when switching in a multiplexed thread with a
+       mask that differs from that of the preempted thread.
+
+       In addition to signal masks, the operating system can also
+       define an alternate signal handling stack  per  LWP.   The
+       Threads Library does not support alternate signal handling
+       stacks for threads.
+
+RReeffeerreenncceess
+
+                                                                5
+

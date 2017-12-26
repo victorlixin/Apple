@@ -1,0 +1,516 @@
+ld(1)                                                             ld(1)
+
+  lldd
+
+  NNAAMMEE
+
+    ld - the GNU linker
+
+  SSYYNNOOPPSSIISS
+
+    ld [[-EgiMSstVvXx]] [[-o output]] objfile ...
+       [[-A architecture]] [[-b input-format]]
+       [[-Bstatic]] [[-Bdynamic]] [[-Bsymbolic]]
+       [[-c commandfile]] [[--cref]] [[-d||-dc||-dp]]
+       [[-defsym symbol=expression]] [[-dll]] [[-e entry]]
+       [[-embedded-relocs]] [[-export-dynamic]] [[-f name]]
+       [[--auxiliary name]] [[-F name]] [[--filter name]]
+       [[-format input-format]] [[-G size]] [[-h name]]
+       [[-soname name]] [[--help]] [[-l ar]] [[-L searchdir]]
+       [[-Map mapfile]] [[-m emulation]] [[-n||-N]]
+       [[--noinhibit-exec]] [[--no-keep-memory]] [[--oformat output-format]]
+       [[-R filename]] [[--relax]] [[-r||-Ur]]
+       [[--rpath directory]] [[--rpath--link directory]]
+       [[--shared]] [[--sort-common]] [[--split-by-reloc count]]
+       [[--split-by-file]] [[-T commandfile]]  [[-Ttext textorg]]
+       [[-Tdata dataorg]] [[-Tbss bssorg]] [[-u sym]]
+       [[--verbose]] [[--version]] [[--warn-common]] [[--warn-constructors]]
+       [[--warn-multiple-gp]] [[--warn-once]] [[--warn-section-align]]
+       [[--whole-archive]] [[--no-whole-archive]] [[--wrap symbol]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The lldd(1) utility combines a number of object and archive files, relocates
+    their data and ties up symbol references. Often, the last step in building
+    a new compiled program to run is a call to lldd(1).
+
+    The lldd(1) utility accepts Linker Command Language files to provide
+    explicit and total control over the linking process. This topic does not
+    describe the command language; see the lldd(1) entry in iinnffoo or the manual
+    ld: the GNU linker, for full details on the command language and on other
+    aspects of the GNU linker.
+
+    This version of lldd(1) uses the general purpose BFD libraries to operate on
+    object files. This allows lldd(1) to read, combine, and write object files
+    in many different formats, for example, COFF or aa..oouutt. Different formats
+    can be linked together to produce any available kind of object file. You
+    can use oobbjjdduummpp --ii to get a list of formats supported on various
+    architectures; see oobbjjdduummpp(1).
+
+    In addition to being flexible, the GNU linker is more helpful than other
+    linkers in providing diagnostic information. Many linkers abandon
+    execution immediately upon encountering an error. Whenever possible, lldd(1)
+    continues executing, which allows you to identify other errors (or, in
+    some cases, to get an output file in spite of the error).
+
+    The GNU linker lldd(1) is meant to cover a broad range of situations and to
+    be as compatible as possible with other linkers. As a result, you have
+    many choices to control its behavior through the command line and through
+    environment variables.
+
+  OOPPTTIIOONNSS
+
+    The command-line options to lldd(1) can be specified in any order, and can
+    be repeated at will. Usually, repeating an option with a different
+    argument will either have no further effect, or it will override the prior
+    occurrences (those further to the left on the command line) of an option.
+
+    The exceptions that can meaningfully be used more than once are --AA, --bb (or
+    its synonym --ffoorrmmaatt), --ddeeffssyymm, --LL, --ll, --RR, and --uu.
+
+    The list of object files to be linked together, shown as objfile, can
+    follow, precede, or be mixed in with command-line options, except that an
+    objfile argument cannot be placed between an option flag and its argument.
+
+    Usually, the linker is invoked with at least one object file. Other forms
+    of binary input files can also be specified with --ll, --RR, and the script
+    command language, however. If no binary input files are specified, the
+    linker does not produce any output, and it issues the message "No input
+    files."
+
+    Option arguments must either follow the option letter without intervening
+    white space, or be given as separate arguments immediately following the
+    option that requires them.
+    --AA architecture
+        In the current release of lldd(1), this option is useful only for the
+        Intel 960 family of architectures. In that lldd(1) configuration, the
+        architecture argument is one of the two-letter names identifying
+        members of the 960 family. The option specifies the desired output
+        target, and warns of any incompatible instructions in the input files.
+        It also modifies the linker's search strategy for archive libraries,
+        to support the use of libraries specific to each particular
+        architecture, by including in the search loop names suffixed with the
+        string identifying the architecture.
+        For example, if your lldd(1) command line included --AACCAA and --llttrryy, the
+        linker would look (in its built-in search paths and in any paths you
+        specify with --LL) for a library with the names
+        try
+        libtry.a tryca libtryca.a
+        The first two possibilities would be considered in any event; the last
+        two are due to the use of --AACCAA.
+        Future releases of lldd(1) might support similar functionality for other
+        architecture families.
+        You can meaningfully use --AA more than once on a command line if an
+        architecture family allows combination of target architectures. Each
+        use will add another pair of name variants to search for when --
+        ll specifies a library.
+    ----aarrcchhiitteeccttuurree==architecture
+        Equivalent to --AA.
+    --bb input-format
+        Specify the binary format for input object files that follow this
+        option on the command line. You do not usually need to specify this
+        because lldd(1) is configured to expect as a default input format the
+        most usual format on each computer. input-format is a text string, the
+        name of a particular format supported by the BFD libraries. Using --
+        ffoorrmmaatt input-format has the same effect, as does the script command
+        TTAARRGGEETT.
+        You might want to use this option if you are linking files with an
+        unusual binary format. You can also use --bb to switch formats
+        explicitly (when linking object files of different formats) by
+        including --bb input-format before each group of object files in a
+        particular format.
+        The default format is taken from the environment variable GNUTARGET.
+        You can also define the input format from a script, using the command
+        TTAARRGGEETT.
+
+    --BBssttaattiicc
+        Do not link against shared libraries. This is only meaningful on
+        platforms for which shared libraries are supported.
+
+    --BBddyynnaammiicc
+        Link against dynamic libraries. This is only meaningful on platforms
+        for which shared libraries are supported. This option is normally the
+        default on such platforms.
+
+    --BBssyymmbboolliicc
+        When creating a shared library, bind references to global symbols to
+        the definitions within the shared library, if there are any. Normally,
+        it is possible for a program linked against a shared library to
+        override the definition within the shared library. This option is only
+        meaningful on ELF platforms which support shared libraries.
+    --cc commandfile
+        Directs lldd(1) to read link commands from the file commandfile. These
+        commands will completely override the lldd(1)default link format (rather
+        than adding to it); commandfile must specify everything necessary to
+        describe the target format.
+        You can also include a script of link commands directly in the command
+        line by bracketing it between { and } characters.
+        This is not a way to extend the command line, that is, to bypass the
+        command line-length limitation imposed by ARG_MAX. The script
+        here describes link commands in built-in language, MRI. The --cc option
+        is also known as ----mmrrii--ssccrriipptt.
+
+    ----ccrreeff
+        Output a cross reference table. If a linker map file is being
+        generated, the cross-reference table is printed to the map file.
+        Otherwise, it is printed on the standard output.
+    --dd, -ddcc, --ddpp
+        These three options are equivalent; multiple forms are supported for
+        compatibility with other linkers. Use any of them to make lldd(1) assign
+        space to common symbols even if a relocatable output file is specified
+        (--rr). The script command FFOORRCCEE__CCOOMMMMOONN__AALLLLOOCCAATTIIOONN has the same effect.
+    --ddeeffssyymm symbol--expression
+        Create a global symbol in the output file, containing the absolute
+        address given by expression. You can use this option as many times as
+        necessary to define multiple symbols in the command line. A limited
+        form of arithmetic is supported for the expression in this context:
+        you can give a hexadecimal constant or the name of an existing symbol
+        or use ++ and -- to add or subtract hexadecimal constants or symbols. If
+        you need more elaborate expressions, consider using the linker command
+        language from a script.
+
+    --ddllll
+        Link with a dynamic-link library (DLL). Note that the entire option
+        must be spelled out completely, due to a conflict with the --dd option.
+    --ee entry
+        Use entry as the explicit symbol for beginning execution of your
+        program rather than using the default entry point.
+
+    --eemmbbeeddddeedd--rreellooccss
+        This option is only meaningful when linking MIPS embedded PIC code,
+        generated by the --mmeemmbbeeddddeedd--ppiicc option to the GNU compiler and
+        assembler. It causes the linker to create a table that can be used at
+        run time to relocate any data that was statically initialized to
+        pointer values.
+
+    --EE,, ----eexxppoorrtt--ddyynnaammiicc
+        When creating an ELF file, add all symbols to the dynamic-symbol
+        table. Normally, the dynamic-symbol table contains only symbols that
+        are used by a dynamic object. This option is needed for some uses of
+        _dd_ll_oo_pp_ee_nn(3).
+    --ff name
+    ----aauuxxiilliiaarryy name
+        When creating an ELF shared object, set the internal DT_AUXILIARY
+        field to the specified name. This tells the dynamic linker that the
+        symbol table of the shared object should be used as an auxiliary
+        filter on the symbol table of the shared object name.
+    --FF name
+    ----ffiilltteerr name
+        When creating an ELF shared object, set the internal DT_FILTER field
+        to the specified name. This tells the dynamic linker that the symbol
+        table of the shared object should be used as a filter on the symbol
+        table of the shared object name.
+    ----ffoorrmmaatt input-format
+        Synonym for --bb input-format.
+
+    --gg
+        Accepted, but ignored; this is provided for compatibility with other
+        tools.
+    --GG size
+        Set the maximum size of objects to be optimized using the GP register
+        to size under MIPS ECOFF. Ignored for other object file formats.
+    --hh name
+    --ssoonnaammee name
+        When creating an ELF shared object, set the internal DT_SONAME field
+        to the specified name. When an executable is linked with a shared
+        object that has a DT_SONAME field, and the executable is run, the
+        dynamic linker will attempt to load the shared object specified by the
+        DT_SONAME field rather than the using the file name given to the
+        linker.
+
+    ----hheellpp
+        Print a summary of the command-line options on the standard output and
+        exit. This option and ----vveerrssiioonn begin with two dashes instead of one
+        for compatibility with other GNU programs. The other options start
+        with only one dash for compatibility with other linkers.
+
+    --ii
+        Perform an incremental link (same as option --rr).
+    --ll ar
+        Add an archive file ar to the list of files to link. This option can
+        be used any number of times. The lldd(1) utility will search its path
+        list for occurrences of libaarr.a for every ar specified.
+    --LL searchdir
+        This command adds path searchdir to the list of paths that lldd(1) will
+        search for archive libraries. You can use this option any number of
+        times.
+        The default set of paths searched (without being specified with --LL)
+        depends on which emulation mode lldd(1) is using, and in some cases, how
+        it was configured. The paths can also be specified in a link script
+        with the SSEEAARRCCHH__DDIIRR command.
+
+    --MM
+        Print (to the standard output file) a link map—diagnostic information
+        about where symbols are mapped by lldd(1), and information on global
+        common storage allocation.
+    --MMaapp mapfile
+        Print to the file mapfile a link map—diagnostic information about
+        where symbols are mapped by lldd(1), and information on global common
+        storage allocation.
+    --mm emulation
+        Emulate the emulation linker. You can list the available emulations
+        with the ----vveerrbboossee or --VV options. This option overrides the compiled-
+        in default, which is the system for which you configured lldd(1).
+    ----mmrrii==ssccrriipptt==MRI-commandfile
+        Equivalent to --cc.
+
+    --NN
+        Specifies readable and writeable tteexxtt and ddaattaa sections. If the output
+        format supports traditional magic numbers, the output is marked as
+        OOMMAAGGIICC.
+        When you use the --NN option, the linker does not page-align the data
+        segment.
+
+    --nn
+        Sets the text segment to be read only, and NNMMAAGGIICC is written, if
+        possible.
+
+    --nnooiinnhhiibbiitt--eexxeecc
+        Normally, the linker will not produce an output file if it encounters
+        errors during the link process. With this flag, you can specify that
+        you want the output file retained even after non-fatal errors. In some
+        versions of ggcccc(1) and gg++++(1), this option is always passed to the
+        linker, but not with Interix.
+
+    --nnoo--kkeeeepp--mmeemmoorryy
+        The linker normally optimizes for speed over memory usage by caching
+        the symbol tables of input files in memory. This option tells the
+        linker to optimize for memory usage instead by rereading the symbol
+        tables as necessary. This might be required if the linker runs out of
+        memory space while linking a large executable.
+    --oo output
+        output is a name for the program produced by lldd(1); if this option is
+        not specified, the name aa..oouutt is used by default. The script command
+        OOUUTTPPUUTT can also specify the output file name.
+    --ooffoorrmmaatt output-format
+        Specify the binary format for the output object file. You do not
+        usually need to specify this, as lldd(1) is configured to produce as a
+        default output format the most usual format on each computer. output-
+        format is a text string, the name of a particular format supported by
+        the BFD libraries. The script command OOUUTTPPUUTT__FFOORRMMAATT can also specify
+        the output format, but this option overrides it.
+    --RR filename
+        Read symbol names and their addresses from filename, but do not
+        relocate it or include it in the output. This allows your output file
+        to refer symbolically to absolute locations of memory defined in other
+        programs.
+
+    --rr
+        Generates relocatable output; that is, generates an output file that
+        can, in turn, serve as input to lldd(1). This is often called partial
+        linking. As a side effect, in environments that support traditional
+        magic numbers, this option also sets the output file's magic number to
+        OOMMAAGGIICC. If this option is not specified, an absolute file is produced.
+        When linking C++ programs, this option will not resolve references to
+        constructors; --UUrr is an alternative.
+        This option does the same as --ii.
+
+    --rreellaaxx
+        An option with computer-dependent effects. Currently this option is
+        only supported on the H8/300.
+        On some platforms, you can use this option to perform global
+        optimizations that become possible when the linker resolves addressing
+        in your program, such as relaxing address modes and synthesizing new
+        instructions in the output object file.
+        On platforms where this is not supported, --rreellaaxx is accepted, but has
+        no effect.
+
+    --rrppaatthh ddiirreeccttoorryy
+        Add a directory to the run-time library search path. This is used when
+        linking an ELF executable with shared objects. All --rrppaatthh arguments
+        are concatenated and passed to the run-time linker, which uses them to
+        locate shared objects at run time. The --rrppaatthh option is also used when
+        locating shared objects that are needed by shared objects explicitly
+        included in the link; see the description of the --rrppaatthh--lliinnkk option.
+        If --rrppaatthh is not used when linking an ELF executable, the contents of
+        the environment variable LLDD__RRUUNN__PPAATTHH will be used if it is defined.
+        The --rrppaatthh option can also be used on SunOS. By default, on SunOS, the
+        linker will form a run-time search patch out of all of the --LL options
+        it is given. If a --rrppaatthh option is used, the run-time search path will
+        be formed exclusively using the --rrppaatthh options, ignoring the --
+        LL options. This can be helpful when using ggcccc, which adds many --
+        LL options that might be on NFS mounted file systems.
+
+    --rrppaatthh--lliinnkk ddiirreeccttoorryy
+        When using ELF or SunOS, one shared library might require another.
+        This happens when an lldd --sshhaarreedd(1) link includes a shared library as
+        one of the input files.
+        If the linker encounters such a dependency when doing a non-shared,
+        non-relocateable link, it will automatically try to locate the
+        required shared library and include it in the link, if it is not
+        included explicitly. In such a case, the --rrppaatthh--lliinnkk option specifies
+        the first set of directories to search. The --rrppaatthh--lliinnkk option can
+        specify a sequence of directory names, either by specifying a list of
+        names separated by colons, or by appearing multiple times.
+        If the required shared library is not found, the linker will issue a
+        warning and continue with the link.
+
+    --SS
+        Omits debugger symbol information (but not all symbols) from the
+        output file.
+
+    --ss
+        Omits all symbol information from the output file.
+
+    --sshhaarreedd
+        Create a shared library. This is currently only supported on ELF and
+        SunOS platforms (on SunOS, it is not required because the linker
+        automatically creates a shared library when there are undefined
+        symbols and the --ee option is not used).
+
+    --ssoorrtt--ccoommmmoonn
+        Normally, when lldd(1) places the global common symbols in the
+        appropriate output sections, it sorts them by size, starting with the
+        one-byte symbols, followed by the two-byte symbols, then the four-byte
+        symbols, and then everything else. This prevent gaps between symbols
+        that result from alignment constraints. This option disables that
+        sorting.
+    --sspplliitt--bbyy--rreelloocc count
+        Tries to create extra sections in the output file so that no single
+        output section in the file contains more than count relocations. This
+        is useful when generating huge relocatables for downloading into
+        certain real-time kernels with the COFF object-file format because
+        COFF cannot represent more than 65535 relocations in a single section.
+        Note that this will fail to work with object-file formats that do not
+        support arbitrary sections. The linker will not split up individual
+        input sections for redistribution, so if a single input section
+        contains more than count relocations, one output section will contain
+        that many relocations.
+
+    --sspplliitt--bbyy--ffiillee
+        Similar to --sspplliitt--bbyy--rreelloocc but creates a new output section for each
+        input file.
+    --TTbbssss org
+    --TTddaattaa org
+    --TTtteexxtt org
+        Use org as the starting address for the bbssss, ddaattaa, or tteexxtt segment of
+        the output file. The org argument is a hexadecimal integer that
+        specifies an address relative to the image base, not an absolute
+        address.
+    --TT commandfile
+        Equivalent to --cc commandfile; supported for compatibility with other
+        tools. The language used for --TT is the default language, rather than
+        MRI. The --TT option is also known as ----ssccrriipptt.
+
+    --tt
+        Prints names of input files as lldd(1) processes them.
+    --uu sym
+        Forces sym to be entered in the output file as an undefined symbol.
+        This might, for example, trigger linking of additional modules from
+        standard libraries. --uu can be repeated with different option arguments
+        to enter additional undefined symbols.
+
+    --UUrr
+        For anything other than C++ programs, this option is equivalent to --rr:
+        it generates relocatable output; that is, an output file that can, in
+        turn, serve as input to lldd(1). When linking C++ programs, --UUrr will
+        resolve references to constructors, unlike --rr.
+
+    ----vveerrbboossee
+        Display the version number for lldd(1) and list the supported
+        emulations. Display which input files can and can not be opened.
+
+    --vv
+        Display the version number for lldd(1).
+
+    --VV
+        Display the version number and the supported emulations for lldd(1).
+
+    ----vveerrssiioonn
+        Display the version number for lldd(1) and exit.
+
+    --wwaarrnn--ccoommmmoonn
+        Warn when a common symbol is combined with another common symbol or
+        with a symbol definition. Traditional linkers allow this somewhat
+        inefficient practice, but other linkers may not not. This option
+        allows you to find potential problems from combining global symbols.
+
+    --wwaarrnn--ccoonnssttrruuccttoorrss
+        Warn if any global constructors are used. This is only useful for a
+        few object-file formats. For formats like COFF or ELF, the linker
+        cannot detect the use of global constructors.
+
+    --wwaarrnn--mmuullttiippllee--ggpp
+        Warn if the output file requires multiple global-pointer values. This
+        option is meaningful only for certain processors, such as those that
+        are Alpha-based.
+
+    --wwaarrnn--oonnccee
+        Only warn once for each undefined symbol, rather than once per module
+        which refers to it.
+
+    --wwaarrnn--sseeccttiioonn--aalliiggnn
+        Warn if the address of an output section is changed because of
+        alignment. Typically, the alignment will be set by an input section.
+        The address will be changed only if it not explicitly specified; that
+        is, if the SECTIONS command does not specify a start address for the
+        section.
+
+    ----wwhhoollee--aarrcchhiivvee
+        For each archive mentioned on the command line after the ----wwhhoollee--
+        aarrcchhiivvee option, include every object file in the archive in the link,
+        rather than searching the archive for the required object files. This
+        is normally used to turn an archive file into a shared library,
+        forcing every object to be included in the resulting shared library.
+
+    ----nnoo--wwhhoollee--aarrcchhiivvee
+        Turn off the effect of the ----wwhhoollee--aarrcchhiivvee option for archives that
+        appear later on the command line.
+    ----wwrraapp symbol
+        Use a wrapper function for symbol. Any undefined reference to symbol
+        will be resolved to __wrap_ssyymmbbooll. Any undefined reference to
+        __real_ssyymmbbooll will be resolved to symbol.
+
+    --XX
+        Delete all temporary local symbols. For most targets, this includes
+        all local symbols whose names begin with LL.
+
+    --xx
+        Delete all local symbols.
+
+  EENNVVIIRROONNMMEENNTT
+
+    You can change the behavior of lldd(1) with the environment variable
+    GNUTARGET.
+
+    GNUTARGET determines the input-file object format if you do not use --bb (or
+    its synonym --ffoorrmmaatt). Its value should be one of the BFD names for an
+    input format. If there is no GNUTARGET in the environment, lldd(1) uses the
+    natural format of the host. If GNUTARGET is set to default, BFD attempts
+    to discover the input format by examining binary input files. This method
+    often succeeds, but there are potential ambiguities because there is no
+    method of ensuring that the magic number used to flag object-file formats
+    is unique. The configuration procedure for BFD on each system, however,
+    places the conventional format for that system first in the search-list,
+    so ambiguities are resolved in favor of convention.
+
+  CCOOPPYYIINNGG
+
+    Copyright (c) 1991, 1992 Free Software Foundation, Inc.
+
+    Permission is granted to make and distribute verbatim copies of this
+    manual provided the copyright notice and this permission notice are
+    preserved on all copies.
+
+    Permission is granted to copy and distribute modified versions of this
+    manual under the conditions for verbatim copying, provided that the entire
+    resulting derived work is distributed under the terms of a permission
+    notice identical to this one.
+
+    Permission is granted to copy and distribute translations of this manual
+    into another language, under the above conditions for modified versions,
+    except that this permission notice may be included in translations
+    approved by the Free Software Foundation instead of in the original
+    English.
+
+  SSEEEE AALLSSOO
+
+    _l_i_b_l_o_c_k(1)
+
+    _o_b_j_d_u_m_p(1)
+
+    lldd(1) and binutils entries in iinnffoo
+
+    ld: the GNU linker, Steve Chamberlain and Roland Pesch; The GNU Binary
+    Utilities, Roland H. Pesch.
+

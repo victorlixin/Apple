@@ -1,0 +1,146 @@
+writev(2)                                                     writev(2)
+
+  wwrriittee(())
+
+  NNAAMMEE
+
+    write(), pwrite(), writev() - write output
+
+  SSYYNNOOPPSSIISS
+
+    #include <unistd.h>
+
+    ssize_t write (int d, const void *buf, size_t nbytes)
+    ssize_t pwrite (int d, const void *buf, size_t nbytes, off_t offset)
+
+    #include <sys/uio.h>
+
+    ssize_t writev (int d, const struct iovec *iov, int iovcnt)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The wwrriittee(2) function attempts to write nbytes of data to the object
+    referenced by the descriptor d from the buffer pointed to by buf. The
+    wwrriitteevv(2) function performs the same action, but gathers the output data
+    from the iovcnt buffers specified by the members of the iioovv array: iov[0],
+    iov[1], ..., iov[iovcnt-1].
+
+    For wwrriitteevv(2), the iioovveecc structure is defined as:
+
+    struct iovec {
+         void *iov_base;
+         size_t iov_len;
+    };
+
+    Each iioovveecc entry specifies the base address and length of an area in
+    memory from which data should be written. The wwrriitteevv(2) function will
+    always write a complete area before proceeding to the next.
+
+    On objects capable of seeking, the wwrriittee(2) starts at a position given by
+    the pointer associated with d, (see _ll_ss_ee_ee_kk(2)). Upon return from wwrriittee(2),
+    the pointer is incremented by the number of bytes which were written.
+
+    Objects that are not capable of seeking always write from the current
+    position. The value of the pointer associated with such an object is
+    undefined.
+
+    The ppwwrriittee(2) function is identical to wwrriittee(2), except that it begins
+    writing at the byte position in the file specified by the offset argument
+    and does not change the file pointer.
+
+    When using non-blocking input/output (I/O) on objects such as sockets that
+    are subject to flow control, these functions can write fewer bytes than
+    requested; the return value must be noted, and the remainder of the
+    operation should be retried when possible.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    Upon successful completion the number of bytes which were written is
+    returned. Otherwise a -1 is returned and the global variable errno is set
+    to indicate the error.
+
+    When calling the wwrriittee(2) or the ppwwrriittee(2) function on a file that is not
+    a regular file with nbytes set to zero, the function returns 0.
+
+    When the nbytes argument exceeds {SSIZE_MAX}, the return value is
+    truncated to type ssssiizzee__tt.
+
+  EERRRROORRSS
+
+    All three functions will fail and the file pointer will remain unchanged
+    if:
+
+    [EAGAIN]
+        The file was marked for non-blocking I/O, and no data could be written
+        immediately.
+
+    [EBADF]
+        D is not a valid descriptor open for writing.
+
+    [EFAULT]
+        Part of iov or data to be written to the file points outside the
+        process's allocated address space.
+
+    [EFBIG]
+        An attempt was made to write a file that exceeds the process's file
+        size limit or the maximum file size.
+
+    [EINVAL]
+        The pointer associated with d was negative, or d is on a device that
+        doesn't support the operation.
+
+    [EIO]
+        An I/O error occurred while reading from or writing to the file
+        system.
+
+    [EPIPE]
+        An attempt is made to write to a socket of type SOCK_STREAM that is
+        not connected to a peer socket.
+
+    [ENOSPC]
+        There is no free space remaining on the file system containing the
+        file.
+
+    [EPIPE]
+        An attempt is made to write to a pipe that is not open for reading by
+        any process.
+
+    The ppwwrriittee(2) function can fail for the following reasons:
+
+    [EINVAL]
+        The offset argument is invalid (negative).
+
+    [ESPIPE]
+        The d argument is associated with a pipe or FIFO.
+
+    In addition, wwrriitteevv(2) may return one of the following errors:
+
+    [EINVAL]
+        Iovcnt was less than or equal to 0, or greater than
+
+    [EINVAL]
+        One of the iov_len values in the iioovv array was negative.
+
+    [EINVAL]
+        The sum of the iov_len values in the iioovv array overflowed a 32-bit
+        integer.
+
+  SSEEEE AALLSSOO
+
+    _f_c_n_t_l(2)
+
+    _l_s_e_e_k(2)
+
+    _o_p_e_n(2)
+
+    _p_i_p_e(2)
+
+    _s_e_l_e_c_t(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    The wwrriittee function is async-signal safe. The following functions are not
+    async-signal safe: wwrriitteevv,, ppwwrriittee.
+

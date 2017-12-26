@@ -1,0 +1,213 @@
+t_accept(3)                                                 t_accept(3)
+
+  tt__aacccceepptt(())
+
+  NNAAMMEE
+
+    t_accept - accept a connection request
+
+  SSYYNNOOPPSSIISS
+
+    #include <xti.h>
+
+    int t_accept(
+        int fd,
+        int resfd,
+        const struct t_call *call)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The following table provides an overview of the _tt____aa_cc_cc_ee_pp_tt(3) function
+    parameters.
+
+    PPaarraammeetteerrss     BBeeffoorree ccaallll      AAfftteerr ccaallll
+
+    fd             x                /
+
+    resfd          x                /
+
+    call->         addr.maxlen      =
+
+    call->         addr.len         x
+
+    call->         addr.buf         ? (?)
+
+    call->         opt.maxlen       =
+
+    call->         opt.len          x
+
+    call->         opt.buf          ? (?)
+
+    call->         udata.maxlen     =
+
+    call->         udata.len        x
+
+    call->         udata.buf        ? (?)
+
+    call->         sequence         x
+
+    The _tt____aa_cc_cc_ee_pp_tt(3) function is issued by a transport user to accept a
+    connection request. The parameter fd identifies the local transport
+    endpoint where the connection indication arrived; resfd specifies the
+    local transport endpoint where the connection is to be established, and
+    call contains information required by the transport provider to complete
+    the connection. The parameter call points to a t_call structure which
+    contains the following members:
+
+    struct netbuf addr;
+    struct netbuf opt;
+    struct netbuf udata;
+    int sequence;
+
+    In call, addr is the protocol address of the calling transport user, opt
+    indicates any options associated with the connection, udata points to any
+    user data to be returned to the caller, and sequence is the value returned
+    by _tt____ll_ii_ss_tt_ee_nn(3) that uniquely associates the response with a previously
+    received connection indication. The address of the caller, addr can be
+    null (length zero); where addr is not null, it can optionally be checked
+    by X/Open Transport Interface (XTI).
+
+    A transport user can accept a connection on either the same local
+    transport endpoint as the one on which the connection indication arrived,
+    or on a different local transport endpoint. Before the connection can be
+    accepted on the same endpoint (resfd==fd), the user must have responded to
+    any previous connection indications received on that transport endpoint
+    (through _tt____aa_cc_cc_ee_pp_tt(3) or _tt____ss_nn_dd_dd_ii_ss(3). Otherwise, _tt____aa_cc_cc_ee_pp_tt(3) will fail and
+    set t_errno to [TINDOUT].
+
+    If a different transport endpoint is specified (resfd!=fd), the user might
+    or might not choose to bind the endpoint before the _tt____aa_cc_cc_ee_pp_tt(3) is issued.
+    If the endpoint is not bound prior to the _tt____aa_cc_cc_ee_pp_tt(3), the endpoint must
+    be in the T_UNBND state before the _tt____aa_cc_cc_ee_pp_tt(3) is issued, and the
+    transport provider will automatically bind it to an address that is
+    appropriate for the protocol concerned. If the transport user chooses to
+    bind the endpoint, it must be bound to a protocol address with a qlen of
+    zero and must be in the T_IDLE state before the _tt____aa_cc_cc_ee_pp_tt(3) is issued.
+
+    Responding endpoints should be supplied to _tt____aa_cc_cc_ee_pp_tt(3) in the state
+    T_UNBND.
+
+    The call to _tt____aa_cc_cc_ee_pp_tt(3) can fail with t_errno set to [TLOOK] if there are
+    indications (for example, connect or disconnect) waiting to be received on
+    endpoint fd. Applications should be prepared for such a failure.
+
+    The udata argument enables the called transport user to send user data to
+    the caller. The amount of user data must not exceed the limits supported
+    by the transport provider as returned in the connect field of the info
+    argument of _tt____oo_pp_ee_nn(3) or _tt____gg_ee_tt_ii_nn_ff_oo(3). If the lleenn field of udata is zero,
+    no data will be sent to the caller. All the mmaaxxlleenn fields are meaningless.
+
+    When the user does not indicate any option (call->opt.len = 0) the
+    connection will be accepted with the option values currently set for the
+    responding endpoint, resfd.
+
+  CCAAVVEEAATTSS
+
+    There might be transport provider-specific restrictions on address
+    binding.
+
+    Some transport providers do not differentiate between a connection
+    indication and the connection itself. If the connection has already been
+    established after a successful return of _tt____ll_ii_ss_tt_ee_nn(3), _tt____aa_cc_cc_ee_pp_tt(3) will
+    assign the existing connection to the transport endpoint specified by
+    resfd.
+
+  VVAALLIIDD SSTTAATTEESS
+
+    fd: T_INCON
+    resfd (fd!=resfd): T_IDLE, T_UNBND
+
+  EERRRROORRSS
+
+    On failure, t_errno is set to one of the following values:
+
+    [TACCES]
+        The user does not have permission to accept a connection on the
+        responding transport endpoint or to use the specified options.
+
+    [TBADADDR]
+        The specified protocol address was in an incorrect format or contained
+        illegal information.
+
+    [TBADDATA]
+        The amount of user data specified was not within the bounds allowed by
+        the transport provider.
+
+    [TBADF]
+        The file descriptor fd or resfd does not refer to a transport
+        endpoint.
+
+    [TBADOPT]
+        The specified options were in an incorrect format or contained illegal
+        information.
+
+    [TBADSEQ]
+        Either an invalid sequence number was specified, or a valid sequence
+        number was specified but the connection request was aborted by the
+        peer. In the latter case, its T_DISCONNECT event will be received on
+        the listening endpoint.
+
+    [TINDOUT]
+        The function was called with fd==resfd, but there are outstanding
+        connection indications on the endpoint. Those other connection
+        indications must be handled either by rejecting them through
+        _tt____ss_nn_dd_dd_ii_ss(3) or accepting them on a different endpoint through
+        _tt____aa_cc_cc_ee_pp_tt(3).
+
+    [TLOOK]
+        An asynchronous event occurred on the transport endpoint referenced by
+        fd and requires immediate attention.
+
+    [TNOTSUPPORT]
+        This function is not supported by the underlying transport provider.
+
+    [TOUTSTATE]
+        The communications endpoint referenced by fd or resfd is not in one of
+        the states in which a call to this function is valid.
+
+    [TPROTO]
+        This error indicates that a communication problem has been detected
+        between XTI and the transport provider for which there is no other
+        suitable XTI error (t_errno).
+
+    [TPROVMISMATCH]
+        The file descriptors fd and resfd do not refer to the same transport
+        provider.
+
+    [TRESADDR]
+        This transport provider requires both fd and resfd to be bound to the
+        same address; this error appears if they are not bound to the same
+        address.
+
+    [TRESQLEN]
+        The endpoint referenced by resfd (where resfd != fd) was bound to a
+        protocol address with a qlen that is greater than zero.
+
+    [TSYSERR]
+        A system error occurred during the execution of this function.
+
+  RREETTUURRNN VVAALLUUEE
+
+    Upon successful completion, a value of 0 is returned. Otherwise, a value
+    of -1 is returned and t_errno is set to indicate an error.
+
+  SSEEEE AALLSSOO
+
+    _tt____cc_oo_nn_nn_ee_cc_tt(3)
+
+    _tt____gg_ee_tt_ss_tt_aa_tt_ee(3)
+
+    _tt____ll_ii_ss_tt_ee_nn(3)
+
+    _tt____oo_pp_ee_nn(3)
+
+    _tt____oo_pp_tt_mm_gg_mm_tt(3)
+
+    _tt____rr_cc_vv_cc_oo_nn_nn_ee_cc_tt(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The tt__aacccceepptt function is not thread safe.
+
+    The tt__aacccceepptt function is not async-signal safe.
+

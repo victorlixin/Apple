@@ -1,0 +1,114 @@
+
+
+strcf(4tcp)                                           strcf(4tcp)
+
+DDeessccrriippttiioonn
+       The  /etc/inet/strcf  file contains the configuration that
+       interprets to define the STREAMS  interface.   (Note  that
+       networking     interfaces     are    defined    via    the
+       /etc/confnet.d/interface file.)
+
+       The strcf file contains  several  functions  that  perform
+       various configuration operations, along with a sample boot
+       function.  Normally, no function  should  be  modified  to
+       customize  the configuration for a given installation.  In
+       some cases, however, it may be necessary to change  exist-
+       ing functions or add new functions.
+
+       The  tp and linkint functions perform basic linking opera-
+       tions.    The   add_interface,   add_interface_SNAP,   and
+       add_loop  functions  configure  different  types of inter-
+       faces.
+
+   ttpp ---- ccoonnffiigguurree lliinnkk ttoo aa ttrraannssppoorrtt pprroovviiddeerr
+       Function tp sets up the link between a transport provider,
+       such  as  TCP,  and  IP.   #  #  tp  - configure transport
+       provider (i.e. tcp, udp, icmp) # usage: tp devname # tp  {
+            p  =  open  $1      ip = open /dev/ip      plink p ip
+            close p }
+
+   lliinnkkiinntt ---- ccoonnffiigguurree tthhee lliinnkk iinntteerrffaaccee
+       Function linkint links the specified streams  and  does  a
+       sifname operation with the given name.  # # linkint - link
+       interface to ip or arp # usage: linkint top bottom  ifname
+       flags  #  linkint {      x = plink $1 $2      sifname $1 x
+       $3 $4 }
+
+   aadddd__iinntteerrffaaccee ---- ccoonnffiigguurree aann EEtthheerrnneett iinntteerrffaaccee
+       Function add_interface is  used  to  configure  a  cloning
+       device  driver that uses a different major number for each
+       interface that uses Ethernet framing (see RFC 894).   #  #
+       add_interface  -  configure  ethernet-type  interface  for
+       cloning driver with #    one major  per  interface.  Argu-
+       ments  are already concatenated with #    the major device
+       number (such  as  emd0).  It  is  assumed  that  boot  has
+       #    already  run.  We  open  /dev/ip  and link the device
+       beneath it.  # #  usage:  add_interface  compat_ip_fd  dev
+       ifname  #  add_interface  {      dev = open $2      addr =
+       dlbind dev 0x800          # For Ethernet encoding       ip
+       = open /dev/ip      linkint ip dev $3 0x4042      close ip
+            dev2 = open $2      addr = dlbind  dev2  0x806 #  For
+       Ethernet     encoding         arp    =    open    /dev/arp
+            sifhrd    arp ether      # hardware interface is eth-
+       ernet       linkint arp dev2 $3 0x4042      sifaddr arp $3
+       addr      close arp      close dev2 }
+
+   aadddd__iinntteerrffaaccee__SSNNAAPP ---- ccoonnffiigguurree aann IIEEEEEE 880022..nn iinntteerrffaaccee
+       Function add_interface_SNAP is used to configure a cloning
+       device  driver that uses a different major number for each
+
+                                                                1
+
+strcf(4tcp)                                           strcf(4tcp)
+
+       interface that uses IEEE 802.n framing.   #  #  add_inter-
+       face_SNAP  - configure ethernet-type interface for cloning
+       driver #    with one major  per  interface.  This  version
+       sets  up  802.n  framing.  #    Arguments are already con-
+       catenated with  the  major  device  number  #    (such  as
+       emd0).  It  is assumed that boot has already run.  #    We
+       bind the device to the SNAP SAP for ip and link the device
+       #    under ip. We also bind the device to the SNAP SAP for
+       arp and link  #    the  device  under  arp.   #  #  usage:
+       add_interface_SNAP  compat_ip_fd  dev  ifname # add_inter-
+       face_SNAP {      dev = open  $2       addr  =  dlbind  dev
+       0xaa        #  For  IEEE  802 encoding      dlsubsbind dev
+       0x800      ip = open /dev/ip      linkint ip dev $3 0x4042
+            close  ip      dev2 = open $2      addr = dlbind dev2
+       0xaa       # For IEEE 802  encoding       dlsubsbind  dev2
+       0x806        arp   =   open   /dev/arp       sifhrd    arp
+       ieee       # hardware interface  is  ieee802       linkint
+       arp dev2 $3 0x4042      sifaddr arp $3 addr      close arp
+            close dev2 }
+
+   aadddd__lloooopp ---- ccoonnffiigguurree aa llooooppbbaacckk iinntteerrffaaccee
+       Function add_loop configures the loopback interface.  #  #
+       add_loop  -  configure loopback device. It is assumed that
+       #    boot has already run. We will open /dev/ip  ourselves
+       #    and  link the device beneath it.  # # usage: add_loop
+       compat_ip_fd compat_dev ifname # # add_loop {       dev  =
+       open  $2       addr  =  dlbind  dev  0x800       ip = open
+       /dev/ip       linkint  ip  dev  $3  0x4048       close  ip
+            close dev }
+
+   bboooott ---- ccoonnffiigguurree nneettwwoorrkk iinntteerrffaaccee aatt bboooott ttiimmee
+       Function  boot  is interpreted by slink unless an alterna-
+       tive function is specified.  Normally, only the interfaces
+       section and possibly the queue params section will have to
+       be customized for a given installation.  # # boot  -  boot
+       time  configuration  #  boot  {      #      # queue params
+            #      initqp  /dev/udp  rq  8192  49152       initqp
+       /dev/ip  muxrq  8192  49152  muxwq  8192 49152      initqp
+       /dev/tcp muxrq 8192 49152 muxwq 8192 49152       #       #
+       transport      #      tp /dev/tcp      tp /dev/udp      tp
+       /dev/icmp       tp  /dev/igmp       tp  /dev/ipip       tp
+       /dev/rip }
+
+FFiilleess
+       network  interface  definition file configuration file for
+       STREAMS
+
+RReeffeerreenncceess
+
+                                                                2
+

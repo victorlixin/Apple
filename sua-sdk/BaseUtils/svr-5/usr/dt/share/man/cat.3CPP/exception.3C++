@@ -1,0 +1,118 @@
+
+
+exception(3C++)                                   exception(3C++)
+
+SSyynnooppssiiss
+       #include <exception>
+
+       namespace std {
+         class exception;
+         class bad_exception;
+
+         typedef void (*unexpected_handler)();
+         unexpected_handler  set_unexpected(unexpected_handler f)
+       throw();
+         <B>void unexpected();
+         typedef void (*terminate_handler)();
+         terminate_handler   set_terminate(terminate_handler   f)
+       throw();
+         void terminate();
+         bool uncaught_exception(); }
+
+DDeessccrriippttiioonn
+       The  header  exception defines several types and functions
+       related  to the handling of exceptions in a C++ program.
+
+   CCllaasssseess
+       namespace std {
+         class exception {
+         public:
+           exception() throw();
+           exception(const exception&) throw();
+           exception& operator=(const exception&) throw();
+           virtual ~exception() throw();
+           virtual const char* what() const throw();
+         }; } The  class exception defines the base class for the
+       types  of  objects  thrown  as  exceptions by C++ Standard
+       library components, and  certain  expressions,  to  report
+       errors  detected  during program execution.  Effects: Con-
+       structs an object of class exception.
+       Notes: Does not throw any exceptions.  Effects: Copies  an
+       exception  object.   Effects:  Destroys an object of class
+       exception.
+       Notes: Does not throw any exceptions.  Returns: The string
+       std::exception.  namespace std {
+         class bad_exception : public exception {
+         public:
+           bad_exception() throw();
+           bad_exception(const bad_exception&) throw();
+           bad_exception&     operator=(const     bad_exception&)
+       throw();
+           virtual ~bad_exception() throw();
+           virtual const char* what() const throw();
+         }; } The class bad_exception defines the type of objects
+       thrown  when an unexpected() handler throws or rethrows an
+       exception that the violated exception  specification  does
+       not  allow,  but the violated exception specification does
+       include the std::bad_exception type.  Effects:  Constructs
+       an  object  of  class  bad_exception.   Effects: Copies an
+
+                                                                1
+
+exception(3C++)                                   exception(3C++)
+
+       object  of  class  bad_exception.   Returns:  The   string
+       std::bad_exception.
+
+   FFuunnccttiioonnss
+       The   type   of  a  handler function to be called by unex-
+       pected when a function attempts to throw an exception  not
+       listed in its exception-specification.
+       Required  behavior: an unexpected_handler either throws an
+       exception or terminates execution of the  program  without
+       returning  to the caller.  An  unexpected_handler may per-
+       form any of the following: throw an exception that  satis-
+       fies  the  exception specification (how- ever, if the call
+       to unexpected is from the  program  rather  than from  the
+       implementation,  any  exception  may be thrown); throw  an
+       exception of class bad_exception or of any class  directly
+       or  indirectly derived from bad_exception; call terminate;
+       call either abort or exit; Default behavior: The implemen-
+       tation's   default   unexpected_handler  calls  terminate.
+       Effects: Establishes the function designated by f  as  the
+       current unexpected_handler.
+       Requires: f shall not be a null pointer.
+       Returns: The previous unexpected_handler.  Called  by  the
+       implementation when a function exits via an exception  not
+       allowed  by  its  exception-specification.   May  also  be
+       called directly by the program.
+       Effects: Calls  the unexpected_handler function in  effect
+       immediately  after  evaluating  the  throw-expression,  if
+       called by the implementation, or calls the  current  unex-
+       pected_handler,  if  called by the program.  The type of a
+       handler function to be called by terminate when  terminat-
+       ing exception processing.
+       Required  behavior:  A  terminate_handler  shall terminate
+       execution of the program without returning to the  caller.
+       Default  behavior:  The  implementation's  default  termi-
+       nate_handler calls abort.  Effects: Establishes the  func-
+       tion  designated  by f as the current handler function for
+       terminating exception processing.
+       Requires: f must not be a null pointer.
+       Returns:  The  previous  terminate_handler.   Called  when
+       exception  handling  must  be abandoned for any of several
+       reasons.  May also be called directly by the program.
+       Effects: Calls the terminate_handler  function  in  effect
+       immediately  after  evaluating  the  throw-expression,  if
+       called by the implementation, or calls the current  termi-
+       nate_handler function, if called by the program.  Returns:
+       true after completing  evaluation  of  a  throw-expression
+       until  either  completing initialization of the exception-
+       declaration in the matching handler or after entering ter-
+       minate  for any reason other than an explicit call to ter-
+       minate.  Note that this includes stack unwinding.
+       Notes: When uncaught_exception is true, throwing an excep-
+       tion can result in a call of terminate.
+
+                                                                2
+

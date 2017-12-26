@@ -1,0 +1,105 @@
+
+
+aclipc(2)                                               aclipc(2)
+
+SSyynnooppssiiss
+       #include <sys/types.h> #include <acl.h>
+
+       int  aclipc(int  type, int id, int cmd,      int nentries,
+       struct acl *aclbufp);
+
+DDeessccrriippttiioonn
+       aclipc gets or sets an IPC object's ACL,  or  returns  the
+       number of ACL entries.  To get the ACL, the user must have
+       read access to the object.  To set an ACL, the  user  must
+       be  the owner or creator of the object or have the P_OWNER
+       privilege.  specifies how many ACL entries fit into buffer
+       aclbufp.   is  a  pointer to the acl struct which contains
+       the following fields:      int  a_type;   /* entry type */
+            uid_t     a_id;     /*    user   or   group   ID   */
+            ushort    a_perm;   /* entry permissions */
+
+       The values for a_type are: Permissions for  the  owner  of
+       the  object.   Permissions  for additional users.  Permis-
+       sions for members of the owning group of the object.  Per-
+       missions  for  members of additional groups.  Maximum per-
+       missions granted to the file group class.  Permissions for
+       other  users.   must be one of the following: id must be a
+       valid shared memory identifier  returned  by  shmget.   id
+       must  be  a valid semaphore identifier returned by semget.
+       id must be a valid message queue  identifier  returned  by
+       msgget.  must be one of the following: The ACL information
+       for the IPC object specified by type and id is copied into
+       the user supplied buffer aclbufp .  nentries specifies the
+       number of ACL entries that will  fit  into  aclbufp.   The
+       user must have read access to the IPC object.  The ACL for
+       the IPC object specified by type and id is set to the  ACL
+       entries  in  the  user  supplied buffer aclbufp.  nentries
+       specifies the number of ACL entries currently in  aclbufp.
+       The entries in aclbufp must be valid and in the proper ACL
+       order [see The user must have P_OWNER privilege, or be the
+       creator  or  owner of the object, to alter the IPC object.
+       Returns the number of ACL entries for the IPC object spec-
+       ified  by  type  and  id nentries and aclbufp are ignored.
+       The user must have read access to the IPC object.
+
+       When the ACL for an IPC object is set, the permission mode
+       (in  ipc_perm)  may  change.   The first three bits of the
+       permission mode are set to the permissions of  the  object
+       user  entry.  The middle three bits of the permission mode
+       are set to the ORed value of the permissions for the addi-
+       tional  users, object group, and additional group entries.
+       The last three bits of the permission mode are set to  the
+       permissions  of the other entry.  See for a description of
+       ipc_perm.  See for a description of ACLs.
+
+       For cmd ACL_SET, the aclipc call will succeed  if  all  of
+       the following are true: There is exactly one entry each of
+       type  USER_OBJ,  GROUP_OBJ,  CLASS_OBJ,   and   OTHER_OBJ.
+
+                                                                1
+
+aclipc(2)                                               aclipc(2)
+
+       Entries  of  type  USER or GROUP may not contain duplicate
+       entries.  A duplicate entry is one of the same  type  con-
+       taining  the  same  numeric  ID.   If  an  ACL contains no
+       entries of type USER and no entries of  type  GROUP,  then
+       the  entries of type GROUP_OBJ and CLASS_OBJ must have the
+       same permissions.
+
+   RReettuurrnn vvaalluueess
+       On success, aclipc returns the number of ACL  entries  for
+       cmd  ACL_CNT and ACL_GET, and 0 for cmd ACL_SET.  On fail-
+       ure, aclipc returns -1 and  sets  errno  to  identify  the
+       error.
+
+   EErrrroorrss
+       In  the  following conditions, aclipc fails and sets errno
+       to: type is not one of IPC_SHM, IPC_SEM, or  IPC_MSG.   id
+       is  not  a  valid  type  identifier.   cmd  is  not one of
+       ACL_GET, ACL_SET, or ACL_CNT.  cmd is ACL_SET and the  ACL
+       entries  in aclbufp are not valid or in proper order.  cmd
+       is ACL_SET and the user does not  have  P_OWNER  privilege
+       and  is  neither  the creator nor owner of the IPC object.
+       cmd is ACL_SET and the security level of the calling  pro-
+       cess is not equal to the security level of the IPC object.
+       cmd is ACL_GET or ACL_CNT and the security  level  of  the
+       calling  process is dominated by the security level of the
+       IPC object.  cmd is ACL_GET or ACL_CNT and the  user  does
+       not have discretionary read access to the IPC object.  cmd
+       is ACL_GET and the number  of  ACL  entries  for  the  IPC
+       object  exceeds  nentries.  cmd is ACL_SET and nentries is
+       greater than the tunable parameter aclmax.  cmd is ACL_SET
+       and  the  number of ACL entries is less than the number of
+       mandatory ACL entries (4).  cmd is ACL_GET and an  attempt
+       is  made  to  copy  ACL  entries beyond the user's address
+       space; this is possible if nentries  is  larger  than  the
+       number  of  ACL  entries  that  aclbufp  can hold.  cmd is
+       ACL_SET and an attempt is made to copy  from  outside  the
+       user's address space.
+
+RReeffeerreenncceess
+
+                                                                2
+

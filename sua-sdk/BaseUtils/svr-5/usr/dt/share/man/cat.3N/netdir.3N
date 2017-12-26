@@ -1,0 +1,192 @@
+
+
+netdir(3N)                                             netdir(3N)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <netdir.h>
+
+       int   netdir_getbyname(const   struct  netconfig  *config,
+            const struct nd_hostserv *service, struct nd_addrlist
+       **addrs);
+
+       int   netdir_getbyaddr(const   struct  netconfig  *config,
+            struct nd_hostservlist **service, const struct netbuf
+       *netaddr);
+
+       void netdir_free(void *ptr, int ident);
+
+       char    *taddr2uaddr(const   struct   netconfig   *config,
+            const struct netbuf *addr);
+
+       struct netbuf *uaddr2taddr(const struct netconfig *config,
+            const char *uaddr);
+
+       int  netdir_options(const struct netconfig *netconfig, int
+       option,      int fd, const char *pointer_to_args);
+
+       void netdir_perror(char *s);
+
+       char *netdir_sperror(void);
+
+DDeessccrriippttiioonn
+       These routines provide a generic  interface  for  name-to-
+       address  mapping  that will work with all transport proto-
+       cols.  This interface provides a generic way for  programs
+       to convert transport-specific addresses into common struc-
+       tures and back again.
+
+       The netdir_getbyname routine maps  the  machine  name  and
+       service  name in the nd_hostserv structure to a collection
+       of addresses of the type understood by the transport iden-
+       tified  in  the netconfig structure.  This routine returns
+       all addresses that are valid for  that  transport  in  the
+       nd_addrlist   structure.    The   netconfig  structure  is
+       described  on  the  manual  page.   The  nd_addrlist   and
+       nd_hostserv structures have the following elements:
+
+       nd_addrlist  structure: int            n_cnt;      /* num-
+       ber of netbufs */ struct netbuf  *n_addrs;   /*  the  net-
+       bufs */
+
+       nd_hostserv  structure: char *h_host;   /* the hostname */
+       char *h_serv;   /* the service  name  */  netdir_getbyname
+       accepts  some special-case hostnames.  These hostnames are
+       hints to the underlying mapping routines that  define  the
+       intent  of  the request.  This information is required for
+       some transport provider developers to provide the  correct
+       information back to the caller.  The hostnames are defined
+       in  netdir.h.   The  currently  defined   hostnames   are:
+
+                                                                1
+
+netdir(3N)                                             netdir(3N)
+
+       Represents  the  address  to which local programs can bind
+       their endpoints.  HOST_SELF differs from the hostname pro-
+       vided  by  gethostname,  which  represents  the address to
+       which remote programs can connect.   Represents  any  host
+       accessible  by  this  transport provider.  HOST_ANY allows
+       applications to specify a required service without  speci-
+       fying  a  particular hostname.  Represents the address for
+       all hosts accessible by this transport provider.   Network
+       requests to this address will be received by all machines.
+       All fields of the nd_hostserv structure must  be  initial-
+       ized.
+
+       To  find  all available transports, call the netdir_getby-
+       name routine with each netconfig structure returned by the
+       getnetpath call.
+
+       The  netdir_getbyaddr  routine  maps  addresses to service
+       names.  This routine returns a list of  host  and  service
+       pairs  that  would  yield  this address.  If more than one
+       tuple of host and service name is returned then the  first
+       tuple  contains the preferred host and service names.  The
+       nd_hostservlist structure contains the following  members:
+       int               h_cnt;         /* the number of nd_host-
+       servs */ struct hostserv  *h_hostservs;  /* the entries */
+       The  netdir_free  structure is used to free the structures
+       allocated by the name to address translation routines.
+
+       The following types of structures may be specified by  the
+       ident  argument:  Frees  a  netbuf  structure.   Frees the
+       nd_addrlist structure, such  as  that  allocated  by  net-
+       dir_getbyname.   Frees a nd_hostserv structure.  Frees the
+       nd_hostservlist structure, such as that allocated by  net-
+       dir_getbyaddr.
+
+       The  taddr2uaddr and uaddr2taddr routines support transla-
+       tion between universal addresses  and  TLI  type  netbufs.
+       They  take  and  return  character  string  pointers.  The
+       taddr2uaddr routine returns a pointer  to  a  string  that
+       contains  the  universal  address  and returns NULL if the
+       conversion is not possible.  This is not  a  fatal  condi-
+       tion,  as  some  transports  may  not  support a universal
+       address form.
+
+       The netdir_options routine is used to pass  options  in  a
+       transport-independent  manner  to  the  transport provider
+       specified by netconfig.
+
+       If a transport provider does not support an  option,  net-
+       dir_options  returns  -1 and sets _nderror to ND_FAILCTRL.
+       If an option is specified that is not on the  above  list,
+       netdir_options  returns -1 and sets _nderror to ND_NOCTRL.
+       In case of any other  failure,  to  perform  the  required
+       action, netdir_options returns -1 and sets _nderror to the
+       appropriate value.
+
+                                                                2
+
+netdir(3N)                                             netdir(3N)
+
+       The specific actions  of  each  option  follow:  Sets  the
+       transport provider up to allow broadcast, if the transport
+       supports broadcast.  fd is  a  file  descriptor  into  the
+       transport   (for  example,  the  result  of  a  t_open  of
+       /dev/udp).  pointer_to_args is not  used.   If  this  com-
+       pletes,  broadcast  operations  may  be  performed on file
+       descriptor fd.  Turns off  permission  to  send  broadcast
+       messages for the transport endpoint.  Allows the transport
+       provider to bind additional  transport  endpoints  to  the
+       same  local  address to which another endpoint has already
+       been bound.  Does not allow the transport provider to bind
+       a  transport  endpoint to a local address to which another
+       endpoint has already been bound.  Allows  the  application
+       to bind to a reserved port, if that concept exists for the
+       transport provider.  fd is  a  file  descriptor  into  the
+       transport  (it  must  not  be  bound  to  an address).  If
+       pointer_to_args is NULL, fd will be bound  to  a  reserved
+       port.   If pointer_to_args is a pointer to a netbuf struc-
+       ture, an attempt will be made to bind to a  reserved  port
+       on  the specified address.  Used to verify that an address
+       corresponds to a reserved port, if that concept exists for
+       the  transport provider.  fd is not used.  pointer_to_args
+       is a pointer  to  a  netbuf  structure  that  contains  an
+       address.  This option returns 0 only if the address speci-
+       fied in pointer_to_args is reserved.  On a server, given a
+       local  address (such as 0.0.0.0), return a real address to
+       which client  machines  can  connect.   fd  is  not  used.
+       pointer_to_args  is  a  pointer  to  a struct nd_mergearg,
+       which  has  the  following  members:  char  *s_uaddr;   /*
+       server's  universal  address */ char *c_uaddr; /* client's
+       universal address */ char *m_uaddr;  /*  merged  universal
+       address  */  For  example,  using TCP/IP, s_uaddr could be
+       0.0.0.0.1.12  (specifying  a  local  port).   The   merged
+       address would be set to a value such as 192.11.109.89.1.12
+       upon the return of the call.   The  netdir_perror  routine
+       prints an error message on the standard output stating why
+       one of the name-to-address mapping routines  failed.   The
+       error  message is preceded by the string given as an argu-
+       ment.
+
+       The netdir_sperror routine returns a string containing  an
+       error  message stating why one of the name-to-address map-
+       ping routines failed.
+
+RReettuurrnn vvaalluueess
+       netdir_getbyname and netdir_getbyaddr return 0 for success
+       and the value of nderror in case of failure.
+
+       taddr2uaddr  and  uaddr2taddr return NULL in case of fail-
+       ure.
+
+       netdir_options returns -1 in case of error and 0 for  suc-
+       cess.
+
+                                                                3
+
+netdir(3N)                                             netdir(3N)
+
+       All  functions  set _nderror in case of failure.  For net-
+       dir_options, when the fd parameter is used  (denoting  use
+       of  TLI  calls),  t_errno  may provide additional insights
+       into why a call failed.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The return value and error reporting of netdir_options may
+       be inconsistent for some providers.
+
+                                                                4
+

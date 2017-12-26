@@ -1,0 +1,79 @@
+
+
+pathchk(1)                                             pathchk(1)
+
+SSyynnooppssiiss
+       pathchk [-p] path . . .
+
+DDeessccrriippttiioonn
+       pathchk  checks  that  each path is valid and portable.  A
+       path is valid if it can be used to access or create a file
+       without  causing  syntax  errors.   (Note  that permission
+       errors are not considered syntax errors.)
+
+       By default, pathchk checks each  component  of  each  path
+       based on the underlying file system.  A diagnostic message
+       is written for each path that: is longer  than  {PATH_MAX}
+       bytes  contains any component longer than {NAME_MAX} bytes
+       in its containing directory contains any  component  in  a
+       directory that is not searchable contains any character in
+       any component that is not valid in its  containing  direc-
+       tory (for example, a pathname may not be valid in a direc-
+       tory on a remote system)
+
+       It is not an error (and so no message is written)  if  one
+       or  more  components  of a path do not exist, so long as a
+       file matching the pathname specified by the missing compo-
+       nents  could  be  created  without  violating  any  of the
+       checks.
+
+       Characters in each path are  processed  according  to  the
+       value of LC_CTYPE, see LANG on
+
+       pathchk  has  the following options: Instead of performing
+       the four checks described  above,  the  -p  option  causes
+       pathchk  to write a diagnostic message for each path that:
+       Is longer than {_POSIX_PATH_MAX} bytes.  Contains any com-
+       ponent  longer than {_POSIX_NAME_MAX} bytes.  Contains any
+       character in any  component  that  is  not  in  the  POSIX
+       portable  filename  character  set. (The portable filename
+       character set consists of the characters  A-Z,  a-z,  0-9,
+       period (.), underscore (_), and hyphen (-).  The hyphen is
+       not allowed as the first character  in  a  portable  file-
+       name.)  As is obvious, the -p checks are stricter than the
+       default tests.
+
+EExxaammpplleess
+       Verify that all pathnames in an imported cpio archive  are
+       legitimate  and unambiguous on the current system: pathchk
+       `cpio -ictI archive` if [$? -eq 0] then
+           cpio -icvdum archive
+       else
+           echo "Could be problems with the file names."
+           exit 1 fi
+
+       Verify that all files in the current  directory  hierarchy
+       could  be  moved  to any POSIX.1 conforming system: find .
+       -print | xargs pathchk -p
+
+                                                                1
+
+pathchk(1)                                             pathchk(1)
+
+EExxiitt ccooddeess
+       If an error is encountered, pathchk will print  an  appro-
+       priate  diagnostic  message,  skip  the  path in which the
+       error occurred, and continue with the next path, returning
+       a non-zero result.
+
+       If no errors occur, the exit value will be zero.
+
+FFiilleess
+       language-specific message file (see LANG on
+
+NNoottiicceess
+       This command has been updated to handle files greater than
+       2GB.
+
+                                                                2
+

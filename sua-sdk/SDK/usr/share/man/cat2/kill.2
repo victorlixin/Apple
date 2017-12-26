@@ -1,0 +1,102 @@
+kill(2)                                                         kill(2)
+
+  kkiillll(())
+
+  NNAAMMEE
+
+    kill() - send signal to a process
+
+  SSYYNNOOPPSSIISS
+
+    #include <signal.h>
+
+    int kill (pid_t pid, int sig)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _kk_ii_ll_ll(2) function sends the signal given by sig to pid, a process or a
+    group of processes. Sig may be one of the signals specified for
+    _ss_ii_gg_aa_cc_tt_ii_oo_nn(2) or it may be 0. If sig is 0, error checking is performed but
+    no signal is actually sent. (This can be used to check the validity of
+    pid.)
+
+    For a process to have permission to send a signal to the process pid, the
+    real or effective user ID of the receiving process must match the real or
+    effective user ID of the sending process or the user must have appropriate
+    privileges. These user ID tests are not applied when sending SIGCONT to a
+    process that is a member of the same session as the sending process.
+    If pid > 0:
+        Sig is sent to the process whose ID is equal to pid.
+    If pid = 0:
+        Sig is sent to all processes whose group ID is equal to the process
+        group ID of the sender, and for which the process has permission.
+    If pid = -1:
+        Sig is sent to all processes for which the process has permission to
+        send that signal.
+    If pid < -1:
+        Sig is sent to all processes whose group ID is equal to the absolute
+        value of pid, and for which the process has permission.
+
+    The _kk_ii_ll_ll(2) function only delivers signals to processes in the Interix
+    subsystem (that is, POSIX processes), not to Win32 processes. If you
+    attempt to _kk_ii_ll_ll(2) a process which has _ee_xx_ee_cc(2)ed a Win32 process, the
+    signal isn't delivered to the Win32 process.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    Upon successful completion, a value of 0 is returned. Otherwise, a value
+    of -1 is returned and errno is set to indicate the error.
+
+  EERRRROORRSS
+
+    The _kk_ii_ll_ll(2) call will fail and no signal will be sent if:
+
+    [EINVAL]
+        Sig is not a valid signal number.
+
+    [ESRCH]
+        No process can be found corresponding to that specified by pid.
+
+    [EPERM]
+        The effective user ID of the sending process does not match the
+        effective user-id of the receiving process. When signaling a process
+        group, this error is returned if any members of the group could not be
+        signaled.
+
+  NNOOTTEESS
+
+    To use the _kk_ii_ll_ll(2) function to send a signal to a process that does not
+    have the same real/effective UID as the calling process, the calling
+    process must have one of these Windows privileges:
+
+    SE_SECURITY_NAME
+        Required to use _rr_ee_nn_aa_mm_ee_ww_tt_mm_pp_xx(2) or mmvvwwttmmppxx(1), or to use the
+        (previously undocumented) command:
+        $ kill 1
+        to cause the Interix subsystem to re-read updated values in the
+        registry without rebooting.
+
+    SE_TCB_NAME
+        Required if the calling process does not already have
+        SE_SECURITY_NAME.
+
+    Only one is required to send a signal to a process with a different real/
+    effective UID than the calling process, but SE_SECURITY_NAME does confer
+    additional privileges.
+
+  SSEEEE AALLSSOO
+
+    _g_e_t_p_i_d(2)
+
+    _g_e_t_p_g_r_p(2)
+
+    _s_i_g_a_c_t_i_o_n(2)
+
+    _p_r_i_v_i_l_e_g_e_s(5)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The kkiillll function is thread safe.
+
+    The kkiillll function is async-signal safe.
+

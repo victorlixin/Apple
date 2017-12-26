@@ -1,0 +1,226 @@
+sigaction(2)                                               sigaction(2)
+
+  ssiiggaaccttiioonn(())
+
+  NNAAMMEE
+
+    sigaction() - software signal facilities
+
+  SSYYNNOOPPSSIISS
+
+    #include <signal.h>
+
+    int sigaction (int sig, const struct sigaction *act,
+                   struct sigaction *oact)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The system defines a set of signals that may be delivered to a process.
+    Upon receiving a signal, a process takes some action; the process may
+    ignore the signal, it may deliver the signal to a specified handler
+    function, it may block the signal (delivery is postponed until the signal
+    is unblocked), or it may take the default action. The _ss_ii_gg_aa_cc_tt_ii_oo_nn(2) call
+    allows the calling process to examine or specify the action to be taken
+    when a signal is received.
+
+    Sig specifies the signal. The action is described in a ssttrruucctt ssiiggaaccttiioonn
+    structure, defined in <<ssiiggnnaall..hh>>, which contains the following members:
+    void         (*sa_handler)(int);
+
+    sigset_t     sa_mask
+
+    int          sa_flags
+    The argument act is the new action associated with the signal and oact is
+    the old action. If act is NULL, _ss_ii_gg_aa_cc_tt_ii_oo_nn(2) fills in the members of oact,
+    providing a way to query the system about the current action associated
+    with a signal.
+
+    Within the ssiiggaaccttiioonn structure:
+    *     sa_handler is the action to be taken: one of SIG_DFL (default),
+          SIG_IGN (ignore), or a pointer to a handler function.
+    *     sa_mask is a set of additional signals (beyond those globally
+          masked) to be blocked during the execution of the signal-catching
+          function.
+    *     sa_flags contains flags to modify the behavior of the specified
+          signal.
+
+          SA_NOCLDSTOP
+              Do not generate SIGCHLD when children stop.
+
+          SA_RESETHAND
+              The signal handler is reset back to SIG_DFL when the signal is
+              delivered. Note that SIGILL and SIGTRAP cannot be automatically
+              reset when delivered; the system silently enforces this
+              restriction.
+
+          SA_RESTART
+              This flag affects the behaviour of interruptible functions; that
+              is, those specified to fail with errno set to [EINTR]. If set,
+              and a function specified as interruptible is interrupted by this
+              signal, the function will restart and will not fail with [EINTR]
+              unless otherwise specified. If the flag is not set,
+              interruptible functions interrupted by this signal will fail
+              with errno set to [EINTR].
+
+    Signal routines execute with the signal that caused their invocation
+    blocked but other signals may yet occur. A global signal mask defines the
+    set of signals currently blocked from delivery to a process. The signal
+    mask for a process is initialized from that of its parent (normally
+    empty). It may be changed with a _ss_ii_gg_pp_rr_oo_cc_mm_aa_ss_kk(2) call, or when a signal is
+    delivered to the process.
+
+    These signals are defined in the file <<ssiiggnnaall..hh>>:
+
+    SSyymmbbooll        EEffffeecctt                DDeessccrriippttiioonn
+
+    SIGABRT       terminate process     aabboorrtt() call (formerly SIGIOT)
+
+    SIGALRM       terminate process     real-time timer expired
+
+    SIGBUS        terminate process     bus error
+
+    SIGCANCEL     discard signal        reserved for internal use only; see
+                                        "NOTES"
+
+    SIGCHLD       discard signal        child status has changed
+
+    SIGCONT       discard signal        continue after stop
+
+    SIGEXCEPT     terminate process     unrecognized Windows exception
+
+    SIGFPE        terminate process     floating-point exception
+
+    SIGHUP        terminate process     terminal line hangup
+
+    SIGILL        terminate process     illegal instruction
+
+    SIGINT        terminate process     interrupt program
+
+    SIGIO         discard signal        I/O possible on a descriptor (see
+                                        ffccnnttll())
+
+    SIGKILL       terminate process     kill program
+
+    SIGPIPE       terminate process     write on a pipe with no reader
+
+    SIGPOLL       terminate process     pollable event
+
+    SIGPROF       terminate process     profiling timer alarm
+
+    SIGQUIT       terminate process     quit program
+
+    SIGSEGV       terminate process     segmentation violation
+
+    SIGSTOP       stop process          stop (cannot be caught or ignored)
+
+    SIGSYS        terminate process     invalid argument to system call
+
+    SIGTERM       terminate process     software termination signal
+
+    SIGTRAP       terminate process     trace trap
+
+    SIGTSTP       stop process          stop signal generated from keyboard
+
+    SIGTTIN       stop process          background read attempted from control
+                                        terminal
+
+    SIGTTOU       stop process          background write attempted to control
+                                        terminal
+
+    SIGURG        discard signal        urgent condition present on socket
+
+    SIGUSR1       terminate process     User defined signal 1
+
+    SIGUSR2       terminate process     User defined signal 2
+
+    SIGVTALRM     terminate process     virtual time alarm
+
+    SIGXCPU       terminate process     CPU time limit exceeded
+
+    SIGXFSZ       terminate process     file size limit exceeded
+
+    SIGWINCH      discard signal        window size change
+
+    When a signal condition arises for a process, the signal is added to a set
+    of signals pending for the process. If the signal is not currently blocked
+    by the process then it is delivered to the process. Signals may be
+    delivered any time a process enters the operating system (e.g., during a
+    system call, trap, or clock interrupt). If multiple signals are ready to
+    be delivered at the same time, any signals that could be caused by traps
+    are delivered first. Additional signals may be processed at the same time,
+    with each appearing to interrupt the handlers for the previous signals
+    before their first instructions. The set of pending signals is returned by
+    the _ss_ii_gg_pp_ee_nn_dd_ii_nn_gg(2) function. When a caught signal is delivered, the current
+    state of the process is saved, a new signal mask is calculated (as
+    described below), and the signal handler is invoked. The call to the
+    handler is arranged so that if the signal handling routine returns
+    normally the process will resume execution in the context from before the
+    signal's delivery. If the process wishes to resume in a different context,
+    then it must arrange to restore the previous context itself.
+
+    When a signal is delivered to a process a new signal mask is installed for
+    the duration of the process' signal handler (or until a ssiiggpprrooccmmaasskk(2)
+    call is made). This mask is formed by taking the union of the current
+    signal mask set, the signal to be delivered, and the signal mask
+    associated with the handler to be invoked.
+
+    Once a signal handler is installed, it remains installed until another
+    _ss_ii_gg_aa_cc_tt_ii_oo_nn(2) call is made, or an _ee_xx_ee_cc(2) is performed.
+
+    After a _ff_oo_rr_kk(2) all signals and the signal mask, are inherited by the
+    child.
+
+    The _ee_xx_ee_cc(2) functions reinstate the default action for all signals which
+    were caught and resets all signals to be caught on the user stack. Ignored
+    signals remain ignored and the signal mask remains the same.
+
+  NNOOTTEESS
+
+    The _ss_ii_gg_aa_cc_tt_ii_oo_nn(2) function is the POSIX.1 replacement for the traditional
+    _ss_ii_gg_nn_aa_ll(2) call and mechanism. The _ss_ii_gg_aa_cc_tt_ii_oo_nn(2) mechanism is more reliable
+    than old-style signals; for a discussion, see a reference such as
+    Zlotnick's The POSIX.1 Standard: A Programmer's Guide.
+
+    The _ss_ii_gg_aa_cc_tt_ii_oo_nn(2) and _ss_ii_gg_nn_aa_ll(2) functions cannot be used to set a signal
+    handler for the SIGCANCEL signal.
+
+    The mask specified in act is not allowed to block SIGKILL or SIGSTOP. This
+    is ignored silently by the system.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    A 0 value indicated that the call succeeded. A -1 return value indicates
+    an error occurred and errno is set to indicated the reason.
+
+  EERRRROORRSS
+
+    The _ss_ii_gg_aa_cc_tt_ii_oo_nn(2) call will fail and no new signal handler will be
+    installed if one of the following occurs:
+
+    [EFAULT]
+        Either act or oact points to memory that is not a valid part of the
+        process address space.
+
+    [EINVAL]
+        Sig is not a valid signal number.
+
+    [EINVAL]
+        An attempt is made to ignore or supply a handler for SIGKILL or
+        SIGSTOP.
+
+  SSEEEE AALLSSOO
+
+    _s_i_g_n_a_l(2)
+
+    _s_i_g_p_e_n_d_i_n_g(2)
+
+    _s_i_g_p_r_o_c_m_a_s_k(2)
+
+    _s_i_g_s_u_s_p_e_n_d(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The ssiiggaaccttiioonn function is thread safe.
+
+    The ssiiggaaccttiioonn function is async-signal safe.
+

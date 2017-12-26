@@ -1,0 +1,126 @@
+
+
+rbtree(3C)                                             rbtree(3C)
+
+SSyynnooppssiiss
+       #include <rbtree.h>
+
+       RBTree *rbt_init(size_t n,
+            int (*cmp)(const void *, const void *),
+            void *(*alloc)(size_t),
+            void (*toss)(const void *));
+
+       void rbt_walk(RBTree *rbtp, int order,
+            void (*operate)(const void *));
+
+       void rbt_free(RBTree *rbtp);
+
+       void *rbt_find(RBTree *rbtp, const void *item);
+
+       void *rbt_insert(RBTree *rbtp, const void *item);
+
+       in rbt_delete(RBTree *rbtp, const void *item);
+
+DDeessccrriippttiioonn
+       These functions manage a ``balanced'' binary tree of arbi-
+       trary content. Each tree is created by  calling  rbt_init.
+       The  argument n gives the size of the data to be stored in
+       each node, and the other three arguments are  pointers  to
+       functions:  the comparison function used to order the tree
+       used to allocate node space used to deallocate node space.
+       These  three  function pointers can be null requesting the
+       default functions, strcmp, malloc, and free  respectively.
+       The  value  returned  is  the  handle for the just-created
+       empty tree, which is the argument rbtp passed to the other
+       functions. A tree is destroyed by calling rbt_free.
+
+       A  tree is traversed by calling rbt_walk.  The six differ-
+       ent regular traversals are specified by  the  order  argu-
+       ment.   It is exactly one of RBT_PREORDER, RBT_INORDER, or
+       RBT_POSTORDER,  optionally  combined  (bitwise  OR)   with
+       RBT_REVERSE.   A  ``preorder'' traversal visits the parent
+       before either child, a ``postorder'' traversal visits  the
+       parent  after any child, and an ``inorder'' traversal vis-
+       its  the  parent  between  the   two   children.    Unless
+       RBT_REVERSE  is  specified,  the  children  are visited in
+       ascending order (as specified by the cmp argument).   Vis-
+       iting a node causes the function pointed to by the operate
+       argument to be called, being passed a pointer to the start
+       of that node's data.
+
+       For  the  remaining functions, item points to a particular
+       data item to which the function is to be applied.
+
+       A data item can be searched for without modifying the tree
+       by  calling  rbt_find.  rbt_insert acts just like rbt_find
+       except the data will be added to the tree if  a  match  is
+       not  found.  And, rbt_delete will remove the item from the
+       tree if it was present.
+
+                                                                1
+
+rbtree(3C)                                             rbtree(3C)
+
+RReettuurrnn vvaalluueess
+       rbt_init and rbt_insert return a null pointer for an allo-
+       cation  failure.  Or,  in  other  words, when the function
+       pointed to by the alloc argument returns a  null  pointer.
+       When  rbt_insert  returns a non-null pointer, it points to
+       the start of the matching data.
+
+       rbt_find returns a null pointer if no match for  the  data
+       is  found;  otherwise it returns a pointer to the start of
+       the matching data.
+
+       rbt_delete returns nonzero when no match for the  item  is
+       present  in  the  tree;  otherwise  it returns zero having
+       found a match and removed it from the tree.
+
+RReeffeerreenncceess
+UUssaaggee
+       The following shows  adding  a  collection  of  invocation
+       parameter strings into a tree, and then printing them out,
+       one per line, in descending  order.   #include  <rbtree.h>
+       #include <stdio.h> #include <string.h>
+
+       static int compare(const void *p1, const void *p2) {
+           return strcmp(*(const char **)p1, *(const char **)p2);
+       }
+
+       static void print(const void *p) {
+           puts(*(const char **)p); }
+
+       int main(int argc, char **argv) {
+           const char *s;
+           RBTree *rbtp;
+
+           if ((rbtp = rbt_init(sizeof(const char  *),  &compare,
+       0, 0)) == 0)      return 2;
+           while ((s = *++argv) != 0) {      if (rbt_insert(rbtp,
+       &s) == 0)          return 2;
+           }
+           rbt_walk(rbtp, RBT_INORDER|RBT_REVERSE, &print);
+           rbt_free(rbtp);
+           return 0; } If the above is  invoked  with  the  three
+       arguments ``aa cc bb'', it will output these three lines:
+          cc
+          bb
+          aa
+
+AAllggoorriitthhmm
+       The  tree is balanced using a ``Red Black'' data structure
+       in which each binary node can be thought of as  being  all
+       or  a  portion of a node in a balanced 2-3-4 tree.  A bal-
+       anced 2-3-4 tree always has the  same  distance  from  the
+       root  to  any leaf.  This is accomplished by adjusting the
+       number of children of individual 2-3-4 tree nodes, since a
+       2-3-4  node is either a leaf (and thus has no children) or
+
+                                                                2
+
+rbtree(3C)                                             rbtree(3C)
+
+       it has 2, 3 or 4 children.
+
+                                                                3
+

@@ -1,0 +1,108 @@
+
+
+CallNonStdCmd(3tlib)                         CallNonStdCmd(3tlib)
+
+SSyynnooppssiiss
+       CallNonStdCmd  command  args  errorId [errorStackVar [mes-
+       sageId [margs]]]
+       CallNonStdCmdLocale   locale    command    args    errorId
+       [errorStackVar [messageId [margs]]]
+
+DDeessccrriippttiioonn
+       CallNonStdCmd  provides  an interface to commands that are
+       outside of the &VTcl; environment:  they  are  ``non-stan-
+       dard'' in that they do not throw errors using error stacks
+       and they require a fork/exec to run as separate processes.
+       CallNonStdCmd executes the specified command, and presents
+       the results to the calling application in ``standardized''
+       way  compatible  with other admin services.  CallNonStdCmd
+       is the recommended interface for applications that  obtain
+       data and services from underlying
+        utilities.
+
+       CallNonStdCmd  forks  and  execs  the  command, passing it
+       optional arguments, and returns the command output. If  an
+       error occurs (See Notes below) in the command, CallNonStd-
+       Cmd creates a admin  error  stack,  pushes  the  localized
+       errorId text which is parameterized to include the command
+       error output, and throws the error back  to  the  applica-
+       tion.   The  application may now proceed with ``standard''
+       error  handling  using  ErrorCatch,  SaDisplayErrorStacks,
+       etc.
+
+       The  application  can  provide an optional messageId (with
+       optional args) to be pushed on  the  stack  as  well.  The
+       application  may  have CallNonStdCmd place the error stack
+       in a named variable without performing a throw.
+
+       CallNonStdCmdLocale provides the same  functionality  with
+       the addition of specifying the locale in which the command
+       will run. This is useful for applications that must  parse
+       the  output  of a command in such a way that they are lan-
+       guage dependent (such as searching for a certain word that
+       is  specific  to a locale). The LANG variable in the envi-
+       ronment will be set to the specified locale before running
+       the  command. Note, any error output from the command will
+       also  be  localized  as  specified.   Applications  should
+       always attempt to design output parsing to be locale inde-
+       pendent.
+
+   AArrgguummeennttss
+       command to be executed. PATH will be used to  locate  com-
+       mand.  If necessary, supply a full path name.  Tcl list of
+       optional arguments to command. May be an empty list.  Mes-
+       sage ID that will be pushed on the errorStack in the event
+       of an error. By convention, the Message  ID  includes  the
+       command  name and if already defined, should come from the
+       sysadm.tlib message  catalog,  (SCO_UNIX1_CMD_ERR_command.
+       If  the command does not already have such a message ID in
+
+                                                                1
+
+CallNonStdCmd(3tlib)                         CallNonStdCmd(3tlib)
+
+       the public catalog, the application must supply  its  own,
+       ideally  retaining  the convention ending with the command
+       name. The message text is typically a single parameterized
+       format  specifier,  "%s",  which will be replaced with the
+       stderr output generated  by  the  command.   Optional  Tcl
+       variable name where CallNonStdCmd can store an error stack
+       instead  of  throwing  an  error  when  encountered.    By
+       default,  if the command generates an error, CallNonStdCmd
+       will throw an error stack  requiring  the  application  to
+       eventually  perform an ErrorCatch.  Optional message to be
+       pushed on to the error stack if the command  generates  an
+       error.  This is an application specific message as opposed
+       to that contained in the error frame pushed on by CallNon-
+       StdCmd.  The  latter  represents the generic command error
+       which may be too generic or specific to be  meaningful  in
+       the  context  of  the  application.   optional Tcl list of
+       arguments to the messageId required if  the  message  text
+       contains parameterized format specifiers.
+
+RReettuurrnn vvaalluueess
+       CallNonStdCmd  returns the output of the command (anything
+       specifically written to stdout).  Note,  CallNonStdCmd  is
+       not  suitable  for  invoking interactive commands since it
+       captures stdout in a pipe.
+
+RReeffeerreenncceess
+NNoottiicceess
+       CallNonStdCmd considers any I/O on stderr from the command
+       to  be  an  error and will therefore throw an error stack.
+       CallNonStdCmd does not pay attention to the exit  code  of
+       the  command. Some commands use a different approach, such
+       as producing output on stderr even in the successful  case
+       or they signal an error not through I/O but a nonzero exit
+       code. Applications can deal with some of  these  cases  by
+       providing an errorStackVar to CallNonStdCmd then accessing
+       the desired information through the error stack: exit code
+       ->   ErrorData(errorStackVar)   stderr  output  ->  Error-
+       Text(errorStackVar) Note, these must  be  applied  to  the
+       stack frame pushed by the command, not the application via
+       the optional messageId to CallNonStdCmd.  In addition, the
+       application  must  be  sure  that  the error stack is non-
+       empty.
+
+                                                                2
+

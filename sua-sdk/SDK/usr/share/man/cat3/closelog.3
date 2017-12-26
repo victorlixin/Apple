@@ -1,0 +1,223 @@
+syslog(3)                                                     syslog(3)
+
+  ssyysslloogg(())
+
+  NNAAMMEE
+
+    syslog, syslog_r, vsyslog, vsyslog_r, openlog, openlog_r, closelog,
+    closelog_r, setlogmask, setlogmask_r - control system log
+
+  SSYYNNOOPPSSIISS
+
+    #include <syslog.h>
+    #include <stdarg.h>
+
+    void syslog (int priority, const char *message, ...)
+    void syslog_r (int priority, struct syslog_data *data, const char *message,
+        ...);
+    void vsyslog (int priority, const char *message, va_list args)
+    void vsyslog_r (int priority, struct syslog_data *data, const char *message,
+        va_list args);
+    void openlog (const char *ident, int logopt, int facility)
+    void openlog_r (const char *ident, int logopt, int facility,
+        struct syslog_data *data);
+    void closelog (void)
+    void closelog_r (struct syslog_data *data);
+    int setlogmask (int maskpri)
+    int setlogmask_r (int maskpri, struct syslog_data *data);
+
+    struct syslog_data {
+            int             log_file;
+            int             connected;
+            int             opened;
+            int             log_stat;
+            const char     *log_tag;
+            int             log_fac;
+            int             log_mask;
+    };
+
+    #define SYSLOG_DATA_INIT {-1, 0, 0, 0, NULL, LOG_USER, 0xff}
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _ss_yy_ss_ll_oo_gg(3) function writes message to the system message logger. The
+    message is then written to log files, logged-in users, or forwarded to
+    other machines as appropriate. (See ssyyssllooggdd(1).) If the ssyyssllooggdd(1) program
+    is not running, the message is written to the file //vvaarr//aaddmm//lloogg//llooggggeerr.
+
+    The message is identical to a _pp_rr_ii_nn_tt_ff(3) format string, except that %%mm is
+    replaced by the current error message (as denoted by the global variable
+    errno; see _ss_tt_rr_ee_rr_rr_oo_rr(3)). A trailing newline is added if none is present.
+
+    The ssyysslloogg__rr(()) function is a reentrant version of the ssyysslloogg(()) function.
+    It takes a pointer to a syslog_data structure which is used to store
+    information.  This parameter must be initialized before ssyysslloogg__rr(()) is
+    called.  The SYSLOG_DATA_INIT constant is used for this purpose.  The
+    syslog_data structure is composed of the following elements:
+   
+    log_file   contains the file descriptor of the file where the message is
+               logged
+   
+    connected  indicates if connect has been done
+   
+    opened     indicates if openlog_r(3) has been called
+   
+    log_stat   status bits, set by openlog_r(3)
+   
+    log_tag    string to tag the entry with
+   
+    log_fac    facility code
+   
+    log_mask   mask of priorities to be logged
+
+    The _vv_ss_yy_ss_ll_oo_gg(3) function is an alternate form in which the arguments have
+    already been captured using the variable-length argument facilities of
+    _ss_tt_dd_aa_rr_gg(3) (note that it is not varargs, as in many implementations).
+
+    The message is tagged with priority. Priorities are encoded as a facility
+    and a level. The facility describes the part of the system generating the
+    message. The level is selected from the following ordered (high to low)
+    list:
+
+    LOG_EMERG
+        A panic condition. This is normally broadcast to all users.
+
+    LOG_ALERT
+        A condition that should be corrected immediately, such as a corrupted
+        system database.
+
+    LOG_CRIT
+        Critical conditions such as hard device errors.
+
+    LOG_ERR
+        Errors.
+
+    LOG_WARNING
+        Warning messages.
+
+    LOG_NOTICE
+        Conditions that are not error conditions, but should possibly be
+        handled specially.
+
+    LOG_INFO
+        Informational messages.
+
+    LOG_DEBUG
+        Messages that contain information normally of use only when debugging
+        a program.
+
+    The vvssyysslloogg__rr(()) is used the same way as vsyslog() except that it takes an
+    additional pointer on a syslog_data structure.  It is a reentrant version
+    of the vvssyysslloogg(()) function described above.
+
+    The _oo_pp_ee_nn_ll_oo_gg(3) function provides for more specialized processing of the
+    messages sent by _ss_yy_ss_ll_oo_gg(3) and _vv_ss_yy_ss_ll_oo_gg(3). The parameter ident is a string
+    that will be prepended to every message. The logopt argument is a bit
+    field specifying logging options, which is formed by ORing one or more of
+    the following values:
+
+    LOG_CONS      If syslog() cannot pass the message to syslogd(8) it will
+                  attempt to write the message to the console (/dev/console).
+
+    LOG_NDELAY
+        Open the connection to ssyyssllooggdd(1) immediately. Normally the open is
+        delayed until the first message is logged. Useful for programs that
+        need to manage the order in which file descriptors are allocated.
+
+    LOG_PERROR
+        Write the message to standard error output as well to the system log.
+
+    LOG_PID
+        Log the process id with each message: useful for identifying
+        instantiations of daemons.
+
+    The facility parameter encodes a default facility to be assigned to all
+    messages that do not have an explicit facility encoded:
+
+    LOG_AUTH
+        The authorization system: llooggiinn(1).
+
+    LOG_AUTHPRIV
+        The same as LOG_AUTH, but logged to a file readable only by selected
+        individuals.
+
+    LOG_CRON
+        The clock daemon.
+
+    LOG_DAEMON
+        System daemons, such as rroouutteedd(1), that are not provided for
+        explicitly by other facilities.
+
+    LOG_KERN
+        Messages generated by the Subsystem for UNIX-based Applications subsystem. These cannot be generated
+        by any user processes.
+
+    LOG_FTP
+        The file transfer protocol (FTP) daemon.
+
+    LOG_LPR
+        The line printer spooling system: llpp(1).
+
+    LOG_MAIL
+        The mail system.
+
+    LOG_NEWS
+        The network news system.
+
+    LOG_SYSLOG
+        Messages generated internally by ssyyssllooggdd(1).
+
+    LOG_USER
+        Messages generated by random user processes. This is the default
+        facility identifier if none is specified.
+
+    LOG_UUCP
+        The uucp system.
+
+    LOG_LOCAL0
+        Reserved for local use. Similarly for LOG_LOCAL1 through LOG_LOCAL7.
+
+    The ooppeennlloogg__rr(()) function is the reentrant version of the ooppeennlloogg(()) func-
+    tion.  It takes an additional pointer on a syslog_data structure.  This
+    function must be used in conjunction with the other reentrant functions.
+
+    The _cc_ll_oo_ss_ee_ll_oo_gg(3) function can be used to close the log file.
+
+    The _ss_ee_tt_ll_oo_gg_mm_aa_ss_kk(3) function sets the log priority mask to maskpri and
+    returns the previous mask. Calls to _ss_yy_ss_ll_oo_gg(3) with a priority not set in
+    maskpri are rejected. The mask for an individual priority pri is
+    calculated by the macro LLOOGG__MMAASSKK(pri); the mask for all priorities up to
+    and including toppri is given by the macro LLOOGG__UUPPTTOO(toppri);. The default
+    allows all priorities to be logged.
+
+    The sseettllooggmmaasskk__rr(()) function is the reentrant version of sseettllooggmmaasskk(()). It
+    takes an additional pointer on a syslog_data structure.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The routines _cc_ll_oo_ss_ee_ll_oo_gg(3), _oo_pp_ee_nn_ll_oo_gg(3), _ss_yy_ss_ll_oo_gg(3), _vv_ss_yy_ss_ll_oo_gg(3),
+    cclloosseelloogg__rr(3),  ooppeennlloogg__rr(3),  ssyysslloogg__rr(3) and vvssyysslloogg__rr(3) return no value.
+
+    The routines _ss_ee_tt_ll_oo_gg_mm_aa_ss_kk and sseettllooggmaasskk__rr always return the previous log
+    mask level.
+
+  EEXXAAMMPPLLEESS
+
+    syslog(LOG_ALERT, "who: internal error 23");
+    openlog("ftpd", LOG_PID, LOG_DAEMON);
+    setlogmask(LOG_UPTO(LOG_ERR));
+    syslog(LOG_INFO, "Connection from host %d", CallingHost);
+    syslog(LOG_INFO|LOG_LOCAL2, "foobar error: %m");
+
+  SSEEEE AALLSSOO
+
+    _l_o_g_g_e_r(1)
+
+    _s_y_s_l_o_g_d(1)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

@@ -1,0 +1,206 @@
+
+
+cs_connect(3N)                                     cs_connect(3N)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <cs.h>
+
+       int    cs_connect(const   char   *host,   char   *service,
+            struct csopts *cs_opt, int *error);
+
+       void cs_perror(const char *string, int error);
+
+DDeessccrriippttiioonn
+       The library routines cs_connect and cs_perror  provide  an
+       interface  that  network  applications use to establish an
+       authenticated TLI/XTI connection to a network  service  on
+       host.   The Connection Server interface shields the client
+       application from details of connection  establishment  and
+       authentication.   Since cs_connect performs authentication
+       on behalf of the client process, authentication is  effec-
+       tively  automated.   The  way in which cs_connect accesses
+       authentication schemes also allows the system  administra-
+       tor  to  use  modular schemes that are interchangeable and
+       can be administered on a per-service basis.
+
+       cs_connect communicates with the Connection Server daemon,
+       which  establishes  a  TLI/XTI connection on behalf of the
+       client application and returns a file  descriptor  associ-
+       ated  with the connection.  The Connection Server uses the
+       Network Selection mechanism  to  determine  the  transport
+       provider  needed  to  connect to the specified service and
+       uses the Name-to-Address Mapping facility  to  obtain  the
+       address of the network service over that transport.
+
+       The  arguments  are  defined  as  follows: The name of the
+       server machine that is supplying the service.   This  name
+       can  be  any string acceptable to the Name-to-Address Map-
+       ping facility.  The name of the  service  with  which  the
+       application  wishes  to communicate.  To connect to a ser-
+       vice via the NLPS server use the  following  syntax:  lis-
+       ten:service_tag  where  service_tag  is the argument taken
+       from the first field in _pmtab on the server machine.   To
+       bind to a reserved port, or to make a special type of net-
+       work selection, the csopts structure may be  used.   Since
+       applications rarely need this functionality, this argument
+       will typically be NULL.  Network selection  usually  means
+       restricting  the  choice  of  transport  providers by name
+       (where a transport provider name is specified in the first
+       field  of  the /etc/netconfig file).  The preferred method
+       of selection is setting the NETPATH  environment  variable
+       to a colon-separated list of transport provider names.  To
+       do such special types of network selection as  restricting
+       by network semantics, use csopts.
+
+       The  csopts  structure  is  defined  in  the  header  file
+       /usr/include/cs.h as: struct csopts {      struct  netcon-
+       fig  *nc_p;       int nd_opt;      struct netbuf *nb_p; };
+       The elements of this structure are as follows: To restrict
+
+                                                                1
+
+cs_connect(3N)                                     cs_connect(3N)
+
+       the networks which may be used in making a connection, the
+       user may set the element nc_p  to  point  to  a  netconfig
+       structure.   A network will be selected which matches with
+       all the elements in the netconfig structure that have been
+       filled  in by the user (see For example, if the user wants
+       to use only TCP  protocol  networks,  then  nc_p->nc_proto
+       should  be set to tcp and all other elements should be set
+       to zero or NULL.  If the user does not  want  to  restrict
+       network  selection,  but  does  want to bind to a reserved
+       port, nc_p should be set to (struct netconfig  *)NULL  and
+       the  other  members  should be set as described below.  To
+       bind to a reserved port, the user should set this  element
+       to  ND_SET_RESERVEDPORT.   To bind to a reserved port on a
+       specific address, nd_opt should be set as described  above
+       and  nb_p  should  be  set to point to a netbuf structure.
+       The buf field of the netbuf structure should  point  to  a
+       sockaddr  structure.   See  sys/socket.h.   An int that is
+       declared in the  application  that  calls  cs_connect  and
+       cs_perror.  A pointer to error is passed to cs_connect and
+       will be set to an error value.  Calling cs_perror with the
+       value  of  error  will print out an appropriate error mes-
+       sage.  The string that is to precede error messages.
+
+       The Connection Server establishes a connection  by  trying
+       each  visible  transport  provider  in the order listed in
+       /etc/netconfig.  Users can choose the transport  providers
+       to  be tried and the order in which they will be tried, by
+       setting the NETPATH environment variable to a  colon-sepa-
+       rated  list  of  transport  provider  names.  (A transport
+       provider name is specified  in  the  first  field  of  the
+       /etc/netconfig file.)
+
+       cs_connect  establishes  communication with the Connection
+       Server daemon via a named pipe and sends the hostname  and
+       service  name  as  parameters.   cs_connect also sends the
+       value of the NETPATH environment variable, or a NULL value
+       if  NETPATH  is  not  set.   If  the pointer to the csopts
+       structure is not NULL, cs_connect will send  the  contents
+       of  the  three member structures with the exception of the
+       last two elements of struct netconfig (that is, nc_lookups
+       and nc_nlookups).
+
+       The  Connection  Server  daemon uses the Network Selection
+       and  Name-to-Address  Mapping  facilities  to  attempt  to
+       establish  an authenticated connection to host for service
+       over each available transport until a connection is estab-
+       lished  or connection establishment fails for every trans-
+       port.  Transport providers may be  restricted  by  setting
+       the NETPATH environment variable to a colon-separated list
+       of transport provider names.  See
+
+       The Connection Server  consults  the  /etc/iaf/serve.allow
+       file  for the list of authentication schemes acceptable to
+       the client machine for service on host.
+
+                                                                2
+
+cs_connect(3N)                                     cs_connect(3N)
+
+       If an authenticated connection is established, the Connec-
+       tion  Server returns a file descriptor associated with the
+       connection.  The application can then perform all  TLI/XTI
+       operations and so on) on the file descriptor.
+
+       cs_perror  prints  an error message on the standard error.
+       The error message is derived from indexing a value  refer-
+       enced  by error, which was set by cs_connect.  The message
+       is preceded by string and a colon.
+
+FFiilleess
+       Connection Server authentication scheme file  database  of
+       network  services  and their aliases database of allowable
+       authentication  schemes  and  network  services   Name-to-
+       Address  Mapping  hosts  file for TCP.  For compatibility,
+       /etc/inet/hosts is linked to /etc/hosts.   Name-to-Address
+       Mapping   services   file  for  TCP.   For  compatibility,
+       /etc/inet/services is linked to  /etc/services.   Name-to-
+       Address  Mapping  hosts  file  for transport_name Name-to-
+       Address Mapping services file for  transport_name  Network
+       Selection  database file Connection Server debug file Con-
+       nection Server log file
+
+RReettuurrnn vvaalluueess
+       On success, cs_connect returns a file descriptor  contain-
+       ing  a  positive  integer.  On failure, cs_connect returns
+       -1.
+
+       On failure, cs_perror may report the following errors:  No
+       Error  System  Error  Dial  error No Memory Authentication
+       scheme specified by server is not acceptable Connection to
+       service  failed  Error  in  invoking authentication scheme
+       Authentication  scheme  unsuccessful  Could   not   obtain
+       address  of service over any transport Could not create CS
+       pipe Could not mount remote stream to CS  pipe  Could  not
+       push  CONNLD  Could  not  fork  CS child request Could not
+       chdir Host/service  not  found  over  available  transport
+       TLI/XTI  failure:  t_open  failed  TLI/XTI failure: t_bind
+       failed TLI/XTI failure: t_connect failed TLI/XTI  failure:
+       t_alloc  failed  MAC check failure or Secure Device access
+       denied DAC check failure or Secure  Device  access  denied
+       Connection  attempt  timed  out Privileges not correct for
+       requested network options Netdir option incorrectly set in
+       csopts struct Service not found in server's _pmtab Connec-
+       tion not permitted by LIDAUTH.map
+
+RReeffeerreenncceess
+NNoottiicceess
+       Not all values stored in the csopts structure are sent  to
+       the  Connection  Server.  In particular, the last two ele-
+       ments of nc_p, that is, nc_lookups  and  nc_nlookups,  are
+       not sent.  See
+
+       The   Connection   Server   daemon   logs   a  message  to
+
+                                                                3
+
+cs_connect(3N)                                     cs_connect(3N)
+
+       /var/adm/log/cs.log on startup.
+
+       If it is invoked with the debug option (-d),  the  Connec-
+       tion   Server   daemon   prints   debug   information   to
+       /var/adm/log/cs.debug: /usr/sbin/cs -d In order  for  net-
+       work applications to use cs_connect, the following network
+       components must be correctly administered: the port  moni-
+       tor  the  Identification and Authentication Facility (IAF)
+       ID Mapping Name-to-Address Mapping
+
+EExxaammpplleess
+       A typical call to cs_connect  is  of  the  form:  #include
+       <cs.h>      . . .
+
+       int error=0;      . . .
+
+       if  ((fd  =  cs_connect("host",  "service", (struct csopts
+       *)NULL,      &error)) < 0) {
+            /* do error handling */
+            cs_perror("application specific string", error);
+            exit(1); }  /*  continue  with  normal  execution  */
+            . . .
+
+                                                                4
+

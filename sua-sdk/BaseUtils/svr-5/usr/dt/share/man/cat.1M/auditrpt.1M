@@ -1,0 +1,550 @@
+
+
+auditrpt(1M)                                         auditrpt(1M)
+
+SSyynnooppssiiss
+       auditrpt [-o] [-i] [-b | -w] [-x]
+            [-e[!]event[,.    .    .]]     [-u user[,.    .   .]]
+       [-f object_id[,. . .]]
+            [-t object_type[,. . .]]  [-l level  |  -r  levelmin-
+       levelmax]
+            [-s time] [-h time] [-a outcome] [-m map]
+            [-p all | priv[,. . .]]  [-v subtype] [log [. . .]]
+
+DDeessccrriippttiioonn
+       The  auditrpt shell level command allows the administrator
+       with the appropriate privileges to selectively display the
+       contents  of  audit log files.  Note that if the log files
+       are presented as standard input that only one log file may
+       be presented at a time.  If more than one log file is pre-
+       sented in this manner, auditrpt will fail when it  encoun-
+       ters  data  from  the  second  log file.  Specify the file
+       names on the command line if you wish to process  multiple
+       log  files.   The  privileges  required are audit and set-
+       plevel.
+
+       The contents of log files created with  previous  releases
+       of  the  Auditing Package may be displayed using this com-
+       mand.  Version numbers are assigned to the audit log files
+       associated  with  each release.  The auditrpt command uses
+       these version numbers to determine  the  release  used  to
+       create  the audit log under examination.  The version num-
+       bers and releases currently recognized are:
+        System V Release 4.1ES
+        System V Release 4.0,  System V Release 4.0MP
+        System V Release 4.2
+        System V Release 4.2ES/MP, UnixWare 1.x, UnixWare 2.0 The
+       following  options  are available: Display the events that
+       correspond to the union of the specified  auditing  crite-
+       ria.   Take input audit records from standard input.  Dis-
+       play the events  in  reverse  chronological  order  (back-
+       wards).   This  option  cannot be used with the -w option.
+       Display the events as they are being written to the  event
+       log  file.  This option cannot be used with the -b option.
+       Display the Lightweight Process ID (LWP  ID)  of  the  LWP
+       associated  with  the  event.   Display the selected event
+       types or event classes.  If ! is specified, all the events
+       except  those  listed are displayed.  Event classes, which
+       are aliases for groups  of  events,  are  defined  in  the
+       /etc/security/audit/classes   file.    Display   all   the
+       recorded events for the specified real and effective  uids
+       and/or  login  names.  Display all the recorded events for
+       the specified object_ids.  The object_id must be the  full
+       pathname  of a regular file, special file, directory, or a
+       named pipe, or the ID of an IPC object or loadable module.
+       Display   all   the  recorded  events  for  the  specified
+       object_types.  Valid arguments are: character special file
+       directory  regular  file  shared memory link message named
+       pipe or unnamed pipe semaphore Display  all  the  recorded
+
+                                                                1
+
+auditrpt(1M)                                         auditrpt(1M)
+
+       events involving objects at the specified level.  Only one
+       level may be specified.   Level  information  is  recorded
+       only  if  the  Mandatory  Access Control (MAC) feature was
+       installed on the system  that  generated  the  audit  log.
+       This  option  cannot  be used with the -r option.  Display
+       all recorded events involving objects whose security level
+       falls  within  the range defined by levelmin and levelmax.
+       Only one level range may be specified, and the level spec-
+       ified  by levelmax must dominate levelmin.  Level informa-
+       tion is recorded only if the MAC feature was installed  on
+       the system that generated the audit log.  This option can-
+       not be used with the -l option.  Display  all  the  events
+       occurring at or after the specified time.  The time should
+       be specified in the format used by the date command.   The
+       following are valid values for times: for hours, 00 to 23;
+       for minutes, 00 to 59; for days, 01 to 31; for months,  01
+       to 12; and for years, 00 to 99.
+
+       When  both  -s and -h are specified without the -o option,
+       the start time (-s) must be  earlier  than  the  end  time
+       (-h).   Display  all  the events existing at or before the
+       specified time.  Format and valid values for time are  the
+       same  as  the  -s option.  Display all the recorded events
+       for the specified outcome: s  (success)  or  f  (failure).
+       Specify  the  path  (absolute or relative) of the auditmap
+       directory.  Display the recorded events that use the spec-
+       ified  privilege(s).   If  the  word  all  follows  the -p
+       option, display all recorded events that  use  any  privi-
+       lege.   Display  all miscellaneous records with the speci-
+       fied subtype.  Only the first 20 characters of the  speci-
+       fied subtype are considered for record matching.  The com-
+       mand will parse  the  first  field  of  the  miscellaneous
+       record,  up  to  20  characters  or  the  colon separator,
+       whichever comes first.  Name (absolute or  relative  path-
+       name) of the audit log(s) to use.
+
+   OOuuttppuutt
+       The  first  part of the output of auditrpt consists of the
+       command line entered by the administrator.  For  each  log
+       file,  the  output consists of two parts.  First, auditrpt
+       displays audit log file and system identification informa-
+       tion  to  verify  that the correct log file was specified.
+       This includes the internal identification of the audit log
+       file,  the version of the audit software that produced the
+       log file, and the identification of the machine that  pro-
+       duced  the  log  file.   Second, all records that meet the
+       selection criteria are  displayed  one  record  per  line.
+       Records   are   displayed   in   the   following   format:
+       time,event,pid(LWP_id),outcome,user,group(s),ses-
+       sion,subj_lvl, \
+          (obj_id:obj_type:obj_lvl:device:maj:min:inode:fsid)(. .
+       .)[,pgm_prm]
+
+       The meanings of the fields are as  follows:  The  time  is
+
+                                                                2
+
+auditrpt(1M)                                         auditrpt(1M)
+
+       printed  as  hour:minute:second:day:month:year.  For exam-
+       ple, ``10:30:00:15:04:91'' is 10:30am of April  15,  1991.
+       The event type.  The process ID number of the process that
+       triggered the event, preceded by the  letter  ``P''.   The
+       LWP  ID  number  of the lightweight process that triggered
+       the event.  The outcome of the event is either s for  suc-
+       cess  or  f(exit  value)  for failure.  Real and effective
+       user names are displayed.  User names are separated  by  a
+       colon (that is, real_user_name:effective_user_name).  Real
+       and effective groups are displayed, followed by a list  of
+       supplementary  groups,  if any.  Groups are separated by a
+       colon          (that          is,          real_grp:effec-
+       tive_grp:suppl_grp1:suppl_grp2:  .  .  .).  The session ID
+       number, preceded by the letter ``S''.  The security  level
+       of  the  process that triggered the event.  The level name
+       may contain colons and/or commas.   For  readability,  the
+       entire  field will be enclosed in double quotes (for exam-
+       ple, "system:private,audit").  Subject  level  information
+       is  recorded  only if the MAC feature was installed on the
+       system that generated the audit log file.  This field will
+       be  blank otherwise.  This field contains file identifica-
+       tion information, enclosed in  parentheses.   If  multiple
+       objects  are  accessed  in  a  single  event, the field is
+       repeated.  This field contains  the  following  subfields:
+       The name of a regular file, special file, directory, named
+       pipe, or the id of an IPC object.  If the full pathname of
+       a  filesystem  object  cannot  be  determined, the partial
+       pathname will be printed with an asterisk (*) as a prefix.
+       The object type, using the codes described in the descrip-
+       tion of the -t option.  The level of the object  that  was
+       accessed  during  the  event.   The level name may contain
+       colons and/or commas.  For readability, the  entire  field
+       will  be  enclosed  in  double  quotes (for example, "sys-
+       tem:private,audit").  Object level information is recorded
+       only  if  the MAC feature was installed on the system that
+       generated the audit log file.  This field  will  be  blank
+       otherwise.   The object's device number.  The major number
+       component of the object's device.  The minor number compo-
+       nent  of  the object's device.  The object's inode number.
+       The object's filesystem ID number.  This field is specific
+       to  each  audit  event and may be composed of several sub-
+       fields.  The subfields described for each  event  will  be
+       displayed  in  the order shown below and will be separated
+       by commas, unless otherwise specified.
+
+       The pgm_prm field can be one of  the  following:  For  the
+       audit_ctl/audit_evt/audit_log/audit_map events when gener-
+       ated by the audit user level commands  auditon,  auditoff,
+       auditset,  auditlog,  auditmap,  respectively:  the entire
+       command             line.              For             the
+       add_grp/add_usr/add_usr_grp/mod_grp/mod_usr   events:  the
+       entire command line.  For the tfadmin  event:  the  entire
+       command             line.              For             the
+
+                                                                3
+
+auditrpt(1M)                                         auditrpt(1M)
+
+       assign_lid/assign_nm/deactivate_lid/del_nm   events:   the
+       entire  command  line.  For the chg_times/date events: the
+       new date.  For the chg_times event only, the file name  is
+       also given.  For the fork event: the child process ID, the
+       number of LWPs created, and the LWP ID's.   For  the  init
+       event:  if  generated by the user level command the entire
+       command line.  If generated by the init process (``process
+       1''):
+
+       current state: state1 new_state: state2
+
+       The  old  init state is represented by state1, and the new
+       init state by state2.  For the kill event: the signal  and
+       a  list  of  pids to which the signal was posted.  For the
+       set_uid event: new user.  For the set_gid event:  the  new
+       group.   For  the  set_pgrps event: the name of the system
+       call that generated the event (setpgrp  or  setpgid).   In
+       addition,  if  generated  by  the setpgid system call, the
+       process ID and process group ID passed to the system call.
+       For  the  set_grps  event:  the supplementary group access
+       list.  For the link event:  the  pathname  of  the  target
+       file.   For  the  dac_own_grp  event:  if  the  owner  was
+       changed, the new user ID (preceded by  user:)  or  if  the
+       group  was changed, the new group ID (preceded by group:).
+       In addition, for the chown system  call,  the  file  name.
+       For   the   dac_mode   event:   the  new  mode.   For  the
+       msg_ctl/msg_get/msg_op/sem_ctl/sem_get/sem_op/shm_ctl/
+       shm_get/shm_op  events:  the operation code, flag and com-
+       mand value.  If a subfield does not pertain  to  an  event
+       type,  a  zero  will be displayed.  For the login/bad_auth
+       events, and  the   bad_lvl/def_lvl  events:  the  terminal
+       identification (tty), user, and group, and level (enclosed
+       in double quotes) of the user attempting  to  log  on  (if
+       valid).   In  addition,  for  the  def_lvl  event: the old
+       default level (enclosed in double  quotes)  and  requested
+       new  default  level (enclosed in double quotes).  In addi-
+       tion, for the bad_auth event: the  error  message  (LOGIN,
+       PASWD or AUDIT) For the passwd event: the user whose pass-
+       word is being  changed  (if  valid).   For  the  pm_denied
+       event: the requested privilege, system call name, and max-
+       imum set of privileges.  For the cron event: user's effec-
+       tive  uid, user's effective gid, user's level (enclosed in
+       double quotes), and cron job name.   User  refers  to  the
+       user  that  cron  is  running on behalf of.  Note that the
+       level subfield will be blank if the
+       Enhanced Security Utilities were not installed and running
+       on  the  audited  system.  For the open_rd/open_wr events:
+       the  file  descriptor.   For   the   cov_chan_1/cov_chan_2
+       events:  covert channel event name and bits per second For
+       the file_lvl event: new security level (enclosed in double
+       quotes).   In  addition, for the flvlfile system call, the
+       file name.  For the set_lvl_rng/proc_lvl events: new secu-
+       rity  level (enclosed in double quotes).  In addition, for
+       the  set_lvl_rng  event,   the   file   name.    For   the
+
+                                                                4
+
+auditrpt(1M)                                         auditrpt(1M)
+
+       disp_attr/set_attr  events:  the release flag (persistent,
+       lastclose, or system), device mode  (static  or  dynamic),
+       low_level   (enclosed   in   double   quotes),  high_level
+       (enclosed in double quotes) and device state  (private  or
+       public).   In addition, for the disp_attr event: the inuse
+       flag (inuse or unused).  For the fdevstat system call, the
+       file  descriptor.  For the file_acl event: all ACL entries
+       and the file name.  For the ipc_acl event: the  ipc  type,
+       the ipc id and all ACL entries.  For the ulimit event: the
+       new  limit.   For  the  setrlimit  event:   the   resource
+       (RLIMIT_CORE,   RLIMIT_CPU,   RLIMIT_DATA,   RLIMIT_FSIZE,
+       RLIMIT_NOFILE, RLIMIT_STACK, RLIMIT_VMEM), soft limit  and
+       hard limit.  For the sched_lk event: the action (PROCLOCK,
+       TXTLOCK, DATLOCK) if generated by the plock  system  call.
+       The  page  mapping attributes (PRIVATE or SHARED) and page
+       protection attributes  (one  or  more  of  the  following:
+       PROT_READ, PROT_WRITE, PROT_EXEC) if generated by the mem-
+       ctl  system  call.   For  the   sched_fp/sched_ts/sched_fc
+       events:  If generated by the priocntl system call with the
+       PC_ADMIN command, the function name (FP_SETDPTBL,  FC_SET-
+       DPTBL,  or TS_SETDPTBL), global priority and time quantum.
+       In addition, if TS_SETDPTBL or FC_SETDPTBL, the time-shar-
+       ing  dispatcher  parameters:  tqexp,  slpret,  maxwait and
+       lwait.  If generated by the priocntl system call with  the
+       PC_SETPARMS  command,  the  function name (FP_NEW, FC_NEW,
+       TS_NEW, FP_PARMSET, FC_PARMSET,  TS_PARMSET),  process  id
+       and  user  priority.   In  addition,  if  the  sched_ts or
+       sched_fc event, user priority limit.  If  sched_fp  event,
+       the  seconds  in  time quantum.  For the modadm event: the
+       module type  (character  device,  block  device,  streams,
+       filesystem,  misc,  none), the command (register), and the
+       module name.  Also, module type specific data as  follows:
+       if  module  type  is character device or block device, the
+       major number; if module type is filesystem, the filesystem
+       name;  if module type is misc or none, no specific data is
+       displayed.  For the modload event: the loadable module id.
+       For  the modpath event: the absolute pathname added to the
+       loadable module search path or NULL if the default  search
+       path  is  set.  For the iocntl event: the command argument
+       id passed to the system call, the flags found in the  file
+       table  entry, if any (separated by colons), (FOPEN, FREAD,
+       FWRITE, FNDELAY, FAPPEND, FSYNC, FNONBLOC, FMASK,  FCREAT,
+       FTRUNC,  FEXCL,  FNOCTTY,  FASYNC,  FNMFS).  For the fcntl
+       event: the command argument passed to the system call.  If
+       command  is F_SETFD, close-on-exec flag (0 or 1).  If com-
+       mand  is  F_SETFL,  status  flags  (separated  by  colons)
+       (O_APPEND,  O_NDELAY,  O_NONBLOCK,  O_SYNC).   If a struct
+       flock was passed to the system call: the command  argument
+       passed to the system call, (F_ALLOCSP, F_FREESP, F_SETLCK,
+       F_SETLKW, F_RSETLCK, F_RSETLKW) and the  following  struc-
+       ture  members:  l_type, l_whence, l_start, l_len.  For the
+       mount event: the flags passed to the system call  and  one
+       or  more  of  the  following: RDONLY (read-only), FSS (old
+       (4-argument)  mount),  DATA  (6-argument  mount),   NOSUID
+
+                                                                5
+
+auditrpt(1M)                                         auditrpt(1M)
+
+       (setuid  disallowed),  REMOUNT  (remount), NOTRUNC (return
+       ENAMETOOLONG for long  file  names).   For  the  file_priv
+       event:  all  information in the priv_t masks passed to the
+       system     call,     in     the     following      format:
+       priv_type1:priv_name[:priv_name],priv_type2:.      .     .
+       priv_type will be the name of the privilege type, if it is
+       recognized  by the privilege mechanism of the audited sys-
+       tem.  If it is not recognized, it will  be  the  character
+       representation  of  the first byte of the priv_t mask (for
+       example, i for inheritable).  For a  list  of  privileges,
+       see  For  the  recvfd event: the receiver's process ID and
+       LWP ID.  For the misc event: the free form string provided
+       by  the  application.   For  the audit_buf event: the high
+       water mark value.  For the audit_ctl event when  generated
+       by  the auditctl system call: the action taken (AUDITON or
+       AUDITOFF).  For the audit_log event when generated by  the
+       auditlog  system  call: all information passed in the alog
+       structure to the system call.  This will include: log file
+       attributes  (PPATH:PNODE:APATH:ANODE:PSIZE :ASPECIAL:PSPE-
+       CIAL),  the  action   taken   when   the   log   is   full
+       (ASHUT,ADISA,AALOG,  AALOG:APROG),  the  action taken when
+       there is an audit error (ASHUT or ADISA), the maximum  log
+       size,  the primary node name, the alternate node name, the
+       primary log pathname, the alternate log pathname  and  the
+       program  to be run during a log switch.  For the audit_dmp
+       event when generated by  the  auditdmp  system  call:  the
+       event  type  and the status (if success: SUCCESS, if fail-
+       ure: FAILURE(status)).  For the audit_evt event when  gen-
+       erated by the auditevt system call: all information passed
+       in the aevt structure  to  the  system  call.   This  will
+       include:    command    argument   (ASETME,ASETSYS,ASETUSR,
+       ASETLVL, ANAUDIT,AYAUDIT).  If the command is ASETME,  the
+       new user event mask for the invoking process.  If the com-
+       mand is ASETSYS, the new system event mask.  If  the  com-
+       mand  is  ASETUSR,  the user whose mask has been modified,
+       the new user event mask.  If the command is  ASETLVL,  the
+       list  of  security  levels  (each level enclosed in double
+       quotes)    or    the    level    range    (displayed    as
+       "level_min"-"level_max")  , or the object level mask.  For
+       the lwp_create event, the ID of the LWP that was  created.
+       For the lwp_bind and lwp_unbind events, the LWP or process
+       flag argument to the system call, the ID of the process or
+       LWP, the processor ID supplied by the caller, and the pro-
+       cessor ID returned by the system.  For the p_online event,
+       the  command type (P_ONLINE or P_OFFLINE).  For the logoff
+       event, the type of logoff.  For the keyctl event, the com-
+       mand  (either  K_SETPROCESSORS  or K_SETUNLIMITED) and the
+       contents of the nskeys structures passed as  arguments  to
+       the  system  call.   For  most  events generated from file
+       descriptor  based  system  calls,  file   information   is
+       returned in the file identification information field.
+
+       All  the  commas  in  the output line, except possibly the
+       last one (if pgm_prm is empty), will be displayed as place
+
+                                                                6
+
+auditrpt(1M)                                         auditrpt(1M)
+
+       holders.   For  all  the  output fields, null will be dis-
+       played if the field is not appropriate for the event  type
+       being  displayed.   For  example,  the  date  event has no
+       objects      related       to       it,       so       the
+       obj_id:obj_type:obj_lvl:device:maj:min:inode:fsid   fields
+       will be null (only the comma separator will  be  displayed
+       for  these  fields).  Also, in a base system the MAC level
+       fields will be null.
+
+       The auditrpt command will use the audit map  to  translate
+       users,  groups,  security  levels,  privileges, events and
+       system calls from IDs(numbers) to names.  If the  informa-
+       tion  for  translating  a number to a name is not found in
+       the map, raw data (ASCII  representation  of  the  numeric
+       value) will be displayed for the corresponding field.
+
+       All numeric values are displayed in decimal representation
+       unless preceded by  ``0x'',  which  indicates  hexadecimal
+       representation.
+
+       If  a  field  is appropriate for an event but its value is
+       invalid, a ``?'' will be displayed.   For  example,  if  a
+       login  event  fails because the logname used is unknown to
+       the system (cannot be translated into a  UID  in  the  log
+       record),  the  user will be flagged as invalid and a ``?''
+       will be displayed.
+
+   MMiisscceellllaanneeoouuss rreeccoorrddss
+       Application programs can generate audit records  with  the
+       auditdmp  system  call.   The  auditrpt  command processes
+       these records as events of the type misc.  The misc record
+       will  have a string in the final field of its output; this
+       string will contain all the  information  written  by  the
+       application program that created the misc audit record.
+
+FFiilleess
+       /var/tmp/ /var/audit/MMDD### /var/audit/auditmap/auditmap
+
+       Additional   files   if  the  MAC  feature  is  installed:
+       /var/audit/auditmap/lid.internal
+       /var/audit/auditmap/ltf.alias  /var/audit/auditmap/ltf.cat
+       /var/audit/auditmap/ltf.class
+
+RReettuurrnn vvaalluueess
+       If successful, auditrpt exits with a value  of  zero  (0).
+       If  there  are  errors, it exits with one of the following
+       values and prints the corresponding error message:  usage:
+       auditrpt . . .
+
+       Invalid  command  syntax.  maximum security level does not
+       dominate minimum security level
+
+       The level range specified by the -r option is  not  valid.
+       invalid  minimum  security level specified invalid maximum
+
+                                                                7
+
+auditrpt(1M)                                         auditrpt(1M)
+
+       security level specified too many levels specified
+       usage: auditrpt . . .
+
+       More than one level was specified as an argument to the -l
+       option,  or  more than one level range was specified as an
+       argument to the -r option.  security level specified  does
+       not exist in map argument list for option option too long
+
+       The  argument list exceeds the current implementation lim-
+       its.  Option requires an argument -- e start time must  be
+       earlier than the end time
+
+       When  the  -s and -h options are used without -o, the time
+       specified by -s must be earlier than that specified by -h.
+       invalid argument given to option option
+
+       user  specified  with  the -u option contains at least one
+       non-alphanumeric character.  event  type  or  class  event
+       does not exist
+
+       The argument to the -e option was an invalid event type or
+       class (that is, an event not found in the audit map infor-
+       mation).   full  pathname  must be specified for object_id
+       invalid object type specified: object_type
+
+       The object type was not a f, c, d,  p,  l,  s,  h,  or  m.
+       invalid outcome specified
+
+       The  outcome  specified  by  -a  must  be  either  s or f.
+       invalid option combination option1, option2,. . .
+       usage: auditrpt . . .  auditing currently  disabled,  log-
+       file must be specified auditing disabled
+
+       The  -w  option was specified while auditing was disabled.
+       cannot open auditmap directory dirname invalid time format
+
+       The  argument  to  the  -h  or  -s  option is not correct.
+       invalid privilege priv supplied -x may not  be  used  with
+       this version
+
+       The  -x  option may not be used when printing records from
+       audit trails created by previous releases.  system service
+       not installed
+
+       If the -w option is used or no log file is specified, then
+       auditing must be installed on the machine in which  audit-
+       ing is executing.  Permission denied
+
+       Failure because of insufficient privilege.  chmod() failed
+       for temporary file, errno = number error manipulating file
+       could not obtain version number
+
+       An  attempt to read the audit log file to obtain the audit
+       trail  version  number  failed.   The  log  file  may   be
+
+                                                                8
+
+auditrpt(1M)                                         auditrpt(1M)
+
+       corrupted  or is not in the correct format.  unknown audit
+       version number
+
+       The audit trail version number read was invalid.  The rec-
+       ognized  version  numbers  are  1.0,  2.0,  3.0,  and 4.0.
+       Incompatible log file version number
+
+       When reading records from standard input, the beginning of
+       a  new  log  file was detected, but the version number for
+       this file was invalid.  could not get buffer attributes
+
+       The call to the auditbuf system  call  to  get  the  audit
+       buffer  attributes  failed.   could  not  get  current log
+       attributes
+
+       The call to the auditlog system call to  get  the  current
+       log file attributes failed.  could not determine status of
+       auditing
+
+       The call to the auditctl system call to  get  the  current
+       status  of  auditing  failed.   bad log record type record
+       number
+
+       An invalid record type was encountered in the audit  event
+       log  file.  all event log files specified are inaccessible
+       unable to allocate space additional options required
+       usage: auditrpt . . .
+
+       The -o option was specified  without  additional  criteria
+       selection options.  function name failed, errno = error
+
+       Failure  occurred  while accessing level information.  bad
+       map record type record number
+
+       An invalid element was encountered in an audit  map  file.
+       log file's format or byte ordering ((format id)
+       is not readable in current architecture
+
+       The  magic  number  of  the event log file is not what was
+       expected.  Possibly the file is in External Data Represen-
+       tation  (XDR)  format,  or  the magic number indicates the
+       file was generated by  another  version  or  architecture.
+       Version  specific auditrpt not found: version Version spe-
+       cific auditrpt not executable: version The following warn-
+       ing  messages may be displayed: The log files specified on
+       the command line may not be in order, or  a  file  may  be
+       missing.   auditrpt  did  not  find the expected number of
+       filename records for the given process.  A log file speci-
+       fied  on the command line does not exist.  The log file or
+       files do not contain a record that matches  the  selection
+       criteria.  The event log file and the audit map files were
+       generated on different machines.  The -w option is  speci-
+       fied,  but the audit log high water mark is not zero.  The
+       -i option or the -w option was used along with a log  file
+
+                                                                9
+
+auditrpt(1M)                                         auditrpt(1M)
+
+       argument.  auditrpt could not access some or all the audit
+       map files containing security level information.  auditrpt
+       could  not  open  the auditmap directory for reading.  The
+       miscellaneous record did not have a subtype name  followed
+       by  a  colon  (:)  in the first 20 characters of the ASCII
+       string.  The specified (or default) log file is a  charac-
+       ter  special  device  and  is  also the current active log
+       file.  The privilege list specified with the -p option can
+       not contain both the keyword all and individual privileges
+       Credential records for the given process  were  not  found
+       previously in the audit log file(s).
+
+RReeffeerreenncceess
+
+                                                               10
+

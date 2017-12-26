@@ -1,0 +1,170 @@
+cfgetospeed(3)                                           cfgetospeed(3)
+
+  ttccsseettaattttrr(())
+
+  NNAAMMEE
+
+    cfgetispeed(), cfsetispeed(), cfgetospeed(), cfsetospeed(), tcgetattr(),
+    tcsetattr() - manipulate the termios structure
+
+  SSYYNNOOPPSSIISS
+
+    #include <termios.h>
+
+    speed_t cfgetispeed (const struct termios *t)
+    int cfsetispeed (struct termios *t, speed_t speed)
+    speed_t cfgetospeed (const struct termios *t)
+    int cfsetospeed (struct termios *t, speed_t speed)
+    int tcgetattr (int fd, struct termios *t)
+    int tcsetattr (int fd, int action, const struct termios *t)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _tt_cc_gg_ee_tt_aa_tt_tt_rr(2) and _tt_cc_ss_ee_tt_aa_tt_tt_rr(2) functions are provided for getting and
+    setting the tteerrmmiiooss structure.
+
+    The _cc_ff_gg_ee_tt_ii_ss_pp_ee_ee_dd(3), _cc_ff_ss_ee_tt_ii_ss_pp_ee_ee_dd(3), _cc_ff_gg_ee_tt_oo_ss_pp_ee_ee_dd(3) and _cc_ff_ss_ee_tt_oo_ss_pp_ee_ee_dd(3)
+    functions are provided for getting and setting the baud rate values in the
+    tteerrmmiiooss structure. These functions set attributes for the terminal, but
+    those attributes do not take effect, nor are all errors detected, until
+    the _tt_cc_ss_ee_tt_aa_tt_tt_rr(2) function is called. Certain values for baud rates set in
+    the tteerrmmiiooss structure and passed to _tt_cc_ss_ee_tt_aa_tt_tt_rr(2) have special meanings.
+    These are discussed in the portion of the manual page that describes the
+    _tt_cc_ss_ee_tt_aa_tt_tt_rr(2) function.
+
+  GGEETTTTIINNGG AANNDD SSEETTTTIINNGG TTHHEE BBAAUUDD RRAATTEE
+
+    The input and output baud rates are found in the tteerrmmiiooss structure. The
+    unsigned integer ssppeeeedd__tt is ttyyppeeddeeff'd in the include file <<tteerrmmiiooss..hh>>. Use
+    the symbolic values defined there, since the value of the integer does not
+    necessarily correspond to the baud rate being represented. (For example,
+    B9600 may not be 9600.)
+    NNaammee     DDeessccrriippttiioonn     NNaammee       DDeessccrriippttiioonn
+
+    B0       Hang up         B600       600 baud
+
+    B50      50 baud         B1200      1200 baud
+
+    B75      75 baud         B1800      1800 baud
+
+    B110     110 baud        B2400      2400 baud
+
+    B134     134.5 baud      B4800      4800 baud
+
+    B150     150 baud        B9600      9600 baud
+
+    B200     200 baud        B19200     19,200 baud
+
+    B300     300 baud        B38400     38,400 baud
+
+    The _cc_ff_gg_ee_tt_ii_ss_pp_ee_ee_dd(3) function returns the input baud rate in the tteerrmmiiooss
+    structure referenced by tp.
+
+    The _cc_ff_ss_ee_tt_ii_ss_pp_ee_ee_dd(3) function sets the input baud rate in the tteerrmmiiooss
+    structure referenced by tp to speed.
+
+    The _cc_ff_gg_ee_tt_oo_ss_pp_ee_ee_dd(3) function returns the output baud rate in the tteerrmmiiooss
+    structure referenced by tp.
+
+    The _cc_ff_ss_ee_tt_oo_ss_pp_ee_ee_dd(3) function sets the output baud rate in the tteerrmmiiooss
+    structure referenced by tp to speed.
+
+    Upon successful completion, the functions _cc_ff_ss_ee_tt_ii_ss_pp_ee_ee_dd(3) and
+    _cc_ff_ss_ee_tt_oo_ss_pp_ee_ee_dd(3) return a value of 0. Otherwise, a value of -1 is returned
+    and the global variable errno is set to indicate the error.
+
+  GGEETTTTIINNGG AANNDD SSEETTTTIINNGG TTHHEE TTEERRMMIIOOSS SSTTAATTEE
+
+    This section describes the functions that are used to control the general
+    terminal interface. Unless otherwise noted for a specific command, these
+    functions are restricted from use by background processes. Attempts to
+    perform these operations shall cause the process group to be sent a
+    SIGTTOU signal. If the calling process is blocking or ignoring SIGTTOU
+    signals, the process is allowed to perform the operation and the SIGTTOU
+    signal is not sent.
+
+    In all the functions, although fd is an open file descriptor, the
+    functions affect the underlying terminal file, not just the open file
+    description associated with the particular file descriptor.
+
+    The _tt_cc_gg_ee_tt_aa_tt_tt_rr(2) function copies the parameters associated with the
+    terminal referenced by fd in the tteerrmmiiooss structure referenced by tp. This
+    function is allowed from a background process, however, the terminal
+    attributes may be subsequently changed by a foreground process.
+
+    The _tt_cc_ss_ee_tt_aa_tt_tt_rr(2) function sets the parameters associated with the terminal
+    from the termios structure referenced by tp. The action field is created
+    by ORing the following values, as specified in the include file
+    <<tteerrmmiiooss..hh>>.
+
+    TCSANOW
+        The change occurs immediately.
+
+    TCSADRAIN
+        The change occurs after all output written to fd has been transmitted
+        to the terminal. This value of action should be used when changing
+        parameters that affect output.
+
+    TCSAFLUSH
+        The change occurs after all output written to fd has been transmitted
+        to the terminal. Additionally, any input that has been received but
+        not read is discarded.
+
+    The 0 baud rate is used to terminate the connection. If 0 is specified as
+    the output speed to the function _tt_cc_ss_ee_tt_aa_tt_tt_rr(2), modem control will no
+    longer be asserted on the terminal, disconnecting the terminal.
+
+    If zero is specified as the input speed to the function _tt_cc_ss_ee_tt_aa_tt_tt_rr(2), the
+    input baud rate will be set to the same value as that specified by the
+    output baud rate.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    If _tt_cc_ss_ee_tt_aa_tt_tt_rr(2) is unable to make any of the requested changes, it returns
+    -1 and sets errno. Otherwise, it makes all of the requested changes it
+    can. If the specified input and output baud rates differ and are a
+    combination that is not supported, neither baud rate is changed.
+
+    Upon successful completion, the functions _tt_cc_gg_ee_tt_aa_tt_tt_rr(2) and _tt_cc_ss_ee_tt_aa_tt_tt_rr(2)
+    return a value of 0. Otherwise, they return -1 and the global variable
+    errno is set to indicate the error.
+
+  EERRRROORRSS
+
+    The functions _tt_cc_gg_ee_tt_aa_tt_tt_rr(2) and _tt_cc_ss_ee_tt_aa_tt_tt_rr(2) can set errno to the following
+    values:
+
+    [EBADF]
+        The fd argument to _tt_cc_gg_ee_tt_aa_tt_tt_rr(2) or _tt_cc_ss_ee_tt_aa_tt_tt_rr(2) was not a valid file
+        descriptor.
+
+    [EINTR]
+        The _tt_cc_ss_ee_tt_aa_tt_tt_rr(2) function was interrupted by a signal.
+
+    [EINVAL]
+        The action argument to the _tt_cc_ss_ee_tt_aa_tt_tt_rr(2) function was not valid, or an
+        attempt was made to change an attribute represented in the tteerrmmiiooss
+        structure to an unsupported value.
+
+    [ENOTTY]
+        The file associated with the fd argument to _tt_cc_gg_ee_tt_aa_tt_tt_rr(2) or
+        _tt_cc_ss_ee_tt_aa_tt_tt_rr(2) is not a terminal.
+
+  NNOOTTEESS
+
+    As of this writing, setting (or getting) the baud rate for a console
+    window is unimportant, since on single PCs there is no modulated phone
+    line connecting the terminal and the subsystem.
+
+  SSEEEE AALLSSOO
+
+    _t_c_s_e_n_d_b_r_e_a_k(2)
+
+    _t_e_r_m_i_o_s(4)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    All of these functions are async-signal safe.
+

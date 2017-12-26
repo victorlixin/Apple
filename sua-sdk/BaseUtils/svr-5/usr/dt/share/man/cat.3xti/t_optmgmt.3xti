@@ -1,0 +1,249 @@
+
+
+t_optmgmt(3xti)                                   t_optmgmt(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       int  t_optmgmt  (int  fd,  struct  t_optmgmt  *req, struct
+       t_optmgmt *ret);
+
+DDeessccrriippttiioonn
+       The  t_optmgmt  function  enables  a  transport  user   to
+       retrieve,  verify,  or negotiate protocol options with the
+       transport provider associated  with  the  bound  transport
+       endpoint  specified  by  fd.  t_optmgmt is a TLI/XTI local
+       management routine that may be used with both  connection-
+       mode   and  connectionless  protocol  services.   &gemini;
+       transport providers do not support XPG4 options management
+       unless  the  value of the environment variable XTI_OPTMGMT
+       is set to 1 and exported. See for more information.
+
+       UnixWare 2.0  transport  providers  do  not  support  XPG4
+       options  management.  Some  features of t_optmgmt may also
+       not be supported by third-party transport providers.  Lim-
+       ited  transport-independent options management is provided
+       by
+
+   PPaarraammeetteerrss
+       the file descriptor for the transport endpoint  points  to
+       the  t_optmgmt  structure  used  to  specify  the request.
+       points to the t_optmgmt structure  used  to  identify  the
+       return.
+
+   SSttrruuccttuurree ddeeffiinniittiioonnss
+       The  req  and ret arguments point to a t_optmgmt structure
+       containing  the  following  members:  struct  netbuf  opt;
+       /*  protocol  options      */  long  flags;             /*
+       actions              */ The opt field identifies  protocol
+       options  and the flags field is used to specify the action
+       to take with those options.  The  members  of  the  netbuf
+       structure are described in
+
+       The  req  argument is used to request a specific action of
+       the provider and to send options  to  the  provider.   The
+       maxlen  field  of  the netbuf structure has no meaning for
+       req.  The len field specifies the number of bytes  in  the
+       options.   The buf field points to the list of options and
+       their headers.
+
+       The ret argument is used to return options and flag values
+       from the transport provider.  The maxlen field of the net-
+       buf structure must be set to specify the maximum number of
+       bytes  that  the  options  buffer can hold.  The buf field
+       points to the buffer where the options are to  be  placed.
+       On  return,  len  specifies the number of bytes of options
+       returned.
+
+       Each option in the options buffer  consists  of  a  struct
+
+                                                                1
+
+t_optmgmt(3xti)                                   t_optmgmt(3xti)
+
+       t_opthdr  option header which may be followed by an option
+       value.  The level member identifies the XTI level  or  the
+       transport  provider  protocol.  The name member identifies
+       the option within the level, and the len member stores its
+       total  length  (length of t_opthdr plus option value).  If
+       t_optmgmt is called with the action T_NEGOTIATE  set,  the
+       status  member  of  the returned options indicates whether
+       the negotiation succeeded or failed.
+
+       You can use the macro OPT_NEXTHDR(pbuf,buflen,poption)  to
+       help in reading from or writing to an option buffer.  This
+       macro also automatically aligns each option in an input or
+       output  option buffer on a long-word boundary. pbuf points
+       to an option buffer (opt.buf), buflen is its  length,  and
+       poption  points  to the current option in the buffer.  The
+       macro returns a pointer to the position of the next option
+       or  returns  a  null  pointer  if the end of the buffer is
+       reached.
+
+       The actual structure and content of the options is imposed
+       by the transport provider (for example, see
+
+       All  options  specified  on  input  must  address the same
+       level.
+
+       The flags field of req can specify one  of  the  following
+       actions:  Negotiate the values of the options specified in
+       req->opt.buf and req->opt.len with the transport provider.
+
+       The provider will evaluate the requested options and nego-
+       tiate the values, returning the negotiated values  through
+       ret->opt.buf.   The  status member of each returned option
+       indicates the result of negotiation:  proposed  value  was
+       negotiated   degraded  value  was  negotiated  negotiation
+       failed according to rules transport provider does not sup-
+       port  option,  or option is privileged option is read-only
+       If status is T_SUCCESS, T_FAILURE, T_NOTSUPPORT or T_READ-
+       ONLY,  the  returned  option  value  is  the  same as that
+       requested.
+
+       The overall result  of  the  negotiation  is  returned  in
+       ret->flags.   This member contains the worst result in the
+       list: T_NOTSUPPORT (worst), T_READONLY, T_FAILURE, T_PART-
+       SUCCESS, and T_SUCCESS (best).
+
+       If the option T_ALLOPT is requested, all supported options
+       of this level are requested  to  be  negotiated  to  their
+       default  values.   On  output,  ret->opt.buf  contains the
+       result, option by  option.   Verify  whether  the  options
+       specified  in req are supported by the transport provider.
+
+       If an option consists only of a  t_opthdr  option  header,
+       the  status  member  of  the returned option indicates the
+       following: option is supported transport provider does not
+
+                                                                2
+
+t_optmgmt(3xti)                                   t_optmgmt(3xti)
+
+       support  option,  or  option is privileged option is read-
+       only If an option is specified with an option value,  sta-
+       tus is returned with the same value as if the option value
+       were negotiated using T_NEGOTIATE. If status is T_SUCCESS,
+       T_FAILURE,   T_NOTSUPPORT,  or  T_READONLY,  the  returned
+       option value is the same as the requested value.
+
+       On return, ret->flags will be set to the  worst  value  as
+       for  T_NEGOTIATE.  All  currently  effective option values
+       remain unchanged.  Retrieve the default options  supported
+       by  the  transport  provider  into ret->opt.buf.  Only the
+       t_opthdr option header need be specified.
+
+       The returned status member indicates the following: option
+       is  supported  transport provider does not support option,
+       or option is privileged option  is  read-only  On  return,
+       ret->flags will be set to the worst value as for T_NEGOTI-
+       ATE.
+
+       If the option T_ALLOPT is requested, all supported options
+       of  this level with their default values are returned.  On
+       input,  ret->opt.maxlen  must  have  at  least  the  value
+       info->options.   Retrieve  the option values that are cur-
+       rently   effective   for   the   options   specified    by
+       req->opt.buf.  Only  the  t_opthdr  option  header need be
+       specified. On return, req->opt.buf will contain  the  cur-
+       rently effective values.
+
+       The returned status member indicates the following: option
+       is supported transport provider does not  support  option,
+       or  option  is  privileged  option is read-only On return,
+       ret->flags will be set to the worst value as for T_NEGOTI-
+       ATE.
+
+       If the option T_ALLOPT is requested, all supported options
+       of this level are returned with their currently  effective
+       values.   The option T_ALLOPT can be used with the actions
+       T_NEGOTIATE, T_DEFAULT, and T_CURRENT at any  level.  Only
+       the t_opthdr option header need be specified.  This option
+       should not be requested with other options.
+
+       t_optmgmt may block if data  previously  sent  across  the
+       transport  endpoint  has  not yet been fully processed. If
+       interrupted by a signal, option negotiations that are  yet
+       to  be  processed  remain  valid.  t_optmgmt is also unaf-
+       fected by the setting of O_NONBLOCK.
+
+   XXTTII--lleevveell ooppttiioonnss
+       The following XTI-level options are generic (with protocol
+       level  XTI_GENERIC)  and are not specific to any transport
+       provider: Enable debugging. If  the  option  is  specified
+       with  only  an  option header, disable debugging.  Prolong
+       the execution of a t_open or t_close (but not t_snddis) if
+       send  data is still queued in the send buffer.  The linger
+
+                                                                3
+
+t_optmgmt(3xti)                                   t_optmgmt(3xti)
+
+       period is specified by the option value  consisting  of  a
+       struct  t_linger: struct t_linger {      long l_onoff;  /*
+       switch option  on  (T_ON)  or  off  (T_OFF)  */       long
+       l_linger; /*  linger  period  in seconds */ } Legal values
+       for l_linger are T_UNSPEC (default), T_INFINITE, or a non-
+       negative integer.
+
+       The  system  will  attempt to send pending data within the
+       linger period before closing the endpoint.  Data  that  is
+       then  still remaining to be sent is discarded.  Adjust the
+       internal size of the receive  buffer.   The  size  may  be
+       increased  for high-volume connections, or reduced to pre-
+       vent incoming data backing-up.  Set a low-end threshold on
+       the  receive  buffer.  This is the minimum number of bytes
+       that must be received in the buffer before  the  transport
+       user  is notified via a T_DATA event.  Adjust the internal
+       size of the send buffer.  Set a low-end threshold  on  the
+       send buffer. This is the minimum number of bytes that must
+       have accumulated in the buffer before they will be sent.
+
+   SSttaattee ttrraannssiittiioonnss
+       t_optmgmt may  be  issued  from  any  valid  state  except
+       T_UNINIT and has no effect on the entry state at exit.
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+UUssaaggee
+       If issued as part of a connectionless  service,  t_optmgmt
+       may  block  due to flow control constraints.  The function
+       will not complete until the transport  provider  has  pro-
+       cessed all previously sent data units.
+
+RReettuurrnn vvaalluueess
+       t_optmgmt  returns  0  on  success  and  -1 on failure and
+       t_errno is set to indicate the error.
+
+   EErrrroorrss
+       On failure, t_errno may be set to one  of  the  following:
+       The  specified  file descriptor does not refer to a trans-
+       port endpoint.  The  function  was  issued  in  the  wrong
+       sequence.   The user does not have permission to negotiate
+       the specified options.   The  specified  protocol  options
+       were  in an incorrect format or contained illegal informa-
+       tion.  An invalid flag was specified.  The number of bytes
+       (maxlen)  allocated  for  an  incoming argument is greater
+       than zero but not sufficient to store the  value  of  that
+       argument.   The  information to be returned in ret will be
+       discarded.  A system error has occurred  during  execution
+       of  this  function.   A  communication  problem  has  been
+       detected with the transport provider and there is no other
+       value  of  t_errno  to  describe the error condition.  The
+       action is not supported by the transport provider.
+
+                                                                4
+
+t_optmgmt(3xti)                                   t_optmgmt(3xti)
+
+WWaarrnniinnggss
+       The transport provider interface may not support the func-
+       tionality  for  T_NEGOTIATE and/or T_CHECK, causing t_opt-
+       mgmt to fail with a TNOTSUPPORT error.
+
+RReeffeerreenncceess
+
+                                                                5
+

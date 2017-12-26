@@ -1,0 +1,84 @@
+
+
+thr_join(3thread)                               thr_join(3thread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <thread.h>
+
+       int thr_join(thread_t wait_for, thread_t *departed_thread,
+       void **status);
+
+DDeessccrriippttiioonn
+       thr_join waits for termination of the  undetached  sibling
+       thread  designated by wait_for and retrieves the exit sta-
+       tus of the terminated thread (see
+
+       When the thread being waited  for  (wait_for)  terminates,
+       and thr_join returns, it can be viewed that the terminated
+       thread has joined  control  paths  with  the  thread  that
+       called thr_join.
+
+   PPaarraammeetteerrss
+       the ID of the thread to wait for or 0 pointer to the ID of
+       the thread joined, set by thr_join pointer to  the  joined
+       thread's exit status
+
+   wwaaiitt__ffoorr ppaarraammeetteerr
+       If  wait_for is set to the thread ID of an undetached sib-
+       ling thread, thr_join waits for that thread to  terminate.
+       If  wait_for  is  equal to (thread_t)0, thr_join waits for
+       termination of any undetached sibling thread, and  returns
+       when the first one completes thr_exit.
+
+       Threads  created  with  the  THR_DETACHED  flag  cannot be
+       joined.
+
+   ddeeppaarrtteedd__tthhrreeaadd ppaarraammeetteerr
+       If the value of the pointer departed_thread is  not  NULL,
+       thr_join  sets  the location pointed to by departed_thread
+       to the identifier of the terminated sibling thread.   This
+       tells the calling thread which thread it joined.
+
+   ssttaattuuss ppaarraammeetteerr
+       If  status  is not NULL, the location pointed to by status
+       is set to the exit  status  from  the  terminated  sibling
+       thread.
+
+       Only  one  thread  can successfully return from a thr_join
+       for a given departed_thread.  If more than one  thread  is
+       waiting  for  a  specific thread to terminate, one is suc-
+       cessful and the others fail with error  indication  ESRCH.
+       This  allows  exactly  one  thread to join with and obtain
+       status from a given thread.
+
+       If wait_for has already been thr_joined, or  otherwise  is
+       not known by the implementation, ESRCH is returned.
+
+                                                                1
+
+thr_join(3thread)                               thr_join(3thread)
+
+       The  wait  in  thr_join  is  not broken by a signal.  If a
+       thread waiting in thr_join receives a signal that  is  not
+       masked,  if  will  execute  the  signal  handler, and then
+       return to waiting in thr_join.  Note  that  this  behavior
+       differs from that of cond_wait (see
+
+RReettuurrnn vvaalluueess
+       thr_join  returns  zero for success and an error number on
+       failure.
+
+   EErrrroorrss
+       If  any  of  the  following  conditions  occurs,  thr_join
+       returns  the  corresponding  value:  there  is no joinable
+       (undetached) thread in the current process with thread  ID
+       wait_for.   wait_for  is  the  calling thread's thread ID.
+       wait_for is (thread_t) 0, and there are no undetached sib-
+       ling threads to wait for.
+
+RReeffeerreenncceess
+
+                                                                2
+

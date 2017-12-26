@@ -1,0 +1,113 @@
+
+
+pwrite(2)                                               pwrite(2)
+
+SSyynnooppssiiss
+       #include <unistd.h>
+
+       ssize_t  pwrite(int  fd,  const  void *buf, size_t nbytes,
+       off_t offset);
+
+       ssize_t pwrite64(int fd, const void *buf,  size_t  nbytes,
+       off64_t offset);
+
+DDeessccrriippttiioonn
+       The  pwrite system call does an atomic position-and-write,
+       eliminating the necessity of  using  a  locking  mechanism
+       when  both operations are desired and file descriptors are
+       shared.  pwrite is analogous to write but takes  a  fourth
+       argument,  offset.   The  write  is done as if an lseek to
+       offset (from the beginning of the file) were  done  first.
+       Note that (though the semantics are analogous) an lseek is
+       not actually performed; the file pointer is  not  affected
+       by  pwrite.  The write of nbytes then starts at the speci-
+       fied offset.
+
+       The atomicity of pwrite enables processes or threads  that
+       share  file  descriptors  to write to the shared file at a
+       particular offset without using a locking  mechanism  that
+       would  be necessary to achieve the same result in separate
+       lseek and write system calls.  Atomicity  is  required  as
+       the  file  pointer is shared and one thread might move the
+       pointer using lseek after  another  process  completes  an
+       lseek but prior to the write.
+
+       Note  that when pwrite is called on a file that was opened
+       with the system call's O_APPEND flag, the offset  argument
+       to  pwrite  is ignored;  the data is written to the end of
+       the file.
+
+   RReettuurrnn vvaalluueess
+       Upon successful completion, pwrite returns the  number  of
+       bytes  actually  written  from buf.  Otherwise a -1 and an
+       error is returned.
+
+   EErrrroorrss
+       In the following conditions, pwrite fails and  sets  errno
+       to:  The  file is a regular file, nbyte is greater than 0,
+       and the starting position is greater than or equal to  the
+       offset  maximum  established  in  the open file descriptor
+       associated with fd.  There is no data transfer.
+
+       In the following conditions, pwrite and pwrite64 fail  and
+       set errno to: Mandatory file/record locking is set, O_NDE-
+       LAY or O_NONBLOCK is set, and there is a  blocking  record
+       lock.   Total amount of system memory available when read-
+       ing via raw I/O is temporarily insufficient.   An  attempt
+       is  made to write to a stream that cannot accept data with
+       the O_NDELAY or O_NONBLOCK flag set.  fd is  not  a  valid
+
+                                                                1
+
+pwrite(2)                                               pwrite(2)
+
+       file descriptor open for writing.  The pwrite was going to
+       go to sleep and cause a deadlock  to  occur.   buf  points
+       outside the process's allocated address space.  An attempt
+       is made to write a file that exceeds  the  process's  file
+       size  limit or the maximum file size (see and A signal was
+       caught during the pwrite system call.  An attempt is  made
+       to  write  to  a  stream  linked below a multiplexor.  The
+       resulting file pointer would be negative.
+
+       fd is a remote file descriptor  accessed  using  NFS,  the
+       Network  File System, and the resulting file pointer would
+       be negative.  The process is  in  the  background  and  is
+       attempting  to  write  to  its  controlling terminal whose
+       TOSTOP flag is set; the process is  neither  ignoring  nor
+       blocking  SIGTTOU  signals,  and  the process group of the
+       process is orphaned.  fd points to a device  special  file
+       that  is  in  the  closing  state.  The system record lock
+       table was full, so the pwrite could not go to sleep  until
+       the  blocking  record lock was removed.  fd is on a remote
+       machine and the link to that machine is no longer  active.
+       An  attempt is made to write to a stream with insufficient
+       STREAMS memory resources available in the system.   During
+       a  pwrite to an ordinary file, there is no free space left
+       on the  device.   The  device  associated  with  the  file
+       descriptor  is  a  block-special or character-special file
+       and the file-pointer value is out of range.  An attempt is
+       made  to  write  to  a stream with nbyte outside specified
+       minimum and maximum write range, and the minimum value  is
+       non-zero.    Enforced   record  locking  was  enabled  and
+       {LOCK_MAX} regions are already locked in the  system.   fd
+       is  associated with a pipe or fifo.  The device for fstype
+       does not support lseek.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Open file descriptors are a process resource and available
+       to  any  sibling  thread; if used concurrently, actions by
+       one thread can interfere with those of a sibling.
+
+       While one thread is blocked, siblings might still be  exe-
+       cuting.
+
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       pwrite64  supports large files, but is otherwise identical
+       to pwrite.  For details  on  programming  for  large  file
+       capable applications, see on intro(2).
+
+                                                                2
+

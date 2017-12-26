@@ -1,0 +1,174 @@
+acl(5)                                                           acl(5)
+
+  aaccll
+
+  NNAAMMEE
+
+    acl - mapping of Windows file permissions to Subsystem for UNIX-based Applications file permissions
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    Within Subsystem for UNIX-based Applications, file ownership on the NTFS file system
+    behaves as the POSIX standard requires. If you do not exchange files
+    between the Subsystem for UNIX-based Applications environment and the Win32 environment, you probably
+    will not notice a difference. If you plan on using both Subsystem for UNIX-based Applications and
+    Windows applications and utilities to access the same files, however,
+    understanding the Windows security model makes it easier to understand
+    interactions between the utilities from one environment and files from
+    another. For example: _c_h_o_w_n(1), _c_h_g_r_p(1), and _c_h_m_o_d(1) might not behave as
+    you expect when used with files created using Windows applications.
+
+    User and group information is stored in the Security Access database.
+    Users and groups are stored in the same database, so group and user names
+    must be unique; no group can have a user's name and vice versa. (This
+    database replaces //eettcc//ppaasssswwdd and //eettcc//ggrroouupp files.) Users and groups are
+    created using User Manager or using the MS-DOS nneett uusseerr command. (Example
+    shell scripts to create and remove users are included in the directory //
+    uussrr//eexxaammpplleess//aaddmmiinn.) Users can belong to many groups.
+
+    Note that in the NTFS file system, the group and the owner of a file are
+    stored as properties of the file; they are not derived from entries in the
+    discretionary access control list (DACL). The permissions given to the
+    group, the owner, and the and others, however, are derived from entries in
+    the DACL.
+
+    Permissions are not implemented the same way on Windows as they are on
+    traditional UNIX systems. UNIX permissions are clearly described in the
+    POSIX standard and in the "Single UNIX Specification." In contrast to the
+    UNIX implementation, the Windows file system underlying the Subsystem for UNIX-based Applications file
+    system uses DACLs consisting of access control entries (ACEs), and
+    Subsystem for UNIX-based Applications maps those to the standard permission types. This topic
+    describes that mapping and the Windows permissions that correspond to
+    certain traditional abilities.
+
+  WWIINNDDOOWWSS OOBBJJEECCTT SSEECCUURRIITTYY
+
+    All objects in Windows on NTFS file system have an owner and a primary
+    group. (Objects can actually be owned by a group rather than a user; this
+    will be discussed later in this topic.) Furthermore, each secure object
+    has a DACL made up of ACEs. Each ACE applies to a particular group or user
+    and either allows or denies a type of access to that group or user. You
+    can see the DACL for a secure object by using the Windows ccaaccllss command,
+    or by selecting the object, clicking PPrrooppeerrttiieess on the FFiillee menu, clicking
+    the SSeeccuurriittyy tab, and then clicking PPeerrmmiissssiioonnss.
+
+    Each user or group with access has its permissions listed with respect to
+    the object, as described in the following list:
+
+    Deny full access
+        The user or group cannot open or change the file, even if membership
+        in a group would otherwise allow it.
+
+    Read and execute
+        The user or group can view or execute the contents of the file, but
+        not change or delete it.
+
+    Read
+        The user or group can view the contents of the file, but cannot
+        execute it.
+
+    Modify
+        The user or group can save changes to the file or its attributes, but
+        not its permissions or owner. The user or group can also delete the
+        file.
+
+    Full control
+        The user or group has complete control over the file, including
+        changing its permissions or owner.
+
+    Special permissions
+        The permissions assigned to the user or group consists of a
+        combination of specific permissions that do not correspond to any of
+        the preceding named permissions.
+
+  DDiirreeccttoorryy pprriivviilleeggeess
+
+    Directories have somewhat different permissions from files. In addition to
+    specifying the access permission for the directory itself, directory
+    permissions also specify the default permission inherited by files in that
+    directory:
+
+    Deny full access
+        The user or group cannot list the files in the directory. Unless the
+        permissions of a particular file explicitly allow it, the user or
+        group cannot access files in the directory.
+
+    List folder contents
+        The user or group can list the files in the directory. Unless the
+        permissions of a particular file explicitly allow it, the user or
+        group cannot access files in the directory.
+
+    Read and execute
+        The user or group can list the files in the directory. Unless the
+        permissions of a particular file provide otherwise, the user or group
+        can view or execute the contents of files in the directory.
+
+    Read
+        The user or group can list the files in the directory. Unless the
+        permissions of a particular file provide otherwise, the user or group
+        can view the contents of files in the directory, but not execute them.
+
+    Write
+        The user or group can create files in the directory, but not list
+        files in the directory. Unless the permissions of a particular file
+        provide otherwise, the user or group can change contents of files in
+        the directory.
+
+    Change
+        The user or group can create and list files in the directory. Unless
+        the permissions on a particular file provide otherwise, the user or
+        group can read, execute, change, or delete files in the directory.
+
+    Full control
+        The user or group has complete control over the directory and, unless
+        individual file permissions specify otherwise, its files, including
+        changing its permissions or owner.
+
+    A file created through Subsystem for UNIX-based Applications and viewed using the llss --ll command has the
+    following permissions and attributes:
+
+    *     The file is owned by the user who created it.
+    *     The file's group is the same as the group of the directory.
+    *     File permissions are dictated by the file creation mask and the user
+          mask (see _u_m_a_s_k(1)).
+
+    POSIX files are given three ACEs, one for the owner, one for the group,
+    and one for the group Everyone, which represents everyone else. POSIX
+    permissions are represented as follows:
+
+    *     The POSIX read permission is represented by the Windows permission.
+    *     The POSIX write permission is represented by the Windows write
+          permission. If the file's read-only attribute is set, the Subsystem for UNIX-based Applications
+          does not assign write permission, regardless of the
+          contents of the ACEs. (Using _c_h_m_o_d(1) to assign write permission to
+          a file with the read-only attribute set removes the read-only
+          attribute.)
+    *     The POSIX execute permission is represented by the Windows execute
+          permission, which is implicit in several standard permissions.
+    *     The owner also has permission to change permissions and to take
+          ownership of the file.
+
+    A file created through the Win32 subsystem can have a different number of
+    ACEs associated with it, and those ACEs might not fit well into the
+    categories of user, group, and other. Subsystem for UNIX-based Applications tools will assemble
+    permissions from the available ACEs:
+
+    *     The file is owned by the user unless the user is a member of the
+          Administrators group, in which case the file is owned by the
+          Administrators group.
+    *     The file's group is determined by the group membership of the owner
+          as stored in the security access database.
+    *     If the owner has no specific ACE associated with it, the owner
+          permission bits are empty.
+    *     If the owner is a group, those permissions will be used as the
+          owner's permission, and the group permissions will be empty.
+    *     The "other" permissions are those of the built-in group Everyone.
+
+    If the ACE used to determine the owner's permissions does not have change
+    permission or take-ownership permission, the utilities _c_h_o_w_n(1), _c_h_g_r_p(1),
+    and _c_h_m_o_d(1) might be hampered.
+
+  SSEEEE AALLSSOO
+
+    _p_r_i_v_i_l_e_g_e_s(5)
+

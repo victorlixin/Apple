@@ -1,0 +1,177 @@
+XListInputDevices(3X11R5)                     XListInputDevices(3X11R5)
+
+  XXLLiissttIInnppuuttDDeevviicceess(())
+
+  NNAAMMEE
+
+    XListInputDevices(), XFreeDeviceList() - list available input devices
+
+  SSYYNNOOPPSSIISS
+
+    XDeviceInfo *XListInputDevices (Display *display, int *ndevices_return)
+    XFreeDeviceList (XDeviceInfo *list)
+
+  AARRGGUUMMEENNTTSS
+
+    display
+        Specifies the connection to the X server.
+
+    ndevices_return
+        Specifies a pointer to a variable where the number of available
+        devices can be returned.
+
+    list
+        Specifies the list of devices to free. The _XX_FF_rr_ee_ee_DD_ee_vv_ii_cc_ee_LL_ii_ss_tt(3X11R5)
+        function frees the list of available extension input devices.
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _XX_LL_ii_ss_tt_II_nn_pp_uu_tt_DD_ee_vv_ii_cc_ee_ss(3X11R5) request lists the available extension input
+    devices. This list includes the X pointer and X keyboard, any other input
+    devices that are currently accessible through the X server, and any input
+    devices that are not currently accessible through the X server but could
+    be accessed if requested.
+
+    Some server implementations may make all input devices available at the
+    time the server is initialized. Others may wait until requested by a
+    client to access an input device. In the latter case, it is possible that
+    an input device will be listed as available at one time but not at
+    another.
+
+    For each input device available to the server, the XListInputDevices
+    request returns an XDeviceInfo structure. That structure contains a
+    pointer to a list of structures, each of which contains information about
+    one class of input supported by the device.
+
+    The XXDDeevviicceeIInnffoo structure is defined as follows:
+
+    typedef struct _XDeviceInfo
+    {
+         XID       id;
+         Atom      type;
+         char      *name;
+         int       num_classes;
+         int       use;
+         XAnyClassPtr   inputclassinfo;
+    } XDeviceInfo;
+
+    The id is a number in the range 0-128 that uniquely identifies the device.
+    It is assigned to the device when it is initialized by the server.
+
+    The type field is of type Atom and indicates the nature of the device.
+
+    The name field contains a pointer to a null-terminated string that
+    corresponds to one of the defined device types. The name will correspond
+    to one of the following strings (defined in the header file <<XX1111//XXII..hh>>:
+
+    These names may be directly compared with the name field of the
+    XXDDeevviicceeIInnffoo structure, or used in an _XX_II_nn_tt_ee_rr_nn_AA_tt_oo_mm(3X11R5) request to return
+    an atom that can be compared with the type field of the XXDDeevviicceeIInnffoo
+    structure.
+
+    The num_classes field is a number in the range 0-255 that specifies the
+    number of input classes supported by the device for which information is
+    returned by _XX_LL_ii_ss_tt_II_nn_pp_uu_tt_DD_ee_vv_ii_cc_ee_ss(3X11R5). Some input classes, such as class
+    Focus and class Proximity do not have any information to be returned by
+    _XX_LL_ii_ss_tt_II_nn_pp_uu_tt_DD_ee_vv_ii_cc_ee_ss(3X11R5).
+
+    The use field specifies how the device is currently being used. If the
+    value is IsXKeyboard, the device is currently being used as the X
+    keyboard. If the value is IsXPointer the X pointer. If the value is
+    IsXExtensionDevice, the device is available for use as an extension
+    device.
+
+    The inputclassinfo field contains a pointer to the first input-class
+    specific data. The first two fields are common to all classes.
+
+    The class field is a number in the range 0-255. It uniquely identifies the
+    class of input for which information is returned. Currently defined
+    classes are KeyClass, ButtonClass, and ValuatorClass.
+
+    The length field is a number in the range 0-255. It specifies the number
+    of bytes of data that are contained in this input class. The length
+    includes the class and length fields.
+
+    The XXKKeeyyIInnffoo structure describes the characteristics of the keys on the
+    device. It is defined as follows:
+
+    typedef struct _XKeyInfo {
+         XID            class;
+         int            length;
+         unsigned short      min_keycode;
+         unsigned short      max_keycode;
+         unsigned short      num_keys;
+    } XKeyInfo;
+
+    min_keycode is of type KEYCODE. It specifies the minimum keycode that the
+    device will report. The minimum keycode will not be smaller than 8.
+
+    max_keycode is of type KEYCODE. It specifies the maximum keycode that the
+    device will report. The maximum keycode will not be larger than 255.
+
+    num_keys specifies the number of keys that the device has.
+
+    The XButtonInfo structure defines the characteristics of the buttons on
+    the device. It is defined as follows:
+
+    typedef struct _XButtonInfo {
+         XID       class;
+         int       length;
+         short          num_buttons;
+    } XButtonInfo;
+
+    num_buttons specifies the number of buttons that the device has.
+
+    The XXVVaalluuaattoorrIInnffoo structure defines the characteristics of the valuators
+    on the device. It is defined as follows:
+
+    typedef struct _XValuatorInfo {
+         XID            class;
+         int            length;
+         unsigned char       num_axes;
+         unsigned char       mode;
+         unsigned long       motion_buffer;
+         XAxisInfoPtr        axes;
+    } XValuatorInfo;
+
+    num_axes contains the number of axes the device supports.
+
+    mode is a constant that has one of the following values: Absolute or
+    Relative. Some devices allow the mode to be changed dynamically through
+    the SSeettDDeevviicceeMMooddee() request.
+
+    motion_buffer_size is a cardinal number that specifies the number of
+    elements that can be contained in the motion history buffer for the
+    device.
+
+    The axes field contains a pointer to an XXAAxxiissIInnffoo structure.
+
+    The XXAAxxiissIInnffoo structure is defined as follows:
+
+    typedef struct _XAxisInfo {
+         int  resolution;
+         int  min_value;
+         int  max_value;
+    } XAxisInfo;
+
+    The resolution contains a number in counts/meter.
+
+    The min_val field contains a number that specifies the minimum value the
+    device reports for this axis. For devices whose mode is Relative, the
+    min_val field will contain 0.
+
+    The max_val field contains a number that specifies the maximum value the
+    device reports for this axis. For devices whose mode is Relative, the
+    max_val field will contain 0.
+
+    To free the XXDDeevviicceeIInnffoo array created by _XX_LL_ii_ss_tt_II_nn_pp_uu_tt_DD_ee_vv_ii_cc_ee_ss(3X11R5), use
+    _XX_FF_rr_ee_ee_DD_ee_vv_ii_cc_ee_LL_ii_ss_tt(3X11R5).
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    None.
+
+  SSEEEE AALLSSOO
+
+    Programming With Xlib
+

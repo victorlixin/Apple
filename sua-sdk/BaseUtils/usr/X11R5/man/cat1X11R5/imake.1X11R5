@@ -1,0 +1,191 @@
+imake(1X11R5)                                             imake(1X11R5)
+
+  iimmaakkee
+
+  NNAAMMEE
+
+    imake - C preprocessor interface to the make utility
+
+  SSYYNNOOPPSSIISS
+
+    imake [[-Ddefine]] [[-Idir]] [[-Ttemplate]]
+          [[-f filename]] [[-s filename]] [[-e ]] [[ -v]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The iimmaakkee(1X11R5) utility is used to generate MMaakkeeffiillees from a template, a
+    set of ccpppp(1) macro functions, and a per-directory input file called an
+    IImmaakkeeffiillee. This allows computer dependencies (such as compiler options,
+    alternate command names, and special mmaakkee rules) to be kept separate from
+    the descriptions of the various items to be built.
+
+  OOPPTTIIOONNSS
+
+    The following command-line options may be passed to iimmaakkee(1X11R5):
+    --DDdefine
+        This option is passed directly to ccpppp(1). It is typically used to set
+        directory-specific variables. For example, the X Window System uses
+        this flag to set TOPDIR to the name of the directory containing the
+        top of the core distribution and CURDIR to the name of the current
+        directory, relative to the top.
+    --IIdirectory
+        This option is passed directly to ccpppp(1). It is typically used to
+        indicate the directory in which the iimmaakkee(1X11R5) template and
+        configuration files may be found.
+    --TTtemplate
+        This option specifies the name of the master template file (which is
+        usually located in the directory specified with --II) used by ccpppp(1).
+        The default is IImmaakkee..ttmmppll.
+    --fffilename
+        This option specifies the name of the per-directory input file. The
+        default is IImmaakkeeffiillee.
+    --ssfilename
+        This option specifies the name of the mmaakkee description file to be
+        generated but mmaakkee should not be invoked. If the filename is a dash (-
+        ), the output is written to stdout. The default is to generate, but
+        not execute, a MMaakkeeffiillee.
+
+    --ee
+        This option indicates the iimmaakkee(1X11R5) should execute the generated
+        MMaakkeeffiillee. The default is to leave this to the user.
+
+    --vv
+        This option indicates that iimmaakkee(1X11R5) should print the ccpppp(1)
+        command line that it is using to generate the MMaakkeeffiillee.
+
+  HHOOWW IITT WWOORRKKSS
+
+    The iimmaakkee(1X11R5) utility invokes ccpppp(1) with any --II or --DD flags passed on
+    the command line and passes it the following 3 lines:
+
+    #define IMAKE_TEMPLATE "Imake.tmpl"
+    #define INCLUDE_IMAKEFILE "Imakefile"
+    #include IMAKE_TEMPLATE
+
+    where IImmaakkee..ttmmppll and IImmaakkeeffiillee may be overridden by the --TT and --ff command
+    options, respectively.
+
+    The IMAKE_TEMPLATE typically reads in a file containing machine-dependent
+    parameters (specified as ccpppp(1) symbols), a site-specific parameters file,
+    a file defining variables, a file containing ccpppp(1) macro functions for
+    generating mmaakkee rules, and finally the IImmaakkeeffiillee (specified by
+    INCLUDE_IMAKEFILE) in the current directory. The IImmaakkeeffiillee uses the macro
+    functions to indicate what targets should be built; iimmaakkee(1X11R5) takes
+    care of generating the appropriate rules.
+
+    The iimmaakkee(1X11R5) utility configuration files contain two types of
+    variables: imake variables and make variables. The imake variables are
+    interpreted by cpp when iimmaakkee(1X11R5) is run. By convention they are mixed
+    case. The make variables are written into the MMaakkeeffiillee for later
+    interpretation by mmaakkee. By convention make variables are upper case.
+
+    The rules file (usually named IImmaakkee..rruulleess in the configuration directory)
+    contains a variety of ccpppp(1) macro functions that are configured according
+    to the current platform. The iimmaakkee(1X11R5) utility replaces any
+    occurrences of the string @@ with a newline to allow macros that generate
+    more than one line of mmaakkee rules. For example, the macro
+
+    #define   program_target(program, objlist)        @@\
+    program:  objlist                                 @@\
+              $(CC)  -o  $@  objlist  $(LDFLAGS)
+
+    when called with program_target(foo, foo1.o foo2.o) will expand to
+
+    foo:      foo1.o  foo2.o
+              $(CC)  -o  $@  foo1.o  foo2.o  $(LDFLAGS)
+
+    On systems whose ccpppp(1) reduces multiple tabs and spaces to a single
+    space, iimmaakkee(1X11R5) attempts to put back any necessary tabs (_mm_aa_kk_ee(1) is
+    very picky about the difference between tabs and spaces). For this reason,
+    colons (:) in command lines must be preceded by a backslash (\).
+
+  UUSSEE WWIITTHH TTHHEE XX WWIINNDDOOWW SSYYSSTTEEMM
+
+    The X Window System uses iimmaakkee(1X11R5) extensively, for both full builds
+    within the source tree and external software. As mentioned previously, two
+    special variables, TOPDIR and CURDIR, are set to make referencing files
+    using relative path names easier. For example, the following command is
+    generated automatically to build the MMaakkeeffiillee in the directory lliibb//XX//
+    (relative to the top of the sources):
+
+    %  ../.././config/imake  -I../.././config  \
+              -DTOPDIR=../../.   -DCURDIR=./lib/X
+
+    When building X programs outside the source tree, a special symbol
+    UseInstalled is defined and TOPDIR and CURDIR are omitted. If the
+    configuration files have been properly installed, the script xxmmkkmmff(1X11R5)
+    may be used.
+
+  IINNPPUUTT FFIILLEESS
+
+    Here is a summary of the files read by iimmaakkee(1X11R5) as used by X. The
+    indentation shows what files include what other files.
+
+    Imake.tmpl      generic variables
+            site.def    site-specific, BeforeVendorCF defined
+            *.cf        machine-specific
+                *Lib.rulesshared library rules
+            site.def    site-specific, AfterVendorCF defined
+            Project.tmplX-specific variables
+                *Lib.tmplshared library variables
+            Imake.rules rules
+        Imakefile
+            Library.tmpllibrary rules
+            Server.tmpl server rules
+
+    Note that ssiittee..ddeeff gets included twice, once before the **..ccff file and once
+    after. Although most site customizations should be specified after the
+    **..ccff file, some, such as the choice of compiler, need to be specified
+    before, because other variable settings may depend on them.
+
+    The first time ssiittee..ddeeff is included, the variable BeforeVendorCF is
+    defined, and the second time, the variable AfterVendorCF is defined. All
+    code in ssiittee..ddeeff should be inside an #ifdef for one of these symbols.
+
+  FFIILLEESS
+
+    The iimmaakkee(1X11R5) utility uses the following files:
+    //uussrr//ttmmpp//ttmmpp--iimmaakkee..nnnnnn
+        Temporary input file for ccpppp(1).
+    //uussrr//ttmmpp//ttmmpp--mmaakkee..nnnnnn
+        Temporary input file for mmaakkee.
+
+    //uussrr//ccoonnttrriibb//ccpppp
+        Default C preprocessor.
+
+    //uussrr//XX1111RR55//lliibb//XX1111//ccoonnffiigg
+        Default configuration and template files for Interix systems.
+
+  EENNVVIIRROONNMMEENNTT VVAARRIIAABBLLEESS
+
+    The following environment variables may be set; however, their use is not
+    recommended as they introduce dependencies that are not readily apparent
+    when iimmaakkee(1X11R5) is run:
+
+    IMAKEINCLUDE
+        If defined, this should be a valid include argument for the C
+        preprocessor. For example, -I/usr/include/local. Actually, any valid
+        ccpppp(1) argument will work here.
+
+    IMAKECPP
+        If defined, this should be a valid path to a preprocessor program,
+        such as /usr/contrib/bin/cpp. By default, iimmaakkee(1X11R5) will use //uussrr//
+        ccoonnttrriibb//iinntteell--ppcc--iinntteerriixx//version, where version is the version of ggcccc.
+
+    IMAKEMAKE
+        If defined, this should be a valid path to a make program, such as /
+        bin/make. By default, iimmaakkee(1X11R5) will use whatever mmaakkee program is
+        found using _ee_xx_ee_cc_vv_pp(2). This variable is only used if the --ee option is
+        specified.
+
+  AAUUTTHHOORR
+
+    Todd Brunhoff, Tektronix and MIT Project Athena; Jim Fulton, MIT X
+    Consortium
+
+  SSEEEE AALLSSOO
+
+    _x_m_k_m_f
+
+    S. I. Feldman, Make A Program for Maintaining Computer Programs
+

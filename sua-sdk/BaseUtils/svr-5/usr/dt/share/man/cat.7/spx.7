@@ -1,0 +1,140 @@
+
+
+spx(7)                                                     spx(7)
+
+SSyynnooppssiiss
+       #include  <sys/stropts.h> #include  <sys/stream.h>
+
+DDeessccrriippttiioonn
+       A  stream  pipe  provides a full-duplex communication path
+       between two processes, and  allows  the  passing  of  file
+       descriptors.   The processes can communicate over a stream
+       pipe using ordinary and system calls.
+
+       The STREAMS pipe device driver sp is accessed through  the
+       character special file /dev/spx.  commands for controlling
+       the sp driver are described in the manual page.  sp is  an
+       example  of  a  clone device; successive calls on /dev/spx
+       cause the driver to make available  arbitrary  and  unique
+       minor  devices.   (Clone devices represent all their minor
+       devices using only one special file.  See
+
+       Each open on /dev/spx returns a  file  descriptor  to  the
+       stream  head of a different loop-back driver (input on the
+       descriptor is echoed straight back as output that  can  be
+       read from the descriptor).
+
+       Unnamed stream pipes may be used whenever a parent process
+       needs  to  establish  full-duplex  communication   between
+       itself  and a child process yet to be spawned.  The parent
+       process opens /dev/spx twice;  the  two  file  descriptors
+       returned  each  point  to  the  stream head of a loop-back
+       driver.   The  parent  then  connects  the  two  loop-back
+       drivers using the ioctl.  A write to either descriptor can
+       then be read from the other.  After the parent  forks,  it
+       closes one file descriptor and the child closes the other.
+       Parent and child communicate by writing to or reading from
+       the  remaining  descriptor.  (If necessary, the ioctl com-
+       mand can be used to change read modes.)
+
+       Named stream pipes allow full-duplex communication between
+       an  arbitrary  pair of processes (that are not necessarily
+       parent and child).  A named  stream  pipe  is  created  by
+       calling to bind a name to a unnamed stream pipe. The mknod
+       system call, however, requires root  privilege  to  create
+       this file type. An auxiliary program can be used to create
+       the named stream pipe provided that it has set it has root
+       credentials.   Any  process may then the named stream pipe
+       and write to it, subject to the normal filesystem  permis-
+       sions.   The  named stream pipe remains in existence after
+       the process that created it exits.
+
+       File descriptors can be sent from one process  to  another
+       down  a  stream  pipe.  Descriptors  are sent and received
+       using the and ioctl commands.  The receiving process  also
+       has  access  to  the credentials of the sending process if
+       these are needed for the purpose of security.
+
+       Typically, a network server daemon would first create  and
+
+                                                                1
+
+spx(7)                                                     spx(7)
+
+       open  a  named stream pipe.  A client opens the named pipe
+       and sends a message to the server  requesting  connection;
+       the  server  establishes  the connection by sending a file
+       descriptor down the pipe.
+
+       Extra functionality can be added to a stream pipe by push-
+       ing further STREAMS modules onto it.
+
+FFiilleess
+       sp STREAMS pipe driver special file
+
+RReeffeerreenncceess
+EExxaammpplleess
+       A  routine to create an unnamed bi-directional stream pipe
+       in   the   manner   of   #include   <unistd.h>    #include
+       <sys/types.h>      #include     <sys/fcntl.h>     #include
+       <sys/stream.h>    #include    <sys/stropts.h>     #include
+       <sys/stat.h>   #include   <termio.h>  #include  <signal.h>
+       #define SPX    "/dev/spx"
+
+       int spipe(fd) int *fd; {
+          struct strfdinsert s;
+          long p;
+
+          if ( ( fd[0] = open(SPX, O_RDWR) ) < 0 )
+                 return(-1);
+          if ( ( fd[1] = open(SPX, O_RDWR) ) < 0 ) /*  open  dif-
+       ferent minor */
+                 return(-1);
+
+          s.ctlbuf.buf = (caddr_t) &p ;
+          s.ctlbuf.maxlen = s.ctlbuf.len = sizeof(long);
+          s.databuf.buf = (caddr_t) NULL;
+          s.databuf.maxlen = s.databuf.len = -1;
+          s.fildes = fd[1];
+          s.offset = s.flags = 0;
+
+          if  (  ioctl(fd[0],  I_FDINSERT, &s) < 0 ) /* join loop
+       drivers */
+               return(-1);
+          return(0); } A routine to create a  named  stream  pipe
+       from  a  unnamed  one  (this requires root privilege): int
+       nspipe(fd, pipename) int *fd; char *pipename; {
+         struct stat status;
+         int omask;
+
+         if ( spipe(fd) < 0 )      return(-1);
+
+         if ( fstat(fd[0],&status) < 0 )      return(-1);
+
+         unlink(pipename);
+         omask = umask(0);
+         if ( mknod(pipename, S_IFCHR|0666, status.st_rdev) < 0 )
+       /* create node */      return(-1);
+
+                                                                2
+
+spx(7)                                                     spx(7)
+
+         umask(omask);
+
+         return(0);  }  A  routine  to  pass a file descriptor to
+       another process: int passfd(fd, sendfd) int fd, sendfd; {
+          if ( ioctl(fd, I_SENDFD, sendfd) < 0 ) /* send descrip-
+       tor  sendfd  */       return(-1); } A routine to receive a
+       file descriptor from a process: int recvfd(fd) int  fd;  {
+            struct strrecvfd s;
+
+            if   (  ioctl(fd,  I_RECVFD,  (char  *)  &s)  <  0  )
+                 return(-1);
+
+       /*   s.uid     received  effective  user  ID   of   sender
+            s.gid     received  effective  group  ID of sender */
+                  return(s.fd);  /* received file descriptor */ }
+
+                                                                3
+

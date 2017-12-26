@@ -1,0 +1,179 @@
+dbm_open(3)                                                 dbm_open(3)
+
+  ddbbmm__cclleeaarreerrrr(())
+
+  NNAAMMEE
+
+    dbm_clearerr, dbm_close, dbm_delete, dbm_error, dbm_fetch, dbm_firstkey,
+    dbm_nextkey, dbm_open, dbm_store - database functions
+
+  SSYYNNOOPPSSIISS
+
+    #include <ndbm.h>
+
+    int dbm_clearerr(DBM *db);
+    void dbm_close(DBM *db);
+    int dbm_delete(DBM *db, datum key);
+    int dbm_error(DBM *db);
+    datum dbm_fetch(DBM *db, datum key);
+    datum dbm_firstkey(DBM *db);
+    datum dbm_nextkey(DBM *db);
+    DBM *dbm_open(const char *file, int open_flags, mode_t file_mode);
+    int dbm_store(DBM *db, datum key, datum content, int store_mode);
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    These functions create, access and modify a database.
+
+    A datum consists of at least two members, ddppttrr and ddssiizzee. The ddppttrr member
+    points to an object that is ddssiizzee bytes in length. Arbitrary binary data,
+    as well as character strings, may be stored in the object pointed to by
+    ddppttrr.
+
+    The database is stored in two files. One file is a directory containing a
+    bit map of keys and has .dir as its suffix. The second file contains all
+    data and has .pag as its suffix.
+
+    The ddbbmm__ooppeenn(3) function opens a database. The file argument to the
+    function is the pathname of the database. The open_flags argument has the
+    same meaning as the flags argument of _oo_pp_ee_nn(2) except that a database
+    opened for write-only access opens the files for read and write access and
+    the behaviour of the O_APPEND flag is unspecified. The file_mode argument
+    has the same meaning as the third argument of _oo_pp_ee_nn(2).
+
+    The ddbbmm__cclloossee(3) function closes a database. The argument db must be a
+    pointer to a dbm structure that has been returned from a call to
+    ddbbmm__ooppeenn(3).
+
+    The ddbbmm__ffeettcchh(3) function reads a record from a database. The argument db
+    is a pointer to a database structure that has been returned from a call to
+    dbm_open(3). The argument key is a datum that has been initialised by the
+    application program to the value of the key that matches the key of the
+    record the program is fetching.
+
+    The ddbbmm__ssttoorree(3) function writes a record to a database. The argument db
+    is a pointer to a database structure that has been returned from a call to
+    ddbbmm__ooppeenn(3). The argument key is a datum that has been initialised by the
+    application program to the value of the key that identifies (for
+    subsequent reading, writing or deleting) the record the program is
+    writing. The argument content is a datum that has been initialised by the
+    application program to the value of the record the program is writing. The
+    argument store_mode controls whether ddbbmm__ssttoorree(3) replaces any pre-
+    existing record that has the same key that is specified by the key
+    argument. The application program must set store_mode to either DBM_INSERT
+    or DBM_REPLACE. If the database contains a record that matches the key
+    argument and store_mode is DBM_REPLACE, the existing record is replaced
+    with the new record. If the database contains a record that matches the
+    key argument and store_mode is DBM_INSERT, the existing record is not
+    replaced with the new record. If the database does not contain a record
+    that matches the key argument and store_mode is either DBM_INSERT or
+    DBM_REPLACE, the new record is inserted in the database.
+
+    The sum of the sizes of a key/content pair must not exceed the internal
+    block size. Moreover, all key/content pairs that hash together must fit on
+    a single block. The ddbbmm__ssttoorree(3) function returns an error in the event
+    that a disk block fills with inseparable data.
+
+    The ddbbmm__ddeelleettee(3) function deletes a record and its key from the database.
+    The argument db is a pointer to a database structure that has been
+    returned from a call to ddbbmm__ooppeenn(3). The argument key is a datum that has
+    been initialised by the application program to the value of the key that
+    identifies the record the program is deleting.
+
+    The ddbbmm__ffiirrssttkkeeyy(3) function returns the first key in the database. The
+    argument db is a pointer to a database structure that has been returned
+    from a call to ddbbmm__ooppeenn(3).
+
+    The ddbbmm__nneexxttkkeeyy(3) function returns the next key in the database. The
+    argument db is a pointer to a database structure that has been returned
+    from a call to ddbbmm__ooppeenn(3). The ddbbmm__ffiirrssttkkeeyy(3) function must be called
+    before calling ddbbmm__nneexxttkkeeyy(3). Subsequent calls to ddbbmm__nneexxttkkeeyy(3) return
+    the next key until all of the keys in the database have been returned.
+
+    The ddbbmm__eerrrroorr(3) function returns the error condition of the database. The
+    argument db is a pointer to a database structure that has been returned
+    from a call to ddbbmm__ooppeenn(3).
+
+    The ddbbmm__cclleeaarreerrrr(3) function clears the error condition of the database.
+    The argument db is a pointer to a database structure that has been
+    returned from a call to ddbbmm__ooppeenn(3).
+
+    These database functions support key/content pairs of at least 1023 bytes.
+
+    The ddppttrr pointers returned by these functions may point into static
+    storage that may be changed by subsequent calls.
+
+    These interfaces need not be reentrant.
+
+  RREETTUURRNN VVAALLUUEE
+
+    The ddbbmm__ssttoorree(3) and ddbbmm__ddeelleettee(3) functions return 0 when they succeed
+    and a negative value when they fail.
+
+    The ddbbmm__ssttoorree(3) function returns 1 if it is called with a flags value of
+    DBM_INSERT and the function finds an existing record with the same key.
+
+    The ddbbmm__eerrrroorr(3) function returns 0 if the error condition is not set and
+    returns a non-zero value if the error condition is set.
+
+    The return value of ddbbmm__cclleeaarreerrrr(3) is unspecified.
+
+    The ddbbmm__ffiirrssttkkeeyy(3) and ddbbmm__nneexxttkkeeyy(3) functions return a key datum. When
+    the end of the database is reached, the ddppttrr member of the key is a null
+    pointer. If an error is detected, the ddppttrr member of the key is a null
+    pointer and the error condition of the database is set.
+
+    The ddbbmm__ffeettcchh(3) function returns a content datum. If no record in the
+    database matches the key or if an error condition has been detected in the
+    database, the ddppttrr member of the content is a null pointer.
+
+    The ddbbmm__ooppeenn(3) function returns a pointer to a database structure. If an
+    error is detected during the operation, ddbbmm__ooppeenn(3) returns a (DDBBMM **)0.
+
+  EERRRROORRSS
+
+    No errors are defined.
+
+  EEXXAAMMPPLLEESS
+
+    None.
+
+  AAPPPPLLIICCAATTIIOONN UUSSAAGGEE
+
+    The following code can be used to traverse the database:
+
+    for(key = dbm_firstkey(db); key.dptr != NULL; key = dbm_nextkey(db))
+
+    The dbm_ functions provided in this library should not be confused in any
+    way with those of a general-purpose database management system. These
+    functions do not provide for multiple search keys per entry, they do not
+    protect against multi-user access (in other words they do not lock records
+    or files), and they do not provide the many other useful database
+    functions that are found in more robust database management systems.
+    Creating and updating databases by use of these functions is relatively
+    slow because of data copies that occur upon hash collisions. These
+    functions are useful for applications requiring fast lookup of relatively
+    static information that is to be indexed by a single key.
+
+    The ddbbmm__ddeelleettee(3) function need not physically reclaim file space,
+    although it does make it available for reuse by the database.
+
+    After calling ddbbmm__ssttoorree(3) or ddbbmm__ddeelleettee(3) during a pass through the keys
+    by ddbbmm__ffiirrssttkkeeyy(3) and ddbbmm__nneexxttkkeeyy(3), the application should reset the
+    database by calling ddbbmm__ffiirrssttkkeeyy(3) before again calling ddbbmm__nneexxttkkeeyy(3).
+    The contents of these files are unspecified and may not be portable.
+
+  FFUUTTUURREE DDIIRREECCTTIIOONNSS
+
+    None.
+
+  SSEEEE AALLSSOO
+
+    _o_p_e_n(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    None of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

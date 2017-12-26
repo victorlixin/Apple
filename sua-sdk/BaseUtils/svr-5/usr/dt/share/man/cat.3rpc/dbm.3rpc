@@ -1,0 +1,98 @@
+
+
+dbm(3rpc)                                               dbm(3rpc)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <rpcsvc/dbm.h>
+
+       typedef struct {
+           char *dptr;
+           int dsize; } datum;
+
+       int dbminit(const char *file);
+
+       int dbmclose(void);
+
+       datum fetch(datum key);
+
+       int store(datum key, datum content);
+
+       int delete(datum key);
+
+       datum firstkey(void);
+
+       datum nextkey(datum key);
+
+DDeessccrriippttiioonn
+       These  functions maintain key/content pairs in a database.
+       The functions will handle very large  (a  billion  blocks)
+       databases  and will access a keyed item in one or two file
+       system accesses.  The  functions  are  obtained  with  the
+       loader option -lnsl.
+
+       keys  and  contents are described by the datum typedef.  A
+       datum specifies a string of  dsize  bytes  pointed  to  by
+       dptr.   Arbitrary  binary  data,  as  well as normal ASCII
+       strings, are allowed.   The  database  is  stored  in  two
+       files.   One  file is a directory containing a bit map and
+       has .dir as its suffix.  The second file contains all data
+       and has .pag as its suffix.
+
+       Before  a  database  can be accessed, it must be opened by
+       dbminit.  At the time of this call, the files file.dir and
+       file.pag must exist.  An empty database is created by cre-
+       ating zero-length .dir and .pag files.
+
+       A database may be closed by calling  dbmclose.   You  must
+       close a database before opening a new one.
+
+       Once  open,  the  data  stored  under a key is accessed by
+       fetch and data is placed under a key by store.  A key (and
+       its  associated  contents) is deleted by delete.  A linear
+       pass through all keys in a database may  be  made,  in  an
+       (apparently) random order, by use of firstkey and nextkey.
+       firstkey will return the first key in the database.   With
+       any  key nextkey will return the next key in the database.
+       This  code  will  traverse  the  database:  for   (key   =
+       firstkey(); key.dptr != NULL; key = nextkey(key))
+
+                                                                1
+
+dbm(3rpc)                                               dbm(3rpc)
+
+   RReettuurrnn vvaalluueess
+       All functions that return an int indicate errors with neg-
+       ative values.  A zero return indicates no error.  Routines
+       that  return a datum indicate errors with a NULL (0) dptr.
+
+FFiilleess
+       /usr/lib/libnsl.so
+
+NNoottiicceess
+       The .pag file will contain holes so that its apparent size
+       is about four times its actual content.  Older versions of
+       the  operating system may  create  real  file  blocks  for
+       these holes when touched.  These files cannot be copied by
+       normal means (that is, without filling in the holes.
+
+       dptr pointers returned by  these  subroutines  point  into
+       static storage that is changed by subsequent calls.
+
+       The sum of the sizes of a key/content pair must not exceed
+       the internal block size (currently 1024 bytes).   Moreover
+       all  key/content  pairs  that  hash together must fit on a
+       single block.  store will return an  error  in  the  event
+       that a disk block fills with inseparable data.
+
+       delete does not physically reclaim file space, although it
+       does make it available for reuse.
+
+       The order  of  keys  presented  by  firstkey  and  nextkey
+       depends  on  a hashing function, not on anything interest-
+       ing.
+
+       There are no interlocks and no  reliable  cache  flushing;
+       thus concurrent updating and reading is risky.
+
+                                                                2
+

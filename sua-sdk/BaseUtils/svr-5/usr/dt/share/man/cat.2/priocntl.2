@@ -1,0 +1,673 @@
+
+
+priocntl(2)                                           priocntl(2)
+
+SSyynnooppssiiss
+       #include  <sys/types.h>  #include <sys/procset.h> #include
+       <sys/priocntl.h>  #include   <sys/fppriocntl.h>   #include
+       <sys/tspriocntl.h>
+
+       long  priocntl(idtype_t  idtype,  id_t  id,  int cmd, void
+       *arg);
+
+DDeessccrriippttiioonn
+       priocntl provides for  control  over  the  scheduling  and
+       working set aging aspects of active processes.
+
+       Processes  fall  into  distinct  classes  with  a separate
+       scheduling policy applied to each class.  The two  classes
+       currently  supported  are the fixed priority class and the
+       time-sharing class.  The characteristics of these  classes
+       are described under the corresponding headings below.  The
+       class attribute of a process is inherited across  the  and
+       system  calls.  priocntl can be used to dynamically change
+       the class and other scheduling parameters associated  with
+       a  running process or set of processes given the appropri-
+       ate permissions as explained below.
+
+       In the default configuration, the highest  fixed  priority
+       process  runs  before any other process.  Therefore, inap-
+       propriate use of fixed priority processes can have a nega-
+       tive effect on system performance.
+
+       priocntl provides an interface for specifying a process or
+       set of processes to which the system  call  is  to  apply.
+       The priocntlset system call provides the same functions as
+       priocntl, but allows a more general interface for specify-
+       ing  the  set  of processes to which the system call is to
+       apply.
+
+       For  priocntl,  the  idtype  and  id  arguments  are  used
+       together to specify the set of processes.  The interpreta-
+       tion of id depends on the value of idtype.   The  possible
+       values  for idtype and corresponding interpretations of id
+       are as follows: id is a process  ID  specifying  a  single
+       process to which the priocntl system call is to apply.  id
+       is a parent process ID.  The priocntl system call  applies
+       to all processes with the specified parent process ID.  id
+       is a process group ID.  The priocntl system  call  applies
+       to  all processes in the specified process group.  id is a
+       session ID.  The priocntl system call applies to all  pro-
+       cesses  in  the  specified  session.   id  is  a  class ID
+       (returned by priocntl PC_GETCID as explained below).   The
+       priocntl system call applies to all processes in the spec-
+       ified class.  id is a user ID.  The priocntl  system  call
+       applies  to all processes with this effective user ID.  id
+       is a group ID.  The priocntl system call  applies  to  all
+       processes with this effective group ID.  The priocntl sys-
+       tem call applies to all existing processes.  The value  of
+
+                                                                1
+
+priocntl(2)                                           priocntl(2)
+
+       id  is  ignored.   The  permission  restrictions described
+       below still apply.
+
+       An id value of P_MYID can be used with the idtype value to
+       specify  the  calling process's process ID, parent process
+       ID, process group ID, session ID, class ID,  user  ID,  or
+       group ID.
+
+       To  change  the  scheduling parameters of a process (using
+       the PC_SETPARMS command as explained below)  the  real  or
+       effective  user  ID  of  the process calling priocntl must
+       match the real or effective user ID of the receiving  pro-
+       cess  or  the calling process must have appropriate privi-
+       lege.  See the subsections  below  for  details  for  each
+       class.   These  are  the  minimum  permission requirements
+       enforced for all classes.  An individual class can  impose
+       additional permissions requirements when setting processes
+       to that class or when  setting  class-specific  scheduling
+       parameters.
+
+       A  special  sys scheduling class exists for scheduling the
+       execution of certain special system processes (such as the
+       swapper  process).  It is not possible to change the class
+       of any process to sys.  In addition, any processes in  the
+       sys  class  that  are  included in a specified set of pro-
+       cesses are  disregarded  by  priocntl.   For  example,  an
+       idtype  of P_UID and an id value of zero would specify all
+       processes with a user ID of zero except processes  in  the
+       sys  class  and  (if changing the parameters using PC_SET-
+       PARMS) the init process.
+
+       The init process is a special case.  In order for a prioc-
+       ntl  call  to change the class or other scheduling parame-
+       ters of the init process (process ID 1), it  must  be  the
+       only process specified by idtype and id.  The init process
+       may be assigned to any class configured on the system, but
+       the  time-sharing  class  is almost always the appropriate
+       choice.  (Some choices may be highly undesirable; see  for
+       more information.)
+
+       The data type and value of arg are specific to the type of
+       command specified by cmd.
+
+       Use the structure of type PC_GETCID and PC_GETCLINFO  con-
+       taining the following members:
+           id_t    pc_cid;                 /* Class id */
+           char    pc_clname[PC_CLNMSZ];   /* Class name */
+           long     pc_clinfo[PC_CLINFOSZ];  /* Class information
+       */
+
+       pc_cid is a  class  ID  returned  by  priocntl  PC_GETCID.
+       pc_clname  is  a  buffer  of  size  PC_CLNMSZ  (defined in
+       sys/priocntl.h) used to hold the class name (FP for or  TS
+       for time-sharing).
+
+                                                                2
+
+priocntl(2)                                           priocntl(2)
+
+       pc_clinfo  is  a  buffer  of  size PC_CLINFOSZ (defined in
+       sys/priocntl.h)  used  to  return  data   describing   the
+       attributes  of  a specific class.  The format of this data
+       is class-specific and is described under  the  appropriate
+       heading (see
+
+       or
+
+       below.
+
+       Use  the structure of the type PC_SETPARMS and PC_GETPARMS
+       containing the following members:
+           id_t    pc_cid;                  /* Process class */
+           long     pc_clparms[PC_CLPARMSZ];  /*   Class-specific
+       params */
+
+       pc_cid  is  a  class  ID (returned by priocntl PC_GETCID).
+       The special class ID PC_CLNULL can  also  be  assigned  to
+       pc_cid  when  using  the  PC_GETPARMS command as explained
+       below.
+
+       The  pc_clparms  buffer  holds  class-specific  scheduling
+       parameters.   The format of this parameter data for a par-
+       ticular class is described under the  appropriate  heading
+       below.  PC_CLPARMSZ is the length of the pc_clparms buffer
+       and is defined in sys/priocntl.h.
+
+   CCoommmmaannddss
+       Available priocntl commands are: Get class  ID  and  class
+       attributes  for  a  specific  class given class name.  The
+       idtype and id arguments are ignored.  If arg is  non-null,
+       it  points to a structure of type pcinfo_t.  The pc_clname
+       buffer contains the name of the class whose attributes you
+       are getting.
+
+       On  success, the class ID is returned in pc_cid, the class
+       attributes are returned in the pc_clinfo buffer,  and  the
+       priocntl  call returns the total number of classes config-
+       ured in the system (including  the  sys  class).   If  the
+       class  specified  by  pc_clname  is invalid or is not cur-
+       rently configured, the priocntl call returns -1 with errno
+       set  to EINVAL.  The format of the attribute data returned
+       for a given class is defined in  the  sys/fppriocntl.h  or
+       sys/tspriocntl.h  header  file  and  described  under  the
+       appropriate heading below.
+
+       If arg is a NULL pointer, no attribute  data  is  returned
+       but  the priocntl call still returns the number of config-
+       ured classes.  Get class name and class attributes  for  a
+       specific  class  given  class ID.  The idtype and id argu-
+       ments are ignored.  If arg is non-null,  it  points  to  a
+       structure of type pcinfo_t.  pc_cid is the class ID of the
+
+                                                                3
+
+priocntl(2)                                           priocntl(2)
+
+       class whose attributes you are getting.
+
+       On success, the class name is returned  in  the  pc_clname
+       buffer, the class attributes are returned in the pc_clinfo
+       buffer, and the priocntl call returns the total number  of
+       classes  configured  in  the  system  (including  the  sys
+       class).  The format of the attribute data returned  for  a
+       given   class   is  defined  in  the  sys/fppriocntl.h  or
+       sys/tspriocntl.h  header  file  and  described  under  the
+       appropriate heading below.
+
+       If  arg  is  a NULL pointer, no attribute data is returned
+       but the priocntl call still returns the number of  config-
+       ured classes.  Set the class and class-specific scheduling
+       parameters of the specified process(es).  arg points to  a
+       structure  of  type pcparms_t.  pc_cid specifies the class
+       you are setting and the  pc_clparms  buffer  contains  the
+       class-specific  parameters you are setting.  The format of
+       the class-specific parameter data is
+       defined in the sys/fppriocntl.h or sys/tspriocntl.h header
+       file  and  described  under  the appropriate class heading
+       below.
+
+       When setting parameters for a set of  processes,  priocntl
+       acts on the processes in the set in an implementation-spe-
+       cific order.  If priocntl encounters an error for  one  or
+       more  of  the target processes, it may or may not continue
+       through the set of processes, depending on the error.   If
+       the error is related to permissions (EPERM), priocntl con-
+       tinues through the process set, resetting  the  parameters
+       for all target processes for which the calling process has
+       appropriate permissions.  priocntl then  returns  -1  with
+       errno  set  to EPERM to indicate that the operation failed
+       for one or more of  the  target  processes.   If  priocntl
+       encounters  an  error  other than permissions, it does not
+       continue through the set of target processes  but  returns
+       the error immediately.
+
+       Due to the relationship between a process and its LWPs, it
+       is  sometimes  necessary  to  queue  up  scheduling  class
+       changes  to the target LWPs.  An LWP with scheduling class
+       changes in its queue will process the requests at the ear-
+       liest  safe opportunity.  The LWP will continue to reflect
+       its old scheduling class until the  change  takes  effect.
+       Get the class and class-specific scheduling parameters for
+       a process.  arg points the a structure of type  pcparms_t.
+
+       If  pc_cid  specifies a configured class and a single pro-
+       cess belonging to that class is specified  by  the  idtype
+       and  id values or the procset structure, then the schedul-
+       ing  parameters  of  that  process  are  returned  in  the
+       pc_clparms  buffer.   If  the  process  specified does not
+       exist or does not belong to the specified class, the  pri-
+       ocntl call returns -1 with errno set to ESRCH.
+
+                                                                4
+
+priocntl(2)                                           priocntl(2)
+
+       If  pc_cid  specifies a configured class and a set of pro-
+       cesses is specified,  the  scheduling  parameters  of  one
+       specified  process  belonging  to  the specified class are
+       returned in the pc_clparms buffer and  the  priocntl  call
+       returns  the process ID of the selected process.  The cri-
+       teria for selecting a process to return  is  class  depen-
+       dent.  If none of the specified processes exist or none of
+       them belong to the  specified  class,  the  priocntl  call
+       returns -1 with errno set to ESRCH.
+
+       If  pc_cid is PC_CLNULL and a single process is specified,
+       the class of the specified process is returned  in  pc_cid
+       and   its   scheduling  parameters  are  returned  in  the
+       pc_clparms buffer.  This  command  provides  functionality
+       needed  for  the  implementation of the command; it is not
+       intended for general use by other applications.
+
+   FFiixxeedd pprriioorriittyy ccllaassss
+       The fixed priority class provides a fixed priority preemp-
+       tive  scheduling policy for those processes requiring fast
+       and deterministic response and absolute user  or  applica-
+       tion  control of scheduling priorities.  If the fixed pri-
+       ority class is configured in the  system  it  should  have
+       exclusive  control of the highest range of scheduling pri-
+       orities on the system.  This ensures that a runnable fixed
+       priority  process  is given CPU service before any process
+       belonging to any other class.
+
+       The fixed priority class has a  range  of  fixed  priority
+       (fp_pri)  values  that can be assigned to processes within
+       the class.  Fixed priorities range from 0 to x, where  the
+       value  of  x  is  configurable and can be determined for a
+       specific installation by using the priocntl  PC_GETCID  or
+       PC_GETCLINFO command.
+
+       The  fixed  priority scheduling policy is a fixed priority
+       policy.  The scheduling priority of a fixed priority  pro-
+       cess  is never changed except as the result of an explicit
+       request by the user or application to  change  the  fp_pri
+       value of the process.
+
+       For  processes  in  the  fixed  priority class, the fp_pri
+       value is, for all practical purposes,  equivalent  to  the
+       scheduling priority of the process.  The fp_pri value com-
+       pletely determines the scheduling priority of a fixed pri-
+       ority  process  relative  to  other  processes  within its
+       class.  Numerically higher fp_pri values represent  higher
+       priorities.   Since  the fixed priority class controls the
+       highest range of scheduling priorities in the system it is
+       guaranteed  that  the runnable fixed priority process with
+       the highest fp_pri value is always selected to run  before
+       any other process in the system.
+
+       In  addition  to providing control over priority, priocntl
+
+                                                                5
+
+priocntl(2)                                           priocntl(2)
+
+       provides for control over the length of the  time  quantum
+       allotted  to  processes  in the fixed priority class.  The
+       time quantum value specifies the maximum amount of time  a
+       process  can  run  if  it  does  not  complete  or enter a
+       resource or  event  wait  state  (sleep).   Note  that  if
+       another process becomes runnable at a higher priority, the
+       currently running process can be preempted before  receiv-
+       ing its full time quantum.
+
+       The  system's  process  scheduler keeps the runnable fixed
+       priority processes on a set of scheduling  queues.   There
+       is a separate queue for each configured fixed priority and
+       all fixed priority processes with a given fp_pri value are
+       kept  together on the appropriate queue.  The processes on
+       a given queue are ordered in FIFO order (that is, the pro-
+       cess  at  the  front of the queue has been waiting longest
+       for service and receives the CPU first).   Fixed  priority
+       processes  that  wake  up  after  sleeping, processes that
+       change to the fixed priority class from some other  class,
+       processes  that  have  used  their  full time quantum, and
+       runnable processes whose priority is reset by priocntl are
+       all  placed at the back of the appropriate queue for their
+       priority.  A process that is preempted by a higher  prior-
+       ity  process remains at the front of the queue (with what-
+       ever time is remaining  in  its  time  quantum)  and  runs
+       before  any  other  process at this priority.  Following a
+       system call by a fixed priority process, the  parent  pro-
+       cess  continues  to  run  while  the  child process (which
+       inherits the fp_pri value of the parent) is placed at  the
+       back of the queue.
+
+       Use   the  structure  fpinfo_t  in  sys/fppriocntl.h  that
+       defines the format used for the  attribute  data  for  the
+       fixed priority class.
+            short     fp_maxpri;     /* Maximum fixed priority */
+
+       The priocntl PC_GETCID and  PC_GETCLINFO  commands  return
+       fixed priority class attributes in the pc_clinfo buffer in
+       this format.
+
+       fp_maxpri specifies the configured  maximum  fp_pri  value
+       for the fixed priority class (if fp_maxpri is x, the valid
+       fixed priority priorities range from 0 to x).
+
+       The  structure  fpparms_t  defined   in   sys/fppriocntl.h
+       defines  the  format  used  to  specify the fixed priority
+       class-specific scheduling parameters of a process.
+           short    fp_pri;        /* Fixed priority */
+           ulong    fp_tqsecs;     /* Seconds in time quantum */
+           long     fp_tqnsecs;    /* Additional  nanoseconds  in
+       quantum */
+
+       When  using  the  priocntl PC_SETPARMS or PC_GETPARMS com-
+       mands, if pc_cid specifies the fixed priority  class,  the
+
+                                                                6
+
+priocntl(2)                                           priocntl(2)
+
+       data in the pc_clparms buffer is in this format.
+
+       The  above  commands can be used to set the fixed priority
+       to the specified value or get the  current  fp_pri  value.
+       Setting  the  fp_pri  value of a process that is currently
+       running or runnable (not sleeping) causes the  process  to
+       be  placed  at  the  back  of the scheduling queue for the
+       specified priority.  The process is placed at the back  of
+       the  appropriate  queue regardless of whether the priority
+       being set is different from the previous fp_pri  value  of
+       the  process.  Note that a running process can voluntarily
+       release the CPU and go to the back of the scheduling queue
+       at  the same priority by resetting its fp_pri value to its
+       current fixed priority value.  To change the time  quantum
+       of a process without setting the priority or affecting the
+       position of the process on the queue, set the fp_pri field
+       to  the special value FP_NOCHANGE (defined in sys/fpprioc-
+       ntl.h).  Specifying FP_NOCHANGE when changing the class of
+       a  process to fixed priority from some other class results
+       in the fixed priority being set to zero.
+
+       For the priocntl PC_GETPARMS command, if pc_cid  specifies
+       the  fixed priority class and more than one fixed priority
+       process is specified, the  scheduling  parameters  of  the
+       fixed priority process with the highest fp_pri value among
+       the specified processes are returned and the process ID of
+       this  process  is returned by the priocntl call.  If there
+       is more than one process sharing the highest priority, the
+       one returned is implementation-dependent.
+
+       The  fp_tqsecs  and fp_tqnsecs fields are used for getting
+       or setting the time quantum associated with a  process  or
+       group of processes.  fp_tqsecs is the number of seconds in
+       the time quantum and fp_tqnsecs is  the  number  of  addi-
+       tional  nanoseconds  in  the quantum.  For example setting
+       fp_tqsecs to 2 and  fp_tqnsecs  to  500,000,000  (decimal)
+       results  in  a  time  quantum of two and one-half seconds.
+       Specifying a value of  1,000,000,000  or  greater  in  the
+       fp_tqnsecs field results in an error return with errno set
+       to EINVAL.  Although the resolution of the tq_nsecs  field
+       is very fine, the specified time quantum length is rounded
+       up by the system to the next integral multiple of the sys-
+       tem  clock's  resolution.  For example, the finest resolu-
+       tion currently available on a system is 10 milliseconds (1
+       ``tick'').   Setting  fp_tqsecs  to  0  and  fp_tqnsecs to
+       34,000,000 specifies a time quantum  of  34  milliseconds,
+       which  is  rounded  up  to  4 ticks (40 milliseconds) on a
+       machine with 10-millisecond resolution.  The maximum  time
+       quantum  that  can be specified is implementation-specific
+       and  equal  to  LONG_MAX  ticks  (defined  in   limits.h).
+       Requesting  a quantum greater than this maximum results in
+       an error return with errno set to ERANGE  (although  infi-
+       nite  quantums  can  be requested using a special value as
+       explained below).   Requesting  a  time  quantum  of  zero
+
+                                                                7
+
+priocntl(2)                                           priocntl(2)
+
+       (setting both fp_tqsecs and fp_tqnsecs to 0) results in an
+       error return with errno set to EINVAL.
+
+       When the fp_tqnsecs  field  is  set  to  a  special  value
+       (defined  in  sys/fppriocntl.h), the value of fp_tqsecs is
+       ignored.  Set an infinite  time  quantum.   Set  the  time
+       quantum  to  the  default for this priority [see Don't set
+       the time quantum.  This value is useful when you  want  to
+       change  the  fixed priority of a process without affecting
+       the time quantum.  Specifying this value when changing the
+       class of a process to fixed priority from some other class
+       is equivalent to specifying FP_TQDEF.
+
+       To change the class of a process to fixed  priority  (from
+       any  other class), or to change the priority or time quan-
+       tum setting of a fixed  priority  process,  the  following
+       conditions must be true: The calling process must have the
+       P_RTIME privilege.  The effective user ID of  the  calling
+       process  must  match  the  effective user ID of the target
+       process (or the calling process have  the  P_OWNER  privi-
+       lege).
+
+       The  fixed  priority and time quantum are inherited across
+       the and system calls.
+
+   TTiimmee--SShhaarriinngg ccllaassss
+       The time-sharing scheduling policy provides for a fair and
+       effective  allocation  of the CPU resource among processes
+       with varying CPU consumption characteristics.  The  objec-
+       tives  of  the  time-sharing  policy  are  to provide good
+       response time to interactive processes and good throughput
+       to  CPU-bound  jobs  while  providing a degree of user and
+       application control over scheduling.
+
+       The time-sharing class has a range  of  time-sharing  user
+       priority (see ts_upri) values that can be assigned to pro-
+       cesses within the class.   A  ts_upri  value  of  zero  is
+       defined  as the default base priority for the time-sharing
+       class.  User priorities range from  -x  to  +x  where  the
+       value  of  x  is  configurable and can be determined for a
+       specific installation by using the priocntl  PC_GETCID  or
+       PC_GETCLINFO command.
+
+       The purpose of the user priority is to provide some degree
+       of user and application control  over  the  scheduling  of
+       processes  in the time-sharing class.  Raising or lowering
+       the ts_upri value of a process in the  time-sharing  class
+       raises  or  lowers the scheduling priority of the process.
+       It is not guaranteed,  however,  that  a  process  with  a
+       higher  ts_upri  value  will  run  before one with a lower
+       ts_upri value.  This is because the ts_upri value is  just
+       one  factor used to determine the scheduling priority of a
+       time-sharing process.  The system dynamically adjusts  the
+       internal  scheduling  priority  of  a time-sharing process
+
+                                                                8
+
+priocntl(2)                                           priocntl(2)
+
+       based on other factors such as recent CPU usage.
+
+       In addition to the system-wide  limits  on  user  priority
+       (returned  by  the  PC_GETCID  and  PC_GETCLINFO commands)
+       there is a per process user priority limit (see ts_uprilim
+       below), which specifies the maximum ts_upri value that can
+       be set for a given  process;  by  default,  ts_uprilim  is
+       zero.
+
+       The   structure  tsinfo_t  (defined  in  sys/tspriocntl.h)
+       defines the format used for the  attribute  data  for  the
+       time-sharing class.
+            short      ts_maxupri;     /* Limits of user priority
+       range */
+
+       The priocntl PC_GETCID and  PC_GETCLINFO  commands  return
+       time-sharing  class  attributes in the pc_clinfo buffer in
+       this format.
+
+       ts_maxupri specifies the configured maximum user  priority
+       value for the time-sharing class.  If ts_maxupri is x, the
+       valid range for both user  priorities  and  user  priority
+       limits is from -x to +x.
+
+       The   structure  tsparms_t  defined  in  sys/tspriocntl.h,
+       defines the format used to specify the time-sharing class-
+       specific scheduling parameters of a process.
+            short     ts_uprilim;   /* Time-Sharing user priority
+       limit */
+            short    ts_upri;     /* Time-Sharing  user  priority
+       */
+
+       When  using  the  priocntl PC_SETPARMS or PC_GETPARMS com-
+       mands, if pc_cid specifies  the  time-sharing  class,  the
+       data in the pc_clparms buffer is in this format.
+
+       For  the priocntl PC_GETPARMS command, if pc_cid specifies
+       the time-sharing class and more than one time-sharing pro-
+       cess  is specified, the scheduling parameters of the time-
+       sharing process with the highest ts_upri value  among  the
+       specified processes is returned and the process ID of this
+       process is returned by the priocntl  call.   If  there  is
+       more  than  one process sharing the highest user priority,
+       the one returned is implementation-dependent.
+
+       Any time-sharing process can lower its own ts_uprilim  (or
+       that of another process with the same user ID).
+
+       If  the  priority  of  the  target process is to be raised
+       above its  current  value,  or  if  the  target  process's
+       ts_uprilim is to be raised above a value of 0, the follow-
+       ing conditions must be true: The calling process must have
+       the P_RTIME privilege.  The effective user ID of the call-
+       ing process must match the effective user ID of the target
+
+                                                                9
+
+priocntl(2)                                           priocntl(2)
+
+       process  (or  the  calling process have the P_OWNER privi-
+       lege).
+
+       Attempts by  an  unprivileged  user  process  to  raise  a
+       ts_uprilim  or set an initial ts_uprilim greater than zero
+       fail with a return value of -1 and errno set to EPERM.
+
+       Any time-sharing process can set its own ts_upri (or  that
+       of  another  process  with  the same user ID) to any value
+       less than or equal  to  the  ts_uprilim  of  the  process.
+       Attempts   to   set   ts_upri  above  ts_uprilim  (or  set
+       ts_uprilim below ts_upri)  result  in  ts_upri  being  set
+       equal to ts_uprilim.
+
+       Either  of  the ts_uprilim or ts_upri fields can be set to
+       the special value  TS_NOCHANGE  (defined  in  sys/tsprioc-
+       ntl.h)  to  set  one  value  without  affecting the other.
+       Specifying TS_NOCHANGE  for  ts_upri  when  ts_uprilim  is
+       being  set  to  a  value  below the current ts_upri causes
+       ts_upri to be set equal to the ts_uprilim value being set.
+       Specifying  TS_NOCHANGE  for a parameter when changing the
+       class of a process to time-sharing (from some other class)
+       causes  the  parameter  to be set to a default value.  The
+       default value for ts_uprilim is  0  and  the  default  for
+       ts_upri  is equal to the value of ts_uprilim that is being
+       set.
+
+       The time-sharing user priority and user priority limit are
+       inherited across the fork and exec system calls.
+
+   AAggiinngg ppaarraammeetteerrss
+       priocntl  also  can  set  or  report the working set aging
+       parameters for one or more specified process.  These  com-
+       mands are not scheduling class related.
+
+       Use  the  structure  of  type ageparms_t for arg for these
+       commands.  The ageparms_t structure contains the following
+       members:
+           size_t    maxrss;
+           clock_t   et_age_interval;
+           clock_t   init_agequantum;
+           clock_t   min_agequantum;
+           clock_t   max_agequantum;
+
+       The  maxrss  value specifies the maximum resident set size
+       in pages.  The system uses this value to determine whether
+       a process is subject to trimming operations.  A fixed num-
+       ber of pages are removed from the  address  space  of  the
+       process when the process is trimmed.
+
+       The  et_age_interval  specifies  the  elapsed time for the
+       aging  interval  in  seconds.   When  this  interval   has
+       elapsed, the process is subject to an external aging oper-
+       ation.
+
+                                                               10
+
+priocntl(2)                                           priocntl(2)
+
+       The age quantum fields specify the age quantum  values  in
+       Hertz.  Processes are aged after they accumulate a certain
+       number of virtual clock ticks.  The initial age quantum is
+       the  value  assigned  to the process(es) at creation time.
+       The minimum and maximum values specify the range  for  the
+       process(es).
+
+       Install  the values specified in the ageparms_t structure.
+       All idtype arguments except P_CID listed before are valid.
+       A  value  of  0  for  any  of the fields in the ageparms_t
+       structure leaves this parameter unchanged.  The errno EIN-
+       VAL  is  returned  when setting the min or max age quantum
+       parameters for the following two reasons:  The  min  value
+       exceeds either the current max value of the process(es) or
+       the max value specified in the command.  The max value  is
+       lower  than either the min value of the process(es) or the
+       min value specified in the command.
+
+       The calling process must have the  P_SYSOPS  privilege  to
+       use PC_SETAGEPARMS.
+
+       On  success,  0 is returned.  Display the aging parameters
+       for the specified process(es).  The only valid  value  for
+       the idtype argument is P_PID.
+
+       No special privileges are needed to use this command.
+
+   RReettuurrnn vvaalluueess
+       Unless  otherwise noted above, priocntl returns a value of
+       0 on success.  On failure, priocntl returns  -1  and  sets
+       errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, priocntl fails and sets errno
+       to: An attempt to change the class  of  a  process  failed
+       because  of  insufficient resources other than memory (for
+       example,  class-specific  kernel  data  structures).   The
+       argument cmd was invalid, an invalid or unconfigured class
+       was specified, or a parameter specified was invalid.   All
+       or  part  of the area pointed to by a data pointer is out-
+       side the address space of  the  process.   An  attempt  to
+       change  the  class of a process failed because of insuffi-
+       cient memory.  An attempt was made to  change  the  system
+       time-sharing  or  fixed priority defaults, and the calling
+       process does not have the P_TSHAR  or  P_RTIME  privileges
+       (respectively,  for  the two classes).  The effective user
+       ID of the calling process does  not  match  the  effective
+       user  ID  of  the  target process, and the calling process
+       does not have the P_OWNER privilege.  An attempt was  made
+       to  change the class of the target process to fixed prior-
+       ity (from any class) and the calling process does not have
+       the  P_OWNER  and  the P_RTIME privileges.  An attempt was
+       made to change the priority of a  fixed  priority  process
+       and  the calling process does not have the P_OWNER and the
+
+                                                               11
+
+priocntl(2)                                           priocntl(2)
+
+       P_RTIME privileges.  An attempt was made to raise the pri-
+       ority of a time-sharing process, or raise the ts_prilim of
+       the process above 0, and the calling process does not have
+       the  P_OWNER  and  the P_TSHAR privileges.  An attempt was
+       made to use the PC_SETAGEPARMS  command  and  the  calling
+       process   did   not  have  the  P_SYSOPS  privilege.   The
+       requested time quantum is out of range.  None of the spec-
+       ified processes exist.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       The  system call should not be used to change the priority
+       of multiplexed threads.  Doing so may interfere  with  the
+       scheduling of threads by the Threads Library.
+
+   CCoonnssiiddeerraattiioonnss ffoorr lliigghhttwweeiigghhtt pprroocceesssseess
+       Operations  on processes apply to all LWPs associated with
+       that process.
+
+                                                               12
+

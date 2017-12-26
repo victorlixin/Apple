@@ -1,0 +1,267 @@
+
+
+ndpd-router(1Mtcp)                             ndpd-router(1Mtcp)
+
+SSyynnooppssiiss
+       ndpd-router [-dgMnOpqrRsStv] [-u port] [-D max[/min[/life-
+       time]]]     [-P      [invlifetime]/[deplifetime]]      [-T
+       [reachtim]/[retrans]/[hlim]]
+
+DDeessccrriippttiioonn
+       The  ndpd-router  daemon  manages  aspects of the Neighbor
+       Discovery Protocol (NDP) that are not under the control of
+       the  kernel.  It provides Router Advertisements and it can
+       also exchange routing information using the  RIPng  proto-
+       col.
+
+       The  file /etc/inet/gateway6 contains ndpd-router options.
+       ndpd-router checks the file for changes  before  transmis-
+       sion  or  on  reception of a message, or if it is sent the
+       SIGHUP signal.  The file contains one directive per  line.
+       Comments are indicated by a # at the start of a line.  All
+       IPv6 addresses and prefixes in the file must be in numeric
+       form.   Symbolic  names  are  not allowed.  Except for the
+       gateway directive and comments, each line  consists  of  a
+       directive of the form keyword = argument.
+
+       ndpd-router  understands  the  following  options: (Debug)
+       Display exceptional conditions and dump.  Send Unsolicited
+       Router  Advertisements  at  intervals from min to max sec-
+       onds.
+
+       The value of max can range from 4  to  1800  seconds;  the
+       default value is 600 seconds.
+
+       The  value  of  min can range from 1 second to 0.75 * max;
+       the default value is set to max/3.
+
+       The router lifetime can range from 0 to 65535 seconds; the
+       default  value  is 10 * max.  Broadcast a default route in
+       RIPng.  Set the stateful configuration flag (M) in  adver-
+       tisements.   Do not install routes received by RIPng.  Set
+       the other stateful information flag (O) in advertisements.
+       Do  not  offer prefixes (learned from interface configura-
+       tion).  Set the invalid life value and the deprecated life
+       value  for  announced  prefixes (in seconds).  The default
+       values are  0xffffffff  which  represents  infinite  life.
+       Enable  RIPng protocol, but do not send RIPng packets.  Do
+       not offer to be the default router  in  Router  Advertise-
+       ments.   Uses split horizon without corrupting reverse for
+       RIPng.  Enable RIPng protocol. By default, RIPng  is  dis-
+       abled.   Do  not  use  split horizon for RIPng.  Timestamp
+       logged messages.  If the value of reachtim is greater than
+       0,  set  the  value  of  the  BaseReachableTime  field  to
+       reachtim seconds.
+
+       If the value of retrans is greater than 0, set  the  value
+       of the RetransTime field to retrans seconds.
+
+                                                                1
+
+ndpd-router(1Mtcp)                             ndpd-router(1Mtcp)
+
+       If  the value of hlim is greater than 0, set the hop limit
+       field in Router Advertisements to hlim.  Use the specified
+       UDP  port  for  RIPng.   The default port is 521.  Log all
+       interesting events (via the daemon.info action  in  syslog
+       and the console).
+
+   IInntteerrffaacceess
+       ndpd-router  understands IEEE, PPP, and CTI point-to-point
+       interfaces.  ndpd-router exchanges packets  on  all  known
+       active (up) interfaces which have a link-local address. It
+       can also detect when an interface's status changes.  If an
+       interface goes down or loses its link-local address, ndpd-
+       router stops NDP and RIPng processing  on  the  interface.
+       If an interface comes up, ndpd-router starts NDP and RIPng
+       processing on it.
+
+       In order to send Router Advertisements and/or RIPng  pack-
+       ets,  both  local  and remote link-local addresses must be
+       configured.  For all  active  (up)  point-to-point  inter-
+       faces,  ndpd-router  configures  a local route via lo0 for
+       local addresses.
+
+   SSiiggnnaallss
+       The operation of ndpd-router may be modified by sending it
+       one  of  the  following  signals:  Reinitialize  from  the
+       /etc/inet/gateway6 file.  Dump the current state of  ndpd-
+       router  to  syslog or stdout.  Clean up and exit.  Turn on
+       verbose mode.  Turn off verbose mode.
+
+KKeeyywwoorrddss
+       The following keywords may be used  in  the  configuration
+       file:  Defines  default  options.  Only one set of default
+       options may be specified, and if specified,  must  be  the
+       first non-comment line in the file.
+
+       The  possible  directives  are described in Defines inter-
+       face-specific options.
+
+       The possible  directives  are  described  in  Defines  the
+       default  filter pattern for incoming (filter=in) or outgo-
+       ing (filter=out) RIPng packets.  One default incoming  and
+       one  default  outgoing  filter may be defined for use with
+       interfaces for which no filter is explicitly defined.  The
+       default  filters must appear before any interface-specific
+       filters in the file.
+
+       The possible directives are described in Defines an inter-
+       face-specific pattern for incoming (filter=in) or outgoing
+       (filter=out) RIPng packets.  One incoming and one outgoing
+       filter may be defined for use with each interface.
+
+       The possible directives are described in
+
+       A  filter  consists  of  a sequence of patterns which test
+
+                                                                2
+
+ndpd-router(1Mtcp)                             ndpd-router(1Mtcp)
+
+       prefix length, source gateway (input  filters  only),  and
+       whether  the prefix matches a specified prefix.  Each pat-
+       tern is applied in the  order  specified  to  test  for  a
+       match.   If a pattern contains more than one test descrip-
+       tion, the match is determined from the conjunction of  all
+       the  tests.  The first matching pattern defines the action
+       to be performed.  The possible actions are  to  accept  or
+       reject  a  message, or to accept after truncating the pre-
+       fix.  Once an accepting match has been found, a prefix  is
+       not checked against any further filters.
+
+       Any received RIPng information is tested against the input
+       filter of the interface, or, if none is specified, against
+       the default input filter.
+
+       Static interface routes are seen as input information com-
+       ing from the interface and from a gateway with  the  link-
+       local  address  of the interface.  Routes set by a gateway
+       directive are seen as input information  coming  from  the
+       specified  interface  and  gateway.  The default route (-g
+       option) and routes set without  a  gateway  directive  are
+       seen  as  input information coming from gateway ``::'' and
+       no interface.  In this case, the default input  filter  is
+       applied.
+
+       RIPng  information to be transmitted is tested against the
+       output filter of the interface, or, if none is  specified,
+       against the default output filter.
+
+       If  no  pattern matches, the default action is to accept a
+       prefix unless overridden by the default  filter.   Disable
+       advertisement of prefix lists.  Defines the interface-spe-
+       cific prefixes announced in router advertisements.
+
+       The possible directives are described in
+
+       If no prefix directive is defined for  an  interface,  the
+       router advertisement contains the list of prefixes deduced
+       from the address list of the interface.  If prefix  direc-
+       tives  are defined for an interface, the router advertise-
+       ment contains the list of prefixes in the order that  they
+       are  defined.   The prefixes are not installed in the ker-
+       nel.  Set a route in RIPng packets.  If  specified,  lines
+       such as these must appear at the end of the file after any
+       option, filter, and prefix directives.   Set  a  route  in
+       RIPng packets and install it in the kernel.  If specified,
+       lines such as these must appear at the  end  of  the  file
+       after any option, filter, and prefix directives.
+
+       An  interface  name may specify a single interface such as
+       en0, or the wildcard *  may  be  used  to  match  multiple
+       interfaces of the same type, for example, net*.
+
+                                                                3
+
+ndpd-router(1Mtcp)                             ndpd-router(1Mtcp)
+
+   OOppttiioonn ddiirreeccttiivveess
+       The  available  option  directives  are:  Advertise an MTU
+       value in router advertisements.  If  there  is  no  mtuval
+       argument,  the advertised MTU is the MTU of the interface.
+       If mtuval is 0, suppress the advertisement of MTU.  Listen
+       (y)  or  do  not listen (n) to incoming RIPng packets, and
+       send (y) or do not send (n)  RIPng  packets.   If  the  -R
+       option is specified on the command line, use split horizon
+       without corrupting reverse.  If the -S option is specified
+       on  the  command line, do not use split horizon.  Send (y)
+       or do not send (n) router advertisements.   Alternatively,
+       set  the interval between router advertisements to a mini-
+       mum value of min second and an optional maximum  value  of
+       max  seconds.   Sets  the  stateful  mode  flags in router
+       advertisements; either M to use stateful configuration, or
+       O to use stateful configuration except for addresses.  Set
+       the router life field in router advertisements to rl  sec-
+       onds.  Set the reachable field in router advertisements to
+       r seconds.  Set the retransmit interval  field  in  router
+       advertisements to ri seconds.
+
+   FFiilltteerr ddiirreeccttiivveess
+       The  possible  filter  directives are: Compare the first l
+       bits of the specified IPv6 prefix, xxxx::, with the  first
+       l  bits  of  the  prefix in the RIPng packet.  Compare the
+       specified IPv6 address xxxx with the source address in the
+       RIPng  message.  Only  used  with  incoming  filters (fil-
+       ter=in).  Compare the  bit-length  l  against  the  prefix
+       length  in  the  RIPng  message using one of the following
+       operators: Match if equal to l.  Match  if  less  than  l.
+       Match  if  less than or equal to l.  Match if greater than
+       l.  Match if greater than or equal to l.  Accept the  mes-
+       sage  if  the  pattern matches.  Reject the message if the
+       pattern  matches.   Accept  the  message  if  the  pattern
+       matches, and truncate the prefix to l bits.
+
+   PPrreeffiixx ddiirreeccttiivveess
+       The possible prefix directives are: The advertised prefix,
+       xxxx, with length l bits.  Set the L and/or the A flag for
+       the  prefix  (the default is LA).  Set the deprecated time
+       in seconds for the prefix.  Set the validity time in  sec-
+       onds for the prefix.
+
+DDiiaaggnnoossttiiccss
+       All  errors  are  logged  using the action defined for the
+       daemon.err level in the  syslog  file,  unless  the  debug
+       option  is  set.  Information  logged  includes all syntax
+       errors in /etc/inet/gateway6 and configuration  mismatches
+       between different routers.
+
+FFiilleess
+       /etc/inet/gateway6
+
+                                                                4
+
+ndpd-router(1Mtcp)                             ndpd-router(1Mtcp)
+
+RReeffeerreenncceess
+NNoottiicceess
+       The  functionality of ndpd-router will be merged into in a
+       future release.
+
+EExxaammpplleess
+       At  a  site  where  all  addresses   are   of   the   form
+       2f06:2200:c001:0200:xxxx,  export only one route, describ-
+       ing the entire site, on all  net*  interfaces:  filter=out
+       if=net*     prefix=2f06:2200:c001:0200::/64    length=>=64
+       action=truncate/64 The keywords may  be  abbreviated  pro-
+       vided  their meaning remains unambiguous: filt=out if=net*
+       pref=2f06:2200:c001:0200::/64 len=>=64 act=trunc/64 Set  a
+       default  outgoing  route  on  en0:  ::/0  metric 2 gateway
+       2f06:2200:c102:0200::1 en0 Define a default outgoing  fil-
+       ter  to  disable sending host routes out on any interface:
+       filter=out length==128 action=reject Declare that any  net
+       interface,  on  which  RIPng  is active, defines a default
+       route: filter=in if=net* act=trunc/0 Define  a  site  with
+       exterior connection en0, which aggregates other sites con-
+       nected through net*, and which uses split horizon  without
+       poisoned  reverse.   The  order  of the lines is important
+       because all net* filter descriptions also  apply  to  en0.
+       option    if=net*    ripout=R   filter=out   if=en0   pre-
+       fix=2f06:2200::/24 len=>=24 act=trunc/24 filt=out  if=net*
+       pref=2f06:2200:c001:0200::/64  len=>=64  act=trunc/64 fil-
+       ter=in   if=en0   act=trunc/0   filter=in   if=net*   pre-
+       fix=2f06:2200::/24 len=>=24 act=trunc/64 filter=in if=net*
+       act=reject
+
+                                                                5
+

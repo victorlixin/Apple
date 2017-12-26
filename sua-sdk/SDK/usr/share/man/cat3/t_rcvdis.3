@@ -1,0 +1,119 @@
+t_rcvdis(3)                                                 t_rcvdis(3)
+
+  tt__rrccvvddiiss(())
+
+  NNAAMMEE
+
+    t_rcvdis - retrieve information from disconnection
+
+  SSYYNNOOPPSSIISS
+
+    #include <xti.h>
+
+    int t_rcvdis(
+        int fd,
+        struct t_discon *discon)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    PPaarraammeetteerrss     BBeeffoorree ccaallll      AAfftteerr ccaallll
+
+    fd             x                /
+
+    discon->       udata.maxlen     x
+
+    discon->       udata.len        /
+
+    discon->       udata.buf        ?
+
+    discon->       reason           /
+
+    discon->       sequence         /
+
+    This function is used to identify the cause of a disconnection and to
+    retrieve any user data sent with the disconnection. The argument fd
+    identifies the local transport endpoint where the connection existed, and
+    discon points to a t_discon structure containing the following members:
+
+    struct netbuf udata;
+    int reason;
+    int sequence;
+
+    The field reason specifies the reason for the disconnection through a
+    protocol-dependent reason code, udata identifies any user data that was
+    sent with the disconnection, and sequence may identify an outstanding
+    connection indication with which the disconnection is associated. The
+    field sequence is only meaningful when tt__rrccvvddiiss() is issued by a passive
+    transport user who has executed one or more _tt____ll_ii_ss_tt_ee_nn(3) functions and is
+    processing the resulting connection indications. If a disconnection
+    indication occurs, sequence can be used to identify which of the
+    outstanding connection indications is associated with the disconnection.
+
+    The maxlen field of udata may be set to zero, if the user does not care
+    about incoming data. If, in addition, the user does not need to know the
+    value of reason or sequence, discon may be set to NULL and any user data
+    associated with the disconnection indication shall be discarded. However,
+    if a user has retrieved more than one outstanding connection indication
+    (through _tt____ll_ii_ss_tt_ee_nn(3)) and discon is a null pointer, the user will be
+    unable to identify with which connection indication the disconnection is
+    associated.
+
+  VVAALLIIDD SSTTAATTEESS
+
+    T_DATAXFER,T_OUTCON,T_OUTREL,T_INREL,T_INCON(ocnt > 0)
+
+  EERRRROORRSS
+
+    On failure, t_errno is set to one of the following:
+
+    [TBADF]
+        The specified file descriptor does not refer to a transport endpoint.
+
+    [TBUFOVFLW]
+        The number of bytes allocated for incoming data (maxlen) is greater
+        than 0 but not sufficient to store the data. If fd is a passive
+        endpoint with ocnt > 1, it remains in state T_INCON; otherwise, the
+        endpoint state is set to T_IDLE.
+
+    [TNODIS]
+        No disconnection indication currently exists on the specified
+        transport endpoint.
+
+    [TNOTSUPPORT]
+        This function is not supported by the underlying transport provider.
+
+    [TOUTSTATE]
+        The communications endpoint referenced by fd is not in one of the
+        states in which a call to this function is valid.
+
+    [TPROTO]
+        This error indicates that a communication problem has been detected
+        between XTI and the transport provider for which there is no other
+        suitable XTI error (t_errno).
+
+    [TSYSERR]
+        A system error has occurred during execution of this function.
+
+  RREETTUURRNN VVAALLUUEE
+
+    Upon successful completion, a value of 0 is returned. Otherwise, a value
+    of -1 is returned and t_errno is set to indicate an error.
+
+  SSEEEE AALLSSOO
+
+    _tt____aa_ll_ll_oo_cc(3)
+
+    _tt____cc_oo_nn_nn_ee_cc_tt(3)
+
+    _tt____ll_ii_ss_tt_ee_nn(3)
+
+    _tt____oo_pp_ee_nn(3)
+
+    _tt____ss_nn_dd_dd_ii_ss(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The tt__rrccvvddiiss function is not thread safe.
+
+    The tt__rrccvvddiiss function is not async-signal safe.
+

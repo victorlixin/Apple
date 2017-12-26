@@ -1,0 +1,636 @@
+
+
+lpadmin(1M)                                           lpadmin(1M)
+
+SSyynnooppssiiss
+       lpadmin -p printer -v device [options]
+       lpadmin  -p  printer  -s server-name[!server-printer-name]
+       [options]
+       lpadmin -p printer -U dial-info [options]
+       lpadmin -x dest
+       lpadmin -d [dest]
+       lpadmin -S print-wheel  -A  alert-type  [-W  minutes]  [-Q
+       requests]
+
+DDeessccrriippttiioonn
+       lpadmin configures the LP print service by defining print-
+       ers and devices.  It is used to add and  change  printers,
+       to  remove printers from the service, to set or change the
+       system default destination, to define alerts  for  printer
+       faults,  to mount print wheels, and, when the Network Sup-
+       port Utilities is installed, to define printers for remote
+       printing  services.   (For details about network printers,
+       see
+
+   AAddddiinngg oorr cchhaannggiinngg aa pprriinntteerr
+       The -p printer option is used to configure a  new  printer
+       or  to  change  the  configuration of an existing printer.
+       When you use this form of the lpadmin  command,  you  must
+       select  one  of  the  following  three options: -v device,
+       required  to  configure  a  local  printer;   -s   server-
+       name[!server-printer-name], required to configure a remote
+       printer; or -U dial-info, required to configure a  dial-up
+       printer.   These, and the remaining options, may appear in
+       any order.  The -A option is used to define  an  alert  to
+       inform the administrator when a printer fault is detected,
+       and periodically thereafter, until the  printer  fault  is
+       cleared  by the administrator.  If an alert is not defined
+       for a particular printer, mail will be sent to user lp  by
+       default.  If the Enhanced Security Utilities are installed
+       and running on the system, no one will be able to  log  in
+       as  lp;  therefore,  mail must be redirected to the person
+       responsible for LP administration.  The  alert-types  are:
+       Send the alert message via mail (see to the administrator.
+       If the Enhanced Security Utilities are installed and  run-
+       ning  on the system, the alert message will be sent to the
+       specified user-name (see shell-command below) at  SYS_PRI-
+       VATE.   Write  the  message  to  the terminal on which the
+       administrator is  logged  in.   If  the  administrator  is
+       logged in on several terminals, one is chosen arbitrarily.
+       If the Enhanced Security Utilities are installed and  run-
+       ning  on  your  system,  write will not be available as an
+       alert-type.  Do not send messages for the  current  condi-
+       tion.  An administrator can use this option to temporarily
+       stop receiving further messages  about  a  known  problem.
+       Once the fault has been cleared and printing resumes, mes-
+       sages will again be sent when another  fault  occurs  with
+       the  printer.   Do  not  send messages; any existing alert
+       definition for the printer will be removed.  No alert will
+
+                                                                1
+
+lpadmin(1M)                                           lpadmin(1M)
+
+       be  sent  when the printer faults until a different alert-
+       type (except quiet) is used.  Run the  shell-command  each
+       time the alert needs to be sent.  The shell command should
+       expect the message in standard input.  If there are blanks
+       embedded  in  the  command, enclose the command in quotes.
+       Note that the mail and write values for  this  option  are
+       equivalent  to the values mail login-ID and write login-ID
+       respectively, where login-ID is the current name  for  the
+       administrator.   This  will  be the login ID of the person
+       submitting this command unless he or she has used  the  su
+       command  to change to another login ID.  If the su command
+       has been used to change the login ID,  then  the  login-ID
+       for  the new login is used.  Display the type of the alert
+       for the printer fault.  No change is made  to  the  alert.
+       The  message  sent appears as follows: The printer printer
+       has stopped printing for the reason given below.  Fix  the
+       problem  and bring the printer back on line.  Printing has
+       stopped, but will be restarted in a few minutes; issue  an
+       enable  command  if  you  want  to restart sooner.  Unless
+       someone issues a change request
+
+            lp -i request-id -P . . .
+
+       to change the page list to print, the current request will
+       be reprinted from the beginning.
+
+       The   reason(s)  it  stopped  (multiple  reasons  indicate
+       reprinted attempts):
+
+            reason The LP print service can detect printer faults
+       only  through  an  adequate  fast filter and only when the
+       standard interface program or a suitable customized inter-
+       face  program is used.  Furthermore, the level of recovery
+       after a fault depends on the capabilities of the filter.
+
+       If the printer is all, the alerting defined in  this  com-
+       mand applies to all existing printers.
+
+       If the -W option is not used to arrange fault alerting for
+       printer, the default procedure is to mail one  message  to
+       the  administrator  of printer per fault.  This is equiva-
+       lent to specifying -W once or -W 0.  If minutes is a  num-
+       ber  greater than zero, an alert will be sent at intervals
+       specified by minutes.  Insert printer into  the  specified
+       class.   Class  will  be  created  if  it does not already
+       exist.  Save this comment for display whenever a user asks
+       for  a  full description of printer (see The LP print ser-
+       vice does not interpret this comment.  Copy the  interface
+       program  of  an existing printer1 to be the interface pro-
+       gram for printer.  (Options -i and -m may not be specified
+       with  this option.)  This option specifies the recovery to
+       be used for any print request that is stopped because of a
+       printer  fault,  according to the value of fault-recovery:
+       Continue printing on the top of the  page  where  printing
+
+                                                                2
+
+lpadmin(1M)                                           lpadmin(1M)
+
+       stopped.   This requires a filter to wait for the fault to
+       clear before automatically continuing.  Start printing the
+       request  again  from  the  beginning.  Disable printing on
+       printer and wait for the administrator or a user to enable
+       printing again.
+
+       During  the wait the administrator or the user who submit-
+       ted the stopped print request can issue a  change  request
+       that  specifies where printing should resume.  (See the -i
+       option of the lp command.)  If no change request  is  made
+       before  printing  is  enabled, printing will resume at the
+       top of the page where stopped, if the filter allows;  oth-
+       erwise, the request will be printed from the beginning.
+
+       The default value of fault-recovery is beginning.
+
+       Allow  or  deny  the  forms  in form-list to be printed on
+       printer.  By  default  no  forms  are  allowed  on  a  new
+       printer.
+
+       For  each printer, the LP print service keeps two lists of
+       forms: an ``allow-list'' of forms that may  be  used  with
+       the  printer, and a ``deny-list'' of forms that may not be
+       used with the printer.  With  the  -f  allow  option,  the
+       forms  listed are added to the allow-list and removed from
+       the deny-list.  With the -f deny option, the forms  listed
+       are  added  to  the  deny-list and removed from the allow-
+       list.
+
+       If the allow-list is not empty, only the forms in the list
+       may  be used on the printer, regardless of the contents of
+       the deny-list.  If the allow-list is empty, but the  deny-
+       list  is  not,  the forms in the deny-list may not be used
+       with the printer.   All  forms  can  be  excluded  from  a
+       printer  by specifying -f deny:all.  All forms can be used
+       on a printer (provided the  printer  can  handle  all  the
+       characteristics  of each form) by specifying -f allow:all.
+
+       The LP print service uses this information  as  a  set  of
+       guidelines  for  determining  where a form can be mounted.
+       Administrators, however, are not restricted from  mounting
+       a form on any printer.  If mounting a form on a particular
+       printer is in disagreement with  the  information  in  the
+       allow-list  or  deny-list, the administrator is warned but
+       the mount is accepted.  Nonetheless, if a user attempts to
+       issue  a  print  or  change request for a form and printer
+       combination that is in disagreement with the  information,
+       the  request  is  accepted  only  if the form is currently
+       mounted on the printer.  If the form  is  later  unmounted
+       before  the request can print, the request is canceled and
+       the user is notified by mail.
+
+       If the administrator tries to specify a form as acceptable
+       for  use  on  a printer that doesn't have the capabilities
+
+                                                                3
+
+lpadmin(1M)                                           lpadmin(1M)
+
+       needed by the form, the command is rejected.
+
+       The lpadmin command will issue a warning when  an  invalid
+       (nonexistent)  form  name  is  submitted with the -f deny:
+       option.
+
+       Note the other use of  -f,  with  the  -M  option,  below.
+       Indicate  that  the  device associated with the printer is
+       hardwired.  If neither of the mutually exclusive  options,
+       -h  and  -l,  is specified, this option is assumed.  Allow
+       printer to handle print requests with  the  content  types
+       listed in a content-type-list.  If the list includes names
+       of more than one type, the names must be separated by com-
+       mas  or  blank  spaces.   (If  they are separated by blank
+       spaces,  the  entire  list  must  be  enclosed  in  double
+       quotes.)
+
+       The  type simple is recognized as the default content type
+       for files in the
+
+       system.  A simple type of file is a data stream containing
+       only  printable ASCII characters and the following control
+       characters.
+       ---------------------------------------------------------------
+       Control Character Octal ValueMeaning
+       ---------------------------------------------------------------
+       backspace         10         move back one  character,  except
+                                    at beginning of line
+       tab               11         move to next tab stop
+       linefeed (newline)12         move to beginning of next line
+       form feed         14         move to beginning of next page
+       carriage return   15         move to beginning of current line
+       To  prevent  the  print  service from considering simple a
+       valid type for the printer,  specify  either  an  explicit
+       value (such as the printer type) in the content-type-list,
+       or an empty list.  If you do want  simple  included  along
+       with  other types, you must include simple in the content-
+       type-list.
+
+       Except for simple, each content-type name is freely deter-
+       mined by the administrator.  If the printer type is speci-
+       fied by the -T option, then the printer type is implicitly
+       considered  to  be also a valid content type.  Establish a
+       new interface program for printer.  interface is the path-
+       name  of  the new program.  (The -e and -m options may not
+       be specified with this option.)  Indicate that the  device
+       associated  with  printer  is  a  login  terminal.  The LP
+       scheduler (lpsched) disables all login terminals automati-
+       cally  each time it is started.  (The -h option may not be
+       specified with this option.)  Mount the form form-name  on
+       printer.   Print  requests  that need the pre-printed form
+       form-name will be printed on printer.  If  more  than  one
+       printer  has  the  form mounted and the user has specified
+       any (with the -d option of the lp command) as the  printer
+
+                                                                4
+
+lpadmin(1M)                                           lpadmin(1M)
+
+       destination, then the print request will be printed on the
+       one printer  that  also  meets  the  other  needs  of  the
+       request.
+
+       The  page length and width, and character and line pitches
+       needed by the form are compared with those allowed for the
+       printer,  by  checking  the  capabilities  in the terminfo
+       database for the type of printer.  If  the  form  requires
+       attributes  that  are  not available with the printer, the
+       administrator is warned but the mount is accepted.  If the
+       form lists a print wheel as mandatory, but the print wheel
+       mounted on the printer is different, the administrator  is
+       also warned but the mount is accepted.
+
+       If  the  -a  option  is  given,  an  alignment  pattern is
+       printed, preceded by the same initialization of the physi-
+       cal  printer that precedes a normal print request.  Print-
+       ing is assumed to start at the top of the  first  page  of
+       the form.  After the pattern is printed, the administrator
+       can adjust the mounted  form  in  the  printer  and  press
+       return  for  another  alignment pattern (no initialization
+       this time), and can continue printing  as  many  alignment
+       patterns  as  desired.   The  administrator  can  quit the
+       printing of alignment patterns by typing q.
+
+       If the  -o  filebreak  option  is  given,  a  formfeed  is
+       inserted  between  each copy of the alignment pattern.  By
+       default, the alignment pattern  is  assumed  to  correctly
+       fill a form, so no formfeed is added.
+
+       A  form  is ``unmounted'' either by mounting a new form in
+       its place or by using the -f none option.  By  default,  a
+       new printer has no form mounted.
+
+       Note  the  other  use  of  -f without the -M option above.
+       Mount the print-wheel on  printer.   Print  requests  that
+       need  the print-wheel will be printed on printer.  If more
+       than one printer has print-wheel mounted and the user  has
+       specified  any  (with  the -d option of the lp command) as
+       the printer destination, then the print  request  will  be
+       printed on the one printer that also meets the other needs
+       of the request.
+
+       If the print-wheel is not listed  as  acceptable  for  the
+       printer,  the  administrator  is  warned  but the mount is
+       accepted.  If the printer does not take print wheels,  the
+       command is rejected.
+
+       A  print  wheel  is ``unmounted'' either by mounting a new
+       print wheel in its place or by using the option  -S  none.
+       By default, a new printer has no print wheel mounted.
+
+       Note the other uses of the -S option without the -M option
+       described below.  Select model interface program, provided
+
+                                                                5
+
+lpadmin(1M)                                           lpadmin(1M)
+
+       with  the  LP print service, for the printer.  (Options -e
+       and -i may not be specified with this option.)   The  fol-
+       lowing  interface  programs are available: generic printer
+       interface interface with special security markings for the
+       B2  security environment interface for PostScript printers
+       only
+
+       By default, the standard interface is used.  The  -O  con-
+       trols  whether  or  not  lp will make a copy of the user's
+       file(s) when a print job is  submitted.   The  copy-option
+       can  be  either  copy or nocopy.  If -O copy is specified,
+       the LP system will always copy the user's source files  to
+       the  spool  area  when  a  print  job  is  submitted.   If
+       -O nocopy is specified, the files are copied only  if  the
+       user  specifies  the  -c  option of lp when submitting the
+       job.
+
+       This option sets the value of the copy-files parameter  in
+       the  /etc/default/lp file.  The value, which can be either
+       on or off, is checked every time a print job is submitted.
+       Each  -o  option in the list below is the default given to
+       an interface program if the option is  not  taken  from  a
+       preprinted  form description or is not explicitly given by
+       the user submitting a request (see  The  only  -o  options
+       that   can   have   defaults  defined  are  listed  below.
+       length=scaled-decimal-number   width=scaled-decimal-number
+       cpi=scaled-decimal-number        lpi=scaled-decimal-number
+       stty='stty-option-list' scaled-decimal-number refers to  a
+       non-negative  number used to indicate a unit of size.  The
+       type of unit is shown by a trailing letter attached to the
+       number.  Three types of scaled decimal numbers can be used
+       with the LP print service: numbers that show sizes in cen-
+       timeters  (marked  with  a  trailing c); numbers that show
+       sizes in inches (marked with a trailing  i);  and  numbers
+       that  show  sizes  in  units appropriate to use (without a
+       trailing letter), that is, lines,  characters,  lines  per
+       inch, or characters per inch.
+
+       The  first  four default option values must agree with the
+       capabilities of the type of physical printer,  as  defined
+       in the terminfo database for the printer type.  If they do
+       not, the command is rejected.
+
+       The stty-option-list is not checked  for  allowed  values,
+       but is passed directly to the stty program by the standard
+       interface program.  Any error messages  produced  by  stty
+       when  a  request  is  processed (by the standard interface
+       program) are mailed to the user submitting the request.
+
+       For each printing option not specified, the  defaults  for
+       the following attributes are defined in the terminfo entry
+       for the specified printer type.  length width cpi lpi  The
+       default for stty is stty='9600 cs8 -cstopb -parenb ixon
+                         -ixany opost -olcuc onlcr -ocrnl -onocr
+
+                                                                6
+
+lpadmin(1M)                                           lpadmin(1M)
+
+                         -onlret -ofill nl0 cr0 tab0 bs0 vt0 ff0'
+       You can set any of the -o options to  the  default  values
+       (which  vary  for  different types of printers), by typing
+       them without assigned values, as follows:  length=  width=
+       cpi=  lpi=  stty=  Allow  a user to submit a print request
+       specifying  that  no  banner  page  be  printed.   If  the
+       Enhanced  Security  Utilities are installed and running on
+       your system, this option will be silently ignored.   Force
+       a banner page to be printed with every print request, even
+       when a user asks for no banner page.  This is the default;
+       you must specify -o nobanner if you want to allow users to
+       be able to specify -o nobanner with the lp  command.   The
+       -R  option allows you to define the range of device levels
+       used for the initial screening of requests  to  a  network
+       printer.   You  define such a range by specifying its high
+       and low ends (with the arguments high and low) on a  local
+       system.   (lpadmin  stores  the range of device levels you
+       specify in a file called /etc/lp/printers/printer/configu-
+       ration, where printer is the name of the relevant device.)
+       The default values of high and low are  SYS_RANGE_MAX  and
+       SYS_RANGE_MIN, respectively (the same values assigned to a
+       local printer).
+
+       This option is available only if the Network Support Util-
+       ities  is  installed  on the system.  This option is valid
+       only if you use the -s system option or the -R option  for
+       an  existing  network  printer.  (If you don't specify the
+       value of low after the -R option, it is assigned the  same
+       value as high by default.)  Remove printer from the speci-
+       fied class.  If printer is the last member of class,  then
+       class  will  be removed.  Allow either the print wheels or
+       aliases for character sets named in list to be used on the
+       printer.   The  -S  option  doesn't let you add items to a
+       list specified with an earlier invocation of -S;  instead,
+       it  replaces  an  existing  list with a new one.  (Thus -S
+       differs from the -f, -u, allow, and  deny  options,  which
+       allow  you to modify existing lists of available forms and
+       authorized users.)  Once you've run  the  -S  option,  the
+       print wheels and character sets specified (in list) on the
+       current command line will be the only ones available.
+
+       If the printer is a type that  takes  print  wheels,  then
+       list  is  a  comma  or space separated list of print wheel
+       names.  (Enclose the  list  with  quotes  if  it  contains
+       blanks.)   These  will be the only print wheels considered
+       mountable on the printer.  (You can always force a differ-
+       ent print wheel to be mounted, however.)  Until the option
+       is used to specify a list, no print wheels will be consid-
+       ered mountable on the printer, and print requests that ask
+       for a particular print wheel with  this  printer  will  be
+       rejected.
+
+       If  the  printer  is  a type that has selectable character
+       sets, then list is a comma  or  blank  separated  list  of
+
+                                                                7
+
+lpadmin(1M)                                           lpadmin(1M)
+
+       character  set name ``mappings'' or aliases.  (Enclose the
+       list with quotes if it contains blanks.)  Each ``mapping''
+       is  of the form known-name=alias The known-name is a char-
+       acter set number preceded by cs (such as cs3 for character
+       set  three)  or  a  character  set  name from the Terminfo
+       database entry csnm.  (See If this option is not  used  to
+       specify a list, only the names already known from the Ter-
+       minfo database or numbers with a  prefix  of  cs  will  be
+       acceptable for the printer.
+
+       If  list  is the word none, any existing print wheel lists
+       or character set aliases will be removed.
+
+       Note the other uses of the -S with the -M option described
+       above.  This option is required when you are configuring a
+       remote printer.  It makes a server printer  accessible  to
+       users on your system.  server-name is the name of the sys-
+       tem on which the printer is located.  It must be listed in
+       the  LP  systems  table.   (See server-printer-name is the
+       name used on the server  system  for  that  printer.   For
+       example, if you want to access printer1 on server1 and you
+       want it called printer2 on your system, enter -p  printer2
+       -s server1!printer1.
+
+       If the -R option is not also specified, the default values
+       of SYS_RANGE_MAX and SYS_RANGE_MIN  are  assigned  to  the
+       high  and  low parameters, respectively.  These parameters
+       define the range of device levels for  a  server  printer.
+       If  you  use  this  option  (either to define a new server
+       printer or to redefine  a  formerly  local  printer  as  a
+       server printer) without also using the -R option, then, by
+       default, high will be set to SYS_RANGE_MAX, and  low  will
+       be set to SYS_RANGE_MIN.
+
+       This option is available only if the Network Support Util-
+       ities is installed on your system.  Identify  the  printer
+       as  being of one or more printer-types.  Each printer-type
+       is used to extract data from the terminfo  database;  this
+       information  is  used  to  initialize  the  printer before
+       printing each user's request.  Some filters may also use a
+       printer-type  to convert content for the printer.  If this
+       option is not  used,  the  default  printer-type  will  be
+       unknown; no information will be extracted from terminfo so
+       each user request will be printed without first initializ-
+       ing  the  printer.   Also, this option must be used if the
+       following are to work: -o cpi, -o lpi, -o  width,  and  -o
+       length  options of the lpadmin and lp commands, and the -S
+       and -f options of the lpadmin command.
+
+       If the printer-type-list contains more than one type, then
+       the  content-type-list  of  the  -I  option must either be
+       specified as simple, as empty (-I ""), or not specified at
+       all.   Allow  or deny the users in login-ID-list access to
+       the printer.  By default all users on the local system are
+
+                                                                8
+
+lpadmin(1M)                                           lpadmin(1M)
+
+       allowed  on a new printer.  The login-ID-list argument may
+       include any or all of the following constructs: a user  on
+       the local system a user on system system-name all users on
+       system system-name a user on all systems all users on  the
+       local system all users on all systems
+
+       For  each  printer the LP print service keeps two lists of
+       users: an ``allow-list'' of  people  allowed  to  use  the
+       printer,  and  a  ``deny-list'' of people denied access to
+       the printer.  With the -u allow option, the  users  listed
+       are  added  to  the  allow-list and removed from the deny-
+       list.  With the -u deny option, the users listed are added
+       to the deny-list and removed from the allow-list.
+
+       If the allow-list is not empty, only the users in the list
+       may use the printer, regardless of  the  contents  of  the
+       deny-list.   If the allow-list is empty, but the deny-list
+       is not, the  users  in  the  deny-list  may  not  use  the
+       printer.  All users can be denied access to the printer by
+       specifying -u deny:all.  All users may use the printer  by
+       specifying -u allow:all.  This option is required when you
+       are configuring a dial-up  printer  (a  printer  connected
+       through a modem to your local print service).  It does not
+       enable your print service to access a remote printer  ser-
+       vice  (use  the  -s  option to do that).  Specifically, -U
+       assigns  the  ``dialing''  information  dial-info  to  the
+       printer.   dial-info is used with the dial routine to call
+       the printer.  Any network connection supported by the Net-
+       work Support Utilities will work.  dial-info can be either
+       a phone number for a modem connection, or  a  system  name
+       for  other  kinds  of  connections.   Or,  if -U direct is
+       given, no dialing will take place, because the name direct
+       is  reserved for a printer that is directly connected.  If
+       a system name is given, it is used to search  for  connec-
+       tion  details  from  the file /etc/uucp/Systems or related
+       files.  This option is available only if the Network  Sup-
+       port Utilities is installed on the system.  By default, -U
+       direct is assumed.  This option is required when  you  are
+       configuring  a local printer.  It associates a device with
+       printer.  device  is  the  pathname  of  a  file  that  is
+       writable  by lp.  Note that the same device can be associ-
+       ated with more than one printer.
+
+   RReessttrriiccttiioonnss
+       When creating a new printer, one of three options (-v, -U,
+       or  -s)  must  be  supplied.  In addition, only one of the
+       following may be supplied: -e, -i, or -m; if none of these
+       three options is supplied, the model standard is used.
+
+       The -h and -l options are mutually exclusive.
+
+       Printer  and class names may be no longer than the maximum
+       length filename allowed for the filesystem  type  you  are
+       using,  and may consist of all printable characters except
+
+                                                                9
+
+lpadmin(1M)                                           lpadmin(1M)
+
+       the space,  slash,  backslash,  colon,  semicolon,  comma,
+       asterisk,  question mark, and tilde.  The dash can be used
+       in any position except the first  position  in  a  printer
+       name.
+
+       If  -s  and/or  -R is specified, the following options are
+       invalid: -A, -e, -F, -h, -i, -l, -M, -m, -o, -U,  -v,  and
+       -W.
+
+   RReemmoovviinngg aa pprriinntteerr ddeessttiinnaattiioonn
+       The -x dest option removes the destination dest (a printer
+       or a class), from the LP print  service.   If  dest  is  a
+       printer  and is the only member of a class, then the class
+       will be deleted, too.  If dest is all,  all  printers  and
+       classes  are  removed.   No other options are allowed with
+       -x.
+
+   SSeeccuurriittyy ccoonnssiiddeerraattiioonnss
+       Printers  should  be  assigned  an  appropriate  Mandatory
+       Access Control (MAC) level range (if the Enhanced Security
+       Utilities are installed) and correct user and group owner-
+       ship and permission before being configured.
+
+       The  owner  of  the  LP  device should be the user lp, the
+       group ID of the device should be lp, and the  access  per-
+       missions should be 600 (that is, read-write for the owner,
+       with no permissions for group or other).  If these  access
+       permissions  are  not correct, lpadmin will not accept the
+       device.  A printer's MAC level should be determined by the
+       security  of its location; if the printer will be used for
+       sensitive data, access to it should be restricted.
+
+       The admalloc command is used to define the  MAC  level  of
+       the  printer  device  when  it  is allocated for use.  For
+       information on the use of admalloc, see the  manual  page.
+       You  must allocate the printer device with admalloc before
+       configuring it with lpadmin.
+
+   SSeettttiinngg//cchhaannggiinngg tthhee ssyysstteemm ddeeffaauulltt ddeessttiinnaattiioonn
+       The -d [dest] option makes dest, an  existing  printer  or
+       class, the new system default destination.  If dest is not
+       supplied, then there is no system default destination.  No
+       other  options  are  allowed with -d.  To unset the system
+       default printer, the user can enter the keyword none.
+
+   SSeettttiinngg aann aalleerrtt ffoorr aa pprriinntt wwhheeeell
+       The -S print-wheel option is used with the  -A  alert-type
+       option  to  define  an alert to mount the print wheel when
+       there are jobs queued for it.  If this command is not used
+       to  arrange  alerting  for a print wheel, no alert will be
+       sent for the print wheel.  Note the other use of -A,  with
+       the -p option, above.
+
+       The  alert-types  are the same as those available with the
+
+                                                               10
+
+lpadmin(1M)                                           lpadmin(1M)
+
+       -A option: mail, write, quiet,  none,  shell-command,  and
+       list.  See the description of -A, above, for details about
+       each.
+
+       The message sent  appears  as  follows:  The  print  wheel
+       print-wheel needs to be mounted on the printer(s): printer
+       (integer1 requests) integer2  print  requests  await  this
+       print  wheel.   The  printers  listed  are  those that the
+       administrator had earlier specified  were  candidates  for
+       this print wheel.  The number integer1 listed next to each
+       printer  is  the  number  of  requests  eligible  for  the
+       printer.  The number integer2 shown after the printer list
+       is the total number of requests awaiting the print  wheel.
+       It  will be less than the sum of the other numbers if some
+       requests can be handled by more than one printer.
+
+       If the print-wheel is all, the alerting  defined  in  this
+       command  applies  to  all  print wheels already defined to
+       have an alert.
+
+       If the -W option is not given, the  default  procedure  is
+       that  only  one message will be sent per need to mount the
+       print wheel.  Not specifying the -W option  is  equivalent
+       to  specifying  -W  once  or -W 0.  If minutes is a number
+       greater than zero, an alert  will  be  sent  at  intervals
+       specified by minutes.
+
+       If  the  -Q  option  is also given, the alert will be sent
+       when a certain number (specified by the argument requests)
+       of  print  requests that need the print wheel are waiting.
+       If the -Q option is not given, or requests  is  1  or  the
+       word  any  (which are both the default), a message is sent
+       as soon as anyone submits a print request  for  the  print
+       wheel when it is not mounted.
+
+FFiilleess
+       language-specific message file (see LANG on
+
+RReeffeerreenncceess
+
+                                                               11
+

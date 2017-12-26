@@ -1,0 +1,141 @@
+
+
+xdr_complex(3rpc)                               xdr_complex(3rpc)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <rpc/xdr.h>
+
+       bool_t  xdr_array(XDR  *xdrs, caddr_t *arrp, u_int *sizep,
+            const u_int maxsize, const u_int  elsize,       const
+       xdrproc_t elproc);
+
+       bool_t  xdr_bytes(XDR  *xdrs,  char  **sp,  u_int  *sizep,
+            const u_int maxsize);
+
+       bool_t xdr_opaque(XDR *xdrs, caddr_t cp, const u_int cnt);
+
+       bool_t xdr_pointer(XDR *xdrs, char **objpp, u_int objsize,
+            const xdrproc_t xdrobj);
+
+       bool_t xdr_reference(XDR *xdrs, caddr_t *pp,  u_int  size,
+            const xdrproc_t proc);
+
+       bool_t  xdr_string(XDR  *xdrs, char **sp, const u_int max-
+       size);
+
+       bool_t xdr_union(XDR  *xdrs,  enum_t  *dscmp,  char  *unp,
+            const  struct xdr_discrim *choices,      const bool_t
+       (*defaultarm)(const XDR *, const char  *,            const
+       int));
+
+       bool_t xdr_vector(XDR *xdrs, char *arrp, const u_int size,
+            const u_int elsize, const xdrproc_t elproc);
+
+       bool_t xdr_wrapstring(XDR *xdrs, char **sp);
+
+DDeessccrriippttiioonn
+       XDR library routines allow C programmers to describe  com-
+       plex  data  structures  in  a machine-independent fashion.
+       Protocols such as remote procedure calls (RPC)  use  these
+       routines  to  describe the format of the data.  These rou-
+       tines are the XDR library routines for complex data struc-
+       tures.  They require the creation of XDR stream (see
+
+   RRoouuttiinneess
+       See  for the definition of the XDR data structure.  bool_t
+       xdr_array(XDR *xdrs, caddr_t *arrp,  u_int  *sizep,  const
+       u_int  maxsize,       const  u_int elsize, const xdrproc_t
+       elproc);  xdr_array  translates  between   variable-length
+       arrays  and  their corresponding external representations.
+       The parameter arrp is the address of the  pointer  to  the
+       array,  while sizep is the address of the element count of
+       the array; this element count cannot exceed maxsize.   The
+       parameter  elsize  is  the sizeof each of the array's ele-
+       ments, and  elproc  is  an  XDR  routine  that  translates
+       between the array elements' C form and their external rep-
+       resentation.  This routine returns 1  if  it  succeeds,  0
+       otherwise.   bool_t  xdr_bytes(XDR *xdrs, char **sp, u_int
+       *sizep, const u_int maxsize); xdr_bytes translates between
+
+                                                                1
+
+xdr_complex(3rpc)                               xdr_complex(3rpc)
+
+       counted  byte  strings and their external representations.
+       The parameter sp is the address  of  the  string  pointer.
+       The  length  of  the  string  is located at address sizep;
+       strings cannot  be  longer  than  maxsize.   This  routine
+       returns   1   if   it   succeeds,   0  otherwise.   bool_t
+       xdr_opaque(XDR  *xdrs,  caddr_t  cp,  const  u_int   cnt);
+       xdr_opaque  translates  between fixed size opaque data and
+       its external representation.   The  parameter  cp  is  the
+       address  of  the  opaque  object,  and  cnt is its size in
+       bytes.  This routine returns 1 if it  succeeds,  0  other-
+       wise.   bool_t  xdr_pointer(XDR *xdrs, char **objpp, u_int
+       objsize,      const xdrproc_t xdrobj); Like  xdr_reference
+       except  that it serializes NULL pointers, whereas xdr_ref-
+       erence does not.  Thus, xdr_pointer can  represent  recur-
+       sive  data  structures,  such  as  binary  trees or linked
+       lists.  bool_t xdr_reference(XDR *xdrs, caddr_t *pp, u_int
+       size,   const   xdrproc_t  proc);  xdr_reference  provides
+       pointer chasing within structures.  The  parameter  pp  is
+       the  address of the pointer; size is the sizeof the struc-
+       ture that *pp points to; and proc is an XDR procedure that
+       translates the structure between its C form and its exter-
+       nal representation.  This routine returns  1  if  it  suc-
+       ceeds, 0 otherwise.
+
+       Note: this routine does not understand NULL pointers.  Use
+       xdr_pointer instead.  bool_t  xdr_string(XDR  *xdrs,  char
+       **sp,  const u_int maxsize); xdr_string translates between
+       C strings and  their  corresponding  external  representa-
+       tions.   Strings  cannot be longer than maxsize.  Note: sp
+       is the address of  the  string's  pointer.   This  routine
+       returns   1   if   it   succeeds,   0  otherwise.   bool_t
+       xdr_union(XDR *xdrs, enum_t *dscmp, char *unp,       const
+       struct  xdr_discrim *choices,      const bool_t (*default-
+       arm)(const XDR *, const char  *,  const  int));  xdr_union
+       translates  between a discriminated C union and its corre-
+       sponding external representation.  It first translates the
+       discriminant of the union located at dscmp.  This discrim-
+       inant is always an enum_t.  Next the union located at  unp
+       is  translated.   The parameter choices is a pointer to an
+       array of xdr_discrim structures.  Each structure  contains
+       an ordered pair of [value, proc].  If the union's discrim-
+       inant is equal to the associated value, then the  proc  is
+       called to translate the union.  The end of the xdr_discrim
+       structure array is denoted by a routine of value NULL.  If
+       the  discriminant  is not found in the choices array, then
+       the defaultarm procedure is called (if it  is  not  NULL).
+       Returns  1  if  it succeeds, 0 otherwise.  bool_t xdr_vec-
+       tor(XDR *xdrs, char *arrp, const  u_int  size,       const
+       u_int  elsize,  const xdrproc_t elproc); xdr_vector trans-
+       lates between fixed-length arrays and their  corresponding
+       external  representations.   The  parameter  arrp  is  the
+       address of the pointer to the array,  while  size  is  the
+       element  count  of the array.  The parameter elsize is the
+       sizeof each of the array's elements, and elproc is an  XDR
+
+                                                                2
+
+xdr_complex(3rpc)                               xdr_complex(3rpc)
+
+       routine that translates between the array elements' C form
+       and their external representation.  This routine returns 1
+       if  it  succeeds,  0 otherwise.  bool_t xdr_wrapstring(XDR
+       *xdrs, char **sp); A routine that  calls  xdr_string  with
+       arguments  xdrs, sp, maxuint, where maxuint is the maximum
+       value of an unsigned integer.
+
+       Many routines, such as xdr_array, xdr_pointer and xdr_vec-
+       tor take a function pointer of type xdrproc_t, which takes
+       two arguments.  xdr_string, one  of  the  most  frequently
+       used  routines,  requires three arguments, while xdr_wrap-
+       string only requires two.  For these  routines,  xdr_wrap-
+       string  is  desirable.   This routine returns 1 if it suc-
+       ceeds, 0 otherwise.
+
+RReeffeerreenncceess
+
+                                                                3
+

@@ -1,0 +1,56 @@
+
+
+moduload(2)                                           moduload(2)
+
+SSyynnooppssiiss
+       #include <sys/mod.h>
+
+       int moduload(int modid);
+
+DDeessccrriippttiioonn
+       moduload  allows  processes  with  privilege  P_LOADMOD to
+       demand-unload a loadable module--or all loadable modules--
+       from a running system.
+
+       If  modid specifies a module identifier, moduload attempts
+       to unload that module.  If modid specifies 0 (zero), modu-
+       load attempts to unload all loadable modules.
+
+       Loadable  modules  are considered unloadable if all of the
+       following conditions are true: the module is not currently
+       being  used  the  module  is not currently being loaded or
+       unloaded no module that depends on the module is currently
+       loaded profiling is disabled
+
+       When  moduload finds that it cannot demand-unload a module
+       for one of the reasons cited above, it flags the module as
+       a candidate for subsequent unloading by the kernel's auto-
+       unload mechanism.
+
+       Tasks performed during the unload operation include: logi-
+       cally  disconnect  the  module  from the running system by
+       removing the module's switch table entry execute the  mod-
+       ule's  wrapper  routine  to perform any cleanup the module
+       requires to remove itself from the system free kernel mem-
+       ory allocated for the module
+
+   RReettuurrnn vvaalluueess
+       On  success,  moduload  returns  0.   On failure, moduload
+       returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, moduload fails and sets errno
+       to:  Outstanding  references to this module exist, or mod-
+       ules that depend on this module are currently  loaded,  or
+       profiling is not enabled, or this module is in the process
+       of being loaded or unloaded.  modid  does  not  specify  a
+       valid  loadable  module  identifier,  or modid is not cur-
+       rently loaded.  The  caller  does  not  possess  P_LOADMOD
+       privileges.   Unable  to  perform  the requested operation
+       because the loadable modules functions are not  configured
+       into the system.
+
+RReeffeerreenncceess
+
+                                                                1
+

@@ -1,0 +1,409 @@
+
+
+xntpdc(1Mtcp)                                       xntpdc(1Mtcp)
+
+SSyynnooppssiiss
+       xntpdc [ -ilnps] [ -c command ] [ host ] [ ... ]
+
+DDeessccrriippttiioonn
+       xntpdc is used to query the daemon about its current state
+       and to request changes in that state. The program  may  be
+       run either in interactive mode or controlled using command
+       line arguments. Extensive state and statistics information
+       is  available  through  the xntpdc interface. In addition,
+       nearly all the configuration options which can  be  speci-
+       fied  at startup using xntpd's configuration file may also
+       be specified at runtime using xntpdc.
+
+       If one or more request options is included on the  command
+       line when xntpdc is executed, each of the requests will be
+       sent to the NTP servers running on each of the hosts given
+       as  command line arguments, or on localhost by default. If
+       no request options are given, xntpdc will attempt to  read
+       commands  from the standard input and execute these on the
+       NTP server running on the first host given on the  command
+       line,  again defaulting to localhost when no other host is
+       specified.  xntpdc will prompt for commands if  the  stan-
+       dard input is a terminal device.
+
+       xntpdc uses NTP mode 7 packets to communicate with the NTP
+       server, and hence can be  used  to  query  any  compatible
+       server  on  the network which permits it.  Note that since
+       NTP is a UDP protocol this communication will be  somewhat
+       unreliable,  especially  over  large distances in terms of
+       network topology.  xntpdc makes no attempt  to  retransmit
+       requests, and will time requests out if the remote host is
+       not heard from within a suitable time out time.
+
+       Command line options are described  below.   Specifying  a
+       command  line  option  other  than -i or -n will cause the
+       specified query (queries) to  be  sent  to  the  indicated
+       host(s)  immediately.   Otherwise,  xntpdc will attempt to
+       read interactive format commands from the standard  input.
+       The command argument is interpreted as an interactive for-
+       mat command and is added to the list  of  commands  to  be
+       executed  on  the  specified host(s).  Multiple -c options
+       may be given.  Force  xntpdc  to  operate  in  interactive
+       mode.   Prompts will be written to the standard output and
+       commands read from the standard input.  Obtain a  list  of
+       peers  which  are  known to the server(s).  This option is
+       equivalent to -c listpeers.  Output all host addresses  in
+       dotted-quad  numeric  format rather than converting to the
+       canonical host names.  Print a list of the peers known  to
+       the  server  as well as a summary of their state.  This is
+       equivalent to -c peers.  Print a list of the  peers  known
+       to  the server as well as a summary of their state, but in
+       a slightly different format than the -p option.   This  is
+       equivalent to -c dmpeers.
+
+                                                                1
+
+xntpdc(1Mtcp)                                       xntpdc(1Mtcp)
+
+   IInntteerrnnaall ccoommmmaannddss
+       Interactive  format commands consist of a keyword followed
+       by zero to four arguments.  Only enough characters of  the
+       full  keyword  to  uniquely  identify  the command need be
+       typed.  The output of a command is normally  sent  to  the
+       standard  output,  but optionally the output of individual
+       commands may be sent to a file by appending >, followed by
+       a file name, to the command line.
+
+       A  number  of  interactive  format  commands  are executed
+       entirely within the  xntpdc  program  itself  and  do  not
+       result  in  NTP  mode  7  requests being sent to a server.
+       These are described below.  A ? by  itself  will  print  a
+       list of all the command keywords known to this incarnation
+       of xntpdc.  A ? followed by a command keyword  will  print
+       function  and  usage  information  about the command. This
+       command is an excellent supplement to the  information  in
+       this  man  page.   A synonym for the ? command.  Specify a
+       time out period for  responses  to  server  queries.   The
+       default is about 8000 milliseconds.  Specify a time inter-
+       val to be added to timestamps included in  requests  which
+       require  authentication.   This is used to enable (unreli-
+       able) server reconfiguration over long delay network paths
+       or  between machines whose clocks are unsynchronized.  Set
+       the host to which future queries will be  sent.   hostname
+       may  be  either  a host name or a numeric (dotted quad) IP
+       address.  Poll the current server  in  client  mode.   The
+       first  argument is the number of times to poll (default is
+       1) while the second argument may be given to obtain a more
+       detailed output of the results.  This command was valid in
+       previous releases, but is currently not  supported.   This
+       command  allows  the  specification  of a key number to be
+       used to authenticate configuration  requests.   This  must
+       correspond  to  the key number the server has been config-
+       ured to use for this purpose.  This command prompts you to
+       type  in  a password (which will not be echoed) which will
+       be used to authenticate configuration requests.  The pass-
+       word  must correspond to the key configured for use by the
+       NTP server for this purpose if such  requests  are  to  be
+       successful.   keyid and passwd are constructed in the keys
+       file.  If yes is specified,  host  names  are  printed  in
+       information  displays.   If no is given, numeric addresses
+       are printed instead.  The default is yes  unless  modified
+       using the command line -n option.  Exit xntpdc.
+
+   QQuueerryy ccoommmmaannddss
+       Query  commands  result  in  NTP mode 7 packets containing
+       requests for information being sent to the server.   These
+       are  ``read-only'' commands in that they make no modifica-
+       tion of the server configuration state.  Obtain and  print
+       a  brief  list  of the peers for which the server is main-
+       taining state.  These should include all  configured  peer
+       associations  as well as those peers whose stratum is such
+       that they are considered by  the  server  to  be  possible
+
+                                                                2
+
+xntpdc(1Mtcp)                                       xntpdc(1Mtcp)
+
+       future synchronization candidates.  Obtain a list of peers
+       for which the server is maintaining state,  along  with  a
+       summary  of  that state.  Summary information includes the
+       remote peer's designation,  the  local  interface  address
+       (0.0.0.0 if a local address has yet to be determined), the
+       stratum of the remote peer (a stratum of 16 indicates  the
+       remote  peer  is unsynchronized), the polling interval, in
+       seconds, the reachability register, in octal, and the cur-
+       rent  estimated  delay, offset and dispersion of the peer,
+       all in seconds.  In addition, the character  in  the  left
+       margin indicates the mode this peer entry is operating in.
+       A + denotes symmetric active, a - indicates symmetric pas-
+       sive,  a  =  means  the  remote  server is being polled in
+       client mode, a ^ indicates that the server is broadcasting
+       to this address, a ~ denotes that the remote peer is send-
+       ing broadcasts and a * marks the peer to which the  server
+       is currently synchronizing.
+
+       The  contents  of the remote peer designation field may be
+       one of four forms.  It may be a host name, an IP  address,
+       a  reference clock implementation name with its parameter,
+       or ``REFCLK(implementation_number, parameter)''.  On host-
+       names,  only  IP-addresses  will be displayed.  A slightly
+       different peer summary list.  Identical to the  output  of
+       the  peers  command  except  for the character in the left
+       most column.  Characters only appear  beside  peers  which
+       were  included  in  the final stage of the clock selection
+       algorithm.  A . indicates that this peer was cast  off  in
+       the  falseticker  detection,  while a + indicates that the
+       peer made it through.  A * denotes the peer the server  is
+       currently synchronizing with.  Shows a detailed display of
+       the current peer variables for one or more peers.  Most of
+       these values are described in the NTP Version 3.4 specifi-
+       cation.  Show peer-to-peer statistic  counters  associated
+       with  the  specified  peer(s).   Obtain  and  print kernel
+       phase-lock loop operating parameters.  This information is
+       available  only  if the kernel has been specifically modi-
+       fied for a precision time  keeping  function.   Print  the
+       values of selected loop filter variables.  The loop filter
+       is the part of NTP which deals with  adjusting  the  local
+       system  clock.  The offset is the last offset given to the
+       loop filter by the packet processing code.  The  frequency
+       is  actually  the  frequency error, or drift, of your sys-
+       tem's clock in the units NTP uses  for  internal  computa-
+       tions.   Dividing  this number by 4096 should give you the
+       actual drift rate.  The compliance is actually a long term
+       average  offset  and is used by NTP to control the gain of
+       the loop filter.  The "time_const"  controls  the  "stiff-
+       ness"  of the phase lock loop and thus, the speed at which
+       it can adapt to oscillator drift. The watchdog timer value
+       is  the  number  of seconds which have elapsed since a new
+       sample offset was given to the loop filter.   The  oneline
+       and  multiline  options  specify  the format in which this
+       information is to be printed;  multiline is  the  default.
+
+                                                                3
+
+xntpdc(1Mtcp)                                       xntpdc(1Mtcp)
+
+       Print  a  variety  of  system  state variables, i.e. state
+       related to the local server.  All except the last four are
+       described  in  the  NTP Version 3 specification, RFC 1305.
+       The "system flags" show  various  system  flags,  some  of
+       which can be set and cleared by the "enable" and "disable"
+       configuration commands. The "stability"  is  the  residual
+       frequency  error remaining after the system frequency cor-
+       rection is applied and is  intended  for  maintenance  and
+       debugging.  In  most  architectures,  this value will ini-
+       tially decrease from as high as 500 ppm to a nominal value
+       in  the  .01 to 0.1 ppm range. If it remains high for some
+       time after starting the daemon,  something  may  be  wrong
+       with  the  local clock or the value of the kernel variable
+       "tick" may be incorrect. The  "broadcastdelay"  shows  the
+       default  broadcast  delay,  as set by the "broadcastdelay"
+       configuration command, while  the  "authdelay"  shows  the
+       default  authentication  delay,  as set by the "authdelay"
+       configuration command.  Print  statistics  counters  main-
+       tained in the protocol mode.  Print a number of statistics
+       counters related  to  the  peer  memory  allocation  code.
+       Print  statistics  counters maintained in the input-output
+       module.   Print  statistics  counters  maintained  in  the
+       timer/event  queue  support  code.   Obtain  and print the
+       server's restriction list.  This list is printed in sorted
+       order  and may help to understand how the restrictions are
+       applied. The version number should not normally need to be
+       specified.   Obtain and print traffic counts collected and
+       maintained by the monitor facility. You  do  not  normally
+       need to specify a version number.  Obtain and print infor-
+       mation concerning a peer clock.  The values obtained  pro-
+       vide information on the setting of fudge factors and other
+       clock performance information.  Obtain debugging  informa-
+       tion  for a clock peer.  This information is provided only
+       by some clock drivers and is mostly undecodable without  a
+       copy of the driver source in hand.
+
+   RRuunnttiimmee ccoonnffiigguurraattiioonn rreeqquueessttss
+       All  requests  which cause state changes in the server are
+       authenticated by the server using  a  configured  NTP  key
+       (the  facility  can  also be disabled by the server by not
+       configuring a key).  The key number and the  corresponding
+       key  must  also be made known to xntpdc.  This can be done
+       using the keyid and passwd commands, the latter  of  which
+       will  prompt  at the terminal for a password to use as the
+       encryption key.  You will also be  prompted  automatically
+       for both the key number and password the first time a com-
+       mand which would result in an authenticated request to the
+       server is given.  Authentication not only provides verifi-
+       cation that the requester  has  permission  to  make  such
+       changes,  but  also  gives  an  extra degree of protection
+       against transmission errors.
+
+       Authenticated requests always include a timestamp  in  the
+       packet  data,  which is included in the computation of the
+
+                                                                4
+
+xntpdc(1Mtcp)                                       xntpdc(1Mtcp)
+
+       authentication code.  This timestamp is  compared  by  the
+       server  to  its receive timestamp.  If they differ by more
+       than a small amount, the request  is  rejected.   This  is
+       done  for  two  reasons.   First,  it  makes simple replay
+       attacks on the server, by someone who  might  be  able  to
+       overhear  traffic  on your LAN, much more difficult.  Sec-
+       ond, it makes it more difficult to  request  configuration
+       changes  to  your  server from topologically remote hosts.
+       While the reconfiguration facility will work well  with  a
+       server  on the local host, and may work adequately between
+       time-synchronized hosts on the same LAN, it will work very
+       poorly  for  more  distant  hosts.  As such, if reasonable
+       passwords are chosen, care is taken  in  the  distribution
+       and  protection  of  keys  and  appropriate source address
+       restrictions  are  applied,  the  runtime  reconfiguration
+       facility should provide an adequate level of security.
+
+       The  following  commands  all make authenticated requests.
+       Add a configured, symmetric active peer association with a
+       peer at the given address.
+
+       Note  that  an existing association with the same peer may
+       be deleted when this command is executed or may simply  be
+       converted  to  conform to the new configuration, as appro-
+       priate.
+
+       If the optional keyid is a nonzero integer,  all  outgoing
+       packets  to  the remote server will have an authentication
+       field attached encrypted with this key.  If the value is 0
+       (or  not  given) no authentication will be done.  The ver-
+       sion# can be 1, 2, or 3 and defaults to 3.  If minpoll  is
+       specified  the  polling  interval for the association will
+       remain clamped at the minimum.  The latter option is  only
+       useful  for  testing.   Note  that an existing association
+       with the same peer may be deleted  when  this  command  is
+       executed, or may simply be converted to conform to the new
+       configuration, as appropriate.  The prefer  keyword  indi-
+       cates  a  preferred  peer (and thus will be used primarily
+       for clock synchronization if possible). The preferred peer
+       also  determines  the  validity of the PPS signal - if the
+       preferred peer is suitable for synchronization so  is  the
+       PPS  signal.  Identical to the addpeer command except that
+       polling is done  in  client  mode  rather  than  symmetric
+       active mode.  Identical to the addpeer command except that
+       packets are instead sent in broadcast mode.  In this case,
+       key  identifier  and  key  are  required. The peer_address
+       parameter will generally be a broadcast address on one  of
+       your  local networks or a multicast group assigned to NTP.
+       This command causes the configured bit to be removed  from
+       the  specified peer(s).  In many cases this will cause the
+       peer association to be deleted.   When  appropriate,  how-
+       ever,  the association may persist in an unconfigured mode
+       if the remote peer is willing to continue on in this fash-
+       ion.   This command provides a way to set data for a local
+
+                                                                5
+
+xntpdc(1Mtcp)                                       xntpdc(1Mtcp)
+
+       reference clock.  See for a description of the parameters.
+       Provides  a  way  to  disable  and  enable  various server
+       options.  Flags not mentioned  are  unaffected.  The  auth
+       flag  causes  the  server to synchronize with unconfigured
+       peers only if the peer has  been  correctly  authenticated
+       using  a  trusted  key and key identifier. The default for
+       this flag is disable (off). The bclient  flag  causes  the
+       server  to listen for a message from a broadcast or multi-
+       cast server, following which an association  is  automati-
+       cally  created for that server.  The default for this flag
+       is disable (off). The  pll  flag  enables  the  server  to
+       adjust  its local clock, with default enable (on).  If not
+       set, the local clock runs free at its instrinsic time  and
+       frequency  offset.  This  flag is useful in case the local
+       clock is controlled by some other device or  protocol  and
+       NTP  is  used  only  to  provide  synchronization to other
+       clients. The monitor flag enables the monitoring  facility
+       with  default  disable  (off).  The stats flag enables the
+       statistics facility  filegen  with  default  enable  (on).
+       Cause  flag(s)  to  be  added to an existing restrict list
+       entry, or adds a new entry to the list with the  specified
+       flag(s).  The possible choices for the flags arguments are
+       given in the following list: Ignore all packets from hosts
+       which match this entry.  If this flag is specified neither
+       queries nor  time  server  polls  will  be  responded  to.
+       Ignore  all  NTP  mode  7  packets  (that  is, information
+       queries and configuration requests) from the source.  Time
+       service  is  not  affected.  Ignore all NTP mode 7 packets
+       which attempt to modify the state of the server (that  is,
+       runtime  reconfiguration).   Queries which return informa-
+       tion are permitted.  Decline to  provide  mode  6  control
+       message  trap  service to matching hosts. The trap service
+       is a subsystem of the  mode  6  control  message  protocol
+       which  is  intended  for  use by remote event logging pro-
+       grams.  Declare traps set by matching hosts to be low pri-
+       ority.  The  number of traps a server can maintain is lim-
+       ited (the current limit is 3). Traps are usually  assigned
+       on  a  first  come,  first  served  basis, with later trap
+       requesters being denied service.  This flag  modified  the
+       assignment  algorithm by allowing low priority traps to be
+       overridden by later requests for  normal  priority  traps.
+       Ignore NTP packets whose mode is other than 7.  In effect,
+       time service is denied, though queries may still  be  per-
+       mitted.   Provide stateless time service to polling hosts,
+       but do not allocate peer memory resources to  these  hosts
+       even  if  they  otherwise  might  be  considered useful as
+       future synchronization partners.  Treat these  hosts  nor-
+       mally  in  other  respects, but never use them as synchro-
+       nization sources.  These hosts are subject  to  limitation
+       of  number  of clients from the same net. Net in this con-
+       text refers to the IP notion of net  (class  A,  class  B,
+       class  C,  and so on). Only the first "client-limit" hosts
+       that have shown up at the server and that have been active
+       during   the   last   "client_limit_period"   seconds  are
+
+                                                                6
+
+xntpdc(1Mtcp)                                       xntpdc(1Mtcp)
+
+       accepted. Requests from other clients from  the  same  net
+       are  rejected.  Only  time  request packets are taken into
+       account.  "Private", "control",  and  "broadcast"  packets
+       are not subject to client limitation and therefore are not
+       contributing to client count. History of clients  is  kept
+       using the monitoring capability of xntpd. Thus, monitoring
+       is active as long as there is a restriction entry with the
+       "limited" flag. The default value for "client_limit" is 3.
+       The default value for "client_limit_period" is  3600  sec-
+       onds.  Currently  both  variables  are not runtime config-
+       urable.  This is  actually  a  match  algorithm  modifier,
+       rather  than  a restriction flag.  Its presence causes the
+       restriction entry to be matched only if the source port in
+       the  packet is the standard NTP UDP port (123).  Both ntp-
+       port and non-ntpport may be  specified.   The  ntpport  is
+       considered  more specific and is sorted later in the list.
+       Remove the specified flag(s) from the restrict list  entry
+       indicated  by  the address and mask arguments.  Delete the
+       matching entry from the restrict list.  Enable or  disable
+       the  monitoring  facility.  Note that a monitor no command
+       followed by a monitor yes command is a good way of  reset-
+       ting the packet counts.  Causes the current set of authen-
+       tication keys to be purged and a new set to be obtained by
+       rereading the keys file (which must have been specified in
+       the xntpd configuration file  -  ntp.conf).   This  allows
+       encryption  keys  to  be  changed  without  restarting the
+       server.  Adds one or more keys to the  trusted  key  list.
+       When  authentication is enabled, peers whose time is to be
+       trusted  must  be  authenticated  using  a  trusted   key.
+       Removes  one  or  more  keys  from  the  trusted key list.
+       Returns information concerning the authentication  module,
+       including known keys and counts of encryptions and decryp-
+       tions which have been done.  Sets the precision which  the
+       server  advertises to the specified value.  This should be
+       a negative integer in the range -4 through -20.  Sets  the
+       selection weight algorithm to that indicated by the speci-
+       fied number.  This should be an integer  value  between  1
+       and  5  inclusive.   Algorithm  1 is that specified in RFC
+       1119, the other 4 algorithms are experimental  and  should
+       be  used  with  caution.   Display  the  traps  set in the
+       server.  Set a trap for asynchronous  messages.   Clear  a
+       trap  for  asynchronous  messages.   Clear  the statistics
+       counters in various modules of the server.
+
+EExxiitt ccooddeess
+       None
+
+RReeffeerreenncceess
+       RFC 1305
+
+                                                                7
+

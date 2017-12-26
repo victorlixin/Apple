@@ -1,0 +1,79 @@
+
+
+VipRecvNotify(3via)                           VipRecvNotify(3via)
+
+SSyynnooppssiiss
+       cc  [flag  ...]  file  ...   -via  [library] ...  #include
+       <vipl.h>
+
+       VIP_RETURN VipRecvNotify(VIP_VI_HANDLE ViHandle, VIP_PVOID
+       Context,
+            void(*Handler());
+
+DDeessccrriippttiioonn
+       The  VipRecvNotify  routine  is used by the VI consumer to
+       request that a handler routine be called when a descriptor
+       completes.
+
+       VipRecvNotify checks whether the descriptor at the head of
+       the receive queue has been marked as being complete. If it
+       has  been  so-marked,  it  is removed from the head of the
+       queue,  and  the  handler  routine  associated  with   the
+       descriptor  is  invoked  with the address of the completed
+       descriptor as a parameter. The  handler  routine  has  the
+       following    syntax:   void   Handler(VIP_PVOID   Context,
+       VIP_NIC_HANDLE NicHandle,
+            VIP_VI_HANDLE  ViHandle,   VIP_DESCRIPTOR   *Descrip-
+       torPtr);  If  the  descriptor  at  the head of the receive
+       queue has not been marked as being complete, VipRecvNotify
+       enables  interrupts  for  the  given VI send queue. When a
+       descriptor is completed, the handler  routine  is  invoked
+       with  the address of the completed descriptor as a parame-
+       ter.
+
+       This registration is only associated with the  VI  receive
+       queue  for a single completed descriptor. In order for the
+       handler routine to be invoked more than  once,  VipRecvNo-
+       tify  must be called multiple times. Multiple handlers may
+       be registered at a time, and will be queued in  descriptor
+       order.
+
+       Destruction  of  the VI will result in the cancellation of
+       any pending routine calls.
+
+       VipRecvNotify cannot be used to block on a  receive  queue
+       that  has been associated with a completion queue. See for
+       a more complete description.
+
+       If the receive queue is empty at the time that  VipRecvNo-
+       tify is called, VIP_DESCRIPTOR_ERROR is returned. The han-
+       dler is called for outstanding Notify requests,  with  the
+       descriptor set to NULL if the receive queue becomes empty.
+
+   AArrgguummeennttss
+       An instance of a VI.  Data to be  passed  to  the  handler
+       routine  as a parameter. Not used by the VI provider.  The
+       address of the user-defined function to be called  when  a
+       single descriptor completes. This is not guaranteed to run
+       in the context of the current thread The handler  function
+
+                                                                1
+
+VipRecvNotify(3via)                           VipRecvNotify(3via)
+
+       is  called  with  the  following  parameters:  Data passed
+       through from the VipRecvNotify routine call. Not  used  by
+       the VI provider.  The handle of the NIC.  An instance of a
+       VI.  The address of the descriptor that has completed.
+
+RReettuurrnn vvaalluueess
+       The routine has successfully completed.  The VI handle  or
+       the  function call address was invalid.  The receive queue
+       was empty when  VipRecvNotify  was  called.   The  receive
+       queue  of the VI is associated with a completion queue, or
+       the operation failed due to insufficient resources.
+
+RReeffeerreenncceess
+
+                                                                2
+

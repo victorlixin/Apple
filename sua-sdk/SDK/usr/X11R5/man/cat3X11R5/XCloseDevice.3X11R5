@@ -1,0 +1,110 @@
+XCloseDevice(3X11R5)                               XCloseDevice(3X11R5)
+
+  XXOOppeennDDeevviiccee(())
+
+  NNAAMMEE
+
+    XOpenDevice(), XCloseDevice() - open or close an extension input device
+
+  SSYYNNOOPPSSIISS
+
+    XDevice *XOpenDevice (Display *display, XID device_id)
+    XCloseDevice (Display *display, XDevice *device)
+
+  AARRGGUUMMEENNTTSS
+
+    display
+        Specifies the connection to the X server.
+
+    device_id
+        Specifies the id of the device to be opened
+
+    device
+        Specifies the device to be closed
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _XX_OO_pp_ee_nn_DD_ee_vv_ii_cc_ee(3X11R5) request makes an input device accessible to a
+    client through input extension protocol requests. If successful, it
+    returns a pointer to an XDevice structure.
+
+    The _XX_CC_ll_oo_ss_ee_DD_ee_vv_ii_cc_ee(3X11R5) request makes an input device inaccessible to a
+    client through input extension protocol requests. Before terminating, and
+    client that has opened input devices through the input extension should
+    close them through CClloosseeDDeevviiccee().
+
+    When a client makes an _XX_CC_ll_oo_ss_ee_DD_ee_vv_ii_cc_ee(3X11R5) request, any active grabs that
+    the client has on the device are released. Any event selections that the
+    client has are deleted, as well as any passive grabs. If the requesting
+    client is the last client accessing the device, the server may disable all
+    access by X to the device.
+
+    _XX_OO_pp_ee_nn_DD_ee_vv_ii_cc_ee(3X11R5) and _XX_CC_ll_oo_ss_ee_DD_ee_vv_ii_cc_ee(3X11R5) can generate a BadDevice
+    error.
+
+  SSTTRRUUCCTTUURREESS
+
+    The XXDDeevviiccee structure returned by _XX_OO_pp_ee_nn_DD_ee_vv_ii_cc_ee(3X11R5) contains:
+
+    typedef struct {
+         XID device_id;
+         int num_classes;
+         XInputClassInfo *classes;
+    } XDevice;
+
+    The classes field is a pointer to an array of XXIInnppuuttCCllaassssIInnffoo structures.
+    Each element of this array contains an event type base for a class of
+    input supported by the specified device. The num_classes field indicates
+    the number of elements in the classes array.
+
+    The XXIInnppuuttCCllaassssIInnffoo structure contains:
+
+    typedef struct {
+         unsigned char input_class;
+         unsigned char event_type_base;
+    } XInputClassInfo;
+
+    The input_class field identifies one class of input supported by the
+    device. Defined types include KeyClass, ButtonClass, ValuatorClass,
+    ProximityClass, FeedbackClass, FocusClass, and OtherClass. The
+    event_type_base identifies the event type of the first event in that
+    class.
+
+    The information contained in the XXIInnppuuttCCllaassssIInnffoo structure is used by
+    macros to obtain the event classes that clients use in making
+    _XX_SS_ee_ll_ee_cc_tt_EE_xx_tt_ee_nn_ss_ii_oo_nn_EE_vv_ee_nn_tt(3X11R5) requests. Currently defined macros include
+    DDeevviicceeKKeeyyPPrreessss(), DDeevviicceeKKeeyyRReelleeaassee(), DDeevviicceeBBuuttttoonnPPrreessss(),
+    DDeevviicceeBBuuttttoonnRReelleeaassee(), DDeevviicceeMMoottiioonnNNoottiiffyy(), DDeevviicceeFFooccuussIInn(),
+    DDeevviicceeFFooccuussOOuutt(), PPrrooxxiimmiittyyIInn(), PPrrooxxiimmiittyyOOuutt(), DDeevviicceeSSttaatteeNNoottiiffyy(),
+    DDeevviicceeMMaappppiiiinnggNNoottiiffyy(), CChhaannggeeDDeevviicceeNNoottiiffyy(), DDeevviicceePPooiinntteerrMMoottiioonnHHiinntt(),
+    DDeevviicceeBBuuttttoonn11MMoottiioonn(), DDeevviicceeBBuuttttoonn22MMoottiioonn(), DDeevviicceeBBuuttttoonn33MMoottiioonn(),
+    DDeevviicceeBBuuttttoonn44MMoottiioonn(), DDeevviicceeBBuuttttoonn55MMoottiioonn(), DDeevviicceeBBuuttttoonnMMoottiioonn(),
+    DDeevviicceeOOwwnneerrGGrraabbBBuuttttoonn(), DDeevviicceeBBuuttttoonnPPrreessssGGrraabb(), and NNooEExxtteennssiioonnEEvveenntt().
+
+    To obtain the proper event class for a particular device, one of the above
+    macros is invoked using the XXDDeevviiccee structure for that device. For
+    example,
+
+    DeviceKeyPress (*device, type, eventclass);
+
+    returns the DeviceKeyPress event type and the eventclass for
+    DeviceKeyPress events from the specified device.
+
+    This eventclass can then be used in an _XX_SS_ee_ll_ee_cc_tt_EE_xx_tt_ee_nn_ss_ii_oo_nn_EE_vv_ee_nn_tt(3X11R5)
+    request to ask the server to send DeviceKeyPress events from this device.
+    When a selected event is received through _XX_NN_ee_xx_tt_EE_vv_ee_nn_tt(3X11R5), the type can
+    be used for comparison with the type in the event.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    BadDevice
+        An invalid device was specified. The specified device does not exist,
+        or is the X keyboard or X pointer. This error might also occur if some
+        other client has caused the specified device to become the X keyboard
+        or X pointer device through the _XX_CC_hh_aa_nn_gg_ee_KK_ee_yy_bb_oo_aa_rr_dd_DD_ee_vv_ii_cc_ee(3X11R5) or
+        _XX_CC_hh_aa_nn_gg_ee_PP_oo_ii_nn_tt_ee_rr_DD_ee_vv_ii_cc_ee(3X11R5) requests.
+
+  SSEEEE AALLSSOO
+
+    Programming With Xlib
+

@@ -1,0 +1,126 @@
+
+
+ftw(3C)                                                   ftw(3C)
+
+SSyynnooppssiiss
+       #include <ftw.h>
+
+       int  ftw(const  char  *path,      int (*fn) (const char *,
+       const struct stat *, int), int depth);
+
+       int ftw64(const char *path,      int (*fn) (const char  *,
+       const struct stat64 *, int), int depth);
+
+       int  nftw(const  char *path,      int (*fn) (const char *,
+       const struct stat *, int, struct  FTW*),       int  depth,
+       int flags);
+
+       int nftw64(const char *path,      int (*fn) (const char *,
+       const struct stat64 *, int, struct FTW*),      int  depth,
+       int flags);
+
+DDeessccrriippttiioonn
+       ftw recursively descends the directory hierarchy rooted in
+       path.  For each object in the  hierarchy,  ftw  calls  the
+       user-defined  function fn, passing it a pointer to a null-
+       terminated character string containing  the  name  of  the
+       object,  a  pointer  to  a  stat structure (see containing
+       information about the object, and  an  integer.   Possible
+       values  of  the integer, defined in the ftw.h header file,
+       are:
+
+       The object is a file.  The object  is  a  directory.   The
+       object is a directory that cannot be read.  Descendants of
+       the directory will not be processed.  stat failed  on  the
+       object  because  of  lack of appropriate permission or the
+       object is a symbolic link that points  to  a  non-existent
+       file.  The stat buffer passed to fn is undefined.
+
+       ftw  visits a directory before visiting any of its descen-
+       dants.
+
+       The tree traversal continues until the tree is  exhausted,
+       an invocation of fn returns a nonzero value, or some error
+       is detected within ftw (such as an  I/O  error).   If  the
+       tree  is  exhausted,  ftw  returns  zero.  If fn returns a
+       nonzero value, ftw stops its tree  traversal  and  returns
+       whatever  value  was  returned  by  fn.  If ftw detects an
+       error other than EACCES, it returns -1, and sets the error
+       type in errno.
+
+       The  function  nftw is similar to ftw except that it takes
+       an additional argument, flags.  The flags field is used to
+       specify:  Physical  walk,  does not follow symbolic links.
+       Otherwise, nftw will follow links but will not  walk  down
+       any  path  that crosses itself.  The walk will not cross a
+       mount point.  All subdirectories will  be  visited  before
+       the directory itself.  The walk will change to each direc-
+       tory before reading it.  nftw continues processing even if
+
+                                                                1
+
+ftw(3C)                                                   ftw(3C)
+
+       fails.   If  an  internal error occurs, nftw calls fn with
+       the flag code FTW_ERR before returning.
+
+       The function nftw calls fn with  four  arguments  at  each
+       file and directory.  The first argument is the pathname of
+       the object, the second is a pointer to  the  stat  buffer,
+       the third is an integer giving additional information, and
+       the fourth is a struct FTW  that  contains  the  following
+       members: int base; int level;
+
+       base  is  the offset into the pathname of the base name of
+       the object.  level indicates the  depth  relative  to  the
+       rest of the walk, where the root level is zero.
+
+       The  values  of  the  third  argument  are as follows: The
+       object is a file.  The object is a directory.  The  object
+       is  a directory and subdirectories have been visited.  The
+       object is a symbolic link that points  to  a  non-existent
+       file.   The object is a directory that cannot be read.  fn
+       will not be called  for  any  of  its  descendants.   stat
+       failed  on  the object because of lack of appropriate per-
+       mission.  The stat buffer passed to fn is undefined.  stat
+       failure other than lack of appropriate permission (EACCES)
+       is considered an error and nftw will return -1.
+
+       Both ftw and nftw use one file descriptor for  each  level
+       in the tree.  The depth argument limits the number of file
+       descriptors so used.  If depth is zero  or  negative,  the
+       effect  is  the  same  as if it were 1.  depth must not be
+       greater than the  number  of  file  descriptors  currently
+       available  for  use.   ftw  will run faster if depth is at
+       least as large as the number of levels in the tree.   When
+       ftw  and nftw return, they close any file descriptors they
+       have opened; they do not close any file  descriptors  that
+       may have been opened by fn.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Because  ftw is recursive, it is possible for it to termi-
+       nate with a memory fault when applied to  very  deep  file
+       structures.
+
+       ftw uses to allocate dynamic storage during its operation.
+       If ftw is forcibly terminated, such as  by  longjmp  being
+       executed  by fn or an interrupt routine, ftw will not have
+       a chance to free that storage, so it  will  remain  perma-
+       nently  allocated.   A safe way to handle interrupts is to
+       store the fact that an interrupt has occurred, and arrange
+       to  have fn return a nonzero value at its next invocation.
+
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       ftw64 and nftw64 support large files,  but  are  otherwise
+       identical  to  ftw and nftw, respectively.  For details on
+       programming for large file capable  applications,  see  on
+
+                                                                2
+
+ftw(3C)                                                   ftw(3C)
+
+       intro(2).
+
+                                                                3
+

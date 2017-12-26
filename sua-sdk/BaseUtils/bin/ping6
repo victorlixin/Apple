@@ -1,0 +1,125 @@
+#!/bin/ksh
+
+usage_ping(){
+	print "usage: $progname [-Rnq] [-c count] "
+	print "       [-s packetsize] host"
+}
+
+usage_ping6(){
+	print "usage: $progname [-Hnq] [-c count] "
+	print "      [-S sourceaddr] [-s packetsize] host"
+}
+
+progname=${0##*/}
+packetsize=64
+nflag=0
+qflag=0
+
+while getopts ":c:qnRHs:S:" arg
+do
+	case $arg in
+	    c)
+		if [[ $OPTARG -lt 1 ]] ; then
+			print "$0: bad number of packets to transmit."
+			exit 1
+		fi
+		OPTIONS="$OPTIONS -n $OPTARG "
+		;;
+	      
+	    n)
+	    	nflag=1
+		;;
+	    
+	    q)
+	    	qflag=1
+		;;
+
+	    R)
+	    	if [ "$progname" = "ping6" ]; then
+			usage_$progname
+			exit 1
+		fi
+	    	OPTIONS="$OPTIONS -r 9 "
+		;;
+	    s)
+		if [[ $OPTARG -lt 1 ]] ; then
+			print "$0: bad packet size: $OPTARG"
+			exit 1
+		fi
+		packetsize=$OPTARG  
+		;;
+
+	    H)
+		if [ "$progname" = "ping" ]; then
+			usage_$progname
+			exit 1
+		fi
+	    	OPTIONS="$OPTIONS -R "
+		;;
+
+ 	    S)
+	    	if [ "$progname" = "ping" ]; then
+			usage_$progname
+			exit 1
+		fi
+		OPTIONS="$OPTIONS -S $OPTARG "  
+		;;
+
+	    :)
+	    	print "$0: option requires an argument -- $OPTARG"
+		usage_$progname
+		exit 1
+		;;
+
+	    ?)
+	    	print "$0: unknown option -- $OPTARG"
+		usage_$progname
+		exit 1
+		;;
+	esac
+done
+
+# no host mentioned
+if [ $# -lt 1 ] ; then
+	usage_$progname
+	exit 1
+fi
+
+# incorrect usage
+if [ $# -ne $OPTIND ] ; then
+	usage_$progname
+	exit 1
+fi
+
+# we dont not expect target_name starting with '/'
+echo $* | grep ^/ > /dev/null
+if [ $? = 0 ] ; then
+    usage_$progname
+    exit 1
+fi
+
+ping="$(winpath2unix "$WINDIR"\\System32\\ping.exe)"
+
+if [[ ! -a $ping ]] ; then
+	print "Windows Ping not found"	
+        exit 2	
+fi
+
+shift $(($OPTIND - 1))
+
+AUX_OPT=" -t "
+if [ "$progname" = "ping" ]; then
+	AUX_OPT="$AUX_OPT -4 "
+else
+	AUX_OPT="$AUX_OPT -6 "
+fi
+	
+if [ $nflag -eq 0 ]; then
+	AUX_OPT="$AUX_OPT -a "
+fi
+
+if [ $qflag -eq 0 ]; then
+        $ping $AUX_OPT-l $packetsize  $OPTIONS $*
+else
+        $ping $AUX_OPT -l $packetsize $OPTIONS $* | grep -v -e Reply -e transmit -e Request 
+fi

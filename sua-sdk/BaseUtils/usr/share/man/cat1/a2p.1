@@ -1,0 +1,169 @@
+a2p(1)                                                           a2p(1)
+
+  aa22pp
+
+  NNAAMMEE
+
+    a2p - awk-to-perl translator
+
+  SSYYNNOOPPSSIISS
+
+    a2p [[options]] filename
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The aa22pp(1) utility takes an _aa_ww_kk(1) script specified on the command line
+    (or from standard input) and produces a comparable _pp_ee_rr_ll(1) script on the
+    standard output.
+
+  OOPPTTIIOONNSS
+    --DDnumber
+        Set debugging flags.
+    --FFcharacter
+        Tell aa22pp(1) that this aawwkk(1) script is always invoked with this --
+        FF switch.
+    --nnfieldlist
+        Specify the names of the input fields if input does not have to be
+        split into an array. For example, to translate an aawwkk(1) script that
+        processes the password file, you might use:
+        a2p -7 -nlogin.password.uid.gid.gcos.shell.home
+        You can use any delimiter to separate the field names.
+    --number
+        Causes aa22pp(1) to assume that input will always have the number of
+        fields indicated by --number.
+
+  CCOONNSSIIDDEERRAATTIIOONNSS
+
+    Although aa22pp(1) translates fairly well, it is not completely reliable. In
+    some cases, you might want to examine and adjust the Perl script it has
+    produced. The examples provided below are such cases; they are given in no
+    particular order.
+
+    There is an aawwkk(1) idiom of putting iinntt() around a string expression to
+    force numeric interpretation even though the argument is always integer.
+    This is usually unnecessary in ppeerrll(1). Because aa22pp(1) is unable to
+    discern whether the argument is always going to be integer, however, it
+    leaves it in. You might want to remove it.
+
+    The ppeerrll(1) command differentiates numeric comparison from string comparison.
+	The aawwkk(1)command has one operator for both that decides at run time which
+	comparison to do.  The aa22pp(1) command does not attempt a complete aawwkk(1)
+	emulation at this point.  Instead, it guesses which one you want. It is usually
+	right, but is not entirely reliable. All such guesses are marked with the comment ``#???''.
+    It is recommended that you check them. You might also want to run at least
+    once with the --ww switch to ppeerrll(1), which warns you if you use ==== where
+    you should have used eeqq.
+
+    The ppeerrll(1) command does not attempt to emulate the behavior of aawwkk(1)
+	in which nonexistent array elements spring into existence simply by being
+    referenced. If you are relying on this mechanism to create null entries
+    for a subsequent ffoorr ... iinn, they will not be there in ppeerrll(1).
+
+    If aa22pp(1) makes a split line that assigns to a list of variables that
+    looks like (Fld1, Fld2, Fld3...) you might want to rerun aa22pp(1) using the
+    --nn option mentioned above. You will then be able to name the fields
+    throughout the script. If it splits to an array instead, the script is
+    probably referring to the number of fields somewhere.
+
+    The eexxiitt statement in aawwkk(1) does not necessarily exit; it goes to the END
+    block if one exists. Any aawwkk(1) scripts that attempt within the END block to
+    bypass the block under such circumstances can be simplified by removing
+    the conditional statement in the END block and exiting directly from the
+    ppeerrll(1) script.
+
+    The ppeerrll(1) command has two kinds of array: numerically indexed and
+	associative.  The aawwkk(1) command arrays are usually translated to
+	associative arrays, but if you know that the index is always going to be
+	numeric you could change the {...} to [...]. Iteration over an associative
+	array is done using the kkeeyyss() function, but iteration over a numeric
+	array is not. You might need to modify any loop that is iterating over a
+	particular array.
+
+    The aawwkk(1) command works by assuming OFMT has the value %.6g. 
+	The ppeerrll(1) command starts by assuming its equivalent, $#, to have
+	the value %.20g. Set $# explicitly if you use the default value of OFMT.
+
+    Near the top of the line loop will be the split operation that is implicit
+    in the aawwkk(1) script. There are times when you can move this down past
+    some conditionals that test the entire record so that the split is not
+    done as often.
+
+    For aesthetic reasons you may want to change the array base $[ from 1 back
+    to the ppeerrll(1) default of 0, but you must also change all array subscripts
+    and all ssuubbssttrr() and _ii_nn_dd_ee_xx(3) operations to match.
+
+    Gratuitous comments that say "# Here is a work around because awk is dumb"
+    are passed through unmodified.
+
+    Typically, aawwkk(1) scripts are often embedded in a shell script that
+	pipes data into and out of aawwkk(1). Often the shell script wrapper can be
+	incorporated into the ppeerrll(1) script, since ppeerrll(1) can start
+	up pipes into and out of itself, and can do other things that aawwkk(1)
+	cannot do by itself.
+
+    Scripts that refer to the special variables RSTART and RLENGTH can often
+    be simplified by referring to the variables $`, $& and $', provided that
+    they are within the scope of the pattern match that sets them.
+
+    The produced ppeerrll(1) script may have subroutines defined to deal with
+    aawwkk(1)'s semantics regarding ggeettlliinnee and pprriinntt. Because aa22pp(1) usually
+    picks correctness over efficiency, it is almost always possible to rewrite
+    such code to be more efficient by discarding the expendable code.
+
+    To increase efficiency, you may want to remove the keyword from any return
+    statement that is the last statement executed in a subroutine. The aa22pp(1)
+    command catches the most common case, but does not analyze embedded blocks for
+    subtler cases.
+
+    ARGV[0] translates to $ARGV0, but ARGV[n] translates to $ARGV[$n]. A loop
+    that tries to iterate over ARGV[0] will not find it.
+
+  EENNVVIIRROONNMMEENNTT VVAARRIIAABBLLEESS
+
+    The aa22pp(1) utility uses no environment variables.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    On success, aa22pp(1) exits with status 0; otherwise, it exist with a status
+    >0.
+
+  BBUUGGSS
+
+    It is possible to emulate aawwkk(1)'s behavior in selecting string rather
+    than numeric operations at run time by inspection of the operands. Doing
+    this is inefficient, however; in addition, aa22pp(1) almost always guesses
+    correctly.
+
+    Storage for the aawwkk(1) syntax tree is currently static and can run out.
+
+    The version of aa22pp(1) distributed with 5.003 has known problems with
+    multiple concatenations and redirection.
+
+    Concatenations must be in pairs. Therefore,
+
+    var="x" "y" "z"
+
+    must be expressed as:
+
+    var=( "x" "y" ) "z"
+
+    to translate. Otherwise aa22pp(1) prints a message about syntax errors. (This
+    bug did not exist in ppeerrll(1) 4.x versions of aa22pp(1).)
+
+    Redirection, such as:
+
+    { print("cat") > "dog" }
+
+    will not be translated correctly. You might want to comment out
+    redirection lines and rewrite them in ppeerrll(1) directly.
+
+  SSEEEE AALLSSOO
+
+    _p_e_r_l(1) [the ppeerrll(1) compiler/interpreter]
+
+    _s_2_p(1) [sseedd(1) to ppeerrll(1) translator]
+
+  AAUUTTHHOORR
+
+    Larry Wall <lwall@jpl-devvax.Jpl.Nasa.Gov>
+

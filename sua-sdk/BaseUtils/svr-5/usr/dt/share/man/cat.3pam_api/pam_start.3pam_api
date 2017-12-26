@@ -1,0 +1,98 @@
+
+
+pam_start(3pam_api)                           pam_start(3pam_api)
+
+SSyynnooppssiiss
+       #include <security/pam_appl.h>
+
+       int pam_start (
+               const char *service,
+               const char *user,
+               const struct pam_conv *pam_conv,
+               pam_handle_t **pamh);
+
+DDeessccrriippttiioonn
+       pam_start  starts  a PAM transaction.  On its return, pamh
+       is a PAM handle that can be used with other PAM functions.
+
+       This  function takes the following arguments: (In) Name of
+       the service.  (In) The  user  name  to  be  authenticated.
+       (In) Address of the conversation structure.  A PAM service
+       module uses the conversation function pointed to  by  this
+       structure  to  exchange  information with the user.  (Out)
+       The returned PAM handle.
+
+   TThhee ppaamm__ccoonnvv ccoonnvveerrssaattiioonn ssttrruuccttuurree
+       The conversation structure, pam_conv, is defined  as  fol-
+       lows: struct pam_conv {
+               int (*conv)();     /* Conversation function */
+               void  *appdata_ptr;  /*  Application  data */ }; A
+       service module invokes the  conversation  function  refer-
+       enced  by  conv  to  initiate  a  PAM conversation with an
+       application or with a  user.   The  conversation  function
+       must  conform  to  the  following  prototype: int conv(int
+       num_msg,
+                const struct pam_message **msg,
+                struct pam_response **resp,
+                void *appdata_ptr); The function takes  the  fol-
+       lowing  arguments: The number of messages.  By convention,
+       the number of responses must equal the number of messages.
+       A  pointer  to  an  array  of  num_msg pam_message message
+       structures.  A pointer to an  array  of  num_msg  pam_resp
+       response  structures.   A  pointer to application-specific
+       data that the application passes to the PAM  service  mod-
+       ules.  Tha  modules  pass it back through the conversation
+       function.
+
+   TThhee ppaamm__mmeessssaaggee mmeessssaaggee ssttrruuccttuurree
+       pam_start uses the pam_message structure to pass  prompts,
+       error messages, or text from the authentication service to
+       an application or to a user.  The structure is defined  as
+       follows: struct pam_message{
+               int msg_style;
+               char  *msg;  };  The  msg_style member defines the
+       style of the message (msg) and can take one of the follow-
+       ing  values:  Error  message.  Prompt user but do not echo
+       response.  Prompt user and echo response.  Text.  The con-
+       versation  function must remove any newline characters for
+       the     message     styles     PAM_PROMPT_ECHO_OFF     and
+
+                                                                1
+
+pam_start(3pam_api)                           pam_start(3pam_api)
+
+       PAM_PROMPT_ECHO_ON,  and add any necessary newline charac-
+       ters for PAM_ERROR_MSG  and  PAM_TEXT_INFO.   The  maximum
+       length  of  message  and response strings is determined by
+       PAM_MAX_MSG_SIZE.
+
+   TThhee ppaamm__rreessppoonnssee rreessppoonnssee ssttrruuccttuurree
+       The authentication service uses the pam_response structure
+       to  retrieve  an  application's  or  user's  response.  An
+       application should  allocate  memory  for  a  pam_response
+       structure.  This  storage will be released by a PAM module
+       when is called.  The  structure  is  defined  as  follows:
+       struct pam_response{
+               char *resp;
+               int  resp_retcode;  };  The  resp member holds the
+       response.  The resp_retcode member is currently unused and
+       should be set to 0.
+
+       If  the  conversation succeeds, the function should return
+       PAM_SUCCESS to the module.  Should it fail,  the  function
+       should return PAM_COV_ERR.
+
+       The  module  that  caused  the conversation function to be
+       invoked should call to complete the transaction.  The mod-
+       ule's  cleanup  function  can  use the value of the status
+       argument  to  determine  the  storage  that  it  needs  to
+       release.
+
+RReettuurrnn vvaalluueess
+       pam_start  returns  PAM_SUCCESS if successful.  Otherwise,
+       it returns one of the following error codes: Buffer error.
+       Reading  or  writing  of  data failed for mapping.  System
+       error.
+
+                                                                2
+

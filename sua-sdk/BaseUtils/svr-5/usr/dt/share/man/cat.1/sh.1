@@ -1,0 +1,1093 @@
+
+
+sh(1)                                                       sh(1)
+
+SSyynnooppssiiss
+       /usr/bin/sh [-acefhiknprstuvx] [args]
+
+       /u95/bin/sh [-abcefhikmnoprstuvxCD] [file] [-o option] ...
+       [-] [args]
+
+       /usr/bin/jsh [-acefhiknprstuvx] [args]
+
+       /usr/lib/rsh [-acefhiknprstuvx] [args]
+
+       /sbin/sh [-acefhiknprstuvx] [args]
+
+DDeessccrriippttiioonn
+       The sh command interpreter is a command  programming  lan-
+       guage  that  executes  commands  read from a terminal or a
+       file.
+
+       The version of sh residing in /usr/bin/sh  is  the  Bourne
+       shell  and  is described in this manual page.  The version
+       residing in /u95/bin/sh is a version  of  the  Korn  Shell
+       that complies with X/Open Interface Definitions, Version 4
+       Issue 2.  /u95/bin/sh is  considered  the  standard  shell
+       when  you  want an X/Open-compliant execution environment;
+       see the manual page  for  a  description  of  /u95/bin/sh.
+       (Also see for a description of how a shell is selected for
+       execution when you log in to the system.)
+
+       jsh is an interface to the shell which  provides  all  the
+       functionality  of  sh  and  enables job control (see ``Job
+       control'', below).  /usr/lib/rsh is a  restricted  version
+       of  the  standard  command  interpreter  sh; it is used to
+       restrict logins to execution environments whose  capabili-
+       ties are more controlled than those of the standard shell.
+       See ``Invocation'' for the meaning  of  arguments  to  the
+       shell.
+
+       The  shell  /sbin/sh is the only shell that is trusted for
+       administrative use when the  Enhanced  Security  Utilities
+       are installed and running on your system.
+
+       sh, jsh, and rsh process supplementary code set characters
+       in command arguments, as values  of  variables  and  field
+       separators, in prompt strings, comments, and pipes, and in
+       scripts according to the locale specified in the  LC_CTYPE
+       environment  variable  (see  LANG  on Pattern searches are
+       performed on characters, not bytes, as described in  File-
+       name Generation below.
+
+   DDeeffiinniittiioonnss
+       A blank is a tab or a space.  A name is a sequence of let-
+       ters, digits, or underscores, beginning with a  letter  or
+       an  underscore.  A parameter is a name, a digit, or any of
+       the following characters: *, @, #, ?, -, $, and !.
+
+                                                                1
+
+sh(1)                                                       sh(1)
+
+   CCoommmmaannddss
+       A simple-command is a sequence of  non-blank  words  sepa-
+       rated by blanks.  The first word specifies the name of the
+       command to be executed.  Except as  specified  below,  the
+       remaining  words  are  passed  as arguments to the invoked
+       command.  The command name is passed as  argument  0  (see
+       The  value  of  a  simple-command is its exit status if it
+       terminates normally, or (octal) 200+status  if  it  termi-
+       nates abnormally; see for a list of status values.
+
+       A pipeline is a sequence of one or more commands separated
+       by |. (The caret (^) is an obsolete synonym for the verti-
+       cal bar and should not be used in a pipeline. Scripts that
+       use ^ for pipelines are incompatible with the Korn shell.)
+       The  standard  output of each command but the last is con-
+       nected by a to the standard input  of  the  next  command.
+       Each command is run as a separate process; the shell waits
+       for the last command to terminate.  The exit status  of  a
+       pipeline  is  the  exit  status of the last command in the
+       pipeline.
+
+       A list is a sequence of one or more pipelines separated by
+       ;,  &,  &&, or ||, and sometimes terminated by ; or &.  Of
+       these four symbols, ; and & have equal  precedence,  which
+       is  lower  than  that of && and ||.  The symbols && and ||
+       also  have  equal  precedence.   A  semicolon  (;)  causes
+       sequential  execution  of the preceding pipeline (that is,
+       the shell waits for the pipeline to finish before  execut-
+       ing  any  commands  following the semicolon); an ampersand
+       (&)  causes  asynchronous  execution  of   the   preceding
+       pipeline  (that  is,  the  shell  does  not  wait for that
+       pipeline to finish).  The symbol && (||) causes  the  list
+       following it to be executed only if the preceding pipeline
+       returns a zero (non-zero) exit status.  An arbitrary  num-
+       ber  of  newlines  may  appear in a list, instead of semi-
+       colons, to delimit commands.
+
+       A command is either a simple-command or one of the follow-
+       ing.   Unless  otherwise  stated,  the value returned by a
+       command is that of the last simple-command executed in the
+       command.
+
+       Each  time  a  for command is executed, name is set to the
+       next word taken from the in word list.  If in word ...  is
+       omitted,  then  the  for command executes the do list once
+       for each positional parameter that is set (see ``Parameter
+       substitution'',  below).  Execution ends when there are no
+       more words in the list.  A case command executes the  list
+       associated  with the first pattern that matches word.  The
+       form of the patterns is the same as that  used  for  file-
+       name  generation (see ``Filename generation'') except that
+       a slash, a leading dot, or a dot immediately  following  a
+       slash  need not be matched explicitly.  The list following
+       if is executed and, if it returns a zero exit status,  the
+
+                                                                2
+
+sh(1)                                                       sh(1)
+
+       list following the first then is executed.  Otherwise, the
+       list following elif is executed and, if its value is zero,
+       the  list  following  the  next then is executed.  Failing
+       that, the else list is executed.  If no else list or  then
+       list  is executed, then the if command returns a zero exit
+       status.  A while command  repeatedly  executes  the  while
+       list  and,  if  the exit status of the last command in the
+       list is zero, executes the do  list;  otherwise  the  loop
+       terminates.   If  no commands in the do list are executed,
+       then the while command returns a zero exit  status;  until
+       may  be used in place of while to negate the loop termina-
+       tion test.  Execute list in a sub-shell.  list is executed
+       in  the  current  (that  is, parent) shell.  The { must be
+       followed by a space.  Define a function  which  is  refer-
+       enced  by  name.   The body of the function is the list of
+       commands between { and }.  The list may appear on the same
+       line  as  the {.  If it does, the { and list must be sepa-
+       rated by a space.  The } may not be on the  same  line  as
+       list;  it must be on a newline.  Execution of functions is
+       described below (see ``Execution'').   The  {  and  }  are
+       unnecessary  if  the body of the function is a simple-com-
+       mand as defined above, under Commands.
+
+       The following words are only recognized as the first  word
+       of  a  command  and  when not quoted: if then else elif fi
+       case esac for while until do done { }
+
+   CCoommmmeennttss
+       A word beginning with a # causes that  word  and  all  the
+       following  characters  up to a newline to be ignored.  The
+       exception to this is when #! shell is used  as  the  first
+       line of a shell script.  See ``Execution''.
+
+   CCoommmmaanndd ssuubbssttiittuuttiioonn
+       The  shell interprets commands from the string between two
+       backquotes (``) and the standard output  from  these  com-
+       mands may be used as all or part of a word.  Trailing new-
+       lines from the standard output are removed.
+
+       No interpretation is done on the string before the  string
+       is  read,  except to remove backslashes (\) used to escape
+       other characters.  Backslashes may be  used  to  escape  a
+       backquote  (`)  or  another  backslash (\) and are removed
+       before the command string is  read.   Escaping  backquotes
+       allows  nested  command substitution.  If the command sub-
+       stitution lies within a pair of double quotes (" . . . ` .
+       .  . ` . . . "), a backslash used to escape a double quote
+       (\") will be removed; otherwise, it will be left intact.
+
+       If a backslash is  used  to  escape  a  newline  character
+       (\newline), both the backslash and the newline are removed
+       (see  ``Quoting'').   In  addition,  backslashes  used  to
+       escape  dollar signs (\$) are removed.  Since no parameter
+       substitution is done on the command string  before  it  is
+
+                                                                3
+
+sh(1)                                                       sh(1)
+
+       read, inserting a backslash to escape a dollar sign has no
+       effect.  Backslashes that precede characters other than \,
+       `,  ",  newline,  and  $  are left intact when the command
+       string is read.
+
+   PPaarraammeetteerr ssuubbssttiittuuttiioonn
+       The character $ is used to introduce substitutable parame-
+       ters.   There  are two types of parameters, positional and
+       keyword.  If a parameter is a digit, it  is  a  positional
+       parameter.   Positional  parameters may be assigned values
+       by set.  Keyword parameters (also known as variables)  may
+       be assigned values by writing: name=value [name=value] ...
+
+       Pattern-matching is not performed on value.  There  cannot
+       be a function and a variable with the same name.
+
+       The  value,  if any, of the parameter is substituted.  The
+       braces are required only when parameter is followed  by  a
+       letter, digit, or underscore that is not to be interpreted
+       as part of its name.  If parameter is  *  or  @,  all  the
+       positional  parameters,  starting with $1, are substituted
+       (separated by spaces).  Parameter $0 is set from  argument
+       zero  when  the shell is invoked.  If parameter is set and
+       is non-null, substitute its  value;  otherwise  substitute
+       word.   If parameter is not set or is null set it to word;
+       the value of the  parameter  is  substituted.   Positional
+       parameters  may not be assigned in this way.  If parameter
+       is set and is non-null, substitute its  value;  otherwise,
+       print parameter: word and exit from the shell.  If word is
+       omitted, the message parameter null or not set is printed.
+       If parameter is set and is non-null, substitute word; oth-
+       erwise substitute nothing.
+
+       In the above, word is not evaluated unless  it  is  to  be
+       used  as the substituted string, so that, in the following
+       example, pwd is executed only if (d)  is  not  set  or  is
+       null: echo ${d:-`pwd`}
+
+       If  the  colon  (:) is omitted from the above expressions,
+       the shell only checks whether parameter is set or not.
+
+       The following parameters  are  automatically  set  by  the
+       shell.   Expands  to  the positional parameters, beginning
+       with 1.  Expands to the positional  parameters,  beginning
+       with  1,  except  when  expanded  within double quotes, in
+       which case each positional parameter expands as a separate
+       field.   The  number  of positional parameters in decimal.
+       Flags supplied to the shell on invocation or  by  the  set
+       command.   The  decimal  value  returned  by the last syn-
+       chronously executed command.  The process number  of  this
+       shell.   $  reports  the process ID of the parent shell in
+       all shell constructs, including pipelines, and  in  paren-
+       thesized sub-shells.  The process number of the last back-
+       ground command invoked.
+
+                                                                4
+
+sh(1)                                                       sh(1)
+
+       The following parameters  are  used  by  the  shell.   The
+       parameters  in  this section are also referred to as envi-
+       ronment variables.  The default argument (home  directory)
+       for  the  cd command, set to the user's login directory by
+       from the password file (see The search path  for  commands
+       (see  ``Execution'', below).  The user may not change PATH
+       if executing under /usr/lib/rsh.  The search path for  the
+       cd  command.   If  this  parameter is set to the name of a
+       mail file and the MAILPATH parameter is not set, the shell
+       informs  the  user of the arrival of mail in the specified
+       file.  This parameter specifies how often (in seconds) the
+       shell  will  check  for  the  arrival of mail in the files
+       specified by the MAILPATH or MAIL parameters.  The default
+       value is 600 seconds (10 minutes).  If set to 0, the shell
+       will check before each prompt.  A colon (:) separated list
+       of filenames.  If this parameter is set, the shell informs
+       the user of the arrival of mail in any  of  the  specified
+       files.   Each  filename can be followed by % and a message
+       that will be printed when the modification  time  changes.
+       The  default  message  is  you  have mail.  Primary prompt
+       string, by  default  $  .   Secondary  prompt  string,  by
+       default  > .  Internal field separators, by default space,
+       tab, and newline (see ``Blank interpretation'').  If  this
+       parameter  is  set, the shell will use it to determine the
+       current locale; see If this parameter is set to  the  name
+       of  a  file  writable by the user, the shell will write an
+       accounting record in the file  for  each  shell  procedure
+       executed.   When  the shell is invoked, it scans the envi-
+       ronment (see ``Environment'', below) for this name.  If it
+       is  found  and  rsh is the filename part of its value, the
+       shell becomes a restricted shell.  A  non-zero  value  for
+       TIMEOUT causes the shell to exit after $TIMEOUT seconds of
+       inactivity.  The default value  is  site  dependent.   The
+       original  whitespace  characters (space, tab, and newline)
+       are always considered  internal  field  separators.   This
+       variable  can  only  be  set  on  a  system-wide  basis in
+       /etc/default/sh, and cannot be set in an individual user's
+       .profile.
+
+       The   shell  gives  default  values  to  PATH,  PS1,  PS2,
+       MAILCHECK, and IFS.  HOME and MAIL are set by
+
+   BBllaannkk iinntteerrpprreettaattiioonn
+       After parameter and command substitution, the  results  of
+       substitution  are  scanned  for  internal  field separator
+       characters (those found in IFS) and  split  into  distinct
+       arguments  where such characters are found.  Explicit null
+       arguments ("" or '') are retained.   Implicit  null  argu-
+       ments  (those  resulting from parameters that have no val-
+       ues) are removed.
+
+   IInnppuutt//OOuuttppuutt
+       A command's input and output may  be  redirected  using  a
+       special  notation interpreted by the shell.  The following
+
+                                                                5
+
+sh(1)                                                       sh(1)
+
+       may appear anywhere in a simple-command or may precede  or
+       follow a command and are not passed on as arguments to the
+       invoked command.  Note that parameter and command  substi-
+       tution occurs before word or digit is used.
+
+       Use  file word as standard input (file descriptor 0).  Use
+       file word as standard output (file descriptor 1).  If  the
+       file does not exist, it is created; otherwise, it is trun-
+       cated to zero length.  Use file word as  standard  output.
+       If  the  file  exists,  output is appended to it (by first
+       seeking to the end-of-file); otherwise, the file  is  cre-
+       ated.  After parameter and command substitution is done on
+       word, the shell input is read up to the  first  line  that
+       literally  matches  the  resulting  word, or to an end-of-
+       file.  If, however, - is appended to <<: leading tabs  are
+       stripped  from  word  before  the shell input is read (but
+       after parameter and command substitution is done on word),
+       leading  tabs  are  stripped from the shell input as it is
+       read and before each line is compared with word, and shell
+       input  is read up to the first line that literally matches
+       the resulting word, or to an end-of-file.
+
+       If any character of word is quoted (see  ``Quoting''),  no
+       additional  processing  is done to the shell input.  If no
+       characters of word are quoted: parameter and command  sub-
+       stitution  occurs,  (escaped) \newlines are removed, and \
+       must be used to quote the characters \, $, and `.
+
+       The resulting document becomes the  standard  input.   Use
+       the file associated with file descriptor digit as standard
+       input.  Similarly for the standard output  using  >&digit.
+       The  standard input is closed.  Similarly for the standard
+       output using >&-.
+
+       If any of the above is  preceded  by  a  digit,  the  file
+       descriptor  which will be associated with the file is that
+       specified by the digit (instead of the default  0  or  1).
+       For example: ... 2>&1
+
+       associates file descriptor 2 with the file currently asso-
+       ciated with file descriptor 1.
+
+       The order in which redirections are specified is  signifi-
+       cant.   The  shell  evaluates  redirections left-to-right.
+       For example: ... 1>xxx 2>&1
+
+       first associates file descriptor  1  with  file  xxx.   It
+       associates file descriptor 2 with the file associated with
+       file descriptor 1 (that is, xxx).  If the order  of  redi-
+       rections were reversed, file descriptor 2 would be associ-
+       ated with the terminal (assuming  file  descriptor  1  had
+       been)  and file descriptor 1 would be associated with file
+       xxx.
+
+                                                                6
+
+sh(1)                                                       sh(1)
+
+       Using the terminology introduced on the first page,  under
+       Commands,  if a command is composed of several simple-com-
+       mands, redirection will be evaluated for the  entire  com-
+       mand before it is evaluated for each simple-command.  That
+       is, the shell evaluates redirection for the  entire  list,
+       then  each  pipeline  within  the  list, then each command
+       within each pipeline, then each list within each  command.
+
+       If  a  command is followed by & the default standard input
+       for the command is the empty file  /dev/null.   Otherwise,
+       the  environment  for  the execution of a command contains
+       the file descriptors of the invoking shell as modified  by
+       input/output specifications.
+
+       Redirection  of  output  is  not allowed in the restricted
+       shell.
+
+   FFiilleennaammee ggeenneerraattiioonn
+       Before a command is executed, each command word is scanned
+       for  the  characters *, ?, and [.  If one of these charac-
+       ters appears the word is regarded as a pattern.  The  word
+       is  replaced  with  alphabetically  sorted  filenames that
+       match the pattern.  If no filename is found  that  matches
+       the  pattern,  the  word is left unchanged.  The character
+       (.)  at the start of a filename or immediately following a
+       /,  as  well  as  the  character / itself, must be matched
+       explicitly.
+
+       Matches any string, including supplementary code set char-
+       acters and the null string.  Matches any single character,
+       including supplementary code set characters.  Matches  any
+       one  character  in the string enclosed by square brackets,
+       or any one character with a code value  within  the  range
+       designated using a minus (-) sign, including supplementary
+       code set characters.  When the characters in the range are
+       from different code sets, one of the characters specifying
+       the range is matched.  If the  first  character  following
+       the  opening  [  is  a  !,  any  character not enclosed is
+       matched, including supplementary code set characters.
+
+       All quoted characters (see below) must be matched  explic-
+       itly in a filename.
+
+   QQuuoottiinngg
+       The  following  characters  have  a special meaning to the
+       shell and cause termination of a word unless quoted: ;   &
+       (  )  |  ^  <  >  newline  space  tab
+
+       A  character  may  be  quoted  (that is, made to stand for
+       itself) by preceding it with a backslash (\) or  inserting
+       it  between a pair of quote marks ('' or "").  During pro-
+       cessing, the shell may quote certain characters to prevent
+       them  from  taking on a special meaning.  Backslashes used
+       to quote a single character  are  removed  from  the  word
+
+                                                                7
+
+sh(1)                                                       sh(1)
+
+       before  the  command  is  executed.   The pair \newline is
+       removed from a word before command and parameter substitu-
+       tion.
+
+       All  characters  enclosed  between  a pair of single quote
+       marks (''), except a  single  quote,  are  quoted  by  the
+       shell.   Backslash has no special meaning inside a pair of
+       single quotes.  A single quote may be quoted inside a pair
+       of  double  quote  marks  (for example, "'"), but a single
+       quote can not be quoted inside a pair of single quotes.
+
+       Inside a pair of double quote marks  (""),  parameter  and
+       command  substitution  occurs  and  the  shell  quotes the
+       results to avoid blank interpretation and filename genera-
+       tion.   If $* is within a pair of double quotes, the posi-
+       tional parameters are substituted and quoted, separated by
+       quoted  spaces  ("$1  $2 ..."); however, if $@ is within a
+       pair of double quotes, the positional parameters are  sub-
+       stituted  and  quoted,  separated by unquoted spaces ("$1"
+       "$2" ... ).  \ quotes the characters \, `, ", and $.   The
+       pair \newline is removed before parameter and command sub-
+       stitution.  If a backslash precedes characters other  than
+       \,  `,  ",  $,  and  newline, then the backslash itself is
+       quoted by the shell.
+
+   PPrroommppttiinngg
+       When used interactively, the shell prompts with the  value
+       of PS1 before reading a command.  If at any time a newline
+       is typed and further input is needed to  complete  a  com-
+       mand,  the secondary prompt (that is, the value of PS2) is
+       issued.
+
+   DDeeffaauullttss
+       The file /etc/default/sh (which does not exist by default)
+       can  contain a value for the parameter TIMEOUT; this inte-
+       ger value specifies the number of seconds that can  elapse
+       without  user  activity before a shell will exit.  If this
+       value is 0, undefined, or the  file  /etc/default/sh  does
+       not  exist  (the  default),  the  shell will wait for user
+       input until explicitly terminated.
+
+   EEnnvviirroonnmmeenntt
+       The environment (see is a list of name-value pairs that is
+       passed  to an executed program in the same way as a normal
+       argument list.  The shell interacts with  the  environment
+       in several ways.  On invocation, the shell scans the envi-
+       ronment and creates a parameter for each name found,  giv-
+       ing  it the corresponding value.  If the user modifies the
+       value of any of these parameters or  creates  new  parame-
+       ters,  none  of  these  affects the environment unless the
+       export command is used to bind the  shell's  parameter  to
+       the  environment  (see  also  set -a).  A parameter may be
+       removed from the environment with the unset command.   The
+       environment  seen by any executed command is thus composed
+
+                                                                8
+
+sh(1)                                                       sh(1)
+
+       of any unmodified name-value pairs originally inherited by
+       the shell, minus any pairs removed by unset, plus any mod-
+       ifications or additions, all of which  must  be  noted  in
+       export commands.
+
+       The environment for any simple-command may be augmented by
+       prefixing it with one or more assignments  to  parameters.
+       Thus: TERM=450 cmd and (export TERM; TERM=450; cmd)
+
+       are equivalent as far as the execution of cmd is concerned
+       if cmd is  not  a  special  command  (see  ``Special  com-
+       mands'').   If cmd is a special command, then TERM=450 cmd
+       will modify the TERM variable in the current shell.
+
+       If the -k flag is set, all keyword arguments are placed in
+       the  environment,  even  if  they  occur after the command
+       name.  The following first prints a=b c and c: echo a=b  c
+       set -k echo a=b c
+
+   SSiiggnnaallss
+       When  a command is run in the background (cmd &) under sh,
+       it can receive interrupt (SIGINT) and quit (SIGQUIT)  sig-
+       nals  but  ignores them by default.  (A background process
+       can override this default behavior  via  trap  or  signal.
+       For details, see the description of trap, below, or When a
+       command is run in the background under  jsh,  however,  it
+       does  not  receive  interrupt  or quit signals.  Otherwise
+       signals have the values inherited by the  shell  from  its
+       parent,  with the exception of three signals: 11 (SIGSEV),
+       14 (SIGALARM), and 18 (SIGCHILD).
+
+   EExxeeccuuttiioonn
+       Each time a command is executed, the command substitution,
+       parameter substitution, blank interpretation, input/output
+       redirection, and filename generation listed above are car-
+       ried  out.   If  the  command  name  matches the name of a
+       defined function, the function is executed  in  the  shell
+       process (note how this differs from the execution of shell
+       procedures).  If the command name does not match the  name
+       of a defined function, but matches one of the special com-
+       mands listed below in Special Commands, it is executed  in
+       the shell process.  The positional parameters $1, $2, ....
+       are set to the arguments of the function.  If the  command
+       name  matches  neither a special command nor the name of a
+       defined function, a new process is created and an  attempt
+       is made to execute the command via
+
+       The  shell  parameter PATH defines the search path for the
+       directory containing the command.   Alternative  directory
+       names  are  separated by a colon (:).  The default path is
+       /usr/bin:.  The current directory is specified by  a  null
+       path  name,  which  can appear immediately after the equal
+       sign, between two colon delimiters anywhere  in  the  path
+       list, or at the end of the path list.  If the command name
+
+                                                                9
+
+sh(1)                                                       sh(1)
+
+       contains a / the search path is not  used;  such  commands
+       will  not be executed by the restricted shell.  Otherwise,
+       each directory in the path is searched for  an  executable
+       file.   If  the  file has execute permission but is not an
+       a.out file, it is assumed to be a  file  containing  shell
+       commands.  A sub-shell is spawned to read it.  A parenthe-
+       sized command is also executed in a sub-shell.
+
+       For shell script files, in order for the set  user  ID  on
+       execution  and/or the set group ID on execution mode to be
+       effective, the first line of the file must be #! /sbin/sh
+
+       The location in the search path where a command was  found
+       is  remembered  by  the  shell  (to help avoid unnecessary
+       execs later).  If the command  was  found  in  a  relative
+       directory, its location must be re-determined whenever the
+       current directory changes.  The shell forgets  all  remem-
+       bered  locations  whenever the PATH variable is changed or
+       the hash -r command is executed (see below).
+
+   SSppeecciiaall ccoommmmaannddss
+       Input/output redirection is now permitted for  these  com-
+       mands.   File descriptor 1 is the default output location.
+       When job control is enabled, additional  special  commands
+       are  added  to  the  shell's  environment  (see ``Job con-
+       trol'').
+
+       No effect; the command does nothing.  A zero exit code  is
+       returned.  Read and execute commands from file and return.
+       The search path specified by PATH  is  used  to  find  the
+       directory containing file.  Exit from the enclosing for or
+       while loop, if any.  If n is specified,  break  n  levels.
+       Resume  the  next  iteration of the enclosing for or while
+       loop.  If n is specified, resume  at  the  n-th  enclosing
+       loop.   Change  the  current  directory to arg.  The shell
+       parameter HOME is the default arg.   The  shell  parameter
+       CDPATH  defines the search path for the directory contain-
+       ing arg.  Alternative directory names are separated  by  a
+       colon  (:).   The  default  path is <null> (specifying the
+       current directory).  The current directory is specified by
+       a  null  path name, which can appear immediately after the
+       equal sign or between the colon delimiters  anywhere  else
+       in  the path list.  If arg begins with a / the search path
+       is not used.  Otherwise, each directory  in  the  path  is
+       searched  for  arg.  The cd command may not be executed by
+       /usr/lib/rsh.  Echo arguments.  See for usage and descrip-
+       tion.   The  arguments  are read as input to the shell and
+       the resulting command(s) executed.  The command  specified
+       by  the arguments is executed in place of this shell with-
+       out creating a new process.   Input/output  arguments  may
+       appear  and,  if  no  other arguments are given, cause the
+       shell input/output to be modified.  Causes a shell to exit
+       with  the exit status specified by n.  If n is omitted the
+       exit status is that of the last command executed (an  end-
+
+                                                               10
+
+sh(1)                                                       sh(1)
+
+       of-file  will  also  cause  the shell to exit.)  The given
+       names are marked for automatic export to  the  environment
+       of  subsequently  executed  commands.  If no arguments are
+       given, variable names that have  been  marked  for  export
+       during  the  current shell's execution are listed.  (Vari-
+       able names exported from a parent shell are listed only if
+       they  have  been exported again during the current shell's
+       execution.)  Function names  are  not  exported.   Use  in
+       shell  scripts to support command syntax standards (see it
+       parses positional parameters and checks for legal options.
+       See  for  usage and description.  For each name, the loca-
+       tion in the search path of the command specified  by  name
+       is  determined and remembered by the shell.  The -r option
+       causes the shell to forget all remembered  locations.   If
+       no  arguments  are  given, hits and cost information about
+       remembered commands is presented.  Hits is the  number  of
+       times  a  command  has  been invoked by the shell process.
+       Cost is a measure of the work required to locate a command
+       in  the  search path.  If a command is found in a relative
+       directory in the  search  path,  after  changing  to  that
+       directory, the stored location of that command is recalcu-
+       lated.  Commands for which this will be done are indicated
+       by an asterisk (*) adjacent to the hits information.  Cost
+       will be incremented when the recalculation is done.   This
+       command  is available only if the Enhanced Security Utili-
+       ties are installed.  With no arguments, the current multi-
+       level  directory  (MLD)  mode is reported.  If -r alone is
+       specified, the  MLD  mode  of  the  interactive  shell  is
+       changed  to  real mode.  If -v alone is specified, the MLD
+       mode of the interactive shell is changed to virtual  mode.
+       If  the -r or -v option is followed by a string specifying
+       a command, that command alone is executed in the specified
+       MLD  mode.   The  default mode upon login is virtual mode.
+       Equivalent to exec newgrp arg.  See for usage and descrip-
+       tion.  For each set_name, priv sets or displays the privi-
+       leges contained in that privilege set.   set_name  may  be
+       either  max  for the maximum privilege set or work for the
+       working set.  priv_name is the name of  a  privilege.   If
+       priv_names are supplied, priv scans the list and turns off
+       thoses privileges that are preceded by a  minus  sign  and
+       turns on those that are preceded by a plus sign in each of
+       the sets listed.  If no priv_names are supplied, the  priv
+       command  prints the current list of privileges for each of
+       the requested sets.
+
+       The values for  priv_name  are:  Represents  all  possible
+       privileges.   Required  to  manipulate  the security audit
+       mechanisms.  Required to write miscellaneous audit records
+       to  the audit trail.  Overrides specific restrictions that
+       are imposed solely for the confinement of covert channels.
+       Required  to dump a core image of a process that is either
+       privileged, setuid, or  setgid.   This  privilege  is  not
+       required to dump the core image of a process that does not
+       meet the above conditions.  Overrides Discretionary Access
+
+                                                               11
+
+sh(1)                                                       sh(1)
+
+       Control (DAC) restrictions but only for operations that do
+       not alter objects (that is, read and execute permissions).
+       See ``Access permissions'' below.  Overrides Discretionary
+       Access Control restrictions but only for  operations  that
+       alter  objects  (that is, write permission).  See ``Access
+       permissions'' below.  Required to set or get device  secu-
+       rity  attributes  to change the device level when it is in
+       private state, and to access a device when it is  in  pri-
+       vate state.  This privilege is also used for special ioctl
+       for window management and to download trusted software  to
+       a  terminal  driver.   Provides  compatibility with device
+       drivers developed by third party vendors.  It is used when
+       a  sensitive operation needs to be limited to a privileged
+       process.  Required for privileged  operations  on  a  file
+       system that have relatively low sensitivity, including the
+       creation of links to directories,  setting  the  effective
+       root  directory,  and making special files.  Override file
+       system range restrictions.  Required to perform  selective
+       operations  associated  with  loadable modules.  Overrides
+       Mandatory Access Control (MAC) restrictions but  only  for
+       certain   operations  that  do  not  alter  objects.   See
+       ``Access permissions'' below.  Overrides Mandatory  Access
+       Control   restrictions  that  involve  the  alteration  of
+       objects or other  MAC-related  attributes.   See  ``Access
+       permissions''  below.  Allows processes to upgrade (change
+       the existing level  to  a  new  dominating  level)  files.
+       Mount  or unmount a file system or set and get the ceiling
+       level of a file system.  Required for creation  of  multi-
+       level directories.  Required to change the attributes of a
+       file (that is, information kept in the file's inode)  that
+       is  not owned by the effective uid of the calling process.
+       See ``Access permissions'' below.  Required to lock a pro-
+       cess  in memory.  Required to change the security level of
+       objects (for block or character special files that are  in
+       the  public  state  only),  subject  to some restrictions.
+       Required  to  change  the  security  level  of  a  process
+       (including  the  process's  own  level),  subject  to some
+       restrictions.  Administrative privilege  required  to  set
+       the inheritable and fixed privileges on files.  This priv-
+       ilege  overrides  access   and   ownership   restrictions.
+       Required  in  order to set the real and effective user and
+       group ID of a process.  Privilege required for  an  other-
+       wise unprivileged process to set the inheritable and fixed
+       privileges on a file.  This privilege  does  not  override
+       access  or  ownership  restrictions.   Required to perform
+       several general system operations  that  have  only  minor
+       security  implications.  Required to raise the priority of
+       a time sharing process or to set the user  priority  limit
+       to  a value greater than 0.  Required by processes that do
+       real-time operations.
+
+       Access Permissions: Access permissions are associated with
+       the priv_name entries.  Access checking is performed when-
+       ever a subject (such as a  process)  tries  to  access  an
+
+                                                               12
+
+sh(1)                                                       sh(1)
+
+       object  (such  as  a  file  or  directory).  Permission to
+       access an object is granted or denied on the basis of mode
+       bits.   mode  bits  and  Access Control Lists (ACLs); mode
+       bits, Access Control Lists (ACLs),  and  Mandatory  Access
+       Control  (MAC) levels; ACLs ACLs and Mandatory Access Con-
+       trol levels are supported only if  the  Enhanced  Security
+       Utilities  are installed and running, and only if the file
+       system on which the object to be accessed  resides  is  of
+       type  ``sfs''.   ACLs and mode bits are collectively known
+       as Discretionary Access Control (DAC).  The mode bits  are
+       known  as  Discretionary  Access Control (DAC).  Mandatory
+       Access Control (MAC) privileges are defined; however, they
+       may not be supported on the system you are using.
+
+       Starting  with  the leftmost component of the file's path-
+       name, first MAC levels are checked.  The kernel checks MAC
+       levels  based  on a ``read-down, write-equal'' access pol-
+       icy: If read or execute/search access is  requested  on  a
+       file,  and  the MAC level of the calling process dominates
+       (see definition below) the MAC level of the file  (or  the
+       process  has  the  macread  privilege in its working set),
+       access is granted; otherwise EACCES is returned.   If  the
+       file is a pipe, then the level of the calling process must
+       equal the level of the pipe  (or  the  process  must  have
+       macwrite   in  its  working  set).   If  write  access  is
+       requested on a file, and the MAC level of the calling pro-
+       cess  equals the MAC level of the file (or the process has
+       the macwrite privilege in  its  working  set),  access  is
+       granted; otherwise EACCES is returned.
+        After MAC checks, the The standard file access permission
+       bit checks are  performed  to  determine  if  the  process
+       requesting  access  to the object has permission to access
+       it in the  manner  (read,  write,  and/or  execute/search)
+       requested.   Each  access  mode requested is checked sepa-
+       rately using the following  algorithm:  If  the  effective
+       user  ID  of  the  process  is equal to the user ID of the
+       owner of the file, and the requested access  mode  bit  is
+       set  in the ``owner'' bits of the mode, access is granted;
+       otherwise access checking  continues.   If  the  effective
+       user  ID  of the process matches the user ID in a ``user''
+       ACL entry, and the requested access mode bit is set in the
+       ``group''  bits of the mode and in the matching ACL entry,
+       access is granted; otherwise, or if  no  ACL  is  present,
+       access  checking continues.  If the effective group ID (or
+       any of the supplementary group ID of the process)  matches
+       the  owning  group  of  the file group ID specified in any
+       ``group'' ACL entry (or the owning group of the  file,  if
+       no  ACL  is present), and the requested access mode bit is
+       set in the ``group'' bits of the mode,  mode  and  in  the
+       matching  ACL  entry, access is granted; otherwise, access
+       checking continues.  If the above  checks  fail,  and  the
+       requested  access mode bit is set in the ``other'' bits of
+       the mode, access is granted; otherwise, access  is  denied
+       (EACCES  is  returned).  (Note that if a process's user ID
+
+                                                               13
+
+sh(1)                                                       sh(1)
+
+       matches a ``user'' ACL entry and the group ID matches  one
+       or  more ``group'' entries, only the ``user'' ACL entry is
+       used to determine access.)  These checks are performed  on
+       every  component  of  the  pathname,  including the object
+       itself.  If any of the checks fail, the privileges of  the
+       calling  process  are examined to determine if the calling
+       process  has  the  appropriate  privilege  for  the   mode
+       requested  (dacread  for  read  and execute/search access,
+       dacwrite for write access).
+
+       Example: This example adds owner and audit privileges  and
+       deletes  dacread  privilege  from  the  working  set: priv
+       +owner +audit -dacread  work  Print  the  current  working
+       directory.   See  for  usage and description.  One line is
+       read from the standard input and, using the internal field
+       separator, IFS, to delimit word boundaries, the first word
+       is assigned to the first name, the second word to the sec-
+       ond  name,  etc., with leftover words assigned to the last
+       name.  If -r is not  specified,  lines  can  be  continued
+       using  \newline  and  characters other than newline can be
+       quoted by preceding them with a  backslash.   These  back-
+       slashes  are  removed  before words are assigned to names,
+       and no interpretation is done on the character  that  fol-
+       lows  the  backslash.  If -r is specified, backslashes are
+       treated as normal characters, so are not removed from  the
+       input,  nor do they affect the next character.  The return
+       code is 0, unless  an  end-of-file  is  encountered.   The
+       given  names  are  marked  readonly  and the values of the
+       these names may not be changed by  subsequent  assignment.
+       If no arguments are given, a list of all readonly names is
+       printed.  Causes a function to exit with the return  value
+       specified  by  n.   If  n is omitted, the return status is
+       that of the last command executed.  Mark  variables  which
+       are modified or created for export.  Exit immediately if a
+       command exits with a non-zero exit status.  Disable  file-
+       name generation.  Locate and remember function commands as
+       functions are  defined  (function  commands  are  normally
+       located when the function is executed).  All keyword argu-
+       ments are placed in the environment  for  a  command,  not
+       just  those  that precede the command name.  Read commands
+       but do not execute them.  Exit after reading and executing
+       one  command.  Treat unset variables as an error when sub-
+       stituting.  Print shell input  lines  as  they  are  read.
+       Print  commands  and their arguments as they are executed.
+       Do not change any of the flags; useful in setting $1 to -.
+       +  rather  than  -  causes  these  flags to be turned off.
+       These flags can also be used upon invocation of the shell.
+       The  current set of flags may be found in $-.  The remain-
+       ing arguments are positional parameters and are  assigned,
+       in  order,  to $1, $2, ....  If no arguments are given the
+       values of all names are printed.  The  positional  parame-
+       ters  from  $n+1  ...   are  renamed $1 ... .  If n is not
+       given, it  is  assumed  to  be  1.   Evaluate  conditional
+       expressions.   See  for  usage and description.  Print the
+
+                                                               14
+
+sh(1)                                                       sh(1)
+
+       accumulated user and system times for processes  run  from
+       the  shell.   The  command  arg is to be read and executed
+       when the shell receives, n, numeric or symbolic signal(s).
+       arg is scanned once when the trap is set and once when the
+       trap is taken.  Trap commands are  executed  in  order  of
+       signal   number  or  corresponding  symbolic  names.   Any
+       attempt to set a trap on a  signal  that  was  ignored  on
+       entry  to  the  current  shell  is  ineffective.  An error
+       results when an attempt is made to trap on any of the fol-
+       lowing  three  signals:  signal  11  (SIGSEV--segmentation
+       fault);  signal  14  (SIGALRM--alarm  clock);  signal   18
+       (SIGCHILD--child  status  changed).   If arg is absent all
+       trap(s) n are reset to their original values.  If  arg  is
+       the null string this signal is ignored by the shell and by
+       the commands it invokes.  If n is 0  the  command  arg  is
+       executed on exit from the shell.  The trap command with no
+       arguments prints a list of commands associated  with  each
+       signal  number.   For  each name, indicate how it would be
+       interpreted if used as a command name.  ulimit  prints  or
+       sets  hard  or  soft  resource  limits.   These limits are
+       described in
+
+       If limit is not present, ulimit prints the specified  lim-
+       its.   Any  number  of  limits may be printed at one time.
+       The -a option prints all limits.
+
+       If limit is present, ulimit sets the  specified  limit  to
+       limit.   The  string  unlimited requests the largest valid
+       limit.  Limits may be set for only one resource at a time.
+       Any  user may set a soft limit to any value below the hard
+       limit.  Any user may lower a hard limit.   Only  a  privi-
+       leged user may raise a hard limit.
+
+       The -H option specifies a hard limit.  The -S option spec-
+       ifies a soft  limit.   If  neither  option  is  specified,
+       ulimit will set both limits and print the soft limit.
+
+       The  following  options  specify the resource whose limits
+       are to be printed or set.  If no option is specified,  the
+       file size limit is printed or set.  maximum core file size
+       (in 512-byte blocks) maximum size of data segment or  heap
+       (in kbytes) maximum file size (in 512-byte blocks) maximum
+       file descriptor plus 1 maximum size of stack  segment  (in
+       kbytes) maximum CPU time (in seconds) maximum size of vir-
+       tual memory (in kbytes) The user file-creation mask is set
+       by  mask.   If  mask  is omitted, the current value of the
+       mask is printed.  If -S is specified, the mask is  printed
+       in  symbolic  form, otherwise it is printed in octal form.
+       See for further details.  For each name, remove the corre-
+       sponding  variable or function value.  The variables PATH,
+       PS1, PS2, MAILCHECK, and IFS cannot be  unset.   Wait  for
+       your background processes whose process IDs are the values
+       of pid and return the termination status of the final pid.
+       If  pid  is  omitted,  all  your  shell's currently active
+
+                                                               15
+
+sh(1)                                                       sh(1)
+
+       background processes are waited for and  the  return  code
+       will be zero.  See for further details.
+
+   IInnvvooccaattiioonn
+       If the shell is invoked through and the first character of
+       argument zero is  -,  commands  are  initially  read  from
+       /etc/profile and from $HOME/.profile, if such files exist.
+       Thereafter, commands are read as described below, which is
+       also  the  case  when the shell is invoked as /usr/bin/sh.
+       The flags below are interpreted by the shell on invocation
+       only.   Note  that  unless the -c or -s flag is specified,
+       the first argument is assumed to be the  name  of  a  file
+       containing  commands,  and  the  remaining  arguments  are
+       passed as positional parameters to that command file:
+
+       If the -c flag is present commands are read  from  string.
+       If the -i flag is present or if the shell input and output
+       are attached to a terminal, this shell is interactive.  In
+       this case SIGTERM is ignored (so that kill 0 does not kill
+       an interactive shell) and SIGINT is caught and ignored (so
+       that  wait  is  interruptible).   In all cases, SIGQUIT is
+       ignored by the shell.  If the  -p  flag  is  present,  the
+       shell will not set the effective user and group IDs to the
+       real user and group IDs.  If the -p flag is  not  present,
+       the  shell will set the effective user ID to the real user
+       ID if the effective user ID is <100, and  the  shell  will
+       set  the  effective  group  ID to the real group ID if the
+       effective group ID is <100 and not equal to 1.  If the  -r
+       flag  is  present the shell is a restricted shell.  If the
+       -s flag is present or if no arguments remain, commands are
+       read  from  the  standard  input.  Any remaining arguments
+       specify the positional parameters.  Shell  output  (except
+       for  special  commands)  is  written to file descriptor 2.
+       The remaining flags and arguments are described under  the
+       set command above.
+
+   JJoobb ccoonnttrrooll ((jjsshh))
+       When  the  shell is invoked as jsh, job control is enabled
+       in addition to all of the functionality  described  previ-
+       ously  for  sh.   Typically job control is enabled for the
+       interactive shell only.  Non-interactive shells  typically
+       do  not  benefit  from the added functionality of job con-
+       trol.
+
+       With job control enabled every  command  or  pipeline  the
+       user  enters  at  the  terminal is called a job.  All jobs
+       exist in one of the following  states:  foreground,  back-
+       ground  or stopped.  These terms are defined as follows: a
+       job in the foreground has read and  write  access  to  the
+       controlling  terminal;  a  job in the background is denied
+       read access and has conditional write access to  the  con-
+       trolling  terminal  (see  a  stopped job is a job that has
+       been placed in a suspended state, usually as a result of a
+
+                                                               16
+
+sh(1)                                                       sh(1)
+
+       SIGTSTP  signal (see Jobs in the foreground can be stopped
+       by interrupt (SIGINT) or quit (SIGQUIT) signals  from  the
+       keyboard;  background jobs cannot be stopped by these sig-
+       nals.
+
+       Every job that the shell starts  is  assigned  a  positive
+       integer,  called a job number that is tracked by the shell
+       and is used as an identifier for a  specific  job.   Addi-
+       tionally,  the shell keeps track of the current and previ-
+       ous jobs.  The current job is the most recent  job  to  be
+       started  or restarted.  The previous job is the first non-
+       current job.
+
+       The acceptable syntax for a Job Identifier is of the form:
+       %jobid  where jobid may be specified in any of the follow-
+       ing formats: for the current  job  for  the  previous  job
+       specify  the  job for which the command line uniquely con-
+       tains string.  for job number n, where n is a  job  number
+       where  pref  is  a  unique prefix of the command name (for
+       example, if the command ls -l  foo  were  running  in  the
+       background,  it  could be referred to as %ls); pref cannot
+       contain blanks unless it is quoted.
+
+       When job control is enabled, the  following  commands  are
+       added  to  the  user's  environment  to  manipulate  jobs:
+       Resumes the execution of a stopped job in the  background.
+       If  %jobid is omitted the current job is assumed.  Resumes
+       the execution of a stopped job  in  the  foreground,  also
+       moves an executing background job into the foreground.  If
+       %jobid is omitted the current job is assumed.  Reports all
+       jobs  that are stopped or executing in the background.  If
+       %jobid is omitted, all jobs that are stopped or running in
+       the  background  will  be reported.  The following options
+       will modify/enhance the output of jobs: Report the process
+       group  ID  and working directory of the jobs.  Report only
+       the process group ID of the jobs.  Replace any jobid found
+       in  command  or  arguments  with the corresponding process
+       group ID, and then execute command passing  it  arguments.
+       Builtin  version  of  kill to provide the functionality of
+       the command for processes identified with  a  jobid.   See
+       for  the  other  functionality.   Stops the execution of a
+       background job(s).  Stops the  execution  of  the  current
+       shell  (but  not  if it is the login shell).  wait builtin
+       accepts a job  identifier.   If  %jobid  is  omitted  wait
+       behaves as described above under Special Commands.
+
+   RReessttrriicctteedd sshheellll ((//uussrr//lliibb//rrsshh)) oonnllyy
+       /usr/lib/rsh  is  used to set up login names and execution
+       environments whose capabilities are more  controlled  than
+       those  of the standard shell.  The actions of /usr/lib/rsh
+       are identical to those of sh, except  that  the  following
+       are  disallowed: changing directory (see setting the value
+       of $PATH specifying path or  command  names  containing  /
+       redirecting output (> and >>)
+
+                                                               17
+
+sh(1)                                                       sh(1)
+
+       The  restrictions  above  are  enforced  after .profile is
+       interpreted.
+
+       A restricted shell can be invoked in one of the  following
+       ways:  rsh  is  the filename part of the last entry in the
+       /etc/passwd  file  (see  the  environment  variable  SHELL
+       exists  and  rsh  is  the  filename part of its value; the
+       shell is invoked and rsh is the filename part of  argument
+       0;  the  shell is invoked with the -r option.  When a com-
+       mand to be executed is found  to  be  a  shell  procedure,
+       /usr/lib/rsh invokes sh to execute it.  Thus, it is possi-
+       ble to provide to the end-user shell procedures that  have
+       access  to  the  full  power  of the standard shell, while
+       imposing a limited menu of commands; this  scheme  assumes
+       that  the end-user does not have write and execute permis-
+       sions in the same directory.
+
+       The net effect of these rules is that the  writer  of  the
+       (see  has complete control over user actions by performing
+       guaranteed setup actions and leaving the user in an appro-
+       priate directory (probably not the login directory).
+
+       The system administrator often sets up a directory of com-
+       mands (for example, /usr/rbin) that can be safely  invoked
+       by  a  restricted  shell.   Some  systems  also  provide a
+       restricted editor, red.
+
+FFiilleess
+       language-specific message file (see LANG on
+
+EExxiitt ccooddeess
+       Errors detected by the shell, such as syntax errors, cause
+       the  shell to return a non-zero exit status.  If the shell
+       is being used non-interactively  execution  of  the  shell
+       file  is abandoned.  Otherwise, the shell returns the exit
+       status of the last command executed  (see  also  the  exit
+       command above).
+
+   jjsshh oonnllyy
+       If  the  shell is invoked as jsh and an attempt is made to
+       exit the shell while there are  stopped  jobs,  the  shell
+       issues one warning: there are stopped jobs
+
+       This  is  the  only  message.   If another exit attempt is
+       made, and there are still stopped jobs they will be sent a
+       SIGHUP signal from the kernel and the shell is exited.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Words  used  for filenames in input/output redirection are
+       not interpreted for filename  generation  (see  ``Filename
+       generation'',  above).   For  example,  cat file1 >a* will
+       create a file named a*.
+
+                                                               18
+
+sh(1)                                                       sh(1)
+
+       Because commands in pipelines are  run  as  separate  pro-
+       cesses,  variables set in a pipeline have no effect on the
+       parent shell.
+
+       If you get the error message UX:sh:ERROR:cannot fork,  too
+       many  processes,  try  using  the command to clean up your
+       background processes.  If this does not help,  the  system
+       process table is probably full or you have too many active
+       foreground processes.  (There is a limit to the number  of
+       process  ids associated with your login, and to the number
+       the system can keep track of.)
+
+       Only the last process in a pipeline can be waited for.
+
+       If a command is executed, and a command with the same name
+       is  installed in a directory in the search path before the
+       directory where the original command was found, the  shell
+       will  continue to exec the original command.  Use the hash
+       command to correct this situation.  Prior  to  Release  4,
+       the  rsh  command  invoked  the  restricted  shell.   This
+       restricted shell command is /usr/lib/rsh  and  it  can  be
+       executed  by  using  the  full  pathname.   Beginning with
+       Release 4, the rsh command is the remote shell (see
+
+       POSIX.2 states that assignments  are  performed  from  the
+       beginning  of the command text to the end.  Therefore, the
+       order of evaluation for variable assignments is changed to
+       use left to right expansion rules.
+
+                                                               19
+

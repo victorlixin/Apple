@@ -1,0 +1,342 @@
+
+
+Regex(3C++)                                           Regex(3C++)
+
+SSyynnooppssiiss
+       #include <Regex.h> namespace SCO_SC {
+
+       class Substrinfo { public:
+           int i;
+           size_t len;
+           operator void*();
+           int  operator!();  }; class Subex;  // see below class
+       Regex { public: //  Enumerations
+           enum sensitivity { case_sensitive, case_insensitive };
+           enum { max_num_subexes = 10 }; //  Constructor
+           Regex(const String &pattern,
+               sensitivity  s  =  case_sensitive);  //   Copy and
+       assign
+           Regex(const Regex & r);
+           Regex & operator=(const Regex & r);
+           void assign(const String &pattern,
+               sensitivity s = case_sensitive); //  Checking pat-
+       tern validity
+           operator void*() const;
+           int operator!() const;
+           String the_error() const; //  Pattern matching
+           Substrinfo match(const char *target) const;
+           Substrinfo match(const char *target,
+               String &the_substr) const;
+           Substrinfo match(const char *target, Subex &) const;
+           Substrinfo match(const char *target, Subex &,
+               String  &the_substr) const; //  Pattern subexpres-
+       sions
+           Substrinfo subex(unsigned int i) const;
+           Substrinfo subex(unsigned int i,
+               String &the_subex) const; //  Relations
+           friend int operator==(const Regex &, const Regex &);
+           friend int operator!=(const Regex &, const  Regex  &);
+       //  Miscellaneous
+           String the_pattern() const;
+           sensitivity the_sensitivity() const;
+           void set_sensitivity(sensitivity); //  Regex constants
+           static Regex Int, Float, Double,
+               Alpha, Alphanum, Identifier; }; class Subex { pub-
+       lic: //  Constructors, destructor
+           Subex();
+           ~Subex(); //  Subexpression information
+           Substrinfo operator()(unsigned int i) const;
+           Substrinfo operator()(unsigned int i,
+               String &the_substr) const; //  Miscellaneous
+           const  char  *the_target() const; }; class Regexiter {
+       public: //  Enumerations
+           enum  style  {  overlapping,  nonoverlapping   };   //
+       Constructors
+           Regexiter(const Regex &, const char *target,
+               style = nonoverlapping); //  Iterating
+           Substrinfo next();
+           Substrinfo next(Subex &);
+
+                                                                1
+
+Regex(3C++)                                           Regex(3C++)
+
+           Substrinfo next(String &the_substr);
+           Substrinfo next(Subex &, String &the_substr); //  Mis-
+       cellaneous
+           const char *the_target();
+           const Regex &the_regex();
+           style the_style(); }; }
+
+DDeessccrriippttiioonn
+       Regex provides the C++ programmer with  a  consistent  and
+       slightly  enhanced  interface  to  the  Section  3 regular
+       expression  compilation   and   matching   routines   (see
+       regcmp(3G),   regexpr(3G),  depending  on  your  machine).
+       Regardless of machine, Regex uses its own regular  expres-
+       sion  compilation and matching routines, rather than rely-
+       ing on whatever routines may or may not happen to exist in
+       the Section 3 library of your machine.
+
+       Regular expressions are as in egrep(1), with the following
+       exceptions: newlines are treated as ordinary characters, $
+       matches the null character, and \\[0-9] subexpression ref-
+       erences are allowed.
+
+       The Regex constructor automatically "compiles" the regular
+       expression  into  an efficient internal form for matching.
+       Member functions can be used to check the validity of  the
+       supplied pattern, and if desired, change the pattern.
+
+       Regexes  can  be  matched  against  target  strings; as in
+       egrep(1), a match is successful if the  pattern  is  valid
+       and the target contains a matchingsubstring --- that is, a
+       substring (possibly the null string, or the entire  string
+       itself)  which  exactly  matches  the pattern.  Successful
+       matches return the position and  length  of  the  leftmost
+       matching substring (in the case of iterators, the leftmost
+       matching substring following the  previous  matching  sub-
+       string).   Successful  matches  also  optionally  return a
+       Subex object, which can be used to pick out the substrings
+       of  the  matching substring which matched the various pat-
+       tern subexpressions.  Finally, the user can pick  out  the
+       subexpressions of the pattern itself.
+
+       In  the  following,  the  i'thsubexpression  in  a regular
+       expression is the subexpression grouped by the  i'th  left
+       parenthesis, where parentheses are counted from 1 starting
+       at the left of the pattern.  For example,  in  a(b(c))(d),
+       the  first,  second  and  third subexpressions are (b(c)),
+       (c), and (d), respectively.   The  0'th  subexpression  is
+       taken to be the entire regular expression.
+
+SSuubbssttrriinnffoo
+       Locates  substrings  within  a  larger  string.  Functions
+       which return a Substrinfo  can  be  considered  to  return
+       three  values:  a  boolean,  an  index, and a length.  The
+       boolean is true if the desired  substring  was  found,  in
+
+                                                                2
+
+Regex(3C++)                                           Regex(3C++)
+
+       which case the index and length are set to the appropriate
+       values.  If the caller needs only the  boolean,  then  the
+       return  value of the function can be tested directly with-
+       out first assigning to a Substrinfo.
+
+       int i; The starting index of the substring.  For  example,
+       the  starting  index of "bar" in "foobar" is 3.  Set to -1
+       if the substring was not found.
+
+       size_t len; The length of the substring.  Set to 0 if  the
+       substring was not found.
+
+       operator void*();
+
+       int  operator!(); Returns non-zero and zero, respectively,
+       if the substring was present.
+
+RReeggeexx
+   EEnnuummeerraattiioonnss
+       enum sensitivity  {  case_sensitive,  case_insensitive  };
+       Used  to  specify whether matching is to be case sensitive
+       or case insensitive.   Under  case  insensitive  matching,
+       alphabetic characters are considered to match either their
+       lower or upper case forms; under case sensitive  matching,
+       all characters must match exactly.
+
+       enum { max_num_subexes = 10 }; Maximum number of parenthe-
+       sized subexpressions allowed in a pattern.  Regexes  whose
+       patterns exceed this value are invalid.
+
+   CCoonnssttrruuccttoorrss
+       Regex(const String &pattern,
+           sensitivity  s = case_sensitive); Constructs the regu-
+       lar expression from the given pattern.  Notice that  back-
+       slashes in the pattern must be escaped to get past the C++
+       compiler.     For    example,    the     egrep     pattern
+       ^(\+|-)?\.[0-9]+$      must      be     constructed     as
+       Regex("^(\\+|-)?\\.[0-9]+$"), and \\ (the  pattern  repre-
+       senting  a  literal  backslash)  must  be  constructed  as
+       Regex("\\\\").  If s  is  case_insensitive,  then  pattern
+       matching  (see match) against this Regex will ignore case.
+
+       WARNING: When used with character class ranges (e.g.,  [a-
+       z], [0-9]), case insensitivity is applied only after range
+       expansion.  For example, the (rather unusual)  range  "[A-
+       c]" is always first expanded into the character class { A,
+       B, ..., Y, Z, [, , ], ^, _, `, a, b, c } (using the  ASCII
+       collating  sequence).   Under case sensitive matching this
+       matches any character in the shown set, while  under  case
+       insensitive matching this matches any character in the set
+       { A, a, B, b, ..., Y, y, Z, z, [, , ], ^, ` }.  Similarly,
+       the   (rather  unusual)  range  "[a-Z]"  is  always  first
+       expanded into the empty character class (using  the  ASCII
+       collating  sequence).   This  matches  no characters under
+
+                                                                3
+
+Regex(3C++)                                           Regex(3C++)
+
+       both case sensitive and case insensitive matching.
+
+   CCooppyy aanndd aassssiiggnn
+       Regex(const Regex & r);
+
+       Regex & operator=(const Regex & r); Copy  constructor  and
+       assignment operator.
+
+       void assign(const String &pat,
+           sensitivity  s  =  case_sensitive)  Equivalent to, but
+       faster than, assigning Regex(pat, s) to this Regex.
+
+   CChheecckkiinngg ppaatttteerrnn vvaalliiddiittyy
+       operator void*() const;
+
+       int operator!() const; Return non-zero and  zero,  respec-
+       tively, if the pattern is valid.
+
+       String  the_error()  const;  If  the  pattern  is invalid,
+       returns a String  describing  the  reason  why,  otherwise
+       returns the null String.
+
+   PPaatttteerrnn mmaattcchhiinngg
+       Substrinfo match(const char *target) const;
+
+       Substrinfo match(const char *target,
+           String &the_substr) const;
+
+       Substrinfo match(const char *target,
+           Subex &subex) const;
+
+       Substrinfo match(const char *target, Subex &subex,
+           String  &the_substr) const; Matches this Regex against
+       the given  target.   If  the  match  is  successful,  then
+       assigns  the_substr  (if supplied) the matching substring,
+       assigns subex (if supplied) an appropriate Subex, and  the
+       return  value tests true; otherwise the return value tests
+       false and the arguments are not affected.
+
+   PPaatttteerrnn ssuubbeexxpprreessssiioonnss
+       Substrinfo subex(unsigned int i) const;
+
+       Substrinfo subex(unsigned int i,
+           String &the_subex) const; Picks out  the  i'th  subex-
+       pression  of  the  pattern.   If  the  pattern has an i'th
+       subexpression, then assigns it to the_subex (if  supplied)
+       and  the  return  value  tests  true; otherwise the return
+       value tests false and the arguments are not affected.
+
+   RReellaattiioonnss
+       friend int operator==(const Regex & r, const Regex & s);"
+
+       friend int operator!=(const Regex & r, const Regex &  s);"
+       Equality  and  inequality.  Regexes r and s are considered
+
+                                                                4
+
+Regex(3C++)                                           Regex(3C++)
+
+       equal if and only if  r.the_pattern()  ==  s.the_pattern()
+       and r.the_sensitivity() == s.the_sensitivity().
+
+   MMiisscceellllaanneeoouuss
+       String the_pattern() const; Returns the current pattern.
+
+       sensitivity the_sensitivity() const;
+
+       void   set_sensitivity(sensitivity   s);  Gets  and  sets,
+       respectively, the case sensitivity of this Regex.
+
+   RReeggeexx ccoonnssttaannttss
+       static Regex Int, Float, Double,
+           Alpha, Alphanum, Identifier; The  following  patterns:
+       ^(\+|-)?[0-9]+$,
+       ^(\+|-)?((\.[0-9]+)|([0-9]+(\.[0-9]*)?))$,
+       ^(\+|-)?((\.[0-9]+)|([0-9]+(\.[0-9]*)?))
+           ([eE](\+|-)?[0-9]+)?$,   ^[A-Za-z]+$,  ^[0-9A-Za-z]+$,
+       and ^[A-Za-z_][A-Za-z0-9_]*$.
+
+SSuubbeexx
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Subex(); Constructs a Subex, in preparation to being  used
+       as a parameter of Regex::match or Regexiter::next.
+
+   SSuubbeexxpprreessssiioonn iinnffoorrmmaattiioonn
+       Substrinfo operator()(unsigned int i) const;
+
+       Substrinfo operator()(unsigned int i,
+           String  &the_substr) const; Picks out the substring in
+       the_target() which matched the i'th subexpression  in  the
+       pattern.   If  the  pattern had an i'th subexpression, and
+       the i'th subexpression matched something in  the_target(),
+       then assigns the matching substring to the_substr (if sup-
+       plied) and the return  value  tests  true;  otherwise  the
+       return  value  tests  false  and  the  arguments  are  not
+       affected.  If this Subex has not been used as an  argument
+       of  Regex::match or Regexiter::next, then the return value
+       tests false and the arguments are not affected.
+
+   MMiisscceellllaanneeoouuss
+       const char *the_target() const; Returns the  target  which
+       was   matched   against   by   the  most  recent  call  to
+       Regex::match() or Regexiter::next() to  which  this  Subex
+       was  supplied  as  an argument.  If there is no such call,
+       returns 0.
+
+RReeggeexxiitteerr
+       Iterating a Regex  over  a  given  target  picks  out,  in
+       sequence,  all  the  matching  substrings  in  the target,
+       beginning with the leftmost and continuing to the right.
+
+   EEnnuummeerraattiioonnss
+       enum  style  {  overlapping,  nonoverlapping  };  Used  to
+
+                                                                5
+
+Regex(3C++)                                           Regex(3C++)
+
+       specify whether iteration is to be overlapping or nonover-
+       lapping.  Under overlapping iteration, the  matching  sub-
+       string  of second and later iterations is allowed to over-
+       lap a proper suffix of the matching substring of the  pre-
+       vious  iteration.   Under  nonoverlapping  iteration,  all
+       matching substrings are disjoint.
+
+   CCoonnssttrruuccttoorrss
+       Regexiter(const Regex &r, const char *target,
+           style s = nonoverlapping); Constructs an iterator  for
+       r over the given target.  The iterator internally stores a
+       reference to r, and hence it is a program error to  delete
+       or move r while this iterator is extant.
+
+   IItteerraattiinngg
+       Substrinfo next();
+
+       Substrinfo next(Subex &subex);
+
+       Substrinfo next(String &the_substr);
+
+       Substrinfo  next(Subex  &subex, String &the_substr); Picks
+       out the next matching substring in the target.   Arguments
+       and return value are as in Regex::match().
+
+   MMiisscceellllaanneeoouuss
+       const  char  *the_target();  Returns  the  value of target
+       which was supplied to this Regexiter's constructor.
+
+       const Regex &the_regex(); Returns a constant reference  to
+       the Regex which was supplied to this Regexiter's construc-
+       tor.
+
+       style the_style(); Returns the style.
+
+BBuuggss
+       There ought to be conversions between  Regex's  and  Fsm's
+       (see Fsm(3C++)).
+
+RReeffeerreenncceess
+
+                                                                6
+

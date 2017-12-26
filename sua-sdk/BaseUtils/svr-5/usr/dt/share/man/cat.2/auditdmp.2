@@ -1,0 +1,73 @@
+
+
+auditdmp(2)                                           auditdmp(2)
+
+SSyynnooppssiiss
+       #include <sys/types.h> #include <audit.h>
+
+       int auditdmp(struct arec *arecp, int size);
+
+DDeessccrriippttiioonn
+       The  auditdmp system call is used to write an audit record
+       to the audit buffer.  The calling process must have either
+       the P_AUDITWR or P_AUDIT privilege.
+
+       In  general,  the P_AUDITWR privilege is intended for user
+       applications that need to append records to the audit log;
+       such  programs  can  append  only records of type ADT_MISC
+       [see to the log.  The P_AUDIT privilege is intended to  be
+       used  only  by  trusted system commands and shell scripts,
+       and allows the calling process to append any type of user-
+       level event record to the audit buffer.
+
+       The arecp argument points to a structure of type arec that
+       contains the following elements:  typedef  struct  arec  {
+            int  rtype;        /*  audit  record event type    */
+            int rstatus;     /* audit  record  event  status   */
+            int  rsize;        /*  audit  records size of argp */
+            char *argp;      /* audit record data           */  }
+       arec_t
+
+       The  rtype  element  of  the  arec structure specifies the
+       event type of the audit record.  If the rtype argument  is
+       one  of those specified on and if its corresponding bit is
+       set in the process emask [see for  the  invoking  process,
+       the system generates an audit record.  The rstatus element
+       of the arec structure is  the  status  of  the  user-level
+       event:  zero for success, non-zero for failure.  The rsize
+       element of the arec structure specifies the size of memory
+       required  to record the data to be written.  The argp ele-
+       ment of the arec structure is a character pointer  to  the
+       audit data.
+
+       The  size  argument is used to verify the size of the arec
+       structure being passed to determine the version of  audit-
+       ing.
+
+   RReettuurrnn vvaalluueess
+       On  success,  auditdmp  returns  0.   On failure, auditdmp
+       returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, auditdmp fails and sets errno
+       to:  It is not possible to allocate memory for the size of
+       rsize.  It is not possible  to  allocate  memory  for  the
+       arecp.   The  arecp is invalid.  The argp is invalid.  The
+       rtype  is  ADT_BAD_AUTH,  ADT_BAD_LVL,   ADT_DEF_LVL,   or
+       ADT_LOGIN  and an invalid bamsg[] or tty[] is passed.  The
+       rtype is ADT_CRON and an invalid cronjob[] is passed.  The
+
+                                                                1
+
+auditdmp(2)                                           auditdmp(2)
+
+       system  call  is  invoked while auditing is disabled.  The
+       size of arec is not equal to size.  The rtype is  invalid.
+       The  invoking subject does not have the appropriate privi-
+       lege (P_AUDIT or P_AUDITWR).  The  audit  package  is  not
+       installed.
+
+RReeffeerreenncceess
+
+                                                                2
+

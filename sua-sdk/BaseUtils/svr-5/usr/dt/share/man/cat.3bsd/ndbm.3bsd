@@ -1,0 +1,113 @@
+
+
+ndbm(3bsd)                                             ndbm(3bsd)
+
+SSyynnooppssiiss
+       /usr/ucb/cc [flag . . . ] file . . .  #include <ndbm.h>
+
+       typedef struct {      char *dptr;      int dsize; } datum;
+
+       int dbm_clearerr(DBM *db);
+
+       void dbm_close(DBM *db);
+
+       int dbm_delete(DBM *db, datum key);
+
+       int dbm_error(DBM *db);
+
+       datum dbm_fetch(DBM *db, datum key);
+
+       datum dbm_firstkey(DBM *db);
+
+       datum dbm_nextkey(DBM *db);
+
+       DBM *dbm_open(char *file, int flags, int mode);
+
+       int dbm_store(DBM  *db,  datum  key,  datum  content,  int
+       flags);
+
+DDeessccrriippttiioonn
+       These  routines are provided for compatibility with appli-
+       cations originally written for BSD systems;  new or ported
+       applications  should  use the equivalent System V routines
+       instead.  See
+
+       These functions maintain key pairs in a  data  base.   The
+       functions  will  handle very large (a billion blocks) data
+       base and will access a keyed item in one or two file  sys-
+       tem  accesses.  This package replaces the earlier library,
+       which managed only a single data base.
+
+       keys and contents are described by the datum  typedef.   A
+       datum  specifies  a  string  of  dsize bytes pointed to by
+       dptr.  Arbitrary binary data,  as  well  as  normal  ASCII
+       strings,  are  allowed.   The  data  base is stored in two
+       files.  One file is a directory containing a bit  map  and
+       has .dir as its suffix.  The second file contains all data
+       and has .pag as its suffix.
+
+       Before a data base can be accessed, it must be  opened  by
+       dbm_open.  This will open and/or create the files file.dir
+       and file.pag depending on the flags parameter (see
+
+       A data base is closed by calling dbm_close.
+
+       Once open, the data stored under  a  key  is  accessed  by
+       dbm_fetch  and  data  is  placed under a key by dbm_store.
+       The flags field can be either DBM_INSERT  or  DBM_REPLACE.
+       DBM_INSERT will only insert new entries into the data base
+
+                     BSD System Compatibility                   1
+
+ndbm(3bsd)                                             ndbm(3bsd)
+
+       and will not change an existing entry with the  same  key.
+       DBM_REPLACE  will  replace an existing entry if it has the
+       same key.  A key (and its associated contents) is  deleted
+       by  dbm_delete.   A linear pass through all keys in a data
+       base may be made, in an (apparently) random order, by  use
+       of dbm_firstkey and dbm_nextkey.  dbm_firstkey will return
+       the first key in the data base.  dbm_nextkey  will  return
+       the  next  key  in the data base.  This code will traverse
+       the data base: for (key =  dbm_firstkey(db);  key.dptr  !=
+       NULL;  key  =  dbm_nextkey(db)) dbm_error returns non-zero
+       when an error has occurred reading  or  writing  the  data
+       base.   dbm_clearerr  resets  the  error  condition on the
+       named data base.
+
+RReettuurrnn vvaalluueess
+       All functions that return an int indicate errors with neg-
+       ative values.  A zero return indicates no error.  Routines
+       that return a datum indicate errors with a NULL (0)  dptr.
+       If  dbm_store  is  called with a flags value of DBM_INSERT
+       and finds an existing entry with the same key, it  returns
+       1.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The .pag file will contain holes so that its apparent size
+       is about four times its actual content.  Older versions of
+       the operating system may create real file blocks for these
+       holes when touched.  These files cannot be copied by  nor-
+       mal means (that is, using or without filling in the holes.
+
+       dptr pointers returned by  these  subroutines  point  into
+       static storage that is changed by subsequent calls.
+
+       The  sum  of  the  sizes of a key pair must not exceed the
+       internal block size (currently 4096 bytes).  Moreover  all
+       key  pairs  that hash together must fit on a single block.
+       dbm_store will return an error in the event  that  a  disk
+       block fills with inseparable data.
+
+       dbm_delete   does   not  physically  reclaim  file  space,
+       although it does make it available for reuse.
+
+       The order of keys presented by dbm_firstkey  and  dbm_nex-
+       tkey depends on a hashing function.
+
+       There  are  no  interlocks and no reliable cache flushing;
+       thus concurrent updating and reading is risky.
+
+                     BSD System Compatibility                   2
+

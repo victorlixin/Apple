@@ -1,0 +1,251 @@
+dc(1)                                                             dc(1)
+
+  ddcc
+
+  NNAAMMEE
+
+    dc - an arbitrary precision calculator
+
+  SSYYNNOOPPSSIISS
+
+    dc
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ddcc(1) utility is a reverse-Polish desk calculator which supports
+    unlimited precision arithmetic. You can also use it to define and call
+    macros. Normally, ddcc(1) reads from the standard input. If any command
+    arguments are given to it, they must be file names. The ddcc(1) utility
+    reads and runs the contents of the files before reading from standard
+    input. All normal output is to standard output; all error output is to
+    standard error.
+
+    A reverse-Polish calculator stores numbers on a stack. Entering a number
+    pushes it on the stack. Arithmetic operations pop arguments off the stack
+    and push the results.
+
+    To enter a number in ddcc(1), type the digits with an optional decimal
+    point. Exponential notation is not supported. To enter a negative number,
+    begin the number with and underscore (_). A dash (-) cannot be used for
+    this, as it is a binary operator for subtraction. To enter two numbers in
+    succession, separate them with spaces or newlines. These have no meaning
+    as commands.
+
+  PPRRIINNTTIINNGG CCOOMMMMAANNDDSS
+
+    pp
+        Prints the value on the top of the stack, without altering the stack.
+        A newline is printed after the value.
+
+    PP
+        Prints the value on the top of the stack, popping it off, and does not
+        print a newline after.
+
+    ff
+        Prints the entire contents of the stack without altering anything.
+        This is a good command to use if you are lost or want to figure out
+        what the effect of some command has been.
+
+  AARRIITTHHMMEETTIICC
+
+    ++
+        Pops two values off the stack, adds them, and pushes the result. The
+        precision of the result is determined only by the values of the
+        arguments, and is enough to be exact.
+
+    --
+        Pops two values, subtracts the first one popped from the second one
+        popped, and pushes the result.
+
+    **
+        Pops two values, multiplies them, and pushes the result. The number of
+        fraction digits in the result is controlled by the current precision
+        value (see below) and does not depend on the values being multiplied.
+
+    //
+        Pops two values, divides the second one popped from the first one
+        popped, and pushes the result. The number of fraction digits is
+        specified by the precision value.
+
+    %%
+        Pops two values, computes the remainder of the division that the //
+        command would do, and pushes that. The division is done with as many
+        fraction digits as the precision value specifies, and the remainder is
+        also computed with that many fraction digits.
+
+    ^^
+        Pops two values and exponentiates, using the first value popped as the
+        exponent and the second popped as the base. The fraction part of the
+        exponent is ignored. The precision value specifies the number of
+        fraction digits in the result.
+
+    vv
+        Pops one value, computes its square root, and pushes that. The
+        precision value specifies the number of fraction digits in the result.
+
+    Most arithmetic operations are affected by the precision value, which you
+    can set with the kk command. The default precision value is zero, which
+    means that all arithmetic, except for addition and subtraction, produces
+    integer results.
+
+    The remainder operation %% requires some explanation: applied to arguments
+    a and b it produces a - (b * (a / b)), where a / b is computed in the
+    current precision.
+
+  SSTTAACCKK CCOONNTTRROOLL
+
+    cc
+        Clears the stack, rendering it empty.
+
+    dd
+        Duplicates the value on the top of the stack, pushing another copy of
+        it. Thus, 44dd**pp computes 4 squared and prints it.
+
+  RREEGGIISSTTEERRSS
+
+    The ddcc(1) utility provides 256 memory registers, each named by a single
+    character. You can store a number or a string in a register and retrieve
+    it later.
+    ssr
+        Pop the value off the top of the stack and store it into register r.
+    llr
+        Copy the value in register r and push it onto the stack. This does not
+        alter the contents of r.
+
+    Each register also contains its own stack. The current register value is
+    the top of the register's stack.
+    SSr
+        Pop the value off the top of the (main) stack and push it onto the
+        stack of register r. The previous value of the register becomes
+        inaccessible.
+    LLr
+        Pop the value off the top of register r's stack and push it onto the
+        main stack. The previous value in register r's stack, if any, is now
+        accessible through the lrr command.
+
+  PPAARRAAMMEETTEERRSS
+
+    The ddcc(1) utility has three parameters that control its operation: the
+    precision, the input radix, and the output radix. The precision specifies
+    the number of fraction digits to keep in the result of most arithmetic
+    operations. The input radix controls the interpretation of numbers typed
+    in; all numbers typed in use this radix. The output radix is used for
+    printing numbers.
+
+    The input and output radices are separate parameters; you can make them
+    unequal, which can be useful or confusing. The input radix must be between
+    2 and 36 inclusive. The output radix must be at least 2. The precision
+    must be zero or greater. The precision is always measured in decimal
+    digits, regardless of the current input or output radix.
+
+    ii
+        Pops the value off the top of the stack and uses it to set the input
+        radix.
+
+    oo
+        Pops the value off the top of the stack and uses it to set the output
+        radix.
+
+    kk
+        Pops the value off the top of the stack and uses it to set the
+        precision.
+
+    II
+        Pushes the current input radix on the stack.
+
+    OO
+        Pushes the current output radix on the stack.
+
+    KK
+        Pushes the current precision on the stack.
+
+  SSTTRRIINNGGSS
+
+    The ddcc(1) utility can operate on strings as well as on numbers. The only
+    things you can do with strings are print them and run them as macros
+    (which means that the contents of the string are processed as ddcc(1)
+    commands). All registers and the stack can hold strings, and ddcc(1) always
+    knows whether any given object is a string or a number. Some commands such
+    as arithmetic operations demand numbers as arguments and print errors if
+    given strings. Other commands can accept either a number or a string; for
+    example, the pp command can accept either and prints the object according
+    to its type.
+    [[characters]]
+
+        Makes a string containing characters (contained between balanced [[ and
+        ]] characters), and pushes it on the stack. For example, [[eexxpp]]PP prints
+        the characters eexxpp (with no newline).
+
+    xx
+        Pops a value off the stack and runs it as a macro. Normally it should
+        be a string; if it is a number, it is simply pushed back onto the
+        stack. For example, [[11pp]]xx runs the macro 11pp which pushes 11 on the
+        stack and prints 11 on a separate line.
+
+    Macros are most often stored in registers; [[11pp]]ssaa stores a macro to print
+    11 into register aa, and llaaxx invokes this macro.
+    >>r
+        Pops two values off the stack and compares them assuming they are
+        numbers, executing the contents of register r as a macro if the
+        original top-of-stack is greater. Thus, 11 will invoke register aa's
+        contents and 22 will not.
+    <<r
+        Similar but invokes the macro if the original top-of-stack is less.
+    ==r
+        Similar but invokes the macro if the two numbers popped are equal.
+
+    ??
+        Reads a line from the terminal and runs it. This command allows a
+        macro to request input from the user.
+
+    qq
+        exits from a macro and also from the macro which invoked it. If called
+        from the top level, or from a macro which was called directly from the
+        top level, the qq command will cause ddcc(1) to exit.
+
+    QQ
+        Pops a value off the stack and uses it as a count of levels of macro
+        execution to be exited. Thus, 33QQ exits three levels. The QQ command
+        will never cause ddcc(1) to exit.
+
+  SSTTAATTUUSS IINNQQUUIIRRYY
+
+    ZZ
+        Pops a value off the stack, calculates the number of digits it has (or
+        number of characters, if it is a string) and pushes that number.
+
+    XX
+        Pops a value off the stack, calculates the number of fraction digits
+        it has, and pushes that number. For a string, the value pushed is 0.
+
+    zz
+        Pushes the current stack depth; the number of objects on the stack
+        before the execution of the zz command.
+
+  MMIISSCCEELLLLAANNEEOOUUSS
+
+    !!
+        Will run the rest of the line as a system command.
+
+    ##
+        Will interpret the rest of the line as a comment.
+    ::r
+        Will pop the top two values off of the stack. The old second-to-top
+        value will be stored in the array r, indexed by the old top-of-stack
+        value.
+    ;;r
+        Pops the top-of-stack and uses it as an index into the array r. The
+        selected value is then pushed onto the stack.
+
+  NNOOTTEESS
+
+    The array operations :: and ;; are usually used only by traditional
+    implementations of bc. (The GNU bbcc(1) is self-contained and does not need
+    ddcc(1) to run.) The comment operator ## is a new command not found in
+    traditional implementations of ddcc(1).
+
+  BBUUGGSS
+
+    E-mail bug reports to bug-gnu-utils@prep.ai.mit.edu. Be sure to include
+    the word "dc" somewhere in the Subject field.
+

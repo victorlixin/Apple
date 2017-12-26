@@ -1,0 +1,1137 @@
+
+
+Intro(3curses)                                     Intro(3curses)
+
+SSyynnooppssiiss
+       cc [options] file -lcurses #include <curses.h>
+
+IInntteerrffaaccee oovveerrvviieeww
+       This  manual  page and the rest of the describe the Curses
+       terminal interface library that  is  compiled  by  default
+       when you specify: -lcurses on the command line.
+
+SSttaannddaarrddss ccoonnffoorrmmaannccee aanndd ccoommppaattiibbiilliittyy
+       This   version   of   the   curses   library,   found   in
+       /usr/lib/libcurses.a, complies  with  the  X/Open  Curses,
+       Issue  4  Version  2  standard found in The Single UNIX(R)
+       Specification, Version 2.
+
+       Note that the traditional curses library used  by  default
+       in    prior    releases    of    &UW;    is    found    in
+       /usr/lib/libocurses.a and is documented on the
+
+       Also note that the and libraries will work only  with  the
+       SVR4  curses  library,  and will not work properly if com-
+       piled with the X/Open  version  of  curses.   Applications
+       that  compile  with these libraries will need to change to
+       compile with the -locurses option of cc if  recompiled  on
+       &gemini; 7.0.1 or later versions.
+
+CCoommppoonneennttss
+       A  Curses  initialization function, usually determines the
+       terminal model in use, by reference to either an  argument
+       or  an  environment variable.  If that model is defined in
+       terminfo,  then  the  same  terminfo  entry  tells  Curses
+       exactly how to operate the terminal.
+
+       In  this  case,  a  comprehensive API lets the application
+       perform terminal operations.  The Curses  run-time  system
+       receives  each terminal request and sends appropriate com-
+       mands to the terminal to achieve the desired effect.
+
+RReellaattiioonnsshhiipp ttoo tthhee ggeenneerraall tteerrmmiinnaall iinntteerrffaaccee
+       Applications using Curses should not also control the ter-
+       minal  using  capabilities  of the general terminal inter-
+       face, as described in and in
+
+DDeeffiinniittiioonnss
+       The term ancestor refers to a window's parent, or its par-
+       ent,  and  so on.  A property of a window that specifies a
+       character (the background character) and a rendition to be
+       used  in  a  variety  of situations.  See Data structures,
+       which can be thought of as two-dimensional arrays of char-
+       acters  that represent screen displays.  These data struc-
+       tures are manipulated with Curses functions.  The line and
+       column  position  on  the screen denoted by the terminal's
+       cursor.  Derived windows are subwindows whose position  is
+       defined  by  reference to the parent window rather than in
+       absolute  screen   coordinates.    Derived   windows   are
+
+                                                                1
+
+Intro(3curses)                                     Intro(3curses)
+
+       otherwise  no different from subwindows.  A wide-character
+       string whose first element is a null wide-character  code.
+       A  special input character that deletes the last character
+       in the current line, if there is  one.   A  special  input
+       character  that  deletes  all data in the current line, if
+       there are any.  A chtype with all bits  set  to  zero.   A
+       wide-character code with all bits set to zero.  A pad is a
+       specialised case of  subwindow  that  is  not  necessarily
+       associated  with  a  viewable part of a screen.  Functions
+       that deal with pads are discussed in  A  window  that  has
+       subwindows  or  derived  windows  associated with it.  The
+       rendition of a character displayed on the  screen  is  its
+       attributes  and  a  colour pair.  A screen is the physical
+       output device of the terminal.  In Curses, a  SCREEN  data
+       type  is  an  opaque data type associated with a terminal.
+       Each window is associated with a SCREEN.  A window created
+       within  another  window  (called  the  parent window), and
+       positioned relative to the parent window.  Changes made to
+       a subwindow do not affect its parent window.  Changes to a
+       parent window will affect both subwindows and derived win-
+       dows.  A subwindow can be created by calling or
+
+       Subwindows  can be created from a parent window by calling
+       The position and size of subwindows on the screen must  be
+       identical  to or totally within the parent window.  Window
+       clipping is not a property of subwindows.  (A derived win-
+       dow differs from a subwindow only in that it is positioned
+       relative to the origin of its parent window.)  A  terminal
+       is the logical input and output device through which char-
+       acter-based applications interact with the user.  TERMINAL
+       is an opaque data type associated with a terminal.  A TER-
+       MINAL data structure primarily contains information  about
+       the  capabilities  of the terminal, as defined by terminfo
+       (see A TERMINAL also contains information about the termi-
+       nal  modes  and  current state for input and output opera-
+       tions.  Each screen is associated with a TERMINAL.  To set
+       a  flag in a window that indicates that the information in
+       the window could differ from the  that  displayed  on  the
+       terminal device.  An integer value corresponding to a sin-
+       gle graphic symbol or control code.  A contiguous sequence
+       of  wide-character  codes  terminated by and including the
+       first null wide-character code.  The Curses functions per-
+       mit  manipulation  of window objects, which can be thought
+       of as two-dimensional arrays of characters and their  ren-
+       ditions.   A  default  window  called stdscr, which is the
+       size of the terminal screen, is supplied.  Others  may  be
+       created with
+
+       Variables  declared  as  WINDOW * refer to windows (and to
+       subwindows,  derived  windows,  and  pads,  as   described
+       below).   These data structures are manipulated with func-
+       tions described on the reference manual pages in Among the
+       most  basic  functions  are  and  More general versions of
+       these functions are  included  that  allow  a  process  to
+
+                                                                2
+
+Intro(3curses)                                     Intro(3curses)
+
+       specify a window.
+
+       After  using  functions to manipulate a window, is called,
+       telling Curses to make the CRT screen look like stdscr.
+
+       Line drawing characters may be specified to be output.  On
+       input, Curses is also able to translate arrow and function
+       keys that transmit escape sequences  into  single  values.
+       The  line  drawing  characters  and input values use names
+       defined in curses.h.
+
+       Each window has a flag that indicates that the information
+       in  the window could differ from the information displayed
+       on the terminal device.  Making any change to the contents
+       of  the window, moving or modifying the window, or setting
+       the window's cursor position, sets this flag (touches  the
+       window).   Refreshing  the  window clears this flag.  (For
+       further information, see The aggregate of a parent  window
+       and all of its subwindows and derived windows.
+
+CChhaarraacctteerrss
+   CChhaarraacctteerr SSttoorraaggee SSiizzee
+       Historically, a position on the screen has corresponded to
+       a single stored byte.  This correspondence  is  no  longer
+       true  for several reasons: Some characters may occupy sev-
+       eral columns when displayed on the screen (see Some  char-
+       acters  may  be  non-spacing  characters,  defined only in
+       association with a spacing character (see  The  number  of
+       bytes to hold a character from the extended character sets
+       depends on the LC_CTYPE locale category.
+
+   MMuullttii--ccoolluummnn CChhaarraacctteerrss
+       Some character sets define  multi-column  characters  that
+       occupy more than one column position when displayed on the
+       screen.
+
+       Writing a character whose width is greater than the  width
+       of the destination window is an error.
+
+   AAttttrriibbuutteess
+       Each  character  can  be displayed with attributes such as
+       underlining, reverse video or color on terminals that sup-
+       port  such  display enhancements.  Current attributes of a
+       window are applied to all characters that are written into
+       the window with and Attributes can be combined.
+
+       Attributes  can  be  specified using constants with the A_
+       prefix specified in curses.h.  The A_ constants manipulate
+       attributes   in   objects   of  type  chtype.   Additional
+       attributes can be specified using constants with  the  WA_
+       prefix.    The  WA_  constants  manipulate  attributes  in
+       objects of type attr_t.
+
+       Two  constants  that  begin  with  A_  and  WA_  and  that
+
+                                                                3
+
+Intro(3curses)                                     Intro(3curses)
+
+       represent  the  same terminal capability refer to the same
+       attribute in the terminfo database and in the window  data
+       structure.  The effect on a window does not differ depend-
+       ing on whether the application specifies A_  or  WA_  con-
+       stants.   For  example, when an application updates window
+       attributes using the interfaces that support the  A_  val-
+       ues,  a  query  of the window attribute using the function
+       that returns WA_ values reflects  this  update.   When  it
+       updates  window  attributes using the interfaces that sup-
+       port the WA_ values, for  which  corresponding  A_  values
+       exist,  a query of the window attribute using the function
+       that returns A_ values reflects this update.
+
+   RReennddiittiioonn
+       The rendition of a character displayed on  the  screen  is
+       its attributes and a color pair.
+
+       The rendition of a character written to the screen becomes
+       a property of the character and moves with  the  character
+       through  any  scrolling  and  insert/delete line/character
+       operations.  To the extent possible on a particular termi-
+       nal,  a  character's  rendition corresponds to the graphic
+       rendition of the character put on the screen.
+
+       If a given terminal does not support a rendition  that  an
+       application  program  is trying to use, Curses may substi-
+       tute a different rendition for it.
+
+       Colors are always used in pairs  (referred  to  as  color-
+       pairs).   A color-pair consists of a foreground color (for
+       characters) and a background color (for the field on which
+       the characters are displayed).
+
+   NNoonn--ssppaacciinngg CChhaarraacctteerrss
+       The  requirements  in  this section are in effect only for
+       implementations that claim Enhanced Curses compliance.
+
+       Some character sets may  contain  non-spacing  characters.
+       (Non-spacing  characters  are  those,  other  than the ' '
+       character, for which returns a width of zero.)  The appli-
+       cation  may  write  non-spacing  characters  to  a window.
+       Every non-spacing character in a window is associated with
+       a  spacing  character  and modifies the spacing character.
+       Non-spacing characters in a  window  cannot  be  addressed
+       separately.    A   non-spacing   character  is  implicitly
+       addressed whenever a Curses operation affects the  spacing
+       character  with which the non-spacing character is associ-
+       ated.
+
+       Non-spacing characters do  not  support  attributes.   For
+       interfaces  that  use  wide characters and attributes, the
+       attributes are ignored if the wide  character  is  a  non-
+       spacing  character.  Multi-column characters have a single
+       set of attributes for all  columns.   The  association  of
+
+                                                                4
+
+Intro(3curses)                                     Intro(3curses)
+
+       non-spacing characters with spacing characters can be con-
+       trolled by the application using the wide character inter-
+       faces.   The wide character string functions provide code-
+       set-dependent association.
+
+       Two typical effects of a non-spacing character  associated
+       with  a  spacing  character  called c, are as follows: The
+       non-spacing character may  modify  the  appearance  of  c.
+       (For  instance,  there  may be non-spacing characters that
+       add diacritical marks to characters.  However,  there  may
+       also  be  spacing  characters  with  built-in  diacritical
+       marks.)  The non-spacing character may  bridge  c  to  the
+       character  following  c.   (Examples of this usage are the
+       formation of ligatures and the  conversion  of  characters
+       into compound display forms, words, or ideograms.)
+
+       Implementations  may limit the number of non-spacing char-
+       acters that can be associated with  a  spacing  character,
+       provided any limit is at least 5.
+
+   CCoommpplleexx CChhaarraacctteerrss
+       A  complex  character  is  a set of associated characters,
+       which may include a spacing character and may include  any
+       non-spacing characters associated with it.  A spacing com-
+       plex character is a spacing character followed by any non-
+       spacing characters associated with it.  That is, a spacing
+       complex character is a complex character that includes one
+       spacing character.  An example of a code set that has com-
+       plex characters is ISO/IEC 10646-1:1993.
+
+       A complex character can be written to the  screen;  if  it
+       does  not  include  a  spacing  character, any non-spacing
+       characters are associated with the spacing complex charac-
+       ter  that  exists  at the specified screen position.  When
+       the application reads information back from the screen, it
+       obtains spacing complex characters.
+
+       The  cchar_t  data type represents a complex character and
+       its rendition.  When a cchar_t  represents  a  non-spacing
+       complex character (that is, when there is no spacing char-
+       acter within the complex character), then its rendition is
+       not  used;  when  it is written to the screen, it uses the
+       rendition specified by the spacing character already  dis-
+       played.
+
+       An object of type cchar_t can be initialized using and its
+       contents can be extracted using The behavior of  functions
+       that  take  a  cchar_t  input argument is undefined if the
+       application provides a cchar_t value that was not initial-
+       ized  in  this way or obtained from a Curses function that
+       has a cchar_t output argument.
+
+   WWiinnddooww PPrrooppeerrttiieess
+       Associated with each window are the  following  properties
+
+                                                                5
+
+Intro(3curses)                                     Intro(3curses)
+
+       that affect the placing of characters into the window (see
+       Each window has a rendition, which is  combined  with  the
+       rendition  component  of  the window's background property
+       described below.  Each window has a  background  property.
+       The background property specifies: A spacing complex char-
+       acter (the background character) that will be  used  in  a
+       variety of situations where visible information is deleted
+       from the screen.  A rendition to  use  in  displaying  the
+       background  character  in  those  situations, and in other
+       situations specified in
+
+CCoonncceeppttuuaall OOppeerraattiioonnss
+   SSccrreeeenn AAddddrreessssiinngg
+       Many Curses functions  use  a  coordinate  pair.   In  the
+       Description  sections  of each Curses manual page, coordi-
+       nate locations are represented as (y, x) since the y argu-
+       ment  always precedes the x argument in the function call.
+       These coordinates denote a  line/column  position,  not  a
+       character position.
+
+       The coordinate y always refers to the row (of the window),
+       and x always refers to the column.  The first row and  the
+       first  column  is number 0, not 1.  The position (0, 0) is
+       the window's origin.
+
+       For example, for terminals that  display  the  ISO  8859-1
+       character  set (with left-to-right writing), (0, 0) repre-
+       sents the upper left-hand corner of the screen.
+
+       Functions that start with mv take arguments that specify a
+       (y,  x)  position  and  move  the  cursor  (as though were
+       called) before performing the requested action.   As  part
+       of  the  requested  action,  further  cursor  movement may
+       occur, specified on the respective reference manual  page.
+
+BBaassiicc CChhaarraacctteerr OOppeerraattiioonnss
+   AAddddiinngg ((OOvveerrwwrriittiinngg))
+       The  Curses  functions  that contain the word add, such as
+       actually specify one or more characters to replace  (over-
+       write)  characters  already in the window.  If these func-
+       tions  specify  only  non-spacing  characters,  they   are
+       appended to a spacing character already in the window; see
+       also
+
+       When replacing a multi-column character with  a  character
+       that  requires  fewer  columns, the new character is added
+       starting at the specified or implied column position.  All
+       columns  that  the  former multi-column character occupied
+       that the new  character  does  not  require  are  orphaned
+       columns,  which  are filled using the background character
+       and rendition.
+
+       Replacing a character with a character that requires  more
+       columns also replaces one or more subsequent characters on
+
+                                                                6
+
+Intro(3curses)                                     Intro(3curses)
+
+       the line.  This process may also produce orphaned columns.
+
+   TTrruunnccaattiioonn,, WWrraappppiinngg aanndd SSccrroolllliinngg
+       If  the  application  specifies a character or a string of
+       characters such that writing them to a window would extend
+       beyond  the  end of the line (for example, if the applica-
+       tion tries to deposit any multi-column  character  at  the
+       last column in a line),
+        the  behavior  depends  on  whether the function supports
+       line wrapping: If the function does not  wrap,  it  fails.
+       If  the function wraps, then it places one or more charac-
+       ters in the window at the start of the next  line,  begin-
+       ning  with  the  first character that would not completely
+       fit on the original line.  If the final character  on  the
+       line  is a multi-column character that does not completely
+       fit on the line, the entire character wraps  to  the  next
+       line  and  columns  at the end of the original line may be
+       orphaned.  If the original line was the last line  in  the
+       window, the wrap may cause a scroll to occur: If scrolling
+       is enabled, a scroll occurs.  The contents  of  the  first
+       line of the window are lost.  The contents of each remain-
+       ing line in the window move to  the  previous  line.   The
+       last line of the window is filled with any characters that
+       wrapped.  Any remaining space on the last line  is  filled
+       with the background character and rendition.  If scrolling
+       is disabled, any characters that would extend  beyond  the
+       last column of the last line are truncated.
+
+       The function enables and disables scrolling.
+
+       Some  add functions move the cursor just beyond the end of
+       the last character added.  If this position is beyond  the
+       end  of a line, it causes wrapping and scrolling under the
+       conditions specified in the second bullet above.
+
+   IInnsseerrttiioonn
+       Insertion functions (such as insert characters immediately
+       before  the  character  at the specified or implied cursor
+       position.
+
+       The insertion shifts all characters that were formerly  at
+       or  beyond  the  cursor position on the cursor line toward
+       the end of that line.  The disposition of  the  characters
+       that  would thus extend beyond the end of the line depends
+       on whether the function supports wrapping: If the function
+       does  not wrap, those characters are removed from the win-
+       dow.  This may produce orphaned columns.  If the  function
+       supports  wrapping,  the effect is as described in (except
+       that the overwriting discussed in the  final  dash  is  an
+       insertion).
+
+       If  multi-column  characters  are  displayed,  some cursor
+       positions are within a multi-column character but  not  at
+       the  beginning of a character.  Any request to insert data
+
+                                                                7
+
+Intro(3curses)                                     Intro(3curses)
+
+       at a position that is not the beginning of a  multi-column
+       character will be adjusted so that the actual cursor posi-
+       tion is at the beginning of the multi-column character  in
+       which the requested position occurs.
+
+       There  are no warning indications relative to cursor relo-
+       cation.  The application should not maintain an  image  of
+       the cursor position, since this constitutes placing termi-
+       nal-specific information in the  application  and  defeats
+       the purpose of using Curses.
+
+       Portable applications cannot assume that a cursor position
+       specified in an insert function is a  reusable  indication
+       of the actual cursor position.
+
+   DDeelleettiioonn
+       Deletion  functions  (such as delete the simple or complex
+       character at the specified or implied cursor position,  no
+       matter  which column of the character this is.  All column
+       positions are replaced by  the  background  character  and
+       rendition and the cursor is not relocated.
+
+   WWiinnddooww OOppeerraattiioonnss
+       Overlapping  a  window (that is, placing one window on top
+       of another) and overwriting a window (that is, copying the
+       contents of one window into another) follows the operation
+       of overwriting multi-column glyphs around its  edge.   Any
+       orphaned  columns  are  handled as in the character opera-
+       tions.
+
+   CChhaarraacctteerrss tthhaatt SSttrraaddddllee tthhee SSuubbwwiinnddooww BBoorrddeerr
+       A subwindow can be defined such that multi-column  charac-
+       ters  straddle the subwindow border.  The character opera-
+       tions deal with these straddling  characters  as  follows:
+       Reading  the  subwindow  with a function such as reads the
+       entire straddling character.  Adding, inserting or  delet-
+       ing in the subwindow deletes the entire straddling charac-
+       ter before the requested operation  begins  and  does  not
+       relocate the cursor.  Scrolling lines in the subwindow has
+       the following effects: A straddling character at the start
+       of  the line is completely erased before the scroll opera-
+       tion begins.  A straddling character at  the  end  of  the
+       line moves in the direction of the scroll and continues to
+       straddle the subwindow border.  Column  positions  outside
+       the  subwindow  at the straddling character's former posi-
+       tion are  orphaned  unless  another  straddling  character
+       scrolls into those positions.
+
+       If the application calls a function such as the above sit-
+       uations do not occur because writing  the  border  on  the
+       subwindow deletes any straddling characters.
+
+       In  the  above  cases  involving  multi-column characters,
+       operations confined to a subwindow can modify  the  screen
+
+                                                                8
+
+Intro(3curses)                                     Intro(3curses)
+
+       outside  the  subwindow.   Therefore,  saving a subwindow,
+       performing  operations  within  the  subwindow,  and  then
+       restoring  the subwindow may disturb the appearance of the
+       screen.  To overcome these effects (for example, for  pop-
+       up  windows),  the  application  should refresh the entire
+       screen.
+
+SSppeecciiaall CChhaarraacctteerrss
+       Some functions process  special  characters  as  specified
+       below.
+
+       In  functions  that  do  not  move the cursor based on the
+       information placed in the window, these special characters
+       would  only be used within a string in order to affect the
+       placement of subsequent characters;  the  cursor  movement
+       specified  below  does  not  persist in the visible cursor
+       beyond the end of the operation.   In  functions  that  do
+       move  the  cursor, these special characters can be used to
+       affect the  placement  of  subsequent  characters  and  to
+       achieve movement of the visible cursor.  Unless the cursor
+       was already in column 0, <backspace> moves the cursor  one
+       column  toward the start of the current line and any char-
+       acters after the <backspace> are added or inserted  start-
+       ing  there.   Unless  the  cursor was already in column 0,
+       <carriage return> moves the cursor to  the  start  of  the
+       current  line.  Any characters after the <carriage return>
+       are added or inserted starting there.  In  an  add  opera-
+       tion, Curses adds the background character into successive
+       columns until reaching the end  of  the  line.   Scrolling
+       occurs  as described in Any characters after the <newline>
+       character are added, starting at  the  start  of  the  new
+       line.
+
+       In  an insert operation, <newline> erases the remainder of
+       the current line with  the  background  character,  effec-
+       tively  a and moves the cursor to the start of a new line.
+       When scrolling is enabled, advancing the cursor to  a  new
+       line  may  cause  scrolling as described in Any characters
+       after the <newline> character are inserted at the start of
+       the new line.
+
+       The  function may inhibit this processing.  Tab characters
+       in text move subsequent characters to the next  horizontal
+       tab  stop.  By default, tab stops are in columns 0, 8, 16,
+       and so on.  In an insert or add operation, Curses  inserts
+       or  adds, respectively, the background character into suc-
+       cessive columns until reaching  the  next  tab  stop.   If
+       there  are no more tab stops in the current line, wrapping
+       and scrolling occur as described in
+
+CCoonnttrrooll CChhaarraacctteerrss
+       The Curses functions that perform  special-character  pro-
+       cessing  conceptually  convert  control  characters to the
+       caret ('^')  character  followed  by  a  second  character
+
+                                                                9
+
+Intro(3curses)                                     Intro(3curses)
+
+       (which  is  an  upper-case letter if it is alphabetic) and
+       write this string to the window in place  of  the  control
+       character.  The functions that retrieve text from the win-
+       dow will not retrieve the original control character.
+
+RReennddiittiioonn ooff CChhaarraacctteerrss PPllaacceedd iinnttoo aa WWiinnddooww
+       When the application adds or  inserts  characters  into  a
+       window, the effect is as follows:
+
+       If the character is not the space character, then the win-
+       dow receives: the character that the application specifies
+       the  color  that  the application specifies; or the window
+       color, if the application does not  specify  a  color  the
+       attributes specified, OR-ed with the window attributes.
+
+       If  the  character is the space character, then the window
+       receives: the background  character  the  color  that  the
+       application  specifies; or the window color, if the appli-
+       cation does not specify a color the attributes  specified,
+       OR-ed with the window attributes.
+
+IInnppuutt PPrroocceessssiinngg
+       The  Curses  input  model  provides  a  variety of ways to
+       obtain input from the keyboard.
+
+   KKeeyyppaadd PPrroocceessssiinngg
+       The application can enable or disable  keypad  translation
+       by calling When translation is enabled, Curses attempts to
+       translate a sequence of terminal input that represents the
+       pressing  of  a function key into a single key code.  When
+       translation is disabled, Curses passes terminal  input  to
+       the  application  without such translation, and any inter-
+       pretation of the input as representing the pressing  of  a
+       keypad key must be done by the application.
+
+       The  complete set of key codes for keypad keys that Curses
+       can process is  specified  by  the  constants  defined  in
+       curses.h whose names begin with KEY_.
+
+       Each  terminal type described in the terminfo database may
+       support some or all of  these  key  codes.   The  terminfo
+       database  specifies  the sequence of input characters from
+       the terminal type that correspond to each key code (see
+
+       The Curses implementation cannot translate keypad keys  on
+       terminals  where  pressing  the  keys  does not transmit a
+       unique sequence.
+
+       When translation is enabled and a character that could  be
+       the  beginning  of  a  function  key  (such  as escape) is
+       received, Curses notes the time  and  begins  accumulating
+       characters.  If Curses receives additional characters that
+       represent the pressing of a keypad key, within an  accept-
+       able  interval  from  the  time  the  first  character was
+
+                                                               10
+
+Intro(3curses)                                     Intro(3curses)
+
+       received, then Curses converts this input to  a  key  code
+       for  presentation  to the application.  If such characters
+       are not received during this interval, translation of this
+       input  does  not  occur  and the individual characters are
+       presented to the application separately.  (Because  Curses
+       waits  for  this  interval  to accumulate a key code, many
+       terminals experience a  delay  between  the  time  a  user
+       presses the escape key and the time the escape is returned
+       to the application.)
+
+       In addition, No Timeout Mode provides  that  in  any  case
+       where Curses has received part of a function key sequence,
+       it waits indefinitely for the complete key sequence.   The
+       acceptable  interval  in  the  previous  paragraph becomes
+       infinite in No Timeout Mode.  No Timeout Mode  allows  the
+       use  of  function  keys over slow communication lines.  No
+       Timeout Mode lets the user type the individual  characters
+       of  a  function  key sequence, but also delays application
+       response when the user types a character (not  a  function
+       key)  that  begins a function key sequence.  For this rea-
+       son, in No Timeout Mode many terminals will appear to hang
+       between  the  time  a  user presses the escape key and the
+       time another key is pressed.  No Timeout Mode  is  switch-
+       able by calling
+
+       If any special characters (see are defined or redefined to
+       be characters that are members of a function key sequence,
+       then  Curses  will  be  unable  to recognise and translate
+       those function keys.
+
+       Several of the modes  discussed  below  are  described  in
+       terms  of availability of input.  If keypad translation is
+       enabled, then input is not available once Curses has begun
+       receiving  a  keypad  sequence  until the sequence is com-
+       pletely received or the interval has elapsed.
+
+   IInnppuutt MMooddee
+       The general terminal interface defines flow-control  char-
+       acters,  the interrupt character, the erase character, and
+       the kill character  (see  under  ``Special  characters'').
+       Four  mutually-exclusive  Curses modes let the application
+       control the effect of these input characters:
+
+                                                               11
+
+Intro(3curses)                                     Intro(3curses)
+
+       The terminal interface settings are recorded when the pro-
+       cess calls or to initialize Curses and restores these set-
+       tings  when  is  called.  The initial input mode is cbreak
+       mode.
+
+       The behavior of the BREAK key depends on other bits in the
+       display driver that are not set by Curses.
+
+   DDeellaayy MMooddee
+       Two  mutually-exclusive  delay  modes  specify how quickly
+       certain Curses functions return to  the  application  when
+       there  is  no  terminal input waiting when the function is
+       called: The function fails.  The application  waits  until
+       the implementation passes text through to the application.
+       If cbreak or Raw Mode is set, this is after one character.
+       Otherwise,  this  is  after the first <newline> character,
+       end-of-line character, or end-of-file character.
+
+   EEcchhoo PPrroocceessssiinngg
+       Echo mode determines whether Curses echoes  typed  charac-
+       ters  to the screen.  The effect of Echo mode is analogous
+       to the effect of the ECHO flag in the local mode field  of
+       the  termios structure associated with the terminal device
+       connected to the window.  However,  Curses  always  clears
+       the  ECHO flag when invoked, to inhibit the operating sys-
+       tem from performing echoing.  The method of echoing  char-
+       acters  is  not identical to the operating system's method
+       of echoing characters, because Curses performs  additional
+       processing of terminal input.
+
+       If  in  Echo  mode,  Curses performs its own echoing:  any
+       visible input character is stored in the current or speci-
+       fied  window  by  the  input function that the application
+       called, at that window's cursor position, as  though  were
+       called,  with  all consequent effects such as cursor move-
+       ment and wrapping.
+
+       If not in Echo mode, any echoing of  input  must  be  per-
+       formed  by  the  application.   Applications often perform
+       their own echoing in a controlled area of the  screen,  or
+       do not echo at all, so they disable Echo mode.
+
+       It  may  not  be  possible to turn off echo processing for
+       synchronous and networked asynchronous  terminals  because
+       echo processing is done directly by the terminals.  Appli-
+       cations running on such terminals should be aware that any
+       characters typed will appear on the screen at wherever the
+       cursor is positioned.
+
+TThhee SSeett ooff CCuurrsseess FFuunnccttiioonnss
+       The Curses functions allow:  overall  screen,  window  and
+       pad manipulation; output to windows and pads; reading ter-
+       minal input; control over terminal and  Curses  input  and
+       output   options;   environment   query  functions;  color
+
+                                                               12
+
+Intro(3curses)                                     Intro(3curses)
+
+       manipulation; use of soft label keys; access to  the  ter-
+       minfo  database  of  terminal  capabilities; and access to
+       low-level functions.
+
+   FFuunnccttiioonn NNaammee CCoonnvveennttiioonnss
+       The reference manual pages in present families of multiple
+       Curses  functions.   Most function families have different
+       functions that give the programmer the following  options:
+       A function with the basic name operates on the window std-
+       scr.  A function with the same  name  plus  the  w  prefix
+       operates  on a window specified by the win argument.  When
+       the reference manual page for a function family refers  to
+       the  current  or specified window, it means stdscr for the
+       basic functions and the window specified by win for any  w
+       function.  Functions whose names have the p prefix require
+       an argument that is a pad instead of a window.  A function
+       with  the  basic name operates based on the current cursor
+       position (of the current or specified window, as described
+       above).   A function with the same name plus the mv prefix
+       moves the cursor to a position specified by the  y  and  x
+       arguments before performing the specified operation.  When
+       the reference manual page for a function family refers  to
+       the  current  or  specified  position, it means the cursor
+       position for the basic functions and the position  (y,  x)
+       for  any  mv function.  The mvw prefix exists and combines
+       the mv semantics discussed here with the w semantics  dis-
+       cussed  above.   The  window  argument is always specified
+       before the coordinates.  A function with the basic name is
+       often  provided  for historical compatibility and operates
+       only on single-byte characters.  A function with the  same
+       name  plus the w infix operates on wide (multi-byte) char-
+       acters.  A function with the same name plus the  _w  infix
+       operates on complex characters and their renditions.  When
+       a function with the basic name operates on a single  char-
+       acter,  there  is  sometimes a function with the same name
+       plus the n infix that operates on multiple characters.  An
+       n  argument specifies the number of characters to process.
+       The respective manual page specifies the  outcome  if  the
+       value of n is inappropriate.
+
+                                                               13
+
+Intro(3curses)                                     Intro(3curses)
+
+     +-------------------------------------------------------------+
+     |                           IInnsseerrtt                            |
+     +-----------------+---------------------------+---+---+---+---+
+     |mv[w]insch       | insert a character        | Y | N | N |   |
+     +-----------------+---------------------------+---+---+---+---+
+     |mv[w]ins[n]str   | insert a character string | Y | N | N |   |
+     +-----------------+---------------------------+---+---+---+---+
+     |mv[w]ins_[n]wstr | insert  a  wide-character | Y | N | N |   |
+     |                 | string                    |   |   |   |   |
+     +-----------------+---------------------------+---+---+---+---+
+     |mv[w]ins_wch     | insert a wide character   | Y | N | N |   |
+     +-----------------+---------------------------+---+---+---+---+
+     |                       Print and Scan                        |
+     +-----------------+---------------------------+---+---+---+---+
+     |mv[w]printw      | print formatted output    | - | - | - |   |
+     +-----------------+---------------------------+---+---+---+---+
+     |mv[w]scanw       | convert formatted output  | - | - | - |   |
+     +-----------------+---------------------------+---+---+---+---+
+   LLeeggeenndd
+       The following notation indicates the effect  when  charac-
+       ters  are  moved  to the screen.  (For the Get* functions,
+       this applies only when echoing is enabled.)
+
+                                                               14
+
+Intro(3curses)                                     Intro(3curses)
+
+       +--------------------+------------------------------------+
+       |     CCoolluummnn         |             DDeessccrriippttiioonn            |
+       +--------------------+------------------------------------+
+       |       ss            |        Y  means  these  func-      |
+       |                    |        tions perform special-      |
+       |                    |        character   processing      |
+       |                    |        (see  N  means they do      |
+       |                    |        not.   ?   means   the      |
+       |                    |        results  are  unspeci-      |
+       |                    |        fied when these  func-      |
+       |                    |        tions  are  applied to      |
+       |                    |        special characters.  A      |
+       |                    |        dash   (-)  means  the      |
+       |                    |        attribute specified by      |
+       |                    |        this  column  does not      |
+       |                    |        apply to  these  func-      |
+       |                    |        tions.                      |
+       +--------------------+------------------------------------+
+       |       ww            |        Y  means  these  func-      |
+       |                    |        tions perform wrapping      |
+       |                    |        (see  N  means they do      |
+       |                    |        not.  A dash (-) means      |
+       |                    |        the  attribute  speci-      |
+       |                    |        fied  by  this  column      |
+       |                    |        does   not   apply  to      |
+       |                    |        these functions.            |
+       +--------------------+------------------------------------+
+       |       cc            |        Y  means  these  func-      |
+       |                    |        tions advance the cur-      |
+       |                    |        sor (see N means  they      |
+       |                    |        do  not.   A  dash (-)      |
+       |                    |        means  the   attribute      |
+       |                    |        specified by this col-      |
+       |                    |        umn does not apply  to      |
+       |                    |        these functions.            |
+       +--------------------+------------------------------------+
+IInntteerrffaacceess IImmpplleemmeenntteedd aass MMaaccrrooss
+       The  following  interfaces  with  arguments must be imple-
+       mented as macros.  The relevance to the  application  pro-
+       grammer is that the ampersand (&) character cannot be used
+       before the arguments.
+
+       getbegyx() getmaxyx() getparyx() getyx()
+
+       See
+
+       The header file reference manual pages list other  macros,
+       like COLOR_BLACK, that do not take arguments.
+
+IInniittiiaalliisseedd CCuurrsseess EEnnvviirroonnmmeenntt
+       Before executing an application that uses Curses, the ter-
+       minal must be prepared as follows:  If  the  terminal  has
+       hardware  tab  stops, they should be set.  Any initializa-
+       tion strings defined for the terminal must  be  output  to
+
+                                                               15
+
+Intro(3curses)                                     Intro(3curses)
+
+       the terminal.
+
+       The  resulting  state  of  the terminal must be compatible
+       with the  model  of  the  terminal  that  Curses  has,  as
+       reflected in the terminal's entry in the terminfo database
+       (see
+
+       To initialize Curses, the application must call or  before
+       calling  any of the other functions that deal with windows
+       and screens, and it must  call  before  exiting.   To  get
+       character-at-a-time  input  without echoing (most interac-
+       tive, screen-oriented programs want this),  the  following
+       sequence should be used:
+
+       initscr cbreak noecho
+
+       Most programs would additionally use the sequence:
+
+       nonl intrflush (stdscr, FALSE) keypad (stdscr, TRUE)
+
+SSyynncchhrroonnoouuss aanndd NNeettwwoorrkkeedd AAssyynncchhrroonnoouuss TTeerrmmiinnaallss
+       This section indicates to the application writer some con-
+       siderations to be borne in mind when driving  synchronous,
+       networked asynchronous (NWA) or non-standard directly-con-
+       nected asynchronous terminals.
+
+       Such terminals are often used in a  mainframe  environment
+       and  communicate  to the host in block mode.  That is, the
+       user types characters at the terminal then presses a  spe-
+       cial key to initiate transmission of the characters to the
+       host.
+
+       Frequently, although it may be possible to send  arbitrary
+       sized  blocks to the host, it is not possible or desirable
+       to cause a character to be transmitted with only a  single
+       keystroke.
+
+       This  can  cause severe problems to an application wishing
+       to make use of single-character input; see
+
+OOuuttppuutt
+       The Curses interface can be used in the normal way for all
+       operations  pertaining to output to the terminal, with the
+       possible exception that on some terminals the routine  may
+       have to redraw the entire screen contents in order to per-
+       form any update.
+
+       If it is additionally necessary to clear the screen before
+       each such operation, the result could be undesirable.
+
+IInnppuutt
+       Because  of the nature of operation of synchronous (block-
+       mode) and NWA terminals, it might not be possible to  sup-
+       port  all  or  any  of  the  Curses  input  functions.  In
+
+                                                               16
+
+Intro(3curses)                                     Intro(3curses)
+
+       particular, the following points should be noted:  Single-
+       character  input  might not be possible.  It may be neces-
+       sary to press a special key to cause all characters  typed
+       at  the  terminal  to  be  transmitted to the host.  It is
+       sometimes not possible to disable  echo.   Character  echo
+       may  be  performed directly by the terminal.  On terminals
+       that behave in this way, any Curses application that  per-
+       forms input should be aware that any characters typed will
+       appear on the screen at wherever the cursor is positioned.
+       This  does  not  necessarily correspond to the position of
+       the cursor in the window.
+
+UUssee aanndd IImmpplleemmeennttaattiioonn ooff CCuurrsseess IInntteerrffaacceess
+       Each of the following statements applies unless explicitly
+       stated otherwise in the detailed descriptions that follow.
+       If an argument to a function has an invalid value (such as
+       a  value  outside the domain of the function, or a pointer
+       outside the address  space  of  the  program,  or  a  null
+       pointer),   the  behaviour  is  undefined.   Any  function
+       declared in a header may also be implemented  as  a  macro
+       defined in the header, so a library function should not be
+       declared explicitly if its header is included.  Any  macro
+       definition  of  a  function  can  be suppressed locally by
+       enclosing the name of the function in parentheses, because
+       the name is then not followed by the left parenthesis that
+       indicates expansion of a macro  function  name.   For  the
+       same syntactic reason, it is permitted to take the address
+       of a library function even if it  is  also  defined  as  a
+       macro.   The  use  of  the  C-language #undef construct to
+       remove any such macro definition will also ensure that  an
+       actual  function  is  referred  to.   Any  invocation of a
+       library function that  is  implemented  as  a  macro  will
+       expand  to  code  that  evaluates  each  of  its arguments
+       exactly once, fully protected by parentheses where  neces-
+       sary, so it is generally safe to use arbitrary expressions
+       as  arguments.   Likewise,  those   function-like   macros
+       described  in  the following sections may be invoked in an
+       expression anywhere a function with  a  compatible  return
+       type could be called.
+
+       Provided  that  a library function can be declared without
+       reference to any type defined in a header, it is also per-
+       missible  to  declare  the  function, either explicitly or
+       implicitly, and use it without  including  its  associated
+       header.   If  a function that accepts a variable number of
+       arguments is not declared (explicitly or by including  its
+       associated header), the behaviour is undefined.
+
+   TThhee CCoommppiillaattiioonn EEnnvviirroonnmmeenntt
+       Applications  should  ensure  that  the feature test macro
+       _XOPEN_SOURCE is defined before inclusion of  any  header.
+       This  is  needed  to enable the functionality described in
+       the manual pages.
+
+                                                               17
+
+Intro(3curses)                                     Intro(3curses)
+
+       The _XOPEN_SOURCE macro may be  defined  automatically  by
+       the  compilation  process, but to ensure maximum portabil-
+       ity, applications should make sure that  _XOPEN_SOURCE  is
+       defined by using either compiler options or #define direc-
+       tives in the source files, before any #include directives.
+       Identifiers  in  this document may only be undefined using
+       the #undef directive  as  described  in  or  These  #undef
+       directives  must follow all #include directives of any XSI
+       headers.
+
+       Most strictly conforming POSIX and ISO C applications will
+       compile  on systems compliant to this specification.  How-
+       ever, an application which uses any of the items marked as
+       an  extension  to  POSIX  and ISO C, for any purpose other
+       than that shown here, may not compile.  In such cases,  it
+       may be necessary to alter those applications to use alter-
+       native identifiers.
+
+       Since this document is aligned with the  ISO  C  standard,
+       and  since all functionality enabled by the_POSIX_C_SOURCE
+       set equal to 2 should be enabled by  _XOPEN_SOURCE,  there
+       should  be  no  need  to  define  either  _POSIX_SOURCE or
+       _POSIX_C_SOURCE if _XOPEN_SOURCE is defined.  Therefore if
+       _XOPEN_SOURCE  is defined and _POSIX_SOURCE is defined, or
+       _POSIX_C_SOURCE is set equal to 1 or 2, the  behaviour  is
+       the  same  as  if  only _XOPEN_SOURCE is defined.  However
+       should _POSIX_C_SOURCE be set to a value greater  than  2,
+       the behaviour is undefined.
+
+       The  and utilities recognise the additional -l operand for
+       standard libraries: This operand makes visible all library
+       functions  referenced  in  this  manual  page, (except for
+       those  labelled  ENHANCED  CURSES).   If  the  application
+       defines  the  _XOPEN_SOURCE_EXTENDED  feature  test macro,
+       then -l curses also makes visible  all  portions  of  this
+       specification labelled ENHANCED CURSES.
+
+       An  application  that  uses  any API specified as ENHANCED
+       CURSES must define _XOPEN_SOURCE_EXTENDED equal  to  1  in
+       each  source  file  or as part of its compilation environ-
+       ment.  When _XOPEN_SOURCE_EXTENDED is set equal to 1 in  a
+       source file, it must appear before any header is included.
+
+   TThhee XX//OOppeenn NNaammee SSppaaccee ((EENNHHAANNCCEEDD CCUURRSSEESS))
+       When _XOPEN_SOURCE is  defined,  each  header  defines  or
+       declares  some  identifiers,  potentially conflicting with
+       identifiers used by the application.  The set  of  identi-
+       fiers  visible  to  the  application consists of precisely
+       those identifiers from the header pages  of  the  included
+       headers,  as  well  as additional identifiers reserved for
+       the implementation.  In addition, some  headers  may  make
+       visible identifiers from other headers as indicated on the
+       relevant header pages.
+
+                                                               18
+
+Intro(3curses)                                     Intro(3curses)
+
+       The identifiers reserved for use by the implementation are
+       described  below.   Each  identifier with external linkage
+       described in the header section is reserved for use as  an
+       identifier   with   external  linkage  if  the  header  is
+       included.  Each macro name described in the header section
+       is  reserved  for any use if the header is included.  Each
+       identifier with file scope described in the header section
+       is  reserved  for  use as an identifier with file scope in
+       the same name space if the header is included.  All  iden-
+       tifiers consisting of exactly 2 upper-case letters.
+
+       If  any header is included, identifiers with the _t suffix
+       are reserved for any use by the implementation.
+
+       If any header in the following table is  included,  macros
+       with  the  prefixes  shown may be defined.  After the last
+       inclusion of a given header, an application may use  iden-
+       tifiers  with  the corresponding prefixes for its own pur-
+       pose, provided their use is preceded by an #undef  of  the
+       corresponding macro.
+                  +---------+------------------------+
+                  | HHeeaaddeerr  |         PPrreeffiixx         |
+                  +---------+------------------------+
+                  |curses.h | A_,  ACS_,  ALL_, BUT- |
+                  |         | TON,   COLOR_,   KEY_, |
+                  |         | MOUSE,  REPORT_,  WA_, |
+                  |         | WACS_                  |
+                  +---------+------------------------+
+                  |term.h   | ext_                   |
+                  +---------+------------------------+
+       The following identifiers are reserved regardless  of  the
+       inclusion  of  headers: All identifiers that begin with an
+       underscore and either  an  upper-case  letter  or  another
+       underscore  are  always reserved for any use by the imple-
+       mentation.  All identifiers that begin with an  underscore
+       are always reserved for use as identifiers with file scope
+       in both the ordinary identifier and tag name spaces.   All
+       identifiers  listed  as  reserved in the XSH specification
+       are reserved for use as identifiers with external linkage.
+
+       All  the  identifiers  defined  in this document that have
+       external linkage are always reserved for  use  as  identi-
+       fiers with external linkage.
+
+       No other identifiers are reserved.
+
+       Applications  must  not declare or define identifiers with
+       the same name as an identifier reserved in the  same  con-
+       text. Since macro names are replaced whenever found, inde-
+       pendent of scope and name space, macro names matching  any
+       of  the  reserved  identifier names must not be defined if
+       any associated header is included.
+
+       Headers may be included in any  order,  and  each  may  be
+
+                                                               19
+
+Intro(3curses)                                     Intro(3curses)
+
+       included  more than once in a given scope, with no differ-
+       ence in effect from that of being included only once.
+
+       If used, a header must be included outside of any external
+       declaration  or  definition, and it must be first included
+       before the  first  reference  to  any  type  or  macro  it
+       defines,  or  to any function or object it declares.  How-
+       ever, if an identifier is declared or defined in more than
+       one  header,  the second and subsequent associated headers
+       may be included after the initial reference to the identi-
+       fier.   Prior  to  the  inclusion of a header, the program
+       must not define any macros with names lexically  identical
+       to symbols defined by that header.
+
+   IInntteerrffaacceess IImmpplleemmeenntteedd aass MMaaccrrooss ((EENNHHAANNCCEEDD CCUURRSSEESS))
+       The  requirements  in  this section are in effect only for
+       implementations that claim Enhanced Curses compliance.
+
+       The following interfaces with  arguments  must  be  imple-
+       mented  as  macros.  The relevance to the application pro-
+       grammer is that the `&' character cannot  be  used  before
+       the arguments.
+                 +-----------------------+-------------+
+                 |        MMaaccrrooss         | MMaannuuaall ppaaggee |
+                 +-----------------------+-------------+
+                 |COLOR_PAIR,  PAIR_NUM- |             |
+                 |BER                    |             |
+                 +-----------------------+-------------+
+                 |getbegyx,    getmaxyx, |             |
+                 |getparyx, getyx        |             |
+                 +-----------------------+-------------+
+EErrrroorr NNuummbbeerrss
+       Most  functions  provide an error number in errno which is
+       either a variable or macro defined in <errno.h>; the macro
+       expands to a modifiable lvalue of type int.
+
+       A list of valid values for errno appears in
+
+DDaattaa TTyyppeess
+       All of the data types used by Curses functions are defined
+       by the implementation.  The following list describes these
+       types:  An  integral  type  that  can  contain at least an
+       unsigned short.  The type attr_t is used to hold an  OR-ed
+       set  of attributes defined in curses.h that begin with the
+       prefix WA_.  Boolean data type.  An integral type that can
+       contain  at least an unsigned char and attributes.  Values
+       of type chtype are formed by OR-ing together  an  unsigned
+       char  value  and  zero or more of the base attribute flags
+       defined in curses.h that have the A_ prefix.  The applica-
+       tion  can extract these components of a chtype value using
+       the base masks defined in curses.h for this purpose.   The
+       chtype  data  type also contains a colour-pair.  Values of
+       type chtype are formed by OR-ing together an unsigned char
+       value,  a  colour pair, and zero or more of the attributes
+
+                                                               20
+
+Intro(3curses)                                     Intro(3curses)
+
+       defined in curses.h that begin with the  prefix  A_.   The
+       application can extract these components of a chtype value
+       using the masks defined in curses.h for this purpose.   An
+       opaque terminal representation.  As defined in A type that
+       can reference a string of wide  characters  of  up  to  an
+       implementation-dependent  length,  a colour-pair, and zero
+       or more attributes from the set of all attributes  defined
+       in this document.  A null cchar_t object is an object that
+       references  a  empty  wide-character  string.   Arrays  of
+       cchar_t  objects  are terminated by a null cchar_t object.
+       An opaque window representation.
+
+                                                               21
+

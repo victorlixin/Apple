@@ -1,0 +1,84 @@
+
+
+snmp_authentication(3snmp)             snmp_authentication(3snmp)
+
+SSyynnooppssiiss
+       #include <snmp/snmp.h>
+
+       short   build_authentication(AuthHeader   *auth_ptr,   PDU
+       *pdu_ptr);
+
+       void free_authentication(AuthHeader *auth_ptr);
+
+       AuthHeader    *make_authentication(OctetString     *commu-
+       nity_ptr);
+
+       AuthHeader  *parse_authentication(unsigned  char  *packet,
+       long packet_len);
+
+       #include <snmp/snmp.h> #include <snmp/snmpuser.h>
+
+       void print_packet_out(unsigned char *packet, long length);
+
+DDeessccrriippttiioonn
+       build_authentication  uses  the PDU and the authentication
+       information to build an SNMP packet in the  authentication
+       data  structure's  packlet octet string area. The argument
+       auth_ptr  is  a  pointer  to  the  authentication   header
+       returned by make_authentication. The pdu_ptr argument is a
+       pointer to the PDU structure returned  by  auth_ptr->pack-
+       let->octet_ptr  points  to  the packet and auth_ptr->pack-
+       let->length contains the packet's length. This packlet  is
+       freed  when free_authentication is called, so it should be
+       copied (using bcopy; see to a holding area; alternatively,
+       the authentication should not be freed until the packet is
+       actually sent. Once this has been done, the authentication
+       can be freed with a call to free_authentication.
+
+       free_authentication  frees  all  memory  associated with a
+       trivial authentication header  data  structure,  including
+       the  actual  SNMP packet that build_authentication creates
+       and the octet string associated with  make_authentication.
+       The  PDU  structure  pointed  to  by the pdu_ptr passed to
+       make-authentication is not touched.
+
+       make_authentication is used to  create  a  library  format
+       authentication   header   data   structure   for   use  by
+       build_authentication. This  particular  implementation  of
+       the  library creates an authentication header based on the
+       trivial authentication put forth by RFC 1098, which  calls
+       for  a  community  octet string usually based on text. The
+       header and the octet string associated with the header are
+       freed  when free_authentication is called with the authen-
+       tication pointer.  community_ptr is usually made by
+
+       parse_authentication is used to create  a  library  format
+       authentication header data structure from an incoming SNMP
+       packet (identified by packet, and of  length  packet_len).
+       If  parsing  errors occur, a message is output to standard
+
+                                                                1
+
+snmp_authentication(3snmp)             snmp_authentication(3snmp)
+
+       error and the routine returns NULL. Otherwise, the  commu-
+       nity_ptr  part  of  the  structure  should  be checked for
+       authentication and the pointer passed on  to  for  further
+       ASN.1  parsing.  It  should be noted that the state of the
+       authentication header created during  the  building  phase
+       after a call to build_authentication is nearly symmetrical
+       to the state of the authentication header after this  call
+       on the parsing side.
+
+       print_packet_out  prints  out the contents of a buffer, in
+       hex at 20 bytes per line. It is called with a  pointer  to
+       the  buffer to be displayed and the number of buffer bytes
+       to be displayed. This call is frequently used in debugging
+       code  to  display  the  actual  SNMP message that has been
+       received; this allows hand parsing of the message.  It  is
+       generally unsuitable for a production user interface.
+
+RReeffeerreenncceess
+
+                                                                2
+

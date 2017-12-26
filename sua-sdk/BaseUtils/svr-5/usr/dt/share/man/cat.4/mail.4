@@ -1,0 +1,202 @@
+
+
+mail(4)                                                   mail(4)
+
+SSyynnooppssiiss
+       /etc/default/mail
+
+DDeessccrriippttiioonn
+       /etc/default/mail  allows  for system-wide mail configura-
+       tion settings. Currently, it is only used to configure the
+       message  store  which  is  primarily  concerned  with mail
+       folder settings and INBOX locations.
+
+       The factory default  settings  for  /etc/default/mail  are
+       preserved  in  a file so that they can be restored easily.
+       That file is /etc/mail/mail.factory.
+
+       The message store (Version  1.0)  uses  strings  beginning
+       with MS1_. All message store settings can be overridden by
+       individual users by placing  a  file  called  .maildef  in
+       their  home  directory.  Only  the  parameters  present in
+       .maildef will be overridden.
+
+       The syntax of both files are identical and are composed of
+       lines of the following format: parameter=value Blank lines
+       and lines beginning with a  hash  sign  (#)  are  ignored.
+       Parameters are case-sensitive, while their values are not.
+
+       The following  parameters  and  values  are  supported  in
+       /etc/default/mail: MS1_FOLDER_FORMAT
+
+       Values: sendmail or MMDF.
+
+       This  parameter  specifies which folder format will be the
+       default for newly created folders. The message store auto-
+       matically  recognizes old folders and preserves their for-
+       mat.
+
+       sendmail specifies ``From'' delimited  messages  and  MMDF
+       implies   A   delimited   messages   compatible  with  the
+       OpenServertm5 MMDF facility.  MS1_INBOX_DIR
+
+       Values: blank or a pathname.  MS1_FOLDER_NAME
+
+       Values: blank or a filename.
+
+       The message store allows you to choose where  the  default
+       inbox for each user is located.
+
+       Two  variables  are  combined into the default INBOX name:
+       MS1_INBOX_DIR
+
+       The spool directory where inboxes are located. It defaults
+       to the home directory for each user.  MS1_INBOX_NAME
+
+       The  name  of  the inbox for each user. It defaults to the
+       username for each user.
+
+                                                                1
+
+mail(4)                                                   mail(4)
+
+       The two normal configurations are as follows: All  inboxes
+       reside   in   /var/mail   (a   central  spool  directory):
+       MS1_INBOX_DIR=/var/mail MS1_INBOX_NAME=  This  effectively
+       means  that a mailbox for each user using each user's name
+       will be created in /var/mail.   All  inboxes  reside  each
+       user's  home  directory  and  have the name MS1_INBOX_DIR=
+       MS1_INBOX_NAME=.mailbox MS1_FSYNC
+
+       Values: TRUE or FALSE.
+
+       The message store always flushes its data to  the   buffer
+       cache.   Enabling  MS1_FSYNC  will cause the flushes to go
+       all the way through to disk. This improves data  reliabil-
+       ity  in  the case of system crashes since the buffer cache
+       normally takes up to 30 seconds to flush to disk,  but  it
+       can  reduce  performance as flushing every write operation
+       through to disk is more expensive than  using  the  buffer
+       cache.  MS1_EXTENDED_CHECKS
+
+       Values: TRUE or FALSE.
+
+       Folders  are  split into two files, a backwards-compatible
+       folder file and an index file. If a non-message store user
+       agent  modifies  the  folder,  two  levels of checking are
+       available for message store-aware applications  to  detect
+       that the folder has been modified and that the index needs
+       to be rebuilt (an expensive operation). Extended  checking
+       is  normally  not  necessary,  unless you have a mail user
+       agent that modifies the folder contents but does not  mod-
+       ify the modification time on the folder (sets the mod time
+       back).  MS1_EXPUNGE_THRESHOLD
+
+       Values: a number from 0 to 100 inclusive.
+
+       Deleting messages from folders is an  expensive  operation
+       for  large  folders as the folder is completely rewritten.
+       The message store has the capability to reduce the  number
+       of  rebuild operations that take place by marking messages
+       as deleted but not rebuilding the folder until  some  per-
+       centage  of  bytes  have become unused. A threshold can be
+       specified where if the  number  of  bytes  still  used  by
+       undeleted  messages  drops below a certain percentage then
+       the folder will be rebuilt on close.   100  percent  means
+       always  rebuild  the  folder  on  close  if  messages were
+       deleted, which provides  maximum  backwards  compatibility
+       but no performance gains.  0 percent is a potentially non-
+       useful case where the folder is  never  rebuilt,  it  just
+       grows  forever  accumulating  deleted messages.  Any other
+       number is the percent of bytes that must be valid, so when
+       the  percentage  of  bytes  drops  below  that number, the
+       folder will be rebuilt when the user  agent/server  closes
+       that mailbox.
+
+       The compatibility you lose is that deleted messages become
+
+                                                                2
+
+mail(4)                                                   mail(4)
+
+       visible to non-message-store-aware user agents as messages
+       where  the  from  address and the subject are ``deleted'',
+       which could be annoying.  As this value can be  overridden
+       for  individual  users, setting the threshold to around 50
+       is a good idea if the majority of users are using message-
+       store-aware mail user agents.  MS1_FOLDERS_INCORE
+
+       Values: TRUE or FALSE.
+
+       The  message store has the capability to read entire mail-
+       boxes into core which provides some  performance  improve-
+       ments  at a potentially large cost in memory. This is use-
+       ful for single user (desktop) systems.  MS1_FILE_LOCKING
+
+       Values: TRUE or FALSE.
+
+       Enables or disables old-style folder.lock lock  file  cre-
+       ation.  If  not  enabled, just kernel locks are used. Turn
+       this on and folder.lock will be created. Note that in this
+       case, kernel locks are still used as well.  MS1_LOCK_TIME-
+       OUT
+
+       Values: a positive integer greater than zero.
+
+       Mailboxes must be locked in order to  access  them.  If  a
+       lock  times  out the folder cannot be accessed. On heavily
+       loaded systems a longer lock timeout may prevent requeuing
+       of messages in the deliver process.  However it will annoy
+       users as it will take longer to time out on locked  files.
+       MS1_UMASK
+
+       Values: an octal number from 0 to 0777 inclusive.
+
+       The leading 0 is required.
+
+       A umask for folder creation is provided. This mask is used
+       in addition to normal  umask support. For POSIX compliance
+       it  should  be zero. For maximum security it should be 077
+       (which is recommended). It is also  recommended  that  the
+       exec  (search)  permissions are also left, as this mask is
+       used to create directories as well as files.
+
+       Note that mail delivery from the  mail  transport,  always
+       sets  the   umask to 077 before calling the message store.
+       Therefore this value is primarily useful for clients  that
+       create  additional  folders  (such  as  and IMAP clients).
+       POP_TIMEOUT
+
+       Values: a number in seconds from 5 to 1800 inclusive.
+
+       The POP (Post Office Protocol) server  will  automatically
+       logout  a  client  if it is inactive for a period of time.
+       Use this option to configure this interval in seconds.  If
+       the  POP  server  has  not  received  any command from the
+
+                                                                3
+
+mail(4)                                                   mail(4)
+
+       client during this interval, then the  server  closes  the
+       TCP  connection  without  removing any messages or sending
+       any response to the client.
+
+       RFC 1939 stipulates this timeout should be  at  least  600
+       seconds  (10  minutes), which is the default value for the
+       timeout.  However, in the event that a client  disconnects
+       without  notifying  the server, the TCP connection will be
+       left open on the server side, and will not be closed until
+       this  timeout  has passed.  Subsequent tries to connect to
+       the POP server before the timeout has occurred  will  fail
+       with  the following error: -ERR Can't get lock.  Try again
+       later.  If you see the above error message, you  may  want
+       to lower the duration of the timeout.  While this does not
+       prevent the problem, it will shorten the time  that  users
+       will  have  to  wait  to  open a new connection and access
+       their mailbox.
+
+RReeffeerreenncceess
+
+                                                                4
+

@@ -1,0 +1,132 @@
+
+
+Intro(7)                                                 Intro(7)
+
+DDeessccrriippttiioonn
+       This  section  provides  information about device drivers,
+       driver interfaces,  and  special  device  files  that  are
+       included  in  the  &geminiREL;  operating  system.   These
+       include software drivers and the device drivers that  pro-
+       vide support for various hardware peripherals.  Some addon
+       drivers may also add pages to this section.
+
+       General purpose  drivers  and  drivers  for  mass  storage
+       devices are documented in this section.  Drivers for other
+       device  types,  such  as  network  and  graphics   adapter
+       drivers,  are  documented  in context-sensitive help files
+       associated with the  managers  used  to  administer  those
+       devices.
+
+       Current information about hardware support is available on
+       the The CHWP includes  information  about  vendor-supplied
+       device  support as well as Caldera device support that was
+       added after the operating system was released.   For  more
+       information, see
+
+BBaacckkwwaarrddss ccoommppaattiibbiilliittyy
+       &geminiREL; uses versioning schemes to provide support for
+       drivers written for earlier versions of the operating sys-
+       tem.   This  enables the operating system to support older
+       drivers, but prevents old  and  new  features  from  being
+       intermixed in a single driver.  Support for older versions
+       will eventually be removed from the operating system.
+
+       The versioning schemes related to device drivers  include:
+       The  idtools,  such  as are used to configure drivers into
+       the kernel.  These tools are versioned to support  differ-
+       ent versions of the configuration files.  The idtools ver-
+       sion of a driver is defined in the $version field  of  the
+       driver's  file.   If  no  $version  field  is present, the
+       driver is version 0, which means that the  command  deter-
+       mines  the  $interface  version  for  the  driver, usually
+       either DDI version 4 or, more typically,  $interface  non-
+       conforming.   The  driver's /etc/conf/mdevice.d file shows
+       either $oversion 0 or  $oversion 1, followed by a list  of
+       nonconforming symbols.  For DDI 8 and later interface ver-
+       sions, $entrytype 1 is defined in an file to indicate that
+       the  main  entry  point  routines  are  accessed through a
+       structure rather than  through  switch  tables  using  the
+       named  entry  point  scheme; see If no $entrytype field is
+       defined,  the  kernel  assumes  $entrytype  0.   Versioned
+       driver  interfaces  define  the  kernel  functions, driver
+       entry points, and kernel structures that are used  in  the
+       driver.  A driver's interfaces are declared in the $inter-
+       face field of the files, which may include only  one  ver-
+       sion  for  each interface type.  Supported interface types
+       include Used for all kernel-level drivers,  defines  basic
+       functionality  such as synchronization, I/O movement, con-
+       figuration, and interrupt handling.  DDI also defines  the
+
+                                                                1
+
+Intro(7)                                                 Intro(7)
+
+       STREAMS  interface.   Used for network adapter drivers, to
+       supplement the DDI.  See Used for  mass  storage  HBA  and
+       target  drivers,  to supplement the DDI.  See Used for all
+       types of devices on an &i2o; platform, to  supplement  the
+       DDI.  Used to implement general support for specific hard-
+       ware platforms.  Used to implement PCI hotplug support for
+       specific hardware platforms.
+
+       Each  interface  type  has a manual page in section 7 that
+       explains the operating system versions that  support  each
+       interface version.
+
+       Drivers that do not conform to the interfaced versions can
+       be installed with $interface nonconformant in their Master
+       files.   These  drivers  must  also  populate the $contact
+       field with information about who wrote  and  supports  the
+       driver.   Drivers  that  use  $interface nonconformant are
+       discouraged because they are generally less  portable  and
+       may be less reliable than conformant drivers.
+
+       $interface  base is used in the Master files for core ker-
+       nel  modules  but  cannot  be  used  for  specific  device
+       drivers.
+
+       Support  for an interface version is retained for at least
+       three years after it is superseded by a  new  version,  to
+       provide  compatibility  for  drivers  written to use them.
+       The manual pages retain  information  about  an  obsoleted
+       version  for one operating system release past where it is
+       supported.  We recommends that drivers be ported to  newer
+       interface  versions  to take advantage of new features and
+       to extend the life of the drivers.
+       ------------------------------------------------------------
+       O/S releaseSupported versions
+       ------------------------------------------------------------
+       SVR4.0     ddi 1, 2
+       SVR4.1 ES  ddi 1, 2
+       SVR4MP     ddi 1, 2, 3
+       SVR4.2     ddi 1, 2, 4; sdi 1
+       SVR4.2MP   ddi 1, 2, 3, 4, 5, 5mp; sdi 1
+       &uw1x;     ddi 1, 2, 4; sdi 1
+       &uw2x;     ddi 1, 2, 3, 4, 5, 5mp, 6, 6mp, 7, 7mp; sdi 1, 2
+       &geminiREL;ddi 5, 5mp, 6, 6mp, 7, 7mp, 8, 8mp; sdi 1, 2, 4;
+                  mdi 2 hpci 1; psm 2; &i2o; 1
+
+       sdi: 4 and mdi: 2 require ddi: 7, 7mp, 8, or 8mp.  See and
+       hpci: 1 requires either ddi: 7mp or ddi: 8mp.  See
+
+       When a driver is installed on the system, it declares  the
+       DDI  version(s)  being used in the $interface field of the
+       file.  Drivers that use one of the mp ddi sets  must  also
+       use  $interface: Version 2 in the Master file and, for DDI
+       versions before DDI 8, set to D_MP.
+
+                                                                2
+
+Intro(7)                                                 Intro(7)
+
+       A simple script can identify  all  drivers  using  certain
+       interface versions that are installed on your system.  For
+       example, the following script reports all drivers that use
+       DDI  version 5/5mp and earlier: # cd /etc/conf/mdevice.d #
+       awk '$1 == "$interface" && $2 == "ddi" && $3 ~ /^[0-5]/  {
+       \            printf("%s: %s\n", FILENAME, $0); }' *
+
+SSeeee aallssoo
+
+                                                                3
+

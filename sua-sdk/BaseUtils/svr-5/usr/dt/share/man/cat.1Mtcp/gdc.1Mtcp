@@ -1,0 +1,158 @@
+
+
+gdc(1Mtcp)                                             gdc(1Mtcp)
+
+SSyynnooppssiiss
+       gdc [ -nq ] [ -t seconds ] command
+
+DDeessccrriippttiioonn
+       gdc  provides  a user-oriented interface for the operation
+       of the routing daemon.  It provides support  for  starting
+       and  stopping  the  daemon, for the delivery of signals to
+       manipulate the daemon when it is operating, for the  main-
+       tenance  and  syntax  checking of configuration files, and
+       for the production and removal of  state  dumps  and  core
+       dumps.   gdc  can reliably determine gated's running state
+       and can produce a reliable exit status when errors  occur,
+       making  it  advantageous  for  use  in shell scripts which
+       manipulate  gated.   Commands  executed  using  gdc   and,
+       optionally,  error  messages  produced by the execution of
+       those commands, are logged via  the  same  facility  which
+       gated  itself uses, providing an audit trail of operations
+       performed on the daemon.
+
+       The command-line options are:  Run  without  changing  the
+       kernel forwarding table. Used for testing and when operat-
+       ing as a route server which does not  perform  forwarding.
+       Run  quietly.  With  this  option,  informational messages
+       which are normally printed to the standard output are sup-
+       pressed and error messages are logged via instead of being
+       printed to the standard error output.  This is often  con-
+       venient  when  running gdc from a shell script.  Specifies
+       the time in seconds which gdc will spend waiting for gated
+       to  complete certain operations, in particular at termina-
+       tion and startup.  By default this value is set to 10 sec-
+       onds.   The  following commands cause signals to be deliv-
+       ered to gated for various purposes: Send an  abort  signal
+       to  gated, causing it to terminate with a core dump.  Sig-
+       nal  gated  to  dump  its  current  state  into  the  file
+       /var/tmp/gated_dump.   Signal  gated to recheck the inter-
+       face configuration. gated normally does this  periodically
+       in  any  event,  but the facility can be used to force the
+       daemon to check interface status immediately when  changes
+       are  known  to  have  occurred.   Cause gated to terminate
+       ungracefully. Normally useful when the  daemon  has  hung.
+       Signal gated to reread its configuration file, reconfigur-
+       ing its current state as  appropriate.   Signal  gated  to
+       terminate after shutting down all operating routing proto-
+       cols gracefully.  Executing this  command  a  second  time
+       should  cause  gated  to  terminate even if some protocols
+       have not yet fully shut down.  If gated is currently trac-
+       ing to a file, cause tracing to be suspended and the trace
+       file to be closed.  If gated  tracing  is  currently  sus-
+       pended,  cause  the  trace file to be reopened and tracing
+       initiated. This is useful  for  moving  trace  files.   By
+       default,  gated obtains its configuration from a file nor-
+       mally named /etc/inet/gated.conf.  The  gdc  program  also
+       maintains  several  other  versions  of  the configuration
+       file, in particular named:  The  new  configuration  file.
+
+                                                                1
+
+gdc(1Mtcp)                                             gdc(1Mtcp)
+
+       When gdc is requested to install a new configuration file,
+       /etc/inet/gated.conf+  is  renamed   /etc/inet/gated.conf.
+       The  old  configuration  file.  When  gdc  is requested to
+       install   a   new   configuration   file,   the   previous
+       /etc/inet/gated.conf  is renamed to /etc/inet/gated.conf-.
+       The really old configuration file. gdc retains the  previ-
+       ous old configuration file under this name.  The following
+       commands  perform  operations  related  to   configuration
+       files: Check /etc/inet/gated.conf for syntax errors.  This
+       is usefully done after changes to the  configuration  file
+       but before sending a reconfig signal to the currently run-
+       ning gated, to ensure that there are no errors in the con-
+       figuration  which  would cause the running gated to termi-
+       nate on reconfiguration.  When this command is  used,  gdc
+       issues  an  informational message indicating whether there
+       were parse errors or not, and if so saves the error output
+       in  a file for inspection.  Like checkconf except that the
+       new configuration file, /etc/inet/gated.conf+, is  checked
+       instead.   Move  the /etc/inet/gated.conf+ file into place
+       as /etc/inet/gated.conf, retaining the older  versions  of
+       the  file  as described above. gdc will decline to do any-
+       thing when given this command  if  the  new  configuration
+       file doesn't exist or otherwise looks suspect.  Rotate the
+       configuration files in the newer direction, in effect mov-
+       ing  the  old  configuration file to /etc/inet/gated.conf.
+       The command will  decline  to  perform  the  operation  if
+       /etc/inet/gated.conf-  doesn't exist or is zero length, or
+       if the operation would delete an existing, non-zero length
+       /etc/inet/gated.conf+  file.   Perform a backout operation
+       even if /etc/inet/gated.conf+ exists and  is  of  non-zero
+       length.   Set  all  configuration files to mode 664, owner
+       root, group gdmaint. This allows a trusted  non-root  user
+       to     modify     the     configuration     files.      If
+       /etc/inet/gated.conf+ does not exist, create a zero length
+       file  with  the  file  mode  set to 664, owner root, group
+       gdmaint. This allows a trusted non-root user to install  a
+       new  configuration  file.   The following commands provide
+       support for starting and stopping gated and for  determin-
+       ing  its  running  state:  Determine if gated is currently
+       running.  This is done by checking to see if gated  has  a
+       lock  on  the  file  containing its pid, if the pid in the
+       file is sensible and if there is a  running  process  with
+       that  pid.   Exits  with  zero status if gated is running,
+       non-zero otherwise.  Start gated. The command  returns  an
+       error  if gated is already running. Otherwise, it executes
+       the gated binary and waits for up to  the  delay  interval
+       (10  seconds  by default, as set with the -t option other-
+       wise) until the newly started process obtains  a  lock  on
+       the  pid  file.  A  non-zero exit status is returned if an
+       error is detected while executing the binary, or if a lock
+       is  not obtained on the pid file within the specified wait
+       time.  Stop gated, gracefully if possible, ungracefully if
+       not. The command returns an error (with non-zero exit sta-
+       tus) if gated is not  currently  running.   Otherwise,  it
+
+                                                                2
+
+gdc(1Mtcp)                                             gdc(1Mtcp)
+
+       sends  a terminate signal to gated and waits for up to the
+       delay interval (10 seconds by default, as  specified  with
+       the  -t  option otherwise) for the process to exit. Should
+       gated fail to exit within the delay interval, it  is  then
+       signaled  again  with a second terminate signal. Should it
+       fail to exit by the end of the second delay  interval,  it
+       is  signaled  for  a  third  time with a kill signal. This
+       should force immediate  termination  unless  something  is
+       very  broken. The command terminates with zero exit status
+       when it detects that gated has terminated, non-zero other-
+       wise.   If gated is running, it is terminated via the same
+       procedure as is used for the stop command above. When  the
+       previous  gated terminates, or if it was not running prior
+       to command execution, a  new  gated  process  is  executed
+       using  the  procedures  described  for  the  start command
+       above.  A non-zero exit status is returned if any step  in
+       this procedure appears to have failed.  The following com-
+       mands allow the removal of files created by the  execution
+       of  some of the commands above: Removes any existing gated
+       core dump file.  Removes any  existing  gated  state  dump
+       file.   Removes  the  parse  error  file  generated when a
+       checkconf or  checknew  command  is  executed  and  syntax
+       errors  are  encountered  in  the configuration file being
+       checked.
+
+FFiilleess
+       gated binary current gated configuration file  newer  con-
+       figuration  file  older configuration file much older con-
+       figuration file where gated stores its pid  gated's  state
+       dump  file  where configuration file parse errors go where
+       gated drops its core file
+
+RReeffeerreenncceess
+
+                                                                3
+

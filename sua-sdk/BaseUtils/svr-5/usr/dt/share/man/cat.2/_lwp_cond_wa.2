@@ -1,0 +1,84 @@
+
+
+_lwp_cond_wait(2)                               _lwp_cond_wait(2)
+
+SSyynnooppssiiss
+       #include <synch.h>
+
+       int _lwp_cond_wait(lwp_cond_t *cond, lwp_mutex_t *mutex);
+
+   PPaarraammeetteerrss
+       pointer to the condition variable to wait for pointer to a
+       locked mutex
+
+DDeessccrriippttiioonn
+       _lwp_cond_wait  allows  the  calling  lightweight  process
+       (LWP) to wait for the occurrence of a condition associated
+       with the given object cond.
+
+       The mutual exclusion lock (mutex) pointed to by mutex must
+       be  locked  by the calling LWP upon entry to this routine,
+       otherwise unspecified behavior may result.  _lwp_cond_wait
+       automatically  releases  the mutex, causes the calling LWP
+       to wait on the condition variable cond, and when the  con-
+       dition is signalled or the wait is interrupted, reacquires
+       the mutex and returns to  the  caller.   If  the  wait  is
+       interrupted,  mutex  is reacquired before a signal handler
+       or any other user code can be executed.  The  calling  LWP
+       is  allowed to resume execution when the condition is sig-
+       naled, broadcast, or interrupted.
+
+       A   wait   on   _lwp_cond_wait   is   interruptible.    If
+       _lwp_cond_wait is interrupted the function fails.
+
+   ccoonndd ppaarraammeetteerr
+       The  condition  variable  denoted  by cond must previously
+       have been statically initialized (zero-filled).
+
+   mmuutteexx ppaarraammeetteerr
+       mutex is a mutual exclusion variable protecting  a  shared
+       resource  associated with the condition represented by the
+       condition variable, cond.  The calling LWP must lock mutex
+       before  calling  _lwp_cond_wait, otherwise the behavior is
+       unpredictable.
+
+   RReettuurrnn vvaalluueess
+       _lwp_cond_wait returns zero for success and an error  num-
+       ber for failure, as described below.
+
+   EErrrroorrss
+       If   any   of   the   following  conditions  is  detected,
+       _lwp_cond_wait fails and returns the corresponding  value:
+       The  condition  variable  pointed  to by cond or the mutex
+       pointed to by mutex is invalid.  Either the cond or  mutex
+       parameter  points  to an illegal address.  (This error may
+       not be detected; a SIGSEGV signal may  be  posted  to  the
+       faulting LWP if an illegal address is used.)
+
+       If  any of the following conditions occurs, _lwp_cond_wait
+
+                                                                1
+
+_lwp_cond_wait(2)                               _lwp_cond_wait(2)
+
+       fails and returns the corresponding value:  The  operation
+       was interrupted by a signal or a fork operation.
+
+UUssaaggee
+       See  the  description  of  how  to use condition variables
+       under USAGE on
+
+       Because the condition can change between the time the con-
+       dition is signaled and the mutex is re-locked, the calling
+       LWP must always re-check the condition  upon  return  from
+       cond_wait.
+
+       _lwp_cond_wait is never automatically restarted.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Lightweight  processes  (LWPs) are internal interfaces and
+       are subject to change.  Their use should be avoided.
+
+                                                                2
+

@@ -1,0 +1,1134 @@
+
+
+wksh(1)                                                   wksh(1)
+
+SSyynnooppssiiss
+       wksh  [-mode]  [+-aefhikmnprstuvx]  [+-o  option]  ... [-c
+       string] [arg ...]
+
+DDeessccrriippttiioonn
+       wksh (Windowing Korn Shelltm) offers a  number  of  exten-
+       sions  to  the standard Korn Shell (see in order to create
+       and manage graphical user-interface  widgets.   There  are
+       also  a  number  of  commands that allow the programmer to
+       extend the wksh language by attaching C code  dynamically,
+       register  C  functions  as new built-in commands, register
+       new widget definitions, and call C functions directly from
+       attached  libraries.  All normal ksh commands and features
+       are also supported, wksh is a true  superset  of  standard
+       ksh.
+
+       The following sections give some background information on
+       concepts that are shared by a number of commands.
+
+   AA nnoottee oonn ttoooollkkiittss
+       wksh supports MoOLITtm (a superset of OPEN  LOOK(R)),  and
+       OSFtm  Motiftm  widget  sets.   This manual page will only
+       cover Motif, because MoOLIT is now considered obsolete.
+
+       Most commands, including all commands from the Xt  Intrin-
+       sics and Xlib layers and some convenience functions, apply
+       to all three toolkits.
+
+       The programmer must specify which toolkit  is  being  used
+       either  by  giving  wksh  one of the options: -openlook or
+       -motif, or by setting the variable $WKSHTOOLKIT to  either
+       OPENLOOK  or  MOTIF.   OPENLOOK  and  -openlook  imply the
+       MoOLIT toolkit on systems that support  MoOLIT.   Although
+       slightly confusing this was done to maintain compatibility
+       with older versions of wksh that supported OPEN LOOK.
+
+       This manual page cannot possibly explain how to use  every
+       widget  of  the Motif toolkit, you must refer to reference
+       materials on Motif for that information.  This manual page
+       assumes  basic  familiarity  with X concepts, see tutorial
+       materials on wksh if that is not the case.
+
+   WWiiddggeett hhaannddlleess
+       Most commands that would return a widget in the C language
+       Xt  Intrinsics will instead set an environment variable to
+       a widget handle in wksh.  A  widget  handle  is  an  ASCII
+       string  used  by  wksh to access an actual widget pointer.
+       Commands that create widget handles take as an argument an
+       environment variable name set to the handle.  For example,
+       the XtCreateManagedWidget command looks like this:  XtCre-
+       ateManagedWidget MYWIDGET widget form $TOPLEVEL
+
+       After a command like this, $MYWIDGET can be used to attach
+       children to the newly created form widget.   In  the  call
+
+                                                                1
+
+wksh(1)                                                   wksh(1)
+
+       above,  $TOPLEVEL  was  also  set  up  by another built-in
+       (XtAppInitialize) in an analogous fashion.
+
+       This manual page uses the following conventions in  defin-
+       ing  arguments to a command: name of the environment vari-
+       able set as a side effect of the function  to  a  returned
+       widget handle environment variable that was previously set
+       to a widget handle by some other wksh  command  any  legal
+       wksh command string
+
+   RReessoouurrcceess
+       wksh has internal tables to convert resources, all conver-
+       sions are automatic.
+
+       Resources are set using the notation: resource:value
+
+       In this notation, resource is the name  of  the  resource,
+       value  is a string representation of the value.  wksh uses
+       String-to-Type converters on this  value,  as  appropriate
+       for the resource in question.
+
+       Here  are  some  examples  of  resource  setting notation:
+       XtSetValues $MYWIDGET x:0 y:100 label:"a string" XtSetVal-
+       ues $WIDGET3 xRefWidget:"$WIDGET2"
+
+       When  resources are retrieved using XtGetValues, a similar
+       notation is used: resource:variable
+
+       the resource is the resource name as above.  The  variable
+       is  the  name  of  an environment variable that receives a
+       string representation of the value.
+
+   AAlliiaasseess
+       For programmer convenience, a standard set of aliases  are
+       predefined  for  all of the X Intrinsics built-ins.  These
+       aliases follow a general naming standard: they always drop
+       the  ``Xt''  prefix, they include just the first character
+       of each ``word'' in a command.  There are a few exceptions
+       to  preserve uniqueness, but in all cases the aliases were
+       chosen to be mnemonic  and  require  minimal  input.   For
+       example,  XtCreateManagedWidget is aliased cmw, XtAddCall-
+       back is aliased acb.
+
+       Each command description lists the aliases  available  for
+       that  command.   Some commands also have aliases providing
+       short forms for commonly used  options  on  that  command.
+       For  example, ListOp -a is aliased listadd.  These aliases
+       provide enhanced readability.
+
+   OOppttiioonnss
+       The wksh command accepts one new option GUI  mode,  either
+       motif or openlook.  If used, this option must be the first
+       option to wksh.  The default is -openlook,  although  this
+       is  now  considered  an  obsolete toolkit, so users should
+
+                                                                2
+
+wksh(1)                                                   wksh(1)
+
+       specify -motif.
+
+       Other options available to wksh are the same as ksh (see
+
+   SShheellll vvaarriiaabblleess
+       The following environment variables are used by  wksh  and
+       its associated commands to set certain defaults:
+
+       ----------------------------------------------------
+       Variable      Default if not set   Use by wksh
+       ----------------------------------------------------
+       WKSHLIBDIR    /usr/X/lib/wksh      Directory  where
+                                          convenience
+                                          functions, exam-
+                                          ples, and so  on
+                                          are stored
+       WKSHBINDIR    /usr/X/bin           Directory  where
+                                          bootstrap   exe-
+                                          cutables  olwksh
+                                          (OPEN LOOK)  and
+                                          xmwksh   (MOTIF)
+                                          are stored
+       WKSHTOOLKIT   OPEN LOOK            Either  OPENLOOK
+                                          or        MOTIF,
+                                          toolkit  to  use
+                                          if  command line
+                                          option -openlook
+                                          or -motif is not
+                                          specified
+       WKSHFPATH     $FPATH               Overrides $FPATH
+                                          in  the  case of
+                                          wksh  execution.
+                                          See     for    a
+                                          description   of
+                                          FPATH
+
+       The  following  environment  variables  are set by various
+       commands in  wksh  as  conveniences  to  the  user.   Full
+       details are given under the associated command.
+
+       ----------------------------------------------
+       Variable   Set by command    Summary
+       ----------------------------------------------
+       WKSHAPI    XtAppInitialize   One   of:  OPEN-
+                                    LOOK, MOTIF,  or
+                                    MOOLIT
+
+              TOPLEVEL   XtAppInitialize   The   handle  of
+                                           the
+                                           TopLevelShell
+                                           Widget
+
+                                                                3
+
+wksh(1)                                                   wksh(1)
+
+              APPNAME    XtAppInitialize   The     Applica-
+                                           tion's name
+
+   SSuubb--oobbjjeecctt ccoonnvveenniieennccee vvaarriiaabblleess
+       Some widgets which contain sub-objects automatically store
+       the widget handle of the sub-object in a variable when the
+       widget is created.  The variable name which holds the sub-
+       object handle is constructed by adding  a  suffix  to  the
+       parent's  variable  name.   In the table below, VAR stands
+       for the parent's widget handle variable.
+
+       ----------------------------------------------------------
+       Widget             Convenience variable   Sub object
+       ----------------------------------------------------------
+       MOTIF:
+       MessageBox         $VAR_CAN               Cancel button
+                          $VAR_DEF               Default button
+                          $VAR_HELP              Help button
+                          $VAR_LAB               Message label
+                          $VAR_OK                OK button
+                          $VAR_SEP               Separator
+                          $VAR_SYM               Symbol label
+
+       FileSelectionBox   $VAR_APPLY             Apply button
+                          $VAR_DEF               Default button
+                          $VAR_CAN               Cancel button
+                          $VAR_HELP              Help button
+                          $VAR_OK                OK button
+                          $VAR_SEP               Separator
+                          $VAR_FILTLAB           Filter label
+                          $VAR_FILTTXT           Filter text
+                          $VAR_SELLAB            Selection label
+                          $VAR_TEXT              Text
+
+       MainWindow         $VAR_SEP1              Separator 1
+                          $VAR_SEP2              Separator 2
+
+       In addition, for the OPEN LOOK  ScrollingList  widget  two
+       variables   are  constantly  kept  up  to  date  by  wksh:
+       $VAR_NUMITEMS, $VAR_CURITEM, and $VAR_CURINDEX, which  are
+       respectively  the number of items in the list, the text of
+       the current item, and  the  index  of  the  current  item.
+       Callbacks  can be any arbitrary wksh command line.  During
+       execution of the command line,  the  environment  variable
+       CB_WIDGET will be set to the handle of the widget on whose
+       behalf the callback is being executed.
+
+FFiilleess
+       OPEN LOOK example programs  Motif  example  programs  Xlib
+       example  programs  bootstrap  rc file for OPEN LOOK/MoOLIT
+       bootstrap rc file for MOTIF Pixmaps for  example  programs
+       bootstrap  executable  file for OPEN LOOK/MoOLIT bootstrap
+       executable file for MOTIF bootstrap  executable  file  for
+       wksh
+
+                                                                4
+
+()                                                             ()
+
+UUssaaggee
+       The  wksh  executable  provides  new built-in commands and
+       shell functions.  Built-in commands  are  built  into  the
+       shell, much like other standard ksh built-in commands, for
+       example echo  or  cd.   Shell  functions  are  small  wksh
+       scripts  pulled  into an application the first time refer-
+       enced.  Text for these shell functions is contained in the
+       directory  /usr/lib/wksh/xmfuncs.   It  is often useful to
+       take these standard functions and modify them for slightly
+       different  purposes, although by convention the programmer
+       should change the function name when making such modifica-
+       tions.  Most of them are short (ten to twenty lines).  The
+       following sections will note when  commands  are  provided
+       using  shell  functions  as  opposed to built-in commands,
+       although to the programmer there is no visible difference.
+
+       The  commands  will be divided into three sections: Widget
+       Set Independent Graphics  Commands,  Motif  Graphics  Com-
+       mands,  and C Function Access Commands.  Add a set of but-
+       tons to a parent widget.  This shell  function  is  useful
+       for  adding  a  set of buttons to a menu or RowColumn in a
+       concise manner.
+
+       In the first form, the parent is the first argument to the
+       function,  followed  by  any  number of pairs of arguments
+       specifying the label on the button and the command  to  be
+       executed if the button is selected.
+
+       In  the  second form, with the -w option, addbuttons takes
+       triplets of arguments after the parent is specified.  Each
+       triplet  specifies  the  environment variable to be set to
+       the handle of the newly created button, the label, and the
+       associated command.
+
+       By default, addbuttons creates PushButtonGadgets.  Set the
+       environment variable BUTTONTYPE to obtain a different kind
+       of  button.   This  shell function adds a set of captioned
+       text fields to a parent widget.  This  command  is  useful
+       for  adding  a set of captioned text fields to a RowColumn
+       in a concise manner.
+
+       The parent is the first argument to the function, followed
+       by  any  number  of  4-tuples  of arguments specifying the
+       variable to  contain  the  TextField  widget  handle,  the
+       label,  the  verification function called on the TextField
+       widget, and the width of the TextField in number of  char-
+       acters.
+
+       On return, each variable contains the widget handle of the
+       corresponding TextField widget.  A variable whose name  is
+       the TextField's variable with _CAP appended holds the han-
+       dle of the widget that was created.
+
+       One additional environment variable modifies  the  initial
+
+                                                                5
+
+()                                                             ()
+
+       resources  on  the  created Caption and TextField widgets:
+       list of resource definitions passed to the  newly  created
+       TextField widgets
+
+       confirm "message" yes-ycommand no-ncommand
+       fatal "message"
+       warn "message"
+
+       The  warn, fatal, and confirm shell functions provide com-
+       monly needed functionality for popping  up  high  priority
+       message  windows  to the user.  Each creates a DialogShell
+       the first time it is called, and re-uses it on  subsequent
+       calls.
+
+       confirm displays message, and creates two buttons, YES and
+       NO.  If YES is selected, then ycommand is executed.  If NO
+       is selected, then ncommand is executed.  Both ycommand and
+       ncommand must be valid wksh commands.
+
+       The fatal function is  useful  in  non-recoverable  situa-
+       tions.   It displays message inside a notice shell with an
+       OK button, and exits as soon as the OK button is selected.
+
+       The  warn  function  is  useful  if  a non-fatal error has
+       occurred.  It displays message inside a notice shell  with
+       an  OK  button  that  does nothing.  This built-in command
+       prints or resets data throughout widget trees.  This  com-
+       mand  is  useful  in  a number of situations, for example,
+       implementing quick databases, implementing  property  win-
+       dows, and easing the implementation of the Reset and Reset
+       to Factory buttons.  This command prints or resets data in
+       Scale, Toggle Button, and Text widgets.
+
+       The  DataOp  options  corresponds,  respectively,  to  the
+       aliases: print data from  widget  trees.   It  recursively
+       descends  the  $widget  tree and prints to stdout a set of
+       name=value lines that corresponds to the  data  stored  in
+       each  data  widget.   The  name printed is the name of the
+       widget in question.  parse and reset data to widget trees.
+       It  takes  a  set of pairs of widget trees and data of the
+       same form as that printed by the  dataprint  command,  and
+       sets  the values on all the widget trees to the named val-
+       ues.  It error checks to ensure consistency with the  name
+       portion  of  the  data.  print data in ``short'' form.  In
+       short form, each piece of data is printed separated by the
+       | symbol.
+
+       If  any widget has the name nodata then the recursion does
+       not descend that widget.  Thus, a widget hierarchy can  be
+       designed to gather data from some subtrees and not others.
+       manipulate  mnemonics  throughout  widget  trees.    setup
+       mnemonics  on the widget trees The mnsetup command sets up
+       all children recursively under $widget so  that  mnemonics
+       will  appear on all action widgets and captions.  It first
+
+                                                                6
+
+()                                                             ()
+
+       scans the entire tree of all  its  arguments  looking  for
+       children  that  already  have  mnemonics, keeping track of
+       them.  Then it takes a second pass over the tree and finds
+       unique  single  letter  keys to use for the mnemonics.  It
+       uses an internal  scoring  system  to  find  the  ``best''
+       mnemonic  for each item in turn, preferring letters closer
+       to the front of each ``word'' in each string, capital let-
+       ters,  removing whitespace, and so on.  It is possible for
+       the command to not find a unique mnemonic, either  because
+       none  exists  or because finding a unique set would be too
+       time consuming.  In this case,  it  prints  a  warning  to
+       stderr.   clear  all  mnemonics  on  the  widget trees The
+       mnclear command descends the $widget tree recursively  and
+       clears all mnemonics resources.  These shell functions add
+       form constraints to the children of Form  widgets.   These
+       functions are automatically included the first time refer-
+       enced.
+
+       Each echos to stdout a set of form constraints to  perform
+       the desired action.  Thus, they are most often used inside
+       backquotes or $( ... ) in the resource list of  the  child
+       be added to the form.
+
+       under  (over)  specify  the  child  should be placed under
+       (over) another child in the form.  If pixels is not speci-
+       fied, it defaults to 0.
+
+       rightof (leftof) places a new child to the right (left) of
+       another child a certain number of pixels.
+
+       floatbottom (floattop) and floatright (floatleft)  make  a
+       child  float  along  the bottom (top) edge of the form, or
+       along the right (left) edge, respectively.  They  take  no
+       arguments.   floatbottom  and floattop may be used in con-
+       junction with under, over, or spanwidth.   Floatright  and
+       floatleft  may be used in conjunction with rightof, leftof
+       or spanheight.
+
+       spanwidth and spanheight make the child  span  the  entire
+       width  or  height of the form, respectively.  They take no
+       arguments.  spanwidth may  be  used  in  conjunction  with
+       under,  over,  or  floatbottom.  spanheight may be used in
+       conjunction with rightof,  leftof,  or  floatright.   list
+       information  about  widgets and their resources to stdout.
+       widlist is useful for debugging, quickly finding the exact
+       spelling  of  a  particular  resource name, or determining
+       what widget classes are available.
+
+       widlist, with no options, lists currently  active  widgets
+       along with information about their parents, handles, name,
+       and state.  In all cases, if args is not specified, infor-
+       mation for all widgets is listed.
+
+       The  -r option lists resources for each of args, which may
+
+                                                                7
+
+()                                                             ()
+
+       be either widget class names or widget  handles.   The  -R
+       option  lists  constraint  resources,  if any.  Constraint
+       resources  are  resources  that  a  manager  class  widget
+       imposes  on  its children.  The -c option lists all avail-
+       able widget class names.  The -h option lists  all  widget
+       handles.   attach  customized widgets to the wksh process.
+       To use widload, first attach a dynamic shared object  file
+       to  wksh containing the widget's definition and code using
+       the libload command (see ``C  Function  Access  Commands''
+       below).   Call  widload  giving as its arguments the class
+       record symbol names of the widgets to attach.   Create  an
+       instance  of  the new widget by specifying the widget name
+       with an XtCreateWidget or XtCreateManagedWidget call.  (or
+       follow  the  normal  wksh  convention  for gadgets).  wksh
+       searchs for a symbol with the correct name  and  considers
+       it the class record constant to use.
+
+       When  adding customized widgets, there should be String to
+       Type and Type to  String  converters  registered  for  any
+       resource  accessed  by the wksh XtGetValues or XtSetValues
+       commands that the widget uses.  wksh provides enough  con-
+       verters  to handle most Motif widget resources.  The easi-
+       est way to register additional converters is to  write  an
+       attachable wksh command that will do all the registration,
+       or use the call command to  call  an  internal  subroutine
+       written  to do such initializations.  Better yet, the wid-
+       get should automatically register all  the  converters  it
+       needs  when its class initialize function is invoked, then
+       no special action is  needed.   ring  the  terminal  bell.
+       volume  range -100 and +100, the default is 0, which rings
+       the bell at the server default value.  The alias is  bell.
+       flush  the  X  Event queue.  This command is generally not
+       needed because the queue is flushed automatically whenever
+       the  client  is awaiting user input.  This command is nor-
+       mally explicitly invoked when the program writes a message
+       to  a  widget and then performs some time consuming opera-
+       tion.  Unless XFlush is explicitly  invoked,  the  message
+       will  not appear until the operation has completed and the
+       client again begins processing user input.   For  example,
+       to  write  ``Please Wait'' to a StaticText widget and then
+       perform a long operation, call XFlush right after  setting
+       the  string  resource so the user sees the message immedi-
+       ately.  add the named ksh-command  to  the  callback  list
+       resource on the widget handle $widget.  The alias for this
+       command is acb.  The order callbacks are executed if  more
+       than  one callback is registered for the named resource is
+       undefined.  It is also possible to  set  a  callback  list
+       resource  to a ksh-command using XtSetValues but all other
+       previously registered callbacks are  lost.   XtAddCallback
+       simply adds a new callback to the list.  execute all call-
+       backs that are registered with $widget on  resource.   The
+       alias for this command is ccb.  remove all callbacks asso-
+       ciated with the widget's resource.   The  alias  for  this
+       command  is  racb.   register  an  input source with the X
+
+                                                                8
+
+()                                                             ()
+
+       Intrinsics.  The alias for this command is ain.   Whenever
+       an input line is available on the named source, ksh-cmd is
+       called one by one, and the  arguments  to  these  commands
+       will consist of the (unquoted) line.  If the ksh-cmd argu-
+       ment is not present, it defaults to the  shell  eval  com-
+       mand.  Usually a user defined function is used as the ksh-
+       cmd.
+
+       The input source may be a device, or a  fifo  pipe.   With
+       the  -d  option, a numerical file descriptor may be named.
+       register a ksh-cmd to  be  executed  milliseconds  in  the
+       future.   The  alias for this command is ato.  The ksh-cmd
+       may be any arbitrary wksh command  line.   Note  that  the
+       commands  are executed only once, if the command should be
+       executed again another timeout should be scheduled  within
+       the command itself.  The actual resolution of the internal
+       timer is server and  operating  system  dependent,  and  a
+       request  may  be rounded to the nearest time interval sup-
+       ported on the system.  create a new TopLevelShell  widget.
+       The  alias  for this command is acs.  variable is the name
+       of an environment variable receiving the widget's  handle.
+       This  handle  can  be  used on other wksh command calls to
+       operate on the widget.  wid-name is the name of  the  wid-
+       get,  and  is  used  by  the X Windows System for resource
+       defaults and other purposes.  class is  one  of  the  sup-
+       ported  wksh  shell  widget classes such as topLevelShell.
+       $parent is the handle of the parent widget,  the  toplevel
+       widget of the entire application.  After these basic argu-
+       ments, there can be any number of pairs of  resources  and
+       values separated by colons.  create a new popup shell wid-
+       get.  The alias for this command is cps.  variable is  the
+       name  of  an  environment  variable receiving the widget's
+       handle.  This handle can be used  on  other  wksh  command
+       calls  to  operate on the widget.  wid-name is the name of
+       the widget, which is used by  the  X  Windows  System  for
+       resource defaults and other purposes.  class is one of the
+       supported wksh shell widget classes such  as  popupWindow-
+       Shell  or  menuShell.  $parent is the handle of the parent
+       widget, the toplevel widget  of  the  entire  application.
+       After  these  basic  arguments, there can be any number of
+       pairs of resources and values separated by colons.  create
+       a  new widget.  The alias for these commands is cw and cmw
+       respectively.  A child created using XtCreateWidget is not
+       managed by the parent.  If a child is not managed, it will
+       not appear on the screen  initially.   Whether  or  not  a
+       child  is  managed  can be changed by the XtManageChildren
+       and XtUnmanageChildren commands.
+
+       variable is the name of an environment variable  receiving
+       the  widget's  handle.   This  handle can be used on other
+       wksh command calls to operate on the widget.  wid-name  is
+       the  name  of  the  widget, which is used by the X Windows
+       System for resource defaults and other purposes.  class is
+       one  of  the  supported  wksh shell widget classes such as
+
+                                                                9
+
+()                                                             ()
+
+       popupWindowShell or menuShell.  $parent is the  handle  of
+       the  parent  widget,  the  toplevel  widget  of the entire
+       application.  After these basic arguments,  there  can  be
+       any  number  of pairs of resources and values separated by
+       colons.  destroy widgets  and  all  their  children.   The
+       alias  for  this  command  is dw.  XtDestroyWidget takes a
+       list of widget handles as its arguments, and destroys them
+       in turn.  Any environment variables holding handles to the
+       widget or their children  become  invalid.   Most  widgets
+       also have destroyCallback resources which will be executed
+       immediately before the widget is destroyed.  take a widget
+       handle  and  get  or  set resource values for that widget.
+       The alias for these commands are gv and  sv  respectively.
+       The widget handle presumably comes from a previous call to
+       XtCreateManagedWidget, XtCreateWidget,  OlInitialize,  and
+       so on.
+
+       XtGetValues  takes a list of one or more resource:variable
+       pairs and stores an ASCII version of each  resource  value
+       into the corresponding variable.
+
+       XtSetValues  takes  a  list  of one or more resource:value
+       pairs and  sets  resource  value  into  the  corresponding
+       value.  go into an infinite loop processing X events.  The
+       alias for this command is ml.  It would typically  be  the
+       final  line  of  an  wksh script.  However, while creating
+       widgets interactively, this command can be interrupted via
+       the  Intr key on the keyboard.  Thus, to make widgets dis-
+       play on the screen, you can use  the  XtMainLoop  command.
+       If  something  looks incorrect, hit the Intr key, interac-
+       tively modify the widgets, then call XtMainLoop again.
+
+       If XtMainLoop is not executing, no X events for the appli-
+       cation are processed, and so nothing happens on the screen
+       in response to keyboard, mouse actions, and so  on,  until
+       XtMainLoop  is  executed again.  manage or unmanage widget
+       children.  The aliases for these commands are mc  and  umc
+       respectively.   These  commands  take any number of widget
+       handles (presumably from a previous call  to  XtCreateMan-
+       agedWidget,  XtCreateWidget,  and so on).  All the widgets
+       named in a given call must have a common parent.   When  a
+       widget is ``managed'' its parent will take it into account
+       when determining screen layout.  Even  if  the  widget  is
+       managed,  it  will  not  appear on the screen unless it is
+       also realized and mapped.  Most  widgets  by  default  are
+       mapped  when  they  are managed, but this behavior is con-
+       trolled by a boolean  resource  called  mappedWhenManaged.
+       map  or unmap widgets.  The aliases for these commands are
+       mw and umw respectively.  These commands take  any  number
+       of  widget  handles  (presumably  from  a previous call to
+       XtCreateManagedWidget, XtCreateWidget, XtAppInitialize and
+       so  on).   When  a widget is ``mapped'' its window is dis-
+       played on the screen.  In order to  be  mapped,  a  widget
+       must  also  be  realized  and  managed.  If the widget has
+
+                                                               10
+
+()                                                             ()
+
+       children, they are recursively mapped or unmapped as well.
+       bring  up and down windows previously created using XtCre-
+       atePopupShell.  The aliases for these commands are pu  and
+       pd  respectively.   XtPopup  takes  a  widget  handle, and
+       optionally a grab type, and brings up  the  popup  window.
+       The default is GrabNone.
+
+       XtPopdown  takes  a widget handle as its argument and pops
+       down the widget, which then disappears  from  the  screen.
+       realize  or  unrealize  widgets.  The alias for these com-
+       mands are rw and urw respectively.   These  commands  take
+       any  number  of widget handles (presumably from a previous
+       call to XtCreateManagedWidget, XtCreateWidget,  OlInitial-
+       ize,  or  XtAppInitialize  and  so  on).  When a widget is
+       ``realized'' its window is  created  on  the  display  and
+       final  initialization  of the widget is completed.  If the
+       widget has children,  they  are  recursively  realized  or
+       unrealized  as  well.  set a widget to be sensitive (true)
+       or insensitive (false).  The alias for this command is ss.
+       This command takes a widget handle (presumably from a pre-
+       vious  call  to   XtCreateManagedWidget,   XtCreateWidget,
+       OlInitialize,  XtAppInitialize,  and so on.  When a widget
+       is insensitive, the user is unable to  interact  with  it.
+       Some  widgets  change  their visual appearance if they are
+       insensitive as well.  If the widget has children, they are
+       recursively set to be sensitive or insensitive as well.
+
+       This command should be used rather than simply setting the
+       sensitive resource of a widget, since  this  command  cor-
+       rectly  takes  care  of  subwidgets.   These built-ins and
+       functions are available when running wksh in  Motif  mode.
+       Operations specific to the Motif List widget.
+
+       The  aliases,  corresponding  to  the  options adpsgSDitbC
+       respectively, are: add new items on the end of the XmList.
+       After  the  $widget argument, further arguments can either
+       be the text of an item to add to the list, or with the  -f
+       option  the  name  of  a  file each of whose lines will be
+       added as an item to the list, or with  the  -P  (position)
+       option  the index of an existing item which new items will
+       be inserted after.  If no -P options are given, then items
+       are added to the end of the list.  For example:
+
+       listadd $W -P 4 "Item 1" "Item 2"
+
+       will add the strings "Item 1", "Item 2" after the 4th item
+       in the list.  Item indices always start at 1.  Using 0  as
+       the  index  will  add items to the end of the list.  Using
+       the -f option to add each line of a file to the list is  a
+       highly efficient way to maintain large lists.  delete list
+       items.  After the $widget argument, the rest of the  argu-
+       ments are a list of indices of items to delete.  Note that
+       the indices are kept constant during the life of the  com-
+       mand,  and after the items are deleted all remaining items
+
+                                                               11
+
+()                                                             ()
+
+       are renumbered so the list of indices are always  consecu-
+       tive  and  start  at 1.  So, the following two lines would
+       perform the same function:                 listdel $W 1  2
+                       listdel $W 1; listdel $W 1
+
+       The  first  command  deletes the first and second items in
+       one operation, after which the remaining  items  would  be
+       renumbered.  The second line deletes the first item, after
+       which  the  remaining  items  would  be  renumbered,  then
+       deletes  the  first  item  again (thus deleting the second
+       item of the original list).
+
+       You may also use the special keyword "all"  instead  of  a
+       list  of  items,  in  that case all items will be deleted.
+       causes the named items to be selected.  You  may  use  the
+       special  keyword  "all"  to  select all items in the list.
+       causes the named items to become deselected.  You may  use
+       the  special  keyword  "all"  to deselect all items in the
+       list.  prints the named items to stdout.  You may use  the
+       special  keyword  "all"  to  print  a list of all items in
+       order to stdout.  prints a  list  of  all  selected  items
+       label text to stdout.  prints a list of all selected items
+       indexes to stdout.  replaces the text of the  named  index
+       item   with   the   following  argument.   Any  number  of
+       index/string pairs may be  specified.   Scroll  the  named
+       item  to the bottom of the list.  Scroll the named item to
+       the top of the list.  quickly remove  all  items  and  add
+       back  the new items.  Faster than calling listdel and lis-
+       tadd separately.  Operate on the xmText  widget.   Aliases
+       corresponding  to  each  option -gsrGSCaidl are: Print the
+       text from a Text widget to stdout.  Set the text of a Text
+       widget.   Replace  text in a Text widget starting at index
+       from-pos up to and  including  character  position  to-pos
+       with  string.  print the selected text in a Text widget to
+       stdout.  set selected text in a Text  widget  starting  at
+       character  position from-pos and going up to and including
+       position to-pos.  Clear the selection in  a  Text  widget.
+       append  text  to the end of a text widget.  insert text at
+       position, which is an integer starting at 0.   Scroll  the
+       text  in  a text widget so that position is in the viewing
+       area.  Print the index of the last position of  the  named
+       text  widget.   For  every Motif widget, there is a conve-
+       nience function defined to create that widget.  There  are
+       also  some convenience functions for creating certain com-
+       monly needed composite widget structures.   All  of  these
+       convenience  functions  take  the same argument structure.
+       The -m option, if present, indicates that the  newly  cre-
+       ated widget should be immediately managed.  The default is
+       that they are not immediately managed and would require  a
+       call  to  XtManageWidget  before  showing.  The var is the
+       name of an environment variable that will receive the han-
+       dle  of the newly created widget.  parent is the handle of
+       the parent of the widget to be created, name is  the  name
+       of  the  newly  created  widget.   Any  number  of res:val
+
+                                                               12
+
+()                                                             ()
+
+       arguments may be given that specify initial  settings  for
+       resources.
+
+       There  is  no  room here to discuss all of these commands,
+       see Motif documentation for complete details.  Here  is  a
+       list  of all the convenience functions currently supported
+       by wksh, along with their aliases in  parentheses:  XmCre-
+       ateBulletinBoardDialog (crtbulletinbd) XmCreateCascadeBut-
+       ton  (crtcascadeb)  XmCreateCascadeButtonGadget   (crtcas-
+       cadebg)  XmCreateCommand  (crtcommand) XmCreateDialogShell
+       (crtdialogs) XmCreateDrawingArea  (crtdrawinga)  XmCreate-
+       DrawnButton  (crtdrawnb)  XmCreateErrorDialog  (crterrord)
+       XmCreateFileSelectionBox  (crtfilesb)   XmCreateFileSelec-
+       tionDialog (crtfilesd) XmCreateForm (crtform) XmCreateFor-
+       mDialog (crtformd) XmCreateFrame (crtframe) XmCreateInfor-
+       mationDialog  (crtinformationd)  XmCreateLabel  (crtlabel)
+       XmCreateLabelGadget  (crtlabelg)  XmCreateList   (crtlist)
+       XmCreateMainWindow  (crtmainw)  XmCreateMenuBar (crtmenub)
+       XmCreateMenuShell (crtmenus)  XmCreateMessageBox  (crtmes-
+       sageb) XmCreateMessageDialog (crtmessaged) XmCreateOption-
+       Menu (crtoptionm) XmCreatePanedWindow  (crtpanedw)  XmCre-
+       atePopupMenu (crtpopupm) XmCreatePromptDialog (crtpromptd)
+       XmCreatePulldownMenu   (crtpulldownm)   XmCreatePushButton
+       (crtpushb)  XmCreatePushButtonGadget (crtpushbg) XmCreate-
+       QuestionDialog (crtquestiond) XmCreateRadioBox (crtradiob)
+       XmCreateRowColumn   (crtrowc)   XmCreateScale   (crtscale)
+       XmCreateScrollBar    (crtscrollb)     XmCreateScrolledList
+       (crtscrolledl)  XmCreateScrolledText (crtscrolledt) XmCre-
+       ateScrolledWindow   (crtscrolledw)    XmCreateSelectionBox
+       (crtselectionb)   XmCreateSelectionDialog  (crtselectiond)
+       XmCreateSeparator  (crtseparator)  XmCreateSeparatorGadget
+       (crtseparatorg)  XmCreateText (crttext) XmCreateToggleBut-
+       ton (crttoggleb) XmCreateToggleButtonGadget  (crttogglebg)
+       XmCreateWarningDialog  (crtwarningd) XmCreateWorkingDialog
+       (crtworkingd) These commands are not graphical in  nature,
+       instead  they  allow a programmer to directly call C func-
+       tions from wksh.  These commands support arbitrary  struc-
+       tures  to  be  passed to functions, pieces of memory to be
+       accessed and modified, etc.  As in programming directly in
+       C,  it  is  quite easy to cause wksh to core dump by using
+       these features.  These features  are  useful  for  testing
+       subroutine libraries without writing extensive C programs,
+       or for accessing existing  library  functions  from  wksh.
+       For example, it is not very difficult to make TLI network-
+       ing calls from shell by using these functions.  call calls
+       a C function with a desired set of arguments.  It puts the
+       return value of func, in hex, into the  environment  vari-
+       able  RET.   By  default, call returns the return value of
+       the function.  However, the -r option reverses the  notion
+       of success for the function (0 is failure, nonzero is suc-
+       cess), and the -n option returns success if  the  function
+       returns a nonnegative value.
+
+       The  argument  func is either the name of a C function, to
+
+                                                               13
+
+()                                                             ()
+
+       be looked up in the internal table of functions, or a  hex
+       address.   Due  to the danger in calling a function with a
+       misinterpreted address, a  hex  address  must  begin  with
+       ``0x''.
+
+       A  maximum  of 10 args is allowed and each argument is one
+       of three types: arg starts with an @.  This argument types
+       has  two parts: the type descriptor and the value descrip-
+       tor.  The type descriptor is the name of a 'C'  data  type
+       (for  example,  long, struct, strbuf, char *); if the type
+       is a structure type, the type will be considered to  be  a
+       pointer  to  that  type.   The value descriptor is a legal
+       value of this type.  arg starts with a number.   Numerical
+       arguments  are  interpreted  as unsigned long integers and
+       are parsed in that form.  For example, the argument  3  is
+       equivalent  to  @ulong:3.  arg is a string.  This argument
+       is taken directly from the command line.
+
+       Any memory allocated due to the parsing of the  type/value
+       descriptor   mechanism   will  be  freed  after  func  has
+       returned, unless the -F option has been given.   When  you
+       need  to free the structure, use strfree.  (The memory for
+       the string or number is not allocated using malloc and can
+       not be freed or stored, it will be overwritten.)
+
+       The set of arguments, arg-modifier (often referred to as a
+       ``overrides''), are used to change certain fields of  some
+       arguments.   The  form  of  these modifiers is: field sub-
+       script-expression operator=val
+
+       where: refers to a field of one  of  the  arguments.   The
+       argument  number or argument type may be used to limit the
+       search for field.  If the field is left out, this  implies
+       an override for the whole first argument.  optional and of
+       the form '[integer expression]'.  The type  of  the  field
+       must be an array or pointer type.  may only be used if the
+       field is an integer type.  The set of operators is  +,  -,
+       &,  |, *, /, %, and ^, interpreted as in C.  val must be a
+       valid value descriptor for the type of the field.   attach
+       new  built-in  commands  to  the  wksh  process.  Create a
+       dynamic shared object file containing the cmdname  defini-
+       tion using the libload command.  Then attach it to wksh by
+       executing the command libload with only one argument,  the
+       path  to  the  shared  object.   A full path to the shared
+       object should be used if it does not reside  in  /usr/lib.
+       Call  cmdload giving the arguments the names of the built-
+       in commands as the user should type them.
+
+       For each command, a function  is  needed  following  these
+       interfacing  rules:  the  name of the function must be the
+       same as the name of the new  built-in  command,  prepended
+       with  b_  the  arguments  to the function are int argc and
+       char *argv[], the same kind of arguments used for  a  main
+       function.   As  usual,  argv[0]  is set to the name of the
+
+                                                               14
+
+()                                                             ()
+
+       command, the rest of the arguments  are  the  strings  the
+       user  passed down on the call.  the function should return
+       int, return ``0'' on success and nonzero on failure in the
+       current  version  of  wksh, stdin of the command cannot be
+       read, get information through the argument list  to  print
+       to  the command's stdout, use altprintf instead of printf,
+       use the same arguments as printf some  provided  functions
+       allow  access  to  wksh  environment  variables or execute
+       other shell command lines use this rather than printf  set
+       the name environment variable to value set global environ-
+       ment variable name to value same as env_set get  the  cur-
+       rent value of name environment variable
+
+       Depending  on  the  type of variable accessed, the pointer
+       returned may point to a static buffer whose  contents  may
+       be  overwritten  on  a  subsequent  call.  get the current
+       value of name global environment variable return the  wid-
+       get  identifier  of  a  handle  evaluate command add a new
+       #define to the list.  name should be a  valid  'C'  define
+       name; value must be an integer value.
+
+       If  name  has  already  been defined, and the -R option is
+       present, the value will not be  re-assigned.   add  a  new
+       list of #defines to the define list.  These lists are sets
+       of name/value pairs  represented  by  structures  of  type
+       symarray, preferably sorted.  struct symarray {
+           const char *str;
+           unsigned long addr; }; address of an array of symarray
+       structures tag for this set of define's read the  contents
+       of  a  pointer.   deref  will  show  the  contents  of the
+       pointer,  address,  in  hexadecimal,  either  byte-by-byte
+       (where  each  byte is represented by a pair of hex digits)
+       or long-by-long.  By default, the output is  long-by-long,
+       with  only  the  first  long  being  printed.  If the -len
+       option (where len is an integer)  is  supplied,  then  the
+       output is byte-by-byte for len bytes.  If the -l option is
+       supplied, the output will be printed  long-by-long.   Note
+       that the long-by-long output can look very different based
+       on the machine's byte ordering.
+
+       The -p option will cause the output to be printed  on  the
+       standard  output,  otherwise, the output will be placed in
+       shell-variable.  If shell-variable is  not  supplied,  RET
+       will  be  used.   compare  internal data at address of the
+       designated type against criteria supplied to the  command.
+       These criteria are of the form: field=value.
+
+       type descriptor address descriptor a field of type a legal
+       value for field's type print internal data at address,  of
+       the designated type, selecting fields supplied to the com-
+       mand.  field-name must be a valid field name or  a  .  for
+       the whole value.
+
+       If  shell-variable is given, the output will be put in the
+
+                                                               15
+
+()                                                             ()
+
+       environment; otherwise, it is printed to stdout.  find the
+       value  of  a #define, (see deflist and define).  It should
+       not be necessary to use this  function  frequently,  since
+       the parser will substitute the value while parsing.  find-
+       def places the value in shell-variable,  or,  by  default,
+       RET.  find the address of a symbol in the running process.
+       access a needed shared object.  If the  architecture  does
+       not  support  dynamic  shared  objects nothing is actually
+       loaded.  the object.  If there is a symbol  accessible  by
+       the  name name_libinit or libinit_name, this function will
+       be called.  find the size of a C type.  declare  a  struc-
+       ture, name, with fields fld.  If type is not present for a
+       field, the type is assumed to be long.
+
+       If name has already been defined, and  the  -R  option  is
+       present,  the  value  will  not be re-assigned.  associate
+       symbolic names with a designated type  or  a  field  of  a
+       structure  of  this  type.   symbolic  must  be  #define's
+       declared earlier.  Any type assigned symbolic values  must
+       be  of  an integer valued type.  The -m option causes each
+       value to be considered a mask and the  set  of  values  on
+       output  should  be  separated  by  | symbols.  declare new
+       types.  type must be a valid type descriptor.  typename is
+       the  name  of  the  type being defined; it must be a valid
+       identifier.  execute command  if  the  variable  DEBUG  is
+       greater  than  or  equal to level.  declare an environment
+       variable as representing a pointer  to  the  designated  C
+       type.   use nm to find symbol.  This is only necessary for
+       static variables.  free the memory of a  previously  allo-
+       cated  and  declared environment variable representing a C
+       data structure.  put the address of  the  expression  into
+       RET,  like getaddr.  print out a designated shell function
+       or all, sending the output through pg.  set value of inte-
+       ger  variable  to new value.  read in an array of built-in
+       variables, aliases or functions.  allocate space using and
+       put  the  pointer  in  var.   use  call to allocate a data
+       structure and put the pointer  into  the  named  variable.
+       free  a data structure allocated by new.  control the out-
+       put of strprint/field_get.  The -v option allows capturing
+       the  output  in  a  variable,  if there is output.  The -p
+       option forces the current setting to be output.  The  nor-
+       mal  reset form allows the specifying of print conventions
+       (names: field names are printed, hex: integer output is in
+       hex,  dec:  integer  output is in decimal).  The -d option
+       allows for passing the output  captured  with  a  previous
+       prctl  back in as input.  symbol can be PRSYMBOLIC, PRHEX,
+       and so on.  By  default,  the  output  setting  is  PRSYM-
+       BOLIC|PRMIXED|PRNAMES  (output  will  use  symbolics  when
+       available, will print both hex  and  decimal  for  integer
+       values  and  will  print  field  names within structures).
+       reverse failure return  codes.   designate  a  new  parse,
+       print  or  free  function for a data type.  take out over-
+       rides from list of arguments  and  put  them  in  specargs
+       array.   This  example  demonstrates  using  addbuttons to
+
+                                                               16
+
+()                                                             ()
+
+       create rectButton widgets  inside  an  Exclusives  widget.
+       The  following code would take advantage of the shell fea-
+       ture whereby a variable can be set just for the  execution
+       of  a  single command: cmw EX ex exclusives $TOPLEVEL BUT-
+       TONTYPE=rectButton        addbuttons         $EX         \
+                       "First"   do_first \                 "Sec-
+       ond" do_second if $POP_UCA is the upper control area of  a
+       popupWindowShell, one can add several captioned textFields
+       to it as follows: sv $POP_UCA alignCaptions:true addfields
+       $POP_UCA  \                  NAME    "Name:"      :   16 \
+                       ADDR      "Address:"       :      20     \
+                       PHONE  "Telephone:" : 18
+
+       To  put the captions above each textField, use the CAPARGS
+       variable  as  follows:  sv   $POP_UCA   alignCaptions:true
+       CAPARGS="position:top"      addfields      $POP_UCA      \
+                       NAME      "Name:"         :       16     \
+                       ADDR       "Address:"       :      20    \
+                       PHONE  "Telephone:" : 18 When using Motif,
+       use XtAppInitialize instead of OlInitialize: XtAppInitial-
+       ize TOPLEVEL myapp Myapp "$@" Using widload, for  example,
+       if a new widget whose class record symbol is fancyLooking-
+       WidgetClass is contained in a dynamic shared object  named
+       libfancy.so,  the commands would be: libload /usr/lib/lib-
+       fancy.so widload fancyLooking
+
+       After this, create an instance of the new widget by speci-
+       fying  fancyLooking  on  an XtCreateWidget or XtCreateMan-
+       agedWidget call.  If the widget is really a  Gadget,  then
+       use  normal  wksh  conventions,  fancyLookingGadget in the
+       above example.  An example  of  a  newly  created  managed
+       child widget using XtCreateManagedWidget: XtCreateManaged-
+       Widget      TEXT1      text1      text      $PARENT      \
+                       value:"hello   world"   XtGetValues  $TEXT
+       value:S width:W
+
+       would store the current string resource into the  environ-
+       ment  variable  $S and the current width into the variable
+       $W.  XtSetValues $TEXT value:"Hello World" background:Yel-
+       low
+
+       would  set  the  current  string  resource  to  the string
+       ``Hello World'' and the current background color  to  Yel-
+       low.
+           call   malloc   1024                   #  Allocates  a
+       buffer
+           BUF=$RET    # Stores pointer in BUF
+           echo $BUF
+
+       RESPONSE:         0x4581568            # Note that BUF  is
+       a pointer
+
+           call  strcpy  $BUF  'hello  world'     # Copies string
+       into BUF
+
+                                                               17
+
+()                                                             ()
+
+           call altprintf '%s
+           ' $BUF      # Print the contents of BUF
+
+       RESPONSE:        hello world
+
+           call free $BUF                     # Frees the buffer
+           call strdup 'a:b:c'                # mallocs space for
+       a:b:c
+           BUF=$RET
+           call  strtok $BUF :                 # breaks up string
+       by :
+           while true
+           do
+               P=$RET  # set P to current segment
+               call altprintf '%s
+           ' $P        # Print out current segment
+               if call strtok 0 :             # see if the return
+       is 0
+               then
+                   break                      # break if it is
+               fi
+           done
+           call free $BUF
+
+       This will print out:
+
+       a b c Suppose you have declared (see struct, typedef)
+           typedef struct hello {
+               int x;
+               int y;
+           } hello_t;
+
+       you can say call hellofunc @hello_t:{1,30}
+
+       and  get  a POINTER to a structure of type hello passed to
+       hellofunc.  Suppose you have declared:
+           struct sub {
+               int subsubx;
+           };
+           struct sub {
+               int subx;
+               struct subsub *suby;
+           };
+           struct top {
+               int x;
+               struct sub y;
+           };
+
+       call strprint top '@top:{1,{2,{3}}}' RESPONSE:  {  x=1,  {
+       subx=2, {subsubx=3 } }
+
+       Using an argument modifier:
+
+       call   strprint   top   '@top:{1,{2,{3}}}'   ++  subsubx=4
+
+                                                               18
+
+()                                                             ()
+
+       RESPONSE: { x=1, { subx=2, {subsubx=4  }  }  Or,  alterna-
+       tively  (they  all  do  the same thing): call strprint top
+       '@top:{1,{2,{3}}}' ++ 2.y.suby.subsubx=4 call strprint top
+       '@top:{1,{2,{3}}}'  ++  y.suby.subsubx=4 call strprint top
+       '@top:{1,{2,{3}}}' ++ y.subsubx=4
+
+       RESPONSE: { x=1, { subx=2,  {subsubx=4  }  }  define  X  1
+       define -R X 2 call strprint -p long '@long:X'
+
+       RESPONSE:  long=1(0x1) #include "my.h" #include "exksh.h"
+
+       struct symarray Mydefines[] = {
+           { "MYVAL", MYVAL },
+           { "MYOTHERVAL", MYOTHERVAL },
+           { NULL, 0 } };
+
+       In  a script, you can then say: deflist Mydefines # Output
+       is for an intel 386 machine
+
+           call strdup "hi there"             # Allocates a duped
+       pointer
+           BUF=$RET    # Stores pointer in BUF
+           deref -9 $BUF aaa
+           echo $aaa
+           deref -l -9 $BUF aaa
+           echo $aaa
+
+       RESPONSE:    0x686920746865726500      # hex equiv. of "hi
+       there"
+                    0x742069686572656800000000   struct    strbuf
+       maxlen:int    len:int    'buf:char    *'    call    malloc
+       4096                       # Allocate a  character  buffer
+       buf=$RET        #  Store  its  pointer  in buf call -F nop
+       "@strbuf:{4096, 0, p$buf  }"               #  Allocates  a
+       strbuf  strbuf=$RET     #  Store  pointer  in  strbuf call
+       getmsg $FD $strbuf 0 0        # Call getmsg with the  str-
+       buf  field_comp strbuf $strbuf len=4        # Before going
+       on, make sure                 # the len is 4 struct strbuf
+       maxlen:int    len:int    'buf:char    *'    call    malloc
+       4096                       # Allocate a  character  buffer
+       buf=$RET        # Store its pointer in buf call nop "@str-
+       buf:{4096,   0,   p$buf   }"  #   Allocates    a    strbuf
+       strbuf=$RET     #  Store pointer in strbuf call getmsg $FD
+       $strbuf 0  0            #  Call  getmsg  with  the  strbuf
+       field_get strbuf $strbuf len      # See the value of len
+
+       At  this  point,  the  length  field is printed to stdout.
+       struct mine a b c define MY_VAL1 1 define MY_VAL2  2  sym-
+       bolic  -t  mine.a  -t  mine.c  MY_VAL1 MY_VAL2 call -F nop
+       '@mine:{MY_VAL1, MY_VAL2, 2}' ptr=$RET field_get mine $ptr
+       .
+
+       RESPONSE:        { a=MY_VAL1, b=2, c=MY_VAL2 } struct mine
+       a b c define MY_VAL1 1 define MY_VAL2  2  symbolic  -m  -t
+
+                                                               19
+
+()                                                             ()
+
+       mine.a  -t  mine.c  MY_VAL1  MY_VAL2  call  strprint  mine
+       '@mine:{3, MY_VAL2, 2}'
+
+       RESPONSE:       { a=MY_VAL1|MY_VAL2, b=2, c=MY_VAL2 }
+
+RReeffeerreenncceess
+       In addition, the Motif manual pages are essential for pro-
+       gramming  graphics  using  wksh,  and  the  Xt  Intrinsics
+       Toolkit Reference Manual is also very helpful.
+
+                                                               20
+

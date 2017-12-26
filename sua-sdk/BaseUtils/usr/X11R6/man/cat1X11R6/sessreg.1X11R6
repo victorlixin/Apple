@@ -1,0 +1,99 @@
+sessreg(1X11R6)                                         sessreg(1X11R6)
+
+  SSEESSSSRREEGG
+
+  NNAAMMEE
+
+    sessreg - manage utmp/wtmp entries for non-init clients
+
+  SSYYNNOOPPSSIISS
+
+    sessreg [[-w wtmp-file]] [[-u utmp-file]] [[-l line-name]] [[-h host-name]]
+            [[-s slot-number]] [[-x Xservers-file]] [[-t ttys-file]] [[-a]] [[-d]]
+            user-name
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    Sessreg is a simple program for managing utmp/wtmp entries for xdm
+    sessions.
+
+    System V has a better interface to /etc/utmp than BSD; it dynamically
+    allocates entries in the file, instead of writing them at fixed positions
+    indexed by position in /etc/ttys.
+
+    To manage BSD-style utmp files, sessreg has two strategies. In conjunction
+    with xdm, the -x option counts the number of lines in /etc/ttys and then
+    adds to that the number of the line in the Xservers file which specifies
+    the display. The display name must be specified as the "line-name" using
+    the -l option. This sum is used as the "slot-number" in /etc/utmp that
+    this entry will be written at. In the more general case, the -s option
+    specifies the slot-number directly. If for some strange reason your system
+    uses a file other that /etc/ttys to manage init, the -t option can direct
+    sessreg to look elsewhere for a count of terminal sessions.
+
+    Conversely, System V managers will not ever need to use these options (-x,
+    -s and -t). To make the program easier to document and explain, sessreg
+    accepts the BSD-specific flags in the System V environment and ignores
+    them.
+
+    BSD also has a host-name field in the utmp file which doesn't exist in
+    System V. This option is also ignored by the System V version of sessreg.
+
+  UUSSAAGGEE
+
+    In Xstartup, place a call like:
+
+           sessreg -a -l $DISPLAY -x /usr/X11R6/lib/xdm/Xservers $USER
+
+    and in Xreset:
+
+           sessreg -d -l $DISPLAY -x /usr/X11R6/lib/xdm/Xservers $USER
+
+  OOPPTTIIOONNSS
+    --ww wtmp-file
+        This specifies an alternate wtmp file, instead of /usr/adm/wtmp for
+        BSD or /etc/wtmp for sysV. The special name "none" disables writing
+        records to /usr/adm/wtmp.
+    --uu utmp-file
+        This specifies an alternate utmp file, instead of "/etc/utmp". The
+        special name "none" disables writing records to /etc/utmp.
+    --ll line-name
+        This describes the "line" name of the entry. For terminal sessions,
+        this is the final pathname segment of the terminal device filename
+        (e.g. ttyd0). For X sessions, it should probably be the local display
+        name given to the users session (e.g. :0). If none is specified, the
+        terminal name will be determined with _tt_tt_yy_nn_aa_mm_ee(3) and stripped of
+        leading components.
+    --hh host-name
+        This is set for BSD hosts to indicate that the session was initiated
+        from a remote host. In typical xdm usage, this options is not used.
+    --ss slot-number
+        Each potential session has a unique slot number in BSD systems, most
+        are identified by the position of the line-name in the /etc/ttys file.
+        This option overrides the default position determined with _tt_tt_yy_ss_ll_oo_tt(3).
+        This option is inappropriate for use with xdm, the -x option is more
+        useful.
+    --xx Xservers-file
+        As X sessions are one-per-display, and each display is entered in this
+        file, this options sets the slot-number to be the number of lines in
+        the ttys-file plus the index into this file that the line-name is
+        found.
+    --tt ttys-file
+        This specifies an alternate file which the -x option will use to count
+        the number of terminal sessions on a host.
+
+    --aa
+        This session should be added to utmp/wtmp.
+
+    --dd
+        This session should be deleted from utmp/wtmp. One of -a/-d must be
+        specified.
+
+  SSEEEE AALLSSOO
+
+    _x_d_m(1X11R6)
+
+  AAUUTTHHOORR
+
+    Keith Packard, MIT X Consortium
+

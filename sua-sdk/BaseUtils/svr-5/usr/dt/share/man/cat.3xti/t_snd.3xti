@@ -1,0 +1,153 @@
+
+
+t_snd(3xti)                                           t_snd(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       int  t_snd(int  fd,  char  *buf,  unsigned int nbytes, int
+       flags);
+
+DDeessccrriippttiioonn
+       This function is a TLI/XTI data transfer routine  used  to
+       send either normal or expedited data over a connection.
+
+       By  default,  t_snd  operates  in synchronous mode and may
+       wait if flow control restrictions prevent  the  data  from
+       being accepted by the local transport provider at the time
+       the call is made.  However,  if  O_NONBLOCK  is  set  (via
+       t_open or fcntl), t_snd will execute in asynchronous mode,
+       and will  fail  immediately  if  there  are  flow  control
+       restrictions.
+
+       Even  when  there  are no flow control restrictions, t_snd
+       will wait if STREAMS internal resources are not available,
+       regardless of the state of O_NONBLOCK.
+
+       On  successful  completion,  t_snd  returns  the number of
+       bytes accepted by the transport provider.   Normally  this
+       will  equal the number of bytes specified in nbytes.  How-
+       ever, if O_NONBLOCK is set, it is possible that only  part
+       of  the  data  will be accepted by the transport provider.
+       In this case, t_snd will set T_MORE for the data that  was
+       sent (see below) and will return a value less than nbytes.
+       If nbytes is 0 and the sending of 0 bytes is not supported
+       by the underlying transport provider, t_snd will return -1
+       with t_errno set to TBADDATA.  A return value of  0  indi-
+       cates that the request to send a 0-length data message was
+       sent to the provider.
+
+       If T_EXPEDITED is set in flags, the data will be  sent  as
+       expedited data, and will be subject to the interpretations
+       of the transport provider.
+
+       If T_MORE is set in flags, or is set as  described  above,
+       an  indication  is sent to the transport provider that the
+       transport service data unit (TSDU) or expedited  transport
+       service  data  unit (ETSDU) is being sent through multiple
+       t_snd calls.  Each t_snd with the T_MORE  flag  set  indi-
+       cates  that  another  t_snd will follow with more data for
+       the current TSDU.  The end of the TSDU (or ETSDU) is iden-
+       tified  by a t_snd call with the T_MORE flag not set.  Use
+       of T_MORE enables a user to break up  large  logical  data
+       units  without losing the boundaries of those units at the
+       other end of the connection.   The  flag  implies  nothing
+       about  how  the  data  is  packaged for transfer below the
+       transport interface. If the transport  provider  does  not
+       support  the  concept  of  a TSDU as indicated in the info
+       argument on return from t_open or  t_getinfo,  the  T_MORE
+
+                                                                1
+
+t_snd(3xti)                                           t_snd(3xti)
+
+       flag is not meaningful and will be ignored.
+
+       The  size of each TSDU or ETSDU must not exceed the limits
+       of the transport provider as returned by t_open or  t_get-
+       info. If the size is exceeded, a TSYSERR with system error
+       EPROTO will  occur.   However,  the  t_snd  may  not  fail
+       because  EPROTO errors may not be reported immediately. In
+       this case, a subsequent call that accesses  the  transport
+       endpoint will fail with the associated TSYSERR.
+
+       If t_snd is issued from the T_IDLE state, the provider may
+       silently discard the data. If t_snd  is  issued  from  any
+       state  other  than  T_DATAXFER,  T_INREL  or  T_IDLE,  the
+       provider will generate a TSYSERR with system error  EPROTO
+       (which may be reported in the manner described above).
+
+   PPaarraammeetteerrss
+       the  file descriptor for the transport endpoint over which
+       data will be sent.  points to the  user  data.   specifies
+       the  number  of  bytes of user data to be sent.  specifies
+       optional flags on return.
+
+   SSttaattee ttrraannssiittiioonnss
+       On entry, T_DATAXFER or T_INREL; unchanged on exit.
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+UUssaaggee
+       t_snd  is  applicable  only  for connection-mode transport
+       services  that  return  a  service  type  of   T_COTS   or
+       T_COTS_ORD in response to t_open or t_getinfo.
+
+RReettuurrnn vvaalluueess
+       On  successful  completion,  t_snd  returns  the number of
+       bytes accepted by the transport provider. On  failure,  it
+       returns -1 and t_errno is set to indicate the error.
+
+   EErrrroorrss
+       On  failure,  t_errno  may be set to one of the following:
+       The specified file descriptor does not refer to  a  trans-
+       port  endpoint.   O_NONBLOCK was set, but the flow control
+       mechanism prevented the transport provider from  accepting
+       data  at this time.  This function is not supported by the
+       underlying transport provider.  A system  error  (see  has
+       been  detected  during execution of this function.  nbytes
+       is 0 and sending 0 bytes is not supported by the transport
+       provider;  or,  the  number  of bytes on a single send was
+       greater than the number specified for nbytes by  the  info
+       argument  on the t_open or fcntl; or, the maximum size was
+       exceeded during multiple sends.  An asynchronous event has
+       occurred  on  the  transport  endpoint specified by fd and
+       requires  immediate  attention.   An  invalid   flag   was
+
+                                                                2
+
+t_snd(3xti)                                           t_snd(3xti)
+
+       specified.   The function was issued in the wrong sequence
+       on the transport endpoint referenced by fd.  A  communica-
+       tion problem has been detected with the transport provider
+       and there is no other value of  t_errno  to  describe  the
+       error condition.
+
+WWaarrnniinnggss
+       The  t_snd  routine does not look for a disconnect indica-
+       tion (showing that the connection was broken) before pass-
+       ing data to the provider.
+
+       In  asynchronous  mode,  if  the  number of bytes accepted
+       exceeds the number requested by  the  transport  provider,
+       the provider may be blocked because of flow control.
+
+       If several processes issue concurrent calls to t_snd (mul-
+       tiple sends), the data from those processes may be  inter-
+       mixed  (since  several  users  of  the  same  endpoint are
+       treated as a single user by the transport provider).
+
+       If the maximum size of a TSDU or ETSDU is  exceeded  as  a
+       result  of  multiple  sends, XTI may not detect the error.
+       If the error is detected, t_snd fails with  TBADDATA.   If
+       the  error  is  not  detected,  t_snd or a subsequent call
+       fails on an error indicating that the connection has  been
+       aborted.
+
+RReeffeerreenncceess
+
+                                                                3
+

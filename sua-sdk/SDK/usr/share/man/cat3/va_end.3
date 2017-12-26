@@ -1,0 +1,171 @@
+va_end(3)                                                     va_end(3)
+
+  vvaarraarrggss(())
+
+  NNAAMMEE
+
+    varargs - variable argument lists
+
+  SSYYNNOOPPSSIISS
+
+    #include <stdarg.h>
+
+    type va_arg (argp, type)
+    va_list argp;
+
+    void va_start (argp, paramn)
+    va_list argp;
+
+    void va_end (argp)
+    va_list argp;
+
+    oorr
+
+    #include <varargs.h>
+
+    va_alist argp;
+    va_dcl
+
+    void va_start (argp)
+    va_list argp;
+
+    type va_arg (argp, type)
+    va_list argp;
+
+    void va_end (argp)
+    va_list argp;
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    You use the vvaarraarrggss(3) set of macros to write subroutines that accept a
+    variable number of arguments in a portable fashion. Unless it uses the
+    vvaarraarrggss macros, a subroutine that has a variable-length parameter list
+    cannot be ported unchanged to other operating systems because they use
+    different conventions for passing arguments.
+
+    The argp parameter specifies a variable that the vvaarraarrggss macros use to
+    track the current location in the parameter list. This variable is read-
+    only.
+
+    The type argument specifies the data type that the expected argument will
+    be converted to when it is passed as an argument. Arguments that are cchhaarr
+    or sshhoorrtt should be accessed as iinntt. Arguments that are uunnssiiggnneedd cchhaarr or
+    sshhoorrtt are converted to uunnssiiggnneedd iinntt. Arguments that are ffllooaatt are
+    converted to ddoouubbllee. When types are mixed, the subroutine is responsible
+    for determining the expected type because the type cannot be determined at
+    run time.
+
+    The parmn argument identifies the rightmost parameter in the function
+    definition.
+
+    The definitions provided in vvaarraarrggss..hh are deprecated and are provide
+    mainly for backward compatibility. For ANSI-standard code, use _ss_tt_dd_aa_rr_gg(3)
+    instead.
+
+  DDeeccllaarraattiioonnss iinn ssttddaarrgg..hh
+
+    vvaa__ssttaarrtt
+        This macro initializes the argp parameter so that it points to the
+        beginning of the argument list. The parmn parameter identifies the
+        rightmost argument in the function definition. By default, it
+        identifies the first argument in the argument list, which can be a
+        pointer, an integer, or a double. The vvaa__ssttaarrtt macro is started before
+        any unnamed arguments are accessed.
+
+  DDeeccllaarraattiioonnss iinn vvaarraarrggss..hh
+
+    vvaa__ssttaarrtt
+        Initializes the argp parameter so that it points to the beginning of
+        the argument list.
+
+    vvaa__aalliisstt
+        Used as the parameter list in the function header.
+
+    vvaa__aarrggpp
+        Used by the vvaarraarrggss macro to track the current location in the
+        argument list. This variable is read-only.
+
+    vvaa__ddccll
+        The declaration for vvaa__lliisstt; as such, it should not be followed by a
+        semicolon (;).
+
+  DDeeccllaarraattiioonnss iinn bbootthh ssttddaarrggss..hh aanndd vvaarraarrggss..hh
+
+    vvaa__lliisstt
+        Defines the type of the variable used to traverse the list.
+
+    vvaa__aarrgg
+        Expands to an expression that has the type and value of the next
+        argument in the function call. The argp argument is the vvaa__lliisstt argp
+        initialized by vvaa__ssttaarrtt.. Each call to vvaa__aarrgg modifies argp so that the
+        type of a pointer to an object that has the specified type can be
+        obtained by simply adding a ** to type.
+        If there is no next argument, or if type is not compatible with the
+        type of the actual next argument (as promoted according to the default
+        argument promotions), random errors will occur.
+        The first use of the vvaa__aarrgg macro after vvaa__ssttaarrtt returns the argument
+        after parmn. Successive invocations return the values of the remaining
+        arguments.
+
+    vvaa__eenndd
+        Handles a normal return from the function whose variable argument list
+        was initialized by vvaa__ssttaarrtt. It has no return value.
+
+  EEXXAAMMPPLLEE
+
+    The function Myprintf takes a string of format characters and prints out
+    the argument associated with each format character based on the type. The
+    arguments some_i fmt indicate only that the function should take at least
+    one actual argument.
+
+    #include <stdio.h>
+
+    #if __STDC__
+    #include <stdarg.h>
+    #else
+    #include <varargs.h>
+    #endif
+
+    #if __STDC__
+    Myprintf(int some_i , const char *fmt, ...)
+    #else
+    Myprintf(some_i, fmt, va_alist)
+            int some_i;
+            char *fmt;
+            va_dcl
+    #endif
+    {
+    int ret;
+    int i ;
+    float f;
+    char c ;
+    va_list ap;
+
+    #if __STDC__
+            va_start(ap, fmt);
+    #else
+            va_start(ap);
+    #endif
+
+    i =  (int) va_arg(ap,int);
+    f =  (float) va_arg(ap,double);
+    c =  (char) va_arg(ap,int);
+
+    printf("%d, %f, %c\n",i,f,c);
+            va_end(ap);
+            return (ret);
+    }
+
+    int main(){
+      int i = 10, some_i = 0 ;
+      float f = 100 ;
+      char c = 'c';
+      Myprintf(some_i,"Some_String",i,f,c);
+    }
+
+  UUSSAAGGEE NNOOTTEESS
+
+    None of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

@@ -1,0 +1,128 @@
+
+
+share(1Mnfs)                                         share(1Mnfs)
+
+SSyynnooppssiiss
+       share  -F nfs [-o specific_options] [-d description] path-
+       name [resource]
+
+DDeessccrriippttiioonn
+       The -specific share command makes local  resources  avail-
+       able for mounting by remote systems.
+
+   OOppttiioonnss
+       The  following options are available to the share command:
+       Specifies the File System Type (FSType). This  option  may
+       be  omitted  if is the first filesystem type listed in the
+       /etc/dfs/fstypes file.  Specify options in  a  comma-sepa-
+       rated  list of keywords and attribute-value-assertions for
+       interpretation by the file-system-type-specific command.
+
+       The specific_options can be any combination of the follow-
+       ing:  Set  uid  to be the effective user ID of unauthenti-
+       cated users if AUTH_DES authentication is used, or  to  be
+       root  if  AUTH_UNIX  authentication  is  used. By default,
+       unknown users are given the effective user ID  UID_NOBODY.
+       If  uid is set to -1, access is denied.  All writes to the
+       shared filesystem will be asynchronous. This  may  improve
+       write  performance  on the server, but carries with it the
+       risk of data loss on server crashes.  On a web server that
+       supports  WebNFS,  serve  an  index  file if a remote user
+       browses a directory rather  than  a  file.  The  specified
+       index_path  is  appended to the pathname to form the path-
+       name of the index file. If the index option is not used to
+       specify  an  index_path,  the  pathname  formed from path-
+       name/index.html is used.  On a web server,  the  directory
+       specified  by  pathname  is  to be shared as the publicly-
+       accessible WebNFS directory.  Sharing will be read-only to
+       all  clients.   Sharing  will  be  read-only to the listed
+       clients; overrides the rw suboption for the clients speci-
+       fied.   Only root users from the specified hosts will have
+       root access. By default, no host has root access.  Sharing
+       will  be read-write to all clients.  Sharing will be read-
+       write to the listed clients; overrides  the  ro  suboption
+       for  the clients specified.  Clients must use the AUTH_DES
+       authentication of RPC.  AUTH_UNIX  authentication  is  the
+       default.   If  no  specific_options are specified, then by
+       default sharing will be read-write to all  clients.   Pro-
+       vides  a comment that describes the resource to be shared.
+       Specifies the pathname  of  the  resource  to  be  shared.
+       Specifies the name of the resource to be shared.
+
+FFiilleess
+UUssaaggee
+       If  no  argument  is specified, then share displays all of
+       the
+        resources currently shared.   The  specific_options  ro=,
+       rw=, and root= are guaranteed to work over UDP and TCP but
+       may not work over other transport providers.
+
+                                                                1
+
+share(1Mnfs)                                         share(1Mnfs)
+
+       In addition, if a resource is shared with a ro= list and a
+       root=  list,  any  host  that is on the root= list will be
+       given read-only access, regardless of whether that host is
+       specified  in  the  ro= list, unless rw is declared as the
+       default, or the host is mentioned in a rw= list. The  same
+       is  true if the resource is shared with ro as the default.
+       Multiple  clients  may  be  specified  using  the  format:
+       ``IPaddr/mask_length''  instead  of  naming them individu-
+       ally.  IPaddr is an IP address,  and  mask_length  is  the
+       number of leading 1's in a bitmask that will be applied to
+       both IPaddr and the requesting client's IP address  before
+       comparing the resulting values. A match is obtained if the
+       computed values are equal.  For example, a  client  speci-
+       fied  as  ``192.168.12.0/24''  includes all hosts whose IP
+       address begins ``192.168.12'' when  OR'ed  with  the  mask
+       ``255.255.255.0''.   The  result  of ORing IPaddr with the
+       inverse of the specified mask  must  be  zero.  Otherwise,
+       share  will  judge the address invalid. A client specified
+       as ``192.168.12.0/16'' would thus not be  allowed.   share
+       advertises  its  resources on applicable transports speci-
+       fied by the NETPATH environment variable if  the  variable
+       is  not  set to NULL. Otherwise, share scans the /etc/net-
+       config file to find all appropriate transports.  The  rec-
+       ommended  use  of the NETPATH variable with the share com-
+       mand is as follows: # NETPATH=udp share -F nfs ...  Speci-
+       fying NETPATH in this manner affects only the execution of
+       the share command and does not affect the  shell  environ-
+       ment.
+
+EExxiitt ccooddeess
+       Successful  exit  Usage  error  Could  not add to sharetab
+       Could not delete from sharetab Could not  share  Error  in
+       options parsing
+
+WWaarrnniinnggss
+       The  share  command  will  fail if both ro and rw (with no
+       qualifiers) are specified. If the same client name  exists
+       in  both  the  ro= and rw= lists, the rw will override the
+       ro, giving read/write access to the client specified.
+
+       Granting root access to other hosts has far reaching secu-
+       rity  implications; use the root= option with extreme cau-
+       tion.
+
+EExxaammpplleess
+       Give  read-only  permissions  to  hostb:  share   -F   nfs
+       -oro=hosta,root=hostb  /var  share  -F nfs -oro,root=hostb
+       /var Give read/write permissions to hostb:  share  -F  nfs
+       -oro=hosta,rw=hostb,root=hostb    /var    share   -F   nfs
+       -oroot=hostb /var Give read/write permissions to all hosts
+       on  network  192.168.16/24 but only allow read-only access
+       for hosts on  networks  192.168.20/24  and  192.168.25/16:
+       share                        -F                        nfs
+       -orw=192.168.16.0/24,ro=192.168.20.0/24:192.168.25.0/16
+
+                                                                2
+
+share(1Mnfs)                                         share(1Mnfs)
+
+       /var
+
+RReeffeerreenncceess
+
+                                                                3
+

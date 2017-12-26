@@ -1,0 +1,92 @@
+
+
+t_sync(3xti)                                         t_sync(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       int t_sync(int fd);
+
+DDeessccrriippttiioonn
+       This  function  is a TLI/XTI local management routine used
+       to synchronize TLI/XTI data structures and  protocol  spe-
+       cific  information.   For the transport endpoint specified
+       by fd, t_sync synchronizes the data structures managed  by
+       the transport library with information from the underlying
+       transport provider.  In doing so, it  can  convert  a  raw
+       file  descriptor  (obtained via or as a result of a and to
+       an initialized transport endpoint, assuming that the  file
+       descriptor referenced a transport provider.
+
+       This  function  also  allows  two cooperating processes to
+       synchronize their interaction with a  transport  provider.
+       For  example,  if a process forks a new process and issues
+       an exec, the new process must issue a t_sync to build  the
+       private library data structure associated with a transport
+       endpoint and to synchronize the data  structure  with  the
+       relevant provider information.
+
+       On successful completion, t_sync returns the current state
+       of the transport provider to the  user,  thereby  enabling
+       the user to verify the state before taking further action.
+       This coordination is only  valid  among  cooperating  pro-
+       cesses; it is possible that a process or an incoming event
+       could change  the  provider's  state  after  a  t_sync  is
+       issued.
+
+   PPaarraammeetteerrss
+       the  file  descriptor for the transport endpoint for which
+       data structures will be synchronized.
+
+   SSttaattee ttrraannssiittiioonnss
+       t_sync may be issued from any valid state except  T_UNINIT
+       and has no effect on the entry state at exit.
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+UUssaaggee
+       It is important to remember that  the  transport  provider
+       treats all users of a transport endpoint as a single user.
+       If multiple processes are using the same  endpoint,  those
+       activities  should be coordinated so as not to violate the
+       state of the provider.
+
+RReettuurrnn vvaalluueess
+       t_sync returns the state of the  transport  provider  (the
+       endpoint  specified  by  fd)  on successful completion. On
+
+                                                                1
+
+t_sync(3xti)                                         t_sync(3xti)
+
+       failure, -1 is returned and t_errno is set to indicate the
+       error.
+
+       The  state  returned  may be one of the following: unbound
+       idle outgoing connection pending  (connection  mode  only)
+       incoming  connection  pending  (connection mode only) data
+       transfer (connection mode only) outgoing  orderly  release
+       (waiting  for  an  orderly release indication) (connection
+       mode  only)  incoming  orderly  release  (waiting  for  an
+       orderly release request) (connection mode only)
+
+   EErrrroorrss
+       On  failure,  t_errno  may be set to one of the following:
+       The specified file descriptor does not refer to  a  trans-
+       port  endpoint.   The  transport  provider is undergoing a
+       state change.  A system error has occurred  during  execu-
+       tion  of  this function.  A communication problem has been
+       detected with the transport provider and there is no other
+       value of t_errno to describe the error condition.
+
+WWaarrnniinnggss
+       If  the transport endpoint specified by fd is undergoing a
+       state transition when t_sync is called, the function  will
+       fail.
+
+RReeffeerreenncceess
+
+                                                                2
+

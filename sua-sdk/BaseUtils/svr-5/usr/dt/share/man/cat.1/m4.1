@@ -1,0 +1,164 @@
+
+
+m4(1)                                                       m4(1)
+
+SSyynnooppssiiss
+       m4 [options] [files]
+
+DDeessccrriippttiioonn
+       The  m4  command  is a macro processor intended as a front
+       end for C, assembler, and other languages.   Each  of  the
+       argument  files  is  processed  in  order; if there are no
+       files, or if a file name is -, the standard input is read.
+       The  processed text is written on the standard output.  m4
+       processes supplementary code set characters  according  to
+       the  locale specified in the LC_CTYPE environment variable
+       (see LANG  on  Note  that  all  references  to  characters
+       include multi-byte characters in their meaning.
+
+       The  options  and  their  effects  are as follows: Operate
+       interactively.  Interrupts are ignored and the  output  is
+       unbuffered.   Enable line sync output for the C preproces-
+       sor (#line ...)  Change the  size  of  the  push-back  and
+       argument  collection  buffers  from  the  default of 4096.
+       Change the size of the symbol table hash  array  from  the
+       default  of  199.   The  size should be prime.  Change the
+       size of the call stack from  the  default  of  100  slots.
+       Macros take three slots, and non-macro arguments take one.
+       Change the size of the token buffer from  the  default  of
+       512  bytes.   Print, on standard error, the version number
+       of m4.  To be  effective,  the  above  flags  must  appear
+       before  any  file  names  and  before  any -D or -U flags:
+       Defines name to val or to null in  val's  absence.   unde-
+       fines  name.   Macro  calls have the form: name(arg1,arg2,
+       ..., argn)
+
+       The ( must immediately follow the name of the  macro.   If
+       the  name of a defined macro is not followed by a (, it is
+       deemed to be a call  of  that  macro  with  no  arguments.
+       Valid  macro  names  consist  of  alphanumeric characters,
+       graphical supplementary  characters,  and  the  underscore
+       (_).   The  first  character of a macro name must not be a
+       digit, but may be any of the listed characters.
+
+       Leading unquoted isspace characters are ignored while col-
+       lecting  arguments.  Left and right single quotes are used
+       to quote strings.  The value of a  quoted  string  is  the
+       string stripped of the quotes.
+
+       When  a  macro  name is recognized, its arguments are col-
+       lected by searching for a matching right parenthesis.   If
+       fewer arguments are supplied than are in the macro defini-
+       tion, the trailing arguments are taken to be null.   Macro
+       evaluation  proceeds normally during the collection of the
+       arguments, and any commas or right parentheses that happen
+       to turn up within the value of a nested call are as effec-
+       tive as those in the original input text.  After  argument
+       collection, the value of the macro is pushed back onto the
+       input stream and rescanned.
+
+                                                                1
+
+m4(1)                                                       m4(1)
+
+       m4 makes available the following built-in  macros.   These
+       macros  may be redefined, but once this is done the origi-
+       nal meaning is lost.  Their values are null unless  other-
+       wise  stated.   the  second  argument  is installed as the
+       value of the macro whose name is the first argument.  Each
+       occurrence of ``$n'' in the replacement text, where n is a
+       digit, is replaced by the n-th argument.   Argument  0  is
+       the  name  of the macro; missing arguments are replaced by
+       the null string; ``$#'' is replaced by the number of argu-
+       ments;  ``$*''  is replaced by a list of all the arguments
+       separated by commas; ``$@'' is like ``$*'', but each argu-
+       ment  is  quoted  (with  the current quotes).  removes the
+       definition of the macro named in  its  argument.   returns
+       the  quoted  definition  of its argument(s).  It is useful
+       for renaming macros, especially built-ins.   like  define,
+       but  saves any previous definition.  removes current defi-
+       nition of its argument(s), exposing the previous  one,  if
+       any.   if  the first argument is defined, the value is the
+       second argument, otherwise the  third.   If  there  is  no
+       third  argument, the value is null.  The word unix is pre-
+       defined.  returns all but its first argument.   The  other
+       arguments  are  quoted  and  pushed  back  with  commas in
+       between.  The quoting nullifies the effect  of  the  extra
+       scan  that  will  subsequently be performed.  change quote
+       symbols to the first and second  arguments.   The  symbols
+       may  be  up  to five characters long.  changequote without
+       arguments restores the original values.  change  left  and
+       right  comment  markers  from  the default # and new-line.
+       With no arguments, the comment  mechanism  is  effectively
+       disabled.   With one argument, the left marker becomes the
+       argument and the right marker becomes new-line.  With  two
+       arguments, both markers are affected.  Comment markers may
+       be up to five characters long.   m4  maintains  10  output
+       streams, numbered 0-9.  The final output is the concatena-
+       tion of the streams in numerical order; initially stream 0
+       is  the current stream.  The divert macro changes the cur-
+       rent output stream to its (digit-string) argument.  Output
+       diverted  to a stream other than 0 through 9 is discarded.
+       causes immediate output of text from diversions  named  as
+       arguments,  or all diversions if no argument.  Text may be
+       undiverted into another diversion.   Undiverting  discards
+       the  diverted text.  returns the value of the current out-
+       put stream.  reads  and  discards  characters  up  to  and
+       including the next new-line.  has three or more arguments.
+       If the first argument is the same string  as  the  second,
+       then  the  value  is  the  third argument.  If not, and if
+       there  are  more  than  four  arguments,  the  process  is
+       repeated  with  arguments  4,  5, 6 and 7.  Otherwise, the
+       value is either the fourth string, or, if it is  not  pre-
+       sent, null.  returns the value of its argument incremented
+       by 1.  The value of the argument is calculated  by  inter-
+       preting  an  initial  digit-string  as  a  decimal number.
+       returns the value of its argument decremented by 1.  eval-
+       uates  its  argument  as  an  arithmetic expression, using
+
+                                                                2
+
+m4(1)                                                       m4(1)
+
+       32-bit arithmetic.  Operators include +, -, *,  /,  %,  **
+       (exponentiation),  bitwise  &,  |,  ^, and ~; relationals;
+       parentheses.  Octal and hex numbers may be specified as in
+       C.   The  second  argument  specifies  the  radix  for the
+       result; the default is 10.  The third argument may be used
+       to  specify  the  minimum  number of digits in the result.
+       returns the number of characters in its argument.  returns
+       the  position in its first argument where the second argu-
+       ment begins (zero origin), or -1 if  the  second  argument
+       does  not  occur.   returns a substring of its first argu-
+       ment.  The second argument is a zero origin number select-
+       ing  the first character; the third argument indicates the
+       length of the substring.   A  missing  third  argument  is
+       taken to be large enough to extend to the end of the first
+       string.  transliterates the characters in its first  argu-
+       ment  from the set given by the second argument to the set
+       given by  the  third.   No  abbreviations  are  permitted.
+       returns  the  contents  of the file named in the argument.
+       is identical to include, except that it  says  nothing  if
+       the file is inaccessible.  executes the
+        System  command given in the first argument.  No value is
+       returned.  is the  return  code  from  the  last  call  to
+       syscmd.   fills  in  a string of ``XXXXX'' in its argument
+       with the current process ID.  causes immediate  exit  from
+       m4.   Argument  1, if given, is the exit code; the default
+       is 0.  argument 1 will be pushed back at  final  EOF,  for
+       example:  m4wrap(cleanup())  prints  its  argument  on the
+       diagnostic output file.  prints current names and  defini-
+       tions, for the named items, or for all if no arguments are
+       given.  with no arguments, turns on tracing for all macros
+       (including  built-ins).   Otherwise,  turns on tracing for
+       named macros.  turns off trace globally and for any macros
+       specified.   Macros  specifically traced by traceon can be
+       untraced only by specific calls to traceoff.
+
+FFiilleess
+       language-specific message file (see LANG on
+
+RReeffeerreenncceess
+
+                                                                3
+

@@ -1,0 +1,162 @@
+
+
+sed(1)                                                     sed(1)
+
+SSyynnooppssiiss
+       sed [-n] [-e script] [-f sfile] [file . . .]
+
+DDeessccrriippttiioonn
+       sed  copies the named file (standard input default) to the
+       standard output, edited according to a script of commands.
+       The  -f  option  causes  the  script to be taken from file
+       sfile; these options accumulate.  If there is just one  -e
+       option and no -f options, the flag -e may be omitted.  The
+       -n option suppresses the default output.
+
+       sed processes supplementary code set characters, and  rec-
+       ognizes  supplementary  code set characters in script file
+       comments (see below) according to the locale specified  in
+       the  LC_CTYPE  environment variable [see LANG on except as
+       noted under the y command below.  In regular  expressions,
+       pattern  searches  are performed on characters, not bytes,
+       as described on
+
+       A script consists of editing commands, one  per  line,  of
+       the  following form: [address [, address]] function [argu-
+       ments]
+
+       In normal operation, sed cyclically copies a line of input
+       into a pattern space (unless there is something left after
+       a D command),  applies  in  sequence  all  commands  whose
+       addresses select that pattern space, and at the end of the
+       script copies the pattern space  to  the  standard  output
+       (except under -n) and deletes the pattern space.
+
+       Some  of the commands use a hold space to save all or part
+       of the pattern space for subsequent retrieval.
+
+       An address is either a decimal number  that  counts  input
+       lines  cumulatively  across  files, a $ that addresses the
+       last line of input, or a context address, that is, a /reg-
+       ular  expression/ in the style of modified thus: In a con-
+       text  address,  the  construction  \?regular  expression?,
+       where  ?   is  any  character,  is  identical  to /regular
+       expression/.  In the context address \xabc\xdefx, the sec-
+       ond x stands for itself, so that the regular expression is
+       abcxdef.  The escape sequence \n matches a new-line embed-
+       ded in the pattern space.  A period .  matches any charac-
+       ter except the terminal new-line of the pattern space.   A
+       command  line  with  no  addresses  selects  every pattern
+       space.  A command line with one address selects each  pat-
+       tern  space that matches the address.  A command line with
+       two addresses selects the inclusive range from  the  first
+       pattern  space  that matches the first address through the
+       next pattern space that matches the second address.
+
+       If the line that matches the first  address  also  matches
+       the  second  address, it is selected as both the start and
+       finish of the range. That is, only one line is selected in
+
+                                                                1
+
+sed(1)                                                     sed(1)
+
+       this case.  If the second address is a number less than or
+       equal to the line number selected by  the  first  address,
+       only  the  line  corresponding  to  the  first  address is
+       selected.
+
+       Thereafter the process is repeated, looking again for  the
+       first address.
+
+       Editing  commands can be applied only to non-selected pat-
+       tern spaces by use of the negation function !  (below).
+
+       In the following list of functions the maximum  number  of
+       permissible  addresses  for  each function is indicated in
+       parentheses.
+
+       The text argument consists of one or more lines,  all  but
+       the  last of which end with \ to hide the new-line.  Back-
+       slashes in  text  are  treated  like  backslashes  in  the
+       replacement  string  of  an s command.  The rfile or wfile
+       argument must terminate the command line and must be  pre-
+       ceded  by exactly one blank.  Each wfile is created before
+       processing begins.  There can be at most 10 distinct wfile
+       arguments.
+
+       Append.   Place text on the output before reading the next
+       input line.  Branch to the : command  bearing  the  label.
+       If  label  is  empty,  branch  to  the  end of the script.
+       Change.  Delete the pattern space.  Place text on the out-
+       put.   Start  the  next  cycle.  Delete the pattern space.
+       Start the next cycle.  Delete the initial segment  of  the
+       pattern  space through the first new-line.  Start the next
+       cycle.  Delete the contents of the  hold  space.   Replace
+       the  contents  of the pattern space by the contents of the
+       hold space.  Append the contents of the hold space to  the
+       pattern  space.  Replace the contents of the hold space by
+       the contents of the pattern space.  Append the contents of
+       the  pattern space to the hold space.  Insert.  Place text
+       on the standard output.  List the  pattern  space  on  the
+       standard  output  in  an  unambiguous form.  Non-printable
+       characters are displayed in octal notation and long  lines
+       are  folded.   Copy the pattern space to the standard out-
+       put.  Replace the pattern space  with  the  next  line  of
+       input.  Append the next line of input to the pattern space
+       with an  embedded  new-line.   (The  current  line  number
+       changes.)   Print.  Copy the pattern space to the standard
+       output.  Copy the initial segment  of  the  pattern  space
+       through  the first new-line to the standard output.  Quit.
+       Branch to the end of the  script.   Do  not  start  a  new
+       cycle.   Read  the  contents  of rfile.  Place them on the
+       output before reading the next input line.  Substitute the
+       replacement string for instances of the regular expression
+       in the pattern space.  Any character may be  used  instead
+       of  /.  For a fuller description see flags is zero or more
+       of: n= 1 - 512.  Substitute for just the nth occurrence of
+
+                                                                2
+
+sed(1)                                                     sed(1)
+
+       the  regular  expression.   Global.   Substitute  for  all
+       nonoverlapping instances of the regular expression  rather
+       than  just  the  first  one.  Print the pattern space if a
+       replacement was made.  Write.  Append the pattern space to
+       wfile  if  a replacement was made.  Test.  Branch to the :
+       command bearing the label if any substitutions  have  been
+       made  since  the  most  recent reading of an input line or
+       execution of a t.  If label is empty, branch to the end of
+       the  script.   Write.   Append the pattern space to wfile.
+       The first occurrence of w will cause wfile to be  cleared.
+       Subsequent  invocations  of  w will append.  Each time the
+       sed command is used, wfile is overwritten.   Exchange  the
+       contents  of  the  pattern  and  hold  spaces.  Transform.
+       Replace all occurrences of characters in string1 with  the
+       corresponding  characters in string2.  string1 and string2
+       must have the same number of characters.   The  result  is
+       not  guaranteed when supplementary code set characters are
+       specified in the strings.  Don't.  Apply the function  (or
+       group, if function is {) only to lines not selected by the
+       address(es).  This command does nothing; it bears a  label
+       for b and t commands to branch to.  Place the current line
+       number on the standard output as a line.  Execute the fol-
+       lowing commands through a matching } only when the pattern
+       space is selected.  An empty command is ignored.  If  a  #
+       appears as the first character on a line of a script file,
+       then that entire line is treated as a  comment,  with  one
+       exception:  if a # appears on the first line and the char-
+       acter after the # is an n, then the default output will be
+       suppressed.   The  rest  of  the  line  after  #n  is also
+       ignored.  A script file must contain at least one non-com-
+       ment  line.   Comments  may contain supplementary code set
+       characters.
+
+FFiilleess
+       language-specific message file [See LANG on
+
+RReeffeerreenncceess
+
+                                                                3
+

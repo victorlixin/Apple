@@ -1,0 +1,550 @@
+
+
+metreg(4)                                               metreg(4)
+
+SSyynnooppssiiss
+           #include <metreg.h>
+
+           cc  [options] file .... -lmas
+
+DDeessccrriippttiioonn
+       Access  to kernel information is through the libmas inter-
+       face (see using the filesystem  path  /var/adm/metreg.data
+       (MAS_FILE  in  /usr/include/metreg.h).   The actual kernel
+       structures are described in /usr/include/sys/metrics.h.
+
+       This interface replaces direct programmatic access to ker-
+       nel  variables such as sysinfo, total, mproc via nlist for
+       obtaining instrumentation or metric information on a  run-
+       ning kernel.
+
+   KKeerrnneell MMeettrriiccss
+       Native units:
+       Macro                                    Description
+       -----------------------------------------------------------
+       HZ_TIX                              clock ticks/second
+       PGSZ                                bytes per page
+
+       System constants:
+       Macro                                        Description
+       -----------------------------------------------------------
+       NCPU                                       number of cpus
+       NDISK                                      number of disks
+
+       Wait I/O indicators:
+        Macro                          Description
+       -----------------------------------------------------------
+       FSWIO             count of outstanding filesystem I/O jobs
+       PHYSWIO           count of outstanding raw I/O jobs
+
+       These  global  values  are  synthesized in the kernel from
+       per-cg (&geminiREL;) or per-cpu (post-&geminiREL;) statis-
+       tics by a call from the clock handler.
+
+       Global scheduling statistics:
+       Macro                          Description
+       -----------------------------------------------------------
+       RUNQUE          cumulative global run queue count
+       RUNOCC          cumulative global run queue occupied
+       SWPQUE          cumulative count of processes swapped
+       SWPOCC          count of ticks when processes were swapped
+
+       Global process table statistics:
+        Macro                             Description
+       -----------------------------------------------------------
+       PROCMAX                 upper limit of proc table entries
+       PROCUSE                 count of proc table entries in use
+       PROCFAIL                failure count
+
+                                                                1
+
+metreg(4)                                               metreg(4)
+
+       Global light weight processes statistics:
+          Macro                                  Description
+       -----------------------------------------------------------
+       MPR_LWP_FAIL                          failure count
+       MPR_LWP_USE                           count of LWPs in use
+       MPR_LWP_MAX                           unused
+       These are per-processor LWP statistics and are meaningless
+       until you sum them.
+
+       Global kmemsizes:
+        Macro                                   Description
+       -----------------------------------------------------------
+       KMPOOLS                             number of kma pools
+       KMASIZE                             buffer sizes for pools
+
+       Global memory statistics:
+        Macro                                      Description
+       -----------------------------------------------------------
+       FREEMEM                                   freemem in pages
+       FREESWAP                                  free swap space
+
+       Kept as a running dl_t (old long long) sum  updated  every
+       second
+
+       Per processor cpu times:
+          Macro                                    Description
+       -----------------------------------------------------------
+       MPC_CPU_IDLE                             idle time
+       MPC_CPU_WIO                              wait for i/o time
+       MPC_CPU_USR                              user time
+       MPC_CPU_SYS                              system time
+       MPC_CPU_INTR                             interrupt time
+
+       Per processor scheduling data:
+          Macro                          Description
+       -----------------------------------------------------------
+       MPS_PSWITCH           process switches
+       MPS_RUNQUE            cumulative engine run queue count
+       MPS_RUNOCC            cumulative engine run queue occupied
+
+       Per processor buffer cache counters:
+          Macro                            Description
+       -----------------------------------------------------------
+       MPB_BREAD                 reads from disk to buffer cache
+       MPB_BWRITE                writes from buffer cache to disk
+       MPB_LREAD                 buffer reads requested
+       MPB_LWRITE                buffer writes requested
+       MPB_PHREAD                physical reads
+       MPB_PHWRITE               physical writes
+
+       Per processor system calls:
+           Macro                       Description
+       -----------------------------------------------------------
+
+                                                                2
+
+metreg(4)                                               metreg(4)
+
+       MPS_SYSCALL       total number of system calls made
+       MPS_FORK          fork system calls made (all types)
+       MPS_LWPCREATE     lwpcreate system calls made
+       MPS_EXEC          exec system calls made
+       MPS_READ          read system calls made
+       MPS_WRITE         write system calls made
+       MPS_READCH        characters read via the read syscall
+       MPS_WRITECH       characters written via the write syscall
+
+       Per processor file lookup statistics:
+            Macro                     Description
+       -----------------------------------------------------------
+       MPF_LOOKUP     lookups done
+       MPF_DNLS_HITS  count of directory names found in cache
+       MPF_DNLS_MISSEScount of directory names not found in cache
+
+       Per processor file table statistics:
+
+       The  file  table  is dynamically allocated so there are no
+       maximum and upper limit values.
+          Macro                           Description
+       -----------------------------------------------------------
+       FILETBLINUSE            count of file table entries in use
+       FILETBLFAIL             failure count
+
+       Per processor file locking statistics:
+          Macro                         Description
+       -----------------------------------------------------------
+       FLCKTBLMAX         upper limit of file lock table entries
+       FLCKTBLTOTAL       count of file lock table entries
+       FLCKTBLINUSE       count of file lock table entries in use
+       FLCKTBLFAIL        failure count
+
+       Per processor file access counts:
+          Macro                         Description
+       -----------------------------------------------------------
+       MPF_IGET           count of calls to get inodes
+       MPF_DIRBLK         count of directory blks read
+       MPF_IPAGE          count of inodes recycled that had pages
+       MPF_INOPAGE        count of inodes recycled without pages
+
+       Per processor tty statistics:
+         Macro                      Description
+       ------------------------------------------------------------
+       MPT_RCVINTinterrupts for data ready to be received
+       MPT_XMTINTinterrupts for data ready to be transmitted
+       MPT_MDMINTmodem interrupts
+       MPT_RAWCH raw characters received from terminal device
+       MPT_CANCH canonical characters recived from terminal device
+       MPT_OUTCH characters output to a terminal device
+
+       Per processor ipc statistics:
+
+                                                                3
+
+metreg(4)                                               metreg(4)
+
+        Macro                               Description
+       -----------------------------------------------------------
+       MPI_MSG                     IPC messages sent and received
+       MPI_SEMA                    IPC semaphores operation calls
+
+       Per processor vm statistics:
+             Macro                              Description
+       -----------------------------------------------------------
+       MPV_PREATCH                         pre-mapped  pages   at
+                                           time  of object/device
+                                           mapping
+       MPV_ATCH                            page   requests   ful-
+                                           filled  by  a  page in
+                                           memory
+       MPV_ATCHFREE                        page   requests   ful-
+                                           filled  by  a  page on
+                                           freelist
+       MPV_ATCHFREE_PGOUT                  page   requests   ful-
+                                           filled  by  a  page on
+                                           the   freelist   being
+                                           paged out
+       MPV_ATCHMISS                        page requests not ful-
+                                           filled by  a  page  in
+                                           memory
+       MPV_PGIN                            page-in     operations
+                                           done
+       MPV_PGPGIN                          pages  paged-in   from
+                                           secondary storage
+       MPV_PGOUT                           page-out    operations
+                                           done
+       MPV_PGPGOUT                         pages written to  sec-
+                                           ondary  storage due to
+                                           pageouts
+       MPV_SWPOUT                          count of process  swap
+                                           outs completed
+       MPV_PSWPOUT                         pages  written to sec-
+                                           ondary storage due  to
+                                           a swap out
+       MPV_VPSWPOUT                        virtual  pages written
+                                           to  secondary  storage
+                                           due to a swap out
+       MPV_SWPIN                           count  of process swap
+                                           ins completed
+       MPV_PSWPIN                          pages brought in  from
+                                           secondary  storage due
+                                           to a swap in  (usually
+                                           just u-area)
+       MPV_VIRSCAN                         count of virtual pages
+                                           scanned or checked  to
+                                           see if they are eligi-
+                                           ble for being freed
+
+                                                                4
+
+metreg(4)                                               metreg(4)
+
+       MPV_VIRFREE                         count of virtual pages
+                                           freed or marked avail-
+                                           able by  a  daemon  or
+                                           page aging policy
+       MPV_PHYSFREE                        count    of   physical
+                                           pages freed or  marked
+                                           available  by a daemon
+                                           or page aging policy
+       MPV_PFAULT                          protection      faults
+                                           caused   by   copy  on
+                                           write,   or    illegal
+                                           access
+       MPV_VFAULT                          validity faults caused
+                                           by lack of an  address
+                                           translation
+       MPV_SFTLOCK                         software locks
+
+       Per processor kmem statistics:
+
+         Macro                               Description
+       -----------------------------------------------------------
+       MPK_MEM                      memory owned by this class
+       MPK_BALLOC                   memory allocated
+       MPK_RALLOC                   memory successfully requested
+       MPK_FAIL                     count of failed requests
+
+       Global filesystem types information:
+        Macro                                  Description
+       -----------------------------------------------------------
+       NFSTYP                           count of filesystem types
+       FSNAMES                          names of filesystem types
+
+       Per filesystem inode information:
+         Macro                           Description
+       -----------------------------------------------------------
+       MAXINODE              upper limit of inodes
+       CURRINIDE             number of inodes allocated
+       INUSEINODE            count of inodes currently being used
+       FAILINODE             failure count
+
+       Per filesystem information:
+          Macro                      Description
+       -----------------------------------------------------------
+       FSGETPG      count of calls to <fs>_getpage()
+       FSPGIN       page in operations (calls to fs_getpageio())
+       FSPGPGIN     pages paged in
+       FSSECTPGIN   512 byte sectors paged in
+       FSRDA        read aheads initiated from fs_getpage()
+       FSRDAPGIN    pages paged in for read ahead - B_ASYNC
+       FSRDASECTIN  sectors paged in for read ahead - B_ASYNC
+       FSPUTPG      calls to fs_putpage()
+       FSPGOUT      page out operations (calls to fs_putpageio())
+       FSPGPGOUT    pages paged out
+
+                                                                5
+
+metreg(4)                                               metreg(4)
+
+       FSSECTOUT    sectors paged out
+
+       Per disk statistics:
+          Macro                      Description
+       -------------------------------------------------------------
+       DS_NAME    name for this drive
+       DS_CYLS    number of cylinders in this drive
+       DS_QLEN    Current queue length (# of outstanding jobs)
+       DS_LASTTIMElast time active & response calculated
+       DS_RESP    cumulative response time in usecs
+       DS_ACTIVE  cumulative active time in usecs
+       DS_READ    count of reads
+       DS_WRITE   count of writes
+       DS_MISC    count of miscellaneous operations
+       DS_READBLK 512 byte blocks read
+       DS_WRITEBLK512 byte blocks written
+       DS_MISCBLK 512 byte blocks used for miscellaneous operations
+
+       The  disk  statistics  track queue length as a function of
+       time.  sar uses these values  as  follows:  Calculate  the
+       before  and  after  differences  for  response  and active
+       times.   Average  service  time:  active_diff/(total  disk
+       operations) Percent disk busy: active_diff/elapsed Average
+       queue length: response_diff/active_diff Average disk wait:
+       (response_diff-active_diff)/(total disk operations)
+
+       The  intent  of Average disk wait is to identify time that
+       jobs spend waiting in the queue, not being  serviced.   At
+       first, this might seem confusing because response_diff has
+       units of job-seconds while active_diff has units  of  sec-
+       onds.  The missing information is an assumption that there
+       is 1 active job being serviced during each interval  where
+       the  queue  length  is  non-zero,  which gives active_diff
+       units of job-seconds.  Hence response_diff  -  active_diff
+       gives  the  number  of waiting jobs multiplied by the time
+       they were waiting.
+
+       STREAMS statistics:
+            Macro                        Description
+       -----------------------------------------------------------
+       STR_STREAM_INUSE      streams in use now (not free)
+       STR_STREAM_TOTAL      streams used since boot
+       STR_QUEUE_INUSE       queues in use now
+       STR_QUEUE_TOTAL       queues used since boot
+       STR_MDBBLK_INUSE      message data blocks in use now
+       STR_MDBBLK_TOTAL      message data blocks used since boot
+       STR_MSGBLK_INUSE      message blocks in use now
+       STR_MSGBLK_TOTAL      message blocks used since boot
+       STR_LINK_INUSE        link blocks in use now
+       STR_LINK_TOTAL        link blocks used since boot
+       STR_EVENT_INUSE       strevent in use now
+       STR_EVENT_TOTAL       strevent used since boot
+       STR_EVENT_FAIL        strevent - number of failed attempts
+
+                                                                6
+
+metreg(4)                                               metreg(4)
+
+       ccNUMA:
+        Macro                                    Description
+       -----------------------------------------------------------
+       NCG                                   number of cpu groups
+       MPG_CGID                              cpu group ids
+
+       vmeter:
+
+       See /usr/include/sys/vmmeter.h.   Many  of  these  may  be
+       unused/unset  by  the kernel at this time.  V_SWTCH V_TRAP
+       V_SYSCALL V_INTR V_PDMA V_PSWPIN V_PSWPOUT V_PGIN  V_PGOUT
+       V_PGPGIN  V_PGPGOUT  V_INTRANS  V_PGREC  V_XSFREC V_XIFREC
+       V_ZFOD V_PGFREC V_FAULTS V_SCAN V_REV V_DFREE  V_FASTPGREC
+       V_SWPIN V_SWPOUT
+
+       Mapping  of  macros from metreg.h, units, types and sizes:
+       (for use with verification routine,  see  use  in  example
+       below).
+            #define         units        type       objsize  n loc res_name
+       HZ_TIX            TIX         CONSTANT     ushort_t   11
+       PGSZ              BYTES       CONSTANT     ushort_t   11
+       NDISK             DISKS       CONFIGURABLE ushort_t   11    system
+       NCPU              CPUS        CONFIGURABLE ushort_t   11    system
+       FSWIO             JOBS        COUNT        ushort_t   11    system
+       PHYSWIO           JOBS        COUNT        ushort_t   11    system
+       ---------------------------------------------------------------------
+       RUNQUE            RUNQ_SECS   SUM_OVER_TIMEuint32     11    system
+       RUNOCC            SECS        PROFILE      uint32     11    system
+       SWPQUE            SWPQ_SECS   SUM_OVER_TIMEuint32     11    system
+       SWPOCC            SECS        PROFILE      uint32     11    system
+       ---------------------------------------------------------------------
+       PROCFAIL          PROCESSES   SUM          uint32     11    system
+       PROCUSE           PROCESSES   COUNT        uint32     11    system
+       PROCMAX           PROCESSES   CONFIGURABLE uint32     11    system
+       ---------------------------------------------------------------------
+       NFSTYP            FILE_SYSTEMSCONFIGURABLE uint32     11
+       FSNAMES                       DESCRIPTIVE  byte       24    nfstypes
+       ---------------------------------------------------------------------
+       FILETBLINUSE      FILE_TBLS   COUNT        uint32     11
+       FILETBLFAIL       FILE_TBLS   SUM          uint32     11
+       FLCKTBLMAX        FLOCK_TBLS  CONFIGURABLE uint32     11
+       FLCKTBLTOTAL      FLOCK_TBLS  SUM          uint32     11
+       FLCKTBLINUSE      FLOCK_TBLS  COUNT        uint32     11
+       FLCKTBLFAIL       FLOCK_TBLS  SUM          uint32     11
+       ---------------------------------------------------------------------
+       MAXINODE          INODES      CONFIGURABLE uint32     14    nfstypes
+       CURRINODE         INODES      COUNT        uint32     14    nfstypes
+       INUSEINODE        INODES      COUNT        uint32     14    nfstypes
+       FAILINODE         INODES      SUM          uint32     14    nfstypes
+       ---------------------------------------------------------------------
+       FREEMEM           PAGE_SECS   SUM_OVER_TIMEuint64/dl_t11    system
+       FREESWAP          PAGE_SECS   SUM_OVER_TIMEuint64/dl_t11    system
+       ---------------------------------------------------------------------
+
+                                                                7
+
+metreg(4)                                               metreg(4)
+
+       KMPOOLS           POOLS       CONFIGURABLE uint32     11
+       KMASIZE           BYTES       CONFIGURABLE uint32     19    kmapools
+       ---------------------------------------------------------------------
+       V_SWTCH           CALLS       SUM          uint32     11    ncpu
+       V_TRAP            CALLS       SUM          uint32     11    ncpu
+       V_SYSCALL         CALLS       SUM          uint32     11    ncpu
+       V_INTR            CALLS       SUM          uint32     11    ncpu
+       V_PDMA            CALLS       SUM          uint32     11    ncpu
+       V_PSWPIN          PAGES       SUM          uint32     11    ncpu
+       V_PSWPOUT         PAGES       SUM          uint32     11    ncpu
+       V_PGIN            CALLS       SUM          uint32     11    ncpu
+       V_PGOUT           CALLS       SUM          uint32     11    ncpu
+       V_PGPGIN          PAGES       SUM          uint32     11    ncpu
+       V_PGPGOUT         PAGES       SUM          uint32     11    ncpu
+       V_INTRANS         CALLS       SUM          uint32     11    ncpu
+       V_PGREC           PAGES       SUM          uint32     11    ncpu
+       V_XSFREC          PAGES       SUM          uint32     11    ncpu
+       V_XIFREC          PAGES       SUM          uint32     11    ncpu
+       V_ZFOD            PAGES       SUM          uint32     11    ncpu
+       V_PGFREC          PAGES       SUM          uint32     11    ncpu
+       V_FAULTS          CALLS       SUM          uint32     11    ncpu
+       V_SCAN            PAGES       SUM          uint32     11    ncpu
+       V_REV             CALLS       SUM          uint32     11    ncpu
+       V_DFREE           PAGES       SUM          uint32     11    ncpu
+       V_FASTPGREC       CALLS       SUM          uint32     11    ncpu
+       V_SWPIN           CALLS       SUM          uint32     11    ncpu
+       V_SWPOUT          CALLS       SUM          uint32     11    ncpu
+       ---------------------------------------------------------------------
+       MPC_CPU_IDLE      TIX         PROFILE      uint32     11    ncpu
+       MPC_CPU_WIO       TIX         PROFILE      uint32     11    ncpu
+       MPC_CPU_USR       TIX         PROFILE      uint32     11    ncpu
+       MPC_CPU_SYS       TIX         PROFILE      uint32     11    ncpu
+       MPS_PSWITCH       CALLS       SUM          uint32     11    ncpu
+       ---------------------------------------------------------------------
+       MPB_BREAD         CALLS       SUM          uint32     11    ncpu
+       MPB_BWRITE        CALLS       SUM          uint32     11    ncpu
+       MPB_LREAD         CALLS       SUM          uint32     11    ncpu
+       MPB_LWRITE        CALLS       SUM          uint32     11    ncpu
+       MPB_PHREAD        CALLS       SUM          uint32     11    ncpu
+       MPB_PHWRITE       CALLS       SUM          uint32     11    ncpu
+       ---------------------------------------------------------------------
+       MPS_RUNQUE        RUNQ_SECS   SUM_OVER_TIMEuint32     11    ncpu
+       MPS_RUNOCC        SECS        PROFILE      uint32     11    ncpu
+       MPS_SYSCALL       CALLS       SUM          uint32     11    ncpu
+       MPS_FORK          CALLS       SUM          uint32     11    ncpu
+       MPS_LWPCREATE     CALLS       SUM          uint32     11    ncpu
+       MPS_EXEC          CALLS       SUM          uint32     11    ncpu
+       MPS_READ          CALLS       SUM          uint32     11    ncpu
+       MPS_WRITE         CALLS       SUM          uint32     11    ncpu
+       MPS_READCH        CALLS       SUM          uint32     11    ncpu
+       MPS_WRITECH       CALLS       SUM          uint32     11    ncpu
+       ---------------------------------------------------------------------
+       MPF_LOOKUP        CALLS       SUM          uint32     11    ncpu
+
+                                                                8
+
+metreg(4)                                               metreg(4)
+
+       MPF_DNLC_HITS     CALLS       SUM          uint32     11    ncpu
+       MPF_DNLC_MISSES   CALLS       SUM          uint32     11    ncpu
+       MPF_IGET          CALLS       SUM          uint32     14    ncpu
+       MPF_DIRBLK        DISK_BLOCKS SUM          uint32     14    ncpu
+       MPF_IPAGE         INODES      COUNT        uint32     14    ncpu
+       MPF_INOPAGE       INODES      COUNT        uint32     14    ncpu
+       ---------------------------------------------------------------------
+       MPT_RCVINT        CALLS       SUM          uint32     11    ncpu
+       MPT_XMTINT        CALLS       SUM          uint32     11    ncpu
+       MPT_MDMINT        CALLS       SUM          uint32     11    ncpu
+       MPT_RAWCH         CALLS       SUM          uint32     11    ncpu
+       MPT_CANCH         CALLS       SUM          uint32     11    ncpu
+       MPT_OUTCH         CALLS       SUM          uint32     11    ncpu
+       ---------------------------------------------------------------------
+       MPI_MSG           MESSAGES    SUM          uint32     11    ncpu
+       MPI_SEMA          SEMAPHORES  SUM          uint32     11    ncpu
+       ---------------------------------------------------------------------
+       MPV_PREATCH       PAGES       SUM          uint32     11    ncpu
+       MPV_ATCH          CALLS       SUM          uint32     11    ncpu
+       MPV_ATCHFREE      CALLS       SUM          uint32     11    ncpu
+       MPV_ATCHFREE_PGOUTCALLS       SUM          uint32     11    ncpu
+       MPV_ATCHMISS      CALLS       SUM          uint32     11    ncpu
+       MPV_PGIN          CALLS       SUM          uint32     11    ncpu
+       MPV_PGPGIN        PAGES       SUM          uint32     11    ncpu
+       MPV_PGOUT         CALLS       SUM          uint32     11    ncpu
+       MPV_PGPGOUT       PAGES       SUM          uint32     11    ncpu
+       MPV_SWPOUT        CALLS       SUM          uint32     11    ncpu
+       MPV_PSWPOUT       PAGES       SUM          uint32     11    ncpu
+       MPV_VPSWPOUT      PAGES       SUM          uint32     11    ncpu
+       MPV_SWPIN         CALLS       SUM          uint32     11    ncpu
+       MPV_PSWPIN        PAGES       SUM          uint32     11    ncpu
+       MPV_VIRSCAN       PAGES       SUM          uint32     11    ncpu
+       MPV_VIRFREE       PAGES       SUM          uint32     11    ncpu
+       MPV_PFAULT        PAGES       SUM          uint32     11    ncpu
+       MPV_VFAULT        CALLS       SUM          uint32     11    ncpu
+       MPV_SFTLOCK       CALLS       SUM          uint32     11    ncpu
+       ---------------------------------------------------------------------
+       MPK_MEM           CALLS       SUM          uint32     11    ncpu
+       MPK_BALLOC        BYTES       COUNT        uint32     19    ncpu
+       MPK_RALLOC        BYTES       COUNT        uint32     19    ncpu
+       MPK_FAIL          BYTES       COUNT        uint32     19    ncpu
+       ---------------------------------------------------------------------
+       MPR_LWP_FAIL      FAILURES    SUM          ushort_t   19    ncpu
+       MPR_LWP_USE       LWPS        SUM          uint32     11    ncpu
+       MPR_LWP_MAX       LWPS        COUNT        uint32     11    ncpu
+       ---------------------------------------------------------------------
+       DS_NAME           LWPS        CONFIGURABLE uint32     11    ncpu
+       DS_CYLS                       DESCRIPTIVE  byte       21    ndisk
+       DS_FLAGS          CYLINDERS   CONSTANT     uint32     11    ndisk
+       DS_QLEN           BITS        BITFLAG      uint32     11    ndisk
+       DS_LASTTIME       JOBS        COUNT        uint32     11    ndisk
+       DS_RESP           TIX         TIMESTAMP    uint32     11    ndisk
+       DS_ACTIVE         USECS       SUM          uint64/dl_t11    ndisk
+
+                                                                9
+
+metreg(4)                                               metreg(4)
+
+       DS_READ           USECS       SUM          uint64/dl_t11    ndisk
+       DS_WRITE          CALLS       SUM          uint32     11    ndisk
+       DS_MISCBLK        CALLS       SUM          uint32     11    ndisk
+       DS_WRITEBLK       CALLS       SUM          uint32     11    ndisk
+       ---------------------------------------------------------------------
+       STR_STREAM_INUSE  STREAMS     COUNT        uint32     11    ncpu
+       STR_QUEUE_INUSE   STREAMS     SUM          uint32     11    ncpu
+       STR_QUEUE_TOTAL   QUEUES      COUNT        uint32     11    ncpu
+       STR_MDBBLK_INUSE  QUEUES      SUM          uint32     11    ncpu
+       STR_MDBBLK_TOTAL  MDBBLKS     COUNT        uint32     11    ncpu
+       STR_MSGBLK_INUSE  MDBBLKS     SUM          uint32     11    ncpu
+       STR_MSGBLK_TOTAL  MSGBLKS     COUNT        uint32     11    ncpu
+       STR_LINK_INUSE    MSGBLKS     SUM          uint32     11    ncpu
+       STR_LINK_TOTAL    LINKS       COUNT        uint32     11    ncpu
+       STR_EVENT_INUSE   LINKS       SUM          uint32     11    ncpu
+       STR_EVENT_TOTAL   EVENTS      COUNT        uint32     11    ncpu
+       STR_EVENT_FAIL    EVENTS      SUM          uint32     11    ncpu
+       ---------------------------------------------------------------------
+       NCG               EVENTS      SUM          uint32     11    ncpu
+       MPG_CGID          CGS         CONFIGURABLE ushort_t   11    system
+                         CGID        CONFIGURABLE uint64/dl_t11    ncpu
+
+EExxaammppllee
+RReeffeerreenncceess
+
+                                                               10
+

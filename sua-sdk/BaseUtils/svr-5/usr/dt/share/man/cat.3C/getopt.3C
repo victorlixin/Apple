@@ -1,0 +1,108 @@
+
+
+getopt(3C)                                             getopt(3C)
+
+SSyynnooppssiiss
+       #include <unistd.h>
+
+       int  getopt (int argc, char *const *argv, const char *opt-
+       string);
+
+       extern char *optarg;
+
+       extern int optind, opterr, optopt;
+
+DDeessccrriippttiioonn
+       getopt returns the next option letter in argv that matches
+       a  letter  in optstring.  It supports all the rules of the
+       command syntax standard [see Since all  new  commands  are
+       intended  to  adhere  to the command syntax standard, they
+       should use or to parse positional parameters and check for
+       options that are legal for that command.
+
+       optstring must contain the option letters that the command
+       using getopt will recognize.  If a letter is followed by a
+       colon,  the  option  is  expected  to have an argument, or
+       group of arguments, which may  be  separated  from  it  by
+       white  space.   optarg is set to point to the start of the
+       option argument on return from getopt.
+
+       getopt places in optind the argv index of the  next  argu-
+       ment  to be processed.  optind is external and is initial-
+       ized to 1 before the  first  call  to  getopt.   When  all
+       options have been processed (that is, up to the first non-
+       option argument), getopt returns EOF.  The special  option
+       ``--'' (two hyphens) may be used to delimit the end of the
+       options; when it  is  encountered,  EOF  is  returned  and
+       ``--''  is  skipped.   This  is  useful in delimiting non-
+       option arguments that begin with ``-'' (hyphen).
+
+   FFiilleess
+       language-specific message file [See LANG on
+
+   EErrrroorrss
+       getopt prints an error message on the standard  error  and
+       returns  a  ``?''   (question  mark) when it encounters an
+       option letter not included in  optstring  or  no  argument
+       after  an option that expects one.  This error message may
+       be disabled by  setting  opterr  to  0.   The  message  is
+       printed  in  the  standard error format.  The value of the
+       character that caused the error is in optopt.
+
+       The label defined by a call to will be used if  available;
+       otherwise  the name of the utility (argv[0]) will be used.
+
+UUssaaggee
+       The following code fragment shows how  one  might  process
+       the  arguments  for  a  command that can take the mutually
+       exclusive options  a  and  b,  and  the  option  o,  which
+
+                                                                1
+
+getopt(3C)                                             getopt(3C)
+
+       requires   an   argument:   #include  <unistd.h>  #include
+       <stdio.h>
+
+       main (int argc, char **argv)  {       int  c;       extern
+       char  *optarg;       extern int optind;      int aflg = 0;
+            int bflg = 0;      int errflg = 0;      char *ofile =
+       NULL;
+
+            while  ((c  =  getopt(argc,  argv,  "abo:"))  != EOF)
+                 switch     (c)     {               case     'a':
+                      if   (bflg)                       errflg++;
+                      else                                aflg++;
+                      break;                    case         'b':
+                      if   (aflg)                       errflg++;
+                      else                                bflg++;
+                      break;                   case          'o':
+                      ofile               =               optarg;
+                      (void)printf("ofile   =   %s\n",    ofile);
+                      break;                    case         '?':
+                      errflg++;           }       if  (errflg)  {
+                 (void)fprintf(stderr,                "usage: cmd
+       [-a|-b]  [-o<file>]  files...\n");             exit   (2);
+            }        for   (   ;   optind   <   argc;   optind++)
+                 (void)printf("%s\n", argv[optind]);       return
+       0; }
+
+RReeffeerreenncceess
+NNoottiicceess
+       The library routine getopt does not fully check for manda-
+       tory arguments.  That is, given an option string  a:b  and
+       the  input  -a -b, getopt assumes that -b is the mandatory
+       argument to the option -a and not that  -a  is  missing  a
+       mandatory argument.
+
+       It  is a violation of the command syntax standard [see for
+       options with arguments to be grouped with  other  options,
+       as in cmd -aboxxx file, where a and b are options, o is an
+       option that requires an argument, and xxx is the  argument
+       to  o.   Although  this syntax is permitted in the current
+       implementation, it should not be used because it  may  not
+       be  supported  in  future releases.  The correct syntax is
+       cmd -ab -o xxx file.
+
+                                                                2
+

@@ -1,0 +1,169 @@
+
+
+swagentd(1M)                                         swagentd(1M)
+
+SSyynnooppssiiss
+       /usr/sbin/swagentd  [-k]  [-n]  [-r] [-x option=value] [-X
+       option_file]
+
+DDeessccrriippttiioonn
+       The roles of target and source systems for  software  man-
+       agement (SM) require two processes known as the daemon and
+       agent.  For most purposes, the distinction  between  these
+       two  processes  is  invisible  to the user and they can be
+       viewed as a single process.
+
+       Each SM command interacts with the  daemon  and  agent  to
+       perform its requested tasks.
+
+       The  swagentd  daemon  process  must be scheduled before a
+       system is available as a target or source  system  for  SM
+       tasks.   This can be done either manually or in the system
+       startup script.  The swagent agent process is executed  by
+       swagentd  to  perform  specific software management tasks.
+       The swagent agent is never invoked by the  user,  only  by
+       swagentd.
+
+   OOppttiioonnss
+       swagentd  supports  the  following options: Kills the cur-
+       rently running daemon.  Stopping the daemon will not  stop
+       any  agent processes currently performing management tasks
+       (such as installing or removing software), but will  cause
+       any  subsequent  management  requests  to  this host to be
+       refused.  This option is equivalent to sending  a  SIGTERM
+       signal  to the daemon that is running.  Runs the daemon as
+       a synchronous process, rather than the default behavior of
+       forking  to run it asynchronously.  This no fork option is
+       intended for running the daemon from other  programs  that
+       schedule  processes,  such  as Stops the currently running
+       daemon, and restarts it.  This must  be  done  if  default
+       options  that  apply  to  the  daemon  are modified (since
+       defaults are only processed on startup),  or  if  removing
+       the swagentd.log daemon log file.  Sets the default option
+       to value, and overrides the default value (or a  value  in
+       an  alternate  option_file  specified with the -X option).
+       Multiple -x options can be specified.  Reads  the  default
+       options  and  behaviors  from  option_file.   These values
+       override the default values.
+
+   DDeeffaauulltt ooppttiioonnss
+       In addition to the standard options, several SM  behaviors
+       and  policy  options  can  be changed by modifying default
+       values   listed   in    the    master    defaults    file,
+       /usr/lib/sw/sys.defaults.   Refer  to  the manual page for
+       information about each of these default options and how to
+       modify them.
+
+       The  following  options are supported by the swagentd dae-
+       mon.  After changing any of these options, the daemon must
+
+                                                                1
+
+swagentd(1M)                                         swagentd(1M)
+
+       be  restarted  (using  the  -r  option)  in  order for the
+       changes to be recognized.
+       agent     max_agents
+       logfile   rpc_binding_info
+       The following options apply only to the agent, swagent:
+       alternate_source      mount_cmd
+       compress_cmd          reboot_cmd
+       compression_type      remove_setup_cmd
+       config_cleanup_cmd    rpc_binding_info
+       install_cleanup_cmd   source_depot_audit
+       install_setup_cmd     system_file_path
+       kernel_build_cmd      system_prep_cmd
+       kernel_path           uncompress_cmd
+
+   SSeessssiioonn ffiilleess
+       swagentd and swagent do not use a session file.
+
+   EEnnvviirroonnmmeenntt vvaarriiaabblleess
+       Refer to the manual page for details of the LANG  environ-
+       ment variable that affects swagent and swagentd.
+
+   SSiiggnnaallss
+       swagentd  ignores  SIGHUP,  SIGINT and SIGQUIT signals. It
+       gracefully exits immediately after receiving a SIGTERM  or
+       SIGUSR2  signal.   After  receiving  a  SIGUSR1 signal, it
+       waits for completion of a copy or remove from a depot ses-
+       sion before exiting, so that it can register or unregister
+       depots.  Requests to start new sessions are refused during
+       this wait.
+
+       swagent  ignores  SIGHUP,  SIGINT  and SIGQUIT signals. It
+       gracefully exits immediately after  receiving  a  SIGTERM,
+       SIGUSR1  or  SIGUSR2  signal.  Killing the agent may leave
+       corrupt software on the system, so should only be done  if
+       absolutely  necessary.  Note  that  when  an SM command is
+       killed, the agent does not terminate until completing  the
+       task in progress.
+
+   LLoocckkiinngg
+       swagentd  ensures  that only one copy of itself is running
+       on the system.
+
+       Each copy of swagent  that  is  invoked  uses  appropriate
+       access control for the operation it is performing, and the
+       object it is operating on.
+
+FFiilleess
+       Contains the master list of current SM options (with their
+       default values).  The directory which contains all config-
+       urable and non-configurable data for SM.   This  directory
+       is  also  the default location of log files.  Contains the
+       active system-wide default values for  some  (or  all)  SM
+       options.   Contains  the  list of depots registered at the
+       local host.
+
+                                                                2
+
+swagentd(1M)                                         swagentd(1M)
+
+EExxiitt ccooddeess
+       If -n is not specified, swagentd returns: when the  daemon
+       is  successfully  initialized,  and  is now running in the
+       background when initialization failed, and the daemon ter-
+       minated
+
+       If -n is specified, swagentd returns: when the daemon suc-
+       cessfully initialized, and then successfully shutdown when
+       initialization failed, or the daemon unsuccessfully termi-
+       nated
+
+DDiiaaggnnoossttiiccss
+       swagentd and swagent log  events  to  their  specific  log
+       files.
+
+       The  swagent (target) log files cannot be relocated.  They
+       always exist relative to the root  or  depot  target  path
+       (for  example, /var/adm/sw/swagent.log for the root /, and
+       /var/spool/sw/swagent.log for the depot /var/spool/sw).
+
+       The  log  files  are:  The  daemon  logs  all  events   to
+       /var/adm/sw/swagentd.log.  (The user can specify a differ-
+       ent log file by modifying  the  logfile  default  option.)
+       When  operating  on  (alternate) root filesystems, swagent
+       logs messages to var/adm/sw/swagent.log, beneath the  root
+       directory (for example, / or an alternate root directory).
+       The system administrator at the source depot  machine  can
+       track  which  user pulls what software from a depot on the
+       source machine, and when the software is pulled. Refer  to
+       the source_depot_audit default option on for more informa-
+       tion.
+
+       When operating on software depots, swagent  logs  messages
+       to  swagent.log, beneath the depot directory (for example,
+       /var/spool/sw).  When accessing a read-only software depot
+       (for  example,  as  a  source),  swagent  logs messages to
+       /tmp/swagent.log.
+
+RReeffeerreenncceess
+NNoottiicceess
+   AAuutthhoorr
+       swagentd was developed  by  the  Hewlett-Packard  Company.
+       swagent  was  developed by the Hewlett-Packard Company and
+       Mark H. Colburn.
+
+                                                                3
+

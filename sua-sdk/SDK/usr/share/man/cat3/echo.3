@@ -1,0 +1,172 @@
+echo(3)                                                         echo(3)
+
+  ccuurrss__iinnooppttss(())
+
+  NNAAMMEE
+
+    cbreak(), nocbreak(), echo(), noecho(), halfdelay(), intrflush(),
+    keypad(), meta(), nodelay(), notimeout(), raw(), noraw(), noqiflush(),
+    qiflush(), timeout(), wtimeout(), typeahead() - curses input options
+
+  SSYYNNOOPPSSIISS
+
+    #include <curses.h>
+
+    int cbreak(void);
+    int nocbreak(void);
+    int echo(void);
+    int noecho(void);
+    int halfdelay(int tenths);
+    int intrflush(WINDOW *win, bool bf);
+    int keypad(WINDOW *win, bool bf);
+    int meta(WINDOW *win, bool bf);
+    int nodelay(WINDOW *win, bool bf);
+    int raw(void);
+    int noraw(void);
+    void noqiflush(void);
+    void qiflush(void);
+    int notimeout(WINDOW *win, bool bf);
+    void timeout(int delay);
+    void wtimeout(WINDOW *win, int delay);
+    int typeahead(int fd);
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    Normally, the tty driver buffers typed characters until a newline or
+    carriage return is typed. The _cc_bb_rr_ee_aa_kk(3) routine disables line buffering
+    and erase/kill character-processing (interrupt and flow control characters
+    are unaffected), making characters typed by the user immediately available
+    to the program. The _nn_oo_cc_bb_rr_ee_aa_kk(3) routine returns the terminal to normal
+    (cooked) mode.
+
+    Initially the terminal may or may not be in _cc_bb_rr_ee_aa_kk(3) mode, as the mode is
+    inherited; therefore, a program should call _cc_bb_rr_ee_aa_kk(3) or _nn_oo_cc_bb_rr_ee_aa_kk(3)
+    explicitly. Most interactive programs using _cc_uu_rr_ss_ee_ss(3) set the _cc_bb_rr_ee_aa_kk(3)
+    mode. Note that _cc_bb_rr_ee_aa_kk(3) overrides _rr_aa_ww(3). (See curs_getch for a
+    discussion of how these routines interact with _ee_cc_hh_oo(3) and _nn_oo_ee_cc_hh_oo(3).)
+
+    The _ee_cc_hh_oo(3) and _nn_oo_ee_cc_hh_oo(3) routines control whether characters typed by the
+    user are echoed by _gg_ee_tt_cc_hh(3) as they are typed. Echoing by the tty driver
+    is always disabled, but initially _gg_ee_tt_cc_hh(3) is in echo mode, so characters
+    typed are echoed. Authors of most interactive programs prefer to do their
+    own echoing in a controlled area of the screen, or not to echo at all, so
+    they disable echoing by calling _nn_oo_ee_cc_hh_oo(3). (See curs_getch for a
+    discussion of how these routines interact with _cc_bb_rr_ee_aa_kk(3) and _nn_oo_cc_bb_rr_ee_aa_kk(3).)
+
+    The _hh_aa_ll_ff_dd_ee_ll_aa_yy(3) routine is used for half-delay mode, which is similar to
+    _cc_bb_rr_ee_aa_kk(3) mode in that characters typed by the user are immediately
+    available to the program. However, after blocking for tenths tenths of
+    seconds, ERR is returned if nothing has been typed. The value of tteenntthhss
+    must be a number between 1 and 255. Use _nn_oo_cc_bb_rr_ee_aa_kk(3) to leave half-delay
+    mode.
+
+    If the _ii_nn_tt_rr_ff_ll_uu_ss_hh(3) option is enabled (bf is TRUE), when an interrupt key
+    is pressed on the keyboard (interrupt, break, quit) all output in the tty
+    driver queue will be flushed, giving the effect of faster response to the
+    interrupt, but causing _cc_uu_rr_ss_ee_ss(3) to have the wrong idea of what is on the
+    screen. Disabling the option (bf is FALSE) prevents the flush. The default
+    for the option is inherited from the tty driver settings. The window
+    argument is ignored.
+
+    The _kk_ee_yy_pp_aa_dd(3) option enables the keypad of the user's terminal. If enabled
+    (bf is TRUE), the user can press a function key (such as an arrow key) and
+    _ww_gg_ee_tt_cc_hh(3) returns a single value representing the function key, as in
+    KEY_LEFT. If disabled (bf is FALSE), _cc_uu_rr_ss_ee_ss(3) does not treat function
+    keys specially and the program has to interpret the escape sequences
+    itself. If the keypad in the terminal can be turned on (made to transmit)
+    and off (made to work locally), turning on this option causes the terminal
+    keypad to be turned on when _ww_gg_ee_tt_cc_hh(3) is called. The default value for
+    _kk_ee_yy_pp_aa_dd(3) is false.
+
+    Initially, whether the terminal returns 7 or 8 significant bits on input
+    depends on the control mode of the tty driver. To force 8 bits to be
+    returned, invoke meta(win, TRUE); this is equivalent, under POSIX, to
+    setting the CS8 flag on the terminal. To force 7 bits to be returned,
+    invoke meta(win, FALSE); this is equivalent, under POSIX, to setting the
+    CS8 flag on the terminal. The window argument, win, is always ignored. If
+    the terminfo capabilities ssmmmm (meta_on) and rrmmmm (meta_off) are defined for
+    the terminal, ssmmmm is sent to the terminal when meta(win, TRUE) is called
+    and rrmmmm is sent when meta(win, FALSE) is called.
+
+    The _nn_oo_dd_ee_ll_aa_yy(3) option causes _gg_ee_tt_cc_hh(3) to be a non-blocking call. If no
+    input is ready, _gg_ee_tt_cc_hh(3) returns ERR. If disabled (bf is FALSE), _gg_ee_tt_cc_hh(3)
+    waits until a key is pressed.
+
+    While interpreting an input escape sequence, _ww_gg_ee_tt_cc_hh(3) sets a timer while
+    waiting for the next character. If notimeout(win, TRUE) is called, then
+    _ww_gg_ee_tt_cc_hh(3) does not set a timer. The purpose of the timeout is to
+    differentiate between sequences received from a function key and those
+    typed by a user.
+
+    The _rr_aa_ww(3) and _nn_oo_rr_aa_ww(3) routines place the terminal into or out of raw
+    mode. Raw mode is similar to _cc_bb_rr_ee_aa_kk(3) mode, in that characters typed are
+    immediately passed through to the user program. The differences are that
+    in raw mode, the interrupt, quit, suspend, and flow control characters are
+    all passed through uninterpreted, instead of generating a signal. The
+    behavior of the BREAK key depends on other bits in the tty driver that are
+    not set by ccuurrsseess.
+
+    When the _nn_oo_qq_ii_ff_ll_uu_ss_hh(3) routine is used, normal flush of input and output
+    queues associated with the INTR, QUIT and SUSP characters will not be
+    done. When _qq_ii_ff_ll_uu_ss_hh(3) is called, the queues will be flushed when these
+    control characters are read. You may want to call _nn_oo_qq_ii_ff_ll_uu_ss_hh(3) in a signal
+    handler if you want output to continue as though the interrupt had not
+    occurred, after the handler exits.
+
+    The _tt_ii_mm_ee_oo_uu_tt(3) and _ww_tt_ii_mm_ee_oo_uu_tt(3) routines set blocking or non-blocking read
+    for a given window. If delay is negative, blocking read is used (i.e.,
+    waits indefinitely for input). If delay is zero, then non-blocking read is
+    used (i.e., read returns ERR if no input is waiting). If delay is
+    positive, then read blocks for delay milliseconds, and returns ERR if
+    there is still no input. Hence, these routines provide the same
+    functionality as _nn_oo_dd_ee_ll_aa_yy(3), plus the additional capability of being able
+    to block for only delay milliseconds (where delay is positive).
+
+    The _cc_uu_rr_ss_ee_ss(3) library does line-breakout optimization by looking for
+    typeahead periodically while updating the screen. If input is found, and
+    it is coming from a tty, the current update is postponed until _rr_ee_ff_rr_ee_ss_hh(3)
+    or _dd_oo_uu_pp_dd_aa_tt_ee(3) is called again. This allows faster response to commands
+    typed in advance. Normally, the input FILE pointer passed to _nn_ee_ww_tt_ee_rr_mm(3),
+    or stdin in the case that _ii_nn_ii_tt_ss_cc_rr(3) was used, will be used to do this
+    typeahead checking. The _tt_yy_pp_ee_aa_hh_ee_aa_dd(3) routine specifies that the file
+    descriptor fd is to be used to check for typeahead instead. If fd is -1,
+    then no typeahead checking is done.
+
+  RREETTUURRNN VVAALLUUEE
+
+    All routines that return an integer return ERR upon failure and OK (SVr4
+    specifies only "an integer value other than ERR") upon successful
+    completion, unless otherwise noted in the preceding routine descriptions.
+
+  PPOORRTTAABBIILLIITTYY
+
+    These functions are described in the XSI Curses standard, Issue 4.
+
+    The ncurses library obeys the XPG4 standard and the historical practice of
+    the AT&T curses implementations, in that the echo bit is cleared when
+    curses initializes the terminal state. BSD curses differed from this
+    slightly; it left the echo bit on at initialization, but the BSD _rr_aa_ww(3)
+    call turned it off as a side-effect. For best portability, set echo or
+    noecho explicitly just after initialization, even if your program remains
+    in cooked mode.
+
+  NNOOTTEESS
+
+    Note that _ee_cc_hh_oo(3), _nn_oo_ee_cc_hh_oo(3), _hh_aa_ll_ff_dd_ee_ll_aa_yy(3), _ii_nn_tt_rr_ff_ll_uu_ss_hh(3), _mm_ee_tt_aa(3),
+    _nn_oo_dd_ee_ll_aa_yy(3), _nn_oo_tt_ii_mm_ee_oo_uu_tt(3), _nn_oo_qq_ii_ff_ll_uu_ss_hh(3), _qq_ii_ff_ll_uu_ss_hh(3), _tt_ii_mm_ee_oo_uu_tt(3), and
+    _ww_tt_ii_mm_ee_oo_uu_tt(3) may be macros.
+
+    The _nn_oo_rr_aa_ww(3) and _nn_oo_cc_bb_rr_ee_aa_kk(3) calls follow historical practice in that they
+    attempt to restore to normal (`cooked') mode from raw and cbreak modes
+    respectively. Mixing raw/noraw and cbreak/nocbreak calls leads to tty
+    driver control states that are hard to predict or understand; it is not
+    recommended.
+
+  SSEEEE AALLSSOO
+
+    _c_u_r_s_e_s(3)
+
+    _c_u_r_s___g_e_t_c_h(3)
+
+    _c_u_r_s___i_n_i_t_s_c_r(3)
+

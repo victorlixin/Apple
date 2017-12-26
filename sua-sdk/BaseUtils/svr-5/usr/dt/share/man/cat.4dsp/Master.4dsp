@@ -1,0 +1,374 @@
+
+
+Master(4dsp)                                         Master(4dsp)
+
+DDeessccrriippttiioonn
+       The  Master  file is one of the Installable Driver/Tunable
+       Parameters kernel configuration files and it  describes  a
+       kernel  module that can potentially be configured into the
+       system.  For configuration information for individual ker-
+       nel modules, see
+
+       When  the  Master  component of a module's Driver Software
+       Package (DSP) is installed,  stores  the  module's  Master
+       file information in /etc/conf/mdevice.d/module-name, where
+       the file module-name is  the  name  of  the  module  being
+       installed.     Package   scripts   should   never   access
+       /etc/conf/mdevice.d/module-name  files  directly;  instead
+       use the and commands.
+
+       Blank  lines in Master files and lines beginning with # or
+       * are considered comments and are ignored.
+
+       The first non-comment line should be: $version 2
+
+       Older Master file versions are also supported by idinstall
+       (see "Compatibility Considerations").
+
+       Following  the  $version line should be one or more of the
+       following lines, in any sequence: $contact  contact-infor-
+       mation  $depend  module-name-list  $entry entry-point-list
+       $interface  interface-name  interface-version-list  $magic
+       magic-number-list $modtype loadable-module-type-name $name
+       visible-name $oversion original-version-number
+
+       The description of each line follows:  User-readable  con-
+       tact  information  for  the  driver provider.  One or more
+       $contact lines, with arbitrary text, can be supplied.   If
+       there  is  a  problem or potential problem configuring the
+       module, this contact information might  be  printed  in  a
+       warning or error message.  For dynamically loadable kernel
+       modules only, specifies the names of the loadable  modules
+       (if  any) that contain symbols referenced by this loadable
+       module.  One or more $depend lines can be used to  specify
+       the module names.  If a single $depend line specifies more
+       than one module name, the names must be separated by white
+       space.
+
+       The  preferred  method  for showing dependencies is to use
+       the $depend line(s) in an file, which is referenced  by  a
+       $interface  line,  rather  than  placing  $depend  line(s)
+       directly in the Master file.  Specifies the names  of  the
+       named entry point routines included in the module.  $entry
+       is legal only for entry-type 0 modules; see for a descrip-
+       tion of entry-type.
+
+       One  or more $entry lines can be used to specify the entry
+       point names.  If a single $entry line specifies more  than
+       one entry point name, the names must be separated by white
+
+                                                                1
+
+Master(4dsp)                                         Master(4dsp)
+
+       space.
+
+       The function names are  created  by  appending  the  entry
+       point  name  to  the  module's  Only  functions explicitly
+       listed on $entry lines are called directly by the  kernel.
+       The  following  entry points are built into Note that some
+       of these entry points apply only to certain module  types:
+       _init  chpoll close core devinfo exec init intr ioctl mmap
+       open read size strategy textinfo write Other entry  points
+       are defined by files.
+
+       The  define  the $entry values used to identify each named
+       entry point routine used with DDI versions prior  to  ver-
+       sion 8.
+
+       Note  that  and.  routines for STREAMS drivers and modules
+       are not considered entry points for $entry,  because  they
+       are  called indirectly through the module's structure, not
+       directly.  Similarly, the and routines used by dynamically
+       loadable  kernel  modules  (see are not listed with $entry
+       since they are referenced indirectly  through  a  module's
+       wrapper.   Specifies  the versioned interface to which the
+       module conforms.  For example, you can specify that a  DDI
+       device  driver  conforms  to a specific version of the ddi
+       interface.  This allows the system to support the  use  of
+       functions  or  variables  within  well-defined interfaces.
+       See
+
+       The interface-version-list for each $interface  line  usu-
+       ally  consists  of  just  one version number.  If multiple
+       versions are specified, the driver must only use functions
+       that  exist  in  the  intersection of the two versions; it
+       must not use any functionality that is defined in one ver-
+       sion  but  not the other.  The syntax was designed to take
+       multiple version numbers, thinking that this was a way  to
+       support  drivers  that  are  coded  to  work with multiple
+       interface versions.
+        recommends that, instead of using  this  syntax,  drivers
+       that  work  with different interface versions have a sepa-
+       rate DSP for each supported version.  Beginning with &gem-
+       iniREL;, provides the -i option that determines the appro-
+       priate DSP to install with the command.
+
+       Every Master file must contain  at  least  one  $interface
+       line.   To  be accepted by the system, each interface line
+       must contain an interface name and version  that  is  sup-
+       ported by this release of the operating system.  For load-
+       able modules, this evaluation is done when the  module  is
+       loaded;  for static modules, this is done at idbuild time.
+
+       All external symbol references from a module  must  be  to
+       symbols  defined in one of its specified interfaces, or to
+       symbols defined in a module for which  it  has  a  $depend
+       line.
+
+                                                                2
+
+Master(4dsp)                                         Master(4dsp)
+
+       The  special $interface line $interface base (with no ver-
+       sion strings) can be used by
+        base system modules to allow symbol references outside of
+       defined  interfaces.  For third party and  add-on modules,
+       the $interface line $interface nonconforming can  be  used
+       to  achieve  the  same  effect;  however,  this  should be
+       avoided since compatibility support cannot be  guaranteed.
+       Modules  with  $interface nonconforming may no longer work
+       when the operating system is upgraded; they may have to be
+       replaced or deconfigured.
+
+       Using  $interface  nonconforming  in  combination  with an
+       explicitly numbered version allows  access  to  additional
+       symbols,  but  does  not  change the behavior of functions
+       that are part of the explicitly specified  interface  ver-
+       sions.  See for more information.
+
+       $contact  is  required  when  $interface  nonconforming is
+       used.  Specifies the magic numbers supported by  the  exec
+       module.   A  leading 0 indicates the base is 8.  A leading
+       0X or 0x indicates the base is 16.
+
+       If wildcard is specified, an additional entry is generated
+       for  the  module,  following  the entries for the explicit
+       magic numbers.  This additional entry  has  a  NULL  magic
+       number  pointer that instructs the system to call the han-
+       dler regardless of the magic number.  If a non-exec module
+       specifies  this  line  or there are multiple iterations of
+       this line for an exec module, it is an error.  For dynami-
+       cally  loadable kernel modules only, specifies the charac-
+       ter string (maximum  of  40  characters,  including  white
+       space  characters)  used in error messages to identify the
+       type of this module.   Specifies  a  visible-name  to  use
+       instead  of  module-name  for  user-visible aspects of the
+       module.  It was designed to be used  as  the  name  for  a
+       filesystem  as given to the command.  Do not use this fea-
+       ture for device drivers.  Specifies the  original  version
+       number (from $version) of a file that was converted to the
+       current version by idinstall.  This line is  automatically
+       appended by idinstall and is not added manually.
+
+       For entry-type 1 modules (such as DDI 8 drivers), the last
+       non-comment line of the Master file contains the following
+       combination of fields and dashes:
+
+       module-name - characteristics
+
+       For entry-type 0 modules (such as DDI 7 drivers), the last
+       non-comment line of the Master file contains the following
+       six fields:
+
+       module-name prefix characteristics order bmaj cmaj
+
+       For  entry-type  0  modules, a value must be specified for
+
+                                                                3
+
+Master(4dsp)                                         Master(4dsp)
+
+       each field; the fields are separated by white space.   For
+       entry-type  1  modules, the first and third fields must be
+       specified with a  dash  supplied  for  the  second  field.
+       Specifies  the  internal name of the module (maximum of 14
+       characters).  The first character must be alphabetic;  the
+       remaining  characters  can  be  letters,  digits or under-
+       scores.  For entry-type 0 modules, specifies the character
+       string  prefixed  to  all  named  entry-point routines and
+       variable names associated with this module (maximum  of  8
+       characters);  see  During the kernel build process, an all
+       uppercase version of this string is used to construct  the
+       #define symbolic constants accessible to the module's file
+       (see
+
+       If the module has no named entry-points or  special  vari-
+       ables,  this  field  can  contain a dash; then, no #define
+       symbols are generated.  entry-type 1 modules have no named
+       entry  point  routines,  so  this  field is always a dash.
+       Defines a set of flags that identify  the  characteristics
+       of  the  module.   If  none  of the characteristics listed
+       below apply to the module, the characteristics field  must
+       contain  a  dash.  Valid field values are: The module is a
+       ``block'' device driver.  Valid only for entry-type 0 mod-
+       ules.   The module is a (STREAMS or non-STREAMS) character
+       device driver.  Valid only for entry-type 0 modules.   The
+       module  is  a  dispatcher  class  module.   Valid only for
+       entry-type 0 modules.   The  module  is  an  exec  module.
+       Valid  only for entry-type 0 modules.  The module controls
+       hardware or requires access to hardware I/O resources (for
+       example,  interrupts or bus addresses).  This flag must be
+       used for any module that  specifies  resources  (including
+       interrupts)  in  its System file.  Keep majors flag.  This
+       flag is intended for device drivers supplied with the base
+       system  only.   It indicates that idinstall should use the
+       major numbers specified by the bmaj and cmaj fields in the
+       module's  Master  file, instead of automatically assigning
+       major numbers to the module.  Valid only for entry-type  0
+       modules.   The module contains loadable stubs (Modstub.o).
+       This should be used only by base system  modules.   Add-on
+       drivers  cannot  use  loadable  stubs.   The  module  is a
+       STREAMS module.  Valid only for entry-type 0 modules.  The
+       module  may  have  only one System file entry.  Valid only
+       for entry-type 0 modules.  The module is a  device  driver
+       that  requires identical block major numbers and character
+       major numbers.  Note that both the b and c flags  must  be
+       set  when using this flag; if they are not set, the u flag
+       is ignored.  Valid only for  entry-type  0  modules.   The
+       module  contains  console  driver support and the variable
+       pfxconssw  that  defines  the  console  (indirect)   entry
+       points.   Such a module is referred to as console-capable.
+       Valid only for entry-type 0  modules.   The  module  is  a
+       hardware  module  that  can  share its DMA channel(s) with
+       other drivers.  The module is  a  VFS  filesystem  module.
+       Valid  only  for  entry-type  0 modules.  Keep nodes flag.
+
+                                                                4
+
+Master(4dsp)                                         Master(4dsp)
+
+       This flag prevents from removing  device  nodes  for  this
+       device  (as determined by the major number(s) in the Valid
+       only for entry-type 0 modules.   Master  file).   Loadable
+       module flag.  The driver module is a loadable module; how-
+       ever, if the System file contains $static, then this entry
+       overrides  the  flag  and the module is statically linked.
+       Valid only for entry-type 0 modules.   The  CMA  range  of
+       this  device  can overlap that of another device.  The IOA
+       range of this device can overlap that of  another  device.
+       Force  to  create a resource manager entry; used for DDI 8
+       pseudo drivers.  The module is a STREAMS driver, a STREAMS
+       module, or both.  Valid only for entry-type 0 modules.
+
+       For  entry-type  1 modules, the only valid flags are h, l,
+       D, O, M, and R.  Specifies a decimal numeric value used to
+       control  the  sequence  in which the module's and routines
+       are called, and the sequence of execsw  entries  for  exec
+       modules.   Higher-numbered positive values are first.  The
+       highest value allowed is 32767; negative numbers  are  not
+       supported.  For most modules, the sequence is unimportant,
+       and this field should be 0.
+
+       All the execsw entries are processed in the sequence spec-
+       ified  in  this field, calling the appropriate handlers if
+       the magic number matches, until one returns 0 for  success
+       or an error other than ENOEXEC.
+
+       Modules that are entry-type 1 do not use and entry points,
+       so this field is omitted.  When the b flag is set,  speci-
+       fies  the  block  major  number(s) for this module.  Typi-
+       cally, drivers do not specify the actual major  number(s).
+       Instead,  this  field is a placeholder that is modified by
+       when the driver is installed; assigns an unused major num-
+       ber to this driver.
+
+       For  most  drivers, bmaj is a single decimal number.  When
+       the driver needs multiple major numbers, this entry  is  a
+       range:  the  first and last number of the range, separated
+       by a dash.  For example, to request four major numbers,  a
+       driver can set bmaj to 0-3, and this entry will be changed
+       to an assigned range of major numbers.
+
+       When the k flag is set, the  original  value  of  bmaj  is
+       unchanged by Note that this flag is intended for installa-
+       tions with the base system only.
+
+       Modules that are entry-type 1 do not use major numbers, so
+       this  field  is omitted.  When the c flag is set, the cmaj
+       entry is processed as described for bmaj except that  cmaj
+       applies  to  character  major  number(s) rather than block
+       major number(s).
+
+       Modules that are entry-type 1 do not use major numbers, so
+       this field is omitted.
+
+                                                                5
+
+Master(4dsp)                                         Master(4dsp)
+
+UUssaaggee
+       For  DDI  versions prior to version 8, STREAMS modules and
+       drivers  are  treated  slightly  differently  from   other
+       drivers, and their configuration reflects this difference.
+       To specify a STREAMS device driver, its Master file should
+       specify  both  an  S  and  a c flag in the characteristics
+       field.  This indicates that it is  a  STREAMS  driver  and
+       that  it  requires  an  entry  in  the cdevsw table, where
+       STREAMS drivers typically are configured into the  system.
+
+       A  STREAMS  module  that is not a device driver, such as a
+       line discipline module, requires both an S and an  m  flag
+       in the characteristics field of its Master file; it should
+       not specify a c flag, as a device driver does.
+
+       In cases where a module contains both a STREAMS module and
+       a STREAMS driver, the S, c and m flags should all be spec-
+       ified.
+
+WWaarrnniinnggss
+       Package scripts should  never  access  /etc/conf/mdevice.d
+       files directly; only the and commands should be used.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoommppaattiibbiilliittyy ccoonnssiiddeerraattiioonnss
+       For compatibility with existing add-on DSP packages, idin-
+       stall accepts the old (version 0  and  version  1)  Master
+       file  formats,  and converts them to the current version 2
+       format.
+
+   vveerrssiioonn 00 ffoorrmmaatt
+       Version 0 Master files are not supported for exec modules.
+
+       The  version  0  format  is a single non-comment line that
+       contains the following nine fields: name   funcs   charac-
+       teristics  prefix  bmaj  cmaj  min_unit  max_unit  dmachan
+
+       When converting version 0 mdevice  files  to  the  current
+       format:  The  funcs  field is converted into $entry lines.
+       The  following  characteristics  flags  are  obsolete  and
+       ignored:  a, i, n, r, s, t, G, H, M, N, R.  (The f flag in
+       the version 0 mdevice file will still be  recognized,  but
+       should not be used in a version 2 Master file).  Note that
+       the new R flag (added for DDI 8 drivers) is  not  affected
+       by this file conversion.  The min_unit and max_unit fields
+       are obsolete and ignored.  The dmachan field is  moved  to
+       the  System  file.  $interface lines are generated.  These
+       are  deduced  from  external  symbol  references  in   the
+       Driver.o file.  Because of this, a version 0 Master cannot
+       be converted to version 2 unless both a System file and  a
+       Driver.o are present.
+
+                                                                6
+
+Master(4dsp)                                         Master(4dsp)
+
+   vveerrssiioonn 11 ffoorrmmaatt
+       The  version  1  format is closer to the current version 2
+       format, except that the last line  can  have  an  optional
+       seventh  field  that  is  the  cpu  field used to bind the
+       driver to a specific processor.  The cpu field is moved to
+       the System file for version 2.  The following characteris-
+       tics flags are obsolete and ignored: a, i, n, p, r, s,  t,
+       G,  H,  M,  N, R; the old Q flag is converted to the new C
+       flag.  Note that the new R flag (added for DDI 8  drivers)
+       is not affected by this file conversion.  $interface lines
+       are generated.  These are  deduced  from  external  symbol
+       references  in  the  Driver.o and from old $dversion lines
+       and p flags that are removed.  Because of this, a  version
+       1  Master  cannot  be converted to version 2 unless both a
+       System file and a Driver.o are present.
+
+                                                                7
+

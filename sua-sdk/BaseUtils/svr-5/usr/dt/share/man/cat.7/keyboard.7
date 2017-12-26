@@ -1,0 +1,596 @@
+
+
+keyboard(7)                                           keyboard(7)
+
+DDeessccrriippttiioonn
+       The  system  console  has two separate parts: the keyboard
+       and the display (see
+
+       The keyboard is used to type data, and send  certain  con-
+       trol signals to the computer.
+        system  software  performs terminal emulation on the con-
+       sole screen and keyboard, and, in doing so, makes  use  of
+       several  particular keys and key combinations.  These keys
+       and key combinations have special names that are unique to
+       the   system,  and may or may not correspond to the keytop
+       labels on your keyboard.
+
+       When you press a key, one of  the  following  happens:  An
+       ASCII  value  is  entered  The  meaning of another key, or
+       keys, is changed.  A string is sent to  the  computer.   A
+       function is initiated.
+
+       When  a key is pressed (a keystroke), the keyboard sends a
+       scancode to the computer.  This scancode is interpreted by
+       the  keyboard  driver.  The actual code sequence delivered
+       to the terminal input routine (see termio (7)) is  defined
+       by  a  set of internal tables in the driver.  These tables
+       can be modified by software (see the discussion  of  ioctl
+       calls  below).   In addition, the driver can be instructed
+       not to do translations, delivering  the  keyboard  up  and
+       down scan codes directly.
+
+   CChhaannggiinngg mmeeaanniinnggss
+       The action performed by a key can be changed by using cer-
+       tain keys in combination.  For example, the   key  changes
+       the  ASCII  values of the alphanumeric keys.  Holding down
+       the  key while pressing another key sends a  control  code
+       (such as -d, -s, and -q).  Holding down the  key also mod-
+       ifies a key's value.  The , , and  keys  can  be  used  in
+       combination.
+
+   SSwwiittcchhiinngg ssccrreeeennss
+       To  change  screens  (virtual  terminals),  first  run the
+       vtlmgr command (see Switch the current  screen  by  typing
+       followed by a key that identifies the desired screen.  Any
+       active screen can be selected by following
+        with Fn, where Fn is one of the function keys.
+        refers to the first virtual terminal screen,
+        refers to the second virtual terminal screen, and so  on.
+        refers to the main console display (/dev/console).
+
+       The  default  screen  switch  enable  sequence  is config-
+       urable.  The SYSREQ table entry (see the ``Keyboard  map''
+       section) can be changed using ioctl calls (see the section
+       ``ioctl calls'').  If the screen switch enable sequence is
+       changed  from  the  default,  you  must  use the newly set
+       sequence to switch virtual terminals.   The  default  key-
+       board   mapping  can  be  restored  using  the  mapkey(1M)
+
+                                                                1
+
+keyboard(7)                                           keyboard(7)
+
+       command.
+
+   SSppeecciiaall kkeeyyss
+       The following table shows which keys on a typical  console
+       correspond  to   system keys.  In this table, a hyphen (-)
+       between keys means you must hold down the first key  while
+       pressing  the second.  The mapping between characters that
+       generate signals and the signal generated is set with  and
+       may be changed (see
+       ------------------------------------------------------------------------------
+       Name        Keytop        Action
+       ------------------------------------------------------------------------------
+       INTR                      Stops  current  action  and  returns  to the shell.
+                                 This key is also called the RUB  OUT  or  INTERRUPT
+                                 key.
+       BACKSPACE   <-            Deletes the first character to the left of the cur-
+                                 sor.
+                                 Note that the ``cursor left'' key also has  a  left
+                                 arrow  (<-) on its keytop, but you cannot backspace
+                                 using that key.
+       -d          -D            Signals the end of input from  the  keyboard;  also
+                                 exits current shell.
+       -h          -H            Deletes the first character to the left of the cur-
+                                 sor.  Also called the ERASE key.
+       -q          -Q            Restarts printing after it has  been  stopped  with
+                                 -s.
+       -s          -S            Suspends  printing on the screen (does not stop the
+                                 program).
+       -u          -U            Deletes all characters on the current  line.   Also
+                                 called the KILL key.
+       -e          -E            Quits current command and creates a core
+                                 file, if allowed. (Recommended for debugging only.)
+       ESCAPE                    Special  code  for  some  programs.   For  example,
+                                 changes from insert mode to  command  mode  in  the
+                                 text editor.
+                    (down-left   Terminates  a  command line and initiates an action
+                   arrow) or     from the shell.
+
+                                                                2
+
+keyboard(7)                                           keyboard(7)
+
+       Fn          Fn            Function key n.  F1-F12 are unshifted, F13-F24  are
+                                 shifted  F1-F12,  F25-F36  are - F1-F12 and F37-F48
+                                 are -- F1-F12.
+                                 The next Fn keys (F49-F60) are on  the  number  pad
+                                 (unshifted):
+                                 F49  7
+                                 F50  8
+                                 F51  9
+                                 F52  -
+                                 F53  4
+                                 F54  5
+                                 F55  6
+                                 F56  +
+                                 F57  1
+                                 F58  2
+                                 F59  3
+                                 F60  0
+
+   KKeeyybbooaarrdd mmaapp
+       The    keyboard    mapping   structure   is   defined   in
+       /usr/include/sys/kd.h.  Each key can have ten states.  The
+       first eight states are: Base
+
+       -  -  -  --  The two remaining states are indicated by two
+       special bytes.  The first byte is  a  special  state  byte
+       whose  bits  indicate whether the key is special in one or
+       more of the first eight states.  The second byte is one of
+       four  codes  represented  by  the characters C, N, B, or O
+       which indicate how the lock  keys  affect  the  particular
+       key.
+
+       The  following  table  describes the default keyboard map-
+       ping.  All values, except for special keywords (which  are
+       described  later),  are  ASCII character values.  The scan
+       code generated by the keyboard  hardware  when  a  key  is
+       pressed.   There  are  no  table entries for the scan code
+       generated by releasing a key.  The normal value of  a  key
+       press.   The value of a key press when  is also being held
+       down.  The value of a key press when  is also  being  held
+       down.   The  value of a key press when  is also being held
+       down.  Indicates which lock keys affect a particular  key:
+       Caps  Lock Num Lock both Caps Lock and Num Lock locking is
+       off This entry provides a simple index of the default vir-
+       tual  terminal  key selectors to the scan code to which it
+       is assigned.  The actual SRQTAB  table  is  a  stand-alone
+       table  which can be read or written using the KDGKBENT and
+       KDSKBENT ioctl calls.
+
+       The remaining columns are the values of key  presses  when
+       combinations of the , , and
+        keys are also held down.
+
+                                                                3
+
+keyboard(7)                                           keyboard(7)
+
+       ------------------------------------------------------------------
+       ScanBase                                            LockSRQTAB
+       code
+
+       ------------------------------------------------------------------
+       1   esc   esc   esc   esc   esc   esc   esc   esc   O   nop
+       2   '1'   '!'   '1'   '1'   escn  escn  nop   nop   O   nop
+       3   '2'   '@'   '2'   nul   escn  escn  nop   nop   O   nop
+       4   '3'   '#'   '3'   '3'   escn  escn  nop   nop   O   nop
+       5   '4'   '$'   '4'   '4'   escn  escn  nop   nop   O   nop
+       6   '5'   '%'   '5'   '5'   escn  escn  nop   nop   O   nop
+       7   '6'   '^'   '6'   rs    escn  escn  nop   nop   O   nop
+       8   '7'   '&'   '7'   '7'   escn  escn  nop   nop   O   nop
+       9   '8'   '*'   '8'   '8'   escn  escn  nop   nop   O   nop
+       10  '9'   '('   '9'   '9'   escn  escn  nop   nop   O   nop
+       11  '0'   ')'   '0'   '0'   escn  escn  nop   nop   O   nop
+       12  '-'   '_'   '-'   ns    escn  escn  nop   nop   O   nop
+       13  '='   '+'   '='   '='   escn  escn  nop   nop   O   nop
+       14  bs    bs    bs    bs    bs    bs    bs    bs    O   nop
+       15  ht    btab  ht    btab  ht    btab  ht    btab  O   nop
+       16  'q'   'Q'   dc1   dc1   escn  escn  nop   nop   C   nop
+       17  'w'   'W'   etb   etb   escn  escn  nop   nop   C   nop
+       18  'e'   'E'   enq   enq   escn  escn  nop   nop   C   nop
+       19  'r'   'R'   dc2   dc2   escn  escn  nop   nop   C   nop
+       20  't'   'T'   dc4   dc4   escn  escn  nop   nop   C   nop
+       21  'y'   'Y'   em    em    escn  escn  nop   nop   C   nop
+       22  'u'   'U'   nak   nak   escn  escn  nop   nop   C   nop
+       23  'i'   'I'   ht    ht    escn  escn  nop   nop   C   nop
+       24  'o'   'O'   si    si    escn  escn  nop   nop   C   nop
+       25  'p'   'P'   dle   dle   escn  escn  nop   nop   C   K_PREV
+       26  '['   '{'   esc   nop   escn  escn  nop   nop   O   nop
+       27  ']'   '}'   gs    nop   escn  escn  nop   nop   O   nop
+       28  cr    cr    cr    cr    cr    cr    cr    cr    O   nop
+       29  lctrl lctrl lctrl lctrl lctrl lctrl lctrl lctrl O   nop
+       30  'a'   'A'   soh   soh   escn  escn  nop   nop   C   nop
+       31  's'   'S'   dc3   dc3   escn  escn  nop   nop   C   nop
+       32  'd'   'D'   eot   eot   escn  escn  k_dbg nop   C   nop
+       33  'f'   'F'   ack   ack   escn  escn  nop   nop   C   K_FRCNEXT
+       34  'g'   'G'   bel   bel   escn  escn  nop   nop   C   nop
+       35  'h'   'H'   bs    bs    escn  escn  nop   nop   C   K_VTF
+       36  'j'   'J'   nl    nl    escn  escn  nop   nop   C   nop
+       37  'k'   'K'   vt    vt    escn  escn  nop   nop   C   nop
+       38  'l'   'L'   np    np    escn  escn  nop   nop   C   nop
+       39  ';'   ':'   ';'   ':'   escn  escn  nop   nop   O   nop
+       40  '''   '"'   '''   '"'   escn  escn  nop   nop   O   nop
+       41  '`'   '~'   '`'   '~'   escn  escn  nop   nop   O   nop
+       42  lshiftlshiftlshiftlshiftlshiftlshiftlshiftlshiftO   nop
+       43  '\\'  '|'   fs    '|'   escn  escn  nop   nop   O   nop
+       44  'z'   'Z'   sub   sub   escn  escn  nop   nop   C   nop
+       45  'x'   'X'   can   can   escn  escn  nop   nop   C   nop
+       46  'c'   'C'   etx   etx   escn  escn  nop   nop   C   nop
+       47  'v'   'V'   syn   syn   escn  escn  nop   nop   C   nop
+       48  'b'   'B'   stx   stx   escn  escn  nop   nop   C   nop
+
+                                                                4
+
+keyboard(7)                                           keyboard(7)
+
+       49  'n'   'N'   so    so    escn  escn  nop   nop   C   K_NEXT
+       50  'm'   'M'   cr    cr    escn  escn  nop   nop   C   nop
+       51  ','   '<'   ','   '<'   escn  escn  nop   nop   O   nop
+       52  '.'   '>'   '.'   '>'   escn  escn  nop   nop   O   nop
+       53  '/'   '?'   '/'   ns    escn  escn  nop   nop   O   nop
+       54  rshiftrshiftrshiftrshiftrshiftrshiftrshiftrshiftO   nop
+       55  '*'   '*'   '*'   '*'   escn  escn  nop   nop   O   nop
+       56  lalt  lalt  lalt  lalt  lalt  lalt  lalt  lalt  O   nop
+       57  ' '   ' '   nul   nul   escn  escn  nop   nop   O   nop
+       58  clock clock clock clock clock clock clock clock O   nop
+       59  fkey1 fkey13fkey25fkey37fkey1 fkey13fkey25fkey37O   K_VTF+1
+       60  fkey2 fkey14fkey26fkey38fkey2 fkey14fkey26fkey38O   K_VTF+2
+       61  fkey3 fkey15fkey27fkey39fkey3 fkey15fkey27fkey39O   K_VTF+3
+       62  fkey4 fkey16fkey28fkey40fkey4 fkey16fkey28fkey40O   K_VTF+4
+       63  fkey5 fkey17fkey29fkey41fkey5 fkey17fkey29fkey41O   K_VTF+5
+       64  fkey6 fkey18fkey30fkey42fkey6 fkey18fkey30fkey42O   K_VTF+6
+       65  fkey7 fkey19fkey31fkey43fkey7 fkey19fkey31fkey43O   K_VTF+7
+       66  fkey8 fkey20fkey32fkey44fkey8 fkey20fkey32fkey44O   K_VTF+8
+       67  fkey9 fkey21fkey33fkey45fkey9 fkey21fkey33fkey45O   K_VTF+9
+       68  fkey10fkey22fkey34fkey46fkey10fkey22fkey34fkey46O   K_VTF+10
+       69  nlock nlock nlock nlock nlock nlock nlock nlock O
+       70  slock slock slock slock slock slock slock slock O
+       71  fkey49'7'   fkey49'7'   fkey49escn  nop   nop   N
+       72  fkey50'8'   fkey50'8'   fkey50escn  nop   nop   N
+       73  fkey51'9'   fkey51'9'   fkey51escn  nop   nop   N
+       74  fkey52'-'   fkey52'-'   fkey52escn  nop   nop   N
+       75  fkey53'4'   fkey53'4'   fkey53escn  nop   nop   N
+       76  fkey54'5'   fkey54'5'   fkey54escn  nop   nop   N
+       77  fkey55'6'   fkey55'6'   fkey55escn  nop   nop   N
+       78  fkey56'+'   fkey56'+'   fkey56escn  nop   nop   N
+       79  fkey57'1'   fkey57'1'   fkey57escn  nop   nop   N
+       80  fkey58'2'   fkey58'2'   fkey58escn  nop   nop   N
+       81  fkey59'3'   fkey59'3'   fkey59escn  nop   nop   N
+       82  fkey60'0'   fkey60'0'   fkey60escn  nop   nop   N
+       83  del   '.'   del   '.'   del   escn  rboot nop   N
+       84  fkey60fkey26fkey60nop   sysreqsysreqsysreqsysreqO
+       85  fkey58fkey58fkey58fkey58fkey58fkey58fkey58fkey58O
+       86  fkey53fkey53fkey53fkey53fkey53fkey53fkey53fkey53O
+       87  fkey11fkey23fkey35fkey47fkey11fkey23fkey35fkey47O   K_VTF+11
+       88  fkey12fkey24fkey36fkey48fkey12fkey24fkey36fkey48O   K_VTF+12
+       89  nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       90  nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       91  nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       92  nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       93  nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       94  nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       95  nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       96  nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       97  nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       98  nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       99  nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       100 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       101 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+
+                                                                5
+
+keyboard(7)                                           keyboard(7)
+
+       102 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       103 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       104 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       105 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       106 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       107 fkey53fkey53fkey53fkey53fkey53fkey53fkey53fkey53O
+       108 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       109 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       110 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       111 fkey51fkey51nop   nop   nop   nop   nop   nop   O   K_NOP
+       112 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       113 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       114 ralt  ralt  ralt  ralt  ralt  ralt  ralt  ralt  O   K_NOP
+       115 rctrl rctrl rctrl rctrl rctrl rctrl rctrl rctrl O   K_NOP
+       116 slock slock brk   brk   slock slock brk   brk   O   nline
+       117 '/'   '/'   nop   nop   escn  escn  nop   nop   O   K_NOP
+       118 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       119 slock slock brk   brk   slock slock brk   brk   O   K_NOP
+       120 fkey50fkey50nop   nop   nop   nop   nop   nop   O   K_NOP
+       121 del   del   del   del   del   del   rboot del   O   K_NOP
+       122 fkey57fkey57nop   nop   nop   nop   nop   nop   O   K_NOP
+       123 fkey60fkey60nop   nop   nop   nop   nop   nop   O   K_NOP
+       124 nop   nop   nop   nop   nop   nop   nop   nop   O   K_NOP
+       125 fkey55fkey55nop   nop   nop   nop   nop   nop   O   K_NOP
+       126 fkey59fkey59nop   nop   nop   nop   nop   nop   O   K_NOP
+       127 fkey49fkey49nop   nop   nop   nop   nop   nop   O   K_NOP
+
+       The following table lists the value of each of the special
+       keywords used in the preceding tables.  The  keywords  are
+       used only in the preceding tables for readability.  In the
+       actual keyboard map, a special keyword is  represented  by
+       its  value  with the corresponding special state bit being
+       set.
+       ----------------------------------------------------------------------
+       Name     Value    Meaning
+       ----------------------------------------------------------------------
+       nop        0      No operation - no action from keypress
+       lshift     2      Left-hand shift
+       rshift     3      Right-hand shift
+       clock      4      Caps lock
+       nlock      5      Numeric lock
+       slock      6      Scroll lock
+       alt        7      Alt key
+       btab       8      Back tab key - generates fixed sequence (ESC[ Z)
+       ctrl       9      Control key
+       lalt      10      Left-hand alt key
+       ralt      11      right-hand alt key
+       lctrl     12      Left-hand control key
+       rctrl     13      Right-hand control key
+       agr       14      ALT-GR key (European keyboards only)
+       fkey1     27      Function key #1
+       ...         ...   ...
+       fkey96   122      Function key #96
+
+                                                                6
+
+keyboard(7)                                           keyboard(7)
+
+       sysreq   123      System request
+       brk      124      Break key
+       escn     125      Generate an ESC N x sequence, where x  is  the  un-
+                         alt'ed value of the scan code
+       esco     126      Generate  an  ESC  O x sequence, where x is the un-
+                         alt'ed value of the scan code
+       escl     127      Generate an ESC L x sequence, where x  is  the  un-
+                         alt'ed value of the scan code
+       rboot    128      Reboot system
+       debug    129      Invoke kernel debugger
+       NEXT     130      Switch to next virtual terminal on queue
+       PREV     131      Switch to previous virtual terminal on queue
+       FNEXT    132      Forced switch to next virtual terminal on queue
+       FPREV    133      Forced switch to previous virtual terminal on queue
+       VTF      134      Virtual Terminal First (VT00)
+       ...         ...   ...
+       VTL      148      Virtual Terminal Last (VT14)
+       MGRF     149      Virtual  Terminal  Manager First.  Allows assigning
+                         special significance to key sequence for actions by
+                         virtual  terminal  layer  manager.   Used in SRQTAB
+                         table.
+       ...         ...   ...
+       MGRL     179      Virtual Terminal  Manager  Last.   Used  in  SRQTAB
+                         table.
+
+       The  following  table  lists  names and decimal values for
+       ASCII characters in the preceding table.  Names  are  used
+       in  place  of  numeric constants to make it easier to read
+       the scan code table.  Only the decimal values  are  placed
+       in the ioctl buffer.  These values are taken from
+       -----------------
+       Name   Value
+       -----------------
+       nul      0
+       soh      1
+       stx      2
+       etx      3
+       eot      4
+       enq      5
+       ack      6
+       bel      7
+       bs       8
+       ht       9
+       nl      10
+       vt      11
+       np      12
+       cr      13
+       so      14
+       si      15
+       dle     16
+       dc1     17
+       dc2     18
+       dc3     19
+
+                                                                7
+
+keyboard(7)                                           keyboard(7)
+
+       dc4     20
+       nak     21
+       syn     22
+       etb     23
+       can     24
+       em      25
+       sub     26
+       esc     27
+       fs      28
+       gs      29
+       rs      30
+       ns      31
+       del    127
+
+       The string mapping table is an array of 512 bytes (typedef
+       strmap_t) containing null-terminated strings that redefine
+       the  function  keys.   The first null-terminated string is
+       assigned to the first function key, the second  string  is
+       assigned to the second function key, and so on.
+
+       There  is no limit to the length of any particular string;
+       however, the whole table can not exceed 512 bytes, includ-
+       ing  nulls.   To  make  a  string  a  null, add extra null
+       characters.  The following table contains default function
+       key values.
+
+       -----------------------------------------------------
+       Function   Function
+       key #                 function   function
+                                                   function
+       -----------------------------------------------------
+       1          ESC OP     ESC Op     ESC OP     ESC Op
+       2          ESC OQ     ESC Oq     ESC OQ     ESC Oq
+       3          ESC OR     ESC Or     ESC OR     ESC Or
+       4          ESC OS     ESC Os     ESC OS     ESC Os
+       5          ESC OT     ESC Ot     ESC OT     ESC Ot
+       6          ESC OU     ESC Ou     ESC OU     ESC Ou
+       7          ESC OV     ESC Ov     ESC OV     ESC Ov
+       8          ESC OW     ESC Ow     ESC OW     ESC Ow
+       9          ESC OX     ESC Ox     ESC OX     ESC Ox
+       10         ESC OY     ESC Oy     ESC OY     ESC Oy
+       11         ESC OZ     ESC Oz     ESC OZ     ESC Oz
+       12         ESC OA     ESC Oa     ESC OA     ESC Oa
+
+   iiooccttll ccaallllss
+       This  call gets the current keyboard mode.  It returns one
+       of    the    following    values,    as     defined     in
+       /usr/include/sys/kd.h:
+       #define K_RAW                 0x00       /* Send row  scan
+       codes    */    #define K_XLATE               0x01       /*
+       Translate to ASCII */ This call sets  the  keyboard  mode.
+       The  argument  to the call is either K_RAW or K_XLATE.  By
+       using raw mode, the program can see the raw  up  and  down
+       scan  codes  from  the  keyboard.   In translate mode, the
+
+                                                                8
+
+keyboard(7)                                           keyboard(7)
+
+       translation tables are used to  generate  the  appropriate
+       character  code.   This  call  gets the keyboard type.  It
+       returns  one  of  the  following  values,  as  defined  in
+       /usr/include/sys/kd.h:
+       #define KB_84                 1          /*84   key   key-
+       board*/ #define KB_101                2          /*101 key
+       keyboard*/ #define KB_OTHER   3          /*Other type key-
+       board*/ This call reads one of the entries in the transla-
+       tion tables.  The argument to the call is the  address  of
+       one    of    the    following   structures,   defined   in
+       /usr/include/sys/kd.h, with the first  two  fields  filled
+       in:   struct  kbentry  {          unchar     kb_table;  /*
+       Table to use */         unchar     kb_index;  /* Entry  in
+       table */         ushort     kb_value;  /* Value to get/set
+       */ };
+
+       Valid   values    for    the    kb_table    member    are:
+       #define K_NORMTAB      0x00  /* Base */ #define K_SHIFTTAB
+       0x01 /* Shifted */ #define K_ALTTAB      0x02  /*  Alt  */
+       #define K_ALTSHIFTTAB    0x03    /*    Shifted    alt   */
+       #define K_SRQTAB      0x04 /* Select sysreq table */
+
+       The ioctl will get the indicated entry from the  indicated
+       table and return it in the third field.
+
+       The  K_SRNTAB  value for the kb_table member allows access
+       to the scancode indexed table which allows assignment of a
+       given virtual terminal selector (K_VTF--K_VTL) or the vir-
+       tual terminal layer  manager  (K_MGRF--K_MGRL)  specialkey
+       assignments.
+
+       The  virtual terminal selector (K_VTF) is normally associ-
+       ated with /dev/tty00, on which the  user  login  shell  is
+       commonly found.  The following terminal selectors also are
+       used to select virtual terminals: K_VTF+1 for the 1st vir-
+       tual terminal (/dev/vt01) K_VTF+2 for the 2nd virtual ter-
+       minal (/dev/vt02)
+                     . . .  K_VTF+12 for the 12th virtual  termi-
+       nal  (/dev/vt12)  This  call  sets  an entry in one of the
+       translation tables.  It uses the  same  structure  as  the
+       KDGKBENT  ioctl,  but  with the third field filled in with
+       the value that should be placed in the translation  table.
+       This can be used to partially or completely remap the key-
+       board.  This ioctl does not work for all keycodes.
+
+       The kd driver provides support for virtual terminals.  The
+       console  minor device, /dev/vtmon, provides virtual termi-
+       nal key requests from the kd driver to  the  process  that
+       has  /dev/vtmon open.  Two ioctls are provided for virtual
+       terminal support: The  VT_GETSTATE  ioctl  returns  global
+       virtual terminal state information.  It returns the active
+       virtual terminal in the v_active field, and the number  of
+       active  virtual  terminals  and  a  bit mask of the global
+       state in the v_state open field, where bit x is the  state
+
+                                                                9
+
+keyboard(7)                                           keyboard(7)
+
+       of  vt x  (1 indicates that the virtual terminal is open).
+       The VT_SENDSIG ioctl specifies a signal (in  v_signal)  to
+       be sent to a bit mask of virtual terminals (in v_state).
+
+       The  data structure used by the VT_GETSTATE and VT_SENDSIG
+       ioctls is: struct vt_stat {
+            ushort v_active;  /* active vt */
+            ushort v_signal;  /* signal to send (VT_SENDSIG) */
+            ushort v_state;   /* vt bit mask
+                              (VT_SENDSIG and VT_GETSTATE) */  };
+       and  is defined in /usr/include/sys/vt.h .  The VT_OPENQRY
+       ioctl is used to get the next available virtual  terminal.
+       It inquires if this vt is already open.  This value is set
+       in the last argument of the ioctl  (2)  call.   This  call
+       gets  the  entire  keyboard mapping table from the kernel.
+       The   structure   of   the   argument    is    given    in
+       /usr/include/sys/kd.h.  This call sets the entire keyboard
+       mapping table.  The structure of the argument is given  in
+       /usr/include/sys/kd.h.   This  call  gets the function key
+       string mapping table from the kernel.   The  structure  of
+       the argument is given in /usr/include/sys/kd.h.  This call
+       sets the function key string mapping table.  The structure
+       of   the   argument  is  given  in  /usr/include/sys/kd.h.
+       Extended  character  codes  are  disabled.   This  is  the
+       default  mode.  Allows extended characters to be transmit-
+       ted to  the  user  program  when  the  extended  keys  are
+       enabled.   Then  the keyboard is said to be fully enabled.
+       The extended characters are transmitted  as  a  null  byte
+       followed  by  a  second  byte  containing  the character's
+       extended code.  When a true  null  byte  is  sent,  it  is
+       transmitted as two consecutive null bytes.
+
+       When  the  keyboard  is  fully enabled, an 8-bit character
+       code can be obtained by holding down the
+        key and entering the 3-digit decimal value of the charac-
+       ter from the numeric keypad.  The character is transmitted
+       when the  key is released.
+
+       Some keyboard  characters  have  special  meaning.   Under
+       default operations, pressing the
+        key  generates  an  interrupt  signal that is sent to all
+       processes designated with the associated control terminal.
+       When  the keyboard is fully enabled, holding down the  key
+       and pressing the 8 key on the home keyboard  (not  on  the
+       numeric  keypad)  returns  a  null  byte followed by 0x7F.
+       This will produce the  same  effect  as  the   key  (0x7F)
+       unless  you  have  executed  the  command  with  the -isig
+       option.  If the keyboard is fully  enabled  (TIOCKBON),  a
+       non-zero  value  will be returned.  If the keyboard is not
+       fully  enabled  (TIOCKBOF),  a  value  of  zero  will   be
+       returned.   Obtains  the  current definition of a function
+       key.  The argument to the call is the address  of  one  of
+       the following structures defined in /usr/include/sys/kd.h:
+       struct fkeyarg {
+
+                                                               10
+
+keyboard(7)                                           keyboard(7)
+
+            unsigned short keynum;
+            unchar keydef [MAXFK]; /* from ioctl.h  via  comcrt.h
+       */
+            char   flen; };
+
+       The  function key number must be passed in keynum (see arg
+       structure above).  The string currently  assigned  to  the
+       key  will  be  returned  in  keydef  and the length of the
+       string will be returned in flen when  the  ioctl  is  per-
+       formed.   Assigns  a  given  string to a function key.  It
+       uses the same structure as the GETFKEY ioctl.   The  func-
+       tion  key number must be passed in keynum, the string must
+       be passed in keydef, and the length of the string  (number
+       of characters) must be passed in flen.
+
+FFiilleess
+       /dev/console /dev/vt00-n /usr/include/sys/kd.h
+
+RReeffeerreenncceess
+NNoottiicceess
+       The  autoreboot caused by pressing the sequence -- is tun-
+       able.  The tunable is in  space.c  for  kd,  the  keyboard
+       driver.
+
+                                                               11
+

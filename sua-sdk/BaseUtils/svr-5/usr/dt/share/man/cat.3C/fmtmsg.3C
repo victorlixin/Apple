@@ -1,0 +1,243 @@
+
+
+fmtmsg(3C)                                             fmtmsg(3C)
+
+SSyynnooppssiiss
+       #include <fmtmsg.h>
+
+       int  fmtmsg(long  classification,  const  char *label, int
+       severity,
+           const char  *text,  const  char  *action,  const  char
+       *tag);
+
+DDeessccrriippttiioonn
+       Based  on  a  message's  classification  component, fmtmsg
+       writes a formatted message to stderr, to the  console,  or
+       to both.
+
+       fmtmsg  can  be  used  instead  of  the traditional printf
+       interface to display messages to stderr.  fmtmsg, in  con-
+       junction with gettxt, provides a simple interface for pro-
+       ducing language-independent applications.
+
+       A formatted message consists of up to five standard compo-
+       nents as defined below.  The component, classification, is
+       not part of the standard message displayed  to  the  user,
+       but  rather  defines the source of the message and directs
+       the display of the formatted message.
+
+       Contains identifiers from the following  groups  of  major
+       classifications  and  subclassifications.  Any one identi-
+       fier from a subclass may be used in combination  by  ORing
+       the  values  together with a single identifier from a dif-
+       ferent subclass.  Two or more identifiers  from  the  same
+       subclass  should  not be used together, with the exception
+       of identifiers from the display subclass.   (Both  display
+       subclass  identifiers  may be used so that messages can be
+       displayed to both stderr and the system console).
+
+       identify the source of the  condition.   Identifiers  are:
+       (hardware), (software), and (firmware).  identify the type
+       of software in which the problem is spotted.   Identifiers
+       are:  (application),  (utility),  and  (operating system).
+       indicate where the message is to  be  displayed.   Identi-
+       fiers are: MM_PRINT to display the message on the standard
+       error stream, MM_CONSOLE to display  the  message  on  the
+       system  console.  Neither, either, or both identifiers may
+       be used.  indicate whether the  application  will  recover
+       from  the  condition.   Identifiers are: (recoverable) and
+       (non-recoverable).
+
+       An additional identifier,  MM_NULLMC,  indicates  that  no
+       classification  component  is  supplied  for  the message.
+       Identifies the source of the message.  The format of  this
+       component  is  two fields separated by a colon.  The first
+       field is up to 10 characters long; the second is up to  14
+       characters.   Suggested usage is that label identifies the
+       package in which the application resides as  well  as  the
+       program  or  application  name.   For  example,  the label
+
+                                                                1
+
+fmtmsg(3C)                                             fmtmsg(3C)
+
+       UX:cat indicates the
+
+       System V package and the cat application.   Indicates  the
+       seriousness  of  the condition.  Identifiers for the stan-
+       dard levels of severity are: indicates that  the  applica-
+       tion  has encountered a severe fault and is halting.  Pro-
+       duces the print string HALT.  indicates that the  applica-
+       tion  has  detected  a  fault.   Produces the print string
+       ERROR.  indicates a condition out  of  the  ordinary  that
+       might  be  a  problem and should be watched.  Produces the
+       print string WARNING.  provides information about a condi-
+       tion  that  is  not  in  error.  Produces the print string
+       INFO.  indicates that no severity level  is  supplied  for
+       the message.
+
+       Other  severity levels may be added by using the addsever-
+       ity routine.  Describes the condition  that  produced  the
+       message.  If the text string is null, then a message stat-
+       ing that  no  text  has  been  provided  will  be  issued.
+       Describes the first step to be taken in the error recovery
+       process.  fmtmsg precedes each action string with the pre-
+       fix:  TO FIX:.  The action string is not limited to a spe-
+       cific size.  An identifier which references on-line  docu-
+       mentation  for  the  message.  Suggested usage is that tag
+       includes the label and a  unique  identifying  number.   A
+       sample tag is UX:cat:146.
+
+   EEnnvviirroonnmmeenntt vvaarriiaabblleess
+       There  are  two  environment  variables  that  control the
+       behavior of fmtmsg: MSGVERB and SEV_LEVEL.
+
+       MSGVERB tells fmtmsg which message  components  it  is  to
+       select  when  writing  messages  to  stderr.  The value of
+       MSGVERB is a colon-separated list  of  optional  keywords.
+       MSGVERB  can  be  set  as  follows: MSGVERB=[keyword[:key-
+       word[:. . .]]]  export MSGVERB
+
+       Valid keywords are: label,  severity,  text,  action,  and
+       tag.   If  MSGVERB  contains a keyword for a component and
+       the component's value is not the component's  null  value,
+       fmtmsg includes that component in the message when writing
+       the message to stderr.  If MSGVERB does not include a key-
+       word  for  a  message  component,  that  component  is not
+       included in the display of the message.  The keywords  may
+       appear  in  any  order.  If MSGVERB is not defined, if its
+       value is the null-string, if its value is not of the  cor-
+       rect  format,  or  if  it contains keywords other than the
+       valid ones listed above, fmtmsg selects all components.
+
+       The first time fmtmsg is called, it examines  the  MSGVERB
+       environment variable to see which message components it is
+       to select when generating a message to write to the  stan-
+       dard  error  stream,  stderr.   The values accepted on the
+       initial call are saved for future calls.
+
+                                                                2
+
+fmtmsg(3C)                                             fmtmsg(3C)
+
+       MSGVERB affects only which  components  are  selected  for
+       display  to the standard error stream.  All message compo-
+       nents are included in console messages.
+
+       SEV_LEVEL defines severity  levels  and  associates  print
+       strings  with them for use by fmtmsg.  The standard sever-
+       ity levels shown below  cannot  be  modified.   Additional
+       severity  levels  can  also  be  defined,  redefined,  and
+       removed using addseverity [see If the same severity  level
+       is  defined by both SEV_LEVEL and addseverity, the defini-
+       tion by addseverity is controlling.
+
+       (no severity is used) HALT ERROR WARNING INFO
+
+       SEV_LEVEL  can  be  set  as  follows:  SEV_LEVEL=[descrip-
+       tion[:description[:...]]]  export SEV_LEVEL
+
+       description  is  a  comma-separated  list containing three
+       fields: description=severity_keyword,level,printstring
+
+       severity_keyword is a character string that is used as the
+       keyword  on  the -s severity option to the fmtmsg command.
+       (This field is not used by the fmtmsg function.)
+
+       level is a character string that evaluates to  a  positive
+       integer  (other  than 0, 1, 2, 3, or 4, which are reserved
+       for the standard severity levels).  If the keyword  sever-
+       ity_keyword is used, level is the severity value passed on
+       to the fmtmsg function.
+
+       printstring is the character string used by fmtmsg in  the
+       standard  message format whenever the severity value level
+       is used.
+
+       If a description in the colon list is  not  a  three-field
+       comma  list,  or, if the second field of a comma list does
+       not evaluate to a positive integer,  that  description  in
+       the colon list is ignored.
+
+       The first time fmtmsg is called, it examines the SEV_LEVEL
+       environment variable, if defined, to see whether the envi-
+       ronment  expands  the  levels  of severity beyond the five
+       standard levels and those defined using addseverity.   The
+       values  accepted  on the initial call are saved for future
+       calls.
+
+   EErrrroorrss
+       The exit codes for fmtmsg are the following: The  function
+       succeeded.   The function failed completely.  The function
+       was unable to generate a message  on  the  standard  error
+       stream,  but otherwise succeeded.  The function was unable
+       to generate a console message, but otherwise succeeded.
+
+                                                                3
+
+fmtmsg(3C)                                             fmtmsg(3C)
+
+UUssaaggee
+   UUssee iinn aapppplliiccaattiioonnss
+       One or more message components may be systematically omit-
+       ted from messages generated by an application by using the
+       null value of the argument for that component.
+
+       The table below indicates the null values and  identifiers
+       for fmtmsg arguments.
+       ---------------------------------------------
+       Argument   Type    Null-Value     Identifier
+       ---------------------------------------------
+       _l_a_b_e_l      _cc_hh_aa_rr_**   _((_cc_hh_aa_rr_**_)) _NN_UU_LL_LL   _MM_MM____NN_UU_LL_LL_LL_BB_LL
+       _s_e_v_e_r_i_t_y   _ii_nn_tt     _00              _MM_MM____NN_UU_LL_LL_SS_EE_VV
+       _c_l_a_s_s      _ll_oo_nn_gg    _00_LL             _MM_MM____NN_UU_LL_LL_MM_CC
+       _t_e_x_t       _cc_hh_aa_rr_**   _((_cc_hh_aa_rr_**_)) _NN_UU_LL_LL   _MM_MM____NN_UU_LL_LL_TT_XX_TT
+       _a_c_t_i_o_n     _cc_hh_aa_rr_**   _((_cc_hh_aa_rr_**_)) _NN_UU_LL_LL   _MM_MM____NN_UU_LL_LL_AA_CC_TT
+       _t_a_g        _cc_hh_aa_rr_**   _((_cc_hh_aa_rr_**_)) _NN_UU_LL_LL   _MM_MM____NN_UU_LL_LL_TT_AA_GG
+
+       Another means of systematically omitting a component is by
+       omitting  the  component  keyword(s)  when  defining   the
+       MSGVERB  environment variable (see the ``Environment Vari-
+       ables'' section).
+
+   EExxaammppllee 11
+       The  following   example   of   fmtmsg:   fmtmsg(MM_PRINT,
+       "UX:cat",  MM_ERROR,  "invalid syntax", "refer to manual",
+       "UX:cat:001")
+
+       produces a complete message in the standard  message  for-
+       mat: UX:cat: ERROR: invalid syntax
+               TO FIX: refer to manual   UX:cat:001
+
+   EExxaammppllee 22
+       When  the  environment variable MSGVERB is set as follows:
+       MSGVERB=severity:text:action
+
+       and the Example 1 is used, fmtmsg produces: ERROR: invalid
+       syntax TO FIX: refer to manual
+
+   EExxaammppllee 33
+       When the environment variable SEV_LEVEL is set as follows:
+       SEV_LEVEL=note,5,NOTE
+
+       the following call to fmtmsg: fmtmsg(MM_UTIL  |  MM_PRINT,
+       "UX:cat",   5,   "invalid   syntax",  "refer  to  manual",
+       "UX:cat:001")
+
+       produces: UX:cat: NOTE: invalid syntax
+               TO FIX: refer to manual   UX:cat:001
+
+RReeffeerreenncceess
+NNoottiicceess
+       A simpler and slightly different  standard  error  message
+       format  and  interfaces  pfmt,  vpfmt,  lfmt and vlfmt are
+
+                                                                4
+
+fmtmsg(3C)                                             fmtmsg(3C)
+
+       available instead of fmtmsg.  fmtmsg will be  removed  and
+       replaced by in a future release.
+
+                                                                5
+

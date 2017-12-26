@@ -1,0 +1,85 @@
+
+
+pthread_setspecific(3pthread)       pthread_setspecific(3pthread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <pthread.h>
+
+       int  pthread_setspecific(pthread_key_t  *key,  const  void
+       (*value); void *pthread_getspecific(pthread_key_t *key);
+
+DDeessccrriippttiioonn
+       pthread_setspecific  associates  a  thread-specific  value
+       with  key.  Different threads can bind different values to
+       the same key.
+
+       If the value bound to key must be updated during the life-
+       time  of  the  thread, the caller must release the storage
+       associated with the old value before a new value is bound,
+       or the storage is lost.
+
+       pthread_getspecific  obtains  the value currently bound to
+       the specified key on behalf of the calling thread.
+
+       Both pthread_setspecific and  pthread_getspecific  may  be
+       called  from  a  thread-specific data destructor function.
+       However, calling pthread_setspecific from a destructor may
+       result in lost storage or infinite loops.
+
+       The  key  parameter is a key obtained with a previous call
+       to  pthread_key_create,  whose  value   is   returned   by
+       pthread_getspecific   and  to  which  value  is  bound  by
+       pthread_setspecific.
+
+       The effect of calling pthread_setspecific with a key value
+       not obtained with pthread_key_create or after key has been
+       deleted with pthread_key_delete is undefined.
+
+       The value parameter is a pointer to thread-specific  date,
+       or NULL.  value is typically a pointer to blocks of dynam-
+       ically-allocated memory that have been reserved for use by
+       the  calling thread.  If value is NULL, the calling thread
+       will give up a non-NULL reference to key.
+
+RReettuurrnn vvaalluueess
+       pthread_setspecific returns zero for success and an  error
+       number for failure, as described below.
+
+       pthread_getspecific returns the thread-specific data value
+       associated with the given key.  If no thread-specific data
+       value  is  associated  with  key,  then  the value NULL is
+       returned.
+
+       pthread_getspecific is not guaranteed to detect an invalid
+       key.  If pthread_getspecific returns NULL, either no value
+       is currently bound to key, the value bound to key is NULL,
+       or key is invalid.  In this case, the caller can determine
+
+                                                                1
+
+pthread_setspecific(3pthread)       pthread_setspecific(3pthread)
+
+       whether key is invalid by calling pthread_setspecific(key,
+       NULL) to get the applicable error number.
+
+DDiiaaggnnoossttiiccss
+       pthread_setspecific  returns the following values if their
+       corresponding conditions are detected: The  key  value  is
+       invalid.   There  is  not  sufficient  memory available to
+       associate value with key.
+
+       pthread_getspecific returns no errors.
+
+SSttaannddaarrddss CCoommpplliiaannccee
+       The Single UNIX Specification, Version 2; The Open  Group.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Although  there is no fixed limit on the number of keys in
+       a process, a large number of keys will consume memory  and
+       slow thread exit performance.
+
+                                                                2
+

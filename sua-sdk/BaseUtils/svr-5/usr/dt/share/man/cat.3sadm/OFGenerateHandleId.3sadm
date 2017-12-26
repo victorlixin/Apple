@@ -1,0 +1,104 @@
+
+
+OFGenerateHandleId(3sadm)               OFGenerateHandleId(3sadm)
+
+SSyynnooppssiiss
+       CC ... -lsysadm -lvtcl -ltclx -ltcl -lsocket -lgen -lm
+
+       #include <scoadmin/osaStdDef.h>
+
+       int      OFGenerateHandleId(errStatusPtr,     oldHandleId,
+       bmipRequestPtr)
+
+DDeessccrriippttiioonn
+       Each BMIP request represents a different  change  that  is
+       being  put  to  the system. When the Server API receives a
+       BMIP request, it translates much of it into  various  data
+       structures for the Server API's routines to use. Each han-
+       dleId is a one-to-one mapping to  a  collection  of  these
+       data  structures  that  represent a BMIP request. When the
+       request processor is first invoked, it is given  the  han-
+       dleId  of  the  data  structure  that  represents the BMIP
+       request that was also passed to the request processor.
+
+       If a request processor  needs  to  use  a  different  BMIP
+       request  (such  as  scoping of another class, etc) then it
+       should generate a new  handleId  to  match  the  new  BMIP
+       request. This is done with the OFGenerateHandleId routine.
+
+       The routine is passed the old handleId and  the  new  BMIP
+       request,  and  it  will return a new handleId that maps to
+       the new data structures that the Server API has  generated
+       for  the  new  BMIP request. These data structures and the
+       original data structure will be deleted by the Server  API
+       when  the request processor exits, and for all intents and
+       purposes are invisible to the OSA writer.
+
+   AArrgguummeennttss
+       A pointer to the error stack data structure. If  an  error
+       occurs  in retrieving the data, the appropriate error will
+       be placed in the error stack. This data can be  referenced
+       using  the  library  functions  associated  with the error
+       stack.  This is the  handle  with  which  the  Server  API
+       stores  extra  information about the current BMIP request.
+       This is passed to the request processor  as  an  argument.
+       This  is a pointer to the BMIP request structure forwarded
+       as an argument to the request processor.
+
+DDiiaaggnnoossttiiccss
+       The handleId named does  not  correspond  to  an  existing
+       class  in  the  Server  API's  internal lookup table.  The
+       class argument to the BMIP request did not  match  any  of
+       the class names that are local to this OSA.
+
+EExxaammpplleess
+       void   ObjectRequestProcessor(errStatus_cl        *errSta-
+       tusPtr,
+                              int                 handleId,
+                              bmipRequest_pt      bmipRequestPtr,
+
+                                                                1
+
+OFGenerateHandleId(3sadm)               OFGenerateHandleId(3sadm)
+
+                              void               *osaDataPtr)
+          {
+               .
+               .
+               .
+
+               /* scoped request code */
+
+               int                           widgetHandleId;
+               objectClass_pt                tmpObjectClassPtr;
+               scopeParameter_pt             tmpScopePtr;
+               extern ofRequestProcessor_fpt widgetRequestProces-
+       sor;
+               .
+               .
+               .
+
+               tmpObjectClassPtr = bmipRequestPtr->scopePtr;
+               tmpScopePtr = bmipRequestPtr->obejctClassPtr;
+               bmipRequestPtr->scopePtr = NULL;
+               bmipRequestPtr->obejctClassPtr = "sco widget";
+               widgetHandleId = OFGenerateHandleId(errStatusPtr,
+                                                 handleId,
+                                                 bmipRequestPtr);
+
+               if (ErrorIsOk(errStatusPtr) == FALSE)
+                   return;
+
+               /*  now call other Request Processor local to this
+       OSA */
+
+               widgetRequestProcessor(errStatusPtr,
+                                      widgetHandleId,
+                                      bmipRequestPtr,
+                                      osaDataSpace);
+
+               bmipRequestPtr->scopePtr = tmpObjectClassPtr;
+               bmipRequestPtr->obejctClassPtr = tmpScopePtr;
+
+                                                                2
+

@@ -1,0 +1,89 @@
+
+
+slocal(1)                                               slocal(1)
+
+SSyynnooppssiiss
+       /etc/mail/slocal  [address  info  sender]  [-addr address]
+       [-info data] [-sender sender] [-user  username]  [-mailbox
+       mbox]  [-file  file] [-home homedir] [-maildelivery deliv-
+       eryfile] [-verbose] [-noverbose] [-debug] [-help]
+
+DDeessccrriippttiioonn
+       The slocal program allows you to have  your  inbound  mail
+       processed  according  to a complex set of selection crite-
+       ria. You do not normally invoke slocal  yourself.  Rather,
+       slocal  is  invoked on your behalf by the Message Transfer
+       Agent (MTA) on your system.
+
+       The message selection criteria used by slocal is specified
+       in  the  file  .maildelivery in the user's home directory.
+       The format of this file is given on the manual page.
+
+       The message delivery address and message sender are deter-
+       mined  from  the  MTA  envelope  information, if possible.
+       Under the sender is obtained from the  ``From''  line,  if
+       present.  The user can override these values with command-
+       line arguments or  arguments  to  the  -addr  and  -sender
+       switches.
+
+       The  message is normally read from the standard input. The
+       -file option sets the name of the file from which the mes-
+       sage  should be read, instead of reading stdin.  The -user
+       option tells slocal the name of the user for  whom  it  is
+       delivering mail. The -mailbox option tells slocal the name
+       of the user's maildrop file.
+
+       The -info option can be used to pass an arbitrary argument
+       to  subprocesses  that  slocal  invoke on your behalf. The
+       -verbose option causes slocal to give information to  std-
+       out  about  its progress.  The -debug option produces more
+       verbose debugging output on stderr.
+
+       slocal is the default local  mail  delivery  agent.   Nor-
+       mally,  only  the maildelivery file needs to be altered to
+       enable slocal processing.  If, for some reason,  this  has
+       changed  and you want to use slocal, include the following
+       line  in  your  .forward  file  in  your  home  directory:
+       /etc/mail/slocal -user username
+
+   SSuubbpprroocceessss eennvviirroonnmmeenntt
+       When  a process is invoked, its environment is as follows:
+       The user and group-ids are set to  recipient's  IDs.   The
+       working  directory is the recipient's home directory.  The
+       umask is 0077.  The process has no /dev/tty.  The standard
+       input  is  set  to  the  message.  The standard output and
+       diagnostic output are set to /dev/null.  All  other  file-
+       descriptors  are  closed.  The variables $USER, $HOME, and
+       $SHELL are  set  appropriately,  and  no  other  variables
+       exist.   The  process is given a certain amount of time to
+
+                                                                1
+
+slocal(1)                                               slocal(1)
+
+       execute. If the process does not exit within  this  limit,
+       it  is  terminated  with  extreme prejudice. The amount of
+       time is calculated as ((size x 60) + 300)  seconds,  where
+       size is the number of bytes in the message.
+
+       The exit status of the process is consulted in determining
+       the success of the action. An exit status  of  zero  means
+       the  action succeeded.  Any other exit status (or abnormal
+       termination) means the action failed.
+
+       To avoid any time limitations, you can implement a process
+       that begins by forking. The parent returns the appropriate
+       value immediately, and the child continues doing  whatever
+       it  wants  for as long as it wants. This approach is some-
+       what risky if the parent returns an exit status  of  zero.
+       If  the  parent  returns  a  non-zero  exit  status,  this
+       approach can lead to quicker delivery into your  maildrop.
+
+FFiilleess
+       The  file  controlling  local  delivery.   Rather than the
+       standard file.  The default maildrop.
+
+RReeffeerreenncceess
+
+                                                                2
+

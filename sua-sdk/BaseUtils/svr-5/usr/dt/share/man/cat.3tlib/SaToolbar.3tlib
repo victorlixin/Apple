@@ -1,0 +1,178 @@
+
+
+SaToolbar(3tlib)                                 SaToolbar(3tlib)
+
+SSyynnooppssiiss
+       SaToolbar  name  attachment icons commands default [short-
+       helpCB] [visibility] [current] [frame] [sensitizeCB] [cus-
+       tomizeCB] SaToolbarButtonSetSensitive key state SaToolbar-
+       GetKeys
+
+       SaToolbarMenuOptions menu options [shorthelpCB] SaToolbar-
+       Get  visibilityVar  [currentVar]  [frameVar] SaToolbarLoad
+       client visibilityVar  [currentVar]  [frameVar]  SaToolbar-
+       Store   client   visibilityVar   [currentVar]   [frameVar]
+       [required]
+
+DDeessccrriippttiioonn
+       The SaToolbar interface enables applications to provide  a
+       user  configurable  graphical tool bar for quick access to
+       commonly used tasks.  Widely used in a number of graphical
+       environments,  a  toolbar is a row of pushbuttons, labeled
+       with icons, each of which duplicates a  common  task  pro-
+       vided  in the pulldown menus above. Each pushbutton may be
+       supplemented with a brief point help text string providing
+       a verbal explanation for the task.
+
+       If  the toolbar configuration menu options are provided by
+       the application, a user may hide the toolbar or  customize
+       its  appearance by adding or deleting tool bar buttons and
+       controlling the spacing between buttons for logical group-
+       ings.  Toolbars  need not be configurable, especially when
+       they are simple, with few buttons, and without  additional
+       buttons  that  might  be  added  at the user's discretion.
+       Non-configurable toolbars will be referred  to  as  static
+       toolbars. Although a static toolbar itself may not change,
+       the application should still allow the user to hide it.
+
+       The interfaces may be divided into two groups: basic tool-
+       bar creation and handling end-user Toolbar customization
+
+   BBaassiicc ttoooollbbaarr ccrreeaattiioonn aanndd hhaannddlliinngg
+       creates  a  toolbar.  SaToolbar  arguments divide into two
+       groups, those for basic static toolbars  and  an  optional
+       group used with customizable toolbars.  required arguments
+       for all toolbars &VTcl; widget name for the  new  toolbar.
+       widget  above  the  toolbar  to  which the toolbar will be
+       attached. This is typically the menu bar. This is required
+       to  support  toolbar hiding.  a Tcl list of full pathnames
+       for icon pixmap files. This list is essentially  a  lookup
+       table referred to by toolbar strings (see default and cur-
+       rent) using a numerical index starting with 0.  a Tcl list
+       of  lists where each list represents a command.  This list
+       is essentially a  lookup  table  referred  to  by  toolbar
+       strings  (see default and current) using a numerical index
+       starting with 0.
+
+       Each command is a list of three elements: unique  name  to
+       distinguish   the   button  from  all  others  application
+
+                                                                1
+
+SaToolbar(3tlib)                                 SaToolbar(3tlib)
+
+       callback to implement button task  point  help  textstring
+       associated  with  the button the default toolbar string. A
+       toolbar string defines the set of icons and commands  that
+       constitute  the toolbar.  It is a list of lists where each
+       list is a toolbar entity composed of two elements: numeri-
+       cal  index into icons list.  numerical index into commands
+       list.
+
+       Each command may appear only once in a toolbar string.
+
+       A special command index ``S'' may be used to  represent  a
+       space  versus  a  toolbar  button.  In this case, the icon
+       index should be {}.  Optional arguments non-default  point
+       help  callback. Defaults to SaShortHelpCB.  boolean speci-
+       fying current visibility: 1 = visibile.   The  application
+       should  first  load  the current value with SaToolbarLoad.
+       Arguments for customizable toolbars  currently  configured
+       (e.g.  user  configured)  toolbar string.  The application
+       should first load the current  value  with  SaToolbarLoad.
+       currently configured (e.g. user configured) toolbar frame.
+       The application should first load the current  value  with
+       SaToolbarLoad.  application callback to reconfigure button
+       sensitivity.  When a user customizes the toolbar and  adds
+       a  new  button,  its  proper  sensitivity is unknown. This
+       callback is a request from  the  toolbar  package  to  set
+       proper  sensitivity for such buttons. The application will
+       typically use SaToolbarGetKeys and loop through the set of
+       buttons configuring their sensitivity.
+
+       sensitizeCB   must  accept  a  callback  structure  (cbs).
+       Application callback invoked by the toolbar package at the
+       beginning and the end of a customization session.  This is
+       useful for applications that  may  wish  to  suspend  auto
+       refresh  callbacks or other automatic processing while the
+       user interacts with the toolbar dialog.
+
+       customizeCB accepts two  arguments:  a  boolean  (1=enter,
+       0=exit) and a callback structure (cbs): proc customizeCB {
+       state cbs } Like menu options and standard  push  buttons,
+       applications  will typically need to stipple certain tool-
+       bar buttons when  tasks  are  unavailable,  inappropriate,
+       unauthorized, etc. SaToolbarButtonSetSensitive can set the
+       sensitivity of the specified button to  sensitive  (1)  or
+       insensitive  (0).  When  insensitive,  a toolbar button is
+       "stippled" or unavailable.  Toolbar buttons are  specified
+       using a symbolic "key" as defined in the toolbar structure
+       and returned by SaToolbarGetKeys.
+
+       Although the set of actual buttons or "keys" on a  config-
+       urable  toolbars can dynamically change, applications need
+       not worry about whether the "key" refers to an actual but-
+       ton  or  whether  the  toolbar  itself is visible.  If the
+       "key" does not map to an actual toolbar button, SaToolbar-
+       ButtonSetSensitive  simply returns.  returns a Tcl list of
+
+                                                                2
+
+SaToolbar(3tlib)                                 SaToolbar(3tlib)
+
+       the current set of tool bar button keys.  Since these  can
+       change for configurable toolbars, the list of keys may not
+       be the same as those in the toolbar data structures.
+
+   AAddddiittiioonnaall IInntteerrffaacceess ffoorr CCuussttoommiizzaabbllee TToooollbbaarrss
+       attach standard toolbar menu options to application  pull-
+       down  menu.  specified application menu where options will
+       be attached list of one or more options  show/hide  toggle
+       toolbar  customization  dialog  option  non-standard point
+       help callback. Default to SaShortHelpCB.  these three pro-
+       vide  the  interface for loading and storing the user cus-
+       tomized visibility and toolbar  so  that  changes  persist
+       across multiple invocations. They use
+
+       The  application  may  chose  to deal only with visibility
+       (showing and hiding the toolbar) in which case the current
+       toolbar and its frametype can be omitted.  Fully customiz-
+       able toolbars require all arguments.  For efficiency,  all
+       three  toolbar  components  are passed by reference rather
+       than value, so the variable names themselves  are  passed.
+       loads  the variables with current toolbar values in prepa-
+       ration for storing them.  This must be  called  after  the
+       user's  last  opportunity  to  configure  the  toolbar and
+       before the call  to  SaToolbarStore.   stores  the  user's
+       toolbar  values until the application is used again.  This
+       is typically called from the application's exit  procedure
+       after  the  user's last opportunity to configure the tool-
+       bar.  client is a  string  that  uniquely  identifies  the
+       application among all other admin applications.  Must con-
+       form to the rules for Stanza  section  names.   loads  the
+       user's toolbar values from the previous store.  This loads
+       the values that may then be passed to SaToolbar. client is
+       a  string  that  uniquely identifies the application among
+       all other admin applications.  Must conform to  the  rules
+       for Stanza section names.
+
+DDiiaaggnnoossttiiccss
+       The  Load  and  Store procedures may throw errors from the
+       underlying SaScreenPolicy interfaces and should be handled
+       with ErrorCatch.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Currently,  SaToolbar supports only one toolbar per appli-
+       cation.
+
+       All application callbacks are auto locked.  See &VTcl; and
+       -autoLock.
+
+       Graphical  toolbars  are  only supported in the X environ-
+       ment. All SaToolbar procedures may be called  under  CHARM
+       but have no effect. Applications need not use special case
+       coding.
+
+                                                                3
+

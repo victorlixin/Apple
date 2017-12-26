@@ -1,0 +1,94 @@
+
+
+thr_sigsetmask(3thread)                   thr_sigsetmask(3thread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <thread.h>
+
+       int  thr_sigsetmask(int how, const sigset_t *set, sigset_t
+       *oset);
+
+DDeessccrriippttiioonn
+       thr_sigsetmask changes or examines  the  calling  thread's
+       signal mask according to the way how and set are set.
+
+       If  there are any pending unblocked signals after the call
+       to thr_sigsetmask, at least one of those signals  will  be
+       delivered before the call to thr_sigsetmask returns.
+
+       In  this  implementation,  changing the signal mask of the
+       thread will also change the signal mask of the lightweight
+       process (LWP) running the thread.
+
+   PPaarraammeetteerrss
+       SIG_BLOCK, SIG_UNBLOCK, or SIG_SETMASK pointer to a set of
+       signals to be blocked or unblocked pointer to the value of
+       the previous signal mask (set by thr_sigsetmask)
+
+   hhooww ppaarraammeetteerr
+       how  determines how set is interpreted.  Set how to one of
+       the following values: Add the set of  signals  denoted  by
+       set  to  the current signal mask Remove the set of signals
+       denoted by set from the current signal  mask  Replace  the
+       current signal mask with the set of signals denoted by set
+       Note that 0 is not a valid value for how.
+
+   sseett ppaarraammeetteerr
+       set points to a set of signals to be blocked or  unblocked
+       (according  to  the  value  of how) in the current thread.
+       set is usually constructed with the routines described  on
+       If  set  is NULL, the value of how is not significant, and
+       the thread's signal mask will not be changed.
+
+       It is not possible to block those signals that  cannot  be
+       ignored  (see  this restriction is silently imposed by the
+       system.
+
+   oosseett ppaarraammeetteerr
+       If oset is not NULL, thr_sigsetmask stores  the  value  of
+       the  previous  mask  in that location.  If set is NULL and
+       oset is not NULL, oset will point  to  the  value  of  the
+       thread's current signal mask.
+
+RReettuurrnn vvaalluueess
+       thr_sigsetmask  returns zero for success and an error num-
+       ber for failure, as described below.
+
+                                                                1
+
+thr_sigsetmask(3thread)                   thr_sigsetmask(3thread)
+
+       If thr_sigsetmask fails, the thread's signal mask  is  not
+       changed.
+
+   EErrrroorrss
+       If  any of the following conditions occurs, thr_sigsetmask
+       returns the corresponding value: The value of how  is  not
+       equal to one of the defined values.
+
+   PPoorrttaabbiilliittyy ccoonnssiiddeerraattiioonnss
+       Threads  should  use  thr_sigsetmask  rather  than In some
+       implementations, sigprocmask can be  trapped  and  behaves
+       identically   to   thr_sigsetmask,  but  for  portability,
+       thr_sigsetmask should be used.
+
+   PPeerrffoorrmmaannccee ccoonnssiiddeerraattiioonnss
+       In this implementation, an application running multiplexed
+       threads  with different signal masks can observe a perfor-
+       mance degradation.  Therefore,  for  optimal  performance,
+       all  multiplexing threads in a process should use the same
+       signal mask.  Applications needing threads that  will  run
+       frequently  with signal masks different from other threads
+       in the process should consider creating those  threads  as
+       bound threads for better performance.
+
+   SSttyyllee ccoonnssiiddeerraattiioonnss
+       The  preferred coding style is to mask all signals and use
+       sigwait synchronously.
+
+RReeffeerreenncceess
+
+                                                                2
+

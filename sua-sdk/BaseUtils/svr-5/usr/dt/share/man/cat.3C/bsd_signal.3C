@@ -1,0 +1,56 @@
+
+
+bsd_signal(3C)                                     bsd_signal(3C)
+
+SSyynnooppssiiss
+       cc -lc ...
+
+       #include <signal.h>
+
+       void (*bsd_signal(int sig, void (*func)(int)))(int);
+
+DDeessccrriippttiioonn
+       The  bsd_signal  function  provides a partially compatible
+       interface for programs written to historical system inter-
+       faces  (see "Usage", below).  The function call bsd_signal
+       (sig, func) has an  effect  as  if  implemented  as:  void
+       (*bsd_signal(int    sig,    void   (*func)(int)))(int)   {
+            struct sigaction act, oact;
+
+            act.sa_handler   =    func;         act.sa_flags    =
+       SA_RESTART;                     sigemptyset(&act.sa_mask);
+            sigaddset(&act.sa_mask, sig);      if (sigaction(sig,
+       &act,    &oact)    ==    -1)              return(SIG_ERR);
+            return(oact.sa_handler); }
+
+       The handler function should be declared: void  handler(int
+       sig);  where  sig is the signal number.  The func function
+       must take exactly one argument and must return a value  of
+       type void.
+
+RReettuurrnn vvaalluueess
+       Upon  successful completion, bsd_signal returns the previ-
+       ous action for sig.  Otherwise, SIG_ERR  is  returned  and
+       errno is set to indicate the error.
+
+EErrrroorrss
+       See
+
+UUssaaggee
+       This function is a direct replacement for the BSD function
+       for simple applications that are installing a single-argu-
+       ment  signal  handler  function.   If a BSD signal handler
+       function is being installed that  expects  more  than  one
+       argument, the application has to be modified to use
+
+BBaacckkwwaarrddss ccoommaappttiibbiilliittyy
+       The  bsd_signal  function  differs from signal in that the
+       SA_RESTART flag is set and the SA_RESETHAND wil  be  clear
+       when  bsd_signal is used.  The state of these flags is not
+       specified for signal.
+
+RReeffeerreenncceess
+       signal 5
+
+                                                                1
+

@@ -1,0 +1,170 @@
+
+
+dlopen(3C)                                             dlopen(3C)
+
+SSyynnooppssiiss
+       #include <dlfcn.h>
+
+       void *dlopen(const char *file, int mode);
+
+DDeessccrriippttiioonn
+       dlopen  is  one of a family of routines that give the user
+       direct access to the dynamic linking  facilities.   dlopen
+       makes  a  shared  object  specified by file available to a
+       running  process.   A  shared  object  may  specify  other
+       objects  that  it  ``needs'' in order to execute properly.
+       These dependencies are specified by DT_NEEDED  entries  in
+       the  .dynamic section of the original object.  Each needed
+       object may, in turn, specify other  needed  objects.   All
+       such  objects are loaded along with the original object as
+       a result of the call to dlopen.
+
+       A successful dlopen call returns to the process  a  handle
+       the  process  may  use  on  subsequent  calls to dlsym and
+       dlclose.  This value should not be interpreted in any  way
+       by the process.
+
+       file  is  used to construct a pathname to the object file.
+       If file contains a slash  character,  the  file  argument,
+       itself,  is  used as the pathname.  Otherwise, a series of
+       directories is searched for file.  First, any  directories
+       specified  by  a DT_RPATH entry in the .dynamic section of
+       the original  program  object  are  searched.   Then,  any
+       directories   specified   by   the   environment  variable
+       LD_LIBRARY_PATH  are  searched.   Finally,  the  directory
+       /usr/lib is searched.
+
+       If  the  value of file is 0, dlopen provides a handle on a
+       ``global symbol object.''  This object provides access  to
+       the  symbols  from an ordered set of objects consisting of
+       the original a.out, all of the objects that were loaded at
+       program  startup  along  with  the  a.out, and all objects
+       loaded using a dlopen operation along with the RTLD_GLOBAL
+       flag.  As the latter set of objects can change during exe-
+       cution, the set  identified  by  handle  can  also  change
+       dynamically.
+
+       Only  a  single copy of an object file is brought into the
+       address space, even if dlopen is invoked multiple times in
+       reference to the file, and even if different pathnames are
+       used to reference the file.
+
+       When a shared object is brought into the address space  of
+       a  process,  it  may  contain  references to symbols whose
+       addresses are not known until the object is loaded.  These
+       references  must  be  relocated  before the symbols can be
+       accessed.  The mode parameter governs when  these  reloca-
+       tions  take place and may have the following values: Under
+       this mode, only references to data symbols  are  relocated
+
+                                                                1
+
+dlopen(3C)                                             dlopen(3C)
+
+       when  the  object  is loaded.  References to functions are
+       not relocated until a given function is  invoked  for  the
+       first  time.   This  mode  should result in better perfor-
+       mance, since a process may not reference all of the  func-
+       tions  in  any  given shared object.  Under this mode, all
+       necessary relocations are performed  when  the  object  is
+       first  loaded.   This may result in some wasted effort, if
+       relocations are performed for  functions  that  are  never
+       referenced,  but  is  useful for applications that need to
+       know as soon as an object is loaded that all symbols  ref-
+       erenced during execution will be available.
+
+       Any  object  loaded  by  dlopen  that requires relocations
+       against global symbols can reference the  symbols  in  the
+       original  a.out,  any  objects  loaded at program startup,
+       from the  object  itself  as  well  as  any  other  object
+       included  in  the  same dlopen invocation, and any objects
+       that were loaded in any dlopen invocation  that  specified
+       the  RTLD_GLOBAL flag.  To determine the scope of visibil-
+       ity for the symbols loaded with a dlopen  invocation,  the
+       mode  parameter  should  be  bitwise or'ed with one of the
+       following values: The object's symbols are made  available
+       for  the  relocation  processing  of any other object.  In
+       addition, symbol lookup using dlopen(0, mode) and an asso-
+       ciated  dlsym()  allows objects loaded with RTLD_GLOBAL to
+       be searched.  The object's symbols are made available  for
+       relocation  processing  only to objects loaded in the same
+       dlopen invocation.
+
+       If neither RTLD_GLOBAL nor RTLD_LOCAL are  specified,  the
+       default is RTLD_LOCAL.
+
+       If  a  file  is  specified in multiple dlopen invocations,
+       mode is interpreted at  each  invocation.  Note,  however,
+       that  once  RTLD_NOW  has  been specified, all relocations
+       will have been completed, rendering any  further  RTLD_NOW
+       operations  redundant and any further RTLD_LAZY operations
+       irrelevant. Similarly note that once RTLD_GLOBAL has  been
+       specified, the object will maintain the RTLD_GLOBAL status
+       regardless of any  previous  or  future  specification  of
+       RTLD_LOCAL,  so  long as the object remains in the address
+       space [see
+
+       Symbols introduced into a program through calls to  dlopen
+       may  be  used in relocation activities.  Symbols so intro-
+       duced may duplicate symbols already defined by the program
+       or previous dlopen operations.  To resolve the ambiguities
+       such a situation might present, the resolution of a symbol
+       reference  to symbol definition is based on a symbol reso-
+       lution order.  Two such  resolution  orders  are  defined:
+       load  and  dependency ordering.  Load order establishes an
+       ordering among symbol definitions using the temporal order
+       in  which  the  objects  containing  the  definitions were
+       loaded, such that the definition first loaded has priority
+
+                                                                2
+
+dlopen(3C)                                             dlopen(3C)
+
+       over  definitions  added  later.  Load ordering is used in
+       relocation  processing.   Dependency   ordering   uses   a
+       ``breadth-first'' order starting with a given object, then
+       all of its dependencies, then  any  dependents  of  those,
+       iterating  until all dependencies are satisfied.  With the
+       exception of the  global  symbol  object  obtained  via  a
+       dlopen operation on a file with value 0, dependency order-
+       ing is used by the dlsym function.  Load ordering is  used
+       in dlsym operations upon the global symbol object.
+
+       When an object is first made accessible via dlopen, it and
+       its dependent objects are added in dependency order.  Once
+       all the objects are added, relocations are performed using
+       load order.  Note that if an object  or  its  dependencies
+       had  been  loaded  by  a  previous dlopen invocation or on
+       startup, the load and dependency orders may yield  differ-
+       ent resolutions.
+
+       The  symbols introduced by dlopen operations and available
+       through dlsym are those which are ``exported'' as  symbols
+       of  global  scope by the object.  For shared objects, such
+       symbols will typically be those  that  were  specified  in
+       (for example) C source code as having extern linkage.  For
+       a.outs, only a subset of externally  visible  symbols  are
+       typically  exported:  specifically those referenced by the
+       shared objects with which the a.out is linked.  The  exact
+       set of exported symbols for any shared object or the a.out
+       can be controlled using the linker [see
+
+   RReettuurrnn vvaalluueess
+       If file cannot be found, cannot be opened for reading,  is
+       not a shared object, or if an error occurs during the pro-
+       cess of loading file or  relocating  its  symbolic  refer-
+       ences,  dlopen  returns  NULL.   More  detailed diagnostic
+       information is available through dlerror.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The environment variable LD_LIBRARY_PATH should contain  a
+       colon-separated  list of directories in the same format as
+       the PATH variable [see LD_LIBRARY_PATH is ignored  if  the
+       process' real user id is different from its effective user
+       id or its real group id is different  from  its  effective
+       group  id  [see  or if the process has acquired any privi-
+       leges [see
+
+                                                                3
+

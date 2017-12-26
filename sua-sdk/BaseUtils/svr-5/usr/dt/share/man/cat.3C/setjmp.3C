@@ -1,0 +1,83 @@
+
+
+setjmp(3C)                                             setjmp(3C)
+
+SSyynnooppssiiss
+       #include <setjmp.h>
+
+       int setjmp (jmp_buf env);
+
+       void longjmp (jmp_buf env, int val);
+
+       void _longjmp(jump_buf env, int val);
+
+       int _setjmp (jmp_buf env);
+
+DDeessccrriippttiioonn
+       These  functions  are  useful  for dealing with errors and
+       interrupts encountered in a low-level subroutine of a pro-
+       gram.
+
+       setjmp  saves  its  stack  environment in env (whose type,
+       jmp_buf, is defined in the  <setjmp.h>  header  file)  for
+       later use by longjmp.  It returns the value 0.
+
+       longjmp restores the environment saved by the last call of
+       setjmp with the corresponding env argument.  After longjmp
+       is completed, program execution continues as if the corre-
+       sponding call of setjmp had just returned the  value  val.
+       (The  caller  of  setjmp  must  not  have  returned in the
+       interim.)  longjmp cannot cause setjmp to return the value
+       0.   If  longjmp  is  invoked with a second argument of 0,
+       setjmp will return 1.  At the time of  the  second  return
+       from setjmp, all external and static variables have values
+       as of the time longjmp is called (see example).  The  val-
+       ues of register and automatic variables are undefined.
+
+       Register or automatic variables whose value must be relied
+       upon must be declared as volatile.
+
+       _longjmp and _setjmp are identical to longjmp and  setjmp,
+       except that they do not manipulate the signal mask.
+
+UUssaaggee
+       #include <stdio.h> #include <stdlib.h> #include <setjmp.h>
+
+       jmp_buf env; int i = 0;
+
+       main () {
+           void exit();
+
+           if(setjmp(env) != 0) {
+              (void)  printf("value  of  i  on  2nd  return  from
+       setjmp: %d\n", i);
+              exit(0);
+           }
+           (void)  printf("value  of i on 1st return from setjmp:
+       %d\n", i);
+           i = 1;
+
+                                                                1
+
+setjmp(3C)                                             setjmp(3C)
+
+           g();
+           /* NOTREACHED */ }
+
+       g() {
+           longjmp(env, 1);
+           /* NOTREACHED */ }
+
+       If the a.out resulting from this C language code  is  run,
+       the  output will be: value of i on 1st return from setjmp:
+       0 value of i on 2nd return from setjmp: 1
+
+RReeffeerreenncceess
+NNoottiicceess
+       If longjmp is called even though env was never primed by a
+       call  to setjmp, or when the last such call was in a func-
+       tion that has since returned, absolute  chaos  is  guaran-
+       teed.
+
+                                                                2
+

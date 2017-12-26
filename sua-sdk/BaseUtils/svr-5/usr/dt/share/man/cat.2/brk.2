@@ -1,0 +1,70 @@
+
+
+brk(2)                                                     brk(2)
+
+SSyynnooppssiiss
+       #include <unistd.h>
+
+       int brk(void *endds);
+
+       void *sbrk(int incr);
+
+DDeessccrriippttiioonn
+       brk  and sbrk are used to change dynamically the amount of
+       space allocated for the  calling  process's  data  segment
+       [see  The  change is made by resetting the process's break
+       value and allocating the appropriate amount of space.  The
+       break  value  is  the address of the first location beyond
+       the end of the data  segment.   The  amount  of  allocated
+       space increases as the break value increases.  Newly allo-
+       cated space is set to zero.  If, however, the same  memory
+       space  is reallocated to the same process its contents are
+       undefined.
+
+       brk sets the break value to endds and  changes  the  allo-
+       cated space accordingly.
+
+       sbrk  adds  incr  bytes to the break value and changes the
+       allocated space accordingly.  incr  can  be  negative,  in
+       which case the amount of allocated space is decreased.
+
+   RReettuurrnn vvaalluueess
+       On  success,  brk returns 0 and sbrk returns the old break
+       value.  On failure, brk and sbrk return -1 and  set  errno
+       to  identify  the  error  without making any change in the
+       allocated space.
+
+   EErrrroorrss
+       In the following conditions, brk and  sbrk  fail  and  set
+       errno  to:  Such a change would result in more space being
+       allocated than is allowed by  the  system-imposed  maximum
+       process  size  [see  Total amount of system memory or swap
+       space available is temporarily insufficient [see This  may
+       occur  even  though  the space requested was less than the
+       system-imposed maximum process size [see
+
+RReeffeerreenncceess
+NNoottiicceess
+   UUssaaggee
+       Applications generally cope with the  details  of  dynamic
+       memory  allocation/deallocation  by  using  the  family of
+       library functions.  Moreover,  use  of  brk  or  sbrk  can
+       interfere with the dynamic memory used by
+
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Threads  within  a  process share (by definition) the same
+       address space; modifications to the address space  by  one
+       thread can be perceived by sibling threads.
+
+                                                                1
+
+brk(2)                                                     brk(2)
+
+       The  sbrk function is actually a front end to the brk sys-
+       tem call and has a potential  race  condition  that  might
+       produce  incorrect results if used concurrently by sibling
+       threads.  Such usage is not advised.  The family of  func-
+       tions has been made safe for use by threads.
+
+                                                                2
+

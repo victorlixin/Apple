@@ -1,0 +1,681 @@
+
+
+ipf(5tcp)                                               ipf(5tcp)
+
+DDeessccrriippttiioonn
+       Filtering rules accepted by must use the following format:
+       [ @dec ] action in|out [ options ] [ tos dec|hex ]  [  ttl
+       dec  ] \ [ proto protocol ] [ from [!]addrport to [!]addr-
+       port | all ] \ [ head dec ] [ group dec ]
+
+       Comment lines are indicated by a # as the first  character
+       on the line.
+
+       Filter  rules  are  checked  in  the  order  that they are
+       listed.  The last matching rule determines the fate  of  a
+       packet unless this is overridden using the quick option.
+
+       By  default,  filters are installed at the end of the ker-
+       nel's filter lists. Prepending the rule with  @dec  (where
+       dec  is  a decimal number) inserts it as entry number n in
+       the current list.  This is useful when modifying and test-
+       ing active sets of filter rules.
+
+       Rule  lines  may  be  extended  across actual lines in the
+       rules file by using the \ character to escape the  end  of
+       line.
+
+   AAccttiioonnss
+       Each  rule  must have an action that indicates what should
+       happen to a packet if it matches the rest  of  the  filter
+       rule.  The following actions are recognized: Allow authen-
+       tication to be performed by a user-space program  that  is
+       waiting  for packet information to validate. The packet is
+       held for a period of time in an internal buffer  while  it
+       waits  for the program to return the ``real'' flags to the
+       kernel that indicate whether it should be allowed  through
+       or  not.   Such a program might look at the source address
+       and request some sort  of  authentication  from  the  user
+       (such  as  a password) before allowing the packet through,
+       or before telling the kernel to drop it if it is  from  an
+       unrecognized source.  Drop a packet.
+
+       In  response  to  blocking  a  packet,  the  filter may be
+       optionally instructed  to  send  either  a  TCP  ``reset''
+       (return-rst) or an ICMP reply packet (return-icmp).
+
+       A  TCP  reset  may only be used with a rule which is being
+       applied to TCP packets.
+
+       An ICMP packet may be generated  in  response  to  any  IP
+       packet. The unreachability code (icmp-code) may be option-
+       ally specified to  indicate  such  conditions  as  network
+       unreachability  (0),  port unreachability (3), or adminis-
+       trative prohibition to access (13).   For  example,  block
+       return-icmp(11)  ...   would  return a response indicating
+       that a network is unreachable for a Type-Of-Service (TOS).
+       This  action  is  not  currently  supported.   Include the
+       packet in the accounting statistics kept  by  the  filter.
+
+                                                                1
+
+ipf(5tcp)                                               ipf(5tcp)
+
+       This  has  no effect on whether the packet will be allowed
+       through the filter.  These statistics  are  viewable  with
+       Log  the  packet  (as  described  in This has no effect on
+       whether the packet will be  allowed  through  the  filter.
+       Let  the  packet  through  the  filter.   Look in the pre-
+       authenticated list for further clarification.  If no  fur-
+       ther  matching  rule  is found, the packet will be dropped
+       (FR_PREAUTH is not the same as  FR_PASS).   If  a  further
+       matching  rule  is  found,  the  result  from that is used
+       instead. This might be used in a situation where a  person
+       logs  into  a  firewall  which then sets up some temporary
+       rules that define access for that person.  Ignore the next
+       dec filter rules.  If a rule is inserted or deleted inside
+       the region  being  skipped  over,  the  value  of  dec  is
+       adjusted appropriately.
+
+   II//OO ddiirreeccttiioonn
+       Following  the  specified  action,  every filter rule must
+       specify the I/O direction to which  it  will  be  applied:
+       Inbound  packets (just received on an interface, and trav-
+       eling  toward  the  protocol  stack).   Outbound   packets
+       (transmitted or forwarded by the protocol stack, and trav-
+       eling toward an interface).
+
+   OOppttiioonnss
+       The following options may additionally be  specified.   If
+       used, they must be specified in the same relative order as
+       they are listed here: For the last rule in the  list  that
+       matches  a  packet, write the packet header to the ipl log
+       (as described in Allow short-cut rules in order  to  speed
+       up the filter or override later rules. If a packet matches
+       a filter rule which is marked as quick, this rule will  be
+       the last rule checked to avoid processing subsequent rules
+       for this packet. The current status of the  packet  (after
+       any effects of the current rule) will determine whether it
+       is passed or blocked.
+
+       If this option is missing, the rule is taken to be a fall-
+       through  rule,  meaning  that  the  result  of  the  match
+       (block/pass) is saved and that processing will continue to
+       see  if  there  are  any more matches.  Allow an interface
+       name to  be  incorporated  into  the  matching  procedure.
+       Interface  names  are  as  printed  by netstat -i. If this
+       option is used, the rule will only match if the packet  is
+       going  through  that  interface in the specified direction
+       (in or out).  If this  option  is  omitted,  the  rule  is
+       applied to packets on all interfaces.
+
+       This  option  is  especially  useful for simple protection
+       against IP  address  spoofing.   Packets  should  only  be
+       allowed  to  pass  inbound on the interface from which the
+       specified source address would be expected, others may  be
+       logged and/or dropped.
+
+                                                                2
+
+ipf(5tcp)                                               ipf(5tcp)
+
+       This option has the following suboptions: Copy the packet,
+       and send the duplicate packet out on the specified  inter-
+       face,  optionally  with the destination IP address changed
+       to that specified. This is useful  for  off-host  logging,
+       using  a network sniffer.  Move the packet to the outbound
+       queue on the specified interface without decrementing  the
+       packet's  time-to-live  (TTL)  value.  This can be used to
+       circumvent kernel routing decisions, and  even  to  bypass
+       the  rest  of  the  kernel  processing  of  the packet (if
+       applied to an inbound rule). It is thus possible  to  con-
+       struct  a firewall that behaves transparently, like a fil-
+       tering hub or switch, rather than a router.  Identical  to
+       to,  except that the packet is moved to the outbound queue
+       on the interface found by ordinary route lookup.
+
+   MMaattcchhiinngg ppaarraammeetteerrss
+       The remain keywords define parameters  that  are  used  to
+       specify  further  constraints  on whether a rule matches a
+       given packet.  If used, they must be specified in the same
+       relative  order as they are listed here: Filter packets by
+       their Type-Of-Service value.  Individual service levels or
+       combinations  can  be filtered upon. The value for the TOS
+       mask can be specified either as a hexadecimal or a decimal
+       integer.  Select packets by their Time-To-Live value.  The
+       decimal integer specified in the filter  rule  must  equal
+       the value in the packet for a match to occur.  Match pack-
+       ets against a specific protocol such  as  icmp,  tcp,  and
+       udp.   Any protocol name listed in /etc/protocols (see may
+       be used.  protocol may also  be  specified  as  a  decimal
+       integer to allow rules to match unlisted protocols.
+
+       For  convenience, tcp/udp may be specified to match either
+       TCP or UDP packets.   Match  against  IP  addresses  (and,
+       optionally, port numbers).  Rules must specify both source
+       (from) and destination (to) parameters.
+
+       The IP address and optional port specification  (addrport)
+       can  take one of the following forms: address address port
+       relop portn address port portm rangeop portn An IP address
+       may  be specified either as ipaddr/masklen, or as hostname
+       mask netmask.  ipaddr is specified in dotted decimal nota-
+       tion,  and  hostname  may  either  be specified as a valid
+       resolvable  hostname  or  in  dotted   decimal   notation.
+       masklen  is  the network mask specified by ts length, that
+       is, the number of leading 1 bits in their binary represen-
+       tation  (for  example, 255.255.255.0 has length 24).  net-
+       mask is the network mask specified  as  a  dotted  decimal
+       address   or   as   a  hexadecimal  number  (for  example,
+       255.255.255.0 may also be represented as 0xffffff00).
+
+       All bits of the IP address  passed  by  the  bitmask  must
+       match  the address on the packet exactly. Currently, there
+       is no way to invert the sense of the match,  or  to  match
+       ranges of IP addresses which are not easily expressible as
+
+                                                                3
+
+ipf(5tcp)                                               ipf(5tcp)
+
+       bitmasks.
+
+       If an IP address or hostname is specified to  reference  a
+       host explicitly, rather than its network, its network mask
+       should be specified as 32 (masklen), or as 255.255.255.255
+       or 0xffffffff (netmask) to avoid masking off the host bits
+       of the address.
+
+       The keyword any and the address/mask combination
+        0.0.0.0/0 match all IP addresses.
+
+       The keyword all is a synonym for from any to any.
+
+       There is no special designation for networks, but  network
+       names  are recognized if they are resolvable.  Making fil-
+       ter rules depend on DNS  results  can  introduce  possible
+       avenues of attack.  The symbol ! placed immediately before
+       a hostname or IP address inverts the match.  For  example,
+       ``from !10.0.0.0/8'' would match packets that do not orig-
+       inate from the 10/8 network.
+
+       If a match is included for source  or  destination  ports,
+       and no protocol is specified, both TCP and UDP packets are
+       examined.  This is equivalent to specifying proto tcp/udp.
+
+       When  composing  port comparisons, a port may be specified
+       either by its service name (see or by its integer value.
+
+       A source port is matched if it appears a from clause,  and
+       a destination port is matched if it appears a to clause.
+
+       Port comparisons can take a number of forms: Specify ports
+       realive to the value of portn using one of  the  following
+       relational operators:
+       =    equal to
+       eq
+       !=   not equal to
+       ne
+       <    less than
+       lt
+       >    greater than
+       gt
+       <=   less than or equal to
+       le
+       >=   greater than or equal to
+       ge
+       Specify a range of ports using one of the following opera-
+       tors:
+       ><   all ports greater than
+            portm  and  less  than
+            portn
+
+                                                                4
+
+ipf(5tcp)                                               ipf(5tcp)
+
+       <>   all  ports  less  than
+            portm and greater than
+            portn
+
+       Following the source and destination matching  parameters,
+       the  following  additional  parameters  may  optionally be
+       specified: (TCP filtering only.)  Each  of  the  following
+       single character symbols represents a flag that can be set
+       in the TCP header: FIN (Finished sending data)  SYN  (Syn-
+       chronize  sequence  numbers)  RST (Reset a connection) PSH
+       (Push the data  to  an  application)  ACK  (Acknowledge  a
+       sequence number) URG (There is urgent data)
+
+       These symbols may be combined, so that ``SA'' would repre-
+       sent a combination of SYN-ACK set in a packet.  To prevent
+       unwanted matches against combined flags, you can specify a
+       subset of the flags which are to be used when matching  by
+       appending  ``/flags'' to the set to be matched.  For exam-
+       ple, ``flags S/FSRPAU'' will match packets that  set  only
+       the  SYN  flag, and ``flags SA/FSRPAU'' will match packets
+       with only SYN and ACK set.  ``flags S/SA'' will match  any
+       packet  with SYN set but not ACK, so that, for example, it
+       will match packets that set the combination  of  SYN,  FIN
+       and PSH.  Match irregular attributes that some packets may
+       have associated with them. The following option types  may
+       be  matched:  Match the presence of any IP options.  Match
+       packets that are too short to contain a  complete  header.
+       Match  fragmented  packets.   Match one IP option from the
+       following (listed in RFC 1700):
+       nop      No operation (RFC 791)
+       rr       Record route (RFC 791)
+       zsu      Experimental measurement
+       mtup     MTU probe (RFC 1191)
+       mtur     MTU reply (RFC 1191)
+       ts       Timestamp (RFC 791)
+       tr       Trace route (RFC 1393)
+       sec      Security (RFC 1108)
+       lsrr     Loose source route (RFC 791)
+       e-sec    Extended security (RFC 1108)
+       cipso    Commercial security
+       satid    Stream ID (RFC 791)
+       ssrr     Strict source route (RFC 791)
+       addext   Address extension
+       visa     Experimental access control
+       imitd    IMI traffic descriptor
+       eip      Unknown
+       finn     Experimental flow control
+       Match a security level (see RFC 1108) from one or more  of
+       the following:
+       unclass     Unclassified
+       confid      Confidential
+       reserv-1    Reserved 1
+       reserv-2    Reserved 2
+
+                                                                5
+
+ipf(5tcp)                                               ipf(5tcp)
+
+       reserv-3    Reserved 3
+       reserv-4    Reserved 4
+       secret      Secret
+       topsecret   Top secret
+
+       Before any parameter used after the with keyword, the key-
+       word no (or equivalently, not) may be used  to  specify  a
+       match if an option is not present.
+
+       Multiple  consecutive  with  clauses are allowed, although
+       the synonym and is commonly used to make  the  rules  more
+       readable. When multiple clauses are listed, all must match
+       for the overall match to succeed.  (ICMP filtering  only.)
+       ICMP  types  and codes may be selected by their number, or
+       using one of the following abbreviations:
+       ------------------------------------------------------------------
+       Type        Code          Description
+       ------------------------------------------------------------------
+       echorep                   Echo reply (used by ping)
+       unreach     net-unr       Network unreachable
+                   host-unr      Host unreachable
+                   proto-unr     Protocol unreachable
+                   port-unr      Port unreachable
+                   needfrag      Fragmentation prevented by set  ``Don't
+                                 fragment'' bit
+                   srcfail       Source route failed
+                   net-unk       Destination network unknown
+                   host-unk      Destination host unknown
+                   isolate       Source host isolated (obsolete)
+                   net-prohib    Access  to destination network adminis-
+                                 tratively prohibited
+                   host-prohib   Access to destination host  administra-
+                                 tively prohibited
+                   net-tos       Network unreachable for Type-Of-Service
+                   host-tos      Host unreachable for Type-Of-Service
+       squench                   Source quench
+       redir                     Redirect
+       echo                      Echo request (used by ping)
+       timex                     Time-to-live  fell  to 0 during transit
+                                 (used by traceroute)
+       paramprob                 Parameter problem
+       timest                    Timestamp request
+       timestrep                 Timestamp reply
+       inforeq                   Information request (obsolete)
+       inforep                   Information reply (obsolete)
+       maskreq                   Address mask request
+       maskrep                   Address mask reply
+
+       The most important of these from a security point of  view
+       are unreach and redir.  Record state information about the
+       flow of a communication session. State  can  be  kept  for
+       TCP,  UDP,  and ICMP packets.  Record information on frag-
+       mented packets that will be applied  to  later  fragments.
+       Allow packets which match this information to pass, rather
+
+                                                                6
+
+ipf(5tcp)                                               ipf(5tcp)
+
+       than going through the access control list.  These parame-
+       ters control filter-rule grouping.  By default, all filter
+       rules are placed in the default group (dec=0) if no  other
+       group  is specified.  To add a rule to a non-default group
+       (dec>0), the group must be initialized by creating a group
+       head.  If  a  packet matches a rule which is the head of a
+       group, the filter processing then switches to  the  group,
+       using the head rule as the default for the group. If quick
+       is also specified in a head rule, rule processing  is  not
+       terminated  until  the  entire group of rules as been pro-
+       cessed.
+
+       head places a rule at the head of a new group (dec>0).
+
+       group places a rule as a member of group number dec rather
+       than in the default group, 0.
+
+       A  rule  may  be both the head for a new non-default group
+       and a member of another non-default group. That  is,  head
+       and group may be specified together in a rule.
+
+   LLooggggiinngg
+       When  a  packet  is  logged, with either the log action or
+       option, the headers of the packet are written to  the  ipl
+       packet  logging  psuedo-device.  Immediately following the
+       log keyword, the following  qualifiers  may  be  used  (in
+       order): The first 128 bytes of the packet contents will be
+       logged after the headers.  Log only the first packet  that
+       matches.   If  the filter is unable to log the packet (for
+       example, if the log reader is  too  slow)  then  the  rule
+       should  be interpreted as if the action was block for this
+       packet.
+
+       You can use to read and format this log.
+
+UUssaaggee
+       A rule file for may have any name or even  be  taken  from
+       the standard input.
+
+       produces  valid rules as output when displaying the inter-
+       nal kernel filter lists. It is therefore possible  to  use
+       its output to feed back into ipf. For example, the follow-
+       ing command line would remove all filters on  input  pack-
+       ets: ipfstat -i | ipf -rf -
+
+FFiilleess
+       /dev/ipauth /dev/ipl /dev/ipstate /etc/hosts /etc/services
+
+RReeffeerreenncceess
+EExxaammpplleess
+       The action keywords block and pass specify whether packets
+       are  to be dropped or let through respectively.  Addition-
+       ally, in and out must be used to specify the direction  in
+       which the packet is traveling: # default action is to drop
+
+                                                                7
+
+ipf(5tcp)                                               ipf(5tcp)
+
+       all packets block in all block out all  #  #  except  pass
+       packets from host firewall to any destination pass in from
+       firewall to any Use the on keyword to specify which inter-
+       face  a packet is traveling to or from.  It is recommended
+       that rules include this where necessary  for  clarity.   #
+       drop  all inbound packets from localhost's ethernet inter-
+       face block in on en0 from localhost to any Netmasks may be
+       specified in a variety of ways. For example, the following
+       four entries are equivalent: block in  on  en0  from  our-
+       net/23 to any block in on en0 from ournet/255.255.254.0 to
+       any block in on en0 from ournet mask 255.255.254.0 to  any
+       block  in  on  en0  from ournet mask 0xfffffe00 to any The
+       default   netmask,   when   none    is    specified,    is
+       "255.255.255.255" or "/32" which matches a host address.
+
+       To  invert the match on a hostname or network, prepend the
+       name or address with a ! leaving no space between them.
+
+   FFiilltteerriinngg oonn pprroottooccoollss
+       Use the proto keyword to filter on an individual  protocol
+       in  a filter rule: # block all incoming ICMP packets block
+       in on en0 proto icmp all # # pass all protocol 4 IP  pack-
+       ets  pass in on en0 proto 4 all The protocol can be speci-
+       fied by its number or any valid name from  /etc/protocols.
+       Additionally, tcp/udp can be specified to match either TCP
+       or UDP. This is useful when setting up port  restrictions:
+       # drop incoming packets destined for the NFS server daemon
+       block in on en0 proto tcp/udp from any to any port = 2049
+
+   UUssiinngg tthhee qquuiicckk ooppttiioonn
+       The quick option is useful for rules  such  as:  block  in
+       quick  all with ipopts This matches any packet with a non-
+       standard header length (IP options  present),  and  aborts
+       further  processing  of later rules, recording a match and
+       also that the packet should be blocked.
+
+       Fall-through rule parsing  allows  for  effects  such  as:
+       block in all port < 6000 pass in all port >= 6000 block in
+       all port > 6003 This sets  up  ports  in  the  range  6000
+       through  6003  as  being permitted and all others as being
+       denied. Note that the effect of one rule is overridden  by
+       subsequent  rules.  Another way to achieve the same effect
+       is: block in all port 6000 <> 6003 pass in all  port  5999
+       ><  6004 Note that both the block and pass are needed here
+       to achieve the desired effect.  This is because  a  failed
+       match on the block action does not imply a pass, only that
+       the rule has not taken effect.  To allow ports <  1024,  a
+       quick rule such as: pass in quick all port < 1024 would be
+       specified before the first block.
+
+   FFiilltteerriinngg IIPP ffrraaggmmeennttss
+       IP packet filtering may be compromised by IP fragments  if
+       rules are used which rely on data being in the first frag-
+       ment.  For example, the TCP flags field may be located  in
+
+                                                                8
+
+ipf(5tcp)                                               ipf(5tcp)
+
+       the  second or subsequent fragment.  Rather than filtering
+       out all fragmented packets: # drop all IP fragments  block
+       in all with frag which will also filter out harmless frag-
+       ments, it is suggested that invalid  short  fragments  are
+       dropped  instead: # drop all short IP fragments (too small
+       for valid comparison) block in proto tcp all with short
+
+   IIPP ooppttiioonnss
+       Some consider IP options to be a general security  threat.
+       The options are useful with programs such as but this does
+       impose some risk.
+
+       IP options can filtered either collectively:  #  drop  and
+       log  any packets with IP options set block in log all with
+       ipopts or specifically: # drop  packets  specifying  loose
+       source  routing options block in quick all with opt lsrr #
+       # drop packets specifying strict  source  routing  options
+       block  in quick all with opt ssrr Each option type must be
+       trapped using a separate rule.   A  single  rule  such  as
+       block  in  quick  all  with opt lsrr,ssrr would only match
+       packets which set both options.  It is  also  possible  to
+       select  packets  which do not specify various options, for
+       example: # allow in telnet provided no IP options are  set
+       pass in proto tcp from any to any port = 23 with no ipopts
+       # # allow in packets with  strict  not  not  loose  source
+       routing pass in from any to any with opt ssrr not opt lsrr
+
+   FFiilltteerriinngg sseerrvviicceess
+       Filtering on services is possible using port  numbers  for
+       the TCP and UDP protocols, or service names from /etc/ser-
+       vices.  If the proto field is used in a  filter  rule,  it
+       will  be  used in conjunction with the port name in deter-
+       mining the port number. Following  are  some  examples:  #
+       allow  in  TCP  packets  from the same subnet destined for
+       port 6667.  pass in  proto  tcp  from  1192.168.1.0/24  to
+       192.168.1.22/32  port  = 6667 # # allow in UDP packets not
+       from port 53 and destined for localhost pass in proto  udp
+       from  any  port  != 53 to localhost # # block the X server
+       ports, X:0 to X:9 block in proto tcp from any to any  port
+       5999  ><  6010  #  #  allow  all connections except to BSD
+       print/r-services/syslog pass in proto tcp/udp all block in
+       proto tcp/udp from any to any port 511 >< 516
+
+   FFiilltteerriinngg oonn TTCCPP ffllaaggss ffoorr eessttaabblliisshheedd ccoonnnneeccttiioonnss
+       TCP packets which belong to an established connection have
+       the ACK bit set in their flags,  sometimes  combined  with
+       URG  and PSH flags.  SYN is the only flag set in the first
+       packet sent to establish a new TCP connection.   The  fol-
+       lowing rule will drop TCP connection requests from outside
+       to the internal network 192.168.0.0/16: block in  on  ppp0
+       proto  tcp  from  any to 192.168.0.0/16 flags S/FSRPAU The
+       statement ``flags S/FSRPAU'' means match packets that  set
+       only  SYN from the set of all possible flags.  The follow-
+       ing similar rule would block all replies (which  only  set
+
+                                                                9
+
+ipf(5tcp)                                               ipf(5tcp)
+
+       SYN  and  ACK)  to such requests if you had let them pass:
+       block out on le0 proto  tcp  from  192.168.0.0/16  to  any
+       flags SA/FRSPAU
+
+   FFiilltteerriinngg oonn IICCMMPP ttyyppeess aanndd ccooddeess
+       Blocking  ICMP  packets  can  be  used to deny information
+       about your local networks to the outside  world,  however,
+       it  will  also stop programs such as from working.  Selec-
+       tive filtering on the ICMP type allows ping to continue to
+       work:  #  block all ICMP packets block in proto icmp all #
+       except allow in ICMP echos and echo-replies pass in  proto
+       icmp  from  any  to  any icmp-type echo pass in proto icmp
+       from any to any icmp-type echorep ICMP codes must be spec-
+       ified by their numeric value: # block all ICMP destination
+       unreachable packets which are port-unreachable  block  out
+       proto icmp from any to any icmp-type unreach code 3
+
+   RReessppoonnddiinngg ttoo bbaadd ppaacckkeettss
+       To  provide  feedback for packets which your filter drops,
+       either  send  back  an  ICMP  ``Destination  Unreachable''
+       error,  or  if a TCP packet was dropped, a TCP reset (RST)
+       which causes immediate closure of a TCP connection.   Fol-
+       lowing are some examples: # block all incoming TCP connec-
+       tions and send back RST block return-rst in proto tcp from
+       any to any flags S/FRSPAU # # block all incoming UDP pack-
+       ets and send back an ICMP error block return-icmp in proto
+       udp  from  any  to  any When returning ICMP packets, it is
+       also possible to specify the type of  ICMP  error  return.
+       This  allows  traceroute traces to end informatively.  The
+       ICMP unreachable code or number is placed in brackets fol-
+       lowing  the return-icmp directive: # block all inbound UDP
+       packets to ports > 30000 and send back an ICMP error block
+       return-icmp (port-unr) in proto udp from any to any port >
+       30000 block return-icmp (3) in proto udp from any  to  any
+       port > 30000
+
+   FFiilltteerriinngg IIPP sseeccuurriittyy ccllaasssseess
+       Filtering  is supported on the defined classes and author-
+       ity levels, but not on 16-bit authority flags.   Following
+       are  some  examples of filtering on IP security options: #
+       drop all packets without IP security options block in  all
+       with  no  opt sec # # only allow packets in and out on en0
+       which are top secret block out on en1 all pass out on  en1
+       all  with opt sec-class topsecret block in on en1 all pass
+       in on en1 all with opt sec-class topsecret
+
+   FFiilltteerriinngg oonn ppaacckkeett ssttaattee
+       Packet state filtering  monitors  the  acknowledgment  and
+       sequence  numbers of packets in a TCP connection, and only
+       allows packets through which fall inside the correct  win-
+       dow.   #  keep  state  for outgoing telnet connections and
+       disallow all other TCP traffic pass out quick on en1 proto
+       tcp  from any to any port = telnet keep state block out on
+       en1 all UDP packet exchanges  are  effectively  stateless.
+
+                                                               10
+
+ipf(5tcp)                                               ipf(5tcp)
+
+       However,  if  a  packet is sent from a given port, a reply
+       can be expected:  #  allow  UDP  replies  back  from  name
+       servers  pass  out on en1 proto udp from any to any port =
+       domain keep state Stored UDP states are  eventually  timed
+       out,  as  are  TCP states for entries which do not set the
+       SYN flag.  If an entry is created with SYN set, any subse-
+       quent matching packet which does not set SYN (for example,
+       as SYN-ACK) will cause it to  be  timeless  (although  the
+       timeout will default to 5 days) until either FIN or RST is
+       seen.
+
+   TTrraannssppaarreenntt rroouuttiinngg
+       Transparent routing does not  decrement  the  time-to-live
+       (TTL)  value of a packet as it passes through the stack on
+       its way between network interfaces.   Transparent  routing
+       can be performed either by including the fastroute keyword
+       to use normal route lookup, or by using the to keyword  to
+       define  a  fixed  route:  #  route all UDP packets through
+       transparently pass in quick fastroute proto udp  all  #  #
+       route  all ICMP packets received on en0 out through en1 to
+       "router" pass in quick on en0 to en1:router proto icmp all
+
+   LLooggggiinngg ppaacckkeettss ttoo nneettwwoorrkk ddeevviicceess
+       Logging  packets  to  the network devices is supported for
+       both packets being passed through  the  filter  and  those
+       being  blocked.  For  packets  being passed on, the dup-to
+       keyword must be used; for packets being blocked, the  more
+       efficient to keyword can be used.
+
+       To  log packets to the interface, create a static entry in
+       the ARP cache  for  a  non-existent  IP  address  such  as
+       10.0.0.1: arp -s ether 10.0.0.1 00:00:00:00:00:00 The fol-
+       lowing example rules log packets to this address.   #  log
+       short TCP packets to en3, with "packetlog" as the intended
+       destination block in quick to en3:packetlog proto tcp  all
+       with short # # log all connection attempts for TCP pass in
+       quick on ppp0 dup-to le1:packetlog  proto  tcp  all  flags
+       S/FRSPAU
+
+   SSeettttiinngg uupp rruullee ggrroouuppss
+       To make rule processing more efficient, rule groups may be
+       set up.  By default, all rules are in group 0 which is the
+       parent of all other groups.  To start a new group, include
+       a head statement such as the following in a rule: #  block
+       all  incoming  packets on ppp0 as group 100 block in quick
+       on ppp0 all head 100 If you wanted to allow people to con-
+       nect  to  your  http server via ppp0, you would add a rule
+       for this to the same group: # allow  connections  to  http
+       via  ppp0  and monitor their state pass in quick proto tcp
+       from any to any port = http  keep  state  group  100  Only
+       packets  which matched the head rule are processed by sub-
+       sequent rules in the same group so it  is  unnecessary  to
+       specify the interface.
+
+                                                               11
+
+ipf(5tcp)                                               ipf(5tcp)
+
+       To  create  a new group for processing all inbound packets
+       on the interfaces en0, en1 and lo0, with the default being
+       to  block all inbound packets, you would set up rules such
+       as the following: block in all block in quick on  en0  all
+       head 100 block in quick on en1 all head 200 block in quick
+       on lo0 all head 300 The following rule  would  allow  ICMP
+       packets  in on en0 alone: pass in proto icmp all group 100
+       Again note that because only inbound packets  on  en0  are
+       processed  by group 100, there is no need to respecify the
+       interface name.  Similarly, we could further break up  the
+       processing  of  TCP: block in proto tcp all head 110 group
+       100 pass in all port = 23 group 110 and so  on.  The  last
+       line,  if  written without the groups would be: pass in on
+       en0 proto tcp from any to any port = telnet Note  that  if
+       we  specify  ``port = telnet'', we need to specify ``proto
+       tcp'' if we want the the rule only to apply to  TCP.  This
+       is  because the parser interprets each rule on its own and
+       qualifies all service or port  names  with  the  specified
+       protocol.
+
+NNoottiicceess
+       Some  rules are disallowed by the software because they do
+       not make sense (such as specifying tcp flags  for  non-TCP
+       packets).
+
+       The  briefest  valid rules are currently no-ops and are of
+       the form: block in all pass in all log out  all  count  in
+       all
+
+   AAuutthhoorr
+       Darren Reed.
+
+                                                               12
+

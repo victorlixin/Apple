@@ -1,0 +1,222 @@
+t_bind(3)                                                     t_bind(3)
+
+  tt__bbiinndd(())
+
+  NNAAMMEE
+
+    t_bind - bind an address to a transport endpoint
+
+  SSYYNNOOPPSSIISS
+
+    #include <xti.h>
+
+    int t_bind(
+        int fd,
+        const struct t_bind *req,
+        struct t_bind *ret)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The following table describes the parameters of tt__bbiinndd(3).
+
+    PPaarraammeetteerrss     BBeeffoorree ccaallll     AAfftteerr ccaallll
+
+    fd             x               /
+
+    req->          addr.maxlen     =
+
+    req->          addr.len        x0
+
+    req->          addr.buf        x (x)
+
+    req->          qlen            x0
+
+    req->          addr.maxlen     x
+
+    req->          addr.len        /
+
+    req->          addr.buf        ?
+
+    req->          qlen            /
+
+    ret->addr.buf (the pointer itself, not the buffer it points to) is also
+    unchanged.
+
+    This function associates a protocol address with the transport endpoint
+    specified by fd and activates that transport endpoint. In connection mode,
+    the transport provider may begin enqueuing incoming connect indications,
+    or servicing a connection request on the transport endpoint. In
+    connectionless-mode, the transport user may send or receive data units
+    through the transport endpoint.
+
+    The req and ret arguments point to a t_bind structure containing the
+    following members:
+
+    struct netbuf addr;
+    unsigned qlen;
+
+    The addr field of the t_bind structure specifies a protocol address, and
+    the qlen field is used to indicate the maximum number of outstanding
+    connection indications.
+
+    The parameter req is used to request that an address, represented by the
+    netbuf structure, be bound to the given transport endpoint. The parameter
+    len specifies the number of bytes in the address, and buf points to the
+    address buffer. The parameter maxlen has no meaning for the req argument.
+    On return, ret contains an encoding for the address that the transport
+    provider actually bound to the transport endpoint; if an address was
+    specified in req, this will be an encoding of the same address. In ret,
+    the user specifies maxlen, which is the maximum size of the address
+    buffer, and buf which points to the buffer where the address is to be
+    placed. On return, len specifies the number of bytes in the bound address,
+    and buf points to the bound address. If maxlen equals zero, no address is
+    returned. If maxlen is greater than zero and less than the length of the
+    address, tt__bbiinndd(3) fails with t_errno set to [TBUFOVFLW].
+
+    If the requested address is not available, tt__bbiinndd(3) will return -1 with
+    t_errno set as appropriate. If no address is specified in req (the len
+    field of addr in req is zero or req is NULL), the transport provider will
+    assign an appropriate address to be bound, and will return that address in
+    the addr field of ret. If the transport provider could not allocate an
+    address, tt__bbiinndd(3) will fail with t_errno set to [TNOADDR].
+
+    The parameter req may be a null pointer if the user does not want to
+    specify an address to be bound. Here, the value of qlen is assumed to be
+    zero, and the transport provider will assign an address to the transport
+    endpoint. Similarly, ret may be a null pointer if the user does not care
+    what address was bound by the provider and is not interested in the
+    negotiated value of qlen. It is valid to set req and ret to the null
+    pointer for the same call, in which case the provider chooses the address
+    to bind to the transport endpoint and does not return that information to
+    the user.
+
+    The qlen field has meaning only when initialising a connection-mode
+    service. It specifies the number of outstanding connection indications
+    that the transport provider should support for the given transport
+    endpoint. An outstanding connection indication is one that has been passed
+    to the transport user by the transport provider but which has not been
+    accepted or rejected. A value of qlen greater than zero is only meaningful
+    when issued by a passive transport user that expects other users to call
+    it. The value of qlen will be negotiated by the transport provider and may
+    be changed if the transport provider cannot support the specified number
+    of outstanding connection indications. However, this value of qlen will
+    never be negotiated from a requested value greater than zero to zero. This
+    is a requirement on transport providers; see CAVEATS below. On return, the
+    qlen field in ret will contain the negotiated value.
+
+    If fd refers to a connection-mode service, this function allows more than
+    one transport endpoint to be bound to the same protocol address (however,
+    the transport provider must also support this capability), but it is not
+    possible to bind more than one protocol address to the same transport
+    endpoint. If a user binds more than one transport endpoint to the same
+    protocol address, only one endpoint can be used to listen for connection
+    indications associated with that protocol address. In other words, only
+    one tt__bbiinndd(3) for a given protocol address may specify a value of qlen
+    greater than zero. In this way, the transport provider can identify which
+    transport endpoint should be notified of an incoming connection
+    indication. If a user attempts to bind a protocol address to a second
+    transport endpoint with a value of qlen greater than zero, tt__bbiinndd(3) will
+    return -1 and set t_errno to [TADDRBUSY]. When a user accepts a connection
+    on the transport endpoint that is being used as the listening endpoint,
+    the bound protocol address will be found to be busy for the duration of
+    the connection, until a _tt____uu_nn_bb_ii_nn_dd(3) or _tt____cc_ll_oo_ss_ee(3) call has been issued. No
+    other transport endpoints may be bound for listening on that same protocol
+    address while that initial listening endpoint is active (in the data
+    transfer phase or in the T_IDLE state). This will prevent more than one
+    transport endpoint bound to the same protocol address from accepting
+    connection indications.
+
+    If fd refers to connectionless mode service, this function allows for more
+    than one transport endpoint to be associated with a protocol address,
+    where the underlying transport provider supports this capability (often in
+    conjunction with value of a protocol-specific option). If a user attempts
+    to bind a second transport endpoint to an already bound protocol address
+    when such capability is not supported for a transport provider, tt__bbiinndd(3)
+    will return -1 and set t_errno to [TADDRBUSY].
+
+  VVAALLIIDD SSTTAATTEESS
+
+    T_UNBND
+
+  EERRRROORRSS
+
+    On failure, t_errno is set to one of the following values:
+
+    [TACCES]
+        The user does not have permission to use the specified address.
+
+    [TADDRBUSY]
+        The requested address is in use.
+
+    [TBADADDR]
+        The specified protocol address was in an incorrect format or contained
+        illegal information.
+
+    [TBADF]
+        The specified file descriptor does not refer to a transport endpoint.
+
+    [TBUFOVFLW]
+        The number of bytes allowed for an incoming argument (maxlen) is
+        greater than 0 but not sufficient to store the value of that argument.
+        The provider's state will change to T_IDLE and the information to be
+        returned in ret will be discarded.
+
+    [TOUTSTATE]
+        The communications endpoint referenced by fd is not in one of the
+        states in which a call to this function is valid.
+
+    [TNOADDR]
+        The transport provider could not allocate an address.
+
+    [TPROTO]
+        This error indicates that a communication problem has been detected
+        between XTI and the transport provider for which there is no other
+        suitable XTI error (t_errno).
+
+    [TSYSERR]
+        A system error has occurred during execution of this function.
+
+  RREETTUURRNN VVAALLUUEE
+
+    Upon successful completion, a value of 0 is returned. Otherwise, a value
+    of -1 is returned and t_errno is set to indicate an error.
+
+  CCAAVVEEAATTSS
+
+    The requirement that the value of qlen never be negotiated from a
+    requested value greater than zero to zero implies that transport
+    providers, rather than the XTI implementation itself, accept this
+    restriction.
+
+    An implementation need not allow an application explicitly to bind more
+    than one communications endpoint to a single protocol address, while
+    permitting more than one connection to be accepted to the same protocol
+    address. That means that although an attempt to bind a communications
+    endpoint to some address with qlen=0 might be rejected with [TADDRBUSY],
+    the user can nevertheless use this (unbound) endpoint as a responding
+    endpoint in a call to _tt____aa_cc_cc_ee_pp_tt(3). To become independent of such
+    implementation differences, the user should supply unbound responding
+    endpoints to _tt____aa_cc_cc_ee_pp_tt(3).
+
+    The local address bound to an endpoint may change as result of a
+    _tt____aa_cc_cc_ee_pp_tt(3) or _tt____cc_oo_nn_nn_ee_cc_tt(3) call. Such changes are not necessarily
+    reversed when the connection is released.
+
+  SSEEEE AALLSSOO
+
+    _tt____aa_cc_cc_ee_pp_tt(3)
+
+    _tt____aa_ll_ll_oo_cc(3)
+
+    _tt____cc_ll_oo_ss_ee(3)
+
+    _tt____cc_oo_nn_nn_ee_cc_tt(3)
+
+    _tt____uu_nn_bb_ii_nn_dd(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The tt__bbiinndd function is not thread safe.
+
+    The tt__bbiinndd function is not async-signal safe.
+

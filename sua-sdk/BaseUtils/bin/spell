@@ -1,0 +1,120 @@
+#!/bin/ksh             
+
+#C+
+# Copyright (c) Microsoft Corporation.  All rights reserved.
+#
+# This Software Source is the unpublished, valuable, confidential property
+# of Microsoft Corporation.  Use is authorised only under the terms and
+# conditions set out in the source code licence agreement protecting this
+# Software Source.  Any unauthorised use or disclosure of this Software
+# Source is prohibited.
+#
+# THIS SOFTWARE IS PROVIDED ``AS IS'' BY MICROSOFT CORPORATION AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL MICROSOFT CORPORATION BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.      
+#C-
+#
+# RcsID = $Id: spell.ksh,v 1.4 1998/11/09 22:27:34 SSI_DEV+mark Exp $
+#
+
+#set -x  # DEBUGGING ON    
+
+#
+# spell -- Interface to map spell options to ispell options
+#
+progname=spell
+
+#
+# Make sure we have the ispell program available
+#
+ispell=$(whence ispell)
+if [ "${ispell}" = "" ]; then
+	print "$progname: Cannot find program 'ispell' in PATH"
+        print "    Please add the directory that contains the ispell"
+	print "    program to the PATH environment variable."
+	exit 1
+fi
+
+
+#
+# scan the argument list looking for all valid options
+# This includes +local_file.
+# Collect up all options that begin with '-' to be parsed with getopts below.
+# Any options that begin with '+' are processed here
+# Once we find a non-valid option, we stop.
+#
+
+unset options
+while [ $# -ge 1 ]; do
+    case "$1" in
+      --)
+	    # end of option parsing
+	    shift
+	    break;
+	    ;;
+      -*)
+      	    options=" ${options} ${1}"
+	    ;;
+      +*)
+	    # got '+localfile'
+	    #
+	    extra="-p${1#+}"	# create appropriate ispell option 
+	    ;;
+      *)
+	    # no more options
+	    break;
+	;;
+    esac
+    shift
+done
+
+# now parse all options that began with '-'
+#
+while getopts  ":bv" opt ${options}; do
+	case "$opt" in
+	b)
+	    # use British spellings
+	    dict=-dbritish
+	    ;;
+	v)
+	    # dump out all words not literally in the dictionary.
+	    notlit=-z
+	    ;;
+	*)
+	    # bad option, so print out the usage message and exit
+	    print "$progname: bad option '$OPTARG'."
+	    print "usage: $progname [-bv] [+local_file] [file...]"
+	    exit 2
+	    ;;
+	esac
+done
+
+#
+# Now run the appropriate ispell command...
+#
+if [ "$*" = "" ]; then
+	# no files specified - run in interactive mode
+	#
+        $ispell -l $dict $notlit $extra | sort -u
+else
+	# check if specified files exist.
+	#
+	for i in $*; do
+	    if [ ! -e $i ]; then
+		print "$progname: $i: File not found"
+		exit 1
+	    fi
+	done
+
+        cat $* | $ispell -l $dict $notlit $extra| sort -u
+fi
+
+exit $?

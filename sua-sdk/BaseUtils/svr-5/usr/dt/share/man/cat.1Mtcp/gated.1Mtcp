@@ -1,0 +1,133 @@
+
+
+gated(1Mtcp)                                         gated(1Mtcp)
+
+SSyynnooppssiiss
+       in.gated [ -c ] [ -C ] [ -n ] [ -N ] [ -ttrace_options ] [
+       -fconfig_file ] [ trace_file ]
+
+DDeessccrriippttiioonn
+       gated is a routing daemon that  handles  multiple  routing
+       protocols  and replaces and any routing daemons that speak
+       the EGP, OSPF, or BGP routing protocols.  gated  currently
+       handles the RIP, BGP, EGP, and OSPF routing protocols. The
+       gated process can be configured  to  perform  all  routing
+       protocols or any combination of the five.
+
+       You can use the command to control the operation of gated.
+
+       The command-line options are: Specifies that the  configu-
+       ration  file  will  be  parsed  for syntax errors and then
+       gated will exit; if there were no errors, gated will leave
+       a dump file in /usr/tmp/gated_dump. gated does not need to
+       be run as root to use the -c option, but  it  may  not  be
+       possible  to  read  the kernel routing table and interface
+       configuration if not run as root. The  -c  option  implies
+       -tgeneral,kernel,nostamp.  All  traceoption  and tracefile
+       clauses in the configuration file will be ignored.  Speci-
+       fies  that  the configuration file will just be parsed for
+       syntax errors.  gated will exit with  a  status  of  1  if
+       there were any errors and 0 if there were not.  gated does
+       not need to be run as root to use the -C  option,  but  it
+       may  not  be possible to read the kernel routing table and
+       interface configuration if not run as root.  The -C option
+       implies  -tnostamp.   Specifies that gated will not modify
+       the kernel's routing table.   This  is  used  for  testing
+       gated  configurations with actual routing data.  Specifies
+       that gated will not daemonize.  Normally,  if  tracing  to
+       stderr  is not specified, gated will daemonize if the par-
+       ent process ID is not  1.   This  allows  the  use  of  an
+       /etc/inittab-like  method  of invoking gated that does not
+       have a PID of 1.  Specifies  a  comma  separated  list  of
+       trace options to be enabled on startup.  If no options are
+       specified, ``general'' is assumed.  No  space  is  allowed
+       between this option and its arguments.
+
+       This  option  must be used to trace events that take place
+       before the configuration file is parsed, such as determin-
+       ing  the  interface  configuration and reading routes from
+       the kernel. The trace options  are  explained  in  greater
+       detail   in  Use  an  alternate  configuration  file.   By
+       default, gated uses /etc/inet/gated.conf.  If on the  com-
+       mand  line  a trace file is specified, or no trace options
+       are specified, gated detaches from the terminal  and  runs
+       in the background.  If trace options are specified without
+       specifying a trace file, gated  assumes  that  tracing  is
+       desired to stderr and remains in the foreground.
+
+                                                                1
+
+gated(1Mtcp)                                         gated(1Mtcp)
+
+   SSiiggnnaall pprroocceessssiinngg
+       gated  catches the following signals and does special pro-
+       cessing.  Reread configuration. A SIGHUP causes  gated  to
+       reread  the  configuration  file.   gated first performs a
+       clean-up of all allocated policy structures.  All BGP  and
+       EGP  peers  are flagged for deletion and the configuration
+       file is reparsed.
+
+       If the reparse is successful, any BGP and EGP  peers  that
+       are  no longer in the configuration are shut down, and new
+       peers are started. gated attempts to determine if  changes
+       to existing peers require a shutdown and restart.
+
+       It  should also be possible to enable/disable any protocol
+       without restarting gated.
+
+       Reconfiguration  is  currently  disabled  when   OSPF   is
+       enabled; this will hopefully be fixed in a future release.
+       Snap-shot of current state. The current state of all gated
+       tasks,   timers,  protocols  and  tables  are  written  to
+       /usr/tmp/gated_dump.
+
+       This is done by forking a subprocess  to  dump  the  table
+       information so as not to impact gated's routing functions.
+       On systems where memory management does not support  copy-
+       on-write,  this  will  cause the gated address space to be
+       duplicated; this may cause a noticeable impact on the sys-
+       tem.   Graceful  shutdown.  On receipt of a SIGTERM, gated
+       attempts a graceful shutdown. All tasks and protocols  are
+       asked  to  shut down. Most will terminate immediately, the
+       exception being EGP peers which wait for confirmation.  It
+       may  be  necessary  to repeat the SIGTERM once or twice if
+       this process takes too long.
+
+       All routes except interface routes, static  routes  marked
+       with  `retain', and routes marked with RTF_STATIC (on sys-
+       tems that support it, these  routes  are  added  with  the
+       route command) are removed from the kernel's routing table
+       on receipt of a SIGTERM.  The  rationale  behind  this  is
+       that  static  routes  provide  the minimal routing to each
+       router when gated is not running.  To terminate gated with
+       all  the  routes  intact,  use  SIGKILL  or SIGQUIT (which
+       causes a core dump).  Toggle  tracing.  On  receipt  of  a
+       SIGUSR1,  gated  will  close  the trace file. A subsequent
+       SIGUSR1 will cause it to be reopened. This will allow  the
+       file to be moved regularly.
+
+       It  is not possible to use SIGUSR1 if a trace file has not
+       been specified or tracing is being  performed  to  stderr.
+       Check  for  interface  changes.   On receipt of a SIGUSR2,
+       gated will rescan the kernel interface  list  looking  for
+       changes.
+
+                                                                2
+
+gated(1Mtcp)                                         gated(1Mtcp)
+
+FFiilleess
+       gated  binary  current gated configuration file newer con-
+       figuration file older configuration file much  older  con-
+       figuration  file  where gated stores its pid gated's state
+       dump file where configuration file parse errors  go  where
+       gated drops its core file
+
+RReeffeerreenncceess
+       RFC  827, RFC 904, RFC 1058, RFC 1227, RFC 1245, RFC 1246,
+       RFC 1256, RFC 1265, RFC 1266,  RFC  1267,  RFC  1269,  RFC
+       1321,  RFC  1370,  RFC 1397, RFC 1403, RFC 1583, RFC 1723,
+       RFC 1724, RFC 1772, RFC 1850
+
+                                                                3
+

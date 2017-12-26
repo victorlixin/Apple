@@ -1,0 +1,100 @@
+
+
+strstreambuf(3C++)                             strstreambuf(3C++)
+
+SSyynnooppssiiss
+       #include <iostream.h> #include <strstream.h>
+
+       class   strstreambuf   :   public   streambuf   {  public:
+                 strstreambuf()  ;            strstreambuf(char*,
+       int,          char*);                   strstreambuf(int);
+                 strstreambuf(unsigned   char*,   int,   unsigned
+       char*);                strstreambuf(void*      (*a)(long),
+       void(*f)(void*));
+
+            void freeze(int    n=1)    ;         char*     str();
+            virtual streambuf*       setbuf(char*, int) };
+
+DDeessccrriippttiioonn
+       A  strstreambuf is a streambuf that uses an array of bytes
+       (a string) to hold the sequence of characters.  Given  the
+       convention  that a char* should be interpreted as pointing
+       just before the char it  really  points  at,  the  mapping
+       between  the  abstract  get/put  pointers  (see  and char*
+       pointers  is  direct.   Moving  the  pointers  corresponds
+       exactly to incrementing and decrementing the char* values.
+
+       To accommodate  the  need  for  arbitrary  length  strings
+       strstreambuf supports a dynamic mode.  When a strstreambuf
+       is in dynamic mode, space for the  character  sequence  is
+       allocated  as  needed.   When the sequence is extended too
+       far, it will be copied to a new array.
+
+       In the following descriptions assume:
+       -- ssb is a strstreambuf*.
+       -- n is an int.
+       -- ptr and pstart are char*s or unsigned char*s.
+       -- a is a void* (*)(long).
+       -- f is a void* (*)(void*).
+
+   CCoonnssttrruuccttoorrss::
+       Constructs an empty strstreambuf in  dynamic  mode.   This
+       means that space will be automatically allocated to accom-
+       modate the characters that are put into  the  strstreambuf
+       (using  operators  new  and  delete).   Because  this  may
+       require copying the original characters, it is recommended
+       that  when  many  characters will be inserted, the program
+       should  use  setbuf()  (described  below)  to  inform  the
+       strstreambuf.  Constructs an empty strstreambuf in dynamic
+       mode.  a is used as  the  allocator  function  in  dynamic
+       mode.   The  argument  passed to a will be a long denoting
+       the number of bytes to be allocated.  If a is null, opera-
+       tor new will be used.  f is used to free (or delete) areas
+       returned by a.  The argument to f will be a pointer to the
+       array  allocated  by  a.  If f is null, operator delete is
+       used.  Constructs an empty strstreambuf in  dynamic  mode.
+       The  initial allocation of space will be at least n bytes.
+       Constructs a strstreambuf to use  the  bytes  starting  at
+       ptr.  The strstreambuf will be in static mode; it will not
+
+                                                                1
+
+strstreambuf(3C++)                             strstreambuf(3C++)
+
+       grow dynamically.  If n is  positive,  then  the  n  bytes
+       starting  at  ptr  are  used as the strstreambuf.  If n is
+       zero, ptr is assumed to point to the beginning of  a  null
+       terminated  string  and  the  bytes  of  that  string (not
+       including the terminating null character) will  constitute
+       the  strstreambuf.   If n is negative, the strstreambuf is
+       assumed to continue indefinitely.  The get pointer is ini-
+       tialized  to  ptr.   The  put  pointer  is  initialized to
+       pstart.  If pstart is null, then stores will be treated as
+       errors.   If pstart is non-null, then the initial sequence
+       for fetching (the get area) consists of the bytes  between
+       ptr  and  pstart.  If pstart is null, then the initial get
+       area consists of the entire array.  If pstart  is  outside
+       the range of a valid stream buffer, the result of a subse-
+       quent put or get operation is undefined.
+
+   MMeemmbbeerr ffuunnccttiioonnss::
+       Inhibits (when n is nonzero) or permits (when n  is  zero)
+       automatic  deletion  of  the current array.  Deletion nor-
+       mally occurs when more space is  needed  or  when  ssb  is
+       being  destroyed.  Only space obtained via dynamic alloca-
+       tion is ever freed.  It is an error  (and  the  effect  is
+       undefined)  to  store  characters into a strstreambuf that
+       was in dynamic allocation mode and is now frozen.   It  is
+       possible,  however, to thaw (unfreeze) such a strstreambuf
+       and resume storing characters.  Returns a pointer  to  the
+       first  char  of the current array and freezes ssb.  If ssb
+       was constructed with an explicit array, ptr will point  to
+       that  array.   If  ssb  is in dynamic allocation mode, but
+       nothing has yet been stored, ptr may be null.  ssb  remem-
+       bers  n  and  the next time it does a dynamic mode alloca-
+       tion, it makes sure that at least n bytes are allocated.
+
+RReeffeerreenncceess
+
+                                                                2
+

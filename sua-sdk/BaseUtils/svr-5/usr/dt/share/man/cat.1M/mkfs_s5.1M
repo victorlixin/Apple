@@ -1,0 +1,136 @@
+
+
+mkfs_s5(1M)                                           mkfs_s5(1M)
+
+SSyynnooppssiiss
+       mkfs [-F s5] [generic_options] special
+
+       mkfs  [-F  s5]  [generic_options]  [-b block_size] special
+       size[:i-nodes]      [gap blocks/cyl]
+
+       mkfs [-F s5]  [generic_options]  [-b  block_size]  special
+       proto      [gap blocks/cyl]
+
+DDeessccrriippttiioonn
+       generic_options  are options supported by the generic mkfs
+       command.
+
+       mkfs constructs an s5 file system by writing on  the  spe-
+       cial  file  using  the values found in the remaining argu-
+       ments of the command line.  mkfs builds a file system with
+       a root directory and a lost+found directory.  mkfs expands
+       the lost+found directory to be as large as possible, while
+       still fitting in one disk block.
+
+   ss55--ssppeecciiffiicc ooppttiioonnss
+       Specifies  an s5-FSType.  Specifies the logical block size
+       for the file system.  The logical block size is the number
+       of bytes read or written by the operating system in a sin-
+       gle I/O operation.  Valid values for  blocksize  are  512,
+       1024,  and  2048.  The default is 1024.  mkfs constructs a
+       file system by writing on the special file.   Specify  the
+       number of logical 512 byte sectors in the file system. The
+       largest  file  system  size  is  a  maximum  of  2,097,152
+       512-byte sectors (1 gigabyte).
+
+       If  the second argument to mkfs is a string of digits, the
+       size of the file system is the value of blocks interpreted
+       as  a decimal number.  This is the number of physical (512
+       byte) disk blocks the file system  will  occupy.   If  the
+       number  of  i-nodes  is not given, the default is approxi-
+       mately the number of logical blocks divided  by  4.   mkfs
+       builds  a file system with a single empty directory on it.
+       The boot program block (block zero) is left uninitialized.
+
+       If  the  second argument is the name of a file that can be
+       opened, mkfs assumes it to be a prototype file proto,  and
+       will  take  its  directions from that file.  The prototype
+       file contains tokens separated by spaces or new-lines.   A
+       sample  prototype specification follows (line numbers have
+       been added to aid in the explanation):
+        1.     /dev/rdsk/0s0
+        2.  4872 110
+        3.  d--777 3 1
+        4.  usr  d--777 3 1
+        5.       sh   ---755 3 1 /sbin/sh
+        6.       ken  d--755 6 1
+        7.            $
+        8.       b0   b--644 3 1 0 0
+
+                                                                1
+
+mkfs_s5(1M)                                           mkfs_s5(1M)
+
+        9.       c0   c--644 3  1  0  0  10.       slnk l--777  2
+       2     /var/tmp 11.       $ 12.  $
+
+       Line  1  in the example is the name of a file to be copied
+       onto block zero as the bootstrap program.
+
+       Line 2 specifies the number of physical (512 byte)  blocks
+       the  file system is to occupy and the number of i-nodes in
+       the file system.
+
+       Lines 3-10 tell mkfs about files  and  directories  to  be
+       included in this file system.
+
+       Line 3 specifies the root directory.
+
+       Lines 4-6 and 8-10 specify other directories and files.
+
+       Line  10  specifies  the symbolic link slnk set up in /usr
+       and containing /var/tmp.
+
+       The $ on line 7 tells mkfs to end the branch of  the  file
+       system  it is on, and continue from the next higher direc-
+       tory.  The $ on lines 11 and 12 end the process, since  no
+       additional specifications follow.
+
+       File  specifications give the mode, the user ID, the group
+       ID, and the initial contents of the  file.   Valid  syntax
+       for  the  contents field depends on the first character of
+       the mode.
+
+       The mode for a file is specified by a 6-character  string.
+       The  first  character specifies the type of the file.  The
+       character range is -bcdl to specify  regular,  block  spe-
+       cial,  character  special,  directory,  and  symbolic link
+       files respectively.  The second character of the  mode  is
+       either  u  or  -  to specify set-user-id mode or not.  The
+       third is g or - for the set-group-id mode.   The  rest  of
+       the  mode  is  a  3  digit  octal number giving the owner,
+       group, and other read, write, execute permissions (see
+
+       Two decimal number tokens come after the mode; they  spec-
+       ify the user and group IDs of the owner of the file.
+
+       If the file is a regular file, the next token of the spec-
+       ification may be a path name whence the contents and  size
+       are  copied.   If the file is a block or character special
+       file, two decimal numbers follow which give the major  and
+       minor  device  numbers.   If the file is a directory, mkfs
+       makes the entries and then  reads  a  list  of  names  and
+       (recursively)  file  specifications for the entries in the
+       directory.  As noted above, the scan  is  terminated  with
+       the token $.
+
+       The  gap  blocks/cyl argument in both forms of the command
+
+                                                                2
+
+mkfs_s5(1M)                                           mkfs_s5(1M)
+
+       specifies  the  rotational   gap   and   the   number   of
+       blocks/cylinder.  If the gap and blocks/cyl are not speci-
+       fied or are considered illegal values a default  value  of
+       gap size 10 and 162 blocks/cyl is used.
+
+RReeffeerreenncceess
+NNoottiicceess
+       With  a  prototype  file  there  is no way to specify hard
+       links.
+
+       The maximum number of i-nodes configurable is 65500.
+
+                                                                3
+

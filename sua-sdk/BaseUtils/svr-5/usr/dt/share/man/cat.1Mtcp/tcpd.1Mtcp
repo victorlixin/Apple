@@ -1,0 +1,144 @@
+
+
+tcpd(1Mtcp)                                           tcpd(1Mtcp)
+
+SSyynnooppssiiss
+       in.tcpd inet_daemon
+
+DDeessccrriippttiioonn
+       The  tcpd  program  can  be  set  up  to  monitor incoming
+       requests for telnet, finger, ftp, exec, rsh, rlogin, tftp,
+       talk  and  other  services  that have a one-to-one mapping
+       onto executable files.
+
+       The program supports both 4.3BSD-style sockets and  System
+       V.4-style TLI.  Functionality may be limited when the pro-
+       tocol underneath TLI is not an internet protocol.
+
+       Operation is as follows: whenever a  request  for  service
+       arrives, the inetd daemon is tricked into running the tcpd
+       program instead of  the  desired  server.  tcpd  logs  the
+       request and does some additional checks. When all is well,
+       tcpd runs the appropriate server program and goes away.
+
+       Optional  features  are:  pattern-based  access   control,
+       client username lookups with the RFC 931 protocol, protec-
+       tion against hosts that pretend to have someone elses host
+       name,  and  protection  against hosts that pretend to have
+       someone elses network address.
+
+   LLooggggiinngg
+       Connections  that  are  monitored  by  tcpd  are  reported
+       through  the  facility. Each record contains a time stamp,
+       the client host name and the name of  the  requested  ser-
+       vice.   The  information  can be useful to detect unwanted
+       activities, especially when logfile information from  sev-
+       eral hosts is merged.
+
+       In  order  to  find out where your logs are going, examine
+       the syslog configuration file, /etc/syslog.conf.
+
+   AAcccceessss ccoonnttrrooll
+       Optionally, tcpd supports a simple form of access  control
+       that  is  based  on  pattern matching.  The access-control
+       software provides hooks for the execution  of  shell  com-
+       mands when a pattern matches.  For details, see
+
+   HHoosstt nnaammee vveerriiffiiccaattiioonn
+       The  authentication  scheme  of  some  protocols  (such as
+       rlogin and rsh) relies on host names. Some implementations
+       believe  the  host name that they get from any random name
+       server; other implementations are more careful but  use  a
+       flawed algorithm.
+
+       When  looking  up the client host name corresponding to an
+       IP address, tcpd verifies the name that is returned by the
+       DNS  server by comparing it with the host name and address
+       that are returned when the name is used  to  look  up  the
+       corresponding  IP  address.   This  is  know  as  a double
+
+                                                                1
+
+tcpd(1Mtcp)                                           tcpd(1Mtcp)
+
+       reverse lookup.  If any discrepancy is detected, tcpd con-
+       cludes  that  it is dealing with a host that is pretending
+       to have someone else's host name.
+
+       The supplied version of tcpd was  compiled  with  PARANOID
+       defined,  so that it will drop the connection in case of a
+       host name/address mismatch.
+
+   HHoosstt aaddddrreessss ssppooooffiinngg
+       Optionally, tcpd disables source-routing socket options on
+       every  connection  that it deals with. This will take care
+       of most attacks from hosts that pretend to have an address
+       that  belongs  to  someone elses network.  UDP services do
+       not benefit from this protection.  This feature was turned
+       on at compile time.
+
+   RRFFCC 993311 llooookkuuppss
+       RFC  931  lookups  are enabled (a compile-time option), so
+       tcpd will attempt to establish  the  name  of  the  client
+       user.  This  will  succeed only if the client host runs an
+       RFC 931-compliant daemon.  Client user name  lookups  will
+       not  work for datagram-oriented connections, and may cause
+       noticeable delays in the case  of  connections  from  some
+       machines.
+
+FFiilleess
+       /etc/inet/hosts.allow
+       /etc/inet/hosts.deny
+
+RReeffeerreenncceess
+NNoottiicceess
+       Some UDP (and RPC) daemons linger around for a while after
+       they have finished their work,  in  case  another  request
+       comes in.  In the inetd configuration file, these services
+       are registered with the wait option. Only the request that
+       started such a daemon will be logged.
+
+       The  program  does  not  work  with RPC services over TCP.
+       These services are registered as rpc/tcp in the inetd con-
+       figuration  file.   The  only  non-trivial service that is
+       affected by this limitation is exec.
+
+       RPC broadcast requests (from rwall or rusers, for example)
+       always  appear to come from the responding host. What hap-
+       pens is that the client  broadcasts  the  request  to  all
+       rpcbind  daemons  on its network; each rpcbind daemon for-
+       wards the request to a local daemon. As far as  the  rwall
+       and similar daemons know, the request comes from the local
+       host.
+
+   AAuutthhoorr
+       Wietse Venema (wietse@wzv.win.tue.nl), Department of Math-
+       ematics  and  Computing  Science,  Eindhoven University of
+       Technology Den Dolech 2, P.O. Box 513, 5600 MB  Eindhoven,
+
+                                                                2
+
+tcpd(1Mtcp)                                           tcpd(1Mtcp)
+
+       The Netherlands
+
+EExxaammpplleess
+       In order to monitor access to the finger service, the fol-
+       lowing entry must exist uncommented in the inetd  configu-
+       ration  file, /etc/inetd.conf: finger  stream  tcp  nowait
+       nobody  /usr/sbin/in.tcpd  in.fingerd Similar changes will
+       be needed for the other services that are to be covered by
+       tcpd.
+
+       In the case of daemons that  do  not  live  in  /usr/sbin,
+       specify  an absolute path name for the process name field.
+       For   example:   ntalk     dgram     udp     wait     root
+       /usr/sbin/in.tcpd   /usr/local/lib/ntalkd  Only  the  last
+       component (/usr/local/lib/ntalkd) of the pathname will  be
+       used for access control and logging.
+
+       Stop  and  restart  inetd to have the changes take effect:
+       sacadm -k -p inetd sacadm -s -p inetd
+
+                                                                3
+

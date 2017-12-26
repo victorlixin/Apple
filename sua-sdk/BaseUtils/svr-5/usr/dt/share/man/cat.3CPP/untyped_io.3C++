@@ -1,0 +1,110 @@
+
+
+untyped_io(3C++)                                 untyped_io(3C++)
+
+SSyynnooppssiiss
+       #include    <String.h>    class    istream;       //   see
+       iostream(3C++) class ostream;     // see iostream(3C++) //
+       Navigable syntax trees struct G2NODE{
+           String name;  // see String(3C++)
+           String val;   // see String(3C++)
+           G2NODE* child;
+           G2NODE* next; }; struct G2BUF{
+           ...
+           G2NODE* root;
+           ...   };  //  Stream insertion and extraction ostream&
+       operator<<(ostream& os,const G2BUF& buf); istream&  opera-
+       tor>>(istream& is,G2BUF& buf); //  Stream searching String
+       g2seek(istream&  is);  String   g2seek(istream&   is,const
+       String& name);
+
+DDeessccrriippttiioonn
+       Untyped  I/O routines can be used to read, write, and seek
+       G2++ records  (see  without  advance  knowledge  of  their
+       structure.   The  operators map between records in streams
+       and navigable syntax trees of type G2BUF.   The  structure
+       of  a syntax tree is isomorphic to that of the correspond-
+       ing G2++ record.
+
+   NNaavviiggaabbllee ssyynnttaaxx ttrreeeess
+       A navigable syntax tree is a dynamically-allocated, linked
+       structure, consisting of one or more nodes of type G2NODE.
+       The root node, which is accessed via G2BUF::root, contains
+       the record name in its name field.  If the record is flat,
+       for example,
+               id      Bob then the value field will be non-empty
+       (it will contain "Bob") and the child and next fields will
+       contain null pointers.  If the record contains an indented
+       group,
+               person
+                       id      Bob
+                       age     11
+
+       the  value  field  of the root node will contain the empty
+       String and the child pointer will point to a node contain-
+       ing  the  name  of  the  first  indented group (id).  next
+       pointers trace the chain of siblings  within  an  indented
+       group.   The client navigates a syntax tree by starting at
+       the root and following child and next pointers.
+
+   SSttrreeaamm iinnsseerrttiioonn aanndd eexxttrraaccttiioonn
+       Absolutely no interpretation of names or  values  is  per-
+       formed  by these operators; the ASCII characters making up
+       the names and values are simply copied without  truncation
+       between the stream and the nodes of the syntax tree.
+
+       ostream&  operator<<(ostream& os,const G2BUF& buf); Stream
+       insertion.  Starts at buf.root and performs  a  pre-order,
+       left-to-right  traversal  of  the  syntax tree, building a
+
+                                                                1
+
+untyped_io(3C++)                                 untyped_io(3C++)
+
+       G2++ record as it goes.  Inserts the resulting record into
+       the output stream os.
+
+       istream&   operator>>(istream&   is,G2BUF&   buf);  Stream
+       extraction.  Searches input stream is until it  encounters
+       the  next  G2++  record,  regardless  of  type.  Reads the
+       record and constructs a  syntax  tree  isomorphic  to  the
+       record in buf.  If the stream is exhausted before a record
+       is found, the return value will test as null.
+
+   SSttrreeaamm sseeaarrcchhiinngg
+       These operations scan an  input  stream  without  actually
+       reading  a  record.   They leave the stream properly posi-
+       tioned for either an untyped extraction (see above)  or  a
+       typed extraction (see typed_io(3C++)).
+
+       String g2seek(istream& is); Searches input stream is until
+       it encounters the next G2++ record,  regardless  of  type.
+       Returns the name of the record as the function result.  If
+       the stream is exhausted before another  record  is  found,
+       returns the empty String.
+
+       String  g2seek(istream&  is,const  String& name); Searches
+       input stream is until it encounters a record of type  name
+       (the  type  of  a  record  is its highest level name - see
+       G2++(4C++)).  Returns the name of the record as the  func-
+       tion  result.   If the stream is exhausted before a record
+       with the desired name is found, returns the empty  String.
+
+BBuuggss
+       There  is  currently  no way to modify the structure of an
+       navigable syntax tree.   Clients  may  only  navigate  the
+       trees  by following pointers, and they may change the val-
+       ues of name and value fields.
+
+NNootteess
+       Untyped I/O is used by applications  that  lack  a  priori
+       knowledge of record types.  For example, tools that manip-
+       ulate files of G2++  records  must  be  implemented  using
+       untyped  I/O.   Applications  that  deal with known record
+       types ordinarily use typed insertion and  extraction  (see
+       typed_io(3C++)).
+
+RReeffeerreenncceess
+
+                                                                2
+

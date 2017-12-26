@@ -1,0 +1,145 @@
+
+
+bkexcept(1M)                                         bkexcept(1M)
+
+SSyynnooppssiiss
+       bkexcept [-t file] [-d patterns]
+
+       bkexcept [-t file] -a|-r patterns
+
+       bkexcept -C [files]
+
+DDeessccrriippttiioonn
+       The  bkexcept command displays a list of patterns describ-
+       ing files that are to be excluded when  backup  operations
+       occur using incfile.  The list is known as the ``exception
+       list.''
+
+       bkexcept may be executed only by a privileged user.
+
+       bkexcept -a adds patterns to the list.
+
+       bkexcept -d displays patterns from the list.
+
+       bkexcept -r removes patterns from the list.
+
+   PPaatttteerrnnss
+       Patterns describe individual pathnames or  sets  of  path-
+       names.   Patterns  must conform to pathname naming conven-
+       tions specified under DEFINITIONS on the page.  A  pattern
+       is taken as a filename and is interpreted in the manner of
+       cpio.  A pattern can include the shell special  characters
+       *,  ?,  and  [].   Asterisk (*) and question mark (?) will
+       match period (.) and slash(/).  Because  these  are  shell
+       special  characters,  they  must be escaped on the command
+       line.
+
+       There are three general methods of specifying  entries  to
+       the  exception list: To specify all files under a particu-
+       lar directory, specify the directory name (and any desired
+       subdirectories) followed by an asterisk: /directory/subdi-
+       rectories/* To specify all instances of a filename regard-
+       less  of its location, specify the filename preceded by an
+       asterisk: */filename To specify one instance of a particu-
+       lar file, specify the entire pathname to the file: /direc-
+       tory/subdirectories/filename If pattern  is  a  dash  (-),
+       standard  input  is  read  for a list of patterns (one per
+       line until EOF) to be added or deleted.
+
+   CCoommppaattiibbiilliittyy
+       Prior versions of the  backup  service  created  exception
+       lists using ed syntax.  bkexcept -C provides a translation
+       facility for exception lists created by ed.  The  transla-
+       tion  is not perfect; not all ed patterns have equivalents
+       in cpio.  For those patterns that have no automatic trans-
+       lation,  an attempt at translation is made, and the trans-
+       lated version is flagged with the word QUESTIONABLE.   The
+       exception list translation is directed to standard output.
+       Redirect the standard output to a translation file, review
+
+                                                                1
+
+bkexcept(1M)                                         bkexcept(1M)
+
+       the  contents  of the translation file (correcting entries
+       that were not translated properly and deleting  the  QUES-
+       TIONABLE  flags), and then use the resulting file as input
+       to a subsequent bkexcept -a.  For example, if  the  trans-
+       lated  file was named checkfile the -a option would appear
+       as follows: bkexcept -a - < checkfile
+
+   OOppttiioonnss
+       The filename used in place of the default file.  Adds pat-
+       tern  to  the  exception list where pattern is one or more
+       patterns (comma-separated or blank-separated and  enclosed
+       in  quotes) describing sets of paths.  Displays entries in
+       the exception list.  If pattern begins with a  slash  (/),
+       -d  displays  all  entries whose names begin with pattern.
+       If pattern does not begin with a slash,  -d  displays  all
+       entries  that  include  pattern anywhere in the entry.  If
+       pattern is a dash (-), input is taken from standard input.
+       pattern  is not a pattern -- it matches patterns.  pattern
+       ``a*b'' matches /a*b but does not match /adb.   For  files
+       containing  a  carriage  return,  a null exception list is
+       returned.  For files of zero length  (no  characters),  an
+       error is returned (search of table failed).
+
+       The  entries  are  displayed  in  ASCII collating sequence
+       order  (special  characters,  numbers,  then  alphabetical
+       order).  Removes pattern from the exception list.  pattern
+       is one or a list of patterns  (comma-separated  or  blank-
+       separated  and  enclosed  in  quotes)  describing  sets of
+       paths.  pattern must be an exact match of an entry in  the
+       exception  list  for pattern to be removed.  Patterns that
+       are removed are echoed to standard output,  stdout.   Dis-
+       plays  on  standard output the translation of each file (a
+       prior version's exception list) to the new  syntax.   Each
+       file contains ed patterns, one per line.
+
+       If   file   is   omitted,  the  default   exception  list,
+       /etc/save.d/except, is translated.  If file is a dash (-),
+       input is taken from standard input, one per line.
+
+DDiiaaggnnoossttiiccss
+       The exit codes for the bkexcept command are the following:
+       The task completed successfully.  One or  more  parameters
+       to  bkexcept  are invalid.  An error has occurred, causing
+       bkexcept to fail to complete all portions of its task.
+
+EExxaammpplleess
+       Example             1:             bkexcept             -a
+       /tmp/*,/var/tmp/*,/usr/rje/*,*/trash adds the four sets of
+       files to the exception list, (all files  under  /tmp,  all
+       files  under  /var/tmp,  all files under /usr/rje, and any
+       file on the system named trash).
+
+       Example 2: bkexcept -d /tmp displays  the  following  pat-
+       terns from those added to the exception list in Example 1.
+
+                                                                2
+
+bkexcept(1M)                                         bkexcept(1M)
+
+       /tmp/* The command: bkexcept -d tmp displays the following
+       patterns from those added to the exception list in Example
+       1: /tmp/*, /var/tmp/*.  One pattern is displayed per  line
+       with a heading.
+
+       Example  3:  bkexcept -r /var/tmp/*,/usr/rje/* removes the
+       two patterns from the exception list.
+
+       Example 4: bkexcept -C /save.d/old.except  >  trans.except
+       translates  the file /save.d/old.except from its ed format
+       to cpio format and sends  the  translations  to  the  file
+       trans.except.   The translations of /save.d/old.except may
+       be added to the current exception list by  using  bkexcept
+       -a as follows: bkexcept -a - < trans.except
+
+FFiilleess
+       default  exception  list for  System V Release 4.0 default
+       exception list for pre- System V Release 4.0
+
+RReeffeerreenncceess
+
+                                                                3
+

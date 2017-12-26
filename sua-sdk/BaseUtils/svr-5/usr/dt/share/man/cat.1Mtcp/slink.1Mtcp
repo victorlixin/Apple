@@ -1,0 +1,183 @@
+
+
+slink(1Mtcp)                                         slink(1Mtcp)
+
+SSyynnooppssiiss
+       /etc/slink  [  -c file ] [ -f ] [ -u ] [ -v ] [ function [
+       arg ... ]]
+
+DDeessccrriippttiioonn
+       slink is a STREAMS configuration utility which is used  to
+       define  the  various  modules  and  drivers  required  for
+       STREAMS .  (Note that networking  interfaces  are  defined
+       via the /etc/confnet.d/interface file.)
+
+       The  following  options may be specified on the slink com-
+       mand line: Use file instead of  /etc/inet/strcf.   Do  not
+       fork.   slink  must remain in the foreground, holding open
+       its file descriptors.  This assumes that persistent  links
+       are  not being used. In this case, slink will only be able
+       to build streams that are defined  to  use  regular  links
+       (I_LINK; see Unlink persistent links (shut down the proto-
+       col stack). This option can only be run by the user  root,
+       and not by others with root authority.  Verbose mode (each
+       operation is logged to stderr).  If a function  is  speci-
+       fied  as  an argument, it will be used instead of the boot
+       function.
+
+       The configuration file contains a list of functions,  each
+       of  which is composed of a list of commands.  Each command
+       is a call to one of the functions defined in the  configu-
+       ration  file  or  to  one  of a set of built-in functions.
+       Among the built-in functions are the basic STREAMS  opera-
+       tions  open,  link,  plink,  and  push, along with several
+       -specific functions.
+
+       A function definition has the  following  form:  function-
+       name  {      command1      command2      ...  } The syntax
+       for commands is: function arg1 arg2 arg3  ...   or  var  =
+       function  arg1 arg2 arg3 ...  The placement of newlines is
+       important: a newline must follow the left and right braces
+       and  every  command.  Extra newlines are allowed; that is,
+       where one newline is required, more than one may be  used.
+       A  backslash (\) followed immediately by a newline is con-
+       sidered equivalent to a space; that is, it may be used  to
+       continue  a  command on a new line. The use of other white
+       space characters (spaces and tabs) is at the discretion of
+       the user, except that there must be white space separating
+       the function name and the arguments of a command.
+
+       Comments are delimited by # and newline, and  are  consid-
+       ered equivalent to a newline.
+
+       Function  and  variable names may be any string of charac-
+       ters taken from A-Z, a-z, 0-9,  and  _,  except  that  the
+       first  character  cannot  be  a  digit. Function names and
+       variable names occupy separate name spaces. All  functions
+       are  global  and  may be forward referenced. All variables
+       are local to the functions in which they occur.
+
+                                                                1
+
+slink(1Mtcp)                                         slink(1Mtcp)
+
+       Variables are defined when they appear to the left  of  an
+       equals  (=)  on  a  command  line. For example: tcp = open
+       /dev/inet/tcp The variable acquires the value returned  by
+       the command.  In the above example, the value of the vari-
+       able tcp will be the file descriptor returned by the  open
+       call.
+
+       Arguments  to  a  command may be either variables, parame-
+       ters, or strings.
+
+       A variable that appears as  an  argument  must  have  been
+       assigned  a value on a previous command line in that func-
+       tion.
+
+       Parameters take the form of a dollar sign ($) followed  by
+       one  or two decimal digits, and are replaced with the cor-
+       responding argument from the function call.   If  a  given
+       parameter was not specified in the function call, an error
+       results (for example, if a command references $3 and  only
+       two  arguments  were  passed to the function, an execution
+       error will occur).
+
+       Strings are sequences of characters optionally enclosed in
+       double quotes (").  Quotes may be used to prevent a string
+       from being interpreted as a variable name or a  parameter,
+       and  to  allow the inclusion of spaces, tabs, and the spe-
+       cial characters {, }, =, and #. The backslash (\) may also
+       be used to quote the characters {, }, =, ", #, and \ indi-
+       vidually.
+
+       The following built-in functions are  provided  by  slink:
+       Send a message to the network driver to implement a multi-
+       cast Media Access  Control  (MAC)  address  (MAC_address).
+       The  48-bit  address  must be formatted as six hexadecimal
+       numbers    separated    by    colons,     for     example:
+       01:00:5e:7f:7f:7f.   Close  file  descriptor  fd.   Send a
+       DL_ATTACH_REQ message down the  stream  referenced  by  fd
+       specifying unit unit.  Send a DL_BIND_REQ message down the
+       stream referenced by  fd  specifying  the  Service  Access
+       Point  sap.   The media-level address of the device at the
+       bottom of the stream is returned  if  the  operation  suc-
+       ceeds.   It  can  be  used  later  as  the argument to the
+       sifaddr command.  Send a DL_SUBS_BIND_REQ message down the
+       stream  referenced  by fd specifying the Secondary Service
+       Access Point ssap.  Cause slink to exit due to the failure
+       of  a  built-in  command  in  the streams-linking process.
+       Send an INITQPARMS (initialize queue parameters) ioctl  to
+       the  driver  corresponding to pathname path.  qname speci-
+       fies the queue for which the low and high water marks will
+       be set, and must be one of:
+
+       stream  head read queue write queue multiplexor read queue
+       multiplexor write queue
+
+                                                                2
+
+slink(1Mtcp)                                         slink(1Mtcp)
+
+       lowat and hiwat specify the new low and high  water  marks
+       for  the  queue.  Both lowat and hiwat must be present. To
+       change only one of these  parameters,  the  other  may  be
+       replaced  with  a  dash  -.  Up  to five qname lowat hiwat
+       triplets may be present.  Link the  stream  referenced  by
+       fd2 beneath the stream referenced by fd1. Returns the link
+       identifier associated with the link. Note that fd2  cannot
+       be  used  after  this operation.  Allow operations to con-
+       tinue rather than causing slink to exit due to the failure
+       of a built-in command in the streams-linking process.  The
+       currently executing function is terminated  and  execution
+       resumes  at the next statement.  Open the device specified
+       by pathname path.  Returns a file  descriptor  referencing
+       the  open  stream.   Link  the  stream  referenced  by fd2
+       beneath the stream referenced by fd1  using  a  persistent
+       link.  Returns  the  link  identifier  associated with the
+       link.  Note that fd2 cannot be used after this  operation.
+       Push  module  onto  the  stream referenced by fd.  Set the
+       return value for the current function to  val.  Note  that
+       executing a return command does not terminate execution of
+       the current function.  Sends a SIOCSIFNAME ioctl down  the
+       stream  referenced  by fd.  The arguments are an interface
+       name and the media-level address associated with the spec-
+       ified  name.   This  is used by the ARP driver to reply to
+       ARP queries.  Send a SIOCSHRDTYPE (set interface  hardware
+       type)  ioctl  down the stream referenced by fd.  The hard-
+       ware type is used by the ARP driver when sending messages.
+       Legal values for type are ether and ieee.  Send a SIOCSIF-
+       NAME (set interface name) ioctl down the stream referenced
+       by  fd  for  the link associated with link identifier link
+       specifying the name name.  flags are specified in hexadec-
+       imal    by    OR'ing    the    bit   values   defined   in
+       /usr/include/sys/net/if.h:
+
+       interface  is  up  (IFF_UP)  broadcast  address  is  valid
+       (IFF_BROADCAST)  turn  on  debugging  (IFF_DEBUG) loopback
+       through the network (IFF_LOOPBACK) interface is  a  point-
+       to-point link (IFF_POINTOPOINT) interface wants to hear IP
+       ioctl  requests   (IFF_WANTIOCTLS)   resources   allocated
+       (IFF_RUNNING)  no  address resolution protocol (IFF_NOARP)
+       link-specific flag (IFF_LINK0) receive all multicast pack-
+       ets  (IFF_ALLMULTI;  not  implemented, reserved for future
+       use) link-specific flag (IFF_LINK1) select one-packet mode
+       (IFF_ONEPACKET)  link-specific  flag (IFF_LINK2) interface
+       cannot hear own transmissions (IFF_SIMPLEX) interface sup-
+       ports IP multicasting (IFF_MULTICAST)
+
+       Concatenate strings str1 and str2 and return the resulting
+       string.  Send a IF_UNITSEL (unit select)  ioctl  down  the
+       stream referenced by fd specifying unit unit.
+
+FFiilleess
+       interface definition file STREAMS  configuration file
+
+                                                                3
+
+slink(1Mtcp)                                         slink(1Mtcp)
+
+RReeffeerreenncceess
+
+                                                                4
+

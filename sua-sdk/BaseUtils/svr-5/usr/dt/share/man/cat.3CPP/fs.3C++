@@ -1,0 +1,212 @@
+
+
+fs(3C++)                                                 fs(3C++)
+
+SSyynnooppssiiss
+       #include <fs.h>
+
+       extern  "C"  {  void  fs_showall();  void  fs_mark(); void
+       fs_unmark(); void fs_since(); void fs_sincen(int i);  void
+       fs_watch(int    i);    void    fs_unwatch(int   i);   void
+       fs_watchall_d();     void     fs_unwatchall_d();      void
+       fs_watchall_n();  void fs_unwatchall_n(); void fs_break();
+       void fs_status(); void  fs_dbxinit();  void  fs_debugrc();
+       void fs_help(); }
+
+DDeessccrriippttiioonn
+       These routines let the programmer view the contents of the
+       freestore symbolically during execution of a C++  program.
+       They  are normally called "by hand" by the programmer from
+       within a debugger, but since they are linked in as part of
+       the  application  code,  they  can also be called from the
+       program itself.
+
+       In order to maximize the quality and accuracy of the  sym-
+       bolic  information provided, as many of the program source
+       files as possible should be compiled with -f (see In order
+       to use any of the above functions, programmers should link
+       their program with -lfs.
+
+   SSyymmbboolliicc iinnffoorrmmaattiioonn
+       For each object in the freestore (that is, for each object
+       created  by  a  new  operation  including  the  array new,
+       nothrow new, and placement new variants), fs  keeps  track
+       of  the  object's  type  and size, the source code line on
+       which it was newed, its main memory address, and miscella-
+       neous  other  information.   Each freestore object is also
+       given a unique identifying number.  Calling  the  function
+       fs_showall from somewhere within the current context (that
+       is, from within a debugger or  from  the  program  itself)
+       results  in  the  information for all objects currently in
+       the freestore being printed on stderr.
+
+       fs lets the programmer set a "watchpoint" on any object in
+       the  freestore.   When (if ever) a watched object is about
+       to be deleted, the function fs_break is called.  Executing
+       the function fs_break has no effect (its body is empty); a
+       call to fs_break should be thought of as  fs  "requesting"
+       that program execution break at the current point.  If the
+       programmer is debugging the program under a debugger,  she
+       should  have  previously  set  a breakpoint on fs_break in
+       order that fs's requests be satisfied.
+
+       The entire freestore  can  also  be  watched.   Setting  a
+       "delete  watch"  results in fs_break being called when any
+       object is about to be deleted, while setting a "new watch"
+       results  in fs_break being called when any object is about
+       to be created.
+
+                                                                1
+
+fs(3C++)                                                 fs(3C++)
+
+       The complete set of freestore functions is as follows:
+
+       void fs_showall(); Shows information for all objects  cur-
+       rently in the freestore.
+
+       void fs_mark(); Lays down a mark at the current time.
+
+       void fs_unmark(); Deletes the last mark.
+
+       void fs_since(); Shows information for all objects created
+       since the last mark.
+
+       void fs_sincen(int i); Shows information for  all  objects
+       created since object number i.
+
+       void fs_watch(int i); Sets a watch on object number i.
+
+       void fs_unwatch(int i); Deletes the watch on object number
+       i.
+
+       void fs_watchall_d(); Watches the freestore for any delete
+       operation.
+
+       void  fs_unwatchall_d();  Stops watching the freestore for
+       delete operations.
+
+       void fs_watchall_n(); Watches the freestore  for  any  new
+       operation.
+
+       void  fs_unwatchall_n();  Stops watching the freestore for
+       new operations.
+
+       void fs_break(); Function with empty body, called whenever
+       freestore wants to break execution.
+
+       void  fs_status(); Shows the current settings of marks and
+       watches.
+
+       void.fs_debugrc(); Prints a .debugrc file  which  incorpo-
+       rates fs's functionality into UnixWare's debug(1).
+
+       void fs_help(); Prints this list.
+
+RReeffeerreenncceess
+FFiilleess
+       fsipp           the instrumenting preprocessor
+
+       libfs.a         the library archive
+
+       fs.h            C++ prototypes of freestore functions
+
+WWaarrnniinnggss
+       The "alert" modifier on object descriptions means that the
+       object was allocated by  a  global  new  operator  and  is
+
+                                                                2
+
+fs(3C++)                                                 fs(3C++)
+
+       either in the process of being initialized, or is initial-
+       ized but the line containing the call to new was not  com-
+       piled with -f.
+
+       Programmers  should always remember to set a breakpoint on
+       the dummy function fs_break immediately upon  loading  any
+       program linked with fs into the debugger.
+
+       Watches and marks are lost when a program is reloaded into
+       the debugger.
+
+       fs renames all the programmer's new and  delete  operators
+       to  _new  and  _delete,  respectively.   If the programmer
+       wishes to set a breakpoint on the definitions  of  any  of
+       these  functions,  she should use the latter names.  Also,
+       because of this renaming, if  the  debugger  is  currently
+       stopped  at the opening curly of a new or delete operator,
+       the programmer will have to issue a  "step  into"  command
+       (rather  than  a  "step over" command) in order to advance
+       execution  to  the  first  line  of  the  function   body.
+       Finally, if the debugger is currently stopped at the clos-
+       ing curly of a new or delete operator, the programmer  may
+       have to issue anywhere from one to three extra "step" com-
+       mands in order to effect a return back to the caller.
+
+       The instrumenting preprocessor does not detect all  syntax
+       errors.   If  the programmer attempts to run syntactically
+       invalid code through the instrumenting  preprocessor,  the
+       latter  may silently generate invalid C++ code.  When this
+       latter code is subsequently run through the  C++  transla-
+       tor, the resulting error messages may be obscure.
+
+       If not all the code comprising a program was compiled with
+       -f, then fs may be missing certain symbolic information at
+       runtime.   Missing  information  is  denoted by a question
+       mark (?); in particular, "T[?]" denotes  "array  of  T  of
+       unknown  size."   The  "T"  itself will also be a question
+       mark if the type of the array elements is unknown.
+
+       fs does its best to hide from the programmer those objects
+       which are created by fs itself rather than by the applica-
+       tion code, but it's not perfect.
+
+       In "new type-expression", type-expression should  have  no
+       side  effects.  If it does have side effects (for example,
+       new T<++i>), this will not be detected, and the  generated
+       code will have incorrect behavior.
+
+BBuuggss
+       Source  files  compiled with -f may generate some spurious
+       "fsATTLCn not used" warnings.
+
+       fs learns about the creation of an object only  after  the
+       object's  memory  has  been allocated.  Further, fs learns
+
+                                                                3
+
+fs(3C++)                                                 fs(3C++)
+
+       the type of an object only after the  call  to  new  which
+       created  it  has  returned.  The exception to this is when
+       the new used is a class (rather than global) operator;  in
+       that  case, the object's type will temporarily be recorded
+       as the name of the class defining the invoked  new  (which
+       is either the actual type of the object, or an ancestor of
+       the actual type).  When the original call to new  returns,
+       fs  will learn the object's actual type (unless the use of
+       new was not compiled with -fs).
+
+       In "delete expression", expression must be a simple  vari-
+       able  name.   (The  workaround is to use a temporary vari-
+       able.)
+
+       In "new type-expression", type-expression cannot be a com-
+       plicated  type  expression.   (The  workaround is to use a
+       typedef.)
+
+       If neither the use nor the corresponding definition  of  a
+       new/  delete  operator  has been instrumented, fs will not
+       detect  the  creation/deletion   of   any   objects   cre-
+       ated/deleted by that use of the operator.  This can result
+       in fs_showall displaying information for objects which  no
+       longer exist.
+
+       Setting  a watchpoint on an object (using fs_watch()) that
+       does not yet exist will not cause fs_break  to  be  called
+       when  the object is about to be created.  Use fs_watch_n()
+       instead.
+
+                                                                4
+

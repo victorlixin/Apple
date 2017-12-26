@@ -1,0 +1,104 @@
+
+
+core(4)                                                   core(4)
+
+DDeessccrriippttiioonn
+       The
+
+       system  writes  out  a  core image of a process when it is
+       terminated due to the receipt of some signals.   The  core
+       image  is  called  core.procid  and is written in the pro-
+       cess's current  directory  (provided  it  can  be;  normal
+       access  controls apply).  procid is the process identifier
+       of the process receiving the signal.  A  process  with  an
+       effective user ID different from the real user ID will not
+       produce a core image.
+
+       The core image contains information that allows user-level
+       tools  to  determine  the cause of process termination and
+       its state at termination.  This information  includes  the
+       contents  of  hardware  registers, process status, and the
+       writable segments of the process including its stack.  The
+       status information in a core file is divided into process-
+       wide information and information specific  to  each  Light
+       Weight Process (LWP) in the address space.
+
+       For  both  COFF  and ELF executable programs [see the core
+       file generated is an ELF file, consisting of the images of
+       the  process'  data  segments plus per-LWP status informa-
+       tion.  The e_type  field  in  the  file  header  has  type
+       ET_CORE.
+
+       A  process is composed of several discrete areas of memory
+       or segments.  Each segment comprise one or more areas with
+       identical permissions called regions.  Each core file con-
+       tains a program header table.  There is a  program  header
+       entry  for  every  region  of  the process at termination.
+       This includes all regions from the shared objects used  by
+       the process.  If a region had read-only permission and was
+       never written to during the  process  lifetime,  then  the
+       contents  of  that  region is not dumped to the core file.
+       The p_filesz member of its program header  will  be  zero.
+       Each  writable region of the process plus each region that
+       was read-only at process termination but was  writable  at
+       some point in the lifetime of the process is dumped to the
+       core image.
+
+       A core file contains a NOTE section containing information
+       common  to  the  process as a whole and an additional NOTE
+       section for each LWP existing in the process  at  termina-
+       tion.   Each of these sections has an accompanying program
+       header entry.  The  NOTE  section  containing  information
+       common  to  the  process  as  a  whole contains up to four
+       entries.  Each entry has the name CORE  and  presents  the
+       contents  of a system structure: The entry containing this
+       structure has a NOTE type of CF_T_PRSTATUS.   This  struc-
+       ture  contains  things  of interest to a debugger from the
+       operating system's  u-area,  such  as  system  call  trace
+       masks, signal dispositions, process ID and so forth.  This
+
+                                                                1
+
+core(4)                                                   core(4)
+
+       information is common to all LWPs in the process but  this
+       entry  will  also  contain  information  on  the  LWP that
+       encountered the signal that resulted in the process'  ter-
+       mination.   The  structure  is  defined in <sys/procfs.h>.
+       The entry containing this structure has  a  NOTE  type  of
+       CF_T_PRPSINFO.  It contains information of interest to the
+       command that is common to all LWPs in the process, such as
+       process  status,  cpu  usage,  ``nice'' value, controlling
+       terminal, user ID, process ID, the name of the  executable
+       and so forth.  The structure is defined in <sys/procfs.h>.
+       The entry containing this structure has  a  NOTE  type  of
+       CF_T_PRCRED.   This entry contains the credential informa-
+       tion for the terminated process.  The structure is defined
+       in  <sys/procfs.h>.   The  entry containing this structure
+       has a NOTE type of CF_T_UTSNAME.  It contains  information
+       about  the system on which the process was running when it
+       terminated.  The structure is defined in  <sys/utsname.h>.
+
+       Each LWP-specific NOTE section contains up to two entries,
+       each named CORE.  The entries contain the following system
+       structures: The entry containing this structure has a NOTE
+       type of CF_T_LWPSTATUS.  This  entry  contains  things  of
+       interest  to a debugger from the LWP's u-area, such as the
+       processor registers, signal mask, state, reason for  stop-
+       ping   and   others.    The   structure   is   defined  in
+       <sys/procfs.h>.  The entry containing this structure has a
+       NOTE type of CF_T_LWPSINFO.  This entry contains things of
+       interest to the ps command, such as flags, status,  prior-
+       ity,   cpu   usage.    The   structure   is   defined   in
+       <sys/procfs.h>.
+
+       The definitions for NOTE types are contained in the header
+       file <sys/core.h>.
+
+       The size of the core file created by a process may be con-
+       trolled by the user [see
+
+RReeffeerreenncceess
+
+                                                                2
+

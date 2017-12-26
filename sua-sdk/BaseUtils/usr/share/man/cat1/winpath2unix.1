@@ -1,0 +1,139 @@
+unixpath2win(1)                                         unixpath2win(1)
+
+  wwiinnppaatthh22uunniixx
+
+  NNAAMMEE
+
+    winpath2unix, unixpath2win - convert path-name formats
+
+  SSYYNNOOPPSSIISS
+
+    winpath2unix [[-n]] winpathname
+    unixpath2win [[-sm]] interixpathname [...]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The wwiinnppaatthh22uunniixx(1) and uunniixxppaatthh22wwiinn(1) utilities convert the format of a
+    specified path name between the Subsystem for UNIX-based Applications format (such as //ddeevv//ffss//FF//CCaatt//ddoogg,
+    here referred to as interixpathname) and the Windows format (such as FF::
+    \\CCaatt\\ddoogg, here referred to as winpathname). The converted path name is
+    written to standard output.
+
+    The winpathname need not be an existing file. If possible, however, the
+    utility will find the longest prefix of the Windows path name that names
+    an existing file which is accessible to the effective user, and it will
+    convert that prefix to canonical case. This conversion is necessary
+    because Windows path name lookups are case insensitive, while Subsystem 
+    for UNIX-based Applications path name lookups are case sensitive.
+
+    The wwiinnppaatthh22uunniixx(1) utility can take a single option:
+
+    --nn
+        Interpret winpathname as a "nonstrict" path. Convert syntactically
+        incorrect Windows path names to //??uunnttrraannssllaatteedd??bad path name. Do not
+        attempt to find the correct case of winpathname. Do not generate an
+        error message for a zero length winpathname, that is, a path name such
+        as "". See EXAMPLES.
+
+    The interixpathname is not required to name an existing file. The
+    uunniixxppaatthh22wwiinn utility will find the longest prefix of the Subsystem for UNIX-based Applications path that
+    names an existing file and which is accessible to the effective user, and
+    it will resolve symbolic links within this prefix.
+
+    The uunniixxppaatthh22wwiinn(1) utility can take two options:
+
+    --ss
+        If interixpathname names an existing symbolic link file, then the
+        symbolic link named by interixpathname will not be followed, although
+        symbolic links named by prefixes of interixpathname will still be
+        followed. For example, if //CC is a symbolic link that points to CC::\\,
+        and Subsystem for UNIX-based Applications is installed in CC::\\SSUUAA, then
+        *     unixpath2win /C prints C:\
+        *     unixpath2win -s /C prints C:\SUA\C
+        *     unixpath2win /C/temp prints C:\temp
+        *     unixpath2win -s /C/temp prints C:\temp
+
+    --mm
+        Treat the pathname as containing multiple paths that are colon (:)
+        separated with the result being multiple Win32 paths that are
+        semi-colon (;) separated.
+
+    As a special case for both utilities, the Subsystem for UNIX-based Applications path name //ddeevv//nnuullll is
+    translated to the Windows path name "nul". Support for other device names
+    will be added in the future.
+
+    Both utilities just perform a syntax conversion of the input string to
+    produce the output string. No attempt is made to verify the validity of
+    either path. Consequently, if the input string specifies a badly formed or
+    illegal path (such as C:\:) or a path that cannot be represented in the
+    target file system (such as /dev/fs/C/..), the output path will not be
+    usable.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    The wwiinnppaatthh22uunniixx(1) and uunniixxppaatthh22wwiinn(1) utilities exit with status 0 for
+    success, and >0 if an error occurred.
+
+  EEXXAAMMPPLLEESS
+
+    Below are examples of path name conversions. They assume that you are in
+    a Subsystem for UNIX-based Applications shell and that your current directory is //ddeevv//ffss//CC//tteemmpp, which
+    in Windows format is CC::\\tteemmpp. Also, the examples assume that you installed
+    Subsystem for UNIX-based Applications into the CC::\\SSUUAA directory.
+
+    The Subsystem for UNIX-based Applications root directory is the installation directory into which you
+    installed Subsystem for UNIX-based Applications. In the example below, // converts to
+    CC::\\SSUUAA.
+
+    $ unixpath2win /
+    C:\SUA
+
+    Any ".." processing is done to the UNIX path name first; the result is
+    then converted to Windows format, as displayed below.
+
+    $ pwd
+    /dev/fs/C/SUA/
+    $ unixpath2win ..
+    C:\
+
+    An error results if, after the UNIX path is processed, the result is not a
+    legal Windows path, as shown.
+
+    $ pwd
+    /dev/fs/C/temp
+    $ unixpath2win ..
+    C:\
+    $ unixpath2win ../..
+    ../..: Can't map pathname to Windows namespace
+
+    A winpathname such as "C:temp" will be interpreted as if it were "C:
+    \temp". The back slash (\) is then converted to a forward slash (/).
+
+    $ winpath2unix c:temp
+    /dev/fs/C/temp
+
+    The --nn option on wwiinnppaatthh22uunniixx(1) does not translate certain arguments. In
+    the example below, because ////tteemmpp//// is syntactically incorrect, the --
+    nn option causes wwiinnppaatthh22uunniixx(1) not to translate ////tteemmpp////.
+
+    $ winpath2unix //temp//
+    //temp//: No such file or directory
+    $ winpath2unix -n //temp//
+    /?untranslated?//temp//
+
+    The following example assumes that you have a //PPeerrll directory. Without the
+    --nn option, the wwiinnppaatthh22uunniixx(1) utility capitalizes the letter "P"; with
+    the --nn option, the wwiinnppaatthh22uunniixx(1) utility does not perform a case
+    conversion.
+
+    $ winpath2unix perl
+    Perl
+    $ winpath2unix -n perl
+    perl
+
+  SSEEEE AALLSSOO
+
+    _u_n_i_x_p_a_t_h_2_w_i_n(2)
+
+    _w_i_n_p_a_t_h_2_u_n_i_x(2)
+

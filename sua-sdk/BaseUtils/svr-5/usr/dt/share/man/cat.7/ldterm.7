@@ -1,0 +1,156 @@
+
+
+ldterm(7)                                               ldterm(7)
+
+DDeessccrriippttiioonn
+       ldterm  is a STREAMS module that provides most of the ter-
+       minal interface.  This module does not  perform  the  low-
+       level  device  control functions specified by flags in the
+       c_cflag word of the termio/termios  structure  or  by  the
+       IGNBRK, IGNPAR, PARMRK, or INPCK flags in the c_iflag word
+       of the termio/termios structure; those functions  must  be
+       performed  by  the  driver  or by modules pushed below the
+       ldterm module.  All  other  termio/termios  functions  are
+       performed  by  ldterm;  some of them, however, require the
+       cooperation of the driver or modules pushed  below  ldterm
+       and may not be performed in some cases.  These include the
+       IXOFF flag in the c_iflag word and the delays specified in
+       the c_oflag word.
+
+       ldterm also handles EUC and multi-byte characters.
+
+       When ldterm is pushed onto a stream, the open routine ini-
+       tializes the settings of the termio  flags.   The  default
+       settings   in   most   implementations   are:   c_iflag  =
+       BRKINT|ICRNL|IXON|ISTRIP   c_oflag   =    OPOST|ONLCR|TAB3
+       c_cflag = 0 c_lflag = ISIG|ICANON|ECHO|ECHOK
+
+       The  remainder of this section describes the processing of
+       various STREAMS messages on the read- and write-side.
+
+   RReeaadd--ssiiddee bbeehhaavviioorr
+       Various types of STREAMS messages are  processed  as  fol-
+       lows:  When  this message is received, either an interrupt
+       signal is generated or the message is  treated  as  if  it
+       were an M_DATA message containing a single ASCII NUL char-
+       acter, depending on the state of the  BRKINT  flag.   This
+       message  is  normally  processed using the standard termio
+       input processing.  If the ICANON flag  is  set,  a  single
+       input  record  (``line'')  is  accumulated  in an internal
+       buffer and sent upstream when a line-terminating character
+       is  received.   If the ICANON flag is not set, other input
+       processing is performed and the processed data are  passed
+       upstream.
+
+       If  output  is to be stopped or started as a result of the
+       arrival of characters (usually Q and S, M_STOP and M_START
+       messages  are  sent  downstream.  If the IXOFF flag is set
+       and input is to be stopped or started as a result of flow-
+       control  considerations, M_STOPI and M_STARTI messages are
+       sent downstream.
+
+       M_DATA messages are sent downstream, as necessary, to per-
+       form echoing.
+
+       If  a signal is to be generated, an M_FLUSH message with a
+       flag byte of FLUSHR is placed on the read queue.   If  the
+       signal  is also to flush output, an M_FLUSH message with a
+       flag byte of FLUSHW is sent downstream.  If  the  size  of
+
+                                                                1
+
+ldterm(7)                                               ldterm(7)
+
+       the data buffer associated with the message is the size of
+       struct iocblk, ldterm will perform functional  negotiation
+       to  determine  where the processing is to be done.  If the
+       command member of the iocblk structure (ioc_cmd) is set to
+       MC_NO_CANON,  the input canonical processing normally per-
+       formed on M_DATA messages is disabled and  those  messages
+       are  passed  upstream  unmodified;  this is for the use of
+       modules or drivers that perform their own  input  process-
+       ing,  such  as  a  pseudo-terminal in TIOCREMOTE mode con-
+       nected to a program that performs this processing.  If the
+       command  is  MC_DO_CANON, all input processing is enabled.
+       If the command is MC_PART_CANON, then  an  M_DATA  message
+       containing  a termios structure is expected to be attached
+       to the original M_CTL message.   The  ldterm  module  will
+       examine  the iflag, oflag, and lflag fields of the termios
+       structure and from then on will process only  those  flags
+       which  have not been turned ON.  If none of the above com-
+       mands are found, the message is ignored; in any case,  the
+       message  is passed upstream.  The read queue of the module
+       is flushed of all its data messages and all  data  in  the
+       record being accumulated are also flushed.  The message is
+       passed upstream.  The data contained within  the  message,
+       which  is  to be returned to the process, are augmented if
+       necessary, and the message is passed upstream.
+
+       All other messages are passed upstream unchanged.
+
+   WWrriittee--ssiiddee bbeehhaavviioorr
+       Various types of STREAMS messages are  processed  as  fol-
+       lows:  The write queue of the module is flushed of all its
+       data messages and the message is passed  downstream.   The
+       function  of  this  ioctl  is performed and the message is
+       passed downstream in most cases.  The  TCFLSH  and  TCXONC
+       ioctls  can be performed entirely in the ldterm module, so
+       the reply is sent upstream and the message is  not  passed
+       downstream.   If  the OPOST flag is set, or both the XCASE
+       and ICANON flags are set, output processing  is  performed
+       and  the processed message is passed downstream along with
+       any M_DELAY messages generated.  Otherwise, the message is
+       passed downstream without change.
+
+       All other messages are passed downstream unchanged.
+
+   iiooccttllss
+       The  following  ioctls are processed by the ldterm module.
+       All others are passed downstream.  EUC_WSET  and  EUC_WGET
+       are I_STR ioctl calls whereas other ioctls listed here are
+       TRANSPARENT ioctls.  The message is passed downstream;  if
+       an acknowledgment is seen, the data provided by the driver
+       and modules downstream are augmented and the  acknowledge-
+       ment  is passed upstream.  The parameters that control the
+       behavior of the ldterm module  are  changed.   If  a  mode
+       change  requires options at the stream head to be changed,
+       an M_SETOPTS message is sent upstream.  If the ICANON flag
+
+                                                                2
+
+ldterm(7)                                               ldterm(7)
+
+       is  turned  on or off, the read mode at the stream head is
+       changed to message-nondiscard or byte-stream mode, respec-
+       tively.  If the TOSTOP
+       flag  is  turned  on or off, the tostop mode at the stream
+       head is turned on or off, respectively.  If  the  argument
+       is  0,  an  M_FLUSH  message with a flag byte of FLUSHR is
+       sent downstream and placed on  the  read  queue.   If  the
+       argument  is 1, the write queue is flushed of all its data
+       messages and an M_FLUSH message with a flag byte of FLUSHW
+       is  sent  upstream  and downstream.  If the argument is 2,
+       the write queue is flushed of all its data messages and an
+       M_FLUSH  message with a flag byte of FLUSHRW is sent down-
+       stream and placed on the read queue.  If the argument is 0
+       and  output  is  not already stopped, an M_STOP message is
+       sent downstream.  If the  argument  is  1  and  output  is
+       stopped,  an  M_START  message is sent downstream.  If the
+       argument is 2 and input is not already stopped, an M_STOPI
+       message  is  sent  downstream.   If  the argument is 3 and
+       input is stopped, an M_STARTI message is sent  downstream.
+       The  message  is  passed  downstream,  so the driver has a
+       chance to drain the data and then  send  and  an  M_IOCACK
+       message  upstream.  This call takes a pointer to an eucioc
+       structure, and uses it to set the  EUC  line  discipline's
+       local  definition  for  the code set widths to be used for
+       subsequent operations.  Within the stream, the line disci-
+       pline  may optionally notify other modules of this setting
+       via M_CTL messages.  This  call  takes  a  pointer  to  an
+       eucioc  structure,  and  returns  in  it  the EUC code set
+       widths currently in use by the EUC line discipline.
+
+RReeffeerreenncceess
+
+                                                                3
+

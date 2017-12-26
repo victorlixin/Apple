@@ -1,0 +1,69 @@
+
+
+rw_rdlock(3synch)                               rw_rdlock(3synch)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <synch.h>
+
+       int rw_rdlock(rwlock_t *lock);
+
+DDeessccrriippttiioonn
+       rw_rdlock  acquires  the  reader-writer lock pointed to by
+       lock in read mode.
+
+       A reader-writer lock can be held by any number of  readers
+       at  one  time,  but only one writer at a time can hold the
+       lock.   Once  a  writer  has  requested  the   lock   with
+       rw_wrlock,  all subsequent requests for the lock in either
+       read or write mode are queued.
+
+       If the lock is free,  or  is  currently  held  by  another
+       reader  and there are no writers waiting, rw_rdlock incre-
+       ments the reader count and  the  caller  proceeds.   If  a
+       writer  holds the lock or if any writer is waiting for the
+       lock, the caller blocks to wait for the lock.
+
+       lock  must   previously   have   been   initialized   (see
+       rwlock_init(3synch)).
+
+       From  the  point  of  view of the caller, this function is
+       atomic: even if interrupted by a signal  or  forkall  (see
+       rw_rdlock  will  not return until it holds the lock.  As a
+       consequence, if rw_rdlock is interrupted, an error indica-
+       tion, such as EINTR, is never returned to the user.
+
+   PPaarraammeetteerrss
+       pointer to the reader-writer lock to be acquired
+
+UUssaaggee
+       For  consistency,  locks acquired with rw_rdlock should be
+       released with rw_unlock.
+
+RReettuurrnn vvaalluueess
+       rw_rdlock returns zero for success and an error number for
+       failure.
+
+   EErrrroorrss
+       If  any of the following conditions is detected, rw_rdlock
+       returns the corresponding value: invalid  argument  speci-
+       fied insufficient memory
+
+WWaarrnniinnggss
+       If  a thread exits while holding a reader-writer lock, the
+       lock will not be unlocked, and other threads  waiting  for
+       the lock will wait forever.  Similarly, if a process exits
+       while holding a USYNC_PROCESS reader-writer lock, the lock
+       will  not be unlocked, and other processes waiting for the
+
+                                                                1
+
+rw_rdlock(3synch)                               rw_rdlock(3synch)
+
+       reader-writer lock will wait forever.
+
+RReeffeerreenncceess
+
+                                                                2
+

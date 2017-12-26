@@ -1,0 +1,96 @@
+forkpty(3)                                                   forkpty(3)
+
+  ooppeennppttyy(())
+
+  NNAAMMEE
+
+    openpty(), forkpty - open pseudo terminal
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/types.h>
+    #include <sys/ioctl.h>
+    #include <termios.h>
+    #include <pty.h>
+
+    int openpty(int *amaster, int *aslave, char *name,
+                struct termios *termp, struct winsize *winp)
+    			
+    int forkpty(int *amaster, char *name, struct termios *termp,
+                struct winsize *winp)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The function ooppeennppttyy() attempts to obtain the next pseudo terminal from
+    the system (see _p_t_y(4)). If it successfully finds one, it subsequently
+    tries to change the ownership of the subordinate (also called slave)
+    device to the real user identifier (UID) of the current process, the group
+    membership to the group tty (if such a group exists in the system), the
+    access permissions for reading and writing by the owner, and for writing
+    by the group.
+
+    If the argument name is not NULL, ooppeennppttyy() copies the path name of the
+    subordinate pty to this area. The caller is responsible for allocating the
+    required space in this array.
+
+    If the arguments termp or winp are not NULL, ooppeennppttyy() initializes the
+    termios and window size settings from the structures these arguments point
+    to, respectively.
+
+    Upon return, the open file descriptors for the master side of the pty and
+    the subordinate side of the pty are returned in the locations pointed to
+    by amaster and aslave, respectively.
+
+    The ffoorrkkppttyy() function first calls ooppeennppttyy() to obtain the next available
+    pseudo terminal from the system. Upon success, it forks off a new process.
+    In the child process, it closes the descriptor for the master side of the
+    pty, and prepares the subordinate side for a new login session. In the
+    parent process, it closes the descriptor for the subordinate side of the
+    pty. The arguments amaster, name, termp, and winp have the same meaning as
+    described for ooppeennppttyy().
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The ooppeennppttyy() function returns 0 on success, or -1 on failure.
+
+    The ffoorrkkppttyy() function returns -1 on failure, or on success, returns 0 in
+    the subordinate process, and the process ID of the child process in the
+    parent process.
+
+  EERRRROORRSS
+
+    On failure, ooppeennppttyy() will set the global variable errno to ENOENT.
+
+    In addition to this, ffoorrkkppttyy() may set it to any value described for
+    ffoorrkk(2).
+
+  NNOOTTEESS
+
+    The calling process must have an effective UID of superuser in order to
+    perform all the intended actions. No notification will occur if ooppeennppttyy()
+    or ffoorrkkppttyy failed to proceed with one of the described steps, as long as
+    they could at least allocate the pty and, in the case of ffoorrkkppttyy(), create
+    the new process.
+
+  SSEEEE AALLSSOO
+
+    _c_h_m_o_d(2)
+
+    _c_h_o_w_n(2)
+
+    _f_o_r_k(2)
+
+    _g_e_t_u_i_d(2)
+
+    _o_p_e_n(2)
+
+    _p_t_y(4)
+
+    _t_e_r_m_i_o_s(4)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

@@ -1,0 +1,215 @@
+
+
+Intro(3mas)                                           Intro(3mas)
+
+SSyynnooppssiiss
+       cc [options] file -lmas
+
+       #include <mas.h>
+
+DDeessccrriippttiioonn
+       The  Metric  Access Support (MAS) functions allow applica-
+       tions to advertise and gather  performance  metrics.   MAS
+       removes  machine  dependencies  from user level raw metric
+       gathering by providing a common programming interface  for
+       metric  information from both the system and user applica-
+       tions.
+
+   OOvveerrvviieeww
+       Metric data are supplied  by  a  provider,  which  can  be
+       either  an  application  or  the operating system, and are
+       collected by a consumer application.   Metric  identifica-
+       tion  is  primarily  based  on  ID numbers.  Providers are
+       responsible for registering the ID numbers and other  per-
+       tinent information about metrics into MAS.  Consumers then
+       access a metric registration file  with  the  MAS  library
+       functions  and  can  access the registered information and
+       metrics.  Raw metric data is file based.  Access  to  met-
+       rics  is  provided  by  either  a  read/write interface or
+       through memory mapping.
+
+   FFuunnccttiioonn oovveerrvviieeww
+       The MAS functions are broken into several categories:  MAS
+       Provider  Functions  are called by systems or applications
+       that want to make metrics  available.   If  user  programs
+       want  to  make  metrics available via memory mapping, they
+       are responsible for allocating their  metrics  within  the
+       address space of a memory mapped file.  MAS Consumer Func-
+       tions are called by applications that want to  use  metric
+       data.   Applications  can  request  either  read or memory
+       mapped access to metric data.  If memory mapped access  is
+       used,  MAS  automatically sets up a mapping of the metrics
+       data in the consumer's address space.   MAS  Type-Specific
+       Functions  have  been  separated  from  the  rest  of  the
+       libraries because they have some notion of the  layout  of
+       particular  data  types.  These are kept separate for ease
+       of porting and continuing development.   MAS  Error  Func-
+       tions  are common to both the consumers and providers, and
+       are used to record and report error conditions.
+
+   DDaattaa oovveerrvviieeww
+       In order to allow data  structures  to  be  extensible  in
+       future  releases,  the  metric registration information is
+       separated into several  areas:  The  MAS  header  contains
+       information  necessary  to  get  and  interpret all of the
+       other registration information.  Essentially it is a boot-
+       strap  data structure.  It contains a magic number, status
+       information, word size, byte ordering, access methods, and
+       information  about  the  locations  of  the remaining data
+
+                                                                1
+
+Intro(3mas)                                           Intro(3mas)
+
+       structures.  The metric registration table header contains
+       the  size of the metric registration table, as well as the
+       sizes of elementary objects such as ID numbers  and  units
+       fields.  These elementary objects are referred to as meta-
+       data.  The metric registration table is the table of  reg-
+       istered  metrics.   Each  entry has the following informa-
+       tion: a status word the size of a metric object the number
+       of  objects ( > 1 implies the metric is an array) the num-
+       ber of instances of the metric; for example usr time on  a
+       4-CPU  system  would  have 4 instances a pointer to the ID
+       number (which is kept in metadata) a pointer to  the  name
+       string  (which  is kept in strings) a pointer to the units
+       of the metric (which is kept in metadata) a pointer to the
+       units  string  (which is kept in strings) a pointer to the
+       list of resources (which is kept in metadata); for example
+       usr  time  would  have one resource, which would be the ID
+       number for the number of CPUs on the system.  Avg dsk wait
+       queue  would have the number of disks on the system as the
+       resource.  A metric that was kept per filesystem  and  per
+       CPU  would  have two resources: the number of CPUs and the
+       number of filesystems.  a pointer to the  list  of  metric
+       data  segment  numbers  (which  are kept in metadata); MAS
+       allows many metric files to be mapped in  as  metric  seg-
+       ments,  since  a  provider may not have all of its metrics
+       collected into a common area.  The list of segment numbers
+       identifies  in  which  segment  a particular instance of a
+       resides.  a pointer  to  the  list  of  metrics  addresses
+       (which are kept in metadata); the metric addresses kept in
+       metadata point to the actual metrics which reside  in  the
+       various  metric  data segments.  Metadata holds all of the
+       things that MAS may not know the size of before  it  reads
+       the  various headers and tables.  Because these things may
+       be different sizes on different  architectures,  they  are
+       not   specified  as  having  particular  sizes  in  mas.h.
+       Instead they are referred to by pointer, with their  sizes
+       bound  at run time.  The strings table contains all of the
+       text strings associated with the metric and  units  names.
+       Eventually  the string handling will be expanded to encom-
+       pass internationalization support.  The metrics data  seg-
+       ments  contain the actual metric data.  Because a provider
+       may have several files and/or several ranges of  addresses
+       from  which it would like to provide metrics, MAS allows a
+       provider to specify multiple metric segments.   Each  seg-
+       ment  is  identified by: file name the start offset within
+       the file segment size
+
+   PPrroovviiddeerr ffuunnccttiioonnss
+       There are only four provider functions.  One  to  initial-
+       ize,  one  to  register an instance of metric data, one to
+       make everything  available  after  some  registration  has
+       taken  place,  and one to write the metrics if memory map-
+       ping is not being used.   These  functions  are:  mas_init
+       initializes  the  MAS  header structures, sets dynamic vs.
+       static registration, and sets file names for  the  various
+
+                                                                2
+
+Intro(3mas)                                           Intro(3mas)
+
+       MAS structs.  mas_register_met registers a single instance
+       of a metric.  mas_put, on first  invocation,  creates  the
+       registration  file(s) and writes the registration informa-
+       tion.  On subsequent calls, it  updates  the  registration
+       files  with  newly  registered metrics.  mas_write_mets is
+       called to write the metrics data segments to their  appro-
+       priate  files when memory mapped access is not being used.
+       If memory mapping is being used, it does not  need  to  be
+       called.
+
+   CCoonnssuummeerr ffuunnccttiioonnss
+       The  consumer functions fall into several categories.  The
+       MAS management functions are used for accessing  a  regis-
+       tration  file and capturing the metrics.  The MAS get met-
+       ric functions are used to access the  metric  registration
+       data  and  to determine the addresses at which the metrics
+       resides.  The MAS get MAS header and get metric  registra-
+       tion table (mrt) header functions return information about
+       the configuration of MAS on the system that performed  the
+       metric registration.
+
+       There are three MAS management functions: mas_open opens a
+       metric registration file.  mas_snap takes  a  snapshot  of
+       the  metrics.   mas_close  closes  the metric registration
+       file.
+
+       The MAS get  metric  functions  return  information  about
+       individual metrics.  A few of the more important functions
+       are: mas_get_met_id, which returns the ID  number  of  the
+       metric  in  a  particular  slot of the metric registration
+       table, and can be used to list the contents of a registra-
+       tion file.  mas_get_met and mas_get_met_snap, which return
+       the address of an instance of a metric within  its  memory
+       mapped  metric  data  segment  and  within  the  snap shot
+       buffer, respectively.  The remaining MAS get metric  func-
+       tions  return  the  name,  status word, units, units name,
+       object size, number of objects, total possible  instances,
+       and  the  resource list for a particular metric.  For more
+       information about these functions, see The MAS get  metric
+       registration table header functions and MAS get MAS header
+       functions return information that is contained within  the
+       metric  registration  table (mrt) header and the top level
+       MAS header structure.  The mrt header contains the size of
+       the header structure, the size of an mrt entry, the number
+       of mrt entries, the size of an ID number, the  size  of  a
+       units  field,  and the size of a resource.  The MAS header
+       contains information about how MAS was configured  on  the
+       system  that  registered  the metrics, including the magic
+       number, bytes per word,  byte  ordering  information,  the
+       size  of  the  MAS header structure and the access methods
+       supported.  The MAS header structure also  contains  file-
+       name  and  addressing information about the following data
+       areas: the top level MAS header, the  metric  registration
+       table  header,  the metric registration table, the strings
+
+                                                                3
+
+Intro(3mas)                                           Intro(3mas)
+
+       table, the metadata, and the metriC data segments.  It  is
+       unlikely  that  consumer  applications  would ever need to
+       access most of the structure elements  that  the  MAS  get
+       header  functions  return.   However,  they  are  provided
+       should such a need occur.   Portable  metric  applications
+       should  make  no assumptions whatsoever about the size and
+       layout of the MAS data structures, and should only  access
+       structure  elements  through  these  functions.   For more
+       information, see
+
+   TTyyppee--SSppeecciiffiicc iinntteerrffaaccee ffuunnccttiioonnss
+       The MAS type-specific functions  are  used  to  manipulate
+       metadata  objects.   These  are  needed  because  metadata
+       objects may change size between various systems and  plat-
+       forms,  or  in future releases.  These functions fall into
+       several categories.  There are comparative functions, copy
+       functions,  name  size  functions, and sanity checks.  For
+       more information about the type-specific functions, see
+
+   EErrrroorr ffuunnccttiioonnss
+       The MAS error  functions  report  error  codes  and  error
+       strings.   For  more information about the MAS error func-
+       tions, see
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoommpplliiaannccee
+       The mas library is not part  of  any  currently  supported
+       standard.
+
+       It was developed by  System Laboratories, Inc. and is used
+       by permission.
+
+                                                                4
+

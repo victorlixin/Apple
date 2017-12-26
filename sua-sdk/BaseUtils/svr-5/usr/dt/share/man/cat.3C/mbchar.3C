@@ -1,0 +1,153 @@
+
+
+mbchar(3C)                                             mbchar(3C)
+
+SSyynnooppssiiss
+       #include <stdlib.h>
+
+       int mbtowc(wchar_t *pwc, const char *s, size_t n);
+
+       int wctomb(char *s, wchar_t wchar);
+
+       int mblen(const char *s, size_t n);
+
+       #include <wchar.h>
+
+       int   mbrtowc(wchar_t  *pwc,  const  char  *s,  size_t  n,
+       mbstate_t *ps);
+
+       int wcrtomb(char *s, wchar_t wc, mbstate_t *ps);
+
+       int mbrlen(const char *s, size_t n, mbstate_t *ps);
+
+DDeessccrriippttiioonn
+       Traditional computer systems used to assume that a charac-
+       ter of a natural language could be represented in one byte
+       of storage.  Languages such as Japanese, Korean,  Chinese,
+       or Taiwanese, however, require more than one byte of stor-
+       age to represent a character.  These characters are called
+       ``multibyte  characters''.   Such character sets are often
+       called ``extended character sets''.
+
+       The number of bytes of storage required by a character  in
+       a  given locale is defined in the LC_CTYPE category of the
+       locale [see The maximum number of  bytes  in  a  multibyte
+       character  in  an  extended  character  set in the current
+       locale is given  by  the  macro,  MB_CUR_MAX,  defined  in
+       stdlib.h.
+
+       Multibyte  character  handling functions provide the means
+       of translating multibyte characters  into  a  bit  pattern
+       which is stored in a data type, wchar_t.
+
+       mbtowc  determines  the  number of bytes that comprise the
+       multibyte character pointed to by s.  If pwc is not a null
+       pointer, mbtowc converts the multibyte character to a wide
+       character and places the result in the object  pointed  to
+       by pwc.  (The value of the wide character corresponding to
+       the null character is zero.)  At  most  n  bytes  will  be
+       examined, starting at the byte pointed to by s.
+
+       wctomb  determines the number of bytes needed to represent
+       the multibyte character corresponding to  the  code  whose
+       value  is  wchar,  and, if s is not a null pointer, stores
+       the  multibyte  character  representation  in  the   array
+       pointed to by s.  At most MB_CUR_MAX bytes are stored.
+
+       mblen determines the number of bytes comprising the multi-
+       byte character pointed to by  s.   It  is  equivalent  to:
+
+                                                                1
+
+mbchar(3C)                                             mbchar(3C)
+
+       mbtowc((wchar_t *)0, s, n)
+
+       The functions mbrtowc, wcrtomb, and mbrlen are essentially
+       the same as the above three  functions,  except  that  the
+       conversion  state  on  entry is specified by the mbstate_t
+       object pointed to by ps.
+
+       If s is a null pointer, mbrtowc and wcrtomb determine  the
+       number of bytes necessary to enter the initial shift state
+       (zero if encodings are not state-dependent or if the  ini-
+       tial  conversion state is described).  The resulting state
+       described is the initial conversion state.  In this  case,
+       the value of the pwc is ignored.
+
+       If  s is not a null pointer, mbrtowc determines the number
+       of bytes that are contained  in  the  multibyte  character
+       (plus  any  leading shift sequences) pointed to by s, pro-
+       duces the value of the corresponding  wide  character  and
+       then,  if  pwc is not a null pointer, stores that value in
+       the object pointed to by pwc.  If the  corresponding  wide
+       character  is the null wide character, the resulting state
+       described is the initial conversion state.
+
+       If s is not a null pointer, wcrtomb determines the  number
+       of  bytes needed to represent the multibyte character that
+       corresponds to the wide character given by  wc  (including
+       any  shift  sequences),  and stores the resulting bytes in
+       the array whose first element is pointed to by s.  At most
+       MB_CUR_MAX bytes are stored.  If wc is a null wide charac-
+       ter, the resulting state described is the initial  conver-
+       sion state.
+
+       mbrlen   is   equivalent   to  the  following  call:  mbr-
+       towc((wchar_t *)0, s, n, ps != 0 ? ps :  &internal)  where
+       &internal  is the address of the internal mbstate_t object
+       for mbrlen.  ps can also be a null pointer for mbrtowc and
+       wcrtomb.
+
+   RReettuurrnn vvaalluueess
+       If  s is a null pointer, mbtowc returns zero.  If s is not
+       a null pointer, then, if s points to the  null  character,
+       mbtowc  returns  zero; if the next n or fewer bytes form a
+       valid multibyte character, mbtowc returns  the  number  of
+       bytes  that  comprise  the  converted multibyte character;
+       otherwise, s does not point to a valid multibyte character
+       and mbtowc returns -1.
+
+       If  s is a null pointer, wctomb returns zero.  If s is not
+       a null pointer, wctomb returns -1 if the  value  of  wchar
+       does not correspond to a valid multibyte character; other-
+       wise it returns the number  of  bytes  that  comprise  the
+       multibyte character corresponding to the value of wchar.
+
+       mbrlen  returns  a  value between -2 and n, inclusive; see
+
+                                                                2
+
+mbchar(3C)                                             mbchar(3C)
+
+       mbrtowc.
+
+       If s is a null pointer, mbrtowc  and  wcrtomb  return  the
+       number  of  bytes  necessary  to  enter  the initial shift
+       state.  The value returned cannot be greater than that  of
+       MB_CUR_MAX.
+
+       If  s is not a null pointer, wcrtomb returns the number of
+       bytes stored in the  array  object  (including  any  shift
+       sequences)  when  wc  is a valid wide character; otherwise
+       (when wc is not a valid wide character), an encoding error
+       occurs,  the  value of the macro EILSEQ is stored in errno
+       and -1 is returned, but the conversion state is unchanged.
+
+       If  s  is not a null pointer, mbrtowc returns the first of
+       the following that applies: if s points to the null  char-
+       acter.   if  the next n or fewer bytes form a valid multi-
+       byte character; the value returned is the number of  bytes
+       that  constitute  that multibyte character.  if the next n
+       bytes form an incomplete (but potentially valid) multibyte
+       character, and all n bytes have been processed; this situ-
+       ation does not  apply  since  the  multibyte  encoding  is
+       stateless.   if  an encoding error occurs (when the next n
+       or fewer bytes do not form a complete and valid  multibyte
+       character);  the  value  of  the macro EILSEQ is stored in
+       errno, but the conversion state is unchanged.
+
+RReeffeerreenncceess
+
+                                                                3
+

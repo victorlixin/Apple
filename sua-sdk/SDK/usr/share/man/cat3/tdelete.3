@@ -1,0 +1,123 @@
+tdelete(3)                                                   tdelete(3)
+
+  ttsseeaarrcchh(())
+
+  NNAAMMEE
+
+    tdelete(), tfind(), tsearch(), twalk() - manage a binary search tree
+
+  SSYYNNOOPPSSIISS
+
+    #include <search.h>
+
+    void *tsearch (const void *key, void **rootp,
+                   int (*compar)(const void *, const void *))
+    void *tfind (const void *key, void **rootp,
+                 int (*compar)(const void *, const void *))
+    void *tdelete (const void *key, void **rootp,
+                 int (*compar)(const void *, const void *))
+    void twalk (const void *root, void (*action)(const void *, VISIT, int));
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _tt_ss_ee_aa_rr_cc_hh(3), _tt_ff_ii_nn_dd(3), _tt_dd_ee_ll_ee_tt_ee(3), and _tt_ww_aa_ll_kk(3) function manage binary
+    search trees. _tt_ss_ee_aa_rr_cc_hh(3) is used to build and access the tree; _tt_ff_ii_nn_dd(3)
+    searches the tree but will not insert nodes. The _tt_dd_ee_ll_ee_tt_ee(3) function
+    deletes a node from a tree, and the _tt_ww_aa_ll_kk(3) function traverses a tree.
+
+    The arguments for _tt_ss_ee_aa_rr_cc_hh(3), _tt_ff_ii_nn_dd(3), and _tt_dd_ee_ll_ee_tt_ee(3) are identical. The
+    key is a pointer to the element to be located (for _tt_ss_ee_aa_rr_cc_hh(3) and
+    _tt_ff_ii_nn_dd(3)), added (for _tt_ss_ee_aa_rr_cc_hh(3)), or deleted (for _tt_dd_ee_ll_ee_tt_ee(3)). The rootp
+    is a pointer to a variable that points to the root node of the tree. If
+    rootp is NULL, it indicates an empty tree. The compar argument is the
+    address of a user-supplied comparison routine which is called with the
+    pointers to the elements being compared. The comparision function doesn't
+    need to compare every byte; the elements of the tree can contain arbitrary
+    data as well as the values actually being compared. The routine returns an
+    iinntt:
+
+    <0
+        if the first argument is less than the second argument
+
+    0
+        if the first argument is equal to the second argument
+
+    >0
+        if the first argument is greater than the second argument
+
+    Both _tt_ss_ee_aa_rr_cc_hh(3) and _tt_ff_ii_nn_dd(3) search the tree. If the element pointed to by
+    key is found, they return a pointer to that element. It is the
+    responsibility of the calling function to copy the element. If the element
+    can't be found, _tt_ss_ee_aa_rr_cc_hh(3) inserts it in the tree and returns a pointer to
+    this new node, while _tt_ff_ii_nn_dd(3) simply returns a null pointer.
+
+    The _tt_dd_ee_ll_ee_tt_ee(3) function deletes the node indicated by key and returns a
+    pointer to the successor of the deleted node (one of the children), or if
+    there are no children, returns a pointer to the root of the tree. If the
+    root node is deleted, the function changes the variable pointed to by
+    rootp. _TT_dd_ee_ll_ee_tt_ee(3) returns NULL if the node can't be found or when the last
+    node has been deleted.
+
+    The _tt_ww_aa_ll_kk(3) function traverses a binary search tree, starting with the
+    node pointed to by root. (The root of the walk can be any node in the
+    tree; the walk visits the tree below that node.) The second argument to
+    _tt_ww_aa_ll_kk(3), action, is a pointer to a function which is invoked at each
+    node. The function pointed to by action takes three arguments:
+    *     The address of the node to be visited;
+    *     a value from the enumerated type VVIISSIITT (defined in <<sseeaarrcchh..hh>>).
+          which indicates whether this is the first, second, or third time the
+          types assume a depth-first, left-to-right walk of the tree, and are:
+          pprreeoorrddeerr:
+              Visiting a node before any of its children.
+          ppoossttoorrddeerr:
+              Visiting a node after its left child and before its right.
+          eennddoorrddeerr:
+              Visiting a node after its children.
+          lleeaaff:
+              The node is a leaf node.
+    *     the level of the node in the tree, where the root is level 0.
+
+  RREETTUURRNN VVAALLUUEE
+
+    The _tt_ss_ee_aa_rr_cc_hh(3) function returns a pointer to the node if it was found; if
+    the item was inserted, the function returns a pointer to the inserted
+    item. If there is not enough space to create a new node, or if rootp is a
+    null pointer on entry, _tt_ss_ee_aa_rr_cc_hh(3) returns a null pointer.
+
+    The _tt_ff_ii_nn_dd(3) function returns a pointer to the node if it was found; if it
+    was not found, or if rootp is a null pointer on entry, the function
+    returns a null pointer.
+
+    The _tt_dd_ee_ll_ee_tt_ee(3) function returns a pointer to the parent of the deleted
+    node; if the node was not found, or if rootp is a null pointer on entry,
+    it returns a null pointer.
+
+    The _tt_ww_aa_ll_kk(3) function does not return a value.
+
+  NNOOTTEESS
+
+    Don't be confused by the meaning of postorder. Here it refers to visiting
+    a node after its left child and before its right. Some people refer to the
+    order of visiting tree nodes as preorder, inorder, and postorder.
+
+    This implementation uses _mm_aa_ll_ll_oo_cc(3) across trees. Using _tt_dd_ee_ll_ee_tt_ee(3) to
+    remove all of the nodes in a given tree may not free all of the memory
+    associated with that tree because some of the memory may also be
+    associated with another tree. When all of the nodes used by all of the
+    trees associated with a given program are _tt_dd_ee_ll_ee_tt_ee(3)d, all of the memory
+    is freed.
+
+  SSEEEE AALLSSOO
+
+    _b_s_e_a_r_c_h(3)
+
+    _h_s_e_a_r_c_h(3)
+
+    _l_s_e_a_r_c_h(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

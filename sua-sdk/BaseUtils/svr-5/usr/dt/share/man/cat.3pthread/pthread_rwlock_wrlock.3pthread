@@ -1,0 +1,115 @@
+
+
+pthread_rwlock_wrlock(3pthread)   pthread_rwlock_wrlock(3pthread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <pthread.h>
+
+       int pthread_rwlock_wrlock(pthread_rwlock_t *rwlock);
+
+       int pthread_rwlock_trywrlock(pthread_rwlock_t *rwlock);
+
+DDeessccrriippttiioonn
+       pthread_rwlock_wrlock acquires the read-write lock pointed
+       to by lock in write mode.
+
+       The calling thread acquires the write  lock  if  no  other
+       thread  (reader  or  writer)  holds  the  read-write  lock
+       rwlock.  Otherwise, the thread blocks (that is,  does  not
+       return  from  the pthread_rwlock_wrlock call) until it can
+       acquire the lock.
+
+       Deadlock will occur if the calling thread holds the  read-
+       write  lock (whether a read or write lock) at the time the
+       call is made.
+
+       If   the   lock   is   held   by    any    readers    when
+       pthread_rwlock_wrlock  is called, and no writer is waiting
+       for the lock, the caller  blocks  until  all  the  current
+       readers  have  released  the lock.  If the lock is held by
+       another writer, or if there are any other writers  already
+       waiting  for  the  lock, the caller blocks to wait for the
+       lock.
+
+       From the point of view of the application,  this  function
+       is  atomic:  even  if  interrupted by a signal or forkall,
+       pthread_rwlock_wrlock will not return until it  holds  the
+       lock.   As  a  consequence,  if  pthread_rwlock_wrlock  is
+       interrupted, an error indication such as  EINTR  is  never
+       returned to the user.
+
+       pthread_rwlock_trywrlock  is used when the caller does not
+       want to block if the lock is unavailable.  It makes a sin-
+       gle  attempt  to acquire the reader-writer lock pointed to
+       by rwlock in write mode; it does not block the  caller  if
+       the lock is unavailable.
+
+       If the lock is free, pthread_rwlock_trywrlock acquires the
+       lock in write mode and the caller proceeds.  If  the  lock
+       is  currently  held,  pthread_rwlock_trywrlock immediately
+       returns EBUSY to the caller, without acquiring the lock.
+
+       Results are undefined if any of these functions are called
+       with an uninitialized read-write lock.
+
+       Only  one  writer at a time can hold a reader-writer lock,
+       although any number of readers can hold the  lock  at  any
+
+                                                                1
+
+pthread_rwlock_wrlock(3pthread)   pthread_rwlock_wrlock(3pthread)
+
+       time.    Once   a  writer  has  requested  the  lock  with
+       pthread_rwlock_wrlock, all  subsequent  requests  for  the
+       lock in either read or write mode are blocked.
+
+       For consistency, locks acquired with pthread_rwlock_wrlock
+       or  pthread_rwlock_trywrlock  should  be   released   with
+       pthread_rwlock_unlock.
+
+RReettuurrnn vvaalluueess
+       pthread_rwlock_wrlock  and pthread_rwlock_trywrlock return
+       zero on success.  Otherwise, an error number is  returned.
+
+DDiiaaggnnoossttiiccss
+       pthread_rwlock_wrlock  and pthread_rwlock_trywrlock return
+       the following values if the corresponding  conditions  are
+       detected:  The value specified by rwlock does not refer to
+       an initialized read-write lock object.
+
+       pthread_rwlock_wrlock returns the following value  if  the
+       corresponding  condition is detected: Insufficient memory.
+
+       pthread_rwlock_trywrlock returns the  following  value  if
+       the corresponding condition is detected: The reader-writer
+       lock pointed to by rwlock cannot be acquired.
+
+WWaarrnniinnggss
+       If a thread exits while holding a reader-writer lock,  the
+       lock  will  not be unlocked, and other threads waiting for
+       the lock will wait forever.
+
+SSttaannddaarrddss ccoommpplliiaannccee
+       The Single UNIX Specification, Version 2; The Open  Group.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Realtime  applications  may  encounter  priority inversion
+       when using read-write locks.  The problem  occurs  when  a
+       high priority thread locks a read-write lock that is about
+       to be unlocked by a low priority thread, but the low  pri-
+       ority  thread  is  preempted  by a medium priority thread.
+       This scenario leads to priority inversion; a high priority
+       thread  is blocked by lower priority threads for an unlim-
+       ited period of time.  During system design, realtime  pro-
+       grammers  must  take  into account the possibility of this
+       kind of priority inversion.  They can deal with  it  in  a
+       number  of  ways, such as by having critical sections that
+       are guarded by read-write locks execute at a  high  prior-
+       ity,  so that a thread cannot be preempted while executing
+       in its critical section.
+
+                                                                2
+

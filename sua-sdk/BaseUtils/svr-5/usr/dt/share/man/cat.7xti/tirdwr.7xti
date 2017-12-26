@@ -1,0 +1,86 @@
+
+
+tirdwr(7xti)                                         tirdwr(7xti)
+
+DDeessccrriippttiioonn
+       tirdwr  is  a  STREAMS  module  that provides an alternate
+       interface to  a  transport  provider  which  supports  the
+       Transport Interface (TI) functions of the Network Services
+       library (see Section 3N).  This alternate interface allows
+       a user to communicate with the transport protocol provider
+       using the and system calls.  The and system calls may also
+       be used. However, putmsg and getmsg can only transfer data
+       messages between user and stream.
+
+       The tirdwr module must only be pushed [see I_PUSH in  onto
+       a stream terminated by a transport protocol provider which
+       supports the TI.  After the tirdwr module has been  pushed
+       onto  a  stream, none of the Transport Interface functions
+       can be used.  Subsequent calls to TI functions will  cause
+       an  error on the stream.  Once the error is detected, sub-
+       sequent system calls on the stream will  return  an  error
+       with errno set to EPROTO.
+
+       The  following  are the actions taken by the tirdwr module
+       when pushed on the stream, popped, see I_POP  in  off  the
+       stream,  or  when data passes through it.  When the module
+       is pushed onto a stream, it will check any  existing  data
+       destined  for  the  user  to ensure that only regular data
+       messages are present. It will ignore any messages  on  the
+       stream that relate to process management, such as messages
+       that generate signals to  the  user  processes  associated
+       with  the  stream.  If any other messages are present, the
+       I_PUSH will return an error with errno set to EPROTO.  The
+       module will take the following actions on data that origi-
+       nated from a write system  call:  All  messages  with  the
+       exception  of  messages that contain control portions (see
+       the putmsg and getmsg system calls) will be  transparently
+       passed  onto  the  module's downstream neighbor.  Any zero
+       length data messages will be freed by the module and  they
+       will  not be passed onto the module's downstream neighbor.
+       Any messages with control portions will generate an error,
+       and  any  further  system calls associated with the stream
+       will fail with errno set to EPROTO.  The module will  take
+       the  following  actions  on  data that originated from the
+       transport protocol provider: All messages with the  excep-
+       tion  of  those  that  contain  control  portions (see the
+       putmsg and getmsg  system  calls)  will  be  transparently
+       passed  onto  the  module's upstream neighbor.  The action
+       taken on messages with control portions will  be  as  fol-
+       lows: Messages that represent expedited data will generate
+       an error.  All further system calls  associated  with  the
+       stream  will fail with errno set to EPROTO.  Any data mes-
+       sages with control portions will have the control portions
+       removed  from  the message prior to passing the message on
+       to the upstream  neighbor.   Messages  that  represent  an
+       orderly  release  indication  from  the transport provider
+       will generate a zero length data message,  indicating  the
+       end  of  file,  which  will  be  sent to the reader of the
+
+                                                                1
+
+tirdwr(7xti)                                         tirdwr(7xti)
+
+       stream.  The orderly release message itself will be  freed
+       by  the  module.  Messages that represent an abortive dis-
+       connect indication from the transport provider will  cause
+       all  further  write  and  putmsg system calls to fail with
+       errno set to ENXIO.  All further read  and  getmsg  system
+       calls  will  return  zero  length  data (indicating end of
+       file) once all previous data  has  been  read.   With  the
+       exception of the above rules, all other messages with con-
+       trol portions will generate an error and all further  sys-
+       tem  calls associated with the stream will fail with errno
+       set to EPROTO.  Any zero  length  data  messages  will  be
+       freed  by  the module and they will not be passed onto the
+       module's upstream neighbor.  When the module is popped off
+       the  stream  or the stream is closed, the module will take
+       the following action: If an orderly release indication has
+       been  previously received, then an orderly release request
+       will be sent to the remote side of the  transport  connec-
+       tion.
+
+RReeffeerreenncceess
+
+                                                                2
+

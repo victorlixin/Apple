@@ -1,0 +1,129 @@
+
+
+ptosm(7)                                                 ptosm(7)
+
+DDeessccrriippttiioonn
+       ptosm  is  a   character  special device which allows low-
+       level access to the &i2o; subsystem from user space.   The
+       &i2o;  subsystem  is  configured via HTML using a standard
+       browser such as Netscape  Navigatortm.   The  &i2o;-dialog
+       daemon which interfaces the browser to the &i2o; subsystem
+       is the primary user  of  the  ptosm  device.   The  device
+       driver is implemented as a loadable STREAMS driver.
+
+   iiooccttll ccoommmmaannddss
+       The  ptosm  device  supports  two  commands:  This command
+       obtains the number of  I/O  processors  (IOPs).   #include
+       <sys/i2o/ptosm.h>
+
+       int fd, stat, num;
+
+       stat  =  ioctl(fd,  I2O_PT_NUMIOPS,  &num);  If  the ioctl
+       returns success then num contains the number of IOPs  reg-
+       istered  in  the &i2o; message layer.  This command trans-
+       fers   messages   to   or   from   an    IOP.     #include
+       <sys/i2o/ptosm.h>
+
+       int fd, stat; I2OptUserMsg_t i2oUserMsg;
+
+       stat     =    ioctl(fd,    I2O_PT_MSGTFR,    &i2oUserMsg);
+       I2OptUserMsg_t is a typedef of  the  following  structure:
+       typedef struct {
+               unsigned char   Version;
+               unsigned char   IopNum;
+               unsigned char   Pad[2];
+               void            *Message;
+               unsigned int    MessageLength;
+               void            *Reply;
+               unsigned int    ReplyLength;
+               I2OPtData           Data[MAX_PT_SGL_BUFFERS];    }
+       I2OptUserMsg_t; Version should be set to  I2O_CURRENT_VER-
+       SION.
+
+       IopNum  should  be set to the number of the desired target
+       IOP.
+
+       Message is a pointer to a buffer containing a copy of  the
+       &i2o;  message  that  is  to be sent to the IOP.  Message-
+       Length is the length of this buffer.
+
+       The ptosm driver will generate and fill in the  SGLOffset,
+       MessageFlags and MessageLength fields of an &i2o; message.
+       It will also generate the scatter/gather lists (SGLs) from
+       information  in  the Data[] entries.  The InitiatorContext
+       and TransactionContext fields will be used for ptosm  pri-
+       vate  data  and will not be preserved in the Reply buffer.
+       Reply is a pointer to a buffer where the ptosm will  place
+       the reply from the IOP.
+
+                                                                1
+
+ptosm(7)                                                 ptosm(7)
+
+       ReplyLength  is  the  size of the Reply buffer.  The ptosm
+       will copy data up to this from the actual reply.  It is an
+       error  for  the Reply buffer to be smaller than a standard
+       &i2o; reply message.  Data[]  is  an  array  of  I2OPtData
+       structures: typedef struct {
+               void            *Data;
+               unsigned int    Length;
+               unsigned  int     Flags;  }  I2OPtData;  Data is a
+       pointer to a buffer that contains data to  be  written  to
+       the IOP or will contain data read from the IOP.
+
+       Length is the length of the buffer in bytes.
+
+       Flags  controls  the direction of data movement and is one
+       of  I2O_PT_DATA_READ  or  I2O_PT_DATA_WRITE.   All   other
+       fields  are  reserved  for  future  use and must be set to
+       zero.
+
+       For each Data[] element that has the Flags  field  set  to
+       I2O_PT_DATA_READ  or  I2O_PT_DATA_WRITE,  the ptosm driver
+       creates a scatter/gather list (SGL) entry on  the  end  of
+       the Message that it sends to the IOP.  Data array elements
+       must be filled in, in order, from element 0.
+
+DDiiaaggnnoossttiiccss
+       ioctl sets the following values in  errno  on  failure:  A
+       parameter  error. This may include: IopNum is greater than
+       the value returned by I2O_PT_NUMIOPS.  Message is  shorter
+       or  longer  than  a  valid  &i2o; message.  Data[n].Length
+       specifies a value greater than the maximum SGL  value  set
+       in  the Space.c file for the ptosm driver.  Data[] entries
+       are not ordered correctly from  element  0  (for  example,
+       Data[0] and Data[2] contain valid data, but Data[1] has no
+       data.)  The system failed to allocate an  internal  buffer
+       or  could  not  get  a valid message frame from the target
+       IOP.  The ioctl will only return a failure if it could not
+       deliver the message to the IOP.  Failure messages from the
+       IOP do not represent  an  ioctl  failure  and  hence  will
+       return SUCCESS.  In such cases, the Reply buffer will con-
+       tain the response from the IOP.  The InitiatorContext  and
+       TransactionContext  fields  will only contain data that is
+       valid to the ptosm, any user data placed in  these  fields
+       in  the  Message  will  have  been  overwritten.   If  the
+       Response indicates an &i2o; transport failure with a  Pre-
+       servedMfa attached, then the ptosm will already have dealt
+       with this.
+
+WWaarrnniinnggss
+       This ioctl allows the user to send nearly all messages  to
+       the  IOP.   Sending  messages  that modify the behavior or
+       running state of an IOP or any of its software could seri-
+       ously  impact  system performance and may lead to a system
+       panic, data loss, or both.
+
+                                                                2
+
+ptosm(7)                                                 ptosm(7)
+
+NNoottiicceess
+       In the current version of the interface (I2O_PT_VERSION_1)
+       there  may be a maximum of 4 SGLs attached to the message.
+       Each dynamically created SGL will be of type SIMPLE.   All
+       messages  must  be  of a type that generate a SINGLE_REPLY
+       frame.
+
+                                                                3
+

@@ -1,0 +1,129 @@
+
+
+inode_sfs(4)                                         inode_sfs(4)
+
+SSyynnooppssiiss
+       #include  <sys/param.h>  #include  <sys/types.h>  #include
+       <sys/vnode.h> #include <sys/fs/sfs_inode.h>
+
+DDeessccrriippttiioonn
+       The inode is the focus of all local  file  activity  in  .
+       There  is  a  unique inode allocated for each active file,
+       each current directory, each mounted-on  file,  each  map-
+       ping,  and  the  root  of  the  file  system.  An inode is
+       `named' by its device/inumber pair.  Data in  icommon  and
+       isecdata  (see  below) is read into memory from the perma-
+       nent inode on the actual volume.  Data is also written  to
+       disk  from  the  inode  in  memory (the incore inode) when
+       appropriate.
+
+       The structure inode represents the incore inode, and  con-
+       tains  copies  of  two  disk inodes, whose formats are the
+       structures icommon and  i_secure  (structure  i_secure  is
+       referenced from structure inode).
+
+       The  data  in icommon and i_secure is common to the incore
+       and disk inodes.  Other information is also stored in  the
+       incore  inode  as  shown  below.   struct inode {       /*
+       Filesystem independent view of this inode. */       struct
+       inode      *i_forw;          /*  hash  chain,  forward  */
+            struct inode    *i_back;        /* hash  chain,  back
+       */       struct  inode     *i_freef;        /* free chain,
+       forward */      struct inode     *i_freeb;        /*  free
+       chain, back */      struct vnode    *i_vp;          /* ptr
+       to  vnode  */       struct  idata     *i_data;          /*
+       pointer to the pool data      */
+
+            /*  Filesystem  dependent  view  of  this  inode.  */
+            union  i_secure *i_secp;        /* extra  memory  for
+       security  data  */      struct  vnode   i_vnode;        /*
+       vnode for this inode */
+
+            struct    vnode     *i_devvp; /* vnode for block  I/O
+       */         ushort_t  i_flag;        dev_t     i_dev;    /*
+       device where inode resides */       ino_t     i_number; /*
+       i     number,    1-to-1    with    device    address    */
+            off_t     i_diroff; /*  offset  in  dir,   where   we
+                           found  last entry */      struct    fs
+       *i_fs; /*  file  sys  associated  with   this   inode   */
+            struct    dquot *i_dquot; /* quota structure control-
+       ling                            this        file        */
+            short     i_owner;  /*  proc index of process locking
+       inode */      short     i_count;  /* number of inode locks
+       for  i_owner */      daddr_t   i_nextr;  /* next byte read
+       offset (read-ahead) */      ulong     i_vcode;  /* version
+       code  attribute */      long i_mapcnt; /* mappings to file
+       pages */      int  *i_map;   /* block list for the  corre-
+       sponding  file  */       int  i_opencnt;     /*  count  of
+       opens for this inode  */       lid_t     i_dirofflid;   /*
+
+                                                                1
+
+inode_sfs(4)                                         inode_sfs(4)
+
+       last  proc changing i_diroff w/o                     write
+       access */      clock_t   i_stamp   /*time when  inode  was
+       modified  but  not                 copied  to  the  buffer
+       cache*/      struct    icommon i_ic;   };
+
+       struct    icommon {      o_mode_t ic_smode;  /*   0:  mode
+       and type of file */      short     ic_nlink; /*  2: number
+       of  links  to  file  */       o_uid_t   ic_suid;  /*    4:
+       owner's user id */      o_gid_t   ic_sgid;  /*  6: owner's
+       group id */      quad ic_size;  /*  8: number of bytes  in
+       file */      time_t    ic_atime; /* 16: time last accessed
+       */      long ic_atspare;       time_t    ic_mtime; /*  24:
+       time     last     modified     */         long ic_mtspare;
+            time_t    ic_ctime; /* 32: last time inode changed */
+            long ic_ctspare;      daddr_t   ic_db[NDADDR]; /* 40:
+       disk block addresses  */       daddr_t   ic_ib[NIADDR]; /*
+       88: indirect blocks */      long ic_flags; /* 100: status,
+       currently  unused  */        long ic_blocks;     /*   104:
+       blocks  actually  held */      long ic_gen;        /* 108:
+       generation number */      mode_t    ic_mode;  /* 112:  EFT
+       version  of  mode*/       uid_t     ic_uid;        /* 116:
+       EFT version  of  uid  */       gid_t     ic_gid;        /*
+       120:        EFT        version       of       gid       */
+            ulong     ic_eftflag;    /* 124:  indicate  EFT  ver-
+       sion*/ };
+
+       union      i_secure  {            struct  icommon  is_com;
+            struct  isecdata  {            lid_t     isd_lid;  /*
+       Level IDentifier */           long isd_sflags;    /* flags
+       */             long isd_aclcnt;    /*   ACL    count    */
+                 long isd_daclcnt;   /*   default  ACL  count  */
+                 daddr_t   isd_aclblk;    /*  extended  ACL  disk
+       blk   */            struct    acl  isd_acl[NACLI]; /*  ACL
+       entries  */            lid_t     isd_cmwlid;    /*   Level
+       IDentifier   for                            file   CMW  */
+                 char isd_filler[8]; /*   reserved   */         }
+       is_secdata;      char      is_size[128]; };
+
+       The structure dinode represents the disk inode;  it is 128
+       bytes long and is the same as the ufs inode,  except  that
+       there  are  two 128-byte inodes allocated on disk for each
+       directory entry.
+       struct dinode {      union  {            struct    icommon
+       di_icom;                struct    isecdata     di_secdata;
+                 char di_size[128];      } di_un; };
+
+       This ``alternate inode'' scheme makes it  look  like  only
+       the  even-numbered  inodes  on  disk  are used.  The first
+       inode (the even-numbered inode) is identical  to  the  ufs
+       inode,  and  contains all the information in the structure
+       icommon.
+
+       The second inode (the ``alternate'',  odd-numbered  inode)
+       contains   the   security  information  in  the  structure
+
+                                                                2
+
+inode_sfs(4)                                         inode_sfs(4)
+
+       isecdata, shown below.
+
+RReeffeerreenncceess
+       sfs-specific
+
+                                                                3
+

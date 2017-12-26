@@ -1,0 +1,103 @@
+
+
+_lwp_cond_timedwait(2)                     _lwp_cond_timedwait(2)
+
+SSyynnooppssiiss
+       #include <synch.h> #include <sys/time.h>
+
+       int   _lwp_cond_timedwait(lwp_cond_t   *cond,  lwp_mutex_t
+       *mutex,
+            timestruc_t *abstime);
+
+   PPaarraammeetteerrss
+       pointer to the condition variable to wait for pointer to a
+       locked mutex absolute time at which to time out
+
+DDeessccrriippttiioonn
+       _lwp_cond_timedwait,  similar to _lwp_cond_wait, waits for
+       the occurrence of a condition associated  with  the  given
+       object  cond.   However, if the absolute time specified by
+       abstime has passed, and the  indicated  condition  is  not
+       signaled,  the operation returns ETIME to the caller.  The
+       calling lightweight process (LWP)  must  lock  the  mutual
+       exclusion  lock (mutex) pointed to by mutex before calling
+       cond_timedwait, otherwise the behavior is unpredictable.
+
+       _lwp_timedwait automatically  releases  the  mutex  before
+       blocking on the condition variable.  When the condition is
+       signalled, the time expires or the  wait  is  interrupted,
+       _lwp_cond_timedwait  reacquires  the  mutex and returns to
+       the caller.  If the wait  is  interrupted,  The  mutex  is
+       reacquired  before a signal handler or any other user code
+       can be executed.
+
+       A  wait  on  _lwp_cond_timedwait  is  interruptible.    If
+       _lwp_cond_timedwait  is  interrupted  the  function always
+       fails.
+
+       The calling LWP is allowed to resume  execution  when  the
+       condition  is  signaled  or  broadcast, timeout occurs, or
+       when interrupted.
+
+       User-visible  timers  are  not  affected  by  a  call   to
+       _lwp_cond_timedwait.
+
+   ccoonndd ppaarraammeetteerr
+       The  condition  variable  denoted  by cond must previously
+       have been statically initialized (zero-filled).
+
+   mmuutteexx ppaarraammeetteerr
+       mutex is a mutual exclusion variable protecting  a  shared
+       resource  associated with the condition represented by the
+       condition variable, cond.  The calling LWP must lock mutex
+       before calling _lwp_cond_timedwait, otherwise the behavior
+       is unpredictable.
+
+   aabbssttiimmee ppaarraammeetteerr
+       abstime represents the time at  which  _lwp_cond_timedwait
+       should time out.  The time is expressed in elapsed seconds
+
+                                                                1
+
+_lwp_cond_timedwait(2)                     _lwp_cond_timedwait(2)
+
+       and nanoseconds since Universal Coordinated Time,  January
+       1,  1970.   returns  the  current time, but in seconds and
+       microseconds.  To construct abstime, convert  the  current
+       time to a timestruc_t, and add to that the waiting time.
+
+   RReettuurrnn vvaalluueess
+       _lwp_cond_timedwait  returns  zero  on success or an error
+       number on failure, as described below.
+
+   EErrrroorrss
+       If  any  of  the   following   conditions   is   detected,
+       _lwp_cond_timedwait  fails  and  returns the corresponding
+       value: The condition variable pointed to by  cond  or  the
+       mutex  pointed  to  by mutex is invalid.  abstime is NULL.
+       Either cond,  mutex,  or  abstime  points  to  an  illegal
+       address.   (This error may not be detected; a SIGSEGV sig-
+       nal may be posted  to  the  faulting  LWP  if  an  illegal
+       address is used.)
+
+       If    any    of    the    following   conditions   occurs,
+       _lwp_cond_timedwait fails and  returns  the  corresponding
+       value:  Time  specified by abstime has passed.  The opera-
+       tion was interrupted by a signal or a fork operation.
+
+UUssaaggee
+       See the description of  how  to  use  condition  variables
+       under USAGE on
+
+       Because the condition can change between the time the con-
+       dition is signaled and the mutex is re-locked, the calling
+       LWP  must  always  re-check the condition upon return from
+       _lwp_cond_timedwait.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Lightweight processes (LWPs) are internal  interfaces  and
+       are subject to change.  Their use should be avoided.
+
+                                                                2
+

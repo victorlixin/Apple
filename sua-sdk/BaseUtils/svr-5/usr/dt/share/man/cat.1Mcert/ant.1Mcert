@@ -1,0 +1,255 @@
+
+
+ant(1Mcert)                                           ant(1Mcert)
+
+SSyynnooppssiiss
+       cd /usr/lib/ant
+
+DDeessccrriippttiioonn
+       The ant (Automated Network Test) suites provide comprehen-
+       sive tests for network  adapter  hardware  and  associated
+       drivers  on &everest; systems.  The suites provide similar
+       testing for &geminiREL; network adapters.
+
+        uses these tests to certify  hardware  and  drivers  from
+       independent  hardware  vendors (IHVs), but the test suites
+       are useful for any driver developer or tester who needs to
+       verify the quality of a device and driver.
+
+       ANT contains tests that verify the integrity of the device
+       and driver as well as tests that verify a  protocol  stack
+       over the driver being tested.
+
+       ANT contains several tests that can be run either individ-
+       ually or as a group.  All test are developed  in  the  OSF
+       Test  Environment Toolkit (TET), although it is not neces-
+       sary to learn TET to use the test  suite.   The  following
+       test  packages are provided: Verify conformance to the MDI
+       specification.   Verify  that  the  MDI  driver  correctly
+       interfaces  with  the  DLPI module under normal operation.
+       Stresses the driver for an extended  period  of  time  and
+       gathers  statistics about failures, timeouts, and apparent
+       memory leaks for the  driver.   Measures  transmision  and
+       reception  characteristics  for different packet sizes and
+       speeds.  The test measures percent CPU overhead to achieve
+       and actual rate achieved by the driver.  Verifies that the
+       driver works correctly with the maximum  number  of  cards
+       specified  and  that  the cards are logically distinct for
+       data communication.  Verifies that the driver  works  with
+       the  TCP/IP protocol.  Verifies that the driver works with
+       the NFS protocol.  Verifies that the driver works with the
+       SPX/IPX protocol.
+
+UUssaaggee
+       The ANT suite requires two test systems, called master and
+       slave.  Master  (machine  1)  is  the  machine  where  the
+       adapter  being  tested is installed; the slave (machine 2)
+       can use either the adapter being tested or another network
+       card that has been tested.
+
+       These  systems  should have a fresh install of the &evere-
+       stREL5; Enterprise operating system and should  be  on  an
+       isolated  network.  The &everestREL5; Enterprise System is
+       required to ensure  that  all  networking  components  are
+       installed.  Problems that are detected in the driver being
+       tested could corrupt the network, and the load  tests  may
+       adversely  affect  the  performance of other activities on
+       the network.
+
+&everest;                                                       1
+
+ant(1Mcert)                                           ant(1Mcert)
+
+   RRuunnnniinngg AANNTT ssuuiitteess
+       Log in as root.  Invoke the ANT suite menu by running  the
+       following  on  both  the  master  and  slave  systems:  cd
+       /usr/lib/ant ./ant Select the test suite you want  to  run
+       from those described below.
+
+       Tests  can  instead be run directly from the command line.
+       For  example,  to  run  the   mdi_unit   test   only:   cd
+       /usr/lib/ant ./ant mdi_unit
+
+       You  must  run  the  same  ant test on both the master and
+       slave machines.  The  test  can  be  initiated  on  either
+       machine  first;  the  tests  are  self-synchronizing.  All
+       &everest; ANT tests must be run  in  init  state  2.   The
+       tests  run  without user intervention.  Log files are pro-
+       duced      during      the      testing       in       the
+       /usr/lib/ant/ts_ant/results  directly.   The  results file
+       are numbered in the order they are run, so the  files  are
+       named 0001e/journal, 0002e/journal, and so forth.
+
+       When  the  tests complete, examine these log files for any
+       errors by selecting the R option ("generate summary report
+       of  all  test reports") to the ANT suites menu.  Note that
+       the ANT journals are not in  compressed  format  like  the
+       &geminiREL;  ndtests  journals are.  Modify the drivers to
+       correct these errors, and rerun the  tests.   Catastrophic
+       test  suite  failures, such as a panic, must be cleaned up
+       by running the following: cd /usr/lib/ant ./antclean
+
+       Do not run X Windows while running the ANT test suites  to
+       avoid false STREAMS checks.
+
+DDeettaaiilleedd ddeessccrriippttiioonn ooff AANNTT tteessttss
+       Each  ANT test executes a series of subtests.  The logfile
+       identifies each subtest that is run, may give other output
+       from  the  subtest,  and  ends  with  one of the following
+       lines: subtestname: PASS  subtestname:  FAIL  subtestname:
+       ABORT  For  any  tests marked FAIL, correct the driver and
+       rerun the tests.  Drivers must PASS all tests.
+
+   mmddii__uunniitt tteesstt
+       The mdi_unit test verifies conformance to the MDI specifi-
+       cation.
+
+       The  subtests  are: Send and receive all packet sizes, one
+       at a time.  Padding and every byte within each  packet  is
+       verified  to  see  that  it did not change.  Addressing is
+       point-to-point.  Same as frametest except that  are  used.
+       Same as frametest except that are used.  Same as frametest
+       except that are used.  Send packets to self.  They  should
+       go  out  on the wire as well as be looped back.  A network
+       monitor is required to verify.  Send packets to  a  multi-
+       cast  address to which the driver is listening; test loop-
+       back to multicast address.   Test  loopback  to  broadcast
+
+&everest;                                                       2
+
+ant(1Mcert)                                           ant(1Mcert)
+
+       addresses.   All  packet sizes are checked.  Test loopback
+       when sent to the token-ring multicast  broadcast  address.
+       Used  only  for  Token-Ring drivers.  Test that bind state
+       transitions are correct.   Test  all  multicast  primitive
+       work.   The  size  of the multicast table is also checked.
+       (Not implemented) Verify the functionality of  promiscuous
+       mode;  see  for  more  information.  Check external symbol
+       names in driver to verify that they start with the  driver
+       This  is  to  avoid name space collision;  see Verify that
+       the number of free message headers,  buffer  headers,  and
+       data blocks of various sizes are the same before and after
+       the ANT test.  This runs as part of the mdi_unit test fin-
+       ish and not as a separate subtest.
+
+   ddllppii__uunniitt tteesstt
+       The  dlpi_unit test verifies that the MDI driver correctly
+       interfaces with the DLPI module under normal operation.
+
+       The subtests are: Send and receive all packet  sizes,  one
+       at  a  time.  Padding and every byte within each packet is
+       verified to see that it did  not  change.   Addressing  is
+       point-to-point.   Same  as frametest except that are used.
+       Same as frametest except that are used.  Same as frametest
+       except  that are used.  Send packets to self.  They should
+       go out on the wire as well as be looped back.   A  network
+       monitor  is  required to verify.  Send packets to a multi-
+       cast address to which the driver is listening; test  loop-
+       back  to  multicast  address.   Test loopback to broadcast
+       addresses.  All packet sizes are checked.   Test  loopback
+       when  sent  to the token-ring multicast broadcast address.
+       Used only for Token-Ring drivers.  Try to reload a  packet
+       that is larger than max_pdu; the reload should fail.  Ver-
+       ify that BIND operations to various SAPs that are near the
+       ends  of the supported ranges succeed.  Attempt to BIND to
+       bad SAPs; this should fail.  Test that  exactly  16  opens
+       and binds are supported.  Test the endpoints of SAP ranges
+       +/- 1 to verify that the  ranges  are  checked  correctly.
+       Test  that  bind  state  transitions  are  correct.   Test
+       bind/unbind/bind state transitions.   Test  all  multicast
+       primitive  work.   The size of the multicast table is also
+       checked.  Verify that the number of free message  headers,
+       buffer  headers,  and data blocks of various sizes are the
+       same before and after the ANT test.  This executes as part
+       of  the  dlpi_unit  test finish and not as a separate sub-
+       test.
+
+   llooaadd tteesstt
+       The load test stresses the driver for an  extended  period
+       of  time  and gathers statistics about failures, timeouts,
+       and apparent memory leaks for the driver.
+
+       The subtests are: Create many pairs of  send  and  receive
+       channels to send large number of big packets.  Verify that
+       the number of free message headers,  buffer  headers,  and
+
+&everest;                                                       3
+
+ant(1Mcert)                                           ant(1Mcert)
+
+       data blocks of various sizes are the same before and after
+       the ANT test is run.
+
+   ppeerrff tteesstt
+       The perf test measures transmission and reception  charac-
+       teristics for different packet sizes and speeds.  The test
+       measures percent CPU overhead to achieve and  actual  rate
+       achieved by the driver.
+
+       The  subtests are: Transmission test and analysis.  Recep-
+       tion test and analysis.
+
+   nnccaarrdd tteesstt
+       The ncard test verifies that the  driver  works  correctly
+       with  the  maximum  number of cards specified and that the
+       cards are logically distinct for data communication.
+
+       Before running the test, the user can  configure  multiple
+       cards  with  the  netconfig  utility.  Add a new ANT chain
+       over the card that has not yet been  configured  into  the
+       system.  Repeat this process until you have configured the
+       maximum number of cards that the driver supports.  Relink,
+       reboot, and verify that all cards are recognized correctly
+       before running the ncard test.
+
+       The subtests are: Create pairs of send and  receive  chan-
+       nels between all cards configured on the two test machines
+       and send many big packets back and forth.  Verify that the
+       number  of  free message headers, buffer headers, and data
+       blocks of different sizes are the same  before  and  after
+       the ANT test.
+
+   ttccpp tteesstt
+       The  tcp  test  verifies  that  the  driver works with the
+       TCP/IP protocol.
+
+       The subtests are: Bring up and shut down the TCP/IP stack.
+       Send  ICMP  packets  and acknowledge receipts.  Copy large
+       files using the ftp protocol.  Login to  remote  host  and
+       cat the /etc/termcap file.
+
+   nnffss tteesstt
+       The  nfs  test verifies that the driver works with the NFS
+       utilities.
+
+       The subtests are: Bring up and shut down the  NFS  subsys-
+       tem.   Mount  and unmount remote file systems.  Copy large
+       files using the NFS protocol.
+
+   iippxx tteesstt
+       The ipx test verifies  that  the  driver  works  with  the
+       IPX/SPX protocol.
+
+       The  subtests  are:  Bring  up  and  shut down the IPX/SPX
+
+&everest;                                                       4
+
+ant(1Mcert)                                           ant(1Mcert)
+
+       stack.   Send  low  level  IPX  packets  and   acknowledge
+       receipt.   Transfer  data  using the TLI test application.
+       Login to remote host and cat the /etc/termcap file.
+
+VVeerrssiioonn aapppplliiccaabbiilliittyy
+       1 on any &everest; Enterprise release.
+
+FFiilleess
+       home directory for the ANT suite, created  when  the  test
+       package is installed.  source for the test suite utilities
+       scripts for the test suites
+
+RReeffeerreenncceess
+
+&everest;                                                       5
+

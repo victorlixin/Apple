@@ -1,0 +1,223 @@
+
+
+ftpd(1Mtcp)                                           ftpd(1Mtcp)
+
+SSyynnooppssiiss
+       in.ftpd  [-aAdilLov]  [-t  timeout]  [-T  maxtimeout]  [-u
+       umask]
+
+DDeessccrriippttiioonn
+       ftpd is the Internet File Transfer  Protocol  server  pro-
+       cess.  The server uses the TCP protocol and listens at the
+       port specified in the FTP service specification; see
+
+       ftpd understands the following options: Enable the use  of
+       the  ftpaccess configuration file.  Disable the use of the
+       ftpaccess configuration file (default).   Write  debugging
+       information  to  the  syslog file.  Equivalent to -v.  Log
+       files received by the ftpd server  to  the  xferlog  file.
+       Log  each  FTP  session  in the syslog file.  Log commands
+       sent to the ftpd server to the syslog file.  Commands  are
+       logged  as  soon  as the FTP server is invoked.  This will
+       cause the server to log all USER commands. If a user acci-
+       dentally enters a password for that command instead of the
+       username, the password will  be  logged  in  syslog.   Log
+       files  transmitted by the ftpd server to the xferlog file.
+       Set the inactivity timeout period to timeout seconds.   By
+       default,  the  FTP server will timeout an inactive session
+       after 900 seconds (15 minutes).  Set the  maximum  timeout
+       period  that  a  client may request.  The default limit is
+       7200 seconds (2 hours).   Set  the  default  file-creation
+       mode  mask  to  umask (an octal integer).  Write debugging
+       information to the syslog file.  Equivalent  to  -d.   The
+       -i,  -L  and  -o  options are overridden by the use of the
+       ftpaccess file.
+
+       The  FTP  server  currently  supports  the  following  FTP
+       requests;  case  (lower  or  upper)  is not distinguished.
+       abort previous command specify account (ignored)  allocate
+       storage  (vacuously)  append to a file change to parent of
+       current working directory change working directory  delete
+       a  file  give help information give list files in a direc-
+       tory (ls -lgA) make a  directory  show  last  modification
+       time  of file specify data transfer mode give name list of
+       files in directory do nothing specify password prepare for
+       server-to-server  transfer  specify  data  connection port
+       print the  current  working  directory  terminate  session
+       restart  incomplete  transfer  retrieve  a  file  remove a
+       directory specify rename-from file name specify  rename-to
+       file  name non-standard commands (see next section) return
+       size of file return status of server store a file store  a
+       file  with  a  unique name specify data transfer structure
+       show operating system type of server system  specify  data
+       transfer  type  specify user name change to parent of cur-
+       rent working directory (deprecated) change working  direc-
+       tory  (deprecated) make a directory (deprecated) print the
+       current working directory (deprecated) remove a  directory
+       (deprecated)
+
+                                                                1
+
+ftpd(1Mtcp)                                           ftpd(1Mtcp)
+
+       The  following non-standard or  specific commands are sup-
+       ported by the SITE request: list aliases (which only apply
+       to the cd command) list the search path used when changing
+       directory change mode of a file, for example:  SITE  CHMOD
+       755  filename  execute  a  program, for example: SITE EXEC
+       program params give special  group  access  password,  for
+       example:  SITE GPASS bar request special group access, for
+       example: SITE GROUP foo list supplemental group membership
+       give  help  information,  for example: SITE HELP set idle-
+       timer, for example: SITE IDLE 60  execute  a  local  index
+       command  change the language which the ftpd server uses to
+       send messages to the client.  When ftp establishes a  con-
+       nection,  the value of LANG (if set in the environment) is
+       passed to ftpd using  the  SITE  LANG  command  like  SITE
+       NEWER, but gives extra information list files newer than a
+       particular date change umask, for example: SITE UMASK 002
+
+       The remaining FTP requests specified in RFC 959 are recog-
+       nized,  but not implemented.  MDTM and SIZE are not speci-
+       fied in RFC 959, but will appear in the next  updated  FTP
+       RFC.
+
+       The  FTP  server  will  abort an active file transfer only
+       when the ABOR command is preceded by a  Telnet  "Interrupt
+       Process"  (IP)  signal  and a Telnet "Synch" signal in the
+       command Telnet stream, as described in Internet  RFC  959.
+       If a STAT command is received during a data transfer, pre-
+       ceded by a Telnet IP and Synch, transfer  status  will  be
+       returned.
+
+       ftpd  interprets file names according to the globbing con-
+       ventions  used  by  This  allows  users  to  utilize   the
+       metacharacters *?[]{}~.
+
+       ftpd authenticates users according to four rules: The user
+       name must be in the password data base,  /etc/passwd,  and
+       the  password  must  not  be null. In this case a password
+       must be provided by the client before any file  operations
+       may  be  performed.   The user name must not appear in the
+       file /etc/ftpusers. A user name of anonymous or  ftp  pre-
+       vents  anonymous  FTP access.  Users other than the anony-
+       mous FTP user must have a standard shell  (one  listed  in
+       /etc/shells).   If  the  user name is anonymous or ftp, an
+       anonymous FTP account must be present in the password file
+       (user  ftp). In this case the user is allowed to log in by
+       specifying any password (by convention this  is  given  as
+       the  client  host's  name).  Ensure that the anonymous FTP
+       account cannot be used to log into your system other  than
+       via FTP.  Lock the account using the -l option to and give
+       the account an invalid login shell such as /bin/true.
+
+       In the last case, ftpd takes special measures to  restrict
+       the  client's  access  privileges.   The server performs a
+       command to the home directory of the ftp user.   In  order
+
+                                                                2
+
+ftpd(1Mtcp)                                           ftpd(1Mtcp)
+
+       that  system  security  is not breached, it is recommended
+       that the FTP subtree be constructed with care; the follow-
+       ing  rules  are recommended: Make the home directory owned
+       by root and unwritable by anyone (mode  555).   Make  this
+       directory  owned by root and executable but unreadable and
+       unwritable by anyone (mode 111).  The program  ls(1)  must
+       be  present  to  support  the  list  command. This program
+       should have mode 111.  Make this directory owned  by  root
+       and  executable  but  unreadable  and unwritable by anyone
+       (mode 111). Copy in the tcp and zero devices by  executing
+       the  following  command  as  root: ls /dev/tcp /dev/zero |
+       cpio -p ~ftp Make this directory owned by  root  and  exe-
+       cutable  but  unreadable  and  unwritable  by anyone (mode
+       111).  Copy  /etc/netconfig  to  this  directory.   Create
+       passwd  and group files from scratch.  These files must be
+       present for the ls command to be able to produce owner and
+       group  names  rather  than  numbers.  The passwd and group
+       files should only contain  entries  corresponding  to  the
+       owner/group  of  files  under  the anonymous FTP hierarchy
+       (for example, root and ftp). Home directory pathnames  and
+       login shells need not be specified, and the password field
+       should be left empty.  These files should  have  mode  444
+       and  be  owned by root.  Make this directory owned by root
+       and readable and executable by all users (mode  555).   If
+       you  want to allow anonymous users to upload files, create
+       this directory owned by root with mode 1777. If  you  want
+       to  discourage  abusers,  set  a  mode of 1733 to make the
+       directory unreadable.  Note that the sticky bit is set  to
+       limit who is able to remove or rename files (see Make this
+       directory owned by root and executable but unreadable  and
+       unwritable  by  anyone  (mode  111).   Make this directory
+       owned by root and executable but unreadable and unwritable
+       by  anyone  (mode 111). The library libc.so.1 must be pre-
+       sent to support the list command.  Copy the  library  from
+       /usr/lib, and set the owner to root and the mode to 111.
+
+   GGeenneerraall FFTTPP eexxtteennssiioonnss
+       Certain actions may be performed on the file when carrying
+       out the RETR command, depending  on  how  the  destination
+       filename is named.  Note that these actions are controlled
+       by the file and the tar and compress keywords in the file.
+       The  request  will  fail if the filename to be tar'ed is a
+       directory containing a file named .notar.
+       ----------------------------------------------------------------
+       Actual    Specified     Action
+       filename  filename      performed
+       ----------------------------------------------------------------
+       filename.Zfilename      Decompress filename before transmitting
+       filename  filename.Z    Compress filename before transmitting
+       filename  filename.tar  Tar filename before transmitting
+       filename  filename.tar.ZTar and compress filename before trans-
+                               mitting
+       For anonymous and guest users to  be  able  to  use  these
+       extensions,  any  commands  listed  in  the  file  and any
+
+                                                                3
+
+ftpd(1Mtcp)                                           ftpd(1Mtcp)
+
+       associated dynamic objects (determined using must be  pre-
+       sent  in  the appropriate location under the anonymous and
+       guest user's home directory  hierarchy.   Commands  should
+       normally  have  mode  111,  and  dynamic objects (with the
+       exception of libc.so.1) mode 444.
+
+       Depending on the arguments to the passwd-check keyword  in
+       the  ftpaccess  file,  the FTP server may attempt to check
+       whether an anonymous user  has  supplied  a  valid  e-mail
+       address as their password.
+
+       If   a   user's  FTP  client  hangs  on  ``long  replies''
+       (responses consisting of multiple lines), they should  use
+       a  dash as the first character of the password to stop the
+       server sending continuation messages.
+
+       The FTP server can also  log  all  file  transmission  and
+       reception with the format described in
+
+FFiilleess
+       directory  containing  executables run by the EXEC command
+       ftp server configuration file file name conversions  addi-
+       tional  group  membership individual user host access file
+       restricted user list allowable shell list  default  syslog
+       filename accounting information default transfer log file
+
+RReeffeerreenncceess
+       RFC 959, RFC 1123
+
+NNoottiicceess
+       The  anonymous  account is inherently dangerous and should
+       be avoided when possible.
+
+       The server must run as root to create sockets with  privi-
+       leged  port  numbers. It maintains an effective user ID of
+       the logged in user, reverting to root  only  when  binding
+       addresses  to  sockets.  The  possible security holes have
+       been extensively scrutinized, but are possibly incomplete.
+
+       ftpd has been updated to handle files larger than 2GB.
+
+                                                                4
+

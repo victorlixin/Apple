@@ -1,0 +1,58 @@
+cat32(1)                                                       cat32(1)
+
+  ccaatt3322
+
+  NNAAMMEE
+
+    cat32 - Win32 program to copy stdin to stdout
+
+  SSYYNNOOPPSSIISS
+
+    cat32
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ccaatt3322(1) utility is a Win32 program that copies its standard input to
+    standard output. It has no other options. It is sometimes used when
+    constructing command pipelines from both SUA and Win32 commands.
+
+    The SUA subsystem has some limitations running Win32 programs and
+    connecting their output to SUA pipes. Any access to a particular pipe
+    end by an SUA process after a Win32 process has been given that end
+    (through the _ee_xx_ee_cc(2) call) will fail, either with the [EPIPE] error, a
+    SIGPIPE signal, or EOF.
+
+    For example, this command will show only the contents of file1:
+
+    (cmd.exe /c type file1; cat file2) | cat
+
+    The SUA ccaatt(1) command fails, because when it tries to write to the
+    pipe (after the Win32 command), it gets an EPIPE error.
+
+    This command will work, because a Win32 command can accept the pipe from
+    an SUA command:
+
+    (cat file1 ; cmd.exe /c type file2) | cat
+
+    The subshell created by the parentheses fork/execs the SUA ccaatt(1)
+    command first; it is only after it fork/execs the Win32 command that the
+    write end of the pipe becomes inaccessible to SUA processes.
+
+    The ccaatt3322(1) utility is a Win32 filter that can overcome many of these
+    problems. The fix for the first command is to use ccaatt3322(1):
+
+    (cmd.exe /c type file1; cat file2 | cat32) | cat
+
+    In this case, the SUA cat is writing to a fresh, uncontaminated pipe.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    The ccaatt3322(1) utility exits with status 0 for success, and >0 if an error
+    occurred.
+
+  SSEEEE AALLSSOO
+
+    _c_a_t(1)
+
+    _e_x_e_c(2)
+

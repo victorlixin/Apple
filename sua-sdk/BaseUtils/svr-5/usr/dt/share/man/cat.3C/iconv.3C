@@ -1,0 +1,159 @@
+
+
+iconv(3C)                                               iconv(3C)
+
+SSyynnooppssiiss
+       #include <iconv.h>
+
+       size_t   iconv(iconv_t  cd,  const  char  **inbuf,  size_t
+       *inbytesleft,
+                    char **outbuf, size_t *outbytesleft);
+
+DDeessccrriippttiioonn
+       iconv converts the characters or sequence of characters in
+       inbuf from one codeset to another and places the converted
+       sequence in the array pointed to by outbuf.
+
+       The from and to codesets are specified with the iconv_open
+       function  call,  which returns cd (the conversion descrip-
+       tor). The argument inbuf is a pointer to a pointer,  which
+       in turn points to the first character in the input buffer.
+       The number of bytes remaining to be converted is stored in
+       the  variable  pointed to by inbytesleft. The outbuf argu-
+       ment is a pointer to a pointer to the first available byte
+       in  the  ouput  buffer.  outbytesleft points to a variable
+       containing the number of bytes that are available  in  the
+       buffer.
+
+       For  encodings  that  are  state-dependent, the conversion
+       descriptor cd is placed into its initial shift state by  a
+       call  where  inbuf  is  a null pointer or points to a null
+       pointer. When a call is made to iconv in this way, and  if
+       outbuf  is  neither  a null pointer or a pointer to a null
+       pointer, and outbytesleft points to a positive value, then
+       the  sequence of bytes needed to change the output charac-
+       ter stream to its initial state is placed  in  the  output
+       buffer.  The iconv function will fail if the output buffer
+       has insufficient space to hold the reset sequence. If fur-
+       ther  calls  are  made  with  inbuf  not  acting as a null
+       pointer or a pointer to a  null  pointer,  the  conversion
+       process  takes place from the conversion descriptor's cur-
+       rent state.
+
+       If during the conversion process, an invalid character  in
+       the  input codeset is encountered, the process halts after
+       the last successful  character  converted.  If  the  input
+       buffer  contains an incomplete character or shift sequence
+       at its end, the conversion process stops  after  the  last
+       successful  character conversion. If the output buffer has
+       insufficient space to hold the newly converted input,  the
+       conversion  is  halted prior to the input bytes that would
+       cause the output buffer to overflow. The variable that  is
+       pointed  to  by  inbuf is updated so that it points to the
+       byte following the last successfully converted  byte.  The
+       value  pointed to by inbytesleft is decremented to reflect
+       the number of bytes that have  not  been  converted.   The
+       variable  pointed  to by outbuf is updated to point to the
+       byte following the last byte of converted output data. The
+       value   pointed  to  by  outbytesleft  is  decremented  to
+
+                                                                1
+
+iconv(3C)                                               iconv(3C)
+
+       indicate the number of remaining free bytes in the  output
+       buffer.
+
+       For  encodings  that  are  state-dependent, the conversion
+       descriptor is updated to reflect the shift state that  was
+       in effect after the last successfully converted character.
+       If iconv encounters a character  which  is  legal  in  the
+       input  codeset,  but does not occur in the output codeset,
+       it is converted in an implementation dependent fashion.
+
+   RReettuurrnn vvaalluueess
+       If iconv encounters no errors, inbytesleft will point to a
+       variable  with  a value of zero, and iconv will return the
+       number of non-identical  conversions  performed.   If  the
+       conversion  process  encounters an error, then inbytesleft
+       will point to a variable with a positive value, iconv will
+       return  (size_t)-1,  and errno will be set to indicate the
+       error.
+
+   EErrrroorrss
+       Failure of the iconv function will occur when:
+
+       Encountered an input byte not belonging to the input code-
+       set.   Insufficient  space  in the output buffer.  Encoun-
+       tered an incomplete character or shift sequence at the end
+       of  the  input  buffer.   cd  may be an invalid conversion
+       descriptor.
+
+UUssaaggee
+       Here is a section of the iconv command source  code  which
+       makes use of the iconv functions: #include <iconv.h>
+
+       char inbuf[LINE_MAX], outbuf[LINE_MAX];
+
+       main(int  argc, char **argv) {      /* Argument processing
+       ... */
+
+            if ((cd = iconv_open(tcode, fcode)) == (iconv_t)  -1)
+       {            if  (errno  ==  EINVAL)  {                 /*
+       error: conversion not  supported  */            }  else  {
+                      /*    error:    unknown    */             }
+                 exit(1);      }
+
+            /* for each file */           process(fd, fname, cd);
+
+            exit(0); }
+
+       process(int  fd,  char  *fname,  iconv_t  cd)  {      char
+       *inptr,   *outptr;        size_t   bytesleft,   spaceleft,
+       linebytes;      int eof = 0;      char *ct, *cf;
+
+            inptr   =   inbuf;       bytesleft  =  0;       while
+       ((linebytes = read(fd, inptr, LINEMAX - bytesleft)) > 0 ||
+                      bytesleft  >  0) {           inptr = inbuf;
+
+                                                                2
+
+iconv(3C)                                               iconv(3C)
+
+                 if  (linebytes  >  0)             bytesleft   +=
+       linebytes;            eof  =  linebytes  == 0 ? 1 : 0;  /*
+       true  if  read  returned  0   */             linebytes   =
+       bytesleft;           spaceleft = LINEMAX;           outptr
+       = outbuf;
+
+                 if  (iconv(cd,  &inptr,   &bytesleft,   &outptr,
+       &spaceleft)                                             ==
+                                               (size_t)-1)      {
+                      switch    (errno)   {                  case
+       EILSEQ:                      write(1,  outbuf,  LINEMAX  -
+       spaceleft);                      /*  error: could not con-
+       vert           */                               return(1);
+                           break;                   case   E2BIG:
+                           break;      /* write outbuf  and  con-
+       tinue */
+
+                      case EINVAL:                     if (eof) {
+       /* if at EOF */                          write(1,  outbuf,
+       LINEMAX  -  spaceleft);                          /* error:
+       incomplete         char         at         eof          */
+                                return(1);                      }
+                           break;                        default:
+                           write(1, outbuf, LINEMAX - spaceleft);
+                           /*       error:       unknown       */
+                           return(1);                      break;
+                      }                /*                 *  move
+       the  partial char left at the end of                 * the
+       input  buffer  to   the   beginning                     */
+                 }   else   {                  inptr   =   inbuf;
+                 }             write(1,   outbuf,    LINEMAX    -
+       spaceleft);      }      return(0); }
+
+RReeffeerreenncceess
+
+                                                                3
+

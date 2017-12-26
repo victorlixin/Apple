@@ -1,0 +1,153 @@
+XtResolvePathname(3X11R6)                     XtResolvePathname(3X11R6)
+
+  XXttRReessoollvveePPaatthhnnaammee
+
+  NNAAMMEE
+
+    XtResolvePathname - search for a file using standard substitution
+
+  SSYYNNTTAAXX
+
+    String XtResolvePathname(display, type, filename, suffix, path,
+    substitutions, num_substitutions, predicate)
+          Display *display;
+          String type, filename, suffix, path;
+          Substitution substitutions;
+          Cardinal num_substitutions;
+          XtFilePredicate predicate;
+
+  AARRGGUUMMEENNTTSS
+
+    display
+        Specifies the display to use to find the language for language
+        substitutions.
+    type
+    filename
+    suffix
+        Specify values to substitute into the path.
+
+    path
+        Specifies the list of file specifications, or NULL.
+
+    substitutions
+        Specifies a list of additional substitutions to make into the path, or
+        NULL.
+
+    num_substitutions
+        Specifies the number of entries in substitutions.
+
+    predicate
+        Specifies a procedure called to judge each potential file name, or
+        NULL.
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The substitutions specified by XXttRReessoollvveePPaatthhnnaammee are determined from the
+    value of the language string retrieved by XXttDDiissppllaayyIInniittiiaalliizzee for the
+    specified display. To set the language for all applications specify
+    "*xnlLanguage: lang" in the resource database. The format and content of
+    the language string are implementation-defined. One suggested syntax is to
+    compose the language string of three parts; a "language part", a
+    "territory part" and a "codeset part". The manner in which this
+    composition is accomplished is implementation-defined and the Intrinsics
+    make no interpretation of the parts other than to use them in
+    substitutions as described below.
+
+    XXttRReessoollvveePPaatthhnnaammee calls XXttFFiinnddFFiillee with the following substitutions in
+    addition to any passed by the caller and returns the value returned by
+    XXttFFiinnddFFiillee:
+
+    %N
+        The value of the filename parameter, or the application's class name
+        if filename is NULL.
+
+    %T
+        The value of the type parameter.
+
+    %S
+        The value of the suffix parameter.
+
+    %L
+        The language string associated with the specified display.
+
+    %l
+        The language part of the display's language string.
+
+    %t
+        The territory part of the display's language string.
+
+    %c
+        The codeset part of the display's language string.
+
+    %C
+        The customization string retrieved from the resource database
+        associated with display.
+
+    %D
+        The value of the implementation-specific default path.
+
+    If a path is passed to XXttRReessoollvveePPaatthhnnaammee, it will be passed along to
+    XXttFFiinnddFFiillee. If the path argument is NULL, the value of the XFILESEARCHPATH
+    environment variable will be passed to XXttFFiinnddFFiillee. If XFILESEARCHPATH is
+    not defined, an implementation-specific default path will be used which
+    contains at least 6 entries. These entries must contain the following
+    substitutions:
+
+    1. %C, %N, %S, %T, %L    or%C, %N, %S, %T, %l, %t, %c
+    2. %C, %N, %S, %T, %l
+    3. %C, %N, %S, %T
+    4. %N, %S, %T, %L   or   %N, %S, %T, %l, %t, %c
+    5. %N, %S, %T, %l
+    6. %N, %S, %T
+
+    The order of these six entries within the path must be as given above. The
+    order and use of substitutions within a given entry is implementation
+    dependent. If the path begins with a colon, it will be preceded by %N%S.
+    If the path includes two adjacent colons, %%NN%%SS will be inserted between
+    them.
+
+    The type parameter is intended to be a category of files, usually being
+    translated into a directory in the pathname. Possible values might include
+    "app-defaults", "help", and "bitmap".
+
+    The suffix parameter is intended to be appended to the file name. Possible
+    values might include ".txt", ".dat", and ".bm".
+
+    A suggested value for the default path on POSIX-based systems is
+        <XRoot>/lib/X11/%L/%T/%N%C%S:<XRoot>/lib/X11/%l/%T/%N%C%S:\
+        <XRoot>/lib/X11/%T/%N%C%S:<XRoot>/lib/X11/%L/%T/%N%S:\
+        <XRoot>/lib/X11/%l/%T/%N%S:<XRoot>/lib/X11/%T/%N%S
+
+    where <XRoot> is replaced by the root of the X11 installation tree (/usr/
+    X11R6, for example).
+
+    Using this example, if the user has specified a language, it will be used
+    as a subdirectory of <XRoot>/lib/X11 that will be searched for other
+    files. If the desired file is not found there, the lookup will be tried
+    again using just the language part of the specification. If the file is
+    not there, it will be looked for in <XRoot>/lib/X11. The type parameter is
+    used as a subdirectory of the language directory or of <XRoot>/lib/X11,
+    and suffix is appended to the file name.
+
+    The %D substitution allows the addition of path elements to the
+    implementation-specific default path, typically to allow additional
+    directories to be searched without preventing resources in the system
+    directories from being found. For example, a user installing resource
+    files under a directory called "ourdir" might set XFILESEARCHPATH to
+        %D:ourdir/%T/%N%C:ourdir/%T/%N
+
+    The customization string is obtained by querying the resource database
+    currently associated with the display (the database returned by
+    XXrrmmGGeettDDaattaabbaassee) for the resource application_name.customization, class
+    application_class.Customization where application_name and
+    application_class are the values returned by XXttGGeettAApppplliiccaattiioonnNNaammeeAAnnddCCllaassss.
+    If no value is specified in the database, the empty string is used.
+
+    It is the responsibility of the caller to free the returned string using
+    XXttFFrreeee when it is no longer needed.
+
+  SSEEEE AALLSSOO
+
+    X Toolkit Intrinsics - C Language Interface
+    Xlib - C Language X Interface
+

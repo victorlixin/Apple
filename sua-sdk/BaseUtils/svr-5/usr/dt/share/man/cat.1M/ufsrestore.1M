@@ -1,0 +1,184 @@
+
+
+ufsrestore(1M)                                     ufsrestore(1M)
+
+SSyynnooppssiiss
+       /usr/sbin/ufsrestore  options [arguments] [filename . . .]
+
+DDeessccrriippttiioonn
+       ufsrestore restores files from backup tapes  created  with
+       the  ufsdump command.  options is a string of at least one
+       of the options listed below, along with any modifiers  and
+       arguments you supply.  Any arguments supplied for specific
+       options are given as subsequent words on the command line,
+       in  the same order as that of the options listed.  Remain-
+       ing arguments to ufsrestore are the  names  of  files  (or
+       directories  whose  files)  are  to  be  restored to disk.
+       Unless the h modifier  is  in  effect,  a  directory  name
+       refers  to  the  files  it contains, and (recursively) its
+       subdirectories and the files they contain.
+
+   CCoommmmaanndd ooppttiioonnss
+       Interactive.  After reading in the  directory  information
+       from the tape, ufsrestore invokes an interactive interface
+       that allows you to browse through the dump  tape's  direc-
+       tory   hierarchy   and   select  individual  files  to  be
+       extracted.  Restore the entire tape.  Load the tape's full
+       contents  into  the current directory.  This option should
+       be used only to restore a complete dump tape onto a  clear
+       filesystem, or to restore an incremental dump tape after a
+       full  level  0  restore.   Resume  restoring.   ufsrestore
+       requests a particular tape of a multivolume set from which
+       to resume a full restore (see the r option  above).   This
+       allows  ufsrestore  to  start from a checkpoint when it is
+       interrupted in the middle of a  full  restore.   Table  of
+       contents.   List  each  filename that appears on the tape.
+       If no filename argument is given, the  root  directory  is
+       listed.   This results in a list of all files on the tape,
+       unless the h modifier is in  effect.   Extract  the  named
+       files  from the tape.  If a named file matches a directory
+       whose contents were written onto the tape, and the h modi-
+       fier  is  not  in  effect,  the  directory  is recursively
+       extracted.  The owner, modification  time,  and  mode  are
+       restored (if possible).  If no filename argument is given,
+       the root directory is  extracted.   This  results  in  the
+       entire  tape  being  extracted unless the h modifier is in
+       effect.
+
+       Some of the following modifiers take  arguments  that  are
+       given  as  separate  words  on the command line. When more
+       than one such modifier appears within options,  the  argu-
+       ments  must appear in the same order as the modifiers that
+       they apply to.  Convert the contents of the dump  tape  to
+       the new filesystem format.  Debug.  Turn on debugging out-
+       put.  Extract the actual directory, rather than the  files
+       that  it  references.  This prevents hierarchical restora-
+       tion of complete subtrees from the tape.  Extract by inode
+       numbers rather than by filename to avoid regenerating com-
+       plete pathnames.  This is useful if only a few  files  are
+
+                                                                1
+
+ufsrestore(1M)                                     ufsrestore(1M)
+
+       being  extracted.   Verbose.  ufsrestore displays the name
+       of each file it restores, preceded by its file  type.   Do
+       not  ask whether to abort the restore in the event of tape
+       errors.  ufsrestore  tries  to  skip  over  the  bad  tape
+       block(s)  and  continue  as best it can.  Blocking factor.
+       Specify the blocking factor for tape reads.   By  default,
+       ufsrestore  will  attempt  to figure out the block size of
+       the tape.  Note: a tape block is 512 bytes.  Use dump-file
+       instead  of  /dev/rmt?   as  the file to restore from.  If
+       dump-file is specified as -,  ufsrestore  reads  from  the
+       standard input.  This allows, and ufsrestore to be used in
+       a pipeline to dump and restore a filesystem, as  shown  in
+       the  example  below.  (The device names on your system may
+       differ from those shown in the example.)   ufsdump   0f  -
+       /dev/rxy0g  |  (cd /mnt; ufsrestore xf -) Skip to the n-th
+       file when there are multiple dump files on the same  tape,
+       as  shown in the example below.  (The device names on your
+       system may differ from those shown in the example.)   ufs-
+       restore  xfs  /dev/nrar0 5 would position you at the fifth
+       file on the tape.
+
+       ufsrestore enters interactive mode when invoked with the i
+       option.   Interactive  commands  are  reminiscent  of  the
+       shell.  For those commands that accept  an  argument,  the
+       default is the current directory.  List files in directory
+       or the  current  directory,  represented  by  a  (period).
+       Directories  are  appended  with a / (backslash).  Entries
+       marked for extraction are prefixed with  a  *  (asterisk).
+       If the verbose option is in effect, inode numbers are also
+       listed.  Change to directory directory (within  the  dump-
+       tape).   Print  the  full  pathname of the current working
+       directory.  Add the current directory, or the  named  file
+       or  directory  directory  to the list of files to extract.
+       If a directory is specified, add that  directory  and  its
+       files  (recursively)  to the extraction list (unless the h
+       modifier is in effect).  Delete the current directory,  or
+       the  named  file  or  directory  from the list of files to
+       extract.  If a directory is specified, delete that  direc-
+       tory  and  all  its  descendents  from the extraction list
+       (unless the h modifier is in effect).  The most  expedient
+       way  to extract a majority of files from a directory is to
+       add that directory to the extraction list, and then delete
+       specific  files to omit.  Extract all files on the extrac-
+       tion list from the dump tape.  ufsrestore asks which  vol-
+       ume  the user wishes to mount.  The fastest way to extract
+       a small number of files is to start  with  the  last  tape
+       volume  and  work  toward the first.  Toggle the status of
+       the v modifier.  While v is  in  effect,  the  ls  command
+       lists  the  inode  numbers  of all entries, and ufsrestore
+       displays information about each file as it  is  extracted.
+       Display  a  summary of the available commands.  ufsrestore
+       exits immediately, even if  the  extraction  list  is  not
+       empty.
+
+                                                                2
+
+ufsrestore(1M)                                     ufsrestore(1M)
+
+FFiilleess
+       the  default tape drive file containing directories on the
+       tape owner, mode, and timestamps for directories  informa-
+       tion passed between incremental restores
+
+DDiiaaggnnoossttiiccss
+       ufsrestore complains about bad option characters.
+
+       Read  errors  result  in complaints.  If y has been speci-
+       fied, or the user responds y, ufsrestore will  attempt  to
+       continue.
+
+       If  the  dump  extends over more than one tape, ufsrestore
+       asks the user to change tapes.  If the x or i  option  has
+       been specified, ufsrestore also asks which volume the user
+       wishes to mount.
+
+       There are numerous consistency checks that can  be  listed
+       by  ufsrestore.   Most  checks are self-explanatory or can
+       ``never happen''.  Common errors are given below.  A  dump
+       tape  created from the old filesystem has been loaded.  It
+       is automatically converted to the new  filesystem  format.
+       The  specified file name was listed in the tape directory,
+       but was not found on the tape.  This  is  caused  by  tape
+       read  errors  while looking for the file, and from using a
+       dump tape created on an active filesystem.   A  file  that
+       was not listed in the directory showed up.  This can occur
+       when using a dump tape created on  an  active  filesystem.
+       When doing an incremental restore, a tape that was written
+       before the previous incremental tape, or that has too  low
+       an  incremental  level has been loaded.  When doing incre-
+       mental restore, a tape that does not  begin  its  coverage
+       where  the previous incremental tape left off, or one that
+       has too high an incremental level has been loaded.   If  a
+       file  name  is  specified,  then its contents are probably
+       partially wrong.  If an inode is being skipped or the tape
+       is  trying  to resynchronize, then no extracted files have
+       been corrupted, though files may not be found on the tape.
+       After a tape read error, ufsrestore may have to resynchro-
+       nize itself.  This message lists the number of blocks that
+       were skipped over.
+
+RReeffeerreenncceess
+NNoottiicceess
+       ufsrestore   can   get  confused  when  doing  incremental
+       restores from dump tapes that were made on active filesys-
+       tems.
+
+       A level 0 dump must be done after a full restore.  Because
+       ufsrestore runs in user mode, it has no control over inode
+       allocation;  this  means  that  ufsrestore repositions the
+       files, although it does not change their contents.   Thus,
+       a  full  dump must be done to get a new set of directories
+       reflecting  the  new  file  positions,   so   that   later
+
+                                                                3
+
+ufsrestore(1M)                                     ufsrestore(1M)
+
+       incremental dumps will be correct.
+
+                                                                4
+

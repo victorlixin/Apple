@@ -1,0 +1,109 @@
+
+
+pthread_cond_wait(3pthread)           pthread_cond_wait(3pthread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <pthread.h>
+
+       int         pthread_cond_wait(pthread_cond_t        *cond,
+       pthread_mutex_t *mutex);
+
+       int      pthread_cond_timedwait(pthread_cond_t      *cond,
+       pthread_mutex_t *mutex,
+          const struct timespec *abstime);
+
+DDeessccrriippttiioonn
+       pthread_cond_wait  blocks the calling thread at the condi-
+       tion variable pointed to by cond to wait  for  the  occur-
+       rence of a condition.
+
+       pthread_cond_timedwait,   similar   to  pthread_cond_wait,
+       blocks  the  calling  thread  at  the  condition  variable
+       pointed to by cond, to wait for the occurrence of a condi-
+       tion.  However, if the absolute time  denoted  by  abstime
+       has  passed  and  the indicated condition is not signaled,
+       pthread_cond_timedwait returns ETIMEDOUT to the caller.
+
+       The calling thread must lock  the  mutual  exclusion  lock
+       (mutex)    pointed    to    by    mutex   before   calling
+       pthread_cond_wait or pthread_cond_timedwait, otherwise the
+       behavior is unpredictable.
+
+       pthread_cond_wait   or  pthread_cond_timedwait  atomically
+       releases the mutex and waits  on  the  condition  variable
+       cond.     When    the    condition    is   signaled   (via
+       pthread_cond_signal) or a signal is delivered to a  thread
+       waiting  for  a  condition  variable, pthread_cond_wait or
+       pthread_cond_timedwait reacquires the  mutex  and  returns
+       zero.    If   the  time  expires,   pthread_cond_timedwait
+       returns ETIMEDOUT.
+
+       User-visible  timers  are  not  affected  by  a  call   to
+       pthread_cond_timedwait.
+
+       The calling thread can resume execution when the condition
+       is signaled or broadcast, a timeout occurs, or when inter-
+       rupted.  The logical condition should always be checked on
+       return, as a return might not have been caused by a change
+       in the condition.
+
+       cond  and mutex must previously have been initialized (see
+       pthread_cond_init(3pthread)).
+
+       mutex is a mutual exclusion variable protecting  a  shared
+       resource  associated with the condition represented by the
+       condition variable, cond.  The calling  thread  must  lock
+       mutex      before     calling     pthread_cond_wait     or
+
+                                                                1
+
+pthread_cond_wait(3pthread)           pthread_cond_wait(3pthread)
+
+       pthread_cond_timedwait, otherwise the behavior  is  unpre-
+       dictable.
+
+       abstime  represents  the time at which pthread_cond_timed-
+       wait should time out.  The time is  expressed  in  elapsed
+       seconds  and nanoseconds since Universal Coordinated Time,
+       January 1, 1970.  returns the current time, but in seconds
+       and  microseconds.  To construct abstime, convert the cur-
+       rent time to a struct timespec, and add to that the  wait-
+       ing time.
+
+       A wait for a condition, either timed or untimed, is a can-
+       celletion point.  When the cancelability enable state of a
+       thread is set to PTHREAD_CANCEL_DEFERRED, acting on a can-
+       cellation request while in a  condition  wait  causes  the
+       mutex  to be reacquired before calling the first cancella-
+       tion cleanup handler.  The behavior is as  if  the  thread
+       were  unblocked,  allowed to execute up to the return from
+       the call to pthread_cond_wait  or  pthread_cond_timedwait,
+       but at that point sees the cancellation request and starts
+       the thread cancellation activities, instead  of  returning
+       to the caller. (See
+
+       Because the condition can change between the time the con-
+       dition is signaled and the mutex is relocked, the  calling
+       thread  must always recheck the condition upon return from
+       pthread_cond_wait or pthread_cond_timedwait.
+
+RReettuurrnn vvaalluueess
+       pthread_cond_wait and pthread_cond_timedwait  return  zero
+       for success and an error number for failure.
+
+DDiiaaggnnoossttiiccss
+       If   any   of   the   following  conditions  is  detected,
+       pthread_cond_wait and  pthread_cond_timedwait  return  the
+       corresponding  value:  invalid  argument  specified If the
+       following  condition  is  detected  pthread_cond_timedwait
+       returns the corresponding value: time specified by abstime
+       has passed
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoommpplliiaannccee
+       The Single UNIX Specification, Version 2; The Open  Group.
+
+                                                                2
+

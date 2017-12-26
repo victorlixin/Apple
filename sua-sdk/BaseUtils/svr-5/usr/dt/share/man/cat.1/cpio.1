@@ -1,0 +1,501 @@
+
+
+cpio(1)                                                   cpio(1)
+
+SSyynnooppssiiss
+       cpio  -i  [ bBcdfkmrsSTtuvV6 ] [-C bufsize ] [ -E file ] [
+       -G    file    ]    [    -H     hdr     ]          [     -e
+       [xattr_name=]action[,[xattr_name=]action  ...]        [ -I
+       file [-M message] ] ] [ pattern ...]
+
+       cpio -o [ aABcLvV ] [ -C bufsize] [-G file] [-H hdr ] [ -K
+       mediasize              ]                  [             -e
+       [xattr_name=]action[,[xattr_name=]action ... ]       [  -O
+       file [-M message] ]
+
+       cpio   -p   directory   |[adlLmuvV]   [-e
+       [xattr_name=]action[,[xattr_name=]action ...]
+
+DDeessccrriippttiioonn
+       The -i, -o, and -p options select the action  to  be  per-
+       formed.   The following list describes each of the actions
+       (which are mutually exclusive).
+
+       cpio -i (copy in) extracts files from the  standard  input
+       (only  if -I is not specified), which is assumed to be the
+       product of a previous cpio -o.  Only files with names that
+       match patterns are selected.  patterns are regular expres-
+       sions given in the filename-generating notation of In pat-
+       terns, meta-characters ?, *, and [ . . . ] match the slash
+       (/) character, and backslash (\) is an  escape  character.
+       A  !  meta-character  means  not.  (For example, the !abc*
+       pattern would exclude all  files  that  begin  with  abc.)
+       Multiple  patterns may be specified and if no patterns are
+       specified, the default for patterns is * (that is,  select
+       all  files).   Each  pattern  must  be  enclosed in double
+       quotes; otherwise, the name  of  a  file  in  the  current
+       directory  might  be used.  Extracted files are condition-
+       ally created and copied into the  current  directory  tree
+       based on the options described below.
+
+       The permissions of the files will be those of the previous
+       cpio -o.  Owner and group permissions will be the same  as
+       the  current  user  unless  the current user possesses the
+       owner privilege.  If this is true, owner and group permis-
+       sions  will be the same as those resulting from the previ-
+       ous cpio -o.
+
+       If cpio -i tries to create a file that already exists  and
+       the existing file is the same age or younger (newer), cpio
+       will output a warning message and not  replace  the  file.
+       (The  -u option can be used to overwrite, unconditionally,
+       the existing file.)  If file names are given  as  absolute
+       pathnames to cpio -o, then when the files are restored via
+       cpio -i, they will be written to their  original  directo-
+       ries  regardless  of the current directory.  When cpio  is
+       invoked from the shell, each pattern should be quoted.
+
+                                                                1
+
+cpio(1)                                                   cpio(1)
+
+       In  normal  circumstances, cpio sets the Hdr_type variable
+       (which defines the header type) to  NONE  before  checking
+       the  actual  header  type.   It does this even if you have
+       specified a different header type  on  the  command  line.
+       When  you  use  the  -k option, however, cpio does not set
+       Hdr_type to NONE if you've specified a header type on  the
+       command  line  (with  the -c or -H option).  In this case,
+       cpio sets Hdr_type to the header  type  you've  specified.
+       Thus you have a way of making sure the correct header file
+       type is specified, which improves your chances of recover-
+       ing  files  correctly.   For this reason, we recommend you
+       specify the header type for the file (with -c or -H) when-
+       ever you use the -k option.
+
+       cpio  -o  (copy  out) reads the standard input to obtain a
+       list of pathnames and copies those files onto the standard
+       output  (only  if  the  -O is not specified) together with
+       pathname and status information.
+
+       cpio -p (pass) reads the standard input to obtain  a  list
+       of  pathnames  of files that are conditionally created and
+       copied into the destination directory tree  based  on  the
+       options described below.
+
+       By  default, cpio also attempts to copy extended attribute
+       information  on  the  source  to  the  target.    Extended
+       attribute   information  includes:  Access  Control  Lists
+       (ACLs) Privileges Veritas file  system  type  (vxfs)  file
+       system attributes
+
+       The  cpio  command  issues  a warning if existing extended
+       attribute information on the source cannot  be  copied  to
+       the  destination  (unless  other actions are specified for
+       extended attributes via the -e option).
+
+       cpio processes supplementary code set characters, and rec-
+       ognizes  supplementary  code set characters in the message
+       given to the -M option (see below) according to the locale
+       specified  in  the LC_CTYPE environment variable (see LANG
+       on In regular expressions, pattern searches are  performed
+       on  characters,  not  bytes, as described on Under the -vt
+       option (see below), the date is displayed according to the
+       locale specified in the LC_TIME environment variable.
+
+       The  meanings  of  the  available options are Reset access
+       times of input files after they have been copied.   Access
+       times  are  not  reset  for linked files when cpio -pla is
+       specified.  Append files to an  archive.   The  -A  option
+       requires the -O option.  Valid only with archives that are
+       files, or that are on floppy diskettes or hard disk parti-
+       tions.   Reverse  the order of the bytes within each word.
+       (Use only with the -i  option.)   Input/output  is  to  be
+       blocked 5120 bytes to the record.  The default buffer size
+       is device dependent when neither this nor the -C option is
+
+                                                                2
+
+cpio(1)                                                   cpio(1)
+
+       used.  Read or write header information in ASCII character
+       form for portability.  Always use this option (or  the  -H
+       option)  when  the origin and the destination machines are
+       different types (mutually exclusive with -H and -6).  (The
+       -c   option   implies  expanded  fundamental  types.   See
+       ``Notices'' for more information.)
+
+       This option (or -H hdr) must be specified if the  file  to
+       be  copied  in or out is larger than 2GB.  Input/output is
+       to be blocked bufsize bytes to the record,  where  bufsize
+       is  replaced  by  a  positive integer.  The default buffer
+       size is device dependent when  neither  this  nor  the  -B
+       option is used.  If used with -K, bufsize must be a multi-
+       ple of 1K.  Directories  are  to  be  created  as  needed.
+       Specify an input file (file) that contains a list of file-
+       names to be extracted from the archive (one  filename  per
+       line).   Specify  how  to  handle  various  extended  file
+       attributes.  The following are the  valid  parameters  for
+       xattr_name and the extended attribute information to which
+       they refer: Access Control  Lists  (ACLs)  on  the  source
+       files and directories.  Privileges on the source files and
+       directories Extent attributes include  reserved  space,  a
+       fixed  extent  size,  and extent alignment.  It may not be
+       possible to preserve the information  if  the  destination
+       file system does not support extent attributes, has a dif-
+       ferent block size than the source file  system,  or  lacks
+       free  extents  appropriate to satisfy the extent attribute
+       requirements.  Can be used only on restore (cpio -i),  and
+       specifies  how  to  deal with extended file attributes not
+       recognized by the current version of cpio.  Refers to  all
+       extended  attribute information for each file or directory
+       processed.
+
+       Valid values for action are: Issue a  warning  message  if
+       extent  attribute  information  cannot  be kept (default).
+       Fail the file save or restore or copy if extent  attribute
+       information  cannot  be  kept.   Ignore  extent  attribute
+       information entirely.
+
+       For  more  information   on   extended   attributes,   see
+       ``Notices''.   Copy  in all files except those in patterns
+       (See the paragraph about cpio -i for a description of pat-
+       terns.)   This  option is intended for use by front-end or
+       application programs that invoke cpio. If  you're  running
+       cpio  at  the  shell  level,  you probably won't need this
+       option.  The -G option allows a program to specify file as
+       the interface through which cpio communicates with a user.
+       Specifically, this interface  is  used  for  end-of-medium
+       processing it is used both for writing the prompts  to  
+       the  user  and  for reading  the  user's  input.   By 
+       default, /dev/tty is the interface.  However, in some 
+       situations (such as  graphics application  environments),  
+       /dev/tty  is  not  available. Therefore an alternative 
+       interface, such as a  pseudo-tty,
+
+                                                                3
+
+cpio(1)                                                   cpio(1)
+
+       may be needed.
+
+       If  the argument to -G is the keyword STDIO, it will print
+       prompts (to change the media on stdout, and read responses
+       from stdin.  Read or write header information in hdr  for-
+       mat.   Always  use  this  option or the -c option when the
+       origin and the destination machines  are  different  types
+       (mutually exclusive with -c and -6).  Valid values for hdr
+       are: ASCII header with expanded fundamental types  and  an
+       additional   per-file   checksum.    See  ``Notices''  for
+       details.
+
+       The crc file format  has  been  updated  to  handle  files
+       larger  than  2GB.   IEEE/P1003  Data Interchange Standard
+       header and format tar header and format ASCII header  with
+       small fundamental types (see NOTICES) Read the contents of
+       file as an input archive.  If file is a character  special
+       device,  and  the current medium has been completely read,
+       replace the medium and press
+        to continue to the next medium.  This option is used only
+       with  the -i option.  Attempt to skip corrupted file head-
+       ers and I/O errors that may be encountered.  If  you  want
+       to  copy  files  from a medium that is corrupted or out of
+       sequence, this option lets you read only those files  with
+       good  headers.  (For cpio archives that contain other cpio
+       archives, if an error is encountered, cpio  may  terminate
+       prematurely.   cpio  will find the next good header, which
+       may be one for a smaller archive, and terminate  when  the
+       smaller archive's trailer is encountered.)  Used only with
+       the -i option.  Specify the media size as  a  multiple  of
+       1K.   If used with -C bufsize, then bufsize must be a mul-
+       tiple of 1K.  Use only with the -o option.  Whenever  pos-
+       sible  (only  with  the -p option), link files rather than
+       copying them.  (Even if a file cannot be linked,  it  will
+       be copied.)  Follow symbolic links.  The default is not to
+       follow symbolic links.  Retain previous file  modification
+       time.  The modification time and access time of a restored
+       file is set to the modification time of the file  when  it
+       was  backed  up.   Modification time of directories is not
+       retained.  Define a message to use when  switching  media.
+       When  you use the -O or -I options and specify a character
+       special device, you can use this option to define the mes-
+       sage that is printed when you reach the end of the medium.
+       One %d can be placed in message to print the sequence num-
+       ber  of  the  next medium needed to continue.  message may
+       contain supplementary code  set  characters.   Direct  the
+       output  of  cpio  to file.  If file is a character special
+       device and the current medium is full, replace the  medium
+       and type a carriage return to continue to the next medium.
+       Use only with the -o option.  Using this  option  with  -o
+       guarantees  exclusive  access  to  the  character  special
+       device or output file.  Redirecting output to a device  or
+       file  does not guarantee exclusive access and could result
+
+                                                                4
+
+cpio(1)                                                   cpio(1)
+
+       in a corrupted archive  if  a  second  process  opens  the
+       device  or  file  while the first process is still active.
+       Interactively rename files.  If the user types a  carriage
+       return  alone,  the  file is skipped.  If the user types a
+       ``.'' the original pathname will be retained.  (Should  be
+       used  only  with  cpio  -i.)  Reassign ownership and group
+       information for each file to user ID (ID must be  a  valid
+       login ID from /etc/passwd).  This option is valid only for
+       a privileged user.  Swap  bytes  within  each  half  word.
+       Swap  halfwords  within  each word.  Print a table of con-
+       tents of the input.  No files are created (mutually exclu-
+       sive with -V).  Truncate long file names to 14 characters.
+       Use only with the -i option.  Copy  unconditionally  (nor-
+       mally,  an  older  file will not replace a newer file with
+       the same name).  Verbose: causes a list of file  names  to
+       be  printed.   When  used with the -t option, the table of
+       contents looks like the output of an ls  -l  command  (see
+       dates  are  displayed according to the locale specified in
+       the LC_TIME environment variable (see LANG on Special Ver-
+       bose:  print  a dot for each file read or written.  Useful
+       to assure the user that cpio is working  without  printing
+       out  all  file  names.   Process  a   System Sixth Edition
+       archive format file.  Use only with the -i  option  (mutu-
+       ally exclusive with -c and -H).
+
+       NOTE: cpio assumes four-byte words.
+
+       If,  when  writing  to  a character device (-o) or reading
+       from a character device (-i), cpio reaches the  end  of  a
+       medium  (such as the end of a diskette), and the -O and -I
+       options aren't used, cpio will print  the  following  mes-
+       sage:
+
+       End  of  medium  on  input  (output).  To  continue,  type
+       device/file name when ready.
+
+       To continue, you must replace  the  medium  and  type  the
+       character  special  device name (/dev/rdsk/f0 for example)
+       and press .  You may want to continue by directing cpio to
+       use  a  different  device.   For  example, if you have two
+       floppy drives you may want to switch between them so  cpio
+       can proceed while you are changing the floppies.
+
+UUssaaggee
+   OOuuttppuutt ((--oo))
+       When standard input is directed through a pipe to cpio -o,
+       files are grouped so they can be redirected (>) to a  sin-
+       gle  file  (../newfile).   The  -c option insures that the
+       file will be portable to other machines (as would  the  -H
+       option).   Instead  of  you could use and so on, to pipe a
+       list of names to cpio.  You could redirect the output to a
+       device instead of a file.  ls | cpio -oc > ../newfile
+
+                                                                5
+
+cpio(1)                                                   cpio(1)
+
+   IInnppuutt ((--ii))
+       cpio  -i uses the output file of cpio -o (directed through
+       a pipe with cat in  the  example  below),  extracts  those
+       files  that match the patterns (memo/a1, memo/b*), creates
+       directories below the  current  directory  as  needed  (-d
+       option),  and places the files in the appropriate directo-
+       ries.  The -c option (with -k) is used if the  input  file
+       was  created  with a portable header.  If no patterns were
+       given, all files from  newfile  would  be  placed  in  the
+       directory.  cat newfile | cpio -ickd "memo/a1" "memo/b*"
+
+   PPaassss ((--pp))
+       cpio  -p  takes  the  file names piped to it and copies or
+       links (-l option) those files to another directory (newdir
+       in the example below).  The -d option allows you to create
+       directories as needed.  The -m option lets you retain  the
+       modification time and security level.  (It is important to
+       use the -depth  option of to generate pathnames for  cpio.
+       Use  of this option eliminates problems cpio could have in
+       trying to create files under read-only directories.)   The
+       destination  directory, newdir, must exist.  find . -depth
+       -print | cpio -pdlmv newdir
+
+       Note that when you use cpio in conjunction with  find,  if
+       you  use  the  -L  option  with cpio then you must use the
+       -follow option with find and vice versa.  Otherwise  there
+       will be undesirable results.
+
+EExxiitt ccooddeess
+       usage  error  file  error  (but cpio completes, displaying
+       error number) fatal error (cpio dies immediately)
+
+       Reading from  magnetic  tape  in  any  fixed-length  block
+       length besides the block length that the media was written
+       in originally will cause an I/O error.   If  you  want  to
+       read  a tape that was written using a block-length besides
+       the default of 512, you must use the command  (  qv  )  to
+       either  set  the  block-length  of  the drive to match the
+       block length of the media or to set the drive  into  vari-
+       able block length mode.
+
+FFiilleess
+       language-specific message file. (See LANG on
+
+RReeffeerreenncceess
+NNoottiicceess
+   SSuuppppoorrtt ffoorr llaarrggee ffiilleess
+       The  utility  supports the archival of files larger than 2
+       gigabytes (2GB) in size when using the ASCII (-c ) or  CRC
+       (-H  crc)  formats.   Files up to 2^63-1 bytes in size are
+       supported.  Previous versions of cpio will not be able  to
+       extract files larger than 2GB in size.
+
+                                                                6
+
+cpio(1)                                                   cpio(1)
+
+   RReessttoorriinngg eexxtteennddeedd aattttrriibbuutteess
+       If  you  attempt  to  restore a cpio archive that contains
+       extended attribute information and  the  version  of  cpio
+       being   used   does  not  support  one  or  more  extended
+       attributes found in the archive, the following occurs: The
+       extended  attributes  not supported by the version of cpio
+       being used will not be restored.  It is  assumed  that  if
+       you  use  a version of cpio that does not support extended
+       attributes, the target file system probably does not  sup-
+       port  extended  attributes either.  cpio creates a file in
+       /tmp with a name of the form If you use the -v  option  of
+       cpio,  the  verbose output of cpio will contain references
+       to this file.  This file, which is not likely to  be  very
+       large,  can  either  be  removed  manually  or  it will be
+       removed with the other files in /tmp during the next  sys-
+       tem reboot.
+
+   CCoommppaattiibbiilliittyy wwiitthh eeaarrlliieerr rreelleeaasseess
+       Versions  of  cpio  on earlier releases of UnixWare used a
+       slightly different syntax for the -e option (that is,  [-e
+       extent_opt]).   In  these  earlier releases, the -e option
+       applied only to Veritas file  system  type  (vxfs)  extent
+       attributes.    For   compatibility   with   these  earlier
+       releases, if an action is specified with  the  -e  option,
+       but  without  a  preceding  xattr_name=,  that  action  is
+       assumed by cpio to  apply  to  the  vxfs_extent  attribute
+       only.
+
+       An  archive  created  with  the  -c  option  on a System V
+       Release 4 system cannot be read on System  V  Release  3.2
+       systems,  or  earlier.   Use  the  -H odc option, which is
+       equivalent to the header created by the -c option in  ear-
+       lier  System V Releases, if the cpio image will be read by
+       a pre-System V Release 4 version of cpio.
+
+       In releases of  System V  prior  to  Release  4,  symbolic
+       links are not understood.  The result of copying in a sym-
+       bolic link on an older release will be a regular file that
+       contains the pathname of the referenced file.
+
+       Prior to Release 4, the default buffer size was 512 bytes.
+       Beginning with Release 4, the default buffer size is opti-
+       mized  for the device and using the -C option to specify a
+       different block size may cause cpio to  fail.   Therefore,
+       care must be taken when choosing the block size.  To avoid
+       wasting space on streaming tape drives, use the -C  option
+       and specify an appropriate block size.
+
+       Using  variable-length  block  mode  when writing magnetic
+       tapes is discouraged because it may not work correctly  in
+       releases before SVR4.2 MP.  Magnetic tape should always be
+       written in fixed-length block mode, even  though  you  are
+       free  to  change  the  default fixed-block length from 512
+       bytes  to  any  other  fixed-block  mode  the  tape  drive
+
+                                                                7
+
+cpio(1)                                                   cpio(1)
+
+       supports.
+
+   PPaatthhnnaammeess rreessttrriiccttiioonnss
+       Pathnames  are restricted to 256 characters for the binary
+       (the default) and -H odc header formats.  Otherwise, path-
+       names are restricted to 1024 characters.
+
+   EExxppaannddeedd ffuunnddaammeennttaall ttyyppeess ssuuppppoorrtt
+       The default binary header format and the ODC header format
+       do  not  support  expanded   fundamental   types   (EFTs).
+       Smaller,  preSVR4-type  sizes  are assumed by these header
+       formats.  If you are trying to use cpio over file  systems
+       with EFT and one of these two header formats are used, you
+       will get the  error  message  Old  format  cannot  support
+       expanded  types.  Use the -c or the -Hcrc options instead.
+       See for details on type sizes.
+
+   CCooppyyiinngg bblloocckk oorr cchhaarraacctteerr ssppeecciiaall ffiilleess
+       Only a privileged user can copy block or character special
+       files.
+
+       When  attempting  to  redirect  standard input or standard
+       output from or to a block or character special device  you
+       may  get  an error message such as Cannot read from device
+       or Cannot write to device.  The appearance of such a  mes-
+       sage  does  not  necessarily  mean  a  true  I/O error has
+       occurred.  It is more likely to mean  the  user  does  not
+       have access to that device; the user should ask the system
+       administrator to allocate the device for him or her.
+
+       It is not desirable for device overwriting to be the ordi-
+       nary  behavior  for cpio even when the -u option is speci-
+       fied.  This has been done for  system  resilience.   If  a
+       device on an archive being read in does not match a device
+       that is already on the system, it  is  almost  always  the
+       case  that  the device on the archive is different because
+       the archive was exported from another system that had dif-
+       ferent  device  numbers.  To overwrite existing devices in
+       such a situation could be crippling to the system, depend-
+       ing  on  which devices are overwritten and what the change
+       is.
+
+   BBlloocckk ssiizzeess
+       Blocks are reported in 512-byte quantities.
+
+       The st01 tape driver does not always require  block  sizes
+       that  are  in  multiples  of  512 bytes, but block size is
+       device dependent.  Use tapecntl to set the tape driver  to
+       use  the block size supported by the tape device.  Failure
+       to set the block size correctly will result  in  an  error
+       when  the  driver  attempts to write a block of the unsup-
+       ported size.
+
+                                                                8
+
+cpio(1)                                                   cpio(1)
+
+   SSaavviinngg aanndd rreessttoorriinngg ffiilleess wwiitthh 000000 ppeerrmmiissssiioonnss
+       If a file has ``000'' permissions and contains more than 0
+       characters  of data, and the user does not have the appro-
+       priate privilege, the file will not be saved or  restored.
+
+   MMaattcchhiinngg ttaappee bblloocckk lleennggtthh oonn rreeaadd
+       Reading  from  magnetic  tape  in  any  fixed-length block
+       length, besides the block length that the media was  writ-
+       ten  in  originally, will cause an I/O error.  In order to
+       read a tape that  was  written  using  some  block  length
+       besides the default of 512, use the command (qv) to either
+       set the block length of  the  drive  to  match  the  block
+       length  of  the  media,  or to set the drive into variable
+       block length mode.
+
+   EEnnvviirroonnmmeenntt vvaarriiaabblleess
+       If POSIX2 is set in the current environment, then the pat-
+       tern-matching  notation  specified  by  POSIX.2  is  used:
+       Matches any string, including the empty  string.   Matches
+       any  single  character.   Matches  any one of the enclosed
+       characters.  A pair of characters separated by `-' matches
+       any symbol between the pair (inclusive), as defined by the
+       system default collating sequence.  If the first character
+       following  the  opening  `[' is a `!', it is regarded as a
+       not operator; the characters within  the  braces  are  not
+       used in the pattern.
+
+       In  pattern,  the special characters ?, * and [ also match
+       the / character.  Multiple cases of pattern can be  speci-
+       fied  and  if no pattern is specified, * is used (that is,
+       all files are selected).
+
+                                                                9
+

@@ -1,0 +1,93 @@
+
+
+elf_xlate(3elf)                                   elf_xlate(3elf)
+
+SSyynnooppssiiss
+       cc [flag . . . ] file . . . -lelf [library] . . .
+
+       #include <libelf.h>
+
+       Elf_Data  *elf32_xlatetof(Elf_Data  *dst,  const  Elf_Data
+       *src,      unsigned encode);
+
+       Elf_Data  *elf32_xlatetom(Elf_Data  *dst,  const  Elf_Data
+       *src,      unsigned encode);
+
+       Elf_Data  *elf64_xlatetof(Elf_Data  *dst,  const  Elf_Data
+       *src,      unsigned encode);
+
+       Elf_Data  *elf64_xlatetom(Elf_Data  *dst,  const  Elf_Data
+       *src,      unsigned encode);
+
+DDeessccrriippttiioonn
+       elf32_xlatetom  translates  various  data  structures from
+       their 32-bit class file representations  to  their  memory
+       representations;   elf32_xlatetof  provides  the  inverse.
+       elf64_xlatetom and elf64_xlatetof provide the  same  func-
+       tionality for 64-bit class files.  This conversion is par-
+       ticularly important for  cross  development  environments.
+       src is a pointer to the source buffer that holds the orig-
+       inal data; dst is a pointer to a destination  buffer  that
+       will  hold  the  translated  copy.   encode gives the byte
+       encoding in which the file objects are (to be) represented
+       and  must  have one of the encoding values defined for the
+       ELF header's e_ident[EI_DATA] entry [see If the  data  can
+       be  translated, the functions return dst.  Otherwise, they
+       return null because an error occurred, such as  incompati-
+       ble types, destination buffer overflow, and so forth.
+
+       describes  the  Elf_Data descriptor, which the translation
+       routines use as follows.  Both the source and  destination
+       must  have  valid  buffer  pointers.   This member's value
+       specifies the type of the data to which d_buf  points  and
+       the  type  of  data to be created in the destination.  The
+       program supplies a d_type value in the source; the library
+       sets  the  destination's  d_type to the same value.  These
+       values are summarized below.  This member holds the  total
+       size,  in bytes, of the memory occupied by the source data
+       and the size allocated for the destination data.   If  the
+       destination  buffer  is  not large enough, the routines do
+       not change its original contents.   The  translation  rou-
+       tines  reset the destination's d_size member to the actual
+       size required, after the translation occurs.   The  source
+       and  destination sizes may differ.  This member holds ver-
+       sion number of the objects (desired) in the  buffer.   The
+       source and destination versions are independent.
+
+       Translation  routines  allow  the  source  and destination
+       buffers  to  coincide.   That  is,  dst->d_buf  may  equal
+
+                                                                1
+
+elf_xlate(3elf)                                   elf_xlate(3elf)
+
+       src->d_buf.   Other cases where the source and destination
+       buffers overlap give undefined behavior.
+
+       -------------------------------------------------------
+       Elf_Type       32-Bit Memory Type   64-Bit Memory Type
+       -------------+--------------------+--------------------
+       _EE_LL_FF____TT____AA_DD_DD_RR   | _EE_ll_ff_33_22____AA_dd_dd_rr         | _EE_ll_ff_66_44____AA_dd_dd_rr
+       _EE_LL_FF____TT____BB_YY_TT_EE   | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr      | _uu_nn_ss_ii_gg_nn_ee_dd _cc_hh_aa_rr
+       _EE_LL_FF____TT____DD_YY_NN    | _EE_ll_ff_33_22____DD_yy_nn          | _EE_ll_ff_66_44____DD_yy_nn
+       _EE_LL_FF____TT____EE_HH_DD_RR   | _EE_ll_ff_33_22____EE_hh_dd_rr         | _EE_ll_ff_66_44____FF_hh_dd_rr
+       _EE_LL_FF____TT____HH_AA_LL_FF   | _EE_ll_ff_33_22____HH_aa_ll_ff         | _EE_ll_ff_66_44____HH_aa_ll_ff
+       _EE_LL_TT____TT____OO_FF_FF    | _EE_ll_ff_33_22____OO_ff_ff          | _EE_ll_ff_66_44____OO_ff_ff
+       _EE_LL_FF____TT____PP_HH_DD_RR   | _EE_ll_ff_33_22____PP_hh_dd_rr         | _EE_ll_ff_66_44____PP_hh_dd_rr
+       _EE_LL_FF____TT____RR_EE_LL    | _EE_ll_ff_33_22____RR_ee_ll          | _EE_ll_ff_66_44____RR_ee_ll
+       _EE_LL_FF____TT____RR_EE_LL_AA   | _EE_ll_ff_33_22____RR_ee_ll_aa         | _EE_ll_ff_66_44____RR_ee_ll_aa
+       _EE_LL_FF____TT____SS_HH_DD_RR   | _EE_ll_ff_33_22____SS_hh_dd_rr         | _EE_ll_ff_66_44____SS_hh_dd_rr
+       _EE_LL_FF____TT____SS_WW_OO_RR_DD  | _EE_ll_ff_33_22____SS_ww_oo_rr_dd        | _EE_ll_ff_66_44____SS_ww_oo_rr_dd
+       _EE_LL_FF____TT____SS_YY_MM    | _EE_ll_ff_33_22____SS_yy_mm          | _EE_ll_ff_66_44____SS_yy_mm
+       _EE_LL_FF____TT____WW_OO_RR_DD   | _EE_ll_ff_33_22____WW_oo_rr_dd         | _EE_ll_ff_66_44____WW_oo_rr_dd
+       _EE_LL_FF____TT____XX_WW_OO_RR_DD  |                    | _EE_ll_ff_66_44____XX_ww_oo_rr_dd
+       _EE_LL_FF____TT____SS_XX_WW_OO_RR_DD |                    | _EE_ll_ff_66_44____SS_xx_ww_oo_rr_dd
+       -------------+--------------------+--------------------
+
+       ``Translating'' buffers of type ELF_T_BYTE does not change
+       the byte order.
+
+RReeffeerreenncceess
+
+                                                                2
+

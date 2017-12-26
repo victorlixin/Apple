@@ -1,0 +1,823 @@
+
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+SSyynnooppssiiss
+       Definition of bundle characteristics:
+
+       bundle bundle_tag {      protocols = protocol_tag [ proto-
+       col_tag]...       type = disabled | in | out  |  bi-direc-
+       tional
+
+            [  authid  =  name  ]      [ authname = name ]      [
+       authtmout = seconds ]      [ bringup = automatic |  manual
+       ]       [  callerid  = identifier ]      [ debug = level ]
+            [ links = link_tag [ link_tag]... ]       [  login  =
+       name  ]       [  maxidle = seconds ]      [ peerauthname =
+       peername ]       [  remotesys  =  Systems_entry  ]       [
+       requirechap  =  true  | false ]      [ requirepap = true |
+       false ]
+
+       Multilink-specific bundle characteristics:
+
+            [ addload = percentage ]      [ addsample = seconds ]
+            [  bod  =  any  | in | none | out ]      [ dropload =
+       percentage ]      [ dropsample = seconds  ]       [  ed  =
+       true  | false ]      [ maxlinks = number ]      [ maxfrags
+       = number ]      [ minfrag = number  ]       [  minlinks  =
+       number ]      [ mrru = bytes ]      [ ssn = true | false ]
+            [ thrashtime = seconds ] }
+
+       Definition of link characteristics:
+
+       link link_tag {      protocols  =  protocol_tag  [  proto-
+       col_tag]...        [  bandwidth = bits_per_second ]      [
+       debug = level ]      [ dev = device ]      [ flow =  hard-
+       ware | software | none ]      [ phone = telephone_number ]
+            [ pop = module [ module]... ]      [ push = module  [
+       module]... ]      [ type = pstn | isdn-sync | isdn-async |
+       static | tcp ] }
+
+       Compression Control Protocol characteristics:
+
+       protocol protocol_tag {      protocol = ccp       [  algo-
+       rithms  =  algorithm_tag ... ]      [ rxalgorithms = algo-
+       rithm_tag ... ]      [ txalgorithms = algorithm_tag ...  ]
+            [ finite state machine parameters ] }
+
+       algorithm algorithm_tag {      algorithm = type      algo-
+       rithm-specific characteristics }
+
+       Internet Protocol Control Protocol characteristics:
+
+       protocol protocol_tag {      protocol = ip      [ advdns =
+       IP_address   ]        [  advdns2  =  IP_address  ]       [
+       advdnsopt = addr | local | none ]      [  bringup  =  fil-
+       ter_tag ]      [ defaultroute = true | false ]      [ exec
+       = pathname ]      [ getdns = true | false ]      [  keepup
+       =  filter_tag  ]       [  localaddr = address | pool_tag ]
+
+                                                                1
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+            [ localopt = any | force | pool  |  prefer  ]       [
+       passin = filter_tag ]      [ passout = filter_tag ]      [
+       peeraddr = address | pool_tag ]      [  peeropt  =  any  |
+       force  |  pool | prefer ]      [ proxyarp = true | false ]
+            [ vjcompress = true | false  ]       [  vjslotcomp  =
+       true  |  false ]      [ vjmaxslot = number ]      [ finite
+       state machine parameters ] }
+
+       Link Control Protocol characteristics:
+
+       protocol protocol_tag {      protocol = lcp      [ acfc  =
+       true  |  false  ]       [  accm  =  hexadecimal  ]       [
+       echofails = number ]      [ echoperiod = seconds ]       [
+       echosample = number ]      [ identification = true | false
+       ]      [ magic = true | false  ]       [  mru  =  bytes  ]
+            [  pfc  =  true | false ]      [ finite state machine
+       parameters ] }
+
+       Definition of Authentication characteristics:
+
+       auth auth_tag {      name = name | peer-id      [ localse-
+       cret  =  secret  | password ]      [ peersecret = secret |
+       password ]      [ protocol = chap | pap ] }
+
+       Definition of global bundle characteristics:
+
+       global bundle {      type =  bundle         [  authname  =
+       name  ]       [  authtmout  = seconds ]      [ ed = true |
+       false ]      [ mrru = bytes ]      [ peerauthname =  peer-
+       name  ]       [  requirechap  =  true  |  false  ]       [
+       requirepap = true | false ]      [ ssn = true | false ] }
+
+       Commands:
+
+       attach bundle_tag debug debug_level [ bundle | link ]  tag
+       defprompt  string  del  [  bundle  | link | protocol ] tag
+       detach bundle_tag help [ command | characteristic [ type ]
+       ] kill bundle_tag linkadd bundle_tag [ link_tab ] linkdrop
+       bundle_tag [ link_tab ] list [ bundle | link | protocol  ]
+       [  tag  ]  prompt  string quit reset [ bundle | link ] tag
+       save stats [ bundle | link ] tag status [ bundle | link  ]
+       tag stop
+
+DDeessccrriippttiioonn
+       The  /etc/ppp.d/.pppcfg file contains the information that
+       the PPP daemon requires to  configure  PPP  links.   reads
+       this  file  to  initialize PPP, communicating with the PPP
+       daemon to build the PPP stack,  negotiate  control  proto-
+       cols,  implement  bandwidth  allocation,  and place calls.
+       The configuration data required depends on the type of PPP
+       links that are required.
+
+       Parameters  shown  in  square brackets in the ``Synopsis''
+       section  are  optional  for  all  entries.   Commands  are
+
+                                                                2
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+       documented in but may also be present in the .pppcfg file.
+       The preferred interface for changing the contents  of  the
+       PPP  Manager.   You  can  use the ppptalk command in batch
+       mode, reading new configuration information from  a  file,
+       or  interactively from the command line.  Tag names can be
+       up to 255 characters long. They must not  contain  control
+       characters (ASCII values 0 through 31), tabs or spaces.
+
+       on  and  enabled are alternative values for true.  off and
+       disabled are alternative values for false.
+
+       Comments may be present in the file if  preceded  by  a  #
+       character.
+
+       The maximum line length is 1024 characters.
+
+       The following sets of characteristics may be defined:
+
+       describes  those parameters which control the operation of
+       the PPP finite state machine, and which are common to sev-
+       eral control protocol modules.
+
+       The top layer of definition is a bundle.  link definitions
+       are attributes of  a  bundle.   protocol  definitions  are
+       attributes of a bundle or of a link.
+
+   BBuunnddllee ddeeffiinniittiioonnss
+       A  bundle  defines  the  top layer of PPP links.  A bundle
+       definition consists of tags that reference link and proto-
+       col  characteristics.   Bundles  may  be  defined that can
+       establish PPP links  over  multiple  physical  connections
+       (multilink  PPP).  Defines the set of protocol definitions
+       referenced by their tags.  Protocol types  allowed  for  a
+       bundle  are ipcp and ccp.  See Defines how the bundle will
+       be used. The possible values are: The bundle may  be  used
+       for  both  incoming  and outgoing connections.  The bundle
+       may not be used.  The bundle may only be used for incoming
+       connections.   The  bundle  may  only be used for outgoing
+       connections.  Defines the identity of the caller as deter-
+       mined  from  a received CHAP or PAP packet.  If specified,
+       use name instead of the local host name in  outgoing  CHAP
+       or PAP packets.  It may be necessary to use this attribute
+       in the following cases: The remote host authenticates  the
+       local host using CHAP.
+
+       authname  overrides  the  local  host name in the outgoing
+       response.  This allows you to supply a name other than the
+       local  host  name  for  the  remote host to look up in its
+       authentication database (unless it chooses to override  it
+       with a different name).
+
+       The  auth  entry  for  the  name in the received challenge
+       packet (possibly overridden by peerauthname) must  contain
+       a  peersecret.   CHAP uses the secret and the random value
+
+                                                                3
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+       from  the  received  challenge  packet  to  calculate  the
+       response  value that it sends to the remote authenticator.
+       The local host authenticates the remote host using CHAP.
+
+       authname overrides the local host  name  in  the  outgoing
+       challenge and in the outgoing acknowledgment of success or
+       failure.  This allows you to configure  local  servers  to
+       use  the  same  name  when authenticating incoming connec-
+       tions.
+
+       The auth entry for the name in the received response (pos-
+       sibly  overridden by peerauthname) must contain a localse-
+       cret.  CHAP uses the secret and the random value from  its
+       challenge packet to calculate an expected value to be com-
+       pared with the response value that it  has  received  from
+       the  remote  host.  If the expected value and the response
+       value are the same, authentication of the remote host suc-
+       ceeds.  The remote host authenticates the local host using
+       PAP.
+
+       authname overrides the local host  name  in  the  outgoing
+       authentication  request.  This allows you to supply a name
+       other than the local host name which the remote host  will
+       use  to  look up a password in its authentication database
+       (unless it chooses to override the supplied  name  with  a
+       different name).
+
+       The  auth  entry  for  the defined authname must contain a
+       peersecret (password).  Specifies  the  time  allowed  for
+       authentication  to  be  performed. The default value is 60
+       seconds. The minimum and maximum allowed values are 5  and
+       300 seconds respectively.  Defines how the link is brought
+       up. Possible values are: A PPP link is  established  auto-
+       matically when the remote system needs to be accessed by a
+       networking application. The link remains established until
+       it becomes idle for a certain time, or it is manually torn
+       down using is used to establish the PPP link to the remote
+       system.   is  used to tear down the PPP link to the remote
+       system.  The default value is manual.  Defines  the  iden-
+       tity  of  the caller as determined by any call information
+       obtained from the physical layer, such  as  the  telephone
+       number  at the remote end of the link.  Define a debugging
+       level for the bundle and its protocols. See for a descrip-
+       tion  of  the  debugging levels.  Defines the set of links
+       that may be members of  the  bundle  referenced  by  their
+       tags.   See  Defines  the user name of the incoming caller
+       used with the PPP shell (see Defines the period in seconds
+       for  which  a  bundle  must  be inactive before its member
+       links are closed.  The minimum  and  default  value  is  0
+       which  means  timeout  is  disabled.  The maximum value is
+       32768 seconds.  A bundle is defined to be inactive if  all
+       network control protocols detect they are idle.  If speci-
+       fied, look up a secret or password for peername.  This can
+       be  used  to override the name that the remote host set in
+
+                                                                4
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+       an incoming CHAP or PAP packet. It can  also  be  used  to
+       look up a PAP password to supply to a remote authenticator
+       instead of looking up a password for the local  host  name
+       (possibly  overridden  by  an authname in the bundle).  It
+       may be necessary to use this attribute  in  the  following
+       cases:  The remote host authenticates the local host using
+       CHAP.
+
+       CHAP looks up a secret for peerauthname  so  that  it  can
+       calculate a response value and send it to the remote host.
+       Normally, CHAP would look for a  secret  corresponding  to
+       the name supplied by the remote host in the incoming chal-
+       lenge.  This allows you to use a single  name-secret  pair
+       for  outgoing  connections  to  a service provider who has
+       several remote access servers which use different names to
+       challenge your system.
+
+       The  auth entry must contain a peersecret.  The local host
+       authenticates the remote host using CHAP.
+
+       CHAP looks up a secret for peerauthname  so  that  it  can
+       check  the  validity  of  a  response  value  that  it has
+       received.  Normally, CHAP would look for a  secret  corre-
+       sponding  to  the  name supplied by the remote host in the
+       incoming response.  This allows you to configure a  single
+       name-secret pair for authenticating several remote systems
+       or users.
+
+       The auth entry must contain  a  localsecret.   The  remote
+       host authenticates the local host using PAP.
+
+       If  peerauthname is set, PAP uses it to look up a password
+       to send in an authentication request to the  remote  host.
+       Normally, PAP would look up a password entry for the local
+       host name, possibly overridden by authname.  The name  set
+       in  outgoing  authentication request is not affected.  PAP
+       sets this to the local  host  name  unless  overridden  by
+       authname.   This  allows a different name-password pair to
+       be used with each remote host.
+
+       The auth entry must contain a peersecret.  The local  host
+       authenticates the remote host using PAP.
+
+       PAP  uses  peerauthname  to  look  up  a password to check
+       against the one  it  has  received  in  an  authentication
+       request.   Normally,  PAP would look up a password for the
+       name supplied by the remote host in the incoming authenti-
+       cation  request.   This  allows  you to configure a single
+       name-password pair for authenticating several remote  sys-
+       tems or users.
+
+       The  auth  entry  must contain a localsecret.  Defines the
+       name of a remote system by reference to its entry  in  the
+       file.   Only  one  remote  system  may  be  specified in a
+
+                                                                5
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+       bundle.  Specifies whether the  local  host  authenticates
+       the  remote  host using CHAP.  The default value is false.
+       Specifies whether the local host authenticates the  remote
+       host using PAP.  The default value is false.  For incoming
+       connections to be accepted, type must be set to in or  bi-
+       directional and at least one of authid, callerid, or login
+       must be specified.  If any of authid, callerid, and  login
+       are  specified,  the  incoming  connection  must match the
+       value of these attributes exactly for it to be accepted.
+
+       If requirechap and requirepap are  both  true,  the  local
+       host may authenticate the remote host using either CHAP or
+       PAP. If the remote host supports both, CHAP will be  used.
+
+       The  following  characteristics are specific to multilinks
+       (that is, the value of maxlinks is greater  than  1):  The
+       load  percentage  above  which links should be added.  The
+       default value is 60.  The minimum and maximum values are 1
+       and  100 respectively.  The time in seconds over which the
+       average loading value for adding links is calculated.  The
+       default value is 60 seconds.  The minimum and maximum val-
+       ues are 2 and 4000 respectively.  Defines which  bandwidth
+       on  demand  policy  will  be used: Add or remove links for
+       both incoming and outgoing  connections.   Add  or  remove
+       links  for  incoming  connections  only.  Do not implement
+       bandwidth on demand.  Add or  remove  links  for  outgoing
+       connections  only.   This is the default policy.  The load
+       percentage below  which  links  should  be  dropped.   The
+       default value is 20.  The minimum and maximum values are 1
+       and 100 respectively.  The time in seconds over which  the
+       average  loading  value  for dropping links is calculated.
+       The default value is 60 seconds.  The minimum and  maximum
+       values  are 2 and 4000 respectively.  Defines whether end-
+       point  discrimination  is  enabled  (true)   or   disabled
+       (false).  The  default value is true.  A system's endpoint
+       discriminator identifies it to its peer when it  tries  to
+       create  a  new  multilink  bundle  or  to add a link to an
+       existing multilink bundle. (See RFC 1990 for more informa-
+       tion.)   Defines  the  maximum number of links that can be
+       active in a multilink bundle. A number greater than 1 (the
+       default)  indicates  the  use  of a multilink bundle.  The
+       value of number must be less than or equal to  the  number
+       of links configured for the bundle.  The minimum and maxi-
+       mum values are 1 and 1024 respectively.  Defines the maxi-
+       mum  number of fragments that may be queued for reassembly
+       per active (open  to  traffic)  link  in  a  bundle.   The
+       default  value is 5.  The minimum and maximum values are 1
+       and 100 respectively.  Defines the  minimum  fragmentation
+       size for a link.  The default value is 15 bytes.  The min-
+       imum and maximum values are 10 and 4096 respectively.  The
+       minimum  number  of links that can remain in a bundle when
+       bandwidth on demand  has  removed  excess  capacity.   The
+       value  of  number must be less than or equal to the number
+       of links configured for the bundle.  The default value  is
+
+                                                                6
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+       1  link.   Defines the size of the Maximum Received Recon-
+       structed Unit (the maximum size of the information  fields
+       of  reassembled  packets).  This must be defined if multi-
+       link connections are required (see RFC 1990 for a descrip-
+       tion).   The  default  and  suggested value is 1500 bytes.
+       The minimum and maximum values are 300 and  16384  respec-
+       tively.   Defines  whether  Short  Sequence  Numbering  is
+       enabled (true) or disabled (false) (see  RFC  1990  for  a
+       description).   If  enabled,  PPP  informs the remote host
+       that it wishes to receive  fragments  with  short,  12-bit
+       sequence numbers rather than 24-bit sequence numbers.  The
+       default value is false.  Defines the minimum  time  period
+       that  must expire before a link can be added to or dropped
+       from a multilink bundle from the time  that  a  links  was
+       last  dropped  from  or added to that bundle respectively.
+       The default value is 60 seconds.  The minimum and  maximum
+       values are 5 and 4000 respectively.  The ed, mrru, and ssn
+       attributes set default values to be  offered  on  incoming
+       connections.   These  options  can  reduce LCP negotiation
+       times by providing a ``good'' starting point for  negotia-
+       tion.   Multilink  PPP  is  not  supported  over dedicated
+       directly connected serial lines.
+
+   LLiinnkk ddeeffiinniittiioonnss
+       Link characteristics define the configuration of a  physi-
+       cal  link  that  is available for establishing incoming or
+       outgoing connections.  Defines the set of protocol defini-
+       tions  referenced  by  their tags.  Protocol types allowed
+       for a link are ccp, and lcp.  This characteristic must  be
+       defined.  There is no default value.  See Defines an esti-
+       mate of the available bandwidth in bits  per  second.  The
+       default  value is obtained using the Call Services Subsys-
+       tem from the and files.  The minimum  and  maximum  values
+       are  0 and 32767.  Define a debugging level for the bundle
+       and its protocols. See for a description of the  debugging
+       levels.   Defines the device file associated with a physi-
+       cal link.  There is no default value.  Defines the type of
+       flow  control  that will be used between the data terminal
+       equipment (DTE; a local computer) and  the  data  circuit-
+       terminating equipment (DCE; a modem or ISDN device), or on
+       a dedicated serial line.   Possible  values  are:  RTS/CTS
+       flow  control.   XON/XOFF  flow control.  No flow control.
+       NOTE: Flow control should not be specified for synchronous
+       mode  ISDN  or TCP connections (type = isdn-sync or type =
+       tcp).  Defines the telephone number that may  be  used  to
+       access this link from elsewhere. The number is passed to a
+       remote system so that it can access the defined link.  The
+       default  value  is  the  null  string.   Defines a list of
+       streams modules and drivers that must be popped  (see  the
+       description  of  I_POP on from the device before it can be
+       used.  The modules and drivers  will  be  removed  in  the
+       order  specified.   The  default  modules for the pstn and
+       isdn-async link types are ttcompat and ldterm.  Defines  a
+       list  of  streams  modules  that  must  be pushed (see the
+
+                                                                7
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+       description of I_PUSH on onto the device before it can  be
+       used  by  PPP  traffic.   The  modules and drivers will be
+       added in the order specified.  The default module for  the
+       pstn  and isdn-async link types is asyh.  Defines the type
+       of the physical link. This can be one  of  the  following:
+       Public  switched  telephone  network  (standard  telephone
+       lines).  This is the default link type.   Integrated  Ser-
+       vices  Digital  Network  in  synchronous mode.  A separate
+       link definition is required for each channel in a pair  of
+       B  channels.  Integrated Services Digital Network in V.120
+       asynchronous mode.  A separate link definition is required
+       for  each  channel  in  a  pair  of B channels.  Dedicated
+       directly connected serial line (no dialing is  performed).
+       Multilink  PPP  is  not  supported over dedicated directly
+       connected serial lines.  A TCP connection.
+
+   PPrroottooccooll ddeeffiinniittiioonnss
+       Protocol definitions may be  configured  and  assigned  to
+       specific bundle definitions. This allows specific protocol
+       requirements to be tailored to certain groups  of  connec-
+       tions.
+
+       The following characteristics are specific to the Compres-
+       sion Control Protocol: Identifies the Compression  Control
+       Protocol  (CCP).   Defines the compression algorithms that
+       are available when sending or receiving  frames.   Defines
+       the compression algorithms that are available when receiv-
+       ing frames.  Defines the compression algorithms  that  are
+       available  when  sending  frames.   Compression  algorithm
+       characteristics may be defined using the algorithm  state-
+       ment. At present, the Stac LZS compression protocol (algo-
+       rithm = stac) is available for use. The following  charac-
+       teristics  are  specific to this protocol: Defines whether
+       compression history should be used, 0 for no or 1 for yes.
+       The  default  value is 1 (yes).  Indicates the method used
+       to  detect  erroneous  datagrams;  none  for  no  checking
+       (requires  history  be  set  to 0), or seq to use sequence
+       numbering. The default value is seq.   Longitudinal  check
+       byte,  cyclic  redundancy check, and extended mode are not
+       currently supported.
+
+       The following characteristics are specific to the Internet
+       Protocol  Control  Protocol:  Defines  the internetworking
+       protocol to be used over the PPP link.  Only the  Internet
+       Protocol  (ip)  is currently supported.  The IP address of
+       the advertised DNS name server.  If the value is  null  or
+       0.0.0.0, it will not be advertised.  The IP address of the
+       advertised alternative DNS name server.  If the  value  is
+       null or 0.0.0.0, it will not be advertised.  Specifies how
+       to obtain the IP addresses of DNS name servers that are to
+       be  advertised:  The  IP  addresses  are defined using the
+       advdns and advdns2 configuration statements.  Use  the  IP
+       addresses   of   name   servers  that  are  configured  in
+       /etc/resolv.conf.  Do  not  advertise  DNS  name  servers.
+
+                                                                8
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+       This  is the default value.  Filter outgoing packets using
+       the specified filter if a transport is not  available.  If
+       they  are  passed,  they will be allowed to bring up a PPP
+       link.   Defines  whether  header  compression  is  enabled
+       (true)  or  disabled  (false).  The default value is true.
+       Specifies whether  this  interface  provides  the  default
+       route for IP packets. The default value is false.  Defines
+       a program (shell script or binary) that must  be  executed
+       if a PPP link comes up, goes down, is added or is deleted.
+       The program will be invoked with the following  arguments:
+       event   interface  local  peer  oldlocal  oldpeer  dnsaddr
+       dnsaddr2 default The arguments are: One of up, down,  add,
+       delete  according to whether the link is being brought up,
+       taken down, added or deleted.  The name of the  interface;
+       this  argument  is  null if the interface is deleted.  The
+       new local IP address.  The new  remote  IP  address.   The
+       previous   local  IP  address.   The  previous  remote  IP
+       address.  The IP address of a DNS  name  server.   The  IP
+       address of an alternative DNS name server.  This interface
+       is the default route for IP packets  if  set  to  default;
+       otherwise,  it  should be set to -.  IP addresses that are
+       passed to the exec program should  be  in  dotted  decimal
+       notation.   The  program should either perform its actions
+       quickly and not block, or put  itself  in  the  background
+       because  the  PPP  daemon  will wait for it to exit before
+       processing additional events.
+
+       The   default   program   that   will   be   executed   is
+       /usr/lib/ppp/psm/ipexec.sh.   This  is a shell script that
+       updates a static route referring to either end of the  PPP
+       link when the interface changes state.  The actions on the
+       new states are:  If  the  interface  is  declared  as  the
+       default  route  (defaultroute = true), add a default route
+       to the remote address.  If the interface  is  declared  as
+       the  default  route,  remove  this  entry from the routing
+       table.  No action required.  Rewrite static routes via the
+       remote  address as necessary.  Obtain the addresses of DNS
+       name servers, if available. The  default  value  is  true.
+       Filter  outgoing  packets  using the specified filter if a
+       transport is available. If  they  are  passed,  they  will
+       reset  the  PPP  link's time without data counter to 0. If
+       the counter reaches maxidle,  the  bundle  may  be  closed
+       depending  on the number of network control protocols that
+       are idle in  the  bundle.   Defines  the  IP  address  (or
+       resolvable  name)  for  the local end of a PPP link.  If a
+       pool_tag is specified, the value of localopt must  be  set
+       to pool.  The default address is 0.0.0.0.  Defines how the
+       IP address of the local end of a PPP link is to be negoti-
+       ated:  The  remote  end  of  the PPP link must specify the
+       local IP address. This is the default behavior.  Only  the
+       IP address specified by localaddr may be used.  Use any IP
+       address from the Address Allocation Server pool_tag speci-
+       fied  by localaddr.  The IP address specified by localaddr
+       is preferred but the  remote  end  of  the  PPP  link  may
+
+                                                                9
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+       specify  the  local  IP  address.  Filter incoming packets
+       using the specified filter.  Filter outgoing packets using
+       the  specified filter.  Defines the IP address (or resolv-
+       able name) for the  remote  end  of  a  PPP  link.   If  a
+       pool_tag is specified, the value of peeropt must be set to
+       pool.  The default address is 0.0.0.0.  Defines how the IP
+       address  of  the remote end of a PPP link is to be negoti-
+       ated: The remote end of the PPP link must specify  its  IP
+       address.  This  is  the  default  behavior.   Only  the IP
+       address specified by remoteaddr may be used.  Use  any  IP
+       address from the Address Allocation Server pool_tag speci-
+       fied by peeraddr.  The IP address specified by peeraddr is
+       preferred  but  the remote end of the PPP link may specify
+       its IP address.  Selects  whether  to  configure  a  proxy
+       entry in the local ARP table for the remote end of the PPP
+       link.  This allows other hosts on a subnet  to  ``see''  a
+       host  that  is  connected  via a PPP link and which has an
+       address on the same subnet.  The local host  will  respond
+       with its own hardware MAC address when asked for that cor-
+       responding to the remote IP address.  If the host is  also
+       configured  as  a router, it will forward packets that are
+       destined for the remote address.  By default, proxy ARP is
+       disabled  (false).   Defines  whether  Van  Jacobson  (VJ)
+       header compression should be used.  The default  value  is
+       false.   VJ  header compression is not recommended for PPP
+       over ISDN links.  Defines whether slot compression  should
+       be  used if VJ header compression is enabled.  The default
+       value is true. This is suitable when the transport may  be
+       unreliable  but  the  asyh  driver can report lost frames.
+       Set vjslotcomp to false if a  third-party  framing  driver
+       cannot  report  frame loss.  Defines the maximum number of
+       slots available to the VJ  header  compression  algorithm.
+       The  default  value is 16, The minimum and maximum allowed
+       values are 3 and 255.  The following  characteristics  are
+       specific to the Link Control Protocol: Identifies the Link
+       Control Protocol (LCP).  Defines whether address and  con-
+       trol field compression is supported (true) or not (false).
+       The default value is true.  Defines the asynchronous  con-
+       trol character map (see RFC 1662 for details). The default
+       value is 0xffffffff.  The minimum value is 0.  Defines the
+       maximum  number  of  failed samples that are acceptable in
+       the number specified by echosample.  The default value  is
+       2. The minimum and maximum values are 1 and 1000.  Defines
+       the time in seconds between echo requests.  If this  value
+       is  greater than 0, LCP echo requests will be generated to
+       determine link quality every echoperiod seconds.   If  the
+       remote  host  fails  to respond more than echofails out of
+       echosample, the link will be dropped.  The  default  value
+       is  5  seconds.  The  minimum and maximum values are 1 and
+       100.  Defines the number  of  samples  that  are  used  to
+       determine link quality.  The default value is 5. The mini-
+       mum and maximum values are 1 and 100.  Enables the sending
+       of  LCP  messages.  The  default  value  is true.  Defines
+       whether magic number  negotiation  is  enabled  (true)  or
+
+                                                               10
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+       disabled  (false).  The  default  value is true. The magic
+       numbers generated by each end of a link should be  differ-
+       ent. If they are the same, it is probable that the host is
+       trying to create a PPP link to itself.  The  usual  reason
+       for  this  is that the UUCP chat script (see has failed to
+       log in, or PPP on the remote system has  failed  to  start
+       correctly.  Defines the maximum receive unit size for this
+       end of the PPP link (see  RFC  1661  for  a  description).
+       Increasing the value of mru will generally improve perfor-
+       mance on non-interactive sessions as it reduces  the  per-
+       centage of header bytes transmitted.  The default value is
+       1500 bytes. The minimum and maximum  values  are  300  and
+       16384.   Defines  whether  protocol  field  compression is
+       enabled.  The default value is true.
+
+   AAuutthheennttiiccaattiioonn ddeeffiinniittiioonnss
+       Authentication definitions are used to construct  a  local
+       authentication  database.   The  following characteristics
+       are specific to authentication using  the  Challenge-Hand-
+       shake  Authentication  Protocol  (CHAP)  and  the Password
+       Authentication Protocol (PAP): The value assigned to  name
+       must  either be a name corresponding to the ``Name'' field
+       of a CHAP challenge or response, or it must be  a  peer-id
+       corresponding  to the ``Peer-ID'' field of a PAP authenti-
+       cation request.  localsecret defines the  CHAP  secret  or
+       the  PAP  password that a remote host (the peer) must know
+       to authenticate itself with the local host (the  authenti-
+       cator).
+
+       peersecret  defines  the  CHAP  secret or the PAP password
+       that the remote host (the authenticator)  knows  when  the
+       local host (the peer) authenticates with it.
+
+       The  value must either be a secret that is used to compute
+       the ``Value'' field of a CHAP response, or it  must  be  a
+       password  corresponding to the ``Password'' field of a PAP
+       authentication request. It must not contain any NULL char-
+       acters.  Selects whether the name-secret pair will be used
+       for CHAP or PAP authentication.   RFC  1334  advises  that
+       CHAP or PAP passwords be different for the same name.  See
+       for a basic discussion of the operation of CHAP and PAP.
+
+   GGlloobbaall bbuunnddllee ddeeffiinniittiioonnss
+       These characteristics define  default  authentication  and
+       multilink  policies for all bundles.  The tag name must be
+       specified as bundle.  The type attribute must be specified
+       as  bundle.  See for a description of the authname, autht-
+       mout, ed, mrru, peerauthname, requirechap, requirepap, and
+       ssn attributes.
+
+   FFiinniittee ssttaattee mmaacchhiinnee ppaarraammeetteerrss
+       The PPP finite state machine (FSM) provides the underlying
+       support for PPP's control protocols. In order to establish
+       communications  over a PPP link, each end of the link must
+
+                                                               11
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+       first send Link Control Protocol (LCP) packets to  config-
+       ure  the  data  link.  Next, PPP must send Network Control
+       Protocol (NCP) packets to choose and configure one or more
+       network-layer  protocols.  The PPP link remains configured
+       for communications until LCP packets explicitly close  the
+       link or the physical link is dropped. The FSM controls the
+       sequencing of link  establishment,  network  configuration
+       and  link  termination.  Whenever an event occurs, such as
+       receipt of a packet, the control protocol  calls  the  FSM
+       for  the  state  transition  and the appropriate action is
+       invoked.
+
+       The configuration definitions  of  all  control  protocols
+       (IPCP,  LCP  and CCP) can specify the following parameters
+       that control the operation of the FSM: The maximum  number
+       of   retries  allowed  for  configuration  requests.   The
+       default value is 10.  The maximum and minimum values are 1
+       and  100.   The  maximum  number  of NAKs that can be sent
+       without sending an ACK before assuming that  configuration
+       has failed. The default value is 5.  The maximum and mini-
+       mum values are 1 and 100.  The maximum number  of  retries
+       allowed  for termination request.  The default value is 2.
+       The maximum and minimum values are 1 and  100.   The  time
+       allowed  for responses to configuration-request and termi-
+       nation-request packets. The default value  is  3  seconds.
+       The maximum and minimum values are 1 and 300.
+
+   SSiiggnnaalliinngg cchhaannggeess ttoo ppppppdd
+       The  configuration  values  in  the  .pppcfg  file  can be
+       changed at any time using ppptalk (or  the  PPP  Manager).
+       Following  a  reset  on a link or bundle, any changes will
+       take effect when the link or bundle is next brought up.
+
+FFiilleess
+       static host name to IP address translation PPP link  defi-
+       nitions  remote  systems accessible using devices that can
+       be used to access remote systems packet filter definitions
+
+EExxaammpplleess
+       The following are example protocol definitions: # LCP def-
+       initions protocol lcp_A {      protocol = lcp      accm  =
+       0x0      mru = 1500      acfc = enabled      pfc = enabled
+            magic = enabled }
+
+       # CCP definitions protocol ccp_A  {       protocol  =  ccp
+            algorithms = stac_seq }
+
+       protocol  ccp_B  {       protocol  = ccp      algorithms =
+       stac_none }
+
+       algorithm stac_seq {      algorithm = stac      history  =
+       1      checkmode = seq }
+
+       algorithm stac_none {      algorithm = stac      history =
+
+                                                               12
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+       0      checkmode = none }
+
+       # IPCP definitions  protocol  IP1  {       protocol  =  ip
+            localaddr   =  160.136.240.7       localopt  =  force
+            peeraddr = 160.136.240.8      peeropt = force }
+
+       The following are example  authentication  definitions:  #
+       Authentication  definition  auth tag_for_xxx {      name =
+       xxx      peersecret = xxx_secret      protocol = chap }
+
+       # Default authentication entry used when a peer # requests
+       that  we  authenticate  ourselves auth tag_for_this_host {
+            name = myname      localsecret = clydenw       proto-
+       col = chap } The following are example link definitions: #
+       Link definitions link LinkA {      type  =  isdn-async   #
+       asynchronous  ISDN  line  -  first  B  channel       dev =
+       /dev/isdn0      push = pppdlpi      phone = 0800  112  358
+            protocols = lcp_A ccp_A }
+
+       link  LinkB {      type = isdn-async   # asynchronous ISDN
+       line - second B channel      dev = /dev/isdn0      push  =
+       pppdlpi       phone  = 0800 112 359      protocols = lcp_A
+       ccp_A }
+
+       link LinkC  {       type  =  pstn       dev  =  /dev/tty2A
+            phone  =  0800  314  159       pop  = ttcompat ldterm
+            push = asynch      flow = hardware       protocols  =
+       lcp_A }
+
+       link  LinkD  {       type  =  pstn       dev  = /dev/tty2B
+            phone = 0800  314  160       pop  =  ldterm  ttcompat
+            push  =  asynch      flow = hardware      protocols =
+       lcp_A } The following is an example bundle definition that
+       uses some of the previous definitions: # bundle definition
+       bundle Bundle1 {      type = bi-directional      protocols
+       =  IP1       mrru  =  1000      remotesys = annex        #
+       name  of  remote  site  in  Systems  file       bringup  =
+       automatic      #  bring up link automatically      login =
+       tom              # user authenticated by login       links
+       = LinkA LinkB LinkC LinkD    # all these links can be used
+            maxlinks = 2              # but only up to two  at  a
+       time }
+
+    ffiillee ccoonnffiigguurraattiioonn
+       Because  links  from automatic and manual dialup endpoints
+       are made  using  ,  they  require  shared  information  in
+       /etc/ppp.d/.pppcfg,         /etc/uucp/Systems,         and
+       /etc/uucp/Devices.   They  may  also  require  entries  in
+       /etc/hosts  or  DNS  if  this file is used to resolve host
+       names to IP addresses.
+
+       Consider the  following  file  entries  for  an  automatic
+       dialup  endpoint  that must use locally defined remote and
+       local IP addresses: # IPCP definitions protocol IP1 {
+
+                                                               13
+
+pppcfg(4tcp)                                         pppcfg(4tcp)
+
+               protocol = ip
+               localaddr = local_ppp      localopt = force
+               peeraddr = ice_d      peeropt = force }
+
+       outgoing sys1 { }
+
+       bundle Bundle1 {      type  =  out       protocols  =  IP1
+            remotesys = ice      bringup = automatic      links =
+       LinkA  LinkB       maxlinks  =  2       maxidle  =  300  }
+       128.2.129.5      ice_d  128.2.130.7     local_ppp ice  Any
+       ACU 9600 555-1234 "" \r ogin:--ogin:  nppp  word:  Secret1
+       ACU  tty2A - 9600 dialTBIT \T ACU tty2B - 9600 dialTBIT \T
+       In this example, the names of the remote host, ice_d,  and
+       the  local  host,  local_ppp,  must  be  resolvable  to IP
+       addresses.
+
+       The remotesys name in /etc/ppp.d/.pppcfg, ice, has a  cor-
+       responding  entry  in /etc/uucp/Systems so that the device
+       type (ACU), and  connection data can be located.
+
+       There must be at  least  one  suitable  device  listed  in
+       /etc/uucp/Devices  that can be used to obtain a connection
+       to the remote site listed in the Systems  file.   In  this
+       example,  two  suitable  modems  are  available  on  ports
+       /dev/tty2A and /dev/tty2B.
+
+RReeffeerreenncceess
+       RFC 1144, RFC 1172, RFC 1332, RFC 1334, RFC 1548, RFC
+       1618, RFC 1661, RFC 1662, RFC 1877, RFC 1962, RFC 1990
+
+NNoottiicceess
+       You  can use the PPP Internet Connection Manager to set up
+       outgoing link endpoints to remote systems.
+
+       Do not edit the PPP configuration file directly.  use  the
+       PPP Manager or ppptalk to configure PPP.  Use the WAN view
+       of the Network Configuration Manager to configure  modems,
+       ISDN hardware, and entries in UUCP configuration files for
+       incoming and outgoing connections.
+
+       If the remotely assigned IP address for a local PPP inter-
+       face is changed by the remote host,
+        applications  such as telnet which cause a PPP link to be
+       brought up will use an incorrect source IP address in  the
+       header  of  outgoing  IP  datagrams.  This  will cause the
+       applications to time out when the link is brought up.  The
+       next  attempt to connect to the remote host should succeed
+       because IPCP negotiation will  have  adjusted  the  source
+       address of the interface by this time.
+
+                                                               14
+

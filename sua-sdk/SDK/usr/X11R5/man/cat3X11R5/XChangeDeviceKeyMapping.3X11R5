@@ -1,0 +1,142 @@
+XChangeDeviceKeyMapping(3X11R5)          XChangeDeviceKeyMapping(3X11R5)
+
+  XXGGeettDDeevviicceeKKeeyyMMaappppiinngg(())
+
+  NNAAMMEE
+
+    XGetDeviceKeyMapping(), XChangeDeviceKeyMapping() - query or change device
+    key mappings
+
+  SSYYNNOOPPSSIISS
+
+    XChangeDeviceKeyMapping (Display *display, XDevice *device,
+                             int first_keycode, int keysyms_per_keycode,
+                             KeySym *keysyms, int keycode_count,
+    KeySym *XGetDeviceKeyMapping (Display *display, XDevice *device,
+                                  KeyCode first_keycode,
+                                  int keycode_count,
+                                  int *keysyms_per_keycode_return )
+
+  AARRGGUUMMEENNTTSS
+
+    display
+        Specifies the connection to the X server.
+
+    device
+        Specifies the device whose key mapping is to be queried or modified.
+
+    first_keycode
+        Specifies the first KeyCode to be returned.
+
+    keycode_count
+        Specifies the number of KeyCodes to be returned or modified.
+
+    keysyms_per_keycode
+        Specifies the number of KeySyms per KeyCode.
+
+    keysyms_per_keycode_return
+        Specifies the address of a variable into which the number of KeySyms
+        per KeyCode will be returned.
+
+    keysyms
+        Specifies the address of an array of KeySyms.
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    For the specified device, the _XX_GG_ee_tt_DD_ee_vv_ii_cc_ee_KK_ee_yy_MM_aa_pp_pp_ii_nn_gg(3X11R5) request returns
+    the symbols for the specified number of KeyCodes starting with
+    first_keycode. The value specified in first_keycode must be greater than
+    or equal to min_keycode as returned by _XX_LL_ii_ss_tt_II_nn_pp_uu_tt_DD_ee_vv_ii_cc_ee_ss(3X11R5), or a
+    BadValue error results. In addition, the following expression must be less
+    than or equal to max_keycode as returned by _XX_LL_ii_ss_tt_II_nn_pp_uu_tt_DD_ee_vv_ii_cc_ee_ss(3X11R5):
+
+    first_keycode + keycode_count - 1
+
+    If this is not the case, a BadValue error results. The number of elements
+    in the KeySyms list is:
+
+    keycode_count * keysyms_per_keycode_return
+
+    KeySym number N, counting from zero, for KeyCode K has the following index
+    in the list, counting from zero: (K - first_code) *
+    keysyms_per_code_return + N
+
+    The X server arbitrarily chooses the keysyms_per_keycode_return value to
+    be large enough to report all requested symbols. A special KeySym value of
+    NoSymbol is used to fill in unused elements for individual KeyCodes. To
+    free the storage returned by _XX_GG_ee_tt_DD_ee_vv_ii_cc_ee_KK_ee_yy_MM_aa_pp_pp_ii_nn_gg(3X11R5), use
+    _XX_FF_rr_ee_ee(3X11R5).
+
+    If the specified device does not support input class keys, a BadMatch
+    error will result.
+
+    _XX_GG_ee_tt_DD_ee_vv_ii_cc_ee_KK_ee_yy_MM_aa_pp_pp_ii_nn_gg(3X11R5) can generate a BadDevice, BadMatch, or
+    BadValue error.
+
+    For the specified device, the _XX_CC_hh_aa_nn_gg_ee_DD_ee_vv_ii_cc_ee_KK_ee_yy_MM_aa_pp_pp_ii_nn_gg(3X11R5) request
+    defines the symbols for the specified number of KeyCodes starting with
+    first_keycode. The symbols for KeyCodes outside this range remain
+    unchanged. The number of elements in keysyms must be:
+
+    num_codes * keysyms_per_keycode
+
+    The specified first_keycode must be greater than or equal to min_keycode
+    returned by _XX_LL_ii_ss_tt_II_nn_pp_uu_tt_DD_ee_vv_ii_cc_ee_ss(3X11R5), or a BadValue error results. In
+    addition, the following expression must be less than or equal to
+    max_keycode as returned by _XX_LL_ii_ss_tt_II_nn_pp_uu_tt_DD_ee_vv_ii_cc_ee_ss(3X11R5), or a BadValue error
+    results:
+
+    first_keycode + num_codes - 1
+
+    KeySym number N, counting from zero, for KeyCode K has the following index
+    in keysyms, counting from zero:
+
+    (K - first_keycode) * keysyms_per_keycode + N
+
+    The specified keysyms_per_keycode can be chosen arbitrarily by the client
+    to be large enough to hold all desired symbols. A special KeySym value of
+    NoSymbol should be used to fill in unused elements for individual
+    KeyCodes. It is legal for NoSymbol to appear in nontrailing positions of
+    the effective list for a KeyCode. _XX_CC_hh_aa_nn_gg_ee_DD_ee_vv_ii_cc_ee_KK_ee_yy_MM_aa_pp_pp_ii_nn_gg(3X11R5)
+    generates a DeviceMappingNotify event that is sent to all clients that
+    have selected that type of event.
+
+    There is no requirement that the X server interpret this mapping. It is
+    merely stored for reading and writing by clients.
+
+    If the specified device does not support input class keys, a BadMatch
+    error results.
+
+    _XX_CC_hh_aa_nn_gg_ee_DD_ee_vv_ii_cc_ee_KK_ee_yy_MM_aa_pp_pp_ii_nn_gg(3X11R5) can generate a BadDevice, BadMatch,
+    BadAlloc, or BadValue error.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    BadDevice
+        An invalid device was specified. The specified device does not exist
+        or has not been opened by this client with XOpenInputDevice. This
+        error may also occur if the specified device is the X keyboard or X
+        pointer device.
+
+    BadMatch
+        This error may occur if an _XX_GG_ee_tt_DD_ee_vv_ii_cc_ee_KK_ee_yy_MM_aa_pp_pp_ii_nn_gg(3X11R5) or
+        _XX_CC_hh_aa_nn_gg_ee_DD_ee_vv_ii_cc_ee_KK_ee_yy_MM_aa_pp_pp_ii_nn_gg(3X11R5) request was made specifying a device
+        that has no keys.
+
+    BadValue
+        Some numeric value falls outside the range of values accepted by the
+        request. Unless a specific range is specified for an argument, the
+        full range defined by the argument's type is accepted. Any argument
+        defined as a set of alternatives can generate this error.
+
+    BadAlloc
+        The server failed to allocate the requested resource or server memory.
+
+  SSEEEE AALLSSOO
+
+    _X_S_e_t_D_e_v_i_c_e_B_u_t_t_o_n_M_a_p_p_i_n_g()
+
+    _X_S_e_t_D_e_v_i_c_e_M_o_d_i_f_i_e_r_M_a_p_p_i_n_g()
+
+    Programming With Xlib
+

@@ -1,0 +1,167 @@
+XrmLocaleOfDatabase(3X11R6)                 XrmLocaleOfDatabase(3X11R6)
+
+  XXrrmmGGeettFFiilleeDDaattaabbaassee
+
+  NNAAMMEE
+
+    XrmGetFileDatabase, XrmPutFileDatabase, XrmGetStringDatabase,
+    XrmLocaleOfDatabase, XrmGetDatabase, XrmSetDatabase, XrmDestroyDatabase -
+    retrieve and store resource databases
+
+  SSYYNNTTAAXX
+
+    XrmDatabase XrmGetFileDatabase(filename)
+         char *filename;
+
+    void XrmPutFileDatabase(database, stored_db)
+         XrmDatabase database;
+         char *stored_db;
+
+    XrmDatabase XrmGetStringDatabase(data)
+         char *data;
+
+    char *XrmLocaleOfDatabase(database)
+          XrmDatabase database;
+
+    XrmDatabase XrmGetDatabase(display)
+          Display *display;
+
+    void XrmSetDatabase(display, database)
+          Display *display;
+          XrmDatabase database;
+
+    void XrmDestroyDatabase(database)
+          XrmDatabase database;
+
+  AARRGGUUMMEENNTTSS
+
+    filename
+        Specifies the resource database file name.
+
+    database
+        Specifies the database that is to be used.
+
+    stored_db
+        Specifies the file name for the stored database.
+
+    data
+        Specifies the database contents using a string.
+
+    database
+        Specifies the resource database.
+
+    display
+        Specifies the connection to the X server.
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The XXrrmmGGeettFFiilleeDDaattaabbaassee function opens the specified file, creates a new
+    resource database, and loads it with the specifications read in from the
+    specified file. The specified file should contain a sequence of entries in
+    valid ResourceLine format (see section 15.1); the database that results
+    from reading a file with incorrect syntax is implementation-dependent. The
+    file is parsed in the current locale, and the database is created in the
+    current locale. If it cannot open the specified file, XXrrmmGGeettFFiilleeDDaattaabbaassee
+    returns NULL.
+
+    The XXrrmmPPuuttFFiilleeDDaattaabbaassee function stores a copy of the specified database in
+    the specified file. Text is written to the file as a sequence of entries
+    in valid ResourceLine format (see section 15.1). The file is written in
+    the locale of the database. Entries containing resource names that are not
+    in the Host Portable Character Encoding or containing values that are not
+    in the encoding of the database locale, are written in an implementation-
+    dependent manner. The order in which entries are written is
+    implementation-dependent. Entries with representation types other than
+    "String" are ignored.
+
+    The XXrrmmGGeettSSttrriinnggDDaattaabbaassee function creates a new database and stores the
+    resources specified in the specified null-terminated string.
+    XXrrmmGGeettSSttrriinnggDDaattaabbaassee is similar to XXrrmmGGeettFFiilleeDDaattaabbaassee except that it reads
+    the information out of a string instead of out of a file. The string
+    should contain a sequence of entries in valid ResourceLine format (see
+    section 15.1) terminated by a null character; the database that results
+    from using a string with incorrect syntax is implementation-dependent. The
+    string is parsed in the current locale, and the database is created in the
+    current locale.
+
+    If database is NULL, XXrrmmDDeessttrrooyyDDaattaabbaassee returns immediately.
+
+    The XXrrmmLLooccaalleeOOffDDaattaabbaassee function returns the name of the locale bound to
+    the specified database, as a null-terminated string. The returned locale
+    name string is owned by Xlib and should not be modified or freed by the
+    client. Xlib is not permitted to free the string until the database is
+    destroyed. Until the string is freed, it will not be modified by Xlib.
+
+    The XXrrmmGGeettDDaattaabbaassee function returns the database associated with the
+    specified display. It returns NULL if a database has not yet been set.
+
+    The XXrrmmSSeettDDaattaabbaassee function associates the specified resource database (or
+    NULL) with the specified display. The database previously associated with
+    the display (if any) is not destroyed. A client or toolkit may find this
+    function convenient for retaining a database once it is constructed.
+
+  FFIILLEE SSYYNNTTAAXX
+
+    The syntax of a resource file is a sequence of resource lines terminated
+    by newline characters or the end of the file. The syntax of an individual
+    resource line is:
+
+    ResourceLine   =  Comment | IncludeFile | ResourceSpec | <empty line>
+    Comment        =  "!" {<any character except null or newline>}
+    IncludeFile    =  "#" WhiteSpace "include" WhiteSpace FileName WhiteSpace
+    FileName       =  <valid filename for operating system>
+    ResourceSpec   =  WhiteSpace ResourceName WhiteSpace ":" WhiteSpace Value
+    ResourceName   =  [Binding] {Component Binding} ComponentName
+    Binding        =  "." | "*"
+    WhiteSpace     =  {<space> | <horizontal tab>}
+    Component      =  "?" | ComponentName
+    ComponentName  =  NameChar {NameChar}
+    NameChar       =  "a"-"z" | "A"-"Z" | "0"-"9" | "_" | "-"
+    Value          =  {<any character except null or unescaped newline>}
+
+    Elements separated by vertical bar (|) are alternatives. Curly braces
+    ({...}) indicate zero or more repetitions of the enclosed elements. Square
+    brackets ([...]) indicate that the enclosed element is optional. Quotes
+    ("...") are used around literal characters.
+
+    IncludeFile lines are interpreted by replacing the line with the contents
+    of the specified file. The word "include" must be in lowercase. The file
+    name is interpreted relative to the directory of the file in which the
+    line occurs (for example, if the file name contains no directory or
+    contains a relative directory specification).
+
+    If a ResourceName contains a contiguous sequence of two or more Binding
+    characters, the sequence will be replaced with single "." character if the
+    sequence contains only "." characters; otherwise, the sequence will be
+    replaced with a single "*" character.
+
+    A resource database never contains more than one entry for a given
+    ResourceName. If a resource file contains multiple lines with the same
+    ResourceName, the last line in the file is used.
+
+    Any white space characters before or after the name or colon in a
+    ResourceSpec are ignored. To allow a Value to begin with white space, the
+    two-character sequence "\space" (backslash followed by space) is
+    recognized and replaced by a space character, and the two-character
+    sequence "\tab" (backslash followed by horizontal tab) is recognized and
+    replaced by a horizontal tab character. To allow a Value to contain
+    embedded newline characters, the two-character sequence "\n" is recognized
+    and replaced by a newline character. To allow a Value to be broken across
+    multiple lines in a text file, the two-character sequence "\newline"
+    (backslash followed by newline) is recognized and removed from the value.
+    To allow a Value to contain arbitrary character codes, the four-character
+    sequence "\nnn", where each n is a digit character in the range of "0"-
+    "7", is recognized and replaced with a single byte that contains the octal
+    value specified by the sequence. Finally, the two-character sequence "\\"
+    is recognized and replaced with a single backslash.
+
+  SSEEEE AALLSSOO
+
+    _X_r_m_G_e_t_R_e_s_o_u_r_c_e(3X11R6)
+
+    _X_r_m_I_n_i_t_i_a_l_i_z_e(3X11R6)
+
+    _X_r_m_P_u_t_R_e_s_o_u_r_c_e(3X11R6)
+
+    Xlib - C Language X Interface
+

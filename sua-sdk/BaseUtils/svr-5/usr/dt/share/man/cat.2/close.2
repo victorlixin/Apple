@@ -1,0 +1,83 @@
+
+
+close(2)                                                 close(2)
+
+SSyynnooppssiiss
+       #include <unistd.h>
+
+       int close(int fildes);
+
+DDeessccrriippttiioonn
+       close closes a file.  fildes is a file descriptor obtained
+       from a creat, open, dup, fcntl,  pipe,  or  iocntl  system
+       call.   close  closes  the  file  descriptor  indicated by
+       fildes.  All outstanding record locks owned by the process
+       (on the file indicated by fildes) are removed.
+
+       Closing  a  file  descriptor  removes one reference to the
+       associated file.  When there are no more outstanding  ref-
+       erences  to  the  file,  if  the link count of the file is
+       zero, the space occupied by the file shall  be  freed  and
+       the file shall no longer be accessible.
+
+       If  a STREAMS-based [see fildes is closed, and the calling
+       process had previously registered  to  receive  a  SIGPOLL
+       signal  [see  for  events associated with that stream [see
+       I_SETSIG in the calling process will be  unregistered  for
+       events  associated  with the stream.  The last close for a
+       stream causes the stream associated with fildes to be dis-
+       mantled.   If  N_NDELAY and O_NONBLOCK are clear and there
+       have been no signals posted for the stream, and  if  there
+       are data on the module's write queue, close waits up to 15
+       seconds (for each module and driver)  for  any  output  to
+       drain  before  dismantling the stream.  The time delay can
+       be changed via an I_SETCLTIME ioctl request [see If O_NDE-
+       LAY or O_NONBLOCK is set, or if there are any pending sig-
+       nals, close does not wait for output to drain, and disman-
+       tles the stream immediately.
+
+       If  fildes  is associated with one end of a pipe, the last
+       close causes a hangup to occur on the  other  end  of  the
+       pipe.   In addition, if the other end of the pipe has been
+       named [see the last close  forces  the  named  end  to  be
+       detached [see If the named end has no open processes asso-
+       ciated with it and becomes detached, the stream associated
+       with that end is also dismantled.
+
+       If  filedes refers to a socket, close causes the socket to
+       be destroyed.  If the socket is  connection-oriented,  and
+       SO_LINGER  is  set  for  the  socket,  and  the socket has
+       untransmitted data, then close will block for  up  to  the
+       current linger interval until all data is transmitted.
+
+   RReettuurrnn vvaalluueess
+       On success, close returns 0.  On failure, close returns -1
+       and sets errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, close fails  and  sets  errno
+
+                                                                1
+
+close(2)                                                 close(2)
+
+       to:  fildes is not a valid open file descriptor.  A signal
+       was caught during the close system call.  fildes is  on  a
+       remote  machine  and the link to that machine is no longer
+       active.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Open file descriptors are global to the process and acces-
+       sible  to  any  sibling  thread.   If  used  concurrently,
+       actions by one thread can interfere with those of  a  sib-
+       ling.
+
+       A  close  executed  by  one  thread  will  render the file
+       descriptor unusable by all  siblings.   The  close  system
+       call  will  block  a  thread that attempts to close a file
+       descriptor that is in use (mid-system call) by a  sibling.
+
+                                                                2
+

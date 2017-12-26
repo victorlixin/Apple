@@ -1,0 +1,281 @@
+#
+# Interix postinstall
+#
+# Do some post installation cleanup
+#
+
+# 
+# there should be an /etc/mail/aliases file installed.
+# If so, then we need to run 'newaliases' to generate the .db file
+#
+if [ -f /etc/mail/aliases -a ! -f /etc/mail/aliases.db ]; then
+    echo "postinstall: running newaliases"
+    (cd /etc/mail; /usr/sbin/newaliases)
+fi
+
+
+# resolv.conf
+# If /etc/resolv.conf doesn't exist, we need to install one 
+# suitable for use by this local system
+#
+typeset -ir MAXNS=3
+typeset -i countNS=0
+typeset -ir MAX_DNS_SUFFIX=6
+typeset -i countDnsSuffix=0
+typeset -ir MAX_DNS_SUFFIX_CHAR=256
+typeset -i countDnsSuffixChar=0
+typeset -i dnsSuffixDone=0
+typeset -i dnsServerDone=0
+typeset LINE=
+typeset index=
+typeset dnsSuffix=
+typeset dnsServer=
+typeset dnsSuffixList=
+typeset dnsServerList=
+file=/etc/resolv.conf
+
+if [ ! -f ${file} ]; then
+
+    echo "*****************"
+    date
+    echo "postinstall: creating $file"
+
+
+    # create /etc/resolv.conf
+    touch ${file}
+    
+	# now set the content of the /etc/resolv.conf file
+	#
+	function SearchForDnsSuffix {
+		if [[ $LINE = *"DNS Suffix"* ]]
+		then
+			dnsSuffix=$(/bin/echo ${LINE#*:} | /bin/sed 's/ //')
+			CheckIfExistingDnsSuffix
+			index=$?
+			if [[ $index != -1 ]]
+			then
+				if ((  $(($(/bin/echo ${dnsSuffix} | /bin/wc -c)+countDnsSuffixChar)) < $MAX_DNS_SUFFIX_CHAR ))
+				then
+					dnsSuffixList[$index]=$dnsSuffix
+					((countDnsSuffix+=1))
+					((countDnsSuffixChar+=$(/bin/echo ${dnsSuffix} | /bin/wc -c)))
+				else
+					dnsSuffixDone=1
+				fi
+			fi
+		fi
+	}
+
+	function CheckIfExistingDnsSuffix {
+		typeset -i num
+		typeset -i i=0
+		num=${#dnsSuffixList[@]}
+		while (($i < $num))
+		do
+			if [[ ${dnsSuffixList[$i]} = "" ]]
+			then
+				return $i
+			elif [[ ${dnsSuffixList[$i]} = $dnsSuffix ]]
+			then
+				return -1
+			fi
+	        	((i+=1))
+		done
+		return $i
+	}
+
+	function SearchForDnsServer {
+		        if [[ $LINE = *"DNS Servers"* ]]
+		        then
+		              dnsServer=$(/bin/echo ${LINE#*:} | /bin/sed 's/ //')
+				CheckIfExistingDnsServer $dnsServer
+				index=$?
+				if [[ $index != -1 ]]
+				then	
+					((countNS+=1))
+					dnsServerList[$index]=$dnsServer
+				fi
+				while read LINE
+				do
+					if [[ $LINE != *:* ]] && (( $countNS < $MAXNS ))
+					then
+						CheckIfExistingDnsServer $LINE
+						index=$?
+						if [[ $index != -1 ]]
+						then	
+							((countNS+=1))
+							dnsServerList[$index]=$LINE
+						fi
+					else
+						if (( $dnsSuffixDone == 0 )) && (( $countDnsSuffix < $MAX_DNS_SUFFIX )) && (( $countDnsSuffixChar < $MAX_DNS_SUFFIX_CHAR ))
+						then
+							SearchForDnsSuffix
+						else
+							dnsSuffixDone=1
+						fi
+						break
+					fi
+				done
+		        fi
+	}
+
+	function CheckIfExistingDnsServer {
+		typeset -i num
+		typeset -i i=0
+		num=${#dnsServerList[@]}
+		while (($i < $num))
+		do
+			if [[ ${dnsServerList[$i]} = "" ]]
+			then
+				return $i
+			elif [[ ${dnsServerList[$i]} = $1 ]]
+			then
+				return -1
+			fi
+	        	((i+=1))
+		done
+		return $i
+	}
+
+	function WriteDnsSuffixAndServer {
+		/bin/echo "# This file was automatically generated on " \
+			$(date) >> ${file}
+	    	/bin/echo "#" >> ${file}
+		/bin/echo "search" ${dnsSuffixList[@]} >> ${file}
+	      	typeset -i num
+	       typeset -i i=0
+	       num=${#dnsServerList[@]}
+	       while (($i < $num))
+	       do
+			/bin/echo "nameserver" ${dnsServerList[$i]} >> ${file}
+			((i+=1))
+	       done
+		/bin/echo "lookup file bind" >> ${file}
+	}
+
+	/usr/contrib/win32/bin/ipconfig /all > ipconfig.out
+
+	while read LINE
+	do
+		if (( $dnsSuffixDone == 0 )) && (( $countDnsSuffix < $MAX_DNS_SUFFIX )) && (( $countDnsSuffixChar < $MAX_DNS_SUFFIX_CHAR ))
+		then
+			SearchForDnsSuffix
+		else
+			dnsSuffixDone=1
+		fi
+		if (( $dnsServerDone == 0 )) && (( $countNS < $MAXNS ))
+		then
+			SearchForDnsServer
+		else
+			dnsServerDone=1
+		fi	        
+		if (( $dnsSuffixDone == 1 )) && (( $dnsServerDone == 1 ))
+		then
+			break
+		fi
+	done < ipconfig.out
+
+	rm -f ipconfig.out
+
+	WriteDnsSuffixAndServer
+fi
+
+# 
+# update /etc/inetd.conf
+#
+file=/etc/inetd.conf
+
+if [ -f $file ]; then
+    echo "*****************"
+    date
+    echo "postinstall: checking contents of $file"
+
+   #
+   # check for old version
+   #
+   grep '^pop	stream	tcp	nowait' $file > /dev/null 2>&1
+   if [ $? = 0 ]; then
+	# found an intermediate version. (but post Interix2.2)
+	# Need to update "pop" to "pop3"
+	#
+	chmod u+w $file
+	ex $file > /dev/null 2>&1 << 'EOF'
+:/pop	stream	tcp	nowait	NULL/
+:s/pop/pop3/
+:w
+:q
+EOF
+	chmod u-w $file
+   else
+	# no "pop" entry. 
+	# So check for "pop3" entry.
+	# if no "pop3" or "camp-pop3" entry, then we have a really old version
+	# circa Interix 2.2. So we need to add pop3 entry.
+	# (we check for both commented and non-commented entries)
+	#
+       grep -E '^#*pop3	stream|^#*camp-pop3	stream' $file > /dev/null 2>&1
+
+       if [ $? != 0 ];  then
+	   # no pop3 entry. Need to add one
+	   #
+	   chmod u+w $file
+	   str=$(printf "\n\n# upgrade patch. Appending pop3 service\n#\ncamp-pop3\tstream\ttcp\tnowait\tNULL\t/usr/sbin/popper\tpopper")
+	   echo "$str" >> $file
+	   #
+	   # note: this chmod will make the file read-only for the owner.
+	   #     Which may be different than what the SUA SDK installer did
+	   #
+	   chmod u-w $file
+       fi
+   fi
+fi
+
+
+#
+# **** fix up old Interix2.2 cron service entries.
+#   Just disable them
+#
+echo "*****************"
+date
+echo "postinstall: disabling Interix2.2 cron services"
+jobs=$(/bin/service list | awk '/cron_/ && /\/cron1/ {print $2}')
+if [ $? = 0 ]; then
+    for i in $jobs; do
+       /bin/service update -n "$i" -s manual 
+    done
+fi
+
+#
+# ********** fix case sensitivity problem in PERL (perldoc actually) *****
+#
+# Perldoc wants to see two directories:  Pod/ and pod/ 
+# located in lib/perl5/5.6.1.
+#
+# But since Perl is installed using a case-insensitive Windows installer,
+# this isn't possible via the installer.
+# So we need to fix it here.
+#
+
+PERLDIR=/usr/local/lib/perl5/5.6.1
+
+#
+# First, check if Perl is actually installed (look for .../Pod/ directory)
+#
+if [ -d ${PERLDIR}/Pod ]; then
+
+    # now check if lowercase pod/ directory exists.
+    #
+    if [ -d /usr/local/lib/perl5/5.6.1/pod ]; then
+        # lowercase directory exists. So we're done.
+        # NOTE: this will be true on a FAT filesystem 
+	# even when 'pod/' doesn't really exist.
+	# But that's ok.
+	#
+        :   # do nothing
+    else
+	# pod/ doesn't exist.  So create a lowercase symlink 
+	# to the existing uppercase directory
+	#
+        ( cd ${PERLDIR}; ln -s ./Pod pod )
+    fi
+fi

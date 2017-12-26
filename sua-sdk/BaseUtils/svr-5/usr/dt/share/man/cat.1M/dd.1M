@@ -1,0 +1,165 @@
+
+
+dd(1M)                                                     dd(1M)
+
+SSyynnooppssiiss
+       dd [option=value] . . .
+
+DDeessccrriippttiioonn
+       dd copies the specified input file to the specified output
+       with possible conversions.  The standard input and  output
+       are used by default.  The input and output block sizes may
+       be specified to take advantage of raw  physical  I/O.   dd
+       processes  supplementary  code set characters according to
+       the locale specified in the LC_CTYPE environment  variable
+       (see  LANG  on  except  as noted below.  values input file
+       name; standard input is default.  output file name;  stan-
+       dard  output  is  default.  If the seek=expr conversion is
+       not also specified, the  output  file  will  be  truncated
+       before  the copy begins, unless conv=notrunc is specified.
+       If the seek=expr conversion is specified, but conv=notrunc
+       is  not,  the  effect  of the copy will be to preserve the
+       blocks in the output file over  which  dd  seeks,  but  no
+       other  portion  of the output file will be preserved.  (If
+       the size of the seek plus the size of the  input  file  is
+       less than the previous size of the output file, the output
+       file will be shortened by the copy.)  input block  size  n
+       bytes  (default  512).  output block size n bytes (default
+       512).  set both input and output block  size,  superseding
+       ibs and obs; also, if no conversion is specified, preserve
+       the input block size instead of packing short blocks  into
+       the output buffer (this is particularly efficient since no
+       in-core copy need be done).  conversion buffer size (logi-
+       cal  record  length).   copy and concatenate n input files
+       before terminating (makes sense only where input is a mag-
+       netic tape or similar device).  skip n input blocks before
+       starting copy (appropriate for magnetic tape, where  iseek
+       is undefined).  seek n blocks from beginning of input file
+       before copying (appropriate for disk files, where skip can
+       be  slow).   seek  n  blocks from beginning of output file
+       before copying.  identical to oseek, retained for backward
+       compatibility.  copy only n input blocks.  Perform charac-
+       ter conversions as specified by one  or  more  comma-sepa-
+       rated  value  arguments,  as  follows:  convert  EBCDIC to
+       ASCII.  Conversion results cannot be assured when  supple-
+       mentary  code  set  characters are also subject to conver-
+       sion.  Cannot be specified with ebcdic  or  ibm.   convert
+       ASCII  to  EBCDIC.   Conversion  results cannot be assured
+       when supplementary code set characters are also subject to
+       conversion.   Cannot  be  specified  with  ascii  or  ibm.
+       slightly different map of  ASCII  to  EBCDIC.   Conversion
+       results  cannot  be  assured  when  supplementary code set
+       characters are also  subject  to  conversion.   Cannot  be
+       specified  with  ascii or ebcdic.  convert new-line termi-
+       nated ASCII records to fixed length.  convert fixed length
+       ASCII  records to new-line terminated records.  map alpha-
+       betics to lower case.  Multibyte characters are  not  con-
+       verted.  map alphabetics to upper case.  Multibyte charac-
+       ters are not converted.  swap every pair of bytes.  do not
+
+                                                                1
+
+dd(1M)                                                     dd(1M)
+
+       stop  processing  on  an  error  (limit  of  5 consecutive
+       errors).  Do  not  truncate  the  output  file.   Preserve
+       blocks  in  the output file not explicitly written by this
+       invocation of the dd utility.   (See  also  the  preceding
+       of=file  operand.)   pad  every  input block to ibs, using
+       spaces if conv=block os  also  specified,  otherwise  NULL
+       characters.   Where sizes are specified, a number of bytes
+       is expected.  A number may end with k, b, or w to  specify
+       multiplication by 1024, 512, or 2, respectively; a pair of
+       numbers may be separated by x to indicate  multiplication.
+
+       cbs  is used only if ascii, ebcdic, ibm, block, or unblock
+       conversion is specified.  In  the  first  two  cases,  cbs
+       characters  are  copied  into  the  conversion buffer, any
+       specified character mapping is done, trailing  blanks  are
+       trimmed,  and  a new-line is added before sending the line
+       to the output.  In the latter three cases, characters  are
+       read  into  the  conversion buffer and blanks are added to
+       make up an output record of size cbs.  If cbs is  unspeci-
+       fied  or  zero, the ascii, ebcdic, and ibm options convert
+       the character set without changing the block structure  of
+       the  input  file;  the  unblock and block options become a
+       simple file copy.
+
+       After completion, dd reports the number of whole and  par-
+       tial input and output blocks.
+
+FFiilleess
+       language-specific message file (see LANG on
+
+UUssaaggee
+       This  command will read an EBCDIC tape blocked ten 80-byte
+       EBCDIC card images per tape block into the ASCII  file  x:
+       dd if=/dev/rmt* of=x ibs=800 obs=8k cbs=80 conv=ascii,lcase
+       Note the use of  raw  magnetic  tape.   dd  is  especially
+       suited  to  I/O  on  the  raw  physical devices because it
+       allows reading and writing in arbitrary block sizes.  Note
+       also  that  /rmt*  represents the raw magnetic tape device
+       name.
+
+       Reading from  magnetic  tape  in  any  fixed-length  block
+       length besides the block length that the media was written
+       in originally will cause an I/O error.   If  you  want  to
+       read  a tape that was written using a block-length besides
+       the default of 512, you must use the command to either set
+       the block-length of the drive to match the block length of
+       the media or to set the drive into variable  block  length
+       mode.
+
+EExxiitt ccooddeess
+       The  following  messages  are  written  to standard error.
+       written only if n is larger than 0;  if POSIX2 is  set  in
+       the  current  environment,  then  n truncated record(s) is
+       written  instead  numbers  of  full  and  partial   blocks
+
+                                                                2
+
+dd(1M)                                                     dd(1M)
+
+       read(written)
+
+RReeffeerreenncceess
+NNoottiicceess
+       Reading  from  magnetic  tape  in  any  fixed-length block
+       length, besides the block length that the media was  writ-
+       ten  in  originally, will cause an I/O error.  In order to
+       read a tape that  was  written  using  some  block  length
+       besides  the default of 512, use the command to either set
+       the block length of the drive to match the block length of
+       the  media, or to set the drive into variable block length
+       mode.
+
+       Do not use dd to copy files between  file  systems  having
+       different block sizes.
+
+       dd  does not always require block sizes that are in multi-
+       ples of 512 bytes.  Block size is  device  dependent.   If
+       input  data blocks are not a multiple of 512, however, the
+       read side will have no error messages, but the write  side
+       might  have  a ``write error'' message.  dd transfers cor-
+       rectly if the input data block sizes  are  a  multiple  of
+       512.
+
+       Using  a   blocked  device  to  copy a file will result in
+       extra nulls being added to the file to pad the final block
+       to the block boundary.
+
+       Using dd with a cartridge tape is not recommended.
+
+       Using  variable-length  block  mode  when writing magnetic
+       tapes is discouraged because it may not work correctly  in
+       releases before SVR4.2 MP.  Magnetic tape should always be
+       written in fixed-length block mode, even  though  you  are
+       free  to  change  the  default fixed-block length from 512
+       bytes to any other fixed-block mode the  tape  drive  sup-
+       ports.
+
+       This command has been updated to handle files greater than
+       2GB.
+
+                                                                3
+

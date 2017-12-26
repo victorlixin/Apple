@@ -1,0 +1,142 @@
+
+
+spm(1Mcert)                                           spm(1Mcert)
+
+SSyynnooppssiiss
+       spm [options] -r | -s -a address -n device start
+       spm [-v] -n /dev/whatever status
+       spm -n /dev/whatever abort
+
+DDeessccrriippttiioonn
+       The  STREAMS Performance Analyzer for MDI (spm) accurately
+       measures performance of a network driver.  It sends frames
+       directly to the MDI driver, bypassing the dlpi module, and
+       can measure both send and receive speeds.
+
+   OOppttiioonnss
+       Number of frames at each size.  Default is 40000.   OR  in
+       ROUTE_INDICATOR;  used only with FDDI and token ring.  Set
+       debug to decimal level This is the sender  process.   This
+       is the receiver process.  dev/netX device to use Show ver-
+       bose status; used only with status command.   MAC  address
+       of  remote  machine.   sap  in frames(default=0x911) blast
+       number of frames indicated by  the  -c  option  and  quit.
+       This  is used only with the -s option (sender process) and
+       is not valid for ISDN devices.  Build long chained  struc-
+       tures  to  verify  that  the driver uses the function cor-
+       rectly.  This is valid only with the -o option.
+
+   RRuunnnniinngg ssppmm
+       Use the utility to install all  network  adapter  drivers.
+       It  is possible to run spm without this step, but you will
+       have to manually edit the /etc/ap/spam.ap  file  later  if
+       you  do  not use netcfg to configure the drivers.  Install
+       the  ndtest  package.   This  creates  the  ndcert   user,
+       installs  the  spam  driver into the system, and edits the
+       /etc/conf/pack.d/spam/space.c file  to  allow  the  ndcert
+       user to use spm.  If you have added or removed any network
+       drivers since installing the  ndtests  package,  you  must
+       edit  the /etc/ap/spam.ap file so that it matches the con-
+       tents of the /dev/mdi directory.  Shut down and reboot the
+       machine  to  single  user  mode  (initstate=s).   Edit the
+       /stand/boot or file if you will be doing this often.   Use
+       the  command  to  bring  all additional processors online.
+       Type: nd start You'll see messages like the  following  in
+       the kernel putbuf array or on the system console: %spam  -
+       -  -  -  CPU family=%d drv_usecwait says XX Mhz  CPU  Mes-
+       sages  like the following will be displayed on the console
+       when dlpid opens the device: NOTICE: spamopen:  queue  for
+       <driver_name>  is 0x%x Type ndstat on both machines to see
+       the MAC address to use.  Initialize spm first on the send-
+       ing  machine  and  then  on the receiving machine.  If you
+       start the receiver first, it will time out waiting for the
+       sender  to  go  online.  spm will still work, but you will
+       have to wait up to 10 seconds longer to get valid informa-
+       tion.
+
+       For  example,  if the MAC address of the receiving machine
+       is  01:02:03:04:05:06,  the  spm  process  on  the  sender
+
+&geminiREL;                                                     1
+
+spm(1Mcert)                                           spm(1Mcert)
+
+       machine  might  be started with the following command: spm
+       -c 30000 -s -n /dev/net0 -a 01:02:03:04:05:06 start If the
+       MAC  address  of the sending machine is 06:05:04:03:02:01,
+       the spm process on the receiver machine might  be  started
+       with  the  following command: spm -c 30000 -r -n /dev/net0
+       -a 06:05:04:03:02:01  start  To  blast  full-sized  frames
+       repeatedly, issue the following command: spm -c 1000000 -s
+       -n /dev/net0 -a 01:02:03:04:05:06 -o start To see if  your
+       driver  can handle weird structures, use a command such as
+       the  following:  spm  -c  1000000  -s  -n   /dev/net0   -a
+       01:02:03:04:05:06 -o -l start To abort a test in progress,
+       use the command: spm -n /dev/net0 abort When the  test  is
+       done,  issue  the following command on both the sender and
+       the receiver machines to see the results of the  test  and
+       save  them  to a file: spm -n /dev/net0 status  > filename
+       This can be very useful to show performance in your driver
+       as development progresses.
+
+       This  can also be done while the test is running, but will
+       slow things down a bit and skew the results for some  num-
+       ber  of frames, since they are being measured by the RDTSC
+       instruction.
+
+   WWhhaatt ssppmm ddooeess
+       spm is written as a STREAMS module.  It is  autopushed  by
+       the  kernel when dlpid opens the /dev/mdi device, silently
+       passing all frames between the MDI  driver  and  the  dlpi
+       module.   When  the  spam  module receives a "start" ioctl
+       from the spm utility, it prevents frames  from  dlpi  from
+       going  to  the MDI driver and begins sending frames on the
+       wire according to the configuration  information.   During
+       the  testing  period, any frames received on the wire that
+       are not to the  testing  SAP  (set  with  the  -q  option,
+       default=0x911),  are  discarded.   However, you should run
+       spm on a isolated network for best results, since extrane-
+       ous  traffic  can skew the performance results.  spm sends
+       frames with a small frame size up  to  full-sized  frames,
+       allowing  both  the  sender  and the receiving machines to
+       exercise the driver's capabilities.
+
+       On the receiving side, spm sends a configuration frame  to
+       the  sender.  This frame effectively says, "please send me
+       x frames of size y".  The receiving side  then  waits  for
+       the  first  frame  to  arrive.   If, after 10 seconds, the
+       first frame has not arrived, it then sends another config-
+       uration  frame  to  the  sender.  Upon receiving the first
+       frame, spm starts the clock running.  spm stops the  clock
+       when  either  all  frames  have been received or 5 seconds
+       elapse without receiving  a  frame.   The  receiving  side
+       ignores any frames of the wrong size.
+
+       On  the sending side, spm waits to receive a configuration
+       frame from the receiver.  Upon receiving one,  spm  starts
+       the  clock,  blasts  the  number  of desired frames to the
+
+&geminiREL;                                                     2
+
+spm(1Mcert)                                           spm(1Mcert)
+
+       receiver, and stops the clock when either the  last  frame
+       has  been  freed  or  a  new  configuration frame from the
+       receiver is received by the sender.
+
+EErrrroorr hhaannddlliinngg
+       If spm encounters an error while testing, it times out and
+       tries the next large frame size.  The receive counters are
+       zeroed when this happens, but spm will continue to execute
+       until it is aborted with an explicit command.
+
+FFiilleess
+       Binary for spm user program.  Autopush configuration file
+
+HHaarrddwwaarree rreeqquuiirreemmeennttss
+       Pentium or later
+
+RReeffeerreenncceess
+
+&geminiREL;                                                     3
+

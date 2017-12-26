@@ -1,0 +1,465 @@
+
+
+grafinfo(4dsp)                                     grafinfo(4dsp)
+
+SSyynnttaaxx
+       /* Header section */
+         VENDOR   vendor_name    "string"
+          MODEL    adapter_model  "string"
+           CLASS    class          "string"
+            MODE     name           "string"
+
+              MEMORY([name], base_addr, length);
+              PORT(port_range[ ,port_range...]);
+
+       /* Parameter definitions */
+              DATA {
+                   XDRIVER        = "name_of_driver";
+                   VISUAL         = "visual_type";
+                   DEPTH          = "number_of_planes";
+                   PIXWIDTH       = "horizontal_pixel_count";
+                   PIXHEIGHT      = "vertical_pixel_count";
+                   [PIXBYTES]     = "bytes_per_raster_line";]
+                   [VIDSCRIPT]            =        "/usr/lib/vid-
+       conf/scripts/script";]
+                   [RGBBITS]                                    =
+       "red_green_blue_bits_per_pixel";]
+                   [...]          = as_defined_per_driver"
+                   }
+
+       /* Procedure definitions */
+              PROCEDURE    SetGraphics
+                   {
+                   commands and variables
+                   }
+
+              PROCEDURE    SetText
+                   {
+                   commands and variables
+                   }
+
+              PROCEDURE    driver_defined_procedure
+                   {
+                   commands and variables
+                   }
+
+DDeessccrriippttiioonn
+       A  grafinfo  file  describes  a  graphics  adapter that is
+       attached to a graphics chip  that  is  controlled  by  the
+       server.   grafinfo files are used to configure the operat-
+       ing system for different classes of graphics adapters  and
+       to supply adapter-specific information to the X server.
+
+       grafinfo  files also contain resolution and depth informa-
+       tion for each supported graphics adapter.  If your  graph-
+       ics  adapter has memory mapped registers or a frame buffer
+       that is visible in PC address space, then this information
+       is stored in the grafinfo file.
+
+                                                                1
+
+grafinfo(4dsp)                                     grafinfo(4dsp)
+
+       grafinfo  files  must  be located in the /usr/lib/grafinfo
+       directory, in  a  subdirectory  whose  name  matches  ven-
+       dor_name  in  the file.  The file itself is named to match
+       the adapter_model string with a .xgi suffix.
+
+       The file is divided into three main sections: defines  the
+       vendor,  model,  class, and resolution mode as well as the
+       text that appears when  running  the  Video  Configuration
+       Manager.   It  also  defines  the  memory  and  I/O ports.
+       define parameters that are unique to a particular graphics
+       adapter mode provide information to specific routines that
+       are coded in the  graphics  driver.   All  grafinfo  files
+       require  procedures  to support the and routines to switch
+       the device between graphics and text mode.   The  graphics
+       driver determines other procedures that are required.
+
+   HHeeaaddeerr sseeccttiioonn
+       vendor  for  the graphics adapter.  The first field is the
+       name of the vendor, in either uppercase or lowercase  let-
+       ters.   The  name of the vendor must match the name of the
+       /usr/lib/grafinfo subdirectory in which the grafinfo  file
+       is  located.   The  second field is the vendor description
+       (up to 20 characters) that will be used in the Video  Con-
+       figuration  Manager  prompts.   By convention, one leading
+       space precedes the VENDOR string.  the vendor's  model  of
+       the  device.  The first field must be the same as the name
+       of the grafinfo file (minus the .xgi suffix).  The  second
+       field  is the model description (up to 20 characters) that
+       will be used in the Video Configuration  Manager  prompts.
+       By  convention,  two  leading  spaces  precede  the  MODEL
+       string.  field used by the X server and  the    kernel  to
+       determine  the  physical  memory  and I/O port address and
+       size requirements of the driver.  If your graphics adpator
+       uses  different  I/O ports and frame buffer addresses than
+       the IBM VGA, then you will  need  to  use  either  another
+       existing  CLASS  string  or define a new class.  The Video
+       Configuration Manager creates the new class, if necessary,
+       from the information provided here.
+
+       The first field is the name of the graphics adapter class,
+       in uppercase or lowercase letters.  The  second  field  is
+       the  class  description (up to 20 characters) that will be
+       used in the Video Configuration Manager prompts.  By  con-
+       vention,  three  leading  spaces precede the CLASS string.
+       specifies the resolution and depth at which this  grafinfo
+       entry  will  set the graphics adapter.  The first field is
+       the mode name, which can be used to indicate  one  of  the
+       various  resolutions, numbers of colors, and other display
+       characteristics that this device supports.  By convention,
+       the  mode  name  uses the following format: width x height
+       [-colors] [-refresh_rate]  [-other_characteristics]  width
+       and  height of the display, in pixels.  These should match
+       the values of the PIXWIDTH and  PIXHEIGHT  fields  in  the
+       DATA section and the way the graphics adapter is set up in
+
+                                                                2
+
+grafinfo(4dsp)                                     grafinfo(4dsp)
+
+       the SetGraphics procedure.  number of colors if  the  dis-
+       play  is  not  monochrome.   vertical refresh rate if more
+       than one rate is supported.  any other feature  that  dis-
+       tinguishes  this  mode  from another mode supported by the
+       adapter, such as -I for an interlaced display.
+
+       The second field is the mode description (up to 40 charac-
+       ters) that will be used in the Video Configuration Manager
+       prompts.  By convention, four leading spaces must  precede
+       the MODE string.  declares physical memory ranges that are
+       accessed by the graphics adapter driver.  There can be one
+       unnamed  memory  range  and  multiple named memory ranges.
+       The graphics adapter driver uses the names to  access  the
+       memory  ranges,  so the names must match those expected by
+       the driver.  MEMORY ranges  must  be  page-aligned  on  4K
+       boundaries.   The  PORT  and  MEMORY  commands  define the
+       device class.  By convention, five leading spaces  precede
+       the MEMORY string.
+
+       Use  the  routine  to access this information: grafGetMem-
+       Info(grafinfo, NULL, NULL, NULL, &memory_ptr) declares the
+       I/O  ports that are accessed by the procedures that follow
+       this command.  The PORT and  MEMORY  commands  define  the
+       device class.
+
+       port_range  can be expressed as one of the following: sin-
+       gle port at port range of ports from startport to endport,
+       inclusive.   range  of  count ports starting at startport.
+       range of ports from 0x3B0 to 0x3DF 8514 ports,  for  exam-
+       ple:  0x2E8:6,  0x6E8:2,  0xAE8:2, 0xEE8:2.  Multiple port
+       ranges can be specified in one command
+
+   PPaarraammeetteerr ddeeffiinniittiioonnss
+       The parameter  definitions  are  defined,  one  per  line,
+       within  a  DATA  statement.  Each parameter definition has
+       the following format: parameter_name  =  value  ;  parame-
+       ter_name  can  be  any  string that does not conflict with
+       other parameters or keywords.   The  following  parameters
+       are  defined  for  all graphics drivers. There may also be
+       parameters specific to a given driver which are not  docu-
+       mented  here.  name of the graphics driver for the chip on
+       which this adapter runs.  This  name  corresponds  to  the
+       driver  name that forms the root of the driver source tree
+       and that is used as a prefix for driver routines.   visual
+       type  of  the graphics adapter, enclosed in double quotes.
+       Legal values are:
+       PseudoColor   TrueColor   DirectColor
+       StaticColor   GrayScale   StaticGray
+       number of planes.  number of  pixels  horizontally.   This
+       value  must match the resolution set up in the SetGraphics
+       procedure and should match the values encoded in the  MODE
+       command.   number  of  pixels vertically.  This value must
+       match the resolution set up in the  SetGraphics  procedure
+       and  should  match the values encoded in the MODE command.
+
+                                                                3
+
+grafinfo(4dsp)                                     grafinfo(4dsp)
+
+       For  example:  Mode     640x480-16    "640x480   16-color"
+                  ...                    PIXWIDTH           =640;
+                  PIXHEIGHT           =480;                   ...
+                  r0  = 0x0012;            int10 (r0,1);   /* Put
+       in 640x480 16-color mode  */  full  pathname  of  a  shell
+       script  that  is run when the graphics adapter is selected
+       from the Video Configuration Manager.  Only the first VID-
+       SCRIPT  command  found  in  the DATA section of a grafinfo
+       file is  used.   Typically,  the  VIDSCRIPT  shell  script
+       prompts the user for further installation information spe-
+       cific to the selected adapter, such as the I/O  port  base
+       address  and  memory  window address.  VIDSCRIPT uses this
+       installation information to modify  an  existing  grafinfo
+       file or to generate a new grafinfo file.
+
+       VIDSCRIPT   shell  scripts  are  usually  located  in  the
+       /usr/lib/vidconf/scripts directory.  The shell script must
+       have  execute permission and should exit with a value of 0
+       (zero) if it is successful.  A non-zero exit status causes
+       the  Video  Configuration  Manager  to  return to the main
+       screen and does not allow the user to  select  an  adapter
+       mode.
+
+       If the VIDSCRIPT script modifies kernel tunable parameters
+       or installs a device driver, the kernel must be  relinked.
+       The   VIDSCRIPT  script  should  not  relink  the  kernel;
+       instead, the script must create an empty .new_unix file in
+       the   /usr/lib/vidconf  directory  before  exiting.   This
+       causes the Video Configuration Manager to request  that  a
+       new  kernel  be  relinked,  then  it will remove the file.
+       total number of red, green, and blue bits used  to  repre-
+       sent a pixel on the screen.
+
+   PPrroocceedduurree ddeeffiinniittiioonnss
+       The  PROCEDURE sections define adapter-specific parameters
+       and perform adapter-specific functions such as  physically
+       switching  a  graphics  adapter  to graphics mode.  Device
+       procedures are interpreted at runtime and  allow  portions
+       of  the  X  server  to  be  defined independently from the
+       graphics driver.  All PROCEDURE sections in  the  grafinfo
+       file  must  relate to a function call that is coded in the
+       driver.  All graphics adapters should have  a  SetGraphics
+       and  SetText  PROCEDURE to support the driver functions of
+       the same name.  Other procedures may be  defined  to  meet
+       the needs of the specific driver.
+
+       A  device procedure is defined by a series of commands and
+       registers (or variables) that are enclosed by curly braces
+       ``{   }''  that follow the PROCEDURE entry.  A command can
+       appear anywhere on a line.  Command lines are case  sensi-
+       tive.   See  Commands  and  registers must be separated by
+       semicolons.  64 variables, or registers, named r0  through
+       r63, are available in a PROCEDURE entry for storing tempo-
+       rary values.  If you are making a BIOS  call  with  int10,
+
+                                                                4
+
+grafinfo(4dsp)                                     grafinfo(4dsp)
+
+       then  r0  usually  corresponds  to x86 register eax, r1 is
+       ebx, and so forth.  Each variable can hold a 32-bit  inte-
+       ger.   When  used with the bout command, values are always
+       set from r0 first.  When selecting variables for  purposes
+       other  than  writing  data to the I/O ports, use registers
+       with numbers higher than the number of  data  values  that
+       you  plan  to  output.  Numeric values can be specified in
+       decimal or hexadecimal.  Hexadecimal values follow C  lan-
+       guage conventions and must be preceded by 0x (for example,
+       0x10, 0X10, 0xAFF2).
+
+       Command                             Purpose
+       ------------------------------------------------------------------------------------
+       and(variable, value);               bitwise (logical) AND on  variable,  using  the
+                                           specified value.
+       ------------------------------------------------------------------------------------
+       bout(count, indexport, dataport);   output  block of values to an indexed I/O port.
+                                           The first count variables starting from r0  are
+                                           output  by  sending  an  index to indexport and
+                                           then sending the variables to  dataport.   This
+                                           is  analagous  to  the  following  C  code: for
+                                           (index  =  0;  index  <  count;  index  ++)   {
+                                                      out        (indexport,       index);
+                                                      out(dataport, register[index]); }
+       ------------------------------------------------------------------------------------
+       in(variable, port); inw(variable,   read  I/O  port and store value in variable; in
+       port);                              stores a byte value;
+                                           inw stores a doublebyte value.
+       ------------------------------------------------------------------------------------
+       int10(variable, count);             perform an INT10 video BIOS call,  mapping  the
+                                           count variables starting at variable to the CPU
+                                           general registers.  The registers are mapped in
+                                           the  following  order:  AX, BX, CX, DX, SI, DI,
+                                           BP, ES.
+       ------------------------------------------------------------------------------------
+       not(variable);                      bitwise (logical) NOT on variable
+       ------------------------------------------------------------------------------------
+       or(variable, value);                bitwise OR on variable, using specified value
+       ------------------------------------------------------------------------------------
+       out(port, value);                   output value to I/O port.  out outputs  a  byte
+       outw(port, value);                  word.  outw outputs a doublebyte word.
+       ------------------------------------------------------------------------------------
+       set(variable1, variable2);          set variable1 equal to variable2
+       ------------------------------------------------------------------------------------
+       shl(variable, value);               logical shift left of value bits on variable
+       ------------------------------------------------------------------------------------
+       shr(variable, value);               logical shift right of value bits on variable
+       ------------------------------------------------------------------------------------
+       wait(delay);                        introduces delay of delay microseconds
+       ------------------------------------------------------------------------------------
+       xor(variable, value);               bitwise  exclusive  OR  on  variable, using the
+                                           specified value
+       ------------------------------------------------------------------------------------
+
+                                                                5
+
+()                                                             ()
+
+       variable = value;                   assign value to variable
+       For examples of the use of these commands, see the  exist-
+       ing grafinfo files on your &everestREL5; system.
+
+EExxaammpplleess
+       Here  is  a  sample  grafinfo entry for the ATI Mach64 PCI
+       graphics adapter.  The mode depicted is 1280x1024 with 64K
+       colors      at      75      MHz.       The     file     is
+       /usr/lib/grafinfo/ati/m64pci.tmpl; because memory  alloca-
+       tion  is not constant for PCI devices, the during graphics
+       configuration.
+
+       VENDOR ATI                   "ATI"
+        MODEL   M64PCI              "Mach64   PCI   (VT/GT/GTB/3D
+       RAGE/3D RAGE II/II+)"
+         CLASS  GX                  "VT/GT"
+          MODE   1280x1024-64K-75   "1280x1024 64K-color NI 75Hz,
+       4MB"
+
+               MEMORY (0xA0000,0x10000); /* Base address & Length
+       VGA memory*/
+               MEMORY  (REGS,0xB0000,0x10000);  /* Base address &
+       Length Registers */
+               MEMORY  (APERTURE,@MEMBASE@,0x800000);   /*   Base
+       address */
+               PORT(0x0:0x3FF);
+               PORT(0x400:0xFBFF);
+
+               DATA
+               {
+                       VIDSETUP      =     "/usr/X11R6.1/lib/vid-
+       conf/scripts/m64pci";
+                       VBIOSOPTS  = 0x0A; /*  illegal  i/o  cause
+       printf:FORCE LOAD */
+                       XDRIVER = "m64";
+                       PIXWIDTH    = 1280;
+                       PIXHEIGHT   = 1024;
+                       DEPTH       = 16;
+                       FREQUENCY   = 75;
+               }
+
+               PROCEDURE SetMode
+               {
+                       int10(r0,4);
+               }
+
+               PROCEDURE SetGraphics
+               {
+                       r4 = 0xA005;   /* Set VGA */
+                       r5 = 0;
+                       r6 = 5;         /* Enable VGA aperture */
+                       int10 (r4,3);
+                       outw(0x03c4, 0x0f02);
+                       outw(0x03c4, 0x0a04);
+
+                                                                6
+
+()                                                             ()
+
+                       outw(0x03ce, 0x1000);
+                       outw(0x03ce, 0x0001);
+                       outw(0x03ce, 0x0002);
+                       outw(0x03ce, 0x0003);
+                       outw(0x03ce, 0x0004);
+                       outw(0x03ce, 0x0005);
+                       outw(0x03ce, 0x0106);
+                       outw(0x03ce, 0x0f07);
+                       outw(0x03ce, 0xff08);
+                       outw(0x01ce, 0x28b0);
+                       outw(0x01ce, 0x04b6);
+
+                       /* Load accelerator CRTC Params */
+                       outw(0x5EEE,0xFF);
+                       int10(r0,4);
+                       outw(0x5EEE,0xFF);
+               }
+
+               PROCEDURE SetText
+               {
+                       r4  = 0xA005; /* Memory Aperature Disabled
+       */
+                       r5 = 0;
+                       r6 = 4;
+                       int10(r4,3);
+
+                       r4 = 0xA001;  /* Set Display Mode VGA */
+                       r5 = 0;
+                       r6 = 4;
+                       int10 (r4,3);
+
+                       r4 = 3; /* Set Text Display Mode */
+                       int10(r4,1);
+               } The ATI Mach64  PCI  comes  with  a  video  BIOS
+       implementation.   This grafinfo entry uses that video BIOS
+       both to establish the monitor type for the BIOS and to put
+       the  hardware into a 1280x1024-64K-75 color graphics mode.
+       The vast majority of graphics hardware for Intel  machines
+       will  come with a video BIOS.  If possible, always use the
+       video BIOS to initialize the graphics  card.   Doing  this
+       alleviates one of the most difficult tasks in getting your
+       driver running because you don't have to set up the regis-
+       ters on the card.  The video BIOS does it for you.
+
+       The  VIDSETUP  parameter specifies the script that creates
+       the  .xgi  grafinfo  file  is  from  the  .tmpl  template:
+       #!/bin/sh   #         @(#)m64pci.sh     11.2      11/26/97
+       14:44:59 # set_trap()  {
+               trap         'echo          "/usr/X11R6.1/lib/vid-
+       conf/scripts/m64pci: Interrupted! Giving
+        up..."; cleanup 1' 1 2 3 15 }
+
+       unset_trap()  {
+               trap '' 1 2 3 15 }
+
+                                                                7
+
+()                                                             ()
+
+       cleanup() {
+               trap '' 1 2 3 15
+               exit $1 }
+
+       TEMPLATE=/usr/X11R6.1/lib/grafinfo/ati/m64pci.tmpl    XGI-
+       FILE=/usr/X11R6.1/lib/grafinfo/ati/m64pci.xgi         PCI-
+       INFO=/usr/X11R6.1/lib/vidconf/scripts/pciinfo
+
+       set_trap $PCIINFO -q -v 0x1002 status="$?"  if [ $status =
+       "1" ] then
+               echo "Cannot find a ATI mach64 PCI  card  in  this
+       computer!"
+               cleanup  1  fi  base=`$PCIINFO  -v 0x1002 -W 0x12`
+       sedarg1="s/@MEMBASE@/${base}0000/g"  sed  -e  $sedarg1   <
+       $TEMPLATE > $XGIFILE cleanup 0
+
+KKeerrnneell ssttrruuccttuurreess
+       Two  kernel  structures  are loaded with the grafinfo file
+       information  before  the  driver's  xxxSetup  routine   is
+       called.   These  structures  are:  typedef  struct  _mem {
+                                        int              memBase;
+                                        int            memSize; }
+       mem
+
+       typedef           struct            _grafData            {
+                                        mem                  mem-
+       ory[MAXMEM];                                           int
+       nummem;                                                int
+       port[MAXPORTS];                                        int
+       numports;                                     functionList
+       *functions;                                        intList
+       *integers;                                      stringList
+       *strings;     }     grafData;     The     routines      in
+       Xserver/hw/sco/dyddx/ddxLoad.c  load  and parse the appro-
+       priate grafinfo file.  The structure contains a pointer to
+       the  grafData structure for that display driver to use.  A
+       pointer to the ddxScreenRequest structure  is  pased  into
+       the xxxSetup routine.
+
+PPoorrttiinngg nnootteess
+       grafinfo  files for the Xsight server used parameters that
+       are not supported for the  server:  BASEADDRESS,  DEVATTR,
+       MAPFLAGS,  MAPWINSCANS,  WINBANK, WINOFFSET, WINSCANS, and
+       WINTYPE.  These lines should be commented out of  grafinfo
+       files being run with the Xsco server.
+
+SSeeee aallssoo
+
+                                                                8
+

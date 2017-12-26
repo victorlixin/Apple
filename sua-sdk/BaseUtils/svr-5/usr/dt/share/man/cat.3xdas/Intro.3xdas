@@ -1,0 +1,420 @@
+
+
+Intro(3xdas)                                         Intro(3xdas)
+
+DDeessccrriippttiioonn
+       The  Distributed Audit Service (XDAS) standard specifies a
+       set of security audit services.  XDAS specifies  the  fol-
+       lowing  features:  A set of which are relevant at a global
+       distributed system level.  Examples  of  such  events  are
+       end-user system sign-on and the initiation and termination
+       of communication sessions.  A common to allow audit infor-
+       mation  from multiple components at the distributed system
+       level to be merged and analyzed.  which are provided by  a
+       number of Application Programming Interfaces (APIs).
+
+XXDDAASS eevveennttss
+       An  event  number  identifies  an  event  set as well as a
+       unique event.  The Open Group will assign a set  of  event
+       numbers  to  an  organization or a vendor on request.  The
+       organization or vendor then has the authority to use event
+       numbers  within  that set. Conceptually, each event number
+       is a pair: (set-id, event-id).  set-id identifies an event
+       set, and the event-id identifies an event within the event
+       set.  In practice, each event number must have one of  the
+       formats illustrated in See for a list of registered events
+       and event classes.  To define your own  XDAS  events,  add
+       them  to /etc/defaults/xdas. You can then register them by
+       sending an email to dce-registry@osf.org
+       Format                           Bit number
+                0   1   2   3   4   5 -- 7   8 -- 15   16 -- 23   24 -- 31
+         A      0           set-id                     event-id
+         B      1   0              set-id                   event-id
+         C      1   1   0                 set-id                  event-id
+         D      1   1   1   0                    event-id
+         E      1   1   1   1   1                  reserved
+       Given an event number, its format can be  determined  from
+       its  four high-order bits: Allocated to organizations such
+       as the Open Group itself and major vendors who  need  more
+       than 16 bits for event-number assignment. 7 bits are allo-
+       cated to set-id and 24 bits  to  event-id.   Allocated  to
+       intermediate-size  vendors  who  need  up  to  16 bits for
+       event-number assignment.  Allocated to small-size  vendors
+       who  need  8  bits  or fewer for event number assignments.
+       Not administered by the Open Group.  These  event  numbers
+       can  be  used  freely  for  local security domain-specific
+       events.  The use of these  numbers  might  not  be  unique
+       across cells and should be avoided by servers which may be
+       installed in more than one cell.  Reserved for future use.
+       The  following  list defines the generic set of XDAS event
+       IDs.  create account delete account disable account enable
+       account query account attributes modify account attributes
+       create a user session terminate a  user  session  query  a
+       user  session  attributes  modify  user session attributes
+       create  data  item  delete  data  item  query  data   item
+       attributes  modify data item attributes install service or
+       application remove service or application query configura-
+       tion  of  service  or  application modify configuration of
+       service or  application  disable  service  or  application
+
+                                                                1
+
+Intro(3xdas)                                         Intro(3xdas)
+
+       enable  service  or application invoke service or applica-
+       tion terminate service  or  application  query  processing
+       context  modify  processing  context create an association
+       with a peer terminate an association with a peer query  an
+       association  context modify an association context receive
+       data via an association send data via an association  cre-
+       ate  association with data item terminate association with
+       data item query context of association with data item mod-
+       ify  context of association with data item query data item
+       contents modify data item contents start system shut  down
+       system  resource  exhaustion  resource  corruption back up
+       datastore recover datastore configure audit service  audit
+       datastore full audit datastore corrupted
+
+   XXDDAASS ggeenneerriicc llooggggiinngg eevveennttss
+       The  following table defines the set of XDAS event ID num-
+       bers that EELS defines for generic logging.  These  events
+       define  a  set  of severity levels that the caller can use
+       when logging messages.  See also the for a description  of
+       the non XDAS generic logging capabilities of the EELS sys-
+       tem.
+       -----------------------------------------------------------
+       Event                  Severity      Description
+       -----------------------------------------------------------
+       EELS_LOG_CODE_BLUE     High          A critical error  has
+                                            occurred   that  made
+                                            part or all of a sys-
+                                            tem  unusable. Admin-
+                                            istrative   interven-
+                                            tion is needed.
+       EELS_LOG_ALERT         Medium        An event has occurred
+                                            that may make part or
+                                            all of a system unus-
+                                            able  if  administra-
+                                            tive  action  is  not
+                                            taken.
+       EELS_LOG_ERROR         Lowest        A non-fatal error has
+                                            occurred.  This  will
+                                            not make part or  all
+                                            of a system unusable.
+       EELS_LOG_FYI           None          Information messages.
+       EELS_LOG_DEBUG         None          Debugging    messages
+                                            from an  application,
+                                            kernel   driver,   or
+                                            kernel module.
+
+   XXDDAASS eevveenntt oouuttccoommee ccooddeess
+       The outcome codes defined by XDAS are shown in the follow-
+       ing  list. The codes are structured into sets for SUCCESS,
+       FAILURE, and DENIAL.  Multiple codes from  within  one  of
+       these  sets  may be returned by a single call by combining
+       them using a bitwise OR, but it is not permitted for  out-
+       come  codes  from  the  different sets to be returned by a
+       single call. That is, multiple SUCCESS codes may  returned
+
+                                                                2
+
+()                                                             ()
+
+       by  one  call,  but  SUCCESS  and FAILURE codes may not be
+       returned by a single  call.   successful  event  privilege
+       used privilege granted privilege revoked preselection cri-
+       teria set or  modified  thresholds  set  actions  set  for
+       alarms  pre-set  thresholds exceeded non security relevant
+       failure service not  available  service  failure  hardware
+       failure  or  exception  condition  service, user or device
+       already enabled service, user or device  already  disabled
+       service returns an error service or device busy service or
+       device disabled input supplied invalid attempt  to  create
+       an  entity  which  already exists attempt to access a non-
+       existent entity security relevant failure  not  sufficient
+       privilege  identity  supplied  not  valid user credentials
+       supplied are invalid
+
+PPoorrttaabbllee aauuddiitt rreeccoorrdd ffoorrmmaatt
+       The audit event record format is  defined  as  an  ordered
+       UTF-8 character encoding in an xdas_buffer_t structure, as
+       follows:
+       -----------------------------------------------------------------
+       Field                        Type           Description
+       -----------------------------------------------------------------
+       Header                       HDR
+       length_in_bytes              digits 0-9     length in  bytes  of
+                                                   the retrieved record
+       version                      digits 0-9     version  number   of
+                                                   the   XDAS   service
+                                                   that   created   the
+                                                   audit record
+       time_offset                  hexadecimal    time  at  which  the
+                                                   audit   record   was
+                                                   committed   or   was
+                                                   timestamped   by   a
+                                                   specific    function
+                                                   call
+       time_uncertainty_interval    hexadecimal    interval of time  by
+                                                   which    the    time
+                                                   recorded  for   this
+                                                   event is uncertain
+       time_uncertainty_indicator   hexadecimal    percentage of confi-
+                                                   dence     in     the
+                                                   time_uncer-
+                                                   tainty_interval
+                                                   value
+       time_source                  alphanumeric   name  or  address of
+                                                   the  source  of  the
+                                                   time   recorded  for
+                                                   this event
+       time_zone                    alphanumeric   time zone applicable
+                                                   to   the  domain  in
+                                                   which   the    event
+                                                   occurred
+
+                                                                3
+
+()                                                             ()
+
+       event_number                 hexadecimal    number  defining the
+                                                   type of event
+       outcome                      hexadecimal    outcome         code
+                                                   recorded   for   the
+                                                   event
+       Originator                   ORG
+       org_location_name            alphanumeric   name of the location
+                                                   of   the  originator
+                                                   domain
+       org_location_address         alphanumeric   address of the loca-
+                                                   tion of the origina-
+                                                   tor domain
+       org_service_type             alphanumeric   server type  of  the
+                                                   originator domain
+       org_auth_authority           alphanumeric   name  of the authen-
+                                                   tication   authority
+                                                   for  the  originator
+                                                   principal
+       org_principal_name           alphanumeric   name of the origina-
+                                                   tor principal
+       org_principal_id             alphanumeric   identifier   of  the
+                                                   originator principal
+       Initiator                    INT
+       int_auth_authority           alphanumeric   name  of the authen-
+                                                   tication   authority
+                                                   for   the  initiator
+                                                   principal
+       int_domain_specific_name     alphanumeric   name of the  initia-
+                                                   tor principal
+       int_domain_specific_id       alphanumeric   identity of the ini-
+                                                   tiator principal
+       Target                       TGT
+       tgt_location_name            alphanumeric   name of the location
+                                                   of the target domain
+       tgt_location_address         alphanumeric   address of the loca-
+                                                   tion  of  the target
+                                                   domain.
+       tgt_service_type             alphanumeric   service type of  the
+                                                   target domain
+       tgt_auth_authority           alphanumeric   name  of the authen-
+                                                   tication   authority
+                                                   for the target prin-
+                                                   cipal
+       tgt_principal_name           alphanumeric   name of the  princi-
+                                                   pal target
+       tgt_principal_id             alphanumeric   identity of the tar-
+                                                   get principal
+       Source                       SRC
+       pointer_to_source_domain     alphanumeric   for   an    imported
+                                                   record,  the pointer
+                                                   to   the    original
+                                                   record   within  the
+                                                   originating domain
+
+                                                                4
+
+()                                                             ()
+
+       Event                        EVT
+       event_specific_information   alphanumeric   event-specific
+                                                   information recorded
+                                                   for the record
+       End                          END
+       The strings HDR, ORG, INT,  TGT,  SRC,  EVT  and  END  are
+       included  in  order  to  support syntax checking. An audit
+       record must include all the listed fields,  even  if  they
+       are empty. The field separator is the colon (:).  An empty
+       field is represented by two colons (::). The escape  char-
+       acter is the %.
+
+       The  following  structure  defines  an audit event record:
+       typedef struct xdas_audit_record_desc_struct(
+           const OM_uint32 record_number,
+           OM_uint32 length,
+           OM_uint32 version,
+           OM_uint32 time_offset,
+           OM_uint32 time_uncertainty_interval,
+           OM_uint32 time_uncertainty_indicator,
+           xdas_buffer_t *time_source,
+           xdas_buffer_t *time_zone,
+           OM_uint32 event_number,
+           OM_uint32 outcome,
+           xdas_buffer_t *org_location_name,
+           xdas_buffer_t *org_location_address,
+           xdas_buffer_t *org_service_type,
+           xdas_buffer_t *org_auth_authority,
+           xdas_buffer_t *org_principal_name,
+           xdas_buffer_t *org_principal_identity,
+           xdas_buffer_t *int_auth_authority,
+           xdas_buffer_t *int_principal_name,
+           xdas_buffer_t *int_principal_identity,
+           xdas_buffer_t *tgt_location_name,
+           xdas_buffer_t *tgt_location_address,
+           xdas_buffer_t *tgt_service_type,
+           xdas_buffer_t *tgt_auth_authority,
+           xdas_buffer_t *tgt_principal_name,
+           xdas_buffer_t *tgt_principal_identity,
+           xdas_buffer_t *source_reference,
+           xdas_buffer_t  *event_info  )  xdas_audit_record_desc,
+       *xdas_audit_record_t;
+
+XXDDAASS AAPPIIss
+       XDAS defined the following APIs:
+
+   GGeenneerraall AAuuddiitt SSeerrvviiccee AAPPII
+       The  General Audit Service API allows applications to sub-
+       mit events to XDAS.  This API is composed of the following
+       functions:
+
+                                                                5
+
+()                                                             ()
+
+                         Initialize  a  session  with XDAS.  This
+                         call will fail unless  the  caller  pos-
+                         sesses at least one XDAS authority. Note
+                         that event logging sessions can also  be
+                         initialized using
+                         Terminate an XDAS session.
+       A  caller must initiate a session with the XDAS audit ser-
+       vice.  This authenticates the  caller's  identity,  estab-
+       lishes their XDAS authorities as an audit client, and sets
+       up a session between the caller and XDAS.  The  caller  is
+       returned  a  handle to the XDAS service which they can use
+       for all XDAS APIs  and  generic  logging  APIs  functions,
+       refer to the
+
+       After initiating a session, a caller may use the XDAS APIs
+       to log events, to configure the audit service, or to  ana-
+       lyze  audit streams. These activities may be restricted by
+       the XDAS  authorities  that  have  been  assigned  to  the
+       caller.
+
+       On completion, the caller must terminate the XDAS session.
+       If a client dies or exits without  terminating  a  session
+       the  user  virtual memory previously allocated by the XDAS
+       API might not be released.
+
+       These interfaces are available to privileged  callers  who
+       possess the XDAS_AUDIT_SERVICE authority.
+
+   AAuuddiitt RReeaadd AAPPII
+       The  Audit Read API allows audit records to be copied into
+       buffers where the contents can be examined.  This  API  is
+       composed of the following functions:
+                         Open an XDAS audit stream for reading.
+                         Read  the next set of audit records from
+                         the specified audit trail into a buffer.
+                         The  caller  supplies  the buffer length
+                         and the maximum number of records to  be
+                         returned.   As many records are returned
+                         as will fit into the buffer  up  to  the
+                         specified  maximum.  The caller can then
+                         parse the buffer to  extract  individual
+                         records.
+                         Parse  an audit event record in an audit
+                         record buffer.
+                         Free  the  storage  associated  with   a
+                         buffer.
+                         Rewind an XDAS audit stream.
+                         Close an XDAS audit stream.
+       These  functions are used to extract records from the XDAS
+       audit stream for analysis.
+
+       These interfaces are available to privileged  callers  who
+       possess the XDAS_AUDIT_READ authority.
+
+                                                                6
+
+()                                                             ()
+
+   AAuuddiitt LLoogg IImmppoorrtt AAPPII
+       The  Audit Log Import API allows audit data to be imported
+       from another audit service into  the  XDAS  audit  stream.
+       This API is composed of the following function:
+                         Import  audit event records from another
+                         audit service.
+       This function allows imported audit records  in  the  XDAS
+       common audit event record format to be aggregated and ana-
+       lyzed at the distributed system level.
+
+       This interface is available to privileged callers who pos-
+       sess the XDAS_AUDIT_IMPORT authority.
+
+   AAuuddiitt EEvveenntt SSeerrvviiccee CClliieenntt AAPPII
+       The  Audit Event Service Client API allows applications to
+       configure event preselection criteria  for  submission  of
+       events  to  XDAS.   This  API is composed of the following
+       functions:
+                         Allocate and initialize an audit  record
+                         descriptor.   The  value  returned indi-
+                         cates to the caller  whether  the  event
+                         requires auditing under the current fil-
+                         tering criteria.
+                         Add  event-specific  information  to  an
+                         initialized audit record.
+                         Write  an audit record to the audit log.
+                         Control the time at which  a  record  is
+                         timestamped.
+                         Discard an audit record.
+       These  functions  allow audit records to be created, filed
+       and committed to the audit log in a common  standard  for-
+       mat, that can be used by EELS.
+
+       These  interfaces  are available to privileged callers who
+       possess the XDAS_AUDIT_SUBMIT authority.
+
+GGeenneerriicc llooggggiinngg AAPPIIss
+       In addition to the XDAS functions, the Enhanced Event Log-
+       ging  System  implements a series of generic logging func-
+       tions, in which the operations controlled by the  function
+       and  the  Event  Submission  API, are replaced by a single
+       funtion call. Refer to the for details.
+
+AAuutthhoorriizzaattiioonn ppoolliiccyy
+       The authorization policy in the XDAS APIs  is  defined  on
+       the  principle  of the separation of duties.  The granting
+       of XDAS authorities is under the control of  authorization
+       security  services.   The  following  XDAS authorities are
+       defined: This authority is required to initialize or  ter-
+       minate  an  XDAS  audit  service session using the General
+       Audit Service API.  This authority is required to use  the
+       Audit  Read  API.   This  authority  is required to import
+       audit events records from a domain specific audit  service
+       using  the  Audit  Log  Import  API.   This  authority  is
+
+                                                                7
+
+()                                                             ()
+
+       required to use the audit logging interfaces of the  Audit
+       Event  Service Client API.  Super User (root) authority is
+       required to use the Audit Event Management API.  Functions
+       in  the  XDAS  APIs  return  the  value  XDAS_S_AUTHORISA-
+       TION_FAILURE if a caller does  not  possess  the  required
+       authority.
+
+RReeffeerreenncceess
+
+                                                                8
+

@@ -1,0 +1,268 @@
+XChangeFeedbackControl(3X11R5)           XChangeFeedbackControl(3X11R5)
+
+  XXGGeettFFeeeeddbbaacckkCCoonnttrrooll(())
+
+  NNAAMMEE
+
+    XGetFeedbackControl(), XChangeFeedbackControl() - query and change input
+    device feedbacks
+
+  SSYYNNOOPPSSIISS
+
+    XFeedbackState *XGetFeedbackControl (Display *display,
+                                         XDevice *device,
+                                         int *num_feedbacks)
+    int XChangeFeedbackControl (Display *display, XDevice *device,
+                                Mask mask, XFeedbackControl *control )
+
+  AARRGGUUMMEENNTTSS
+
+    display
+
+        Specifies the connection to the X server.
+
+    device
+
+        Specifies the device whose feedbacks are to be queried or modified.
+
+    num_feedbacks
+
+        Specifies an address into which the number of feedbacks supported by
+        the device is to be returned.
+
+    mask
+
+        Specifies a mask specific to each type of feedback that describes how
+        the feedback is to be modified.
+
+    control
+
+        Specifies the address of an XXFFeeeeddbbaacckkCCoonnttrrooll structure that contains
+        the new values for the feedback.
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    These requests are provided to manipulate those input devices that support
+    feedbacks. A BadMatch error will be generated if the requested device does
+    not support feedbacks. Whether or not a given device supports feedbacks
+    can be determined by examining the information returned by the
+    _XX_OO_pp_ee_nn_DD_ee_vv_ii_cc_ee(3X11R5) request. For those devices that support feedbacks,
+    _XX_OO_pp_ee_nn_DD_ee_vv_ii_cc_ee(3X11R5) will return XXIInnppuuttCCllaassssIInnffoo structure with the
+    input_class field equal to the constant FeedbackClass (defined in the file
+    <<XX1111//XXII..hh>>).
+
+    The _XX_GG_ee_tt_FF_ee_ee_dd_bb_aa_cc_kk_CC_oo_nn_tt_rr_oo_ll(3X11R5) request returns a pointer to a list of
+    XXFFeeeeddbbaacckkSSttaattee structures. Each item in this list describes one of the
+    feedbacks supported by the device. The items are variable length, so each
+    contains its length to allow traversal to the next item in the list.
+
+    The feedback classes that are currently defined are: KbdFeedbackClass,
+    PtrFeedbackClass, StringFeedbackClass, IntegerFeedbackClass,
+    LedFeedbackClass, and BellFeedbackClass. These constants are defined in
+    the file <<XX1111//XXII..hh>>. An input device may support zero or more classes of
+    feedback, and may support multiple feedbacks of the same class. Each
+    feedback contains a class identifier and an id that is unique within that
+    class for that input device. The id is used to identify the feedback when
+    making an _XX_CC_hh_aa_nn_gg_ee_FF_ee_ee_dd_bb_aa_cc_kk_CC_oo_nn_tt_rr_oo_ll(3X11R5) request.
+
+    _XX_GG_ee_tt_FF_ee_ee_dd_bb_aa_cc_kk_CC_oo_nn_tt_rr_oo_ll(3X11R5) can generate a BadDevice or BadMatch error.
+
+    The _XX_CC_hh_aa_nn_gg_ee_FF_ee_ee_dd_bb_aa_cc_kk_CC_oo_nn_tt_rr_oo_ll(3X11R5) request modifies the values of one
+    feedback on the specified device. The feedback is identified by the id
+    field of the XXFFeeeeddbbaacckkCCoonnttrrooll structure that is passed with the request.
+    The fields of the feedback that are to be modified are identified by the
+    bits of the mask that is passed with the request.
+
+    _XX_CC_hh_aa_nn_gg_ee_FF_ee_ee_dd_bb_aa_cc_kk_CC_oo_nn_tt_rr_oo_ll(3X11R5) can generate a BadDevice, BadMatch, or
+    BadValue error.
+
+  SSTTRRUUCCTTUURREESS
+
+    Each class of feedback is described by a structure specific to that class.
+    These structures are defined in the file <<XX1111//eexxtteennssiioonnss//XXIInnppuutt..hh>>.
+    XXFFeeeeddbbaacckkSSttaattee and XXFFeeeeddbbaacckkCCoonnttrrooll are generic structures that contain
+    three fields that are at the beginning of each class of feedback:
+
+    typedef struct {      XID class;      int length;      XID
+    id; } XFeedbackState, XFeedbackControl;
+
+    The XXKKbbddFFeeeeddbbaacckkSSttaattee structure defines the attributes that are returned
+    for feedbacks equivalent to those on the X keyboard.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     click;
+         int     percent;
+         int     pitch;
+         int     duration;
+         int     led_mask;
+         int     global_auto_repeat;
+         char    auto_repeats[32];
+    } XKbdFeedbackState;
+
+    The XXPPttrrFFeeeeddbbaacckkSSttaattee structure defines the attributes that are returned
+    for feedbacks equivalent to those on the X pointer.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     accelNum;
+         int     accelDenom;
+         int     threshold;
+    } XPtrFeedbackState;
+
+    The XXIInntteeggeerrFFeeeeddbbaacckkSSttaattee structure defines attributes that are returned
+    for integer feedbacks.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     resolution;
+         int     minVal;
+         int     maxVal;
+    } XIntegerFeedbackState;
+
+    The XXSSttrriinnggFFeeeeddbbaacckkSSttaattee structure defines the attributes that are
+    returned for string feedbacks.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     max_symbols;
+         int     num_syms_supported;
+         KeySym  *syms_supported;
+    } XStringFeedbackState;
+
+    The XXBBeellllFFeeeeddbbaacckkSSttaattee structure defines the attributes that are returned
+    for bell feedbacks.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     percent;
+         int     pitch;
+         int     duration;
+    } XBellFeedbackState;
+
+    The XXLLeeddFFeeeeddbbaacckkSSttaattee structure defines the attributes that are returned
+    for LED feedbacks.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     led_values;
+    } XLedFeedbackState;
+
+    The XXPPrrttFFeeeeddbbaacckkCCoonnttrrooll structure defines the attributes that can be
+    controlled for pointer feedbacks.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     accelNum;
+         int     accelDenom;
+         int     threshold;
+    } XPtrFeedbackControl;
+
+    The XXKKbbddFFeeeeddbbaacckkCCoonnttrrooll structure defines the attributes that can be
+    controlled for keyboard feedbacks.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     click;
+         int     percent;
+         int     pitch;
+         int     duration;
+         int     led_mask;
+         int     led_value;
+         int     key;
+         int     auto_repeat_mode;
+    } XKbdFeedbackControl;
+
+    The XXSSttrriinnggFFeeeeddbbaacckkCCoonnttrrooll structure defines the attributes that can be
+    controlled for string feedbacks.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     num_keysyms;
+         KeySym  *syms_to_display;
+    } XStringFeedbackControl;
+
+    The XXIInntteeggeerrFFeeeeddbbaacckkCCoonnttrrooll structure defines the attributes that can be
+    controlled for integer feedbacks.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     int_to_display;
+    } XIntegerFeedbackControl;
+
+    The XXBBeellllFFeeeeddbbaacckkCCoonnttrrooll structure defines the attributes that can be
+    controlled for bell feedbacks.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     percent;
+         int     pitch;
+         int     duration;
+    } XBellFeedbackControl;
+
+    The XXLLeeddFFeeeeddbbaacckkCCoonnttrrooll structure defines the attributes that can be
+    controlled for LED feedbacks.
+
+    typedef struct {
+         XID     class;
+         int     length;
+         XID     id;
+         int     led_mask;
+         int     led_values;
+    } XLedFeedbackControl;
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    BadDevice
+
+        An invalid device was specified. The specified device does not exist
+        or has not been opened by this client through XXOOppeennIInnppuuttDDeevviiccee(). This
+        error may also occur if some other client has caused the specified
+        device to become the X keyboard or X pointer device through the
+        _XX_CC_hh_aa_nn_gg_ee_KK_ee_yy_bb_oo_aa_rr_dd_DD_ee_vv_ii_cc_ee(3X11R5) or _XX_CC_hh_aa_nn_gg_ee_PP_oo_ii_nn_tt_ee_rr_DD_ee_vv_ii_cc_ee(3X11R5)
+        requests.
+
+    BadMatch
+
+        This error may occur if an _XX_GG_ee_tt_FF_ee_ee_dd_bb_aa_cc_kk_CC_oo_nn_tt_rr_oo_ll(3X11R5) request was
+        made specifying a device that has no feedbacks, or an
+        _XX_CC_hh_aa_nn_gg_ee_FF_ee_ee_dd_bb_aa_cc_kk_CC_oo_nn_tt_rr_oo_ll(3X11R5) request was made with an
+        XXFFeeeeddbbaacckkCCoonnttrrooll structure that contains an invalid feedback type. It
+        may also occur if an invalid combination of mask bits is specified
+        (Key but no AutoRepeatMode for keyboard feedbacks), or if an invalid
+        KeySym is specified for a string feedback.
+
+    BadValue
+
+        Some numeric value falls outside the range of values accepted by the
+        _XX_CC_hh_aa_nn_gg_ee_FF_ee_ee_dd_bb_aa_cc_kk_CC_oo_nn_tt_rr_oo_ll(3X11R5) request. Unless a specific range is
+        specified for an argument, the full range defined by the argument's
+        type is accepted. Any argument defined as a set of alternatives can
+        generate this error.
+
+  SSEEEE AALLSSOO
+
+    Programming With Xlib
+

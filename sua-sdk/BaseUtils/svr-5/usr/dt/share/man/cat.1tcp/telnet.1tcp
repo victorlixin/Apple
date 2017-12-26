@@ -1,0 +1,477 @@
+
+
+telnet(1tcp)                                         telnet(1tcp)
+
+SSyynnooppssiiss
+       telnet  [  -8ELacdr  ] [ -e escape_char ] [ -l user ] [ -n
+       tracefile ] [ host [ -port | port ]
+
+DDeessccrriippttiioonn
+       The telnet command communicates with  another  host  using
+       the TELNET protocol. If telnet is invoked without the host
+       argument, it will enter command mode as indicated  by  its
+       prompt  telnet>. In this mode, telnet will accept and exe-
+       cute the commands listed below; if telnet is invoked  with
+       arguments,  it  will  perform  an  open command with those
+       arguments.
+
+       The following options are available: Use an eight bit data
+       path.  This  will cause an attempt to negotiate the BINARY
+       option on both input and output.  Stop any character  from
+       being recognized as an escape character.  Use an eight bit
+       data path on output.  This causes the BINARY option to  be
+       negotiated  on  output.   Automatic  login into the remote
+       system. If  the  remote  system  understands  the  ENVIRON
+       option,  then  the USER variable is exported to the remote
+       system.  This option may also be used with the  open  com-
+       mand.  Do not process the user's ~/.telnetrc file (see the
+       toggle skiprc command below).  Toggles socket level debug-
+       ging (useful only to root).  Sets the initial value of the
+       debug toggle to TRUE.   Sets  the  initial  TELNET  escape
+       character  to  escape_char.  If  escape_char  is  the null
+       string (""), then there is no pre-defined  escape  charac-
+       ter.   When  connecting  to  the  remote system and if the
+       remote system understands the ENVIRON option, then user is
+       exported  to  the  remote system as the value for the USER
+       variable.  This option may also be used with the open com-
+       mand.   Opens  tracefile  for recording the trace informa-
+       tion. (See the set tracefile command below.)  Use  a  user
+       interface similar to In this mode, the escape character is
+       set to the tilde (~) character, unless modified  with  the
+       -e  option.  Indicates the host's official name, an alias,
+       or the Internet address of a remote host.
+
+       host may be specified as an  IPv4  or  IPv6  loose  source
+       route  (where each element does not need to be a neighbor)
+       or strict source route  (where  each  element  must  be  a
+       neighbor).   An  IPv4  loose  source route takes the form:
+       @addr[@addr...]:dest An IPv4 strict source route takes the
+       form:  !@addr[@addr...]:dest  An  IPv6  loose source route
+       takes the form: @addr[@addr...]@dest An IPv6 strict source
+       route  takes the form: !@addr[@addr...]@dest Additionally,
+       IPv6 allows the specification of a mixed strict and  loose
+       source route: @addr[!][@addr[!]...]@dest[!]  In this case,
+       strict elements specify a trailing !;  loose  elements  do
+       not specify a trailing !.
+
+       IPv4 allows up to 9 intermediate addresses to be specified
+       in the route to the destination.  IPv6  allows  up  to  23
+
+                                                                1
+
+telnet(1tcp)                                         telnet(1tcp)
+
+       intermediate addresses to be specified in the route to the
+       destination.  See RFC 791 and RFC 1883 for  more  informa-
+       tion  about  source routing in IPv4 and IPv6.  This exists
+       primarily for debugging or for use when network connectiv-
+       ity  is  problematic. Use of source routing is not usually
+       recommended.   Indicates  a  port  number  (that  is,  the
+       address  of an application). If a number is not specified,
+       the default TELNET port is used.
+
+       When a port number is  specified,  telnet  will  omit  the
+       automatic  initiation  of  any  TELNET options, unless the
+       port number is preceded by a minus sign.
+
+       After establishing a connection, file  .telnetrc  file  in
+       the user's home directory is opened.  Lines beginning with
+       a # are treated as comment lines; blank lines are ignored.
+       Lines  that  begin  without  whitespace are the start of a
+       machine entry.  The first thing on the line is the name of
+       the  machine  that the host is connecting to.  The rest of
+       the line (and successive lines which  begin  with  whites-
+       pace) are assumed to be telnet commands, and are processed
+       as if they had been entered manually in  response  to  the
+       telnet command prompt.
+
+       Once  a  connection has been opened, TELNET will enter the
+       input mode. TELNET  will  attempt  to  enable  the  TELNET
+       LINEMODE option. If this fails, then TELNET will revert to
+       one of two input  modes:  either  the  character-at-a-time
+       mode  or  the old line-by-line mode, depending on what the
+       remote system supports.
+
+       When LINEMODE is enabled, character processing is done  on
+       the  local  system  while  under the control of the remote
+       system. When input editing or character echoing is  to  be
+       disabled,  the  remote system will relay that information.
+       The remote system will also relay changes to  any  special
+       characters  that happen on the remote system, so that they
+       can take effect on the local system.
+
+       In the character at a time mode, most entered text will be
+       sent immediately to the remote host for processing.
+
+       In  the old line-by-line mode, all text is echoed locally,
+       but usually only completed lines are sent  to  the  remote
+       host.  The local echo character (initially ^E) may be used
+       to enable and disable the local echo mode; normally,  this
+       would  be  used  only  for  entering passwords so that the
+       password will not be echoed.
+
+       If the LINEMODE option is enabled  or  if  the  localchars
+       toggle is TRUE (the default value for the old line-by-line
+       mode; see below), the user's quit, intr, and flush charac-
+       ters  are  trapped  locally  and  sent  as TELNET protocol
+       sequences to the remote  machine.  If  LINEMODE  had  been
+
+                                                                2
+
+telnet(1tcp)                                         telnet(1tcp)
+
+       enabled  at any earlier time, then the user's susp and eof
+       characters will also be sent as TELNET protocol sequences;
+       quit  are  sent  as  a  TELNET  ABORT  instead  of  toggle
+       autosynch below) which cause this action to flush any sub-
+       sequent  output  to  the  terminal  (until the remote host
+       acknowledges the TELNET sequence) and  to  flush  previous
+       terminal input (in the case of quit and intr).
+
+       While  connected to a remote host, the telnet command mode
+       may be entered by typing the TELNET   sequence  (initially
+       ^]).
+
+       When  in command mode, the normal terminal editing conven-
+       tions are available.
+
+       The following TELNET  commands  are  available,  but  only
+       enough  of each command need be typed to uniquely identify
+       it (this is also true  for  arguments  pertaining  to  the
+       mode,  toggle,  set, unset, slc, environ, and display com-
+       mands).  Close a TELNET  session  and  return  to  command
+       mode.   Display all, or some, of the set and toggle values
+       (see description below).  Manipulate  the  variables  that
+       may  be  sent through the TELNET ENVIRON option.  The ini-
+       tial set of variables is taken from  the  user's  environ-
+       ment;  only  the  DISPLAY, LANG, and PRINTER variables are
+       automatically exported, although USER is also exported  if
+       the -a or -l options are used.
+
+       The  valid  arguments  for the environ command are: Define
+       the variable to have a  value  of  value.   Any  variables
+       defined  by  this command are automatically exported.  The
+       value may be enclosed in single or double quotes  so  that
+       tabs and embedded spaces may be included.  Remove variable
+       from the list of environment variables.  Mark the variable
+       to  be exported to the remote side.  Mark the variable not
+       to be exported unless explicitly requested by  the  remote
+       side.   List  the  current  set  of environment variables.
+       Those marked with a * are sent  automatically;  any  other
+       variables  are  sent  only  if explicitly requested.  Send
+       environment variable.  Prints out help information for the
+       environ  command.   Send  the  TELNET LOGOUT option to the
+       remote site.  This command is similar to  the  close  com-
+       mand. However, nothing will happen if the remote site does
+       not support the LOGOUT option.  If the  remote  site  does
+       support  this option, then it should cause the remote site
+       to close the TELNET connection.  Additionally, if a user's
+       session can be suspended for future attachment, the logout
+       option indicates that you  should  terminate  the  session
+       immediately.   Depending  on  the state of the TELNET ses-
+       sion, the  type  argument  is  one  of  several  available
+       options.   The  remote  host is asked for permission to go
+       into the requested mode.  If the remote host is capable of
+       entering  that  mode, the requested mode is entered.  Dis-
+       able the TELNET LINEMODE option; or, if  the  remote  side
+
+                                                                3
+
+telnet(1tcp)                                         telnet(1tcp)
+
+       does not understand the TELNET LINEMODE option, then enter
+       the character-at-a-time mode.  Enable the TELNET  LINEMODE
+       option;  or,  if  the  remote side does not understand the
+       TELNET LINEMODE option, then  attempt  to  enter  the  old
+       line-by-line  mode.  Attempt to enable (disable) the TRAP-
+       SIG mode of the TELNET  LINEMODE  option.   This  requires
+       that  the  LINEMODE  option be enabled.  Attempt to enable
+       (disable) the EDIT mode  of  the  LINEMODE  option.   This
+       requires  that the LINEMODE option be enabled.  Attempt to
+       enable (disable) the SOFT_TAB mode of the LINEMODE option.
+       This   requires  that  the  LINEMODE  option  be  enabled.
+       Attempt to enable  (disable)  the  LIT_ECHO  mode  of  the
+       LINEMODE  option.   This requires that the LINEMODE option
+       be enabled.  Prints out help information for the mode com-
+       mand.   Open a connection to the named host.  If host is ?
+       then the help information for the  open  command  is  dis-
+       played.   If  no  port  number  is  specified, telnet will
+       attempt to contact a TELNET server at  the  default  port.
+       The  host  specification  may  be either a host name or an
+       Internet address specified in the dot notation (see  Close
+       any  open TELNET session and exit telnet.  When in command
+       mode, an End-of-File (EOF) will also close a  session  and
+       exit.   Send  one (or more) special character sequences to
+       the remote host.  The following are  the  arguments  which
+       may  be specified (more than one argument may be specified
+       at a given time): Send the TELNET ABORT (ABORT  processes)
+       sequence.   Send  the  TELNET  AO  (Abort Output) sequence
+       which should cause the remote system to flush  all  output
+       from  the  remote system to the user's terminal.  Send the
+       TELNET AYT (Are You There?)  sequence; the  remote  system
+       may  or  may  not  respond to this transmission.  Send the
+       TELNET BRK (Break) sequence which  may  have  significance
+       for  the remote system.  Send the TELNET EC (Erase Charac-
+       ter) sequence which should  cause  the  remote  system  to
+       erase  the  last  character  entered.   Send the TELNET EL
+       (Erase Line) sequence which should cause the remote system
+       to  erase the line currently being entered.  Send the TEL-
+       NET EOF (End Of File) sequence.  Send the TELNET EOR  (End
+       Of Record) sequence.  Send the current TELNET escape char-
+       acter (initially ^]).   Send  the  TELNET  GA  (Go  Ahead)
+       sequence, which probably has no significance to the remote
+       system.  If the remote side  supports  the  TELNET  STATUS
+       command, send the subnegotiation request to the server for
+       its current option status.  Send the TELNET IP  (Interrupt
+       Process) sequence, which should cause the remote system to
+       abort the currently running process.  Send the TELNET  NOP
+       (No  Operation)  sequence.   Send the TELNET SUSP (Suspend
+       process) sequence.  Send the TELNET SYNCH sequence.   This
+       sequence  causes  the  remote system to discard all previ-
+       ously typed (but not yet read) input.   This  sequence  is
+       sent  as  TCP  urgent data (and may not work if the remote
+       system is a 4.2 BSD system; if it does not work, a  lower-
+       case  ``l'' may be echoed on the terminal).  Send the TEL-
+       NET DO, DONT, WILL or WONT command sequence.  cmd  can  be
+
+                                                                4
+
+telnet(1tcp)                                         telnet(1tcp)
+
+       either  a  decimal number between 0 and 255, or a symbolic
+       name for a specific TELNET command. cmd may also  be  help
+       or  ? which prints help information, including the list of
+       symbolic names.  Print out help information for  the  send
+       command.  The set command sets any one of a number of TEL-
+       NET variables to a specific value or to TRUE.  The special
+       value off turns off the function associated with the vari-
+       able; this is equivalent to using the unset command.   The
+       unset  command  will  disable (or set to FALSE) any of the
+       specified functions.   The  values  of  variables  may  be
+       interrogated  with  the  aid  of the display command.  The
+       variables which may be set or unset -- but not toggled  --
+       are  listed  here.   In addition, any of the variables for
+       the toggle command may be explicitly enabled  or  disabled
+       using  the  set  and  unset  commands.   If  telnet  is in
+       localchars mode, or LINEMODE is enabled,  and  the  status
+       character  is  typed,  a TELNET AYT sequence (see send ayt
+       above) is sent to the remote host.  The initial value  for
+       the Are You There character is the terminal's status char-
+       acter.  This is the value (initially ^E)  which,  when  in
+       the  line-by-line  mode,  will  toggle between doing local
+       echoing of entered characters (for normal processing)  and
+       suppressing  echoing  of  entered characters (for example,
+       for entering a  password).   If  telnet  is  operating  in
+       LINEMODE  or  in  the old line-by-line mode, entering this
+       character as the first character on a line will cause this
+       character  to  be  sent to the remote system.  The initial
+       value of the eof character is taken to be  the  terminal's
+       eof  character.  If telnet is in localchars mode (see tog-
+       gle localchars below), and if telnet is operating  in  the
+       character  at  a  time  mode,  then when this character is
+       entered, a TELNET EC sequence (see send ec above) are sent
+       to  the  remote  system.   The initial value for the erase
+       character is taken to be the terminal's  erase  character.
+       This  is  the TELNET escape character (initially ^]) which
+       causes entry into the TELNET command mode  when  connected
+       to  a remote system.  If telnet is in localchars mode (see
+       toggle localchars below) and the flushoutput character  is
+       entered, a TELNET AO sequence (see send ao above) are sent
+       to the remote host.  The initial value for the flush char-
+       acter  is  taken to be the terminal's flush character.  If
+       telnet is operating in LINEMODE, these are the  characters
+       that,  when  typed, cause partial lines to be forwarded to
+       the remote system.  The initial value for  the  forwarding
+       characters  are  taken  from  the  terminal's eol and eol2
+       characters.  If telnet is in localchars mode  (see  toggle
+       localchars  below) and the interrupt character is entered,
+       a TELNET IP sequence (see send ip above) are sent  to  the
+       remote  host.  The initial value for the interrupt charac-
+       ter is taken to be the terminal's intr character.  If tel-
+       net  is  in localchars mode (see toggle localchars below),
+       and if TELNET is operating in  the  character  at  a  time
+       mode,  then  when  this  character is entered, a TELNET EL
+       sequence (see send  el  above)  are  sent  to  the  remote
+
+                                                                5
+
+telnet(1tcp)                                         telnet(1tcp)
+
+       system.  The initial value for the kill character is taken
+       to be the terminal's kill character.  If telnet is operat-
+       ing in LINEMODE or in the old line-by-line mode, then this
+       character is taken to be the terminal's  lnext  character.
+       The  initial  value for the lnext character is taken to be
+       the  terminal's  lnext  character.   If   telnet   is   in
+       localchars mode (see toggle localchars below) and the quit
+       character is entered, a TELNET BRK sequence (see send  brk
+       above) are sent to the remote host.  The initial value for
+       the quit character is taken  to  be  the  terminal's  quit
+       character.   If  telnet is operating in LINEMODE or in the
+       old line-by-line mode, then this character is taken to  be
+       the  terminal's  reprint character.  The initial value for
+       the reprint  character  is  taken  to  be  the  terminal's
+       reprint  character.   This is the rlogin escape character.
+       If set, the normal TELNET  escape  character  is  ignored,
+       unless  preceded  by  this character at the beginning of a
+       line.  If the character is followed by a ., then the  con-
+       nection  is closed.  If the character is followed by a ^Z,
+       then the telnet command is suspended.  The  initial  state
+       is  to disable the rlogin escape character.  If the TELNET
+       TOGGLE-FLOW-CONTROL option has  been  enabled,  then  this
+       character  is  taken to be the terminal's start character.
+       The initial value for the start character is taken  to  be
+       the  terminal's  start  character.   If the TELNET TOGGLE-
+       FLOW-CONTROL option has been enabled, then this  character
+       is taken to be the terminal's stop character.  The initial
+       value for the stop character is taken to be the terminal's
+       stop character.  If telnet is in the localchars mode or if
+       the LINEMODE is  enabled  and  the  suspend  character  is
+       entered,  a TELNET SUSP sequence (see send susp above) are
+       sent to the remote host.  The initial value for  the  sus-
+       pend character is taken to be the terminal's suspend char-
+       acter.  This is the file to which the  output,  caused  by
+       netdata  or  option  tracing  being TRUE, will be written.
+       The default value is -, which sends tracing information to
+       the  standard  output.  If telnet is operating in LINEMODE
+       or in the old line-by-line mode, then  this  character  is
+       taken  to be the terminal's worderase character.  The ini-
+       tial value for the worderase character is taken to be  the
+       terminal's worderase character.  Display the legal set and
+       unset commands.  The slc command  (Set  Local  Characters)
+       sets (or changes) the state of the special characters when
+       the TELNET LINEMODE option has been enabled.  The  special
+       characters  are  characters that get mapped to TELNET com-
+       mands sequences (like ip or quit) or line-editing  charac-
+       ters (like erase and kill).  By default, the local special
+       characters are exported.  Verify the current settings  for
+       the  current  special  characters.   The  remote  side  is
+       requested to send all the current special  character  set-
+       tings; if there are any discrepancies with the local side,
+       the local side will switch to the remote value.  Switch to
+       the  local defaults for the special characters.  The local
+       default characters are those of the local terminal at  the
+
+                                                                6
+
+telnet(1tcp)                                         telnet(1tcp)
+
+       time  when  telnet  was  started.   Switch  to  the remote
+       defaults for the special characters.  The  remote  default
+       characters are those of the remote system at the time when
+       the TELNET connection was  established.   Print  out  help
+       information  for the slc command.  Show the current status
+       of telnet.  This includes the peer to which  one  is  con-
+       nected, as well as the current mode.  Toggle various flags
+       (between TRUE and FALSE) that control how TELNET  responds
+       to  events.   These flags may be set explicitly to TRUE or
+       FALSE using the set and unset commands listed above.  More
+       than  one  argument  may be specified.  The state of these
+       flags may be interrogated using display.
+
+       The valid arguments are: If autoflush and  localchars  are
+       both  TRUE,  then  when  the ao or the quit characters are
+       recognized (and transformed into TELNET sequences; see set
+       above for details), telnet will refuse to display any data
+       on the user's terminal until the  remote  system  acknowl-
+       edges  (via  a TELNET TIMING MARK option) that it has pro-
+       cessed those TELNET sequences.  The initial value for this
+       toggle  is  TRUE  if the terminal user had not executed an
+       stty  noflsh;  otherwise  FALSE  (see  If  autosynch   and
+       localchars  are  both  TRUE,  then when either the intr or
+       quit character is entered (see set above for  descriptions
+       of  the  intr  and  quit characters), the resulting TELNET
+       sequence sent are followed by the TELNET  SYNCH  sequence.
+       This  procedure  should  cause  the remote system to begin
+       throwing away all previously entered input until  both  of
+       the  TELNET  sequences have been read and acted upon.  The
+       initial value of this toggle is FALSE.  Enable or  disable
+       the  TELNET  BINARY  option  on both the input and output.
+       Enable or disable  the  TELNET  BINARY  option  on  input.
+       Enable  or disable the TELNET BINARY option on output.  If
+       this toggle value is TRUE, then carriage returns are  sent
+       as  <CR><LF>.  If this is FALSE, then carriage returns are
+       sent as <CR><NUL>.  The initial value for this  toggle  is
+       FALSE.   Toggle  the carriage return mode.  When this mode
+       is enabled, most carriage return characters received  from
+       the remote host are mapped into a carriage return followed
+       by a line feed.  This mode does not affect  those  charac-
+       ters entered by the user, but only those received from the
+       remote host.  This mode is  not  very  useful  unless  the
+       remote host only sends carriage return, but never any line
+       feeds.  The initial value for this toggle is FALSE.   Tog-
+       gle the socket level debugging mode (useful only to root).
+       The initial value for this toggle is FALSE.   If  this  is
+       TRUE,  then  the  flush,  interrupt, quit, erase, and kill
+       characters (see set above) are recognized locally and then
+       transformed  into  appropriate  TELNET  control  sequences
+       (respectively ao, ip, brk, ec, and el;  see  send  above).
+       The  initial value for this toggle is TRUE in old line-by-
+       line mode and FALSE in character at a time mode.
+
+       When  the  LINEMODE  option  is  enabled,  the  value   of
+
+                                                                7
+
+telnet(1tcp)                                         telnet(1tcp)
+
+       localchars  is  ignored and assumed to always be TRUE.  If
+       LINEMODE has ever been  enabled,  then  quit  is  sent  as
+       abort; eof and suspend are sent as eof and susp; (see send
+       above).  Toggle the display of all network data  (in  hex-
+       adecimal  format).   The  initial value for this toggle is
+       FALSE.  Toggle the display of some internal telnet  proto-
+       col  processing which pertain to TELNET options.  The ini-
+       tial value for this toggle is  FALSE.   When  the  netdata
+       toggle is enabled and if prettydump is enabled, the output
+       from the netdata command are reorganized into a more user-
+       friendly format.  Spaces are put between each character in
+       the output and the beginning of any TELNET escape sequence
+       are  preceded  by a * to aid in locating them.  If this is
+       TRUE, then telnet does not process the  ~/.telnetrc  file.
+       The  initial  value  is  set to FALSE.  Toggle printing of
+       hexadecimal terminal data.  The  initial  value  for  this
+       toggle is FALSE.  Display the legal toggle commands.  Sus-
+       pend telnet.  This command will work only when the user is
+       using  or  Execute  a  single command in a subshell on the
+       local system.  If command is omitted, then an  interactive
+       subshell are invoked.  Get help.  When no command is spec-
+       ified, telnet will print a summary for the  help  command.
+       If  a  command  is  specified,  telnet will print the help
+       information for just that command.
+
+   EEnnvviirroonnmmeenntt vvaarriiaabblleess
+       If set, the telnet command exports at least the  following
+       environment  variables  to  the  remote  machine: DISPLAY,
+       LANG,  and  PRINTER.   Note  that  DISPLAY  are   set   to
+       local_hostname:0.0  if  DISPLAY  is  set  to  :0.0  or  to
+       unix:0.0 locally.
+
+       Other environment  variables  may  be  propagated  to  the
+       remote side via the TELNET ENVIRON option.
+
+       USER  is set to LOGNAME if LOGNAME is set locally but USER
+       is not.  By default, USER is not set.
+
+FFiilleess
+       user-customized telnet startup values
+
+RReeffeerreenncceess
+       RFC 727, RFC 854, RFC 856, RFC 857, RFC 858, RFC 859,  RFC
+       860, RFC 1073, RFC 1079, RFC 1091, RFC 1096, RFC 1123, RFC
+       1184, RFC 1372, RFC 1572
+
+NNoottiicceess
+       On some remote systems, the echo command has to be  turned
+       off manually when in the old line-by-line mode.
+
+       When in the old line-by-line mode or in LINEMODE, the ter-
+       minal's eof character is only recognized (and sent to  the
+       remote system) when it is the first character in a line.
+
+                                                                8
+
+telnet(1tcp)                                         telnet(1tcp)
+
+                                                                9
+

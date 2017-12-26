@@ -1,0 +1,149 @@
+
+
+confstr(3C)                                           confstr(3C)
+
+SSyynnooppssiiss
+       #include <unistd.h>
+
+       size_t confstr(int name, char *buf, size_t len);
+
+DDeessccrriippttiioonn
+       The  confstr  function  provides a way for applications to
+       obtain string values that are configuration-defined.   The
+       argument  name  is  the  system  variable  that  is  being
+       queried.  The confstr routine copies information  relating
+       to  the  system on which the process is executing into the
+       buffer pointed to by buf.  len is the size of the  buffer.
+
+       The  and routines provide a similar class of configuration
+       information.
+
+       The confstr function provides the following  valid  values
+       for  name:  Copy  a  string describing the instruction set
+       architecture of the current system into the array  pointed
+       to by buf.  For example, mc68030, i80486.  These names may
+       not match predefined names in the C  language  compilation
+       system.  Copy a comma-separated list of strings describing
+       the installed bus types  on  the  system  into  the  array
+       pointed to by buf.  Copy a string that is the fully-quali-
+       fied hostname (e.g., system.prod.caldera.com) of the  sys-
+       tem  into  the  array pointed to by buf.  This is the same
+       string that would be returned by the uname command's host-
+       name  parameter.   Internet  host  names  may be up to 256
+       bytes in length  (plus  the  terminating  null).   Copy  a
+       string  which  is  the OEM manufacturer's name and product
+       identifier of the physical hardware on  which  the  system
+       call is executed into the array pointed to by buf.  Copy a
+       string which is the ASCII representation of the  hardware-
+       specific  serial  number  of the physical machine on which
+       the system call is executed into the array pointed  to  by
+       buf.   Note that this may be implemented in Read-Only Mem-
+       ory, via software constants set when building the  operat-
+       ing system, or by other means, and may contain non-numeric
+       characters.  It is anticipated that manufacturers will not
+       issue the same ``serial number'' to more than one physical
+       machine.  The pair of strings returned  by  SI_HW_PROVIDER
+       and  SI_HW_SERIAL  is likely to be unique across operating
+       system implementations.  Copy a string that represents the
+       manufacturer's  date stamp for the currently running oper-
+       ating system kernel into the  array  pointed  to  by  buf.
+       Copy  the  string  that  would be returned by uname in the
+       machine field into the array pointed to by buf.  For exam-
+       ple,  i486.   Copy a string that represents the base revi-
+       sion level of the currently running operating system  into
+       the  array  pointed  to by buf.  Copy a string that repre-
+       sents the name of the manufacturer of the  currently  run-
+       ning  operating  system  base into the array pointed to by
+       buf.  Copy the string that would be returned by  uname  in
+       the  release  field  into  the  array  pointed  to by buf.
+
+                                                                1
+
+confstr(3C)                                           confstr(3C)
+
+       Copies a string representing the Secure  Remote  Procedure
+       Call  domain  name into the array pointed to by buf.  Copy
+       the string that would be returned by  uname  [see  in  the
+       sysname  field, into the array pointed to by buf.  This is
+       the name of the implementation of  the  operating  system,
+       for  example,  UNIX_SV.  Copy a string that represents the
+       maximum number of  users  currently  configured  into  the
+       operating  system  into the array pointed to by buf.  This
+       is a number or the keyword  unlimited.   Copy  the  string
+       that  would be returned by uname in the version field into
+       the array pointed to by buf.  The syntax and semantics  of
+       this string are defined by the system provider.
+
+       The  name  value  of  _CS_PATH,  defined  in  the unistd.h
+       header, is supported by the implementation.  Others may be
+       supported.   When  len has a non-zero value and name has a
+       value that is configuration-defined, confstr  copies  this
+       value  into  the len-bytes buffer that buf is pointing to.
+       If the string that is being returned is  longer  than  len
+       bytes, including the terminating null, the string is trun-
+       cated to len-1 bytes by the confstr function.  The  result
+       is also null-terminated.
+
+       To  detect that the string has undergone a truncation pro-
+       cess, the application makes a comparison between the value
+       that  the  confstr  function has returned and len.  If len
+       has the value zero and buf is a null pointer,  an  integer
+       is  still  returned  by  confstr, as defined below, but it
+       does not return a string.  An unspecified result  is  pro-
+       duced if len is zero and buf is not a null pointer.
+
+   RReettuurrnn vvaalluueess
+       If name has a value that is configuration-defined, confstr
+       returns the size of the buffer that  would  be  needed  to
+       hold the entire configuration-defined value.  If the value
+       returned is greater than len, the string returned  in  buf
+       is truncated.
+
+       If  name  is  invalid  variable,  confstr returns zero and
+       errno is set to indicate the error.  If name has  a  value
+       that  is  not  configuration-defined, confstr returns zero
+       and errno is left unchanged.
+
+   EErrrroorrss
+       Failure in the confstr function will occur if:  The  value
+       of the argument name is invalid.
+
+UUssaaggee
+       An  application  can  distinguish between a name parameter
+       that is invalid and one that corresponds to a configurable
+       variable that has no configuration-defined value by check-
+       ing whether errno is modified.  This reflects  the  opera-
+       tion of the sysconf function.
+
+                                                                2
+
+confstr(3C)                                           confstr(3C)
+
+       The initial reason for having this function was to provide
+       a way of finding the configuration-defined  default  value
+       for  the  environment variable PATH.  Applications need to
+       be able to determine the system-supplied PATH  environment
+       variable value which contains the correct search paths for
+       the various standard utilities.  This is because PATH  can
+       be  altered  by  users  so that it can include directories
+       that may contain utilities that  replace  standard  utili-
+       ties.
+
+   EExxaammpplleess
+       Here  is  an  example of the use of confstr by an applica-
+       tion: confstr(name, (char *)NULL, (size_t)0);
+
+       In the example the confstr function is being used  by  the
+       application  to  determine  how big a buffer is needed for
+       the string value.  malloc could  be  used  to  allocate  a
+       buffer  to hold the string.  To obtain the string, confstr
+       must be called again.  An alternative  is  to  allocate  a
+       fixed  static  buffer  which  is large enough to hold most
+       answers, perhaps 512 or 1024 bytes.  malloc could then  be
+       used  to  allocate  a  buffer that is larger in size if it
+       finds that this is too small.
+
+RReeffeerreenncceess
+
+                                                                3
+

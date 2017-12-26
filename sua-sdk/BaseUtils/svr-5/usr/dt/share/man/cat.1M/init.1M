@@ -1,0 +1,266 @@
+
+
+init(1M)                                                 init(1M)
+
+SSyynnooppssiiss
+       /sbin/init [0123456SsQqabc]
+
+       /sbin/telinit [0123456SsQqabc]
+
+DDeessccrriippttiioonn
+   iinniitt
+       init is a general process spawner.  Its primary role is to
+       create processes from information  stored  in  an  inittab
+       file (see The default inittab file used is /etc/inittab.
+
+       At  any given time, the system is in one of eight possible
+       states.  A system state is a software configuration of the
+       system  under  which  only  a  selected group of processes
+       exist.  The processes spawned by init for  each  of  these
+       system  states  is defined in inittab.  init can be in one
+       of eight system states, and S or s (system states S and  s
+       are  identical).   The  system state changes when a privi-
+       leged user executes /sbin/init.  This user-initiated  init
+       sends  appropriate  signals  to the original init (the one
+       spawned by  the  operating  system  when  the  system  was
+       booted)  designating  the system state to which the latter
+       should change.
+
+       The following are the arguments to init.
+
+       Shut the machine down so it is safe to remove  the  power.
+       Have  the  machine remove power if it can.  Put the system
+       in administrative state.  All file  systems  are  mounted.
+       Only  a small set of essential kernel processes run.  This
+       state is used for performing administrative tasks such  as
+       installing  optional  utilities  packages.   All files are
+       accessible and no users are logged in on the system.   Put
+       the  system  in multi-user state.  All multi-user environ-
+       ment terminal processes and daemons  are  spawned.   Start
+       the  remote file sharing processes and daemons.  Mount and
+       advertise remote resources.  System state 3 extends multi-
+       user  state  and  is  also  known as the networking state.
+       Define a configuration for an alternative multi-user envi-
+       ronment.   This  state  is not necessary for normal system
+       operations; it's usually not used.  Stop the UnixWare sys-
+       tem  and  enter  firmware state.  Stop the UnixWare system
+       and reboot to the state defined by the  initdefault  entry
+       in  inittab.  Process only those inittab entries for which
+       the system state is set to a, b, or c.  These are  pseudo-
+       states,  which may be defined to run certain commands, but
+       which do not cause the current  system  state  to  change.
+       Re-examine  inittab.   Enter  single-user state.  When the
+       system changes to this state the terminal from  which  the
+       init  command  was  executed  becomes  the system console.
+       (The terminal device is linked to /dev/syscon.)
+
+       This is the only system state  that  doesn't  require  the
+       existence  of  a properly formatted inittab file.  If this
+
+                                                                1
+
+init(1M)                                                 init(1M)
+
+       file does not exist, then by default the only legal system
+       state that init can enter is the single-user state.
+
+       The  set of file systems mounted and the list of processes
+       killed when a system  enters  single-user  state  are  not
+       always  the same; which file systems are mounted and which
+       processes are  killed  depends  on  the  method  used  for
+       putting the system into single-user state and the rules in
+       force at your computer  site.   The  following  paragraphs
+       describe  single-user  state  in three circumstances: when
+       the system is brought up to s with init; when  the  system
+       is  brought (from another state) to single-user state with
+       init; and when the system is brought to single-user  state
+       with shutdown.
+
+       When  the  system  is brought up to single-user state with
+       init, the only file systems mounted are  /  (root),  /var,
+       and  /stand.   (Two file system types, /proc and /dev/fd),
+       are also mounted.)  File systems for users' files are  not
+       mounted.   With the commands available on the mounted file
+       systems, you can manipulate the file systems or transition
+       to  other  system states.  Only essential kernel processes
+       are kept running.
+
+       When the system is brought down to single-user state  with
+       init, all mounted file systems remain mounted and all pro-
+       cesses started by init that  should  be  running  only  in
+       multi-user  state  are  killed.  Because all login-related
+       processes are killed, users cannot access the system while
+       it's  in  this  state.  In addition, any process for which
+       the utmp file has an entry will be killed.  This last con-
+       dition  insures that all port monitors started by the Ser-
+       vice Access Controller (SAC) will be killed and  all  ser-
+       vices  started  by  these  port monitors, including ttymon
+       login services, will be killed.  (The SAC is a daemon that
+       maintains  the  port  monitors  on a server machine in the
+       state specified by the system administrator.)  Other  pro-
+       cesses  not  started  directly by init (such as cron) will
+       remain running.
+
+       When you change to single-user state  with  shutdown,  the
+       system  is  restored  to the state in which it was running
+       when you first booted the machine and came up  in  single-
+       user state, as described above.
+
+       When  a UnixWare system is booted, init is invoked and the
+       following occurs.  First, init looks in  inittab  for  the
+       initdefault  entry (see If there is one, init will use the
+       system state specified in that entry as the initial system
+       state for the system.  If there is no initdefault entry in
+       inittab, init requests that the user enter a system  state
+       from the virtual system console (/dev/syscon).
+
+       If  an S or s is entered, init takes the system to single-
+
+                                                                2
+
+init(1M)                                                 init(1M)
+
+       user state.  When single-user state is entered, the user's
+       current terminal becomes the virtual system console and is
+       used from then on for interactions with init.  Even  after
+       a  reboot,  init will try to continue to use the same vir-
+       tual system console.  If this  device  can  no  longer  be
+       accessed,  the  virtual  system console will revert to the
+       default console device, /dev/systty.  The command /sbin/su
+       is invoked and a message is generated on the physical con-
+       sole saying where the virtual console has been  relocated.
+       Use  either  init or telinit, to signal init to change the
+       system state of the system.  Note that  if  the  shell  is
+       terminated  (via  an  end-of-file), init will only re-ini-
+       tialize to the single-user state if the inittab file  does
+       not exist.
+
+       If a 0 through 6 is entered, init enters the corresponding
+       system state.  System states 0,  5,  and  6  are  reserved
+       states  for shutting the system down.  System states 2, 3,
+       and 4 are available as multi-user operating states.
+
+       If this is the first time since power  up  that  init  has
+       entered  a  state other than single-user state, init first
+       scans inittab for boot and  bootwait  entries  (see  These
+       entries are performed before any other processing of init-
+       tab takes place, providing that the system  state  entered
+       matches  that  of the entry.  In this way any special ini-
+       tialization of the operating system, such as mounting file
+       systems,  can take place before users are allowed onto the
+       system.  init then scans inittab and  executes  all  other
+       entries that are to be processed for that system state.
+
+       To  spawn  each process in inittab, init reads each entry,
+       and for each entry that should be respawned,  it  forks  a
+       child  process.  After it has spawned all of the processes
+       specified by inittab, init waits for one of its descendant
+       processes  to  die,  a  powerfail signal, or a signal from
+       another init or telinit process  to  change  the  system's
+       state.  When one of these conditions occurs, init re-exam-
+       ines inittab.  New entries can be added to inittab at  any
+       time; however, init still waits for one of the above three
+       conditions to occur before re-examining inittab.   To  get
+       around  this, the init Q (or init q) command wakes init to
+       re-examine inittab immediately.
+
+       When init comes up  at  boot  time,  ioctl  settings  from
+       /etc/ioctl.syscon are saved internally.  Whenever the sys-
+       tem changes to the single-user state, and after  the  vir-
+       tual  console  device has been established (that is, after
+       the device from which you issued the init  s  command  has
+       been  linked  to  /dev/syscon),  the  ioctl  settings  are
+       retrieved    from    /dev/syscon    and    restored     to
+       /etc/ioctl.syscon.       The     ioctl     values     from
+       /etc/ioctl.syscon are set on the  virtual  console  device
+       prior  to  a  message  being displayed by init.  The ioctl
+
+                                                                3
+
+init(1M)                                                 init(1M)
+
+       values on the virtual console device are restored to their
+       original values after the message is displayed.
+
+       When a system state change request is made, init sends the
+       warning signal (SIGTERM) to all processes that  are  unde-
+       fined in the target system state.  init waits five seconds
+       before forcibly terminating these processes via  the  kill
+       signal (SIGKILL).
+
+       When  init  receives a signal telling it that a process it
+       spawned has died, it records the fact and  the  reason  it
+       died  in /var/adm/utmp and /var/adm/wtmp if it exists (see
+       A  history  of  the   processes   spawned   is   kept   in
+       /var/adm/wtmp.
+
+       If  init  receives  a  powerfail  signal (SIGPWR) it scans
+       inittab for special entries of the type powerfail and pow-
+       erwait.   These  entries  are invoked (if the system state
+       permits) before any further processing  takes  place.   In
+       this  way  init  can perform various cleanup and recording
+       functions during the powerdown of the operating system.
+
+   tteelliinniitt
+       telinit, which is linked to /sbin/init, is used to  direct
+       the  actions  of  init.  It takes a one-character argument
+       and signals init to take the appropriate action.
+
+FFiilleess
+       default inittab file
+
+DDiiaaggnnoossttiiccss
+       If init finds that it is  respawning  an  entry  from  the
+       inittab  file  more  than ten times in one minute, it will
+       assume that there is an error in the command string in the
+       entry,  and  generate  an error message on the system con-
+       sole.  It will then refuse to  respawn  this  entry  until
+       either  five  minutes  has elapsed or it receives a signal
+       from a user-spawned init or telinit.  This  prevents  init
+       from eating up system resources when someone makes a typo-
+       graphical error in  the  inittab  file  or  a  program  is
+       removed that is referenced in inittab.
+
+       When  attempting  to  boot  the system, failure of init to
+       prompt for a new system state may be because  the  virtual
+       system console is linked to a device other than the physi-
+       cal system console.
+
+RReeffeerreenncceess
+NNoottiicceess
+       init and telinit can be run only by a privileged user.
+
+       The S or s state must not be used indiscriminately in  the
+       inittab  file.   A good rule to follow when modifying this
+       file is to avoid adding this state to any line other  than
+
+                                                                4
+
+init(1M)                                                 init(1M)
+
+       the initdefault.
+
+       If  a  default  state  is not specified in the initdefault
+       entry in inittab, state 6 is entered.   Consequently,  the
+       system  will  loop,  that  is,  it will go to firmware and
+       reboot continuously.
+
+       Messages generated from the kernel (for example, Press any
+       key  to  reboot  ...   which  is  displayed as a result of
+       entering the command init 5), are displayed on the default
+       system console device.
+
+       If  the  utmp file cannot be created when booting the sys-
+       tem, the system will boot to single-user state  regardless
+       of  the  state  specified  in the initdefault entry in the
+       inittab file.  This can happen if the /var file system  is
+       not accessible.
+
+       In the event of a file table overflow condition, init uses
+       a file descriptor associated with the inittab file that it
+       retained  from  the last time it accessed that file.  This
+       prevents init from going into single user  state  when  it
+       cannot  obtain a file descriptor to open the inittab file.
+
+                                                                5
+

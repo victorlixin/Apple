@@ -1,0 +1,144 @@
+
+
+OFEvaluateFilter(3sadm)                   OFEvaluateFilter(3sadm)
+
+SSyynnooppssiiss
+       CC ... -lsysadm -lvtcl -ltclx -ltcl -lsocket -lgen -lm
+
+       #include <scoadmin/osaStdDef.h>
+
+       void   OFEvaluateFilter(errStatusPtr,   handleId,  filter-
+       String, objectList, objectCount)
+
+DDeessccrriippttiioonn
+       This routine takes a list of objects and performs a filter
+       on them, returning an indication of which of those objects
+       passed the filter (and which did not).  The list given  by
+       objectList  will  be  modified  so that those objects that
+       passed the filter will be placed at the beginning  of  the
+       list,  and  the variable pointed to by objectCount will be
+       replaced with the number of objects that did pass the fil-
+       ter.  Thus  if  ten(10) objects are passed to the function
+       and only three of them pass the filter, their  names  will
+       be    found    in    *objectList[0],    *objectList[1]   &
+       *objectList[2], and objectCount  will  contain  the  value
+       three (3).
+
+   AArrgguummeennttss
+       The  ubiquitous  error stack pointer. The error stack this
+       points to will be modified if any errors occur during  the
+       operation  of  the  filter.  This is the handle identifier
+       that was forwarded to the request processor by  the  admin
+       services library.  A char * to the ASCII representation of
+       the filter to be performed on the object(s). This is  nor-
+       mally found in bmipRequest_pt.filterPtr, but in performing
+       a scope on the named object the request processor may want
+       to  change the given filter.  A char ***, a pointer to the
+       location of a list of object identification  strings.  The
+       OFEvaluateFilter  routine will reorder this list and place
+       the valid objects (those that  pass  the  filter)  at  the
+       beginning  of  the  list,  and those that fail at the end.
+       The number of objects in the objectList is passed  to  the
+       function.  It  then  places the number of valid objects in
+       the variable pointed to by objectCount.   If  the  request
+       processor  is performing a scoping operation on the object
+       instance passed to  it,  or  is  generating  the  list  of
+       objects to be worked on based on the named object instance
+       and the given filter, or can eliminate a  portion  of  the
+       filter  in  a trivial solution; then the request processor
+       might  want   to   send   only   the   portions   of   the
+       bmipRequest_pt.filterPtr that are still relevant.
+
+DDiiaaggnnoossttiiccss
+       This function can return any of the error messages associ-
+       ated with OFEvaluateOperation plus the  following  errors:
+       The  handleId  named  does  not  correspond to an existing
+       class in the Server APIs internal lookup table.  The class
+       represented  by  the named handleId has no filter function
+       associated with it.  The class represented  by  the  named
+
+                                                                1
+
+OFEvaluateFilter(3sadm)                   OFEvaluateFilter(3sadm)
+
+       handleId  has  defined the no filter action for one of the
+       attributes & filter-action pairs named in the filterString
+       argument. Or the data portion of a binary filter-action is
+       corrupt. Or the wrong order or number  of  arguments  were
+       given  to a filter-action. Or the filter command itself is
+       corrupt.  The execution of the filter operation was halted
+       because  of  an error in running the operation's execution
+       procedure.
+
+EExxaammpplleess
+       void RequestProcessor(errStatus_cl   *errStatusPtr,
+                        int             handleId,
+                        bmipRequest_pt  bmipRequestPtr,
+                        void           *handle) {
+           /*---
+            *
+            * Generate a list of all the objects to be evaluated
+            *
+            */
+
+           objectInstance_pt *objectList;
+           int                objectCount;
+
+               .
+               .
+               .
+
+           /*    create     the     "objectList[]"     out     of
+       bmipRequestPtr->objectInstancePtr
+            * and possibly bmipRequestPtr->scopePtr.
+            */
+
+               .
+               .
+               .
+
+           OFEvaluateFilter(errStatusPtr,
+                            handleId,
+                            bmipRequestPtr->filterPtr,
+                            &objectList,
+                            &objectCount);
+
+           if (objectCount < 1)
+           {
+               /*  If  all the objects failed the filter, we need
+       to send a BMIP
+                * response to that effect back to the client.  So
+       we set the
+                *   objectInstancePtr  to  NULL  and  call  OFRe-
+       turnBmipResponse().
+                */
+
+               bmipResponse_t *bmipResponsePtr =
+                   OFComposeBmipResponseError(errStatusPtr,
+
+                                                                2
+
+OFEvaluateFilter(3sadm)                   OFEvaluateFilter(3sadm)
+
+       bmipRequestPtr);
+
+               ErrorClear(errStatusPtr);
+
+               OFReturnBmipResponse(errStatusPtr,
+                                    handleId,
+                                    bmipResponsePtr,
+                                    FALSE);
+
+               /*  Calling  OFReturnBmipResponse() will also free
+       up the bmipResponse_t
+                * and the errorParameter field of that structure.
+                */
+
+               MemFree(objectList);
+               return;
+           }
+
+RReeffeerreenncceess
+
+                                                                3
+

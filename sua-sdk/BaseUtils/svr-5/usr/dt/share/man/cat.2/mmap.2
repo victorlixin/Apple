@@ -1,0 +1,263 @@
+
+
+mmap(2)                                                   mmap(2)
+
+SSyynnooppssiiss
+       #include <sys/types.h> #include <sys/mman.h>
+
+       void  *mmap(void  *addr,  size_t len, int prot, int flags,
+       int fd,      off_t off);
+
+       void *mmap64(void *addr, size_t len, int prot, int  flags,
+       int fd,      off64_t offset);
+
+DDeessccrriippttiioonn
+       mmap  establishes  a  mapping  between a process's address
+       space and a virtual memory object (a file).   The  mapping
+       allows  you  to  perform  I/O  without  using and when you
+       retrieve or store data in the mapped  region,  the  system
+       reads from or writes to the corresponding file.
+
+       The format of the call is as follows: pa = mmap(addr, len,
+       prot, flags, fd, off);
+
+       mmap establishes a mapping between the  process's  address
+       space  at  an address pa for len bytes and the file repre-
+       sented by the file descriptor fd at  offset  off  for  len
+       bytes.   The  value  of  pa is an implementation-dependent
+       function of the parameter addr and values of  flags,  fur-
+       ther  described  below.  A successful mmap call returns pa
+       as its result.
+
+   ffdd ppaarraammeetteerr
+       fd is the file descriptor for the file to be mapped.   The
+       file  must be a virtual memory object, that is, it must be
+       able to be  treated  as  storage.   Some  devices  can  be
+       mapped,  but  their  behavior is device-specific and some-
+       times  implementation-specific.   However,  some  devices,
+       such  as /dev/zero and /dev/dzero, are generic.  Typically
+       file systems do not allow directories to be mapped.
+
+   pprroott ppaarraammeetteerr
+       The parameter prot determines whether  read,  write,  exe-
+       cute, or some combination of accesses are permitted to the
+       pages being mapped.  The protection options are defined in
+       sys/mman.h     as:    PROT_READ Page    can    be    read.
+       PROT_WRITE     Page can be written.  PROT_EXEC Page can be
+       executed.  PROT_NONE Page can not be accessed.
+
+       Not  all  implementations  literally  provide all possible
+       combinations.   PROT_WRITE   is   often   implemented   as
+       PROT_READ|PROT_WRITE and PROT_EXEC as PROT_READ|PROT_EXEC.
+       However, no implementation will permit a write to  succeed
+       where  PROT_WRITE  has  not  been  set.   The  behavior of
+       PROT_WRITE can be influenced by setting MAP_PRIVATE in the
+       flags parameter, described below.
+
+   ffllaaggss ppaarraammeetteerr
+       The  parameter  flags provides other information about the
+
+                                                                1
+
+mmap(2)                                                   mmap(2)
+
+       handling of the mapped pages.  The options are defined  in
+       sys/mman.h as:
+
+       MAP_SHARED     Share  changes.  MAP_PRIVATE    Changes are
+       private.       MAP_FIXED Interpret      addr      exactly.
+       MAP_ANONYMOUS  Map /dev/zero without open or close.
+
+       MAP_SHARED  and  MAP_PRIVATE  describe  the disposition of
+       write references to the file.  If MAP_SHARED is specified,
+       write  references will change the file.  If MAP_PRIVATE is
+       specified, the initial write reference will create a  pri-
+       vate  copy of the modified file page and redirect the map-
+       ping to the copy.  Either MAP_SHARED or  MAP_PRIVATE  must
+       be  specified, but not both.  The mapping type is retained
+       across a
+
+       Note that the private copy is not created until either the
+       first  write  or  the page is locked for write access (see
+       until  then,  other  users  who  have  the   file   mapped
+       MAP_SHARED  can  change  the image of the file observed in
+       the mapped page.
+
+       MAP_FIXED informs the system that the value of pa must  be
+       addr, exactly.  The use of MAP_FIXED is discouraged, as it
+       may prevent an implementation from making the most  effec-
+       tive use of system resources.
+
+       The  MAP_ANONYMOUS  flag  provides  a mapping identical to
+       that obtained by mapping /dev/zero.  However, there is  no
+       need for the program to open and close a device.
+
+       When MAP_ANONYMOUS is specified fd must be set to -1.
+
+       Using MAP_ANONYMOUS is faster than mapping /dev/zero, even
+       after device /dev/zero is already open, due  to  the  sys-
+       tem's ability to completely bypass the device layer.  Also
+       see ``Usage'' and ``Standards Conformance'', below.
+
+   aaddddrr ppaarraammeetteerr
+       When MAP_FIXED is not set, the  system  uses  addr  in  an
+       implementation-defined  manner to arrive at pa.  The pa so
+       chosen will be an area of the address space which the sys-
+       tem deems suitable for a mapping of len bytes to the spec-
+       ified file.  All implementations interpret an  addr  value
+       of zero as granting the system complete freedom in select-
+       ing pa, subject to constraints described  below.   A  non-
+       zero  value  of addr is taken to be a suggestion of a pro-
+       cess address near which  the  mapping  should  be  placed.
+       When  the  system  selects  a  value for pa, it will never
+       place a mapping at address 0,  nor  will  it  replace  any
+       extant  mapping, nor map into areas considered part of the
+       potential data or stack segments.  pa will be aligned on a
+       page  boundary.  When MAP_FIXED is specified, addr must be
+       aligned on a page boundary.
+
+                                                                2
+
+mmap(2)                                                   mmap(2)
+
+   ooffff ppaarraammeetteerr
+       off is the offset into the file to be mapped.  off is con-
+       strained to be aligned on a page boundary.
+
+   lleenn ppaarraammeetteerr
+       The  system  performs mapping operations over whole pages.
+       Therefore, if len is not a multiple of the page  size  (as
+       returned  by  the system will include in the mapped region
+       the remainder of any partial page specified by  the  range
+       [pa,  pa  +  len).  (The notation [start, end) denotes the
+       interval from start to end, including start but  excluding
+       end.)
+
+   FFuurrtthheerr ddeettaaiillss
+       The address range covered by [pa, pa + len) must be legit-
+       imate for the address space of  a  process.   mmap  cannot
+       grow a file.
+
+       The mapping established by mmap replaces any previous map-
+       pings for the process's pages in the range [pa, pa + len).
+
+       In  the  case  where  off  + len exceeds the length of the
+       file, the system will zero-fill the mapping from  the  end
+       of  the  file  to  the next page boundary.  If the process
+       modifies any portion of the mapped region beyond  the  end
+       of  the  file,  there is no guarantee that the system will
+       write those changes out to the file; the results are  file
+       system  dependent.  References to pages in a mapped region
+       which are beyond the page containing the  end  of  a  file
+       will  result  in  the delivery of a SIGBUS signal.  SIGBUS
+       signals may also be delivered on various file system  con-
+       ditions, including quota exceeded errors.
+
+       mmap  adds  an extra reference to the file associated with
+       the file descriptor fd which is not removed  by  a  subse-
+       quent  close  on  that file descriptor.  This reference is
+       removed when the entire range is unmapped  (explicitly  or
+       implicitly).   A  mapping is unmapped explicitly with mun-
+       map, or implicitly with or by an  mmap  MAP_FIXED  to  the
+       same range.
+
+   RReettuurrnn vvaalluueess
+       On  success,  mmap  and mmap64 return the address at which
+       the mapping was placed (pa).  On failure, mmap and  mmap64
+       return ( void *)-1 and set errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, mmap fails and sets errno to:
+       The file is a regular file and the  value  of  off  +  len
+       exceeds  the maximum established in the open file descrip-
+       tor associated with fd.
+
+       In the following conditions, mmap and mmap64 fail and  set
+       errno  to:  The  mapping  could not be locked in memory or
+
+                                                                3
+
+mmap(2)                                                   mmap(2)
+
+       MAP_FIXED was not specified and there is insufficient room
+       in  the  address  space  to effect the mapping.  fd is not
+       open.  fd is not open for read, regardless of the  protec-
+       tion specified, or fd is not open for write and PROT_WRITE
+       was specified for a MAP_SHARED type  mapping.   The  argu-
+       ments  addr  (if  MAP_FIXED  was specified) or off are not
+       multiples of the page size as returned  by  sysconf.   The
+       field   in   flags  is  invalid  (neither  MAP_PRIVATE  or
+       MAP_SHARED).  MAP_ANONYMOUS was specified and  fd  is  not
+       equal  to -1.  fd refers to a file for which mmap is mean-
+       ingless, such as a terminal.  MAP_FIXED was specified  and
+       the  range [addr, addr + len) exceeds that allowed for the
+       address space of a process, or MAP_FIXED was not specified
+       and  there  is  insufficient  room in the address space to
+       effect the mapping.
+
+UUssaaggee
+       mmap allows access to resources via address space  manipu-
+       lations  instead of the read/write interface.  Once a file
+       is mapped, all a process has to do to access it is use the
+       data  at  the  address to which the file was mapped.  Con-
+       sider the following pseudo-code: fd = open(...)  lseek(fd,
+       offset) read(fd, buf, len) /* use data in buf */
+
+       Here  is  a  rewrite using mmap: fd = open(...)  address =
+       mmap((void *) 0, len, (PROT_READ | PROT_WRITE),
+                      MAP_PRIVATE, fd, offset)  /*  use  data  at
+       address */
+
+   MMAAPP__AANNOONNYYMMOOUUSS
+       With MAP_ANONYMOUS, one can mmap zero-filled space without
+       having a file descriptor that refers to /dev/zero.
+
+       The most straightforward  way  to  get  zero-filled  space
+       using  mmap  without  MAP_ANONYMOUS is demonstrated by the
+       following code fragment: fd = open("/dev/zero", O_RDONLY);
+       ptr = mmap(0, desired_size, PROT_READ|PROT_WRITE, MAP_PRI-
+       VATE, fd, 0); close(fd);
+
+       This approach, while very reasonable in concept, is expen-
+       sive  in terms of system performance, particularly if mul-
+       tiple such calls to mmap are required by the  application.
+
+       This  is what MAP_ANONYMOUS addresses.  The three lines of
+       code above turn into a single system call: ptr  =  mmap(0,
+       desired_size, PROT_READ|PROT_WRITE, MAP_PRIVATE|MAP_ANONY-
+       MOUS, 0, 0);
+
+       MAP_ANONYMOUS causes mmap to ignore  the  file  descriptor
+       argument  and act as if it had been given one referring to
+       /dev/zero.
+
+RReeffeerreenncceess
+
+                                                                4
+
+mmap(2)                                                   mmap(2)
+
+SSttaannddaarrddss CCoonnffoorrmmaannccee
+       UnixWare implements MAP_ANONYMOUS in an identical  fashion
+       with  several  other  popular  Unix systems.  However, the
+       Single   UNIX   Specification,   Version   2   does    not
+       includeMAP_ANONYMOUS.
+
+       An  application  can  take  advantage of MAP_ANONYMOUS and
+       still run on systems that do not implement it, by attempt-
+       ing  first  MAP_ANONYMOUS and, if this fails, then opening
+       /dev/zero.
+
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Sibling threads share (by  definition)  the  same  address
+       space;  modifications  to  the address space by one can be
+       perceived by the others.
+
+   CCoonnssiiddeerraattiioonnss ffoorr LLaarrggee FFiillee SSuuppppoorrtt
+       mmap64 supports large files, but is otherwise identical to
+       mmap.   For  details on programming for large file capable
+       applications, see on intro(2).
+
+                                                                5
+

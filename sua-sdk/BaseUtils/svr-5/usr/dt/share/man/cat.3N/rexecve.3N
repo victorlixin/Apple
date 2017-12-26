@@ -1,0 +1,141 @@
+
+
+rexecve(3N)                                           rexecve(3N)
+
+SSyynnooppssiiss
+       cc  [options]  file  -lnsl #include <sys/types.h> #include
+       <rx.h>
+
+       int rexecve(char *host, char  *rx_service,  char  *argv[],
+            char *envp[], long flags);
+
+       int  rx_set_ioctl_hand(int  cnum,  int  (*ioctl_hand)(int,
+       int, ...));
+
+       int rx_set_write_hand(int cnum, ssize_t (*write_hand)(int,
+       const void*,      size_t));
+
+       int rx_fd(int cnum);
+
+       int rx_proc_msg(int cnum, long *msg_type, long *ret_code);
+
+       int rx_write(int cnum, char *buf, long len);
+
+       int rx_signal(int cnum, int signum);
+
+       int rx_ack_exit(int cnum, char *ta_buf, long ta_len);
+
+       int rx_free_conn(int cnum);
+
+DDeessccrriippttiioonn
+       The REXEC  support  routines  contain  all  the  functions
+       required by an REXEC client program, such as the functions
+       needed by to communicate with the rxserver program.
+
+       The rexecve function is used to establish a connection  to
+       rxserver.   rexecve  contacts  rxserver on the remote host
+       host and attempts to start executing a service  rx_service
+       with  the  arguments specified by argv and the environment
+       specified by envp.  Options may  be  specified  using  the
+       flags  parameter:  Informs REXEC that only one end-of-file
+       condition can occur on stdin.  If stdin is associated with
+       a  terminal,  additional data can be sent after an end-of-
+       file, so this flag would not be used.  Instructs  rxserver
+       to  set  up  a separate standard output and standard error
+       channels for data written by the remote service so that it
+       may be treated separately by the client.
+
+       Once a connection has been successfully established, other
+       library functions may be  used  to  communicate  with  the
+       remote  service.  rexecve returns a connection number cnum
+       which needs to be specified when using other rx_ functions
+       to refer to this particular connection.
+
+       The  rx_set_ioctl_hand  function  is used to set a handler
+       function for incoming RX_IOCTL messages.  By default,  the
+       handler  function  is  ioctl.   The handler may be changed
+       while an REXEC connection is in progress.
+
+                                                                1
+
+rexecve(3N)                                           rexecve(3N)
+
+       The rx_set_write_hand function is used to  set  a  handler
+       function  for  incoming RX_DATA messages.  By default, the
+       handler function is write.  The  handler  may  be  changed
+       while an REXEC connection is in progress.
+
+       The  rx_fd function returns the file descriptor of an open
+       REXEC connection (useful when using poll).
+
+       The rx_proc_msg function is called by the  client  program
+       when  it gets a new data indication from poll for the file
+       descriptor used  by  the  REXEC  connection.   rx_proc_msg
+       reads  an  REXEC  message header and message, and performs
+       the appropriate actions depending on the type  of  message
+       (such as RX_DATA or RX_IOCTL).  The msg_type argument is a
+       pointer to a user-supplied variable, which upon the return
+       of  the call is set to the message type that was received.
+       The following  are  possible  message  types,  from  rx.h:
+       #define  RX_INCOMPLETE     1     /*  incomplete message */
+       #define RX_PROTOCOL      2    /* protocol  message  (open,
+       close  etc)  */  #define  RX_SERVICE_DEAD  3    /* service
+       termination message */ #define  RX_TYPEAHEAD      4     /*
+       typeahead message */ #define RX_DATA          5    /* data
+       message */ #define RX_IOCTL         6    /* ioctl  message
+       */  #define  RX_EOF            7    /* 0-length message */
+       The ret_code argument is  a  pointer  to  a  user-supplied
+       variable,  which upon the return of the call is set to the
+       error value as returned from the  server  (from  the  same
+       list as the values for Rx_errno).
+
+       The  rx_write  function  is  used by the client program to
+       send data  to  the  remote  service.   Any  data  sent  by
+       rx_write  will  be  passed  to the remote service process'
+       file descriptor 0 (stdin).
+
+       The rx_signal function is used by the  client  program  to
+       send  a  signal  to the remote service.  Only four signals
+       are supported: SIGHUP, SIGINT, SIGQUIT, and SIGPIPE.
+
+       The rx_ack_exit function always returns -1.  It is kept in
+       the  library  for  compatibility  and  may be removed in a
+       future release.
+
+       The rx_free_conn function is used by the client program to
+       close  an  REXEC  connection  and  to  free  any resources
+       (mainly the file descriptor) used by it.  An internal ver-
+       sion   of   rx_free_conn   is   invoked  automatically  by
+       rx_proc_msg when an RX_EOF message is  received,  or  when
+       rxserver drops the connection.
+
+RReettuurrnn vvaalluueess
+       Upon  successful completion, the routines return 0, other-
+       wise they return -1 and set Rx_errno to one of the follow-
+       ing:   No  error  Too  many  open  rexec  connections  Bad
+       options/flags specified Too many arguments Bad environment
+
+                                                                2
+
+rexecve(3N)                                           rexecve(3N)
+
+       specification  Unknown host Connection problem Host is not
+       running rxserver Unsupported version No such  service  Not
+       authorized  to  execute service No pseudo terminals avail-
+       able rxserver cannot make pipe for stderr Error in  start-
+       ing server side Server side memory allocation problems Bad
+       rexec connection number write would cause process to block
+       Bad  signal  number  Connection  in wrong state to perform
+       operation Could not push TIRDWR  module  at  client  write
+       handler  failure at client ioctl handler failure at client
+       Protocol failure--unexpected message  Could  not  allocate
+       memory for error variable Unknown error code
+
+RReeffeerreenncceess
+NNoottiicceess
+       If  the  remote  process  exits before it consumes all the
+       data that the client application has sent, this data  will
+       be lost.
+
+                                                                3
+

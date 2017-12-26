@@ -1,0 +1,446 @@
+
+
+terminfo(4)                                           terminfo(4)
+
+SSyynnooppssiiss
+       #include <term.h>
+
+       /usr/share/lib/terminfo/?/*
+
+DDeessccrriippttiioonn
+       This  manual  page describes the default terminfo database
+       format, which complies with the  X/Open  Curses,  Issue  4
+       Version  2 standard found in The Single UNIX(R) Specifica-
+       tion, Version 2.
+
+       The terminfo database is a collection of  files,  produced
+       by that describe the capabilities of a variety of devices,
+       such as terminals and printers.
+
+       The terminfo database is  often  used  by  screen-oriented
+       applications such as vi and curses programs, as well as by
+       some utilities such as ls and more.   Using  the  terminfo
+       database,  applications can work with a variety of devices
+       without changes to the application.
+
+TTeerrmmiinnffoo ssoouurrccee ffoorrmmaatt
+       Devices are described by specifying a set of capabilities,
+       by quantifying certain aspects of the device, and by spec-
+       ifying character sequences that effect particular results.
+
+       This  manual  page specifies the format of terminfo source
+       files.  The command accepts source  files  in  the  format
+       specified  here,  compiles  them  into  device description
+       files, and places them in the terminfo database.  A  valid
+       terminfo entry describing a given model of terminal can be
+       added to terminfo to permit use of the same terminal model
+       by applications.
+
+       describes  the syntax of terminfo source files.  A grammar
+       and lexical conventions appear in A list of  all  terminal
+       capabilities  defined by X/Open appears in An example fol-
+       lows in
+
+SSoouurrccee FFiillee SSyynnttaaxx
+       Source  files  can  use  the  ISO  8859-1  codeset.    The
+       behaviour  when  the  source file is in another codeset is
+       unspecified.  Traditional practice has been  to  translate
+       information  from other codesets into the source file syn-
+       tax.
+
+       terminfo source  files  consist  of  one  or  more  device
+       descriptions.   Each  description  defines a mnemonic name
+       for the terminal model.  Each description  consists  of  a
+       header  (beginning in column 1) and one or more lines that
+       list the features for that particular device.  Every  line
+       in a terminfo source file must end in a comma.  Every line
+       in a terminfo  source  file  except  the  header  must  be
+       indented  with  one or more white spaces (either spaces or
+
+                                                                1
+
+terminfo(4)                                           terminfo(4)
+
+       tabs).
+
+       Entries in terminfo source files consist of  a  number  of
+       comma-separated  fields.   White space after each comma is
+       ignored.  Embedded commas must be escaped by using a back-
+       slash.   The  following example shows the format of a ter-
+       minfo source file: delim $$ delim off The first line, com-
+       monly referred to as the header line, must begin in column
+       one and must contain at least  two  aliases  separated  by
+       vertical  bars.  The last field in the header line must be
+       the long name of the device and it may contain any string.
+
+       Alias  names  must  be unique in the terminfo database and
+       they must conform to file naming  conventions  established
+       by implementation-specific terminfo compilation utilities.
+       Implementations will recognise alias names consisting only
+       of  characters  from  the  portable filename character set
+       except that implementations need not accept a first  char-
+       acter of minus (-).  For example, a typical restriction is
+       that they cannot contain white space  or  slashes.   There
+       may  be  further constraints imposed on source file values
+       by the implementation-specific terminfo compilation utili-
+       ties.
+
+       Each  capability  in  terminfo  is of one of the following
+       types: Boolean capabilities show that a device has or does
+       not have a particular feature.  Numeric capabilities quan-
+       tify particular features of a device.  String capabilities
+       provide  sequences  that can be used to perform particular
+       operations on devices.
+
+       Capability names adhere to an  informal  length  limit  of
+       five  characters.  Whenever possible, capability names are
+       chosen to be the same as or similar to those specified  by
+       the ANSI X3.64-1979 standard.  Semantics are also intended
+       to match those of the ANSI standard.
+
+       All string capabilities may have padding  specified,  with
+       the  exception  of  those used for input.  Input capabili-
+       ties, listed under the Strings section  in  the  following
+       tables,  have  names beginning with key_.  These capabili-
+       ties are defined in term.h.
+
+MMiinniimmuumm GGuuaarraanntteeeedd LLiimmiittss
+       All X/Open-compliant implementations support at least  the
+       following limits for the terminfo source file:
+
+                                                                2
+
+terminfo(4)                                           terminfo(4)
+
+       +----------------------------+----------------------------+
+       |  SSoouurrccee FFiillee CChhaarraacctteerr--    |       MMiinniimmuumm VVaalluuee        |
+       |  iissttiicc                     |                            |
+       +----------------------------+----------------------------+
+       |  Length of a line          |         1023 bytes         |
+       +----------------------------+----------------------------+
+       |  Length of  a  terminal    |           14 bytes         |
+       |  alias                     |                            |
+       +----------------------------+----------------------------+
+       |  Length  of  a terminal    |          128 bytes         |
+       |  model name                |                            |
+       +----------------------------+----------------------------+
+       |  Width  of   a   single    |          128 bytes         |
+       |  field                     |                            |
+       +----------------------------+----------------------------+
+       |  Length   of  a  string    |         1000 bytes         |
+       |  value                     |                            |
+       +----------------------------+----------------------------+
+       |  Length  of  a   string    |           99 digits        |
+       |  representing a numeric    |                            |
+       |  value                     |                            |
+       +----------------------------+----------------------------+
+       |  Magnitude of a numeric    |   0 to 32767 (inclusive)   |
+       |  value                     |                            |
+       +----------------------------+----------------------------+
+       An  implementation  may  support  higher limits than those
+       specified above.
+
+FFoorrmmaall GGrraammmmaarr
+       The  grammar  and  lexical  conventions  in  this  section
+       together   describe   the  syntax  for  terminfo  terminal
+       descriptions within a terminfo source  file.   A  terminal
+       description  that  satisfies the requirements of this sec-
+       tion will be accepted by  all  implementations.   descrip-
+       tions  :  START_OF_HEADER_LINE   rest_of_header_line  fea-
+       ture_lines
+                 |       descriptions        START_OF_HEADER_LINE
+       rest_of_header_line
+                 | feature_lines
+                 ;  An  ALIAS that begins in column one.  This is
+       handled by the lexical analyzer.
+
+       rest_of_header_line : PIPE LONGNAME COMMA NEWLINE
+                 | aliases PIPE LONGNAME COMMA NEWLINE
+                 ;
+
+       feature_lines : start_feature_line rest_of_feature_line
+                 | feature_lines start_feature_line  rest_of_fea-
+       ture_line
+                 ;
+
+       start_feature_line  : START_FEATURE_LINE_BOOLEAN A BOOLEAN
+       feature that begins after column one but is the first fea-
+       ture  on the feature line.  This is handled by the lexical
+
+                                                                3
+
+terminfo(4)                                           terminfo(4)
+
+       analyzer.
+                 | START_FEATURE_LINE_NUMERIC A  NUMERIC  feature
+       that  begins  after column one but is the first feature on
+       the feature line.  This is handled  by  the  lexical  ana-
+       lyzer.
+                 |  START_FEATURE_LINE_STRING  A  STRING  feature
+       that begins after column one but is the first  feature  on
+       the  feature  line.   This  is handled by the lexical ana-
+       lyzer.
+                 ;
+
+       rest_of_feature_line : features COMMA NEWLINE
+                 | COMMA NEWLINE
+                 ;
+
+       features : COMMA feature
+                 | features COMMA feature
+                 ;
+
+       aliases : PIPE ALIAS
+                 | aliases PIPE ALIAS
+                 ;
+
+       feature : BOOLEAN
+                 | NUMERIC
+                 | STRING
+                 ;
+
+       The lexical conventions for terminfo descriptions  are  as
+       follows: White space consists of the space and tab charac-
+       ters.  An ALIAS may contain  any  graph  characters  other
+       than  ``,'', ``/'', and ``|''.  Graph characters are those
+       characters for which returns  non-zero.   A  LONGNAME  may
+       contain  any  print characters other than ``,'' and ``|''.
+       Print characters are those characters  for  which  returns
+       non-zero.  A BOOLEAN feature may contain any print charac-
+       ters other than ``,'', ``='', and ``#''.  A  NUMERIC  fea-
+       ture consists of: A name which may contain any print char-
+       acter other than ',', '=', and '#'.  The '#' character.  A
+       positive  integer which conforms to the C language conven-
+       tion for integer constants.  A STRING feature consists of:
+       A  name  which  may contain any print character other than
+       ',', '=', and '#'.  The '=' character.  A string which may
+       contain  any print characters other than ','.  White space
+       immediately following a ',' is ignored.  Comments  consist
+       of  <bol>, optional whitespace, a required '#', and a ter-
+       minating <eol>.  A header line must begin in  column  one.
+       A  feature line must not begin in column one.  Blank lines
+       are ignored.
+
+DDeeffiinneedd CCaappaabbiilliittiieess
+       X/Open defines the capabilities listed  in  the  following
+       table.   All  X/Open-compliant implementations must accept
+       each of these capabilities  in  an  entry  in  a  terminfo
+
+                                                                4
+
+terminfo(4)                                           terminfo(4)
+
+       source  file.   Implementations  use  this  information to
+       determine how properly to operate  the  current  terminal.
+       In  addition,  implementations  return  any of the current
+       terminal's capabilities when  the  application  calls  the
+       query  functions listed in (in the cases where the follow-
+       ing table lists a Termcap code).
+
+       The table of capabilities has the following columns: Names
+       for  use  by the Curses functions that operate on the ter-
+       minfo database.  These names are reserved and the applica-
+       tion  must not define them.  The short name for a capabil-
+       ity specified in the terminfo source file.  It is used for
+       updating  the  source file and by the command.  Codes pro-
+       vided for compatibility with older applications that  used
+       the  termcap  database, which is no longer supported.  For
+       this reason, not all Capnames have Termcap codes.
+
+BBoooolleeaannss
+
+                                                                5
+
+terminfo(4)                                           terminfo(4)
+
+NNuummbbeerrss
+
+                                                                6
+
+terminfo(4)                                           terminfo(4)
+
+SSttrriinnggss
+
+                                                                7
+
+terminfo(4)                                           terminfo(4)
+
+       The key_ strings are sent  by  specific  keys.   The  key_
+       descriptions  include  the macro, defined in curses.h, for
+       the code returned by when the key is pressed (see
+
+                                                                8
+
+terminfo(4)                                           terminfo(4)
+
+SSaammppllee EEnnttrryy
+       The  following  entry  describes  the  AT&T  610 terminal.
+       610|610bct|ATT610|att610|ATT610;80column;98key keyboard,
+                    am, eslok, hs, mir, msgr, xenl, xon,
+                    cols#80, it#8, lh#2, lines#24, lw#8,  nlab#8,
+       wsl#80,
+                    acsc="aaffggjjkkllmmnnooppqqrrsst-
+       tuuvvwwxxyyzz{{||}}~~,
+                    bel=^G, blink=\E[5m, bold=\E[1m, cbt=\E[Z,
+                    civis=\E[?25l,                clear=\E[H\E[J,
+       cnorm=\E[?25h\E[?12l,
+                    cr=\r,  csr=\E[%i%p1%d;%p2%dr, cub=\E[%p1%dD,
+       cub1=\b,
+                    cud=\E[%p1%dB,   cud1=\E[B,    cuf=\E[%p1%dC,
+       cuf1=\E[C,
+                    cup=\E[%i%p1%d;%p2%dH,         cuu=\E[%p1%dA,
+       cuu1=\E[A,
+                    cvvis=\E[?12;25h,  dch=\E[%p1%dP,  dch1=\E[P,
+       dim=\E[2m,
+                    dl=\E[%p1%dM,   dl1=\E[M,  ed=\E[J,  el=\E[K,
+       el1=\E[1K,
+                    flash=\E[?5h$<200>\E[?5l, fsl=\E8, home=\E[H,
+       ht=\t,
+                    ich=\E[%p1%d@,     il=\E[%p1%dL,    il1=\E[L,
+       ind=\ED, .ind=\ED$<9>,
+                    invis=\E[8m,
+                    is1=\E[8;0                                  |
+       \E[?3;4;5;13;15l\E[13;20l\E[?7h\E[12h\E(B\E)0,
+                    is2=\E[0m^O,    is3=\E(B\E)0,    kLFT=\E[\s@,
+       kRIT=\E[\sA,
+                    kbs=^H,  kcbt=\E[Z,  kclr=\E[2J,  kcub1=\E[D,
+       kcud1=\E[B,
+                    kcuf1=\E[C, kcuu1=\E[A, kfP=\EOc, kfP0=\ENp,
+                    kfP1=\ENq,  kfP2=\ENr,  kfP3=\ENs, kfP4=\ENt,
+       kfI=\EOd,
+                    kfB=\EOe,   kf4=\EOf,   kf=\EOg,    kf6=\EOh,
+       kf7=\EOi,
+                    kf8=\EOj,  kf9=\ENo,  khome=\E[H,  kind=\E[S,
+       kri=\E[T,
+                    ll=\E[24H, mc4=\E[?4i, mc5=\E[?5i, nel=\EE,
+                    pfxl=\E[%p1%d;%p2%l%02dq%?%p1%{9}%<%t\s\s\sF%p1%1d\s\s\s\s\s\s\s\s\s\s\s%;%p2%s,
+                    pln=\E[%p1%d;0;0;0q%p2%:-16.16s,      rc=\E8,
+       rev=\E[7m,
+                    ri=\EM,  rmacs=^O,  rmir=\E[4l,   rmln=\E[2p,
+       rmso=\E[m,
+                    rmul=\E[m, rs2=\Ec\E[?3l, sc=\E7,
+                    sgr=\E[0%?%p6%t;1%;%?%p5%t;2%;%?%p2%t;4%;%?%p4%t;5%;%?%p3%p1%
+       | %t;7%;%?%p7%t;8%;m%?%p9%t^N%e^O%;,
+                    sgr0=\E[m^O, smacs=^N, smir=\E[4h, smln=\E[p,
+                    smso=\E[7m,                       smul=\E[4m,
+       tsl=\E7\E[25;%i%p1%dx,
+
+TTyyppeess ooff CCaappaabbiilliittiieess iinn tthhee SSaammppllee EEnnttrryy
+       The sample entry shows the formats for the three types  of
+
+                                                                9
+
+terminfo(4)                                           terminfo(4)
+
+       terminfo capabilities:  Boolean, numeric, and string.  All
+       capabilities specified in the terminfo source file must be
+       followed  by  commas, including the last capability in the
+       source file.  In terminfo source files,  capabilities  are
+       referenced by their capability names (as shown in the Cap-
+       name column of the previous tables).
+
+BBoooolleeaann CCaappaabbiilliittiieess
+       A boolean capability is true if its Capname is present  in
+       the  entry, and false if its Capname is not present in the
+       entry.
+
+       The ``@'' character following a Capname is used to explic-
+       itly declare that a boolean capability is false.
+
+NNuummeerriicc CCaappaabbiilliittiieess
+       Numeric  capabilities  are followed by the character ``#''
+       and then a positive integer value.   The  example  assigns
+       the  value  80  to  the cols numeric capability by coding:
+       cols#80 Values for numeric capabilities may  be  specified
+       in  decimal, octal or hexadecimal, using normal C-language
+       conventions.
+
+SSttrriinngg CCaappaabbiilliittiieess
+       String-valued capabilities such as el  (clear  to  end  of
+       line  sequence) are listed by the Capname, an ``='', and a
+       string ended by the next occurrence of a comma.
+
+       A delay in milliseconds may  appear  anywhere  in  such  a
+       capability,  preceded by $ and enclosed in angle brackets,
+       as in  el=\EK$<3>.   The  Curses  implementation  achieves
+       delays by outputting to the terminal an appropriate number
+       of system-defined padding characters.  The  function  pro-
+       vides  delays  when  used to send such a capability to the
+       terminal.
+
+       The delay can be any of the following:  a number, a number
+       followed  by an asterisk, such as 5*, a number followed by
+       a slash, such as 5/, or a number followed by both, such as
+       5*/.   An  ``*''  shows that the required delay is propor-
+       tional to the number of lines affected by  the  operation,
+       and  the  amount  given is the delay required per affected
+       unit.  (In the case of insert characters,  the  factor  is
+       still  the  number  of  lines  affected.  This is always 1
+       unless the device has in and the software uses it.)   When
+       a  ``*''  is  specified,  it is sometimes useful to give a
+       delay of the form 3.5 to  specify  a  delay  per  unit  to
+       tenths  of  milliseconds.   (Only  one  decimal  place  is
+       allowed.)  A ``/'' indicates that the delay  is  mandatory
+       and  padding  characters are transmitted regardless of the
+       setting of xon.  If ``/'' is not specified or if a  device
+       has  xon defined, the delay information is advisory and is
+       only used for cost estimates or when the device is in  raw
+       mode.   However,  any  delay specified for bel or flash is
+
+                                                               10
+
+terminfo(4)                                           terminfo(4)
+
+       treated as mandatory.
+
+       The following notation is valid in terminfo  source  files
+       for specifying special characters:
+
+       +---------------+-----------------------------------------+
+       |  NNoottaattiioonn     |          RReepprreesseennttss CChhaarraacctteerr           |
+       +---------------+-----------------------------------------+
+       |     ^x        |    Control-x (for any appropriate x)    |
+       +---------------+-----------------------------------------+
+       |     \a        |    Alert                                |
+       +---------------+-----------------------------------------+
+       |     \b        |    Backspace                            |
+       +---------------+-----------------------------------------+
+       |  \E or \e     |    An ESCAPE character                  |
+       +---------------+-----------------------------------------+
+       |     \f        |    Form feed                            |
+       +---------------+-----------------------------------------+
+       |     \l        |    Linefeed                             |
+       +---------------+-----------------------------------------+
+       |     \n        |    Newline                              |
+       +---------------+-----------------------------------------+
+       |     \r        |    Carriage return                      |
+       +---------------+-----------------------------------------+
+       |     \s        |    Space                                |
+       +---------------+-----------------------------------------+
+       |     \t        |    Tab                                  |
+       +---------------+-----------------------------------------+
+       |     \^        |    Caret (^)                            |
+       +---------------+-----------------------------------------+
+       |     \\        |    Backslash (\)                        |
+       +---------------+-----------------------------------------+
+       |     \,        |    Comma (,)                            |
+       +---------------+-----------------------------------------+
+       |     \:        |    Colon (:)                            |
+       +---------------+-----------------------------------------+
+       |     \0        |    Null                                 |
+       +---------------+-----------------------------------------+
+       |    \nnn       |    Any character, specified as three    |
+       |               |    octal digits                         |
+       +---------------+-----------------------------------------+
+       (Also see
+
+CCoommmmeenntteedd--oouutt CCaappaabbiilliittiieess
+       Sometimes individual capabilities must be  commented  out.
+       To  do this, put a period before the capability name.  For
+       example, see the second ind in the example  in  Note  that
+       capabilities  are  defined  in  a left-to-right order and,
+       therefore, a prior definition will override a later  defi-
+       nition.
+
+                                                               11
+

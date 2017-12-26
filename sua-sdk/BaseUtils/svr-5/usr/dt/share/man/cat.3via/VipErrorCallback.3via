@@ -1,0 +1,96 @@
+
+
+VipErrorCallback(3via)                     VipErrorCallback(3via)
+
+SSyynnooppssiiss
+       cc  [flag  ...]  file  ...   -via  [library] ...  #include
+       <vipl.h>
+
+       VIP_RETURN   VipErrorCallback(VIP_NIC_HANDLE    NicHandle,
+       VIP_PVOID Context,
+            void(*Handler());
+
+DDeessccrriippttiioonn
+       The VipErrorCallback routine is used by the VI consumer to
+       register an error-handling function with the VI  provider.
+       If the consumer does not register such a function via this
+       call, a default error handler  logs  the  error  condition
+       according to operating system conventions
+
+       If  an  error handling function has been specified in this
+       way, the default handling function may be restored using a
+       subsequent  call  to  VipErrorCallback,  with  the Handler
+       parameter set to NULL.
+
+       The handler routine has the following  syntax:  void  Han-
+       dler(VIP_PVOID  Context, VIP_ERROR_DESCRIPTOR *ErrorDesc);
+       Asynchronous errors are  those  that  cannot  be  reported
+       directly  back  into  a  descriptor.  The  following asyn-
+       chronous errors are possible: This occurs under  the  fol-
+       lowing  conditions:  The virtual address and memory handle
+       of the descriptor were not valid when the  descriptor  was
+       posted.   The  next address and/or next handle fields were
+       inadvertently modified after the  descriptor  was  posted.
+       The descriptor address was not aligned on a 64-byte bound-
+       ary.  The connection on a VI was lost, and the  VI  is  in
+       the  Error  state.  See  the  manual page for details.  An
+       incoming packet was dropped because the receive queue  was
+       empty.   The  VI  consumer  attempted  to  post  too  many
+       descriptors to a VI's work queue.  A protection error  was
+       detected at the remote end of an incoming RDMA write oper-
+       ation. Note that if the write operation contained  immedi-
+       ate  data, this status would be reported in the associated
+       descriptor, and not via the asynchronous  error  reporting
+       mechanism.   A  data  corruption error was detected at the
+       remote end of an incoming RDMA write operation. Note  that
+       if the write operation contained immediate data, this sta-
+       tus would be reported in the  associated  descriptor,  and
+       not via the asynchronous error reporting mechanism.  Indi-
+       cates that a partial packet was detected at the remote end
+       of  an  incoming  RDMA  write  operation. Note that if the
+       write operation  contained  immediate  data,  this  status
+       would  be  reported  in the associated descriptor, and not
+       via the asynchronous error reporting mechanism.  A  trans-
+       port error was detected on an incoming RDMA operation that
+       does not consume a descriptor.   A  protection  error  was
+       detected at the remote end of an incoming RDMA read opera-
+       tion.  When reporting completion, this could  result  from
+       the  de-registering  of  a  memory  region that contains a
+
+                                                                1
+
+VipErrorCallback(3via)                     VipErrorCallback(3via)
+
+       descriptor, after the descriptor was read by the hardware,
+       but before the completion status was written.
+
+       This  error  can  also occur if a completion queue becomes
+       inaccessible to the hardware. In this case,  an  error  is
+       generated for each VI that was associated with the comple-
+       tion queue. Note  that  the  status  (Done  or  Done  with
+       Errors)  of the descriptors on work queues associated with
+       the completion queue may already  have  been  written  The
+       hardware  has failed or has detected a fatal configuration
+       problem.  The Post Descriptor Error, VI  Overrun,  Comple-
+       tion  Protection  Error  and  Catastrophic  Error  are all
+       catastrophic hardware errors.
+
+   AArrgguummeennttss
+       The handle of the NIC.  Data to be passed to  the  handler
+       routine  as a parameter. Not used by the VI provider.  The
+       address of the user-defined function to be called when  an
+       asynchronous  error is detected. This is not guaranteed to
+       run in the context of the current thread The handler func-
+       tion  is called with the following parameters: Data passed
+       through from the VipErrorCallback routine call.  Not  used
+       by the VI provider.  The error descriptor.
+
+RReettuurrnn vvaalluueess
+       The  routine  has  successfully completed.  One or more of
+       the input parameters was invalid.   The  operation  failed
+       due to insufficient resources.
+
+RReeffeerreenncceess
+
+                                                                2
+

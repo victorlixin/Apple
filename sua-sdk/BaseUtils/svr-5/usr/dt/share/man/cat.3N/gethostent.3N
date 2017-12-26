@@ -1,0 +1,132 @@
+
+
+gethostent(3N)                                     gethostent(3N)
+
+SSyynnooppssiiss
+       cc [options] file -lsocket -lnsl #include <netdb.h>
+
+       extern int h_errno;
+
+       struct hostent *gethostent(void);
+
+       struct hostent *gethostbyname(const char *name);
+
+       struct hostent *gethostbyname2(const char *name, int af);
+
+       struct  hostent  *gethostbyaddr(const  void  *addr, size_t
+       len, int type);
+
+       void sethostent(int stayopen);
+
+       void endhostent(void)
+
+DDeessccrriippttiioonn
+       gethostent reads a line from /etc/hosts, opening the  file
+       if necessary.  It returns a pointer to a structure of type
+       hostent which describes an internet host.
+
+       sethostent allows gethostent to read subsequent lines from
+       /etc/hosts.   If  the  stayopen  argument is non-zero, the
+       hosts' database will not be  closed  after  each  call  to
+       gethostent.   sethostent  opens a connected TCP socket for
+       queries, and retains the connection  after  each  call  to
+       gethostent.   If  stayopen  is zero, queries are performed
+       using  UDP  datagrams  and  the  file  is  re-opened  (and
+       rewound) on each invocation of gethostent.
+
+       endhostent closes the TCP connection.
+
+       gethostbyname,   gethostbyname2   and  gethostbyaddr  also
+       return a pointer to a  structure  of  type  hostent  which
+       describes  an  internet  host.   These routines search for
+       this description, by hostname, hostname and address family
+       or  by  host  address,  respectively, in any or all of the
+       following databases: the Domain  Name  System  (DNS),  the
+       Network   Information   Service   (NIS),   and   the  file
+       /etc/hosts.  For gethostbyname2, use the  af  argument  to
+       specify  the  address  family.  Valid address families are
+       AF_INET (IP version 4) and AF_INET6 (IP version 6). If you
+       do  not  specify  a  valid  address  family, this function
+       returns NULL, and sets h_errno to  NETDB_INTERNAL.   geth-
+       ostbyname  assumes AF_INET by default.  The order and num-
+       ber of databases searched depends on the order  given  for
+       the  libraries  in the directory lookup libraries field of
+       the entries for the tcp, udp,  icmp,  rawip,  igmp,  tcp6,
+       udp6,  icmpv6 and rawipv6 services in the network configu-
+       ration database, /etc/netconfig (see These routines do not
+       read  /etc/netconfig  directly.   They invoke the resolver
+       routine res_init (see The hostent structure is defined  as
+
+                                                                1
+
+gethostent(3N)                                     gethostent(3N)
+
+       follows:  struct    hostent  {      char *h_name;       /*
+       official name of host */      char **h_aliases;   /* alias
+       list  */       int  h_addrtype;    /* host address type */
+            int  h_length;        /*   length   of   address   */
+            char **h_addr_list;  /*  list  of addresses from name
+       server */ }; #define   h_addr  h_addr_list[0] /*  address,
+       for  backward  compatibility */ The members of this struc-
+       ture are: Official name of the  host.   A  null-terminated
+       array  of  alternate  names  for  the  host.   The type of
+       address  being  returned;  currently  either  AF_INET   or
+       AF_INET6.   The length, in bytes, of the address.  A null-
+       terminated array of network addresses for the host.   Host
+       addresses  are  returned  in  network byte order in struct
+       in_addr for AF_INET and struct in6_addr for AF_INET6.  The
+       first address in h_addr_list; this is for backward compat-
+       ibility.  When using the name  server,  gethostbyname  and
+       gethostbyname2  search  for  the named host in the current
+       domain and then its parents, unless the  name  ends  in  a
+       dot.   If the name contains no dot, and if the environment
+       variable HOSTALIASES contains the name of an  alias  file,
+       the alias file is first searched for an alias matching the
+       input name.  See for the domain search procedure  and  the
+       alias file format.
+
+FFiilleess
+       /etc/hosts
+       /etc/netconfig
+
+DDiiaaggnnoossttiiccss
+       Error return status from gethostbyname, gethostbyname2 and
+       gethostbyaddr is indicated by return of  a  null  pointer.
+       The  external  integer  h_errno may then be checked to see
+       whether this is a  temporary  failure  or  an  invalid  or
+       unknown host.
+
+       h_errno  can  have the following values: This indicates an
+       internal error in the library, unrelated to the network or
+       name  service.  errno is valid in this case.  No such host
+       is known.  This is usually a  temporary  error  and  means
+       that  the  local server did not receive a response from an
+       authoritative server.  A retry at some later time may suc-
+       ceed.   Some  unexpected  server  failure was encountered.
+       This is a non-recoverable error.  The  requested  name  is
+       valid  but does not have an IP address; this is not a tem-
+       porary error.  This means that the name is  known  to  the
+       name  server  but there is no address associated with this
+       name.  Another type of request to the  name  server  using
+       this  domain name will result in an answer; for example, a
+       mail-forwarder may be registered for this domain.
+
+RReeffeerreenncceess
+NNoottiicceess
+       All information is contained in a static area so  it  must
+       be copied if it is to be saved.  Only the Internet address
+
+                                                                2
+
+gethostent(3N)                                     gethostent(3N)
+
+       format is currently understood.
+
+SSttaannddaarrddss ccoommpplliiaannccee
+       gethostbyname, gethostbyname2 and gethostbyaddr  are  con-
+       formant with:
+
+       RFC1034 (STD13), RFC1035 (STD13)
+
+                                                                3
+

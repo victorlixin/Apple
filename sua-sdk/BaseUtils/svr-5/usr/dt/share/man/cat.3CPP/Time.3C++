@@ -1,0 +1,742 @@
+
+
+Time(3C++)                                             Time(3C++)
+
+SSyynnooppssiiss
+       #include <Time.h> namespace SCO_SC {
+
+       class  Duration;               // see Duration(3C++) class
+       Place;                 // see Place(3C++)  class  ostream;
+       //  see  iostream(3C++)  typedef  long  long time_t; class
+       Time{ public: //  Time constants
+           static Time min();
+           static Time max();
+           static Time ref(); //  Objections
+           static Objection environment_objection;
+           static Objection string_objection; //  Enumerations
+           enum Weekday{
+               sunday    = 0, monday    = 1, tuesday   = 2,
+               wednesday = 3, thursday  = 4, friday    = 5,
+               saturday  = 6
+           };
+           enum Month{
+               january   = 0, february  = 1, march     = 2,
+               april     = 3, may       = 4, june      = 5,
+               july      = 6, august    = 7, september = 8,
+               october   = 9, november  = 10, december  = 11
+           }; //  Constructors, destructor
+           Time();
+           Time(unsigned y, Month m, unsigned d, const Place& p);
+           Time(unsigned y, Month m, unsigned d);
+           ~Time(); //  Copy and assign
+           Time(const Time& t);
+           Time& operator=(const Time& t); //  Julian dates
+           unsigned julian_day_no(const Place& p)const;
+           unsigned  julian_day_no()const;  //  Component extrac-
+       tors
+           unsigned year_part(const Place& p)const;
+           Month month_part(const Place& p)const;
+           unsigned day_part(const Place& p)const;
+           Duration clock_part(const Place& p)const;
+           unsigned year_part()const;
+           Month month_part()const;
+           unsigned day_part()const;
+           Duration clock_part(); //  Day-of-week operations
+           Weekday week_day(const Place& p)const;
+           Time previous(Weekday w, const Place& p)const;
+           Time next(Weekday w, const Place& p)const;
+           Weekday week_day()const;
+           Time previous(Weekday w)const;
+           Time next(Weekday w)const; //  Relations
+           friend int operator==(const Time& t1,const Time& t2);
+           friend int operator!=(const Time& t1,const Time& t2);
+           friend int operator<=(const Time& t1,const Time& t2);
+           friend int operator>(const Time& t1,const Time& t2);
+           friend int operator>=(const Time& t1,const Time& t2);
+           friend int operator<(const Time& t1,const  Time&  t2);
+       //  Arithmetic operators
+           friend  Time  operator+(const  Time& t,const Duration&
+
+                                                                1
+
+Time(3C++)                                             Time(3C++)
+
+       d);
+           friend Time operator+(const  Duration&  d,const  Time&
+       t);
+           friend  Time  operator-(const  Time& t,const Duration&
+       d);
+           const Time& operator+=(const Duration& d);
+           const Time& operator-=(const Duration& d);
+           friend Duration operator-(const Time& t1,
+               const  Time&  t2);  //   Conversion  to  and  from
+       strings
+           String make_string(const char* fmt,
+               const Place& p)const;
+           String make_string(const Place& p)const;
+           friend Time make_time(const char* str,const Place& p);
+           String make_string(const char* fmt)const;
+           String make_string()const;
+           friend Time make_time(const char* str);
+           static void set_table(char** tm_form);
+           char** get_table(); //  Conversion to and from time_t
+           friend time_t make_time_t(const Time& t);
+           friend Time make_time(time_t t); //  Stream insertion
+           friend ostream& operator<<(ostream& os,const Time& t);
+       //  Auxiliary functions
+           static unsigned days_in_year(unsigned y);
+           static int is_leap(unsigned y);
+           static unsigned first_day(Month m, unsigned y);
+           static unsigned days_in_month(Month m, unsigned y);
+           static  int  valid_date(unsigned  y, Month m, unsigned
+       d);
+           static Time julian(unsigned y, int n, const Place& p);
+           static  Time  julian(unsigned y, int n); //  Miscella-
+       neous
+           unsigned hash()const; }; }
+
+DDeessccrriippttiioonn
+       The facilities of Time(3C++) can be viewed as  a  replace-
+       ment for (or, an interface to) UNIX system facilities such
+       as those  described  in  ctime(3C).   The  most  important
+       facilities are:
+
+       class Time - see this page
+
+       Combines  the notion of calendar date and time of day into
+       a single abstract value denoting  a  particular  epoch  in
+       absolute time.
+
+       class Place - see Place(3C++)
+
+       Timezone information for specific locations, including the
+       host machine location.
+
+       class Duration - see Duration(3C++)
+
+       Time differences
+
+                                                                2
+
+Time(3C++)                                             Time(3C++)
+
+   CCllaassss TTiimmee
+       Time combines the notion of calendar date and  time-of-day
+       into  a  single abstract value denoting a particular epoch
+       in absolute time.  Times have a  fixed  precision  of  one
+       second  and a machine-dependent range.  For UnixWare, this
+       range is from January 1, 1901 to January  1,  2901.   Note
+       that  Time uses a 64-bit representation and is not subject
+       to the Unix 32-bit "end of time" at year 2038.
+
+       Times specified  relative  to  a  particular  Place(3C++),
+       called local times, are converted to an internal represen-
+       tation of absolute time based on Greenwich Mean Time (GMT)
+       by  applying the timezone difference plus daylight savings
+       time correction, if any, for that Place.  Times  may  also
+       be  viewed  relative to particular Places; this requires a
+       conversion from absolute time back  to  local  time.  Note
+       that  when working with Times near the limits of the range
+       of representable Times, these conversions may  fail,  pro-
+       ducing undefined results (see the Preconditions below).
+
+       Many  functions  come in pairs: one with and one without a
+       Place parameter (see Bugs for why we did this).  The  ones
+       with the Place parameter allow a Time to be expressed rel-
+       ative to a particular  Place.   Those  without  the  Place
+       parameter  use  Place::here(),  a  Place  initialized with
+       timezone information for the host machine location, gotten
+       from   the   TZ  environment  variable.   See  Environment
+       Requirements for a discussion of how to set the  TZ  vari-
+       able and related environment issues.
+
+   EEnnvviirroonnmmeenntt RReeqquuiirreemmeennttss
+       Many  operations of class Time take optional Place parame-
+       ters, allowing Times to be expressed or viewed relative to
+       particular  timezones  ("local times").  By default, these
+       functions use the timezone of the host machine, as  deter-
+       mined from the TZ environment variable (see environ(5) for
+       a discussion of environment variables). To see  if  TZ  is
+       defined  on  your  machine  and, if so, what value it has,
+       type
+           echo $TZ
+
+       If (1) TZ is undefined or (2) you  want  your  program  to
+       behave  as if it were in a timezone different from the one
+       in which it is actually located, the safest policy  is  to
+       define  and  export  the  TZ variable before executing any
+       program that includes <Time.h>.
+
+       To set the TZ variable for a  Place  in  New  Jersey,  for
+       example, you could enter the following command:
+           TZ="EST5EDT4;117/2:00:00,299/2:00:00"
+
+       or simply
+           TZ=EST5EDT
+
+                                                                3
+
+Time(3C++)                                             Time(3C++)
+
+       (the  quotation marks are necessary for the more elaborate
+       form). To simulate a location in the southern  hemisphere,
+       such  as  the  Cook Islands, you could enter the following
+       command:
+           TZ="KDT9:30KST10:00;64/5:00,303/20:00"
+
+       In each case, follow the assignment by the command
+           export TZ
+
+       The syntax of the TZ variable can be described as follows:
+
+       TZ        ->     zone
+
+                       | zone signed_time
+
+                       | zone signed_time zone
+
+                       | zone signed_time zone dst
+
+       zone      ->      letter letter letter
+
+       signed_time       ->      sign time
+
+                       | time
+
+       time      ->      hour
+
+                       | hour : minute
+
+                       | hour : minute : second
+
+       dst       ->      signed_time
+
+                       | signed_time ; dst_date , dst_date
+
+                       | ; dst_date , dst_date
+
+       dst_date  ->      julian
+
+                       | julian / time
+
+       letter    ->      a | A | b | B | ... | z | Z
+
+       hour      ->      00 | 01 | ... | 23
+
+       minute    ->      00 | 01 | ... | 59
+
+       second    ->      00 | 01 | ... | 59
+
+       julian    ->      001 | 002 | ...| 366
+
+       sign      ->      - | [plus  ]
+
+       Note  that  on  older systems, the above definition may be
+
+                                                                4
+
+Time(3C++)                                             Time(3C++)
+
+       more complete than the one in environ(5).
+
+       Certain systems (such as UnixWare) may use an  implementa-
+       tion  defined  format for the TZ variable (indicated by an
+       initial colon).  In this case,  Time  uses  the  ctime(3C)
+       function  tzsef()  to interpret the variable. However, all
+       uses of the timezone variable as an optional Place parame-
+       ter, should use the standard format documented here.
+
+       If  you  are writing code that does not use local timezone
+       information, then TZ need not be set for your  program  to
+       work  correctly.   If  your  program  uses  local timezone
+       information and it may be executed on machines other  than
+       your  host machine (for which you do not control the envi-
+       ronment), then it is possible to  write  your  program  in
+       such  a way that it is able to cope with an unset TZ vari-
+       able using the Objection(3C++) mechanism.  See  Time(3C++)
+       for a discussion of how to do this.
+
+   SSttrriinngg TTaabbllee
+       Times  can be converted to and from character strings in a
+       wide variety of styles (e.g., 1/1/84, Jan 1, 1984f, etc.).
+       Nonnegative  Durations less than 24 hours ("times-of-day")
+       also have a variety  of  possible  string  representations
+       (2:00  PM,  14:00,  etc.).   The defaults are built into a
+       string table; your program can get  the  address  of  this
+       table by calling Time::get_table() and they can install an
+       alternate  table  by  by  calling  Time::set_table()  (see
+       Time(3C++)).  The contents of this table (by index) are:
+
+       0-11    3-character abbreviated month names.
+
+       12-23    Full month names.
+
+       24-30    3-character abbreviated weekday names.
+
+       31-37    Full weekday names.
+
+       38    Local time format used by the %X field.
+
+       39    Local date format used by the %x field.
+
+       40    Format used if the format argument is NULL or empty.
+
+       41-42    Meridian names: AM, PM.
+
+       43-46    UTC timezone names: GMT, UTC, UCT, CUT.
+
+       47-50    Daylight savings time suffix names: DST.
+
+       51-54    Suffixes to be ignored.
+
+       55-61    Time part names: second, hour, minute, day, week,
+       month, year.
+
+                                                                5
+
+Time(3C++)                                             Time(3C++)
+
+       62-65     Hours of the day names: midnight, morning, noon,
+       evening.
+
+       66-68    Relative day names: yesterday, today, tomorrow.
+
+       69-71    Past relative time references: last, ago, past.
+
+       72-75    Current relative time references: this, now, cur-
+       rent.
+
+       75-77     Future  relative  time  references: next, hence,
+       coming.
+
+       78-81    Noise words to be ignored: at, in, on.
+
+   TTiimmee ccoonnssttaannttss
+       static Time min(); Returns the Time  whose  value  is  the
+       earliest   Time  that  can  be  computed.   For  UnixWare,
+       Time::min() is January 1, 1901.
+
+       static Time max(); Returns the Time  whose  value  is  the
+       greatest   Time  that  can  be  computed.   For  UnixWare,
+       Time::max() is January 1, 2901.
+
+       static Time ref(); The reference Time (January 1, 1970  at
+       0h, GMT).
+
+   OObbjjeeccttiioonnss
+       The default action for both Objections is to abort with an
+       error message.
+
+       static Objection environment_objection; Indicates that the
+       TZ  environment variable has not been set (see Environment
+       Requirements for a discussion of how to set the  TZ  vari-
+       able and related environment issues).  The recovery action
+       in all cases is to behave as if TZ=GMT0  had  been  speci-
+       fied.
+
+       static  Objection  string_objection; Indicates an error in
+       conversion from string to Time.  The default action is  to
+       abort with an error message.
+
+   EEnnuummeerraattiioonnss
+       The  following  enumeration  types  have been provided for
+       convenience in naming the days of the week and the  months
+       of  the  year.  Since  these definitions are nested inside
+       class Time, you must refer to both the typenames  and  the
+       enumeration constants using qualification (see below).
+
+       enum  Weekday The days of the week.  Refer to the typename
+       as  Time::Weekday  and  the   enumeration   constants   as
+       Time::sunday and so on.
+
+       enum  Month The months of the year.  Refer to the typename
+
+                                                                6
+
+Time(3C++)                                             Time(3C++)
+
+       as Time::Month and the enumeration constants as Time::jan-
+       uary and so on.
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Time(); A Time equal to Time::ref().
+
+       Time(unsigned  y,  Month m, unsigned d, const Place& p); A
+       Time of 0h on the date specified by y, m, and d  at  Place
+       p.   Preconditions:  (1)  the  first  three arguments must
+       describe a valid date  (for  example,  February  29,  1988
+       would  be  valid, while February 29, 1987 would be invalid
+       because 1987 was not a leap year); (2) the parameters must
+       represent  a  Time in the range [Time::min(),Time::max()].
+       Note that you can test a date for validity using  function
+       valid_date().
+
+       Time(unsigned  y,  Month  m,  unsigned  d); Similar to the
+       above  except   that   Place::here()   is   used.   Raises
+       Time::environment_objection if the TZ environment variable
+       is not set.
+
+       ~Time(); Destructor.
+
+   CCooppyy aanndd aassssiiggnn
+       Time(const Time& t);
+
+       Time& operator=(const Time& t);  Copying  or  assigning  a
+       Time creates a copy of its value.
+
+   JJuulliiaann ddaatteess
+       unsigned  julian_day_no(const  Place&  p)const; Returns an
+       integer in [1,366] representing the Julian day  number  of
+       this  Time  at Place p.  Preconditions: the result of con-
+       version  to  local  Time  must  lie   inside   the   range
+       [Time::min(),Time::max()].
+
+       unsigned julian_day_no()const; Similar to the above except
+       that  Place::here()   is   used.   Raises   Time::environ-
+       ment_objection  if the TZ environment variable is not set.
+
+   CCoommppoonneenntt eexxttrraaccttoorrss
+       The  normalized  components  of  a  Time  are  a   4-tuple
+       <y,m,d,c>  satisfying  the  following invariant: (1) y, m,
+       and d represent a legal year-month-day  combination  (that
+       is, valid_date(y,m,d) returns non-zero).  (2) c is a time-
+       of-day (that is, a nonnegative Duration strictly less than
+       24h).
+
+       All  operations  have  the  following  Preconditions:  the
+       result of conversion to local Time must lie in  the  range
+       [Time::min(),Time::max()].
+
+       unsigned year_part(const Place& p)const;
+
+                                                                7
+
+Time(3C++)                                             Time(3C++)
+
+       Month month_part(const Place& p)const;
+
+       unsigned day_part(const Place& p)const;
+
+       Duration  clock_part(const  Place& p)const; The normalized
+       components of a Time at Place p.
+
+       unsigned year_part()const;
+
+       Month month_part()const;
+
+       unsigned day_part()const;
+
+       Duration clock_part(); Similar to the  above  except  that
+       Place::here()  is used. Raises Time::environment_objection
+       if the TZ environment variable is not set.
+
+   DDaayy--ooff--wweeeekk ooppeerraattiioonnss
+       The following operations recognize  Time  as  a  repeating
+       cycle of seven-day weeks.  All operations have the follow-
+       ing Preconditions: the result of conversion to local  Time
+       must lie in the range [Time::min(),Time::max()].
+
+       Weekday  week_day(const  Place&  p)const;  The  Weekday on
+       which this Time falls at Place p.
+
+       Time previous(Weekday w, const Place& p)const; A  Time  at
+       Place  p  whose  date  is  that of the most recent weekday
+       (relative to this Time) specified by w and with  the  same
+       time-of-day as this Time.
+
+       Time next(Weekday w, const Place& p)const; A Time at Place
+       p whose date is that of the next weekday (relative to this
+       Time) specified by w and with the same time-of-day as this
+       Time.
+
+       Weekday week_day()const;
+
+       Time previous(Weekday w)const;
+
+       Time next(Weekday w)const; Similar  to  the  above  except
+       that   Place::here()   is   used.   Raises  Time::environ-
+       ment_objection if the TZ environment variable is not  set.
+
+   RReellaattiioonnss
+       friend int operator==(const Time& t1, const Time& t2);"
+
+       friend  int  operator!=(const  Time& t1, const Time& t2);"
+       Equality and inequality relations.
+
+       friend int operator<=(const Time& t1, const Time& t2);"
+
+       friend int operator>(const Time& t1, const Time& t2);"
+
+                                                                8
+
+Time(3C++)                                             Time(3C++)
+
+       friend int operator>=(const Time& t1, const Time& t2);"
+
+       friend int operator<(const Time& t1, const Time& t2);" The
+       usual (total) ordering relations.
+
+   AArriitthhmmeettiicc ooppeerraattoorrss
+       friend Time operator+(const Time& t, const Duration& d);"
+
+       friend Time operator+(const Duration& d, const Time& t);"
+
+       friend  Time operator-(const Time& t, const Duration& d);"
+       A new Time obtained by adding (subtracting) a Duration  to
+       (from)  a Time.  Preconditions: the result must lie in the
+       range [Time::min(),Time::max()].
+
+       const Time& operator+=(const Duration& d);
+
+       const Time& operator-=(const Duration& d); Assignment ver-
+       sions of the above.
+
+       friend  Duration  operator-(const  Time&  t1,  const Time&
+       t2);" The algebraic difference between t1 and t2.  Precon-
+       ditions:  the  resulting  Duration  must  lie in the range
+       [-Duration::min()-1,    Duration::max()]    (see     Dura-
+       tion(3C++)).
+
+   CCoonnvveerrssiioonn ttoo aanndd ffrroomm ssttrriinnggss
+       String  make_string(const char* fmt, const Place& p)const;
+       Constructs a String representation of this Time at Place p
+       under  control of the printf(3S)-style control string fmt.
+       Raises Time::environment_objection if the  TZ  environment
+       variable  is  not  set.  Fields of the control string have
+       the form %field, where
+
+       %    % character.
+
+       a   Abbreviated weekday name.
+
+       B   Full month name.
+
+       A   Full weekday name.
+
+       b   Abbreviated month name.
+
+       c    ctime(3) style date without the trailing newline.
+
+       C    date(1) style date.
+
+       d   Day of month number.
+
+       D   Date as mm/ dd / yy.
+
+       e   Blank-padded day of month number.
+
+                                                                9
+
+Time(3C++)                                             Time(3C++)
+
+       E   Unpadded day of month number.
+
+       h   Abbreviated month name.
+
+       H   24-hour clock hour.
+
+       i   International date(1) date.
+
+       I   12-hour clock hour.
+
+       j   1-offset Julian date.
+
+       J   0-offset Julian date.
+
+       l    ls(1)  -l date that lists recent dates with yy  :  mm
+       and distant dates with yyyy.
+
+       m   Month number.
+
+       M   Minutes.
+
+       n   newline character.
+
+       p   Meridian (for example, AM or PM ).
+
+       r   12-hour time as hh : mm : ss meridian.
+
+       R   24-hour time as hh : mm.
+
+       S   Seconds.
+
+       t   tab character.
+
+       T   24-hour time as hh : mm : ss.
+
+       U   Week number with Sunday as the first day.
+
+       w   Weekday number.
+
+       W   Week number with Monday as the first day.
+
+       x    Local  date style, using index 39 of the string table
+       that includes the month, day and year.
+
+       X   Local time style, using index 38 of the  string  table
+       that includes the hours and minutes.
+
+       y   2-digit year.
+
+       Y   4-digit year.
+
+       Z   Timezone name.
+
+       String  make_string(const  Place&  p)const;  Equivalent to
+
+                                                               10
+
+Time(3C++)                                             Time(3C++)
+
+       make_string("%x %X",p)
+
+       friend Time make_time(const char* str, const  Place&  p);"
+       Parses  string str representing a date and time-of-day and
+       creates a Time, taking timezone  information  from  p  (it
+       ignores  any  timezone  names  embedded  in  the  string).
+       Raises string_objection if the string  cannot  be  parsed.
+       The  recovery  action is to return Time::ref().  The func-
+       tion is not perfect (see Bugs), but it does recognize most
+       forms  that  can  be produced by make_string(), plus a few
+       others, including strings expressing relative times (e.g.,
+       "now",  "today",  "3  hours ago", etc.).  See String Table
+       for a description of the table.
+
+       String make_string(const char* fmt)const;
+
+       String make_string()const;
+
+       friend Time make_time(const char*  str);  Similar  to  the
+       above   except   that   Place::here()   is  used.   Raises
+       Time::environment_objection if the TZ environment variable
+       is not set.
+
+       static   void  set_table(char**  tm_form);  Redefines  the
+       string  table  used   by   Time::make_time()   and   Dura-
+       tion::make_time()  for  string-to-Time and string-to-Dura-
+       tion conversion, respectively.  See  String  Table  for  a
+       description of the table.
+
+       char**  get_table();  Returns  a  pointer  to  the current
+       string table.
+
+   CCoonnvveerrssiioonn ttoo aanndd ffrroomm ttiimmee__tt
+       Times can be converted to and from  time_t  values,  where
+       time_t is a type (defined in sys/types.h) representing the
+       number of seconds elapsed since Time::ref().   These  con-
+       versions  provide  an  escape-hatch  to  UNIX  system time
+       facilities.
+
+       friend  time_t  make_time_t(const  Time&  t);  Computes  a
+       time_t value from t.
+
+       friend  Time make_time(time_t t); The inverse of the above
+       transformation.
+
+   SSttrreeaamm iinnsseerrttiioonn
+       friend ostream& operator<<(ostream&  os,const  Time&  t);"
+       Displays a local time in the standard format.  That is, os
+       << t is equivalent to os << t.make_string().
+
+   AAuuxxiilliiaarryy ffuunnccttiioonnss
+       These functions have been declared as static to avoid pol-
+       luting the global namespace.
+
+                                                               11
+
+Time(3C++)                                             Time(3C++)
+
+       static  unsigned  days_in_year(unsigned  y); The number of
+       days in year y.
+
+       static int is_leap(unsigned y); Returns non-zero if year y
+       is a leap year.
+
+       static  unsigned  first_day(Month  m, unsigned y); Returns
+       the Julian day number of the first day of Month m in  year
+       y.
+
+       static   unsigned   days_in_month(Month  m,  unsigned  y);
+       Returns the number of days in Month m in year y.
+
+       static int valid_date(unsigned y, Month  m,  unsigned  d);
+       Returns  non-zero  if  y, m, and d represent a legal year-
+       month-day combination.
+
+       static Time julian(unsigned y, int  n,  const  Place&  p);
+       Returns  a Time corresponding to 0h on Julian day number n
+       of year y at Place p, where January 1 is Julian day number
+       1  and December 31 is Julian day number 365 (366 in a leap
+       year).  If n lies outside [1,365] (366 in  a  leap  year),
+       the  date  will be adjusted accordingly.  For example, day
+       numbers 0 and -1 correspond to December 31 and December 30
+       (respectively)  of  the  previous year, and day number 367
+       corresponds to January 1 (or  2)  of  the  following  year
+       (depending  on  whether  the current year is a leap year).
+       Preconditions: the parameters must represent a Time inside
+       the range [Time::min(),Time::max()].
+
+       static  Time  julian(unsigned  y,  int  n); Similar to the
+       above  except  that   Place::here()   is   used.    Raises
+       Time::environment_objection if the TZ environment variable
+       is not set.
+
+   MMiisscceellllaanneeoouuss
+       unsigned hash()const; Returns a number suitable for use as
+       a hash table probe.
+
+BBuuggss
+       The  string version of make_time() gives incorrect answers
+       for strings of the following  form:  Strings  representing
+       Times prior to 1970.
+
+       Strings  that  omit a time-of-day specifier.  Such strings
+       do not yield a time of midnight on the specified date  (as
+       might  be expected), but rather some arbitrary time-of-day
+       on the same date.  Always specify time-of-day  unless  you
+       don't care, e.g., "0:00:00 on 12/1/88".
+
+       Strings  containing timezone names (the timezone names are
+       ignored).  Use  the  second  parameter  to  pass  timezone
+       information.  Instead of pairs of functions like
+           Time(unsigned y,Month m,unsigned d,const Place& p);
+
+                                                               12
+
+Time(3C++)                                             Time(3C++)
+
+           Time(unsigned y,Month m,unsigned d);
+
+       we  would have preferred to provide a single function with
+       a default:
+           Time(unsigned y,Month m,unsigned d,
+               const Place& p=Place::here());
+
+       This is a historical consequence of limitations  of  early
+       C++ compilers.
+
+NNootteess
+       As  described above, certain operations have preconditions
+       requiring that their results lie in the  range  of  repre-
+       sentable Times. For example,
+           Time::max() + seconds(1)
+
+       violates the precondition of the addition operator and
+           Time::min() - seconds(1)
+
+       violates  the  precondition  of  the subtraction operator.
+       Although preconditions  are  never  checked  for  and  the
+       result is technically undefined when preconditions are not
+       satisfied, the usual effect of  such  operations  is  that
+       Times  in  the  future become Times in the past, and vice-
+       versa.
+
+       A corollary to this is that Time::min() cannot be used  in
+       timezones  west  of GMT, and Time::max() cannot be used in
+       timezones east of GMT, because adjustment  for  the  time-
+       zones would violate the preconditions described above.
+
+RReeffeerreenncceess
+
+                                                               13
+

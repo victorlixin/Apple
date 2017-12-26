@@ -1,0 +1,98 @@
+
+
+pt_send(3X)                                           pt_send(3X)
+
+SSyynnooppssiiss
+       cc [options] file -lsdi #include <libsdi.h>
+
+       int   pt_send(pt_handle_t   handle,   void   *scb,  size_t
+       scb_length,  void  *buffer,        size_t   buffer_length,
+       uint_t  mode, time_t timeout, time_t *elapsed,      uint_t
+       *compcode, uint_t *status, void * req_buffer,       size_t
+       req_buffer_length)
+
+DDeessccrriippttiioonn
+       The  opaque  handle  obtained from a previous sdi_open.  A
+       pointer to a complete SCSI command descriptor block.   See
+       The  length  in bytes of the SCSI command block pointed to
+       by scb.  A pointer to a user-supplied data area for use by
+       the specified SCSI command.  The size in bytes of the area
+       pointed to by buffer.  If the command does not  require  a
+       buffer  area,  buffer_length  may  be zero.  specifies the
+       direction of data transfer.  If the SCSI  command  returns
+       data  to the buffer, it should be set to SCB_READ.  If the
+       SCSI command transfer data from the  buffer  to  the  SCSI
+       target,  it  should be set to SCB_WRITE.  If buffer_length
+       is set to 0,  this  element  is  ignored.   Specifies  the
+       amount  of  time  in milliseconds that SDI should wait for
+       the completion of this command.  If the command  does  not
+       complete  before this time is exceeded, SDI will abort the
+       command and return a value in  compcode  of  SDI_TIME.   A
+       pointer  to  variable of type time_t.  If the command com-
+       pletes normally, the amount of time the  command  took  to
+       complete is returned here.  A pointer to an unsigned inte-
+       ger used to return the status of the job.  A SCSI  command
+       that  completes  normally  returns SDI_ASW.  SDI_CKSTAT is
+       returned if the user should check the value of status  for
+       more  information.   There  are many other possible values
+       for this field.  They can be found in  sdi_comm.h.   These
+       values are used to indicate failures where no SCSI command
+       completed on the SCSI bus.  A pointer to an unsigned inte-
+       ger  and is used to return to the user the actual value of
+       the status byte code returned by the target to the initia-
+       tor  during the STATUS phase at the completion of the SCSI
+       command.   Its  value  is  only  valid  if  SDI_CKSTAT  is
+       returned in compcode.  If its value indicates CHECK CONDI-
+       TION, the user should issue a REQUEST SENSE command to the
+       target  that returned the CHECK CONDITION.  A pointer to a
+       user-supplied data area in which the  request  sense  data
+       for  this command is returned.  Request sense data is only
+       returned if the SCSI command completes with a CHECK CONDI-
+       TION.   If  this buffer is supplied it must be at least 18
+       bytes long.  The size in bytes of the area pointed  to  by
+       req_buffer.   This  length  must  be  at least 18 bytes if
+       req_buffer is not NULL.  If it is not, pt_send  will  fail
+       with EINVAL.
+
+RReettuurrnn vvaalluueess
+       On  success,  pt_send returns 0.  It does not return until
+
+                                                                1
+
+pt_send(3X)                                           pt_send(3X)
+
+       the SCSI command has completed.
+
+       If the SCSI command returns with  a  CHECK  CONDITION  and
+       req_buffer  is not NULL, a REQUEST SENSE command is issued
+       by  SDI  and  the  request  sense  data  is  returned   in
+       req_buffer.
+
+       If  req_buffer  is  NULL,  a  REQUEST SENSE command is not
+       automatically issued by SDI and it  is  the  application's
+       responsibility  to issue the REQUEST SENSE command if they
+       need the sense data.
+
+EErrrroorrss
+       On failure, pt_send returns an appropriate errno.  Failure
+       does not mean that the SCSI command failed.  Rather, fail-
+       ure means that SDI was unable to transmit the SCSI command
+       successfully.  The argument req_buffer is not NULL and the
+       length given by req_buffer_length is less than 18 bytes.
+
+UUssaaggee
+       See
+
+CCoommppaattiibbiilliittyy
+       This routine replaces the use of calls to  ioctl  to  send
+       SCSI  pass-through  commands  to  a device.  See The older
+       SCSI pass-through interface is supported for compatibility
+       with older applications only.
+
+SSttaannddaarrddss ccoonnffoorrmmaannccee
+       This routine is not part of any industry standard.
+
+RReeffeerreenncceess
+
+                                                                2
+

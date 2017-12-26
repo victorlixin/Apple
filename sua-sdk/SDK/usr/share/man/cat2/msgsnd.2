@@ -1,0 +1,103 @@
+msgsnd(2)                                                     msgsnd(2)
+
+  mmssggssnndd(())
+
+  NNAAMMEE
+
+    msgsnd() - send message to message queue
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/msg.h>
+
+    int msgsnd (int msqid, const void *msgp, size_t msgsz, int msgflg)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _mm_ss_gg_ss_nn_dd(2) function sends a message to the queue associated with the
+    identifier msqid. The message is held in the data structure pointed to by
+    msgp; the size of the message in bytes is indicated by msgsz, and can be
+    any value from 0 to the system limit. The msgflg argument specifies what
+    is to be done if the queue already holds the maximum number of bytes or if
+    the total number of messages on all queues on the system meets the system-
+    imposed limit. The important instruction for msgflg is IPC_NOWAIT.
+
+    When the _mm_ss_gg_ss_nn_dd(2) function succeeds, the data structure associated with
+    msqid is modified:
+    *     mmssgg__qqnnuumm is increased by 1
+    *     mmssgg__llssppiidd is set to the process ID of the calling process
+    *     mmssgg__ssttiimmee is set to the current time.
+
+    The msgp structure is defined by the user, but the first member must be a
+    non-zero positive lloonngg iinntt which holds a value used for selecting
+    messages. The second member must hold the data text. The length must be
+    the same as msgsz.
+
+    If the message queue is full, or if the system-limit on queued messages is
+    reached, the behavior of _mm_ss_gg_ss_nn_dd(2) depends upon the value of msgflg:
+
+    *     If (msgflg is non-zero, the message isn't sent and the calling
+          process returns immediately.
+    *     If (msgflg is zero, the calling process suspends execution until one
+          of:
+          *     the condition is relieved (messages are removed from the
+                message queue, the total number of queued messages shrinks),
+                and the message is sent;
+          *     the identifier for this message queue is removed from the
+                system, and _mm_ss_gg_ss_nn_dd(2) returns -1 and sets errno to [EIDRM].
+          *     The calling process is interrupted by a signal that is to be
+                caught, in which case the signal is handled and the message is
+                not sent.
+
+  RREETTUURRNN VVAALLUUEE
+
+    The _mm_ss_gg_ss_nn_dd(2) function returns 0 on success. On failure, it returns -1,
+    doesn't send the message, and sets errno to indicate the error.
+
+  EERRRROORRSS
+
+    [EACCES]
+        The calling process does not have permission to perform that
+        operation.
+
+    [EAGAIN]
+        The operation failed for some reason and The non-wait bit is set (that
+        is, (msgflg is non-zero).
+
+    [EIDRM]
+        The message queue identifier msqid has been removed from the system.
+
+    [EINTR]
+        The function was interrupted by a signal.
+
+    [EINVAL]
+        The msqid is not a valid message queue identifier, or the message size
+        value is negative or too large, or the value of the message type is
+        less than 1.
+
+  EEXXAAMMPPLLEESS
+
+    A simple structure for data which sends four-character strings as messages
+    might be:
+
+    struct a_msg {
+       long int msg_type;   /* message type */
+       char msg_text[5];    /* message text */
+    };
+
+    For this structure, the value of msgsz would be 5.
+
+  SSEEEE AALLSSOO
+
+    _m_s_g_c_t_l(2)
+
+    _m_s_g_g_e_t(2)
+
+    _m_s_g_r_c_v(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The mmssggssnndd function is thread safe.
+
+    The mmssggssnndd function is not async-signal safe.
+

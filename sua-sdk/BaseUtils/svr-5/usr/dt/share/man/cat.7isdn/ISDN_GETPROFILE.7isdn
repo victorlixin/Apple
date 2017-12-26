@@ -1,0 +1,100 @@
+
+
+ISDN_GETPROFILE(7isdn)                     ISDN_GETPROFILE(7isdn)
+
+SSyynnooppssiiss
+       #include   <sys/stream.h>  #include  <sys/mdi.h>  #include
+       <sys/scoisdn.h>
+
+       typedef union isdn_profile {
+           struct
+           {        isdnBfU8_t     CtrlNr;        /*   Controller
+       number */
+           } request;
+
+           struct
+           {      isdnU16_t CtlrCnt;  /* number of installed con-
+       trollers */       isdnU16_t BchanCnt; /*  number  of  sup-
+       ported B-channels */
+
+            /*  Global  Options  */      isdnBfU32_t    g_IntCtlr
+       :1,     /*    internal     controller     supported     */
+                      g_ExtEqpt    :1, /* external equipment sup-
+       ported */                 g_Handset    :1,     /*  Handset
+       supported  */                 g_DTMF       :1,     /* DTMF
+       supported */                         :0;   /* Reserved */
+
+            /* B1 protocols support; Physical layer  and  framing
+       */       isdnBfU32_t    b1_HDLC64    :1,     /*  64 kBit/s
+       with HDLC framing */                b1_Trans64  :1,     /*
+       64  kBit/s  bit  transparent  */                b1_V110asy
+       :1,     /*    V.110     asynchronous     start/stop     */
+                      b1_V110sync  :1, /*  V.110 synchronous HDLC
+       */                b1_T30      :1,     /*  T.30  modem  for
+       fax  group  3  */                b1_HDLCi64  :1,     /* 64
+       kBit/s   inverted   HDLC   */                   b1_Trans56
+       :1,     /*     56     kBit/s     bit     transparent    */
+                               :0;     /* Reserved */
+
+            /* B2 protocol support; Data link layer  protocol  */
+            isdnBfU32_t    b2_ISO7776   :1,    /*  ISO 7776 (X.75
+       SLP) */                b2_Trans    :1,     /*  Transparent
+       */                   b2_SDLC        :1,     /*   SDLC   */
+                      b2_LAPD     :1, /* LAPD Q.921 for D channel
+       X.25 */                b2_T30      :1,     /* T.30 for fax
+       group 3 */                b2_PPP      :1,     /* Point  to
+       Point  Protocol  */                 b2_TransNE  :1,     /*
+       Transparent  ignoring   errors   */
+       :0;   /* Reserved */
+
+            /*  B3  protocol  support;  Network layer protocol */
+            isdnBfU32_t    b3_Trans     :1,  /*  Transparent   */
+                      b3_T90NL    :1,  /* T.90NL w/ compatibility
+       to T.70NL  */                 b3_ISO8208   :1,     /*  ISO
+       8208    (X.25    DTE-DTE)    */                  b3_X25DCE
+       :1,     /*    X.25    DCE     */                    b3_T30
+       :1,     /*  T.30  for  fax group 3 */
+       :0;   /* Reserved */
+
+                                                                1
+
+ISDN_GETPROFILE(7isdn)                     ISDN_GETPROFILE(7isdn)
+
+            isdnU32_t isdn_reserved[6];       isdnU32_t mfgr_spe-
+       cific[5];
+           } reply;
+           unsigned char   buf[64];
+
+       } isdn_profile_t;
+
+DDeessccrriippttiioonn
+       This ioctl requests that the ISDN driver return the proto-
+       col-specific capabilities  of  the  adapter  it  controls.
+       This  will  appear as an message with an associated block.
+       Specifically,  the  ISDN  driver  returns  the  number  of
+       adapters  is controls or protocol-specific capabilities of
+       the adapter.   The protocol-specific capabilities  include
+       the protocols supported.
+
+   PPaarraammeetteerrss
+       If CtrlNr (controller number) is 0, only CtrlNr (number of
+       installed controllers) is passed to the application.  Oth-
+       erwise, appropriate values should be given for each param-
+       eter.
+
+   DDaattaa rreettuurrnneedd
+       The ISDN driver returns the appropriate information to the
+       application  in  the  reply structure.  The data is one of
+       the following: Acknowledge successful  completion  of  the
+       operation.   Set ioc_rval set to zero and ioc_count set to
+       the size of the isdn_profile  structure  returned  in  the
+       associated  Acknowledge  unsuccessful  completion  of  the
+       operation.  Set ioc_count to zero,  ioc_rval  to  -1,  and
+       ioc_error  set  to EINVAL if CtrlNr is invalid.  For other
+       error conditions, set ioc_error to  an  appropriate  value
+       from
+
+RReeffeerreenncceess
+
+                                                                2
+

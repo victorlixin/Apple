@@ -1,0 +1,127 @@
+
+
+sigwait(3pthread)                               sigwait(3pthread)
+
+SSyynnooppssiiss
+       #include <signal.h>
+
+       int sigwait(sigset_t *set);
+
+       cc [options] -Kthread file
+
+       #include  <signal.h>  #define  _XOPEN_SOURCE  500  #define
+       _POSIX_C_SOURCE 199506
+
+       int sigwait(const sigset_t *set, int *sig);
+
+DDeessccrriippttiioonn
+       There are two versions of the  sigwait  function  in  this
+       release.
+
+   NNoonn--PPOOSSIIXX--ccoommpplliiaanntt vveerrssiioonn
+       This version of the function atomically chooses and clears
+       a pending signal from set and returns the  number  of  the
+       signal chosen.  If no signal in set is pending at the time
+       of the call, the calling function shall be suspended until
+       one  or  more  signals become pending.  This suspension is
+       indefinite in extent.
+
+       The set of signals remains blocked after return.
+
+       An application should not mix use of sigwait and sigaction
+       for  a  given  signal  number  because  the results may be
+       unpredictable.
+
+   PPOOSSIIXX ccoommpplliiaanntt vveerrssiioonn
+       To access the POSIX version of sigwait you must define the
+       value of _XOPEN_SOURCE to be greater than or equal to 500,
+       and the value of _POSIX_C_SOURCE to  be  greater  than  or
+       equal  to  199506.   You  must  also  specify  the Kthread
+       library as an option to the cc command.
+
+       The POSIX compliant version of sigwait, shown in the  sec-
+       ond  synopsis  shown  above, selects a pending signal from
+       set, atomically clears it from the system's set of pending
+       signals,  and  returns  that signal number in the location
+       referenced by sig.  If no signal in set is pending at  the
+       time  of  the  call,  the thread is suspended until one or
+       more becomes pending.  The signals defined  by  set  shall
+       have been blocked at the time of the call to sigwait; oth-
+       erwise the behavior is undefined.
+
+       If more than one thread is using sigwait to wait  for  the
+       same  signal,  only  one of these threads will return from
+       sigwait with the signal number.
+
+RReettuurrnn vvaalluueess
+       Upon successful completion, the  non-POSIX-compliant  ver-
+       sion  of sigwait returns the signal number of the received
+
+                                                                1
+
+sigwait(3pthread)                               sigwait(3pthread)
+
+       signal.  Otherwise, it returns a negative value and  errno
+       is set to indicate the error.
+
+       Upon successful completion, the POSIX compliant version of
+       sigwait stores the signal number of the received signal at
+       the  location  referenced by sig and returns zero.  Other-
+       wise, an error number is returned to indicate the error.
+
+DDiiaaggnnoossttiiccss
+       The non-POSIX-compliant version of sigwait returns a nega-
+       tive  value  and sets errno to the following values if the
+       corresponding conditions are detected.:  set  contains  an
+       invalid  or  unsupported  signal  number  set points to an
+       illegal address.
+
+       The POSIX compliant version of sigwait returns the follow-
+       ing  value if the corresponding condition is detected: set
+       contains an  invalid  or  unsupported  signal  number  set
+       points to an illegal address.
+
+SSttaannddaarrddss ccoommpplliiaannccee
+       The  Single UNIX Specification, Version 2; The Open Group.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       The sigwait system call allows a multithreaded application
+       to use a synchronous organization for signal handling.
+
+   UUssaaggee
+       The  semantics  of sigwait make it ideal for a thread that
+       will be dedicated to handling certain signal types  for  a
+       process.  The functionality that might have been placed in
+       a separate handler function  could  be  placed  after  the
+       return  from sigwait to be executed once a signal arrives.
+       Once handling is complete, the thread could  call  sigwait
+       again to block itself until arrival of the next signal.
+
+       To  be  sure  that  signals  are delivered to the intended
+       thread: All threads in the process (including  the  thread
+       that  will be using sigwait) should mask the relevant sig-
+       nal types.  Only the intended thread should  use  sigwait.
+       No thread should define a handler function.
+
+       See for further details.
+
+       Code to handle a signal type on return from sigwait is not
+       considered a handler in the containing  process'  disposi-
+       tion  for  that  signal type.  It is important that signal
+       types handled by a thread using be included in the  signal
+       mask  of every thread, otherwise, the default response for
+       the process will be triggered.  Even  the  thread  calling
+       sigwait  should  mask that signal type because a signal of
+       that type may arrive while the thread is between calls to
+
+                                                                2
+
+sigwait(3pthread)                               sigwait(3pthread)
+
+       While one thread is blocked, siblings might still be  exe-
+       cuting.
+
+                                                                3
+

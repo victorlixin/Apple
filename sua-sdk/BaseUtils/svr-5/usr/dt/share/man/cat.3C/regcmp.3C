@@ -1,0 +1,118 @@
+
+
+regcmp(3C)                                             regcmp(3C)
+
+SSyynnooppssiiss
+       char  *regcmp  (const  char  *string1, [char *string2...,]
+       (char *)0);
+
+       char *regex (const char *re, const char *subject, ...);
+
+       extern char *__loc1;
+
+DDeessccrriippttiioonn
+       The regcmp function compiles a regular expression consist-
+       ing of the concatenated arguments and returns a pointer to
+       the compiled form.  The end of arguments is indicated by a
+       null pointer.  The malloc function is used to create space
+       for the compiled form.  It is the process'  responsibility
+       to  free  unneeded  space  so  allocated.   A NULL pointer
+       returned from regcmp indicates an invalid argument.
+
+       The regex function executes a compiled pattern against the
+       subject  string.  Additional arguments of type char * must
+       be passed to receive matched subexpressions back.
+
+       A global character pointer  __loc1  points  to  the  first
+       matched character in the subject string.
+
+       Both  regcmp and regex were largely borrowed from the edi-
+       tor  but  the  syntax  and  semantics  have  been  changed
+       slightly.   The  following are the valid symbols and their
+       associated meanings: These symbols retain their meaning in
+       Matches  the  end  of  the  string;  \n matches a newline.
+       Within brackets the minus  means  through.   For  example,
+       [a-z]  is equivalent to [abcd...xyz].  The - can appear as
+       itself only if used as the first or last  character.   For
+       example,  the  character class expression []-] matches the
+       characters ] and -.  A regular expression  followed  by  +
+       means  one  or more times.  For example, [0-9]+ is equiva-
+       lent to [0-9][0-9]*.  Integer values enclosed in {}  indi-
+       cate  the number of times the preceding regular expression
+       is to be applied.  The value m is the minimum number and u
+       is a number, less than 256, which is the maximum.  If only
+       m is present (that is, {m}), it indicates the exact number
+       of  times  the  regular  expression is to be applied.  The
+       value {m,} is analogous to {m,infinity}.  The plus (+) and
+       star  (*)  operations  are  equivalent  to  {1,}  and {0,}
+       respectively.  The value of the enclosed  regular  expres-
+       sion  is  to be returned.  The value will be stored in the
+       (n+1)th argument following the subject argument.  At most,
+       ten enclosed regular expressions are allowed.  regex makes
+       its assignments unconditionally.  Parentheses are used for
+       grouping.  An operator, for example, *, +, {}, can work on
+       a single character or a  regular  expression  enclosed  in
+       parentheses.  For example, (a*(cb+)*)$0.
+
+       By  necessity,  all the above defined symbols are special.
+       They must, therefore, be escaped with a \  (backslash)  to
+
+                                                                1
+
+regcmp(3C)                                             regcmp(3C)
+
+       be used as themselves.
+
+EExxaammpplleess
+       The  following  example  matches  a leading newline in the
+       subject  string  pointed  at  by  cursor.   char  *cursor,
+       *newcursor,  *ptr;       ...   newcursor  =  regex((ptr  =
+       regcmp("^\n", (char *)0)), cursor); free(ptr);
+
+       The following example matches through the string  Testing3
+       and  returns  the  address of the character after the last
+       matched character (the ``4'').   The  string  Testing3  is
+       copied  to  the  character array ret0.  char ret0[9]; char
+       *newcursor,      *name;            ...        name       =
+       regcmp("([A-Za-z][A-za-z0-9]{0,7})$0", (char *)0); newcur-
+       sor = regex(name, "012Testing345", ret0);
+
+       The  following  example  applies  a  precompiled   regular
+       expression   in  file.i  [see  against  string.   #include
+       "file.i" char *string, *newcursor;      ...   newcursor  =
+       regex(name, string);
+
+RReettuurrnn vvaalluueess
+       Upon  successful  completion,  regcmp returns a pointer to
+       the  compiled  regular  expression.   Otherwise,  a   NULL
+       pointer  is  returned  and  errno  is  set to indicate the
+       error.
+
+       Upon successful completion, regex returns a pointer to the
+       next  unmatched  character  in the subject string.  Other-
+       wise, a NULL pointer  is  returned.   The  regex  function
+       returns  a  NULL  pointer  on failure, or a pointer to the
+       next unmatched character on success.
+
+EErrrroorrss
+       The regcmp function  may  fail  if:  Insufficient  storage
+       space was available.
+
+UUssaaggee
+       User  programs  that  use  regcmp may run out of memory if
+       regcmp is called iteratively without freeing compiled reg-
+       ular expression strings that are no longer required.
+
+CCoommppaattiibbiilliittyy
+       These functions were added to X/Open System Interfaces and
+       Headers, Issue 4, Version 2, but are labelled to be  with-
+       drawn  in  a  future issue.  For portability, the routines
+       documented on are preferred.
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoonnffoorrmmaannccee
+       These routines conform to  X/Open  System  Interfaces  and
+       Headers, Issue 4, Version 2.
+
+                                                                2
+

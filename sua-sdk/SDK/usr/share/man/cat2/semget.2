@@ -1,0 +1,110 @@
+semget(2)                                                     semget(2)
+
+  sseemmggeett(())
+
+  NNAAMMEE
+
+    semget() - get or create a set of semaphores
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/sem.h>
+
+    int semget(key_t key, int nsems, int semflg)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _ss_ee_mm_gg_ee_tt(2) function returns the semaphore identifier associated with
+    key. If the following are true, _ss_ee_mm_gg_ee_tt(2) creates the semaphore
+    identifier, its associated sseemmiidd__ddss data structure and the associated set
+    of semaphores (the number of semaphores in the set is determined by
+    nsems):
+    *     The key is IPC_PRIVATE.
+    *     The key doesn't already have a semaphore associated with it, and the
+          value of (semflg & IPC_CREAT) is not zero.
+
+    The sseemmiidd__ddss data structure has the following members:
+
+    struct semid_ds {
+       struct ipc_perm sem_perm      /* operation permission structure */
+       unsigned short int sem_nsems  /* number of semaphores in set */
+       time_t sem_otime              /* time of last sseemmoopp() */
+       time_t sem_ctime              /* time of last change by sseemmccttll() */
+    }
+
+    The new sseemmiidd__ddss data structure is initialized to:
+    *     The IDs in the operation permissions structure are set to those of
+          the effective IDs of the calling process. That is, the members
+          sem_perm.cuid sem_perm.uid sem_perm.cgid and sem_perm.gid are set to
+          the value of the calling process' effective user ID and effective
+          group ID. (On Subsystem for UNIX-based Applications systems, these are the user ID and the group
+          ID, respectively.)
+    *     The low-order 9 bits of sem_perm.mode are set to the low-order 9
+          bits of semflg.
+    *     The value of sem_nsems is set to the value of nsems.
+    *     The value of sem_otime is set to 0.
+    *     The value of sem_ctime is set to the current time.
+
+    NNoottee::
+        The data structure associated with each semaphore in the set is not
+        initialized. Use the _ss_ee_mm_cc_tt_ll(2) function with the command SETVAL or
+        SETALL to initialize each semaphore.
+
+    A semaphore contains the following members (the data structure is
+    anonymous):
+    unsigned short int     semval      semaphore value
+
+    pid_t                  sempid      process ID of last operation
+
+    unsigned short int     semncnt     number of processes waiting for
+                                       semval to become greater than
+                                       current value
+
+    unsigned short int     semzcnt     number of processes waiting for
+                                       semval to become 0
+
+    The header file <<ssyyss//sseemm..hh>> includes <<ssyyss//iippcc..hh>>.
+
+  RREETTUURRNN VVAALLUUEE
+
+    On success, _ss_ee_mm_gg_ee_tt(2) returns the semaphore identifier, a non-negative
+    integer; on failure, it returns -1 and sets errno to indicate the error.
+
+  EERRRROORRSS
+
+    The _ss_ee_mm_gg_ee_tt(2) function can fail for these reasons:
+
+    [EACCES]
+        Although a semaphore identifier exists for key, its permissions are
+        not compatible with the low-order 9 bits of semflg.
+
+    [EEXIST]
+        Although a semaphore identifier exists for key, the value of ((semflg
+        & IPC_CREAT) && (semflg & IPC_EXCL)) is non-zero.
+
+    [EINVAL]
+        The value of nsems is outside the system boundaries (less than or
+        equal to 0 or greater than the limit), or an identifier exists for key
+        but the number of semaphores in the set associated with it is less
+        than nsems and nsems isn't equal to 0.
+
+    [ENOENT]
+        No semaphore identifier exists for key, and (semflg & IPC_CREAT)
+        equals 0.
+
+    [ENOSPC]
+        Creating the identifier would exceed the system-wide maximum number of
+        semaphores allowed.
+
+  SSEEEE AALLSSOO
+
+    _s_e_m_c_t_l(2)
+
+    _s_e_m_o_p(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The sseemmggeett function is thread safe.
+
+    The sseemmggeett function is not async-signal safe.
+

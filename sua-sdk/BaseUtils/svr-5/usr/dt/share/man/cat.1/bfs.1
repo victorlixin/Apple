@@ -1,0 +1,143 @@
+
+
+bfs(1)                                                     bfs(1)
+
+SSyynnooppssiiss
+       bfs [-] file
+
+DDeessccrriippttiioonn
+       The  bfs  command is similar to ed except that it is read-
+       only and processes much larger files.  Files can be up  to
+       1024K bytes and 32K lines, with up to 512 bytes, including
+       new-line, per line (255 for 16-bit machines).  bfs is usu-
+       ally more efficient than ed for scanning a file, since the
+       file is not copied to a buffer.  It  is  most  useful  for
+       identifying sections of a large file where the csplit com-
+       mand can be used to divide it into more manageable  pieces
+       for editing.
+
+       bfs  processes  supplementary code set characters in file,
+       and recognizes supplementary code set  characters  in  the
+       labels  given  to  the  :,  xb, xbn, and xbz commands (see
+       below) according to the locale specified in  the  LC_CTYPE
+       environment  variable (see LANG on In regular expressions,
+       pattern searches are performed on  characters,  not  bytes
+       (see
+
+       Normally,  the  size in bytes of the file being scanned is
+       printed, as is the size of any file  written  with  the  w
+       command.   The  optional  -  suppresses printing of sizes.
+       Input is prompted with * if P and a  are typed, as in  ed.
+       Prompting  can  be turned off again by inputting another P
+       and .  Messages are given in response to errors if prompt-
+       ing is turned on.
+
+       All  address expressions described under ed are supported.
+       In addition, regular expressions may  be  surrounded  with
+       two  symbols  besides / and ?: > indicates downward search
+       without wrap-around, and < indicates upward search without
+       wrap-around.
+
+       The  e,  g, v, k, p, q, =, !  and null commands operate as
+       described under ed.  Commands such  as  ---,  +++-,  +++=,
+       -12,  and +4p are accepted.  Note that 1,10p and 1,10 both
+       print the first ten lines.  The f command only prints  the
+       name  of  the  file  being scanned; there is no remembered
+       file name.  The w command is independent of output  diver-
+       sion,  truncation,  or  crunching  (see the xo, xt, and xc
+       commands, below).  The following additional  commands  are
+       available: Further commands are taken from the named file.
+       When an end-of-file is reached,  an  interrupt  signal  is
+       received or an error occurs, reading resumes with the file
+       containing the xf.  The xf commands may  be  nested  to  a
+       depth  of  10.  List the marks currently in use (marks are
+       set by the k command).  Further output from the p and null
+       commands  is  diverted to the named file, which, if neces-
+       sary, is created with mode 666 (readable and  writable  by
+       everyone),  unless  your umask setting dictates otherwise;
+       see If file is missing, output is diverted to the standard
+
+                                                                1
+
+bfs(1)                                                     bfs(1)
+
+       output.   Note  that  each  diversion causes truncation or
+       creation of the file.  This positions a label in a command
+       file.   The  label  is  terminated by new-line, and blanks
+       between the : and the label are ignored.  This command may
+       also be used to insert comments into a command file, since
+       labels need not be referenced.  label may contain  supple-
+       mentary  code  set  characters.   A jump (either upward or
+       downward) is made to label if the  command  succeeds.   It
+       fails  under  any  of  the  following  conditions:  Either
+       address is not between 1 and $.   The  second  address  is
+       less  than  the  first.   The  regular expression does not
+       match at least one line in the specified range,  including
+       the  first  and  last  lines.  On success, . is set to the
+       line matched and a jump is made to label.  This command is
+       the  only  one that does not issue an error message on bad
+       addresses, so it may be used to test whether addresses are
+       bad  before  other  commands  are executed.  Note that the
+       command xb/^/ label is an unconditional jump.
+
+       The xb command is allowed only if it is  read  from  some-
+       place  other  than  a terminal.  If it is read from a pipe
+       only a downward jump is possible.  label may contain  sup-
+       plementary  code  set  characters.   Output from the p and
+       null commands is truncated to  at  most  number  displayed
+       columns.  The initial number is 255.  The variable name is
+       the specified digit following the xv.  The commands xv5100
+       or  xv5  100  both assign the value 100 to the variable 5.
+       The command xv61,100p assigns  the  value  1,100p  to  the
+       variable  6.  To reference a variable, put a % in front of
+       the variable name.  For example, using the  above  assign-
+       ments  for  variables 5 and 6: 1,%5p 1,%5 %6 all print the
+       first 100 lines.  g/%5/p globally searches for the charac-
+       ters  100  and  prints  each  line containing a match.  To
+       escape the special meaning of %,  a  \  must  precede  it.
+       g/".*\%[cds]/p  could be used to match and list lines con-
+       taining a  printf  of  characters,  decimal  integers,  or
+       strings.
+
+       Another  feature  of the xv command is that the first line
+       of output from a  system command  can  be  stored  into  a
+       variable.   The only requirement is that the first charac-
+       ter of value be an !.  For example: .w junk  xv5!cat  junk
+       !rm junk !echo "%5" xv6!expr %6 + 1
+
+       puts  the  current  line  into  variable 5, prints it, and
+       increments the variable 6 by one.  To escape  the  special
+       meaning  of !  as the first character of value, precede it
+       with a \.  xv7\!date
+
+       stores the value !date into variable 7.   These  two  com-
+       mands  test  the last saved return code from the execution
+       of a
+
+       system command  (!command)  for  zero  or  nonzero  value,
+
+                                                                2
+
+bfs(1)                                                     bfs(1)
+
+       respectively,  and jump to the specified label.  label may
+       contain supplementary code set characters.  The two  exam-
+       ples  below both search for the next five lines containing
+       the string size.  xv55 : l /size/ xv5!expr %5 - 1 !test  0
+       = %5 xbn l
+
+       xv45  :  l  /size/  xv4!expr %4 - 1 !test 0 != %4 xbz l If
+       switch is 1, output  from  the  p  and  null  commands  is
+       crunched;  if  switch is 0 it is not.  xc reverses switch.
+       Initially switch is set for no crunching.  Crunched output
+       has  strings  of  tabs and blanks reduced to one blank and
+       blank lines suppressed.
+
+DDiiaaggnnoossttiiccss
+       ?  for errors in commands, if  prompting  is  turned  off.
+       Self-explanatory error messages when prompting is on.
+
+RReeffeerreenncceess
+
+                                                                3
+

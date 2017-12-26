@@ -1,0 +1,129 @@
+
+
+send(3sock)                                           send(3sock)
+
+SSyynnooppssiiss
+       cc  [options]  file  -lsocket -lnsl #include <sys/types.h>
+       #include <sys/socket.h>
+
+       ssize_t send(int s,  const  void  *msg,  size_t  len,  int
+       flags);
+
+       ssize_t  sendto(int  s,  const  void *msg, size_t len, int
+       flags,      const struct sockaddr *to, size_t tolen);
+
+       ssize_t sendmsg(int  s,  const  struct  msghdr  *msg,  int
+       flags);
+
+DDeessccrriippttiioonn
+       s  is  a  socket  created  with socket.  send, sendto, and
+       sendmsg are used to transmit a message to another  socket.
+       send  may  be  used only when the socket is in a connected
+       state, while sendto and sendmsg may be used at any time.
+
+       The address of the target is given by to with tolen speci-
+       fying  its  size.   The  length of the message is given by
+       len.  If the message is too  long  to  pass  automatically
+       through  the  underlying protocol, then the error EMSGSIZE
+       is returned, and the message is not transmitted.
+
+       No indication of failure to deliver is implicit in a send.
+       Return values of -1 indicate some locally detected errors.
+
+       If no buffer space is available at the socket to hold  the
+       message  to  be  transmitted,  then  send normally blocks,
+       unless the socket has been placed in non-blocking I/O mode
+       (O_NONBLOCK).   The  select  call may be used to determine
+       when it is possible to send more data.
+
+       If the socket protocol supports broadcasting and the spec-
+       ified  address  is a broadcast address, sendto and sendmsg
+       will fail if the SO_BROADCAST option is not  set  for  the
+       socket.
+
+       The  flags parameter is formed by ORing one or more of the
+       following: Send out-of-band data on sockets  that  support
+       this  notion.   The  underlying protocol must also support
+       out-of-band data.   Currently,  only  SOCK_STREAM  sockets
+       created  in the AF_INET and AF_INET6 address families sup-
+       port out-of-band data.  The SO_DONTROUTE option is  turned
+       on  for the duration of the operation.  It is used only by
+       diagnostic or routing programs.
+
+       See for a description of the msghdr structure.
+
+FFiilleess
+       /usr/lib/locale/locale/LC_MESSAGES/uxnsl
+
+                                                                1
+
+send(3sock)                                           send(3sock)
+
+RReettuurrnn vvaalluueess
+       These calls return the number of bytes sent, or -1  if  an
+       error occurred.
+
+   EErrrroorrss
+       The calls fail if: No search permission for a component of
+       the specified path, or no  write  permission  on  a  named
+       socket  (AF_UNIX only).  The specified address family can-
+       not be used with the socket.  s is an invalid  descriptor.
+       The  peer  forcibly  closed the connection.  The socket is
+       not connection-oriented and a peer  address  is  not  set.
+       The  operation  was  interrupted  by  delivery of a signal
+       before any data could be buffered to be  sent.   tolen  is
+       not  the size of a valid address for the specified address
+       family.  An I/O error occurred while writing to or reading
+       from  the  filesystem  (AF_UNIX  only).  Too many symbolic
+       links when translating the pathname in the socket  address
+       (AF_UNIX only).  A component of the pathname or the entire
+       pathname was too long (AF_UNIX only).  The socket requires
+       that  message  be sent atomically, and the message was too
+       long.  A component of the pathname or the entire  pathname
+       does  not refer to an existing file (AF_UNIX only).  There
+       was insufficient user memory available for  the  operation
+       to  complete.  s is a descriptor for a file, not a socket.
+       The socket is not connected or the peer has not been  pre-
+       specified.  A component of the pathname is not a directory
+       (AF_UNIX only).  The socket does not support a  value  set
+       in  flags.  The socket is connection-oriented and the peer
+       is closed or shut down for reading (generates  SIGPIPE  to
+       calling  process if type is SOCK_STREAM), or the socket is
+       shut down for writing.  There  were  insufficient  STREAMS
+       resources  available  for  the operation to complete.  The
+       socket is marked non-blocking and the requested  operation
+       would block.
+
+RReeffeerreenncceess
+       RFC 2133
+
+NNoottiicceess
+       The type of address structure passed to sendto and sendmsg
+       depends on the address family.
+        domain sockets (address family AF_UNIX) require  a  sock-
+       addr_un  structure as defined in sys/un.h; Internet domain
+       IPv4 sockets (address family  AF_INET)  require  a  struct
+       sockaddr_in structure as defined in netinet/in.h; Internet
+       domain IPv6 sockets (address family  AF_INET6)  require  a
+       struct  sockaddr_in6 structure as defined in netinet/in.h.
+       Other address families may require other structures.   Use
+       the  structure appropriate to the address family; cast the
+       structure address to a struct sockaddr*  in  the  call  to
+       sendto  and  pass the size of the structure in the fromlen
+       argument. If you are using sendmsg, set msghdr.msg_name to
+       point  to the appropriate structure and msghdr.msg_namelen
+       to the length of the structure.
+
+                                                                2
+
+send(3sock)                                           send(3sock)
+
+       In &geminiREL; the sockaddr structure has been modified to
+       support  variable  length  sockets. The net result of this
+       modification is that the family member has been  shortened
+       to 8 bits and a new 8-bit member inserted before it called
+       len. For more information on the new sockaddr  structures,
+       see: and
+
+                                                                3
+

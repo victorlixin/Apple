@@ -1,0 +1,124 @@
+
+
+t_sndudata(3xti)                                 t_sndudata(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       int t_sndudata(int fd, struct t_unitdata *unitdata);
+
+DDeessccrriippttiioonn
+       This  function  is a TLI/XTI data transfer routine used in
+       connectionless mode to send a data unit to another  trans-
+       port  user.   Data  is sent through the transport endpoint
+       specified by fd, which must be bound, and unitdata  points
+       to information associated with the data unit.
+
+       This  function  is a service of connectionless mode trans-
+       port providers and  is  supported  only  if  the  provider
+       returned service type T_CLTS on t_open or t_getinfo.
+
+   PPaarraammeetteerrss
+       the  file  descriptor  for  the transport endpoint through
+       which data will be sent.  points to the t_unitdata  struc-
+       ture associated with the transmitted data unit.
+
+   SSttrruuccttuurree ddeeffiinniittiioonnss
+       The  unitdata  argument  points  to a t_unitdata structure
+       containing the following members:
+
+       struct netbuf addr; /* address          */  struct  netbuf
+       opt;  /*  options         */  struct  netbuf udata;     /*
+       user data */
+
+       netbuf is described in In  unitdata,  addr  specifies  the
+       protocol  address  of the destination user, opt identifies
+       protocol-specific options that the user  wants  associated
+       with this request, and udata specifies the user data to be
+       sent.  The user may choose not to  specify  what  protocol
+       options  are  associated  with the transfer by setting the
+       len field of opt to 0.  In this case, the provider may use
+       default options.
+
+       If the len field of udata is 0, and the sending of 0 bytes
+       is not supported by  the  underlying  transport  provider,
+       t_sndudata will return -1 with t_errno set to TBADDATA.
+
+   SSttaattee ttrraannssiittiioonnss
+       On entry, T_IDLE; unchanged on exit.
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+UUssaaggee
+       By default, t_sndudata operates in  synchronous  mode  and
+       may  wait  if  flow  control restrictions prevent the data
+       from being accepted by the local transport provider at the
+       time the call is made.  However, if O_NONBLOCK is set (via
+
+                                                                1
+
+t_sndudata(3xti)                                 t_sndudata(3xti)
+
+       t_open or fcntl), t_sndudata will execute in  asynchronous
+       mode and will fail under such conditions.
+
+       The calling process can use t_look or the Event Management
+       Interface to determine when flow control restrictions,  if
+       any, have been cleared.
+
+RReettuurrnn vvaalluueess
+       t_sndudata  returns  0  on successful completion and -1 on
+       failure t_errno is set to indicate the error.
+
+   EErrrroorrss
+       On failure, t_errno may be set to one  of  the  following:
+       The  specified  file descriptor does not refer to a trans-
+       port endpoint.  O_NONBLOCK was set, but the  flow  control
+       mechanism  prevented the transport provider from accepting
+       data at this time.  This function is not supported by  the
+       underlying   transport   provider.   A  system  error  has
+       occurred during execution of this  function.   (An  EPROTO
+       error  may  not  cause t_sndudata to fail until subsequent
+       access of the transport endpoint.)  nbytes is 0 and  send-
+       ing  0  bytes  is not supported by the transport provider.
+       An asynchronous event has occurred on the  transport  end-
+       point  specified  by  fd and requires immediate attention.
+       The specified protocol address was in an incorrect  format
+       or  contained invalid information.  (This error may alter-
+       natively be returned by t_rcvuderr.)  The specified proto-
+       col  options  were  in  an  incorrect  format or contained
+       invalid information.  (This  error  may  alternatively  be
+       returned  by  t_rcvuderr.)  The function was issued in the
+       wrong sequence on the transport endpoint referenced by fd.
+       A  communication problem has been detected with the trans-
+       port provider and there is no other value  of  t_errno  to
+       describe the error condition.
+
+WWaarrnniinnggss
+       If  t_sndudata  is  issued before the destination user has
+       activated its transport endpoint (see  t_bind),  the  data
+       unit may be discarded.
+
+       If  t_sndudata  is issued from an invalid state, or if the
+       amount of data specified in udata exceeds the TSDU size as
+       returned  in the tsdu field of the info argument of t_open
+       or t_getinfo, the provider will generate an EPROTO  proto-
+       col  error.   If  the state is invalid, this error may not
+       occur until a subsequent reference is made to  the  trans-
+       port endpoint.
+
+       If a unit data error is received, a subsequent call should
+       be made to t_rcvuderr to check for conditions indicated by
+       TBADADDR  and  TBADOPT,  which  are not always returned by
+       t_sndudata.
+
+                                                                2
+
+t_sndudata(3xti)                                 t_sndudata(3xti)
+
+RReeffeerreenncceess
+
+                                                                3
+

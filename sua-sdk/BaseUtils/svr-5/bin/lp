@@ -1,0 +1,388 @@
+#!/bin/ksh
+#C+
+# Copyright (c) Microsoft Corporation.  All rights reserved.
+#C-
+
+#
+# RCSID = $Id$
+#
+
+#M+
+# NAME
+#	lp -- print a file on a printer.
+# SYNOPSIS
+# 
+# 	$ lp [-bc] [-d printer-queue] [-n copies] file
+#
+# DESCRIPTION
+#	The lp command queues a file for printing on the appropriate named
+#	queue.  It uses the Win32 PRINT command to do this.
+# 
+# OPTIONS
+#	The name utility supports the Utility Syntax Guidelines, 
+#	ISO/IEC 9945-2:1993, Section 2.10.2, (also XBD4.2, Section 10.2).
+#
+# 	The following options are supported:
+#	-d printer-queue
+#		Print queue on which file is to be printed.
+#
+#	-n copies
+#		Print copies number of copies of file.
+#
+#
+#	-c	Copy file (Redundant here.)
+#
+# 	-x	Explanation (Help) flag.  Prints a (possibly expanded) 
+#		usage message to stderr.
+#
+#       -b      Binary file; don't convert line-endings to match NT
+#
+# OPERANDS
+#	The following operands are supported:
+#
+#	file	A file to be printed.
+# 
+# STDIN
+#	If there's no file to print, stdin is redirected to a temp file
+#	and printed.
+# 
+# INPUT FILES
+#	It is expected that files will be appropriate to the queue, 
+#	ie. PostScript or text to a printer expecting PS or text. Use -b
+#       for raw binary files (e.g. PCL to an HP-compatible printer).
+# 
+# ENVIRONMENT VARIABLES
+#	The following environment variables affect the execution of name:
+#
+#	PRINTER	Provides a default for the print queue.
+#	LPDEST  Provides a printer queue with greater precedence than PRINTER.
+#       LP_PRINT Provides an override for the location of NT's print.exe
+# 
+# EXIT STATUS
+#	The following exit values are returned:
+#
+#	0	Successful completion.
+#	1	Something terrible happened.
+#	2	Usage error.
+#      127      print.exe could not be found
+#
+# SEE ALSO
+#	DOS print, , system32/print.exe  ....
+#
+# 
+#M-
+
+
+
+CMD=${0##*/}
+PRINTQ=${LPDEST:=$PRINTER}
+COPIES=1
+BINARY=0
+silent=no
+
+USAGE="usage: $CMD [-bc] [-d printer] [-n copies] [file ...]"
+
+INFO='
+SYNOPSIS
+    $ lp [-b] [-c] [-d printer-queue] [-n copies] [file ...]
+
+OPTIONS
+    -b   Binary files. These will be printed untouched (i.e. newlines
+         will not be converted to <cr><lf>)
+
+    -d   printer-queue
+         Print queue on which file is to be printed.
+
+    -n   copies
+         Print copies number of copies of file.
+
+    -x   Explanation (Help) flag.  Prints a (possibly expanded) 
+         usage message to stderr.
+
+INPUT FILES
+    It is expected that files will be appropriate to the queue, 
+    i.e. PostScript or text to a printer expecting PS or text. If
+    printing binary files (e.g. raw PCL) use the -b option to
+    disable conversion of line endings.
+    
+
+ENVIRONMENT VARIABLES
+
+    PRINTER   Provides a default for the print queue.
+    LPDEST    Provides a printer queue with greater precedence than PRINTER.
+    LP_PRINT  Overrides location of system PRINT.EXE command.
+    TMPDIR    Directory where temporary files are created.
+
+'
+
+function usage {
+    print $USAGE 1>&2
+    exit 2
+}
+
+BATFILE=/tmp/lp_$$.bat
+
+function printit
+{
+    # Create the Windows print command line syntax
+    # and copy it into a .bat file.  And then execute the bat file
+    #
+    # This is necessary since /D: option to print.exe requires double quotes
+    # around the print name IF there are embedded spaces in the printer
+    # name. Yes, it seems double quotes are the only thing that works here.
+    # And trying to pass them through the subsystem as a command line arg
+    #  (ie     $printcmd '/D:"printername"' "$(unixpath2win "$TEMP")" 
+    # doesn't work. (Seems the subsytem does quote munging when passing
+    #  command line args to win32 exec )
+    #
+
+    # create a .bat file and check that its writeable
+    #
+    touch $BATFILE	# create .bat file if necessary
+    stat1=$?
+    > $BATFILE		# make sure we can write the .bat file
+    stat2=$?
+
+    if [ $stat1 != 0 -o  $stat2 != 0 ]; then
+	 print "Attempt to create file $BATFILE failed." 1>&2
+	 exit 1
+    fi
+
+    # now write out the windows command line to the .bat file
+    # Bat file should look like
+    #   @echo off
+    #   c:\winnt\system32\print.exe /D:"printer" c:\SFU\tmp\lp.1234
+    #
+    print "@echo off" > $BATFILE
+    print -n $(unixpath2win "$printcmd") >> $BATFILE
+    print -n '  /D:"' >> $BATFILE
+
+    # convert UNC printer name into Windows syntax
+    #
+    print -rn "$PRINTQ" | tr '/' '\\\\' >> $BATFILE
+    print -r '"'  " $(unixpath2win $TEMP)" >> $BATFILE
+
+    #
+    # now execute the .bat file
+    #
+    /usr/contrib/win32/bin/cmd /c $(unixpath2win $BATFILE)
+    return $?
+}
+
+
+
+#
+# **** MAIN PROGRAM  ******
+#
+
+while getopts ":bcd:n:xs" opt 
+do
+	case "$opt" in
+	'b') BINARY=1
+	     ;;
+	'c') 
+	     # no-op: no copy required as it is copied to
+	     # NT print queue by default.
+	     ;;			
+	'd') PRINTQ=$OPTARG
+	     ;;
+	'n') COPIES=$OPTARG
+	     ;;
+	's') silent=yes
+	     ;;
+	'x') print "$INFO"
+	     exit 0
+	     ;;
+
+	:)   print "$CMD: missing argument after -$OPTARG" >&2
+	     usage
+	     ;;
+	?)
+	     print "$CMD: unknown option -$OPTARG" >&2
+	     usage
+	     ;;
+	esac
+done
+shift $(($OPTIND - 1))
+
+# find a tmp directory to create files in.
+#
+origTMPDIR=$TMPDIR
+TMPDIR=""
+if [ "$origTMPDIR" = "" -o ! -d "$origTMPDIR" ]; then
+    TMPDIR=$(getconf CS_TMPDIR)
+    if [ $? != 0 -o ! -d $TMPDIR ]; then
+	print -r "$CMD: No temporary directory found." >&2
+	print -r "$CMD: Please set TMPDIR environment variable" >&2
+	exit 1
+    fi
+else
+    TMPDIR=$origTMPDIR
+fi
+
+#
+# Handle stdin as a default source of input
+#
+case "$#" in
+0)
+	set -- -
+	;;
+esac
+
+#
+# Fix UNC printer names for slashes.
+#
+case "$PRINTQ" in
+"")
+
+	print "$CMD: No printer destination. Use "lp -x" for more help" >&2
+	exit 1
+	#
+	# PRINT.EXE doesn't work if the default printer is used and
+	# it's a network printer.  
+	#
+	# QNAME="" 
+	;;
+*)
+	QNAME="/D:$(print -r "$PRINTQ" | tr '/' '\\\\')"
+	;;
+esac
+
+
+#
+# Find the PRINT command. If LP_PRINT is set, then use this value.t
+# if not, then for PRINT.EXE or print.exe. If it's not there, build
+# a path to $WINDIR/system32 and check PRINT.EXE and print.exe again. If not
+# there, give up.
+#
+printcmd=""
+
+if [ "$LP_PRINT" != "" ]; then
+    printcmd=$(whence $LP_PRINT)
+    if [ $? -ne 0 ]; then
+	print -r "$CMD: LP_PRINT environment variable doesn't name an executable file" 1>&2
+	exit 127
+    fi
+else
+    docmd=${WINDIR}/system32/print.exe
+    printcmd=$(ntpath2posix -c ${docmd})
+    if [ "$printcmd" = "" ]; then
+	print -r "$CMD: cannot find command '${docmd}'." 1>&2
+	print -r "$CMD: Set LP_PRINT environment variable to an alternate print command." 1>&2
+	exit 127
+    fi
+fi
+
+#
+# For each file argument, while there are copies to print, ...
+#
+trap 'rm -f "$TEMP" "$TEMP2"' HUP INT TERM
+
+ret=0
+for arg
+do
+	COUNT=$COPIES
+
+	case "$arg" in 
+	"-")
+		fname="stdin"
+		;;
+	*)
+		fname="$arg"
+		if ! test -f "$arg"
+		then
+			print -r "$CMD: no such file: $arg" >&2
+			ret=1
+			continue
+		fi
+		;;
+	esac
+
+	case "$BINARY" in
+	0)
+		docmd="$(print sed -e '/[^\r]\\$/s/$/\r/' -e 's/^\\$/\r/' --)"
+		case "$arg" in
+		-)
+			;;
+		*)
+			docmd="$docmd \"\$arg\""
+			;;
+		esac
+		;;
+	*)
+		docmd='cat -- "$arg"'
+		;;
+	esac 
+
+	TEMP="$TMPDIR/lp.$$"
+	TEMP2="$TMPDIR/lp.$$.info"
+
+	# ensure prev. tmp file has been removed
+	rm -f "$TEMP" "$TEMP2"
+
+	# Since PRINT.EXE prints out this temp file name,
+	# echo a message that we're creating the temp file
+	# so user knows what's going on.
+	#
+	case "$silent" in
+	    no)
+		# print temp file name in both UNIX and Windows
+		# formats.  The Windows format is important
+		# since print.exe will see this name and its
+		# output may specify this name
+		#
+		__X=$(unixpath2win $TEMP)
+		print -r "$CMD: Copying $fname to $TEMP ($__X)"
+		unset __X
+		;;
+	esac
+		
+	#
+	# now copy the user's datafile to $TEMP
+	#
+	if ! eval "$docmd" > "$TEMP"; then
+		print -r "$CMD: can't copy $fname to $TEMP" >&2
+		ret=1
+		rm -f "$TEMP"
+		continue
+	fi
+
+	# print out COUNT copies of file stored in $TEMP
+	# Send output to TEMP2 so that we can disect the error status
+	#
+	while [ $COUNT -ne 0 ]; do
+
+		printit > "$TEMP2" 2>&1
+		status=$?
+
+		case "$silent" in
+		  no)
+		      cat "$TEMP2"
+		      ;;
+		esac
+
+		# If user specified a 'printcmd' then assume
+		# it will return an exit status on error.
+		# We know that print.exe does not, so we have
+		# to check its output in order for us to return 
+		# a proper exit status.
+		#
+		if [ "$LP_PRINT" = "" ]; then
+		    # need to check output for error status
+		    grep "is currently being printed" "$TEMP2" > /dev/null 2>&1
+		    if [ $? != 0 ]; then
+		        # must have been unsuccessful print
+		        ret=1
+		    fi
+		fi
+		rm -f "$TEMP2"
+
+	    	COUNT=$(($COUNT - 1))
+	done
+	rm -f "$TEMP"
+done
+
+rm -f "$BATFILE"
+
+exit "$ret"
+

@@ -1,0 +1,67 @@
+
+
+hpsl_check_async_events(3hpsl)     hpsl_check_async_events(3hpsl)
+
+SSyynnooppssiiss
+       cc -lhpsl
+
+       #include <hpsl.h>
+
+       int hpsl_check_async_events(int *evCount)
+
+DDeessccrriippttiioonn
+       /*(L<hpsl_check_async_events/*(L>   checks   for  any  new
+       socket related events, such as open and  interlock  opera-
+       tions, that have occurred since the last time the function
+       was called.
+
+   IInnppuutt
+       None.
+
+   OOuuttppuutt
+       number of new events detected since last call.
+
+UUssaaggee
+       /*(L<hpsl_check_async_events/*(L> should be called from  a
+       poll  loop  in  the application to relay the effect of any
+       asynchronous events to the user.
+
+       To reflect the availability of a new event  on  a  socket,
+       the  socketEvent member of the HpslSocketInfo structure is
+       set.  Refer to for more information.  As a  special  case,
+       if  the  evCount  value  equals EV_RESCAN, the application
+       should call the function and then  call  the  function  to
+       reinitialize the core hot plug data structures.  EV_RESCAN
+       is reported when the Hot Plug Controller Interface  (HPCI)
+       detects  the existence of a new hot plug controller or bus
+       in the system.
+
+RReettuurrnn vvaalluueess
+       See
+
+RReeffeerreenncceess
+EExxaammppllee
+       extern           uint    hpslSocketCount;           extern
+       HpslSocketInfo_t  **hpslSocketInfo;
+
+       uint evCount=0; int  socketIx=0;
+
+       if   (hpsl_check_async_events(&evCount)!=HPSL_SUCCESS)   {
+            localErrorHandler():  }  if  (evCount==EV_RESCAN)   {
+            hpsl_cleanup();       localReset(); } else {      for
+       (socketIx=0; socketIx<hpslSocketCount; socketIx++)       {
+                 if              (hpslSocketInfo[socketIx]->sock-
+       etEvent==NEW_EVENT)           {                localSocke-
+       tRedisplay(socketIx);                 hpslSocketInfo[sock-
+       etIx]->socketEvent=NO_CHANGE;                   evCount--;
+                 }         }         if    (evCount!=0)         {
+
+                                                                1
+
+hpsl_check_async_events(3hpsl)     hpsl_check_async_events(3hpsl)
+
+                 localDisplayHandler("Event  count  mismatched");
+                 localErrorHandler();      } }
+
+                                                                2
+

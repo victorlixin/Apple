@@ -1,0 +1,195 @@
+gai_strerror(3)                                         gai_strerror(3)
+
+  ggeettaaddddrriinnffoo
+
+  NNAAMMEE
+
+    getaddrinfo freeaddrinfo, gai_strerror - nodename-to-address translation
+    in protocol-independent manner
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/socket.h>
+    #include <netdb.h>
+
+    int getaddrinfo(const char *nodename, const char *servname,
+                    const struct addrinfo *hints, struct addrinfo **res);
+
+    void freeaddrinfo(struct addrinfo *ai);
+
+    char * gai_strerror(int ecode);
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ggeettaaddddrriinnffoo() function is defined for protocol-independent nodename-
+    to-address translation. It performs functionality of
+    gethostbyname(@LIB_NETWORK_EXT@) and getservbyname(@LIB_NETWORK_EXT@), in
+    more sophisticated manner.
+
+    The addrinfo structure is defined as a result of including the <netdb.h>
+    header:
+
+    struct addrinfo {                                                  *
+         int     ai_flags;     /* AI_PASSIVE, AI_CANONNAME, AI_NUMERICHOST */
+         int     ai_family;    /* PF_xxx */
+         int     ai_socktype;  /* SOCK_xxx */
+         int     ai_protocol;  /* 0 or IPPROTO_xxx for IPv4 and IPv6 */
+         size_t  ai_addrlen;   /* length of ai_addr */
+         char   *ai_canonname; /* canonical name for nodename */
+         struct sockaddr  *ai_addr; /* binary address */
+         struct addrinfo  *ai_next; /* next structure in linked list */
+    };
+
+    The nodename and servname arguments are pointers to null-terminated
+    strings or NULL. One or both of these two arguments must be a non-NULL
+    pointer. In the normal client scenario, both the nodename and servname are
+    specified. In the normal server scenario, only the servname is specified.
+    A non-NULL nodename string can be either a node name or a numeric host
+    address string (i.e., a dotted-decimal IPv4 address or an IPv6 hexadecimal
+    address). A non-NULL servname string can be either a service name or a
+    decimal port number.
+
+    The caller can optionally pass an addrinfo structure, pointed to by the
+    third argument, to provide hints concerning the type of socket that the
+    caller supports. In this hints structure all members other than ai_flags,
+    ai_family, ai_socktype, and ai_protocol must be zero or a NULL pointer. A
+    value of PF_UNSPEC for ai_family means the caller will accept any protocol
+    family. A value of 0 for ai_socktype means the caller will accept any
+    socket type. A value of 0 for ai_protocol means the caller will accept any
+    protocol. For example, if the caller handles only TCP and not UDP, then
+    the ai_socktype member of the hints structure should be set to SOCK_STREAM
+    when ggeettaaddddrriinnffoo() is called. If the caller handles only IPv4 and not
+    IPv6, then the ai_family member of the hints structure should be set to
+    PF_INET when ggeettaaddddrriinnffoo() is called. If the third argument to
+    ggeettaaddddrriinnffoo() is a NULL pointer, this is the same as if the caller had
+    filled in an addrinfo structure initialized to zero with ai_family set to
+    PF_UNSPEC.
+
+    Upon successful return a pointer to a linked list of one or more addrinfo
+    structures is returned through the final argument. The caller can process
+    each addrinfo structure in this list by following the ai_next pointer,
+    until a NULL pointer is encountered. In each returned addrinfo structure
+    the three members ai_family, ai_socktype, and ai_protocol are the
+    corresponding arguments for a call to the ssoocckkeett() function. In each
+    addrinfo structure the ai_addr member points to a filled-in socket address
+    structure whose length is specified by the ai_addrlen member.
+
+    If the AI_PASSIVE bit is set in the ai_flags member of the hints
+    structure, then the caller plans to use the returned socket address
+    structure in a call to bbiinndd(). In this case, if the nodename argument is a
+    NULL pointer, then the IP address portion of the socket address structure
+    will be set to INADDR_ANY for an IPv4 address or IN6ADDR_ANY_INIT for an
+    IPv6 address.
+
+    If the AI_PASSIVE bit is not set in the ai_flags member of the hints
+    structure, then the returned socket address structure will be ready for a
+    call to ccoonnnneecctt() (for a connection-oriented protocol) or either
+    ccoonnnneecctt(), sseennddttoo(), or sseennddmmssgg() (for a connectionless protocol). In this
+    case, if the nodename argument is a NULL pointer, then the IP address
+    portion of the socket address structure will be set to the loopback
+    address.
+
+    If the AI_CANONNAME bit is set in the ai_flags member of the hints
+    structure, then upon successful return the ai_canonname member of the
+    first addrinfo structure in the linked list will point to a null-
+    terminated string containing the canonical name of the specified nodename.
+
+    If the AI_NUMERICHOST bit is set in the ai_flags member of the hints
+    structure, then a non-NULL nodename string must be a numeric host address
+    string. Otherwise an error of EAI_NONAME is returned. This flag prevents
+    any type of name resolution service (e.g., the DNS) from being called.
+
+    All of the information returned by ggeettaaddddrriinnffoo() is dynamically allocated:
+    the addrinfo structures, and the socket address structures and canonical
+    node name strings pointed to by the addrinfo structures. To return this
+    information to the system the function Fn freeaddrinfo is called. The
+    addrinfo structure pointed to by the ai argument is freed, along with any
+    dynamic storage pointed to by the structure. This operation is repeated
+    until a NULL ai_next pointer is encountered.
+
+    To aid applications in printing error messages based on the EAI_xxx codes
+    returned by ggeettaaddddrriinnffoo(), ggaaii__ssttrreerrrroorr() is defined. The argument is one
+    of the EAI_xxx values defined earlier and the return value points to a
+    string describing the error. If the argument is not one of the EAI_xxx
+    values, the function still returns a pointer to a string whose contents
+    indicate an unknown error.
+
+  FFIILLEESS
+
+    /etc/hosts
+
+    /etc/resolv.conf
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    Error return status from ggeettaaddddrriinnffoo() is zero on success and non-zero on
+    errors. Non-zero error codes are defined in <netdb.h>, and as follows:
+
+    EAI_ADDRFAMILY
+        address family for nodename not supported
+
+    EAI_AGAIN
+        temporary failure in name resolution
+
+    EAI_BADFLAGS
+        invalid value for ai_flags
+
+    EAI_FAIL
+        non-recoverable failure in name resolution
+
+    EAI_FAMILY
+        ai_family not supported
+
+    EAI_MEMORY
+        memory allocation failure
+
+    EAI_NODATA
+        no address associated with nodename
+
+    EAI_NONAME
+        nodename nor servname provided, or not known
+
+    EAI_SERVICE
+        servname not supported for ai_socktype
+
+    EAI_SOCKTYPE
+        ai_socktype not supported
+
+    EAI_SYSTEM
+        system error returned in errno
+
+    If called with proper argument, ggaaii__ssttrreerrrroorr() returns a pointer to a
+    string describing the given error code. If the argument is not one of the
+    EAI_xxx values, the function still returns a pointer to a string whose
+    contents indicate an unknown error.
+
+  SSEEEE AALLSSOO
+
+    _g_e_t_n_a_m_e_i_n_f_o(3)
+
+    _g_e_t_h_o_s_t_b_y_n_a_m_e(3)
+
+    _g_e_t_s_e_r_v_b_y_n_a_m_e(3)
+
+    _s_e_r_v_i_c_e_s(5)
+
+    R. Gilligan, S. Thomson, J. Bound, and W. Stevens, "Basic Socket Interface
+    Extensions for IPv6," RFC2133, April 1997.
+
+  HHIISSTTOORRYY
+
+    The implementation first appeared in WIDE Hydrangea IPv6 protocol stack
+    kit.
+
+  SSTTAANNDDAARRDDSS
+
+    The ggeettaaddddrriinnffoo() function is defined IEEE POSIX 1003.1g draft
+    specification, and documented in "Basic Socket Interface Extensions for
+    IPv6" (RFC2133).
+
+  UUSSAAGGEE NNOOTTEESS
+
+    None of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

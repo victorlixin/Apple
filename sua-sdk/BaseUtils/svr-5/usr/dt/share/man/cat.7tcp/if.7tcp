@@ -1,0 +1,395 @@
+
+
+Intro(7tcp)                                           Intro(7tcp)
+
+SSyynnooppssiiss
+       #include  <sys/socket.h>
+       #include  <netinet/in.h>
+       #include  <net/if.h>
+       #include  <netinet/ip_str.h>
+       #include  <net/strioc.h>
+       #include  <net/sockio.h>
+
+DDeessccrriippttiioonn
+       This  manual page describes various special files and pro-
+       tocols that refer to specific STREAMS  networking protocol
+       drivers.  Features  common to a set of protocols are docu-
+       mented as a protocol family.
+
+   PPrroottooccooll ffaammiillyy eennttrriieess
+       A protocol family provides basic services to the  protocol
+       implementation  to  allow it to function within a specific
+       network environment. These  services  may  include  packet
+       fragmentation  and  reassembly,  routing,  addressing, and
+       basic transport. A protocol family  may  support  multiple
+       methods  of addressing, though the current protocol imple-
+       mentations do not. A protocol family is normally comprised
+       of a number of protocols, one per type. It is not required
+       that a protocol family support all socket types. A  proto-
+       col  family  may contain multiple protocols supporting the
+       same socket abstraction.
+
+       A  protocol  supports  one  of  the  socket   abstractions
+       detailed  in A specific protocol may be accessed by creat-
+       ing a socket of the appropriate type and protocol  family,
+       by  requesting  the  protocol  explicitly  when creating a
+       socket, by executing the appropriate  TLI/XTI  primitives,
+       or by opening the associated STREAMS device.
+
+   PPrroottooccooll eennttrriieess
+       The system currently supports the Internet protocols.  Raw
+       socket interfaces are provided to the IP protocol layer of
+       the Internet, to the ICMP protocol, and to the IGMP proto-
+       col.  Consult and for more information.
+
+   AAddddrreessssiinngg
+       Associated with each protocol family is an address format.
+       All  network  addresses  adhere  to  a  general structure,
+       called a sockaddr, shown here:
+           struct sockaddr {
+               u_char  sa_len;
+               u_char  sa_family;
+               char    sa_data[14];
+           }; However, each protocol imposes finer and more  spe-
+       cific  structure,  generally renaming the variant. See the
+       appropriate protocol manual page for more details.
+
+       The following address values for sa_family  are  known  to
+       the  system:  #define     AF_UNIX       1    /*  domain */
+
+                                                                1
+
+Intro(7tcp)                                           Intro(7tcp)
+
+       #define    AF_INET      2    /*  internetwork:  UDP,  TCP,
+       etc.  */  #define     AF_LINK     18    /* data-link layer
+       (ARP) */ #define     AF_INET6     27     /*  internetwork:
+       UDP, TCP, etc. */
+
+   RRoouuttiinngg
+       The  system  provides some packet routing facilities.  The
+       kernel maintains a routing information database, which  is
+       used  in  selecting the appropriate network interface when
+       transmitting packets.
+
+       A user process (or  possibly  multiple  co-operating  pro-
+       cesses) maintains this database by sending messages over a
+       special kind of stream.  This supplants fixed size used in
+       earlier releases.
+
+       This facility is described in
+
+   SSoocckkeett iiooccttllss
+       The   ioctl  call  on  a  socket  has  the  general  form:
+       ioctl(file_descriptor,code,arg) The following  ioctl  com-
+       mand  codes  have  significance for the socket layer only:
+       Set the process group for a  socket  to  enable  signaling
+       (SIGUSR1)  of  that  process  group  when out-of-band data
+       arrives.  The argument, arg, is a pointer to an  int  and,
+       if  positive,  is  treated as a process ID; otherwise, (if
+       negative) is treated as a process group ID.  Get the  pro-
+       cess group ID associated with a particular socket.  If the
+       value returned to the int location pointed to  by  arg  is
+       negative,  it should be interpreted as a process group ID;
+       otherwise, it should be interpreted as a process ID.  Used
+       to  ascertain  whether  or  not the socket read pointer is
+       currently at the point (mark) in  the  data  stream  where
+       out-of-band  data was sent.  If a 1 is returned to the int
+       location pointed to by arg, the next read will return data
+       after  the mark.  Otherwise (assuming out-of-band data has
+       arrived), the next read will  provide  data  sent  by  the
+       client  prior  to  transmission of the out-of-band signal.
+       Returns (to the int location pointed to by arg) the number
+       of bytes currently waiting to be read on the socket.  Tog-
+       gles the socket into blocking/non-blocking mode.   If  the
+       int  location pointed to by arg contains a non-zero value,
+       subsequent socket operations that would cause the  process
+       to  block  waiting  on a specific event will return abnor-
+       mally with errno set to EWOULDBLOCK; otherwise,  the  pro-
+       cess will block.
+
+   QQuueeuuee iiooccttllss
+       Each  STREAMS  device has default queue high and low water
+       marks, that can be changed by  the  super  user  with  the
+       INITQPARMS  specification  in  an  The  ioctl is done on a
+       driver or module, with the  argument  being  an  array  of
+       structures of type: struct iocqp {
+               ushort iqp_type;
+
+                                                                2
+
+Intro(7tcp)                                           Intro(7tcp)
+
+               ushort iqp_value; };
+
+       iqp_value  specifies  the  value  for  the queue parameter
+       according to iqp_type, which may be one of:  IQP_RQ  (read
+       queue),  IQP_WQ (write queue), IQP_MUXRQ (mux read queue),
+       IQP_MUXWQ (mux write  queue),  or  IQP_HDRQ  (stream  head
+       queue), each OR'ed with either IQP_LOWAT (value is for low
+       water mark of queue), or  IQP_HIWAT  (value  is  for  high
+       water mark of queue).
+
+   IInntteerrffaaccee iiooccttllss
+       Each  network  interface in a system corresponds to a path
+       through which messages may be sent and received.   A  net-
+       work  interface  usually  has a hardware device associated
+       with it, although certain interfaces such as the  loopback
+       interface, do not.
+
+       The  following  ioctl calls may be used to manipulate net-
+       work interfaces.  The ioctl is made on a socket (typically
+       of   type  SOCK_DGRAM)  in  the  desired  ``communications
+       domain'' (see  Unless  specified  otherwise,  the  request
+       takes  an ifreq structure as its parameter. This structure
+       has the form struct  ifreq { #define IFNAMSIZ    16
+               char    ifr_name[IFNAMSIZ];   /*  name  of  inter-
+       face, e.g. net0 */
+               union {
+                       struct  sockaddr ifru_addr;
+                       struct  sockaddr ifru_dstaddr;
+                       struct  sockaddr ifru_broadaddr;
+                       short   ifru_flags;
+                       int     ifru_metric;
+                       caddr_t ifru_data;
+                       char    ifru_enaddr[6];
+                       struct  onepacket ifru_onepacket;
+                       struct  ifperf ifru_perf;
+               }                 ifr_ifru;                #define
+       ifr_addr    ifr_ifru.ifru_addr  /*  address   */   #define
+       ifr_dstaddr       ifr_ifru.ifru_dstaddr    /* other end of
+       p-to-p      link      */       #define       ifr_broadaddr
+          ifr_ifru.ifru_broadaddr  /*    broadcast   address   */
+       #define ifr_flags  ifr_ifru.ifru_flags /* flags */ #define
+       ifr_metric  ifr_ifru.ifru_metric     /*  routing metric */
+       #define ifr_nif          ifr_ifru.ifru_metric     /* #  of
+       interfaces                    */                   #define
+       ifr_naddr   ifr_ifru.ifru_metric     /* # of addresses  */
+       #define   ifr_data    ifr_ifru_ifru_data  /*  for  use  by
+       interface                    */                    #define
+       ifr_enaddr  ifr_ifru_ifru_enaddr     /*  ethernet  address
+       */  #define  ifr_onepacket     ifr_ifru.ifru_onepacket  /*
+       one-packet     mode    params    */    #define    ifr_perf
+          ifr_ifru.ifru_onepacket  /* performance  tuning  */  };
+       Set  interface  address for protocol family. Following the
+       address assignment, the ``initialization'' routine for the
+       interface  is  called.  Get interface address for protocol
+
+                                                                3
+
+Intro(7tcp)                                           Intro(7tcp)
+
+       family.  Set interface network  mask.   The  network  mask
+       defines  the  network  part of the address; if it contains
+       more of the address than the address type would  indicate,
+       then subnets are in use.  Get interface network mask.  Set
+       broadcast address for protocol family and interface.   Get
+       broadcast  address for protocol family and interface.  Set
+       destination address for protocol family of  point-to-point
+       interfaces.   Get  destination address for protocol family
+       of point-to-point interfaces.  Set interface flags  field.
+       If  the  interface is marked down, any processes currently
+       routing packets through the interface are  notified;  some
+       interfaces  may  be  reset so that incoming packets are no
+       longer received.  When marked up again, the  interface  is
+       reinitialized.   Get interface flags.  Set interface rout-
+       ing  metric.   The  metric  is  used  only  by  user-level
+       routers.   Get  interface metric.  Sets the maximum-trans-
+       mission-unit size of the interface.  This value  indicates
+       the largest atomic data-unit (including all protocol head-
+       ers) that can be  transmitted  via  this  interface.   The
+       ifr_metric  field  is  used  to  contain  the  MTU  value.
+       Retrieves the  maximum-transmission-unit  size  associated
+       with  the  interface.   The  MTU  value is returned in the
+       ifr_metric field.  Sets the debugging level of the  inter-
+       face.   The  ifr_metric  field  is used to contain the MTU
+       value.  Retrieves the current debugging  level  associated
+       with the interface.  The level is returned in the ifr_met-
+       ric field.  Sets the interface type to the value specified
+       in the ifr_metric field.  Valid interface types are speci-
+       fied in <sys/net/if_types.h>.  This is  performed  by  the
+       system  when  appropriate  and  should  never  normally be
+       issued by an application.  Retrieves the interface type of
+       the  specified  interface.   The  value is returned in the
+       ifr_metric field.  Set  one-packet  mode  parameters.  The
+       ifr_onepacket  field  of  the  ifreq structure is used for
+       this request. This structure is defined as follows: struct
+       onepacket {
+               int     spsize;         /* small packet size */
+               int      spthresh;       /* small packet threshold
+       */  };  One-packet  mode  is  enabled   by   setting   the
+       IFF_ONEPACKET  flag  (see  SIOCSIFFLAGS above). See for an
+       explanation  of  one-packet  mode.   Get  one-packet  mode
+       parameters.    Set  performance  tuning  parameters.   The
+       ifr_perf field of the ifreq structure  is  used  for  this
+       request.   This  structure  is  defined as follows: struct
+       ifperf {
+               u_short     ip_recvspace;      /*  recv  buffering
+       */
+               u_short      ip_sendspace;       /* send buffering
+       */
+               u_short     ip_fullsize;        /*  use  full-size
+       segments */ };
+
+       These  values  control interface-specific information that
+       TCP will use  to  determine  optimal  window  and  segment
+
+                                                                4
+
+Intro(7tcp)                                           Intro(7tcp)
+
+       sizes.  They can be configured on a per-interface basis so
+       that systems with multiple different types  of  interfaces
+       do  not have to be configured in such a way as to penalize
+       faster hardware.  Get performance tuning  parameters.   An
+       interface  may  have more than one address associated with
+       it in the Internet  protocol.   This  request  provides  a
+       means  to add additional addresses (or modify characteris-
+       tics of the primary address if the default address for the
+       address family is specified).  Rather than making separate
+       calls to set destination or broadcast addresses,  or  net-
+       work  masks  (now  an integral feature of the protocol), a
+       separate structure is used to  specify  all  three  facets
+       simultaneously (see below).  One would use a slightly tai-
+       lored version of  this  struct  specific  to  each  family
+       (replacing  each  sockaddr  by  one of the family-specific
+       types, for example, sockaddr_in).   This  request  deletes
+       the  specified  address  from  the list associated with an
+       interface.  It also  uses  the  if_aliasreq  structure  to
+       allow  for  the possibility of protocols allowing multiple
+       masks or destination addresses, and also adopts  the  con-
+       vention that specification of the default address means to
+       delete the first address for the  interface  belonging  to
+       the  address  family  in  which  the  original  socket was
+       opened.
+
+       The following structure is used with SIOCAIFADDR,  SIOCGI-
+       FALIAS, and SIOCDIFADDR: /*
+        *  Structure used in SIOCAIFADDR/SIOCGIFALIAS/SIOCDIFADDR
+       requests.
+        */ struct ifaliasreq {
+               char    ifra_name[IFNAMSIZ];   /*  if  name,  e.g.
+       net0 */
+               struct  sockaddr        ifra_addr;
+               struct  sockaddr        ifra_broadaddr;
+               struct   sockaddr         ifra_mask; }; Get inter-
+       face alias.  This request takes an ifaliasreq structure as
+       an argument.  The alias about which information is desired
+       is identified by the  combination  of  the  ifra_name  and
+       ifra_addr  fields.   For  example, to retrieve information
+       about  the  alias  ``127.0.0.2''  on  interface   ``lo0'',
+       ifra_name  should contain the string ``lo0'' and ifra_addr
+       should be initialized to  a  sockaddr_in  structure  whose
+       sin_addr  field contains 0x7f000002 in network-byte order.
+       The remaining fields will be returned by the kernel.  This
+       returns  the  current number of interfaces in ifr_nif.  No
+       values need be set in the passed  ifreq  structure.   This
+       returns  the  current  number  of  non-multicast interface
+       addresses in ifr_naddr.  No values  need  be  set  in  the
+       passed ifreq structure.
+
+       This  is  useful  for  sizing  buffers to be used with the
+       SIOCGIFCONF ioctl, since that ioctl will return  a  struct
+       ifreq for every interface address.  Get interface configu-
+       ration list. This request takes an ifconf  structure  (see
+
+                                                                5
+
+Intro(7tcp)                                           Intro(7tcp)
+
+       below)  as  a  value-result  parameter.  The ifc_len field
+       should be initially set to the size of the buffer  pointed
+       to  by  ifc_buf.  If the SIOCGIFANUM ioctl is used to size
+       the buffer,  the  size  should  be  equal  to  the  number
+       returned  via the SIOCGIFANUM ioctl multiplied by the size
+       of an ifreq structure.  On  return  it  will  contain  the
+       length, in bytes, of the configuration list.  /* Structure
+       used in SIOCGIFCONF request.
+        * Used to retrieve interface configuration
+        * for machine (useful for programs which
+        * must know all networks accessible
+        * or all local addresses).
+        */ struct  ifconf {
+               int     ifc_len;             /* size of associated
+       buffer */
+               union {
+                       caddr_t ifcu_buf;
+                       struct  ifreq *ifcu_req;
+               }   ifc_ifcu;  #define  ifc_buf  ifc_ifcu.ifcu_buf
+       /* buffer address  */  #define  ifc_req  ifc_ifcu.ifcu_req
+       /* array of structures returned */ };
+
+   SSttrreeaammss iiooccttll iinntteerrffaaccee
+       Socket  ioctl  calls can also be issued using STREAMS file
+       descriptors.  The standard  strioctl  structure  is  used,
+       with  the ic_cmd field containing the socket ioctl command
+       code (from <sys/socket.h>) and the ic_dp field pointing to
+       the  data  structure  appropriate  for that ioctl, for all
+       socket ioctls except  SIOCGIFCONF.   For  the  SIOCGIFCONF
+       ioctl,  an ifconf structure is not used. Rather, the ic_dp
+       field points to the buffer to  receive  the  ifreq  struc-
+       tures.
+
+       In all cases, the ic_len field should be set to the appro-
+       priate size.
+
+   TTLLII//XXTTII ooppttiioonnss mmaannaaggeemmeenntt
+       Options may be set and retrieved using They  are  communi-
+       cated  using  a  buffer  pointed to by the buf member of a
+       struct netbuf. The buffer contains a list of options. Each
+       option consists of an option header and an option value.
+
+       If  the  value  of the environment variable XTI_OPTMGMT is
+       set to 1 and exported (XTI option management), options may
+       be  set  and  retrieved using a struct t_opthdr header (as
+       defined in X/Open CAE Specification, Networking  Services,
+       Issue  4,  1994):  struct  t_opthdr  {       unsigned long
+       length;    /*   total   length   of   option            */
+                           /*  sizeof (struct t_opthdr) plus   */
+                           /* length of option value in bytes  */
+            unsigned  long  level;     /* protocol level affected
+       */       unsigned  long  name; /*  option  to  modify   */
+            unsigned long status;  /* status value */ } /* option
+       value */ If the environment variable  XTI_OPTMGMT  is  not
+
+                                                                6
+
+Intro(7tcp)                                           Intro(7tcp)
+
+       defined or its value is not equal to 1 (TLI option manage-
+       ment), options may be set and  retrieved  using  a  struct
+       opthdr header in a manner similar to and struct opthdr {
+               long level;     /* protocol level affected */
+               long name;      /* option to modify */
+               long len;       /* length of option value in bytes
+       */ }; /* option value */  For  both  t_opthdr  and  opthdr
+       headers,  the  option  value  must be a multiple of sizeof
+       (long) bytes in length, and must  immediately  follow  the
+       option header. The header of the next option, if any, fol-
+       lows the option value.
+
+       To get the values of options, set the flags field  of  the
+       t_optmgmt  structure  to  T_CHECK.   Set the length or len
+       fields to 0 and make the option headers  adjacent.  A  new
+       options buffer will be formatted and returned to the user.
+       Note that  T_CHECK  may  have  failed  even  if  t_optmgmt
+       returns  zero.  You  must  check  the  flags  field of the
+       returned  t_optmgmt  structure.  If  this  field  contains
+       T_FAILURE, one or more of the options were invalid.
+
+       To  set  options,  set  the  flags  field of the t_optmgmt
+       structure to T_NEGOTIATE.
+
+       To retrieve the default values of  all  options,  set  the
+       flags  field of the t_optmgmt structure to T_DEFAULT.  For
+       this operation, no input buffer should be specified.
+
+   OObbttaaiinniinngg RRFFCCss
+         man pages frequently cite appropriate RFCs (Requests for
+       Comments).  See for more information.
+
+RReeffeerreenncceess
+       RFC 1180, RFC 1500
+
+                                                                7
+

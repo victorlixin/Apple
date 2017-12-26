@@ -1,0 +1,137 @@
+
+
+socket(3sock)                                       socket(3sock)
+
+SSyynnooppssiiss
+       cc [options] file -lsocket -lnsl #include <sys/socket.h>
+
+       int socket(int domain, int type, int protocol);
+
+DDeessccrriippttiioonn
+       socket  creates  an  unbound  socket  in  a communications
+       domain, and returns a file descriptor that can be used  in
+       later functions that operate on sockets.
+
+       The  domain  parameter  specifies  a communications domain
+       within which communication will take place;  this  selects
+       the  protocol  family  which should be used.  The protocol
+       family generally is the same as the address family for the
+       addresses  supplied  in  later  operations  on the socket.
+       These  families  are   defined   in   the   include   file
+       sys/socket.h.   There  must be an entry in the file for at
+       least each protocol family and type required.  If protocol
+       has been specified, but no exact match for the tuplet fam-
+       ily, type, protocol is found, then the  first  entry  con-
+       taining the specified family and type with zero for proto-
+       col will be used.  The currently understood formats are:
+
+        system internal protocols ARPA  Internet  protocols--IPv4
+       ARPA Internet protocols--IPv6
+
+       The  socket  has  the  indicated type, which specifies the
+       communication semantics.   Currently  defined  types  are:
+       Supports datagrams (connectionless, unreliable messages of
+       a  fixed  (typically  small)  maximum  length).   Provides
+       access  to  internal  network  interfaces.   This  is only
+       available to a  privileged  user.   Provides  a  reliably-
+       delivered message.  No implementation currently exists for
+       this facility.  Provides a  sequenced,  reliable,  two-way
+       connection-based  data  transmission path for datagrams of
+       fixed maximum length; a consumer may be required  to  read
+       an  entire packet with each read system call.  This facil-
+       ity is protocol specific, and is presently not implemented
+       for  any  protocol  family.  Provides sequenced, reliable,
+       two-way connection-based  byte  streams.   An  out-of-band
+       data  transmission mechanism is supported for TCP and UDP.
+
+       protocol specifies a particular protocol to be  used  with
+       the  socket.   Normally  only  a single protocol exists to
+       support a particular socket type within a  given  protocol
+       family.   However,  multiple protocols may exist, in which
+       case a particular protocol must be specified in this  man-
+       ner.   The  protocol  number  to  use is particular to the
+       ``communication domain'' in which communication is to take
+       place.   If a protocol is specified by the caller, then it
+       will be packaged into a socket level  option  request  and
+       sent to the underlying protocol layers.
+
+       Sockets  of type SOCK_STREAM are full-duplex byte streams,
+
+                                                                1
+
+socket(3sock)                                       socket(3sock)
+
+       similar to pipes.  A stream socket must be in a  connected
+       state  before  any  data may be sent or received on it.  A
+       connection to another socket is  created  with  a  connect
+       call.   Once connected, data may be transferred using read
+       and write calls or some  variant  of  the  send  and  recv
+       calls.   When a session has been completed, a close may be
+       performed.  Out-of-band data may also  be  transmitted  as
+       described  on the manual page and received as described on
+       the manual page.
+
+       The  communications  protocols   used   to   implement   a
+       SOCK_STREAM  insure  that  data is not lost or duplicated.
+       If a piece of data for which the peer protocol has  buffer
+       space  cannot be successfully transmitted within a reason-
+       able length of time, then  the  connection  is  considered
+       broken  and  calls  will indicate an error with -1 returns
+       and with ETIMEDOUT as the  specific  code  in  the  global
+       variable  errno.   The  protocols  optionally keep sockets
+       warm by forcing transmissions roughly every minute in  the
+       absence  of other activity.  An error is then indicated if
+       no response can be elicited on an otherwise  idle  connec-
+       tion  for  a  extended period (for instance 5 minutes).  A
+       SIGPIPE signal is raised if a process sends  on  a  broken
+       stream;  this  causes naive processes, which do not handle
+       the signal, to exit.
+
+       SOCK_SEQPACKET sockets employ the  same  system  calls  as
+       SOCK_STREAM  sockets.   The  only  difference is that read
+       calls will return only the amount of data  requested,  and
+       any remaining in the arriving packet will be discarded.
+
+       SOCK_DGRAM and SOCK_RAW sockets allow datagrams to be sent
+       to correspondents named in sendto  calls.   Datagrams  are
+       generally  received  with recvfrom, which returns the next
+       datagram with its return address.
+
+       An fcntl call can be used to specify a  process  group  to
+       receive a SIGURG signal when the out-of-band data arrives.
+       It may also enable non-blocking I/O and asynchronous noti-
+       fication of I/O events with SIGIO signals.
+
+       The  operation  of  sockets  is controlled by socket level
+       options.   These  options  are   defined   in   the   file
+       sys/socket.h.   setsockopt  and getsockopt are used to set
+       and get options, respectively.
+
+FFiilleess
+       /usr/lib/locale/locale/LC_MESSAGES/uxnsl
+
+RReettuurrnn vvaalluueess
+       A -1 is returned if an error occurs,  and  errno  is  set.
+       Otherwise the return value is a descriptor referencing the
+       socket.
+
+                                                                2
+
+socket(3sock)                                       socket(3sock)
+
+   EErrrroorrss
+       The socket call fails if: Permission to create a socket of
+       the  specified type and/or protocol is denied.  The speci-
+       fied address family is  not  supported.   The  per-process
+       descriptor  table  is  full.   The system has no more file
+       descriptors available.  Insufficient user memory is avail-
+       able.  There were insufficient STREAMS resources available
+       to complete the operation.  The protocol type or the spec-
+       ified  protocol  is not supported within this domain.  The
+       protocol does not support the specified socket type.
+
+RReeffeerreenncceess
+       RFC 2133
+
+                                                                3
+

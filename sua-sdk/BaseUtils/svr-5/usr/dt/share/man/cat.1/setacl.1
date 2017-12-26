@@ -1,0 +1,207 @@
+
+
+setacl(1)                                               setacl(1)
+
+SSyynnooppssiiss
+       setacl [-r] -s acl_entries file ...
+
+       setacl [-r] [-m acl_entries] -d acl_entries file ...
+
+       setacl [-r] -f acl_file file ...
+
+DDeessccrriippttiioonn
+       For  each  file  specified, setacl will either replace its
+       entire ACL, including the default ACL on a  directory,  or
+       it  will  add,  modify, or delete one or more ACL entries,
+       including default entries on directories.
+
+       The -s option will set the ACL to the entries specified on
+       the  command  line.   The  -f  option will set the ACL the
+       entries contained within the file acl_file.  The -d option
+       will  delete one or more specified entries from the file's
+       ACL.  The -m option will add or modify one or more  speci-
+       fied ACL entries.
+
+       One  of  the  options -s, -m, -d, or -f must be specified.
+       If -s or -f are specified, other options are invalid.  The
+       -m and -d options may be combined.
+
+       For  the  -m  and  -s options, acl_entries are one or more
+       comma separated ACL entries selected  from  the  following
+       list.   For  the  -f  option,  acl_file  must  contain ACL
+       entries, one to a  line,  selected  from  the  same  list.
+       Default  entries  may  only  be specified for directories.
+       Bold face indicates that characters must be typed as spec-
+       ified, brackets denote optional characters, and italicized
+       characters are to be specified by the user.  u[ser]::operm
+       |  perm  u[ser]:uid:operm  |  perm  g[roup]::operm  | perm
+       g[roup]:gid:operm   |   perm    c[lass]:operm    |    perm
+       o[ther]:operm   |   perm  d[efault]:u[ser]::operm  |  perm
+       d[efault]:u[ser]:uid:operm | perm d[efault]:g[roup]::operm
+       |      perm     d[efault]:g[roup]:gid:operm     |     perm
+       d[efault]:c[lass]:operm | perm  d[efault]:o[ther]:operm  |
+       perm
+
+       For the -d option, acl_entries are one or more comma sepa-
+       rated ACL entries without permissions, selected  from  the
+       following list.  The entries for file owner, owning group,
+       and others may not  be  deleted.   u[ser]:uid  g[roup]:gid
+       d[efault]:u[ser]:  d[efault]:u[ser]:uid d[efault]:g[roup]:
+       d[efault]:g[roup]:gid                   d[efault]:c[lass]:
+       d[efault]:o[ther]:
+
+       In the above lists, the user specifies the following: is a
+       permissions string composed of the characters r (read),  w
+       (write), and x (execute), each of which may appear at most
+       one time, in any order.  The character - may be  specified
+       as  a  placeholder.   is  the  octal representation of the
+       above permissions, with 7 representing all permissions, or
+
+                                                                1
+
+setacl(1)                                               setacl(1)
+
+       rwx,  and  0  representing  no  permissions, or ---.  is a
+       login name or user ID.  is a group name or group ID.
+
+       The options have the following meanings:  Recalculate  the
+       group class entry so as to ensure that permissions granted
+       in the additional ACL entries will  actually  be  granted.
+       If  the -r option is specified, the value specified in the
+       class entry is ignored.  Set a file's ACL.   All  old  ACL
+       entries are removed, and replaced with the newly specified
+       ACL.  There must be exactly one user entry  specified  for
+       the  owner  of the file, exactly one group entry specified
+       for the owning group of the file, exactly one class  entry
+       specified  for the file group class, and exactly one other
+       entry specified.  There may be additional user ACL entries
+       and  additional group ACL entries specified, but there may
+       not be duplicate additional user ACL entries with the same
+       uid,  or  duplicate  additional group ACL entries with the
+       same gid.  If the file is a directory, default ACL entries
+       may  be  specified.  There may be at most one default user
+       entry for the owner of the file, at most one default group
+       entry for the owning group of the file, atmost one default
+       class entry for the file group  class,  and  at  most  one
+       default  other  entry  for other.  There may be additional
+       default user entries and additional default group  entries
+       specified,  but  there  may  not  be  duplicate additional
+       default user entries with the same uid, or duplicate addi-
+       tional  default group entries with the same gid.  An entry
+       with no permissions will result in the  specified  uid  or
+       gid being denied access to the file.  The entries need not
+       be in order.  They will be sorted by  the  command  before
+       being  applied  to  the  file.   Add  one  or more new ACL
+       entries to the file, and/or change one  or  more  existing
+       ACL entries on the file.  If an entry already exists for a
+       specified  uid  or  gid  the  specified  permissions  will
+       replace  the  current  permissions.   If an entry does not
+       exist for the specified uid or gid, an entry will be  cre-
+       ated.   Delete  one  or more existing ACL entries from the
+       file.  The entries for the file owner, the  owning  group,
+       and  others  may not be deleted from the ACL.  Deleting an
+       entry does not necessarily have the same effect as  remov-
+       ing  all permissions from the entry.  Specifically, delet-
+       ing an entry for a specific user would cause  that  user's
+       permissions  to  be  determined by the other entry (or the
+       owning group entry, if the user is in that group).  Set  a
+       file's  ACL  with  the  ACL  entries contained in the file
+       named acl_file.  The same constraints on specified entries
+       hold  as with the -s option.  The entries are not required
+       to be in any specific  order  in  the  file  specified  as
+       acl_file.   The  character  "#" in acl_file may be used to
+       indicate a comment.  All characters, starting with the  #,
+       until  the  end  of  the  line,  will  be ignored.  If the
+       acl_file has been created as the output of the getacl com-
+       mand,  any  effective  permissions,  which  will have been
+       written with a preceding "#", will also be ignored.
+
+                                                                2
+
+setacl(1)                                               setacl(1)
+
+       When the setacl command is used, it may result in  changes
+       to  the file permission bits.  When the user ACL entry for
+       the file owner is changed, the file owner permission  bits
+       will  be  modified.   When the other ACL entry is changed,
+       the file other permission bits  will  be  modified.   When
+       additional  user  ACL entries and/or any group ACL entries
+       are set or modified, the file group class permission  bits
+       will  be  modified  to  reflect  the  maximum  permissions
+       allowed by the additional user entries and all  the  group
+       entries.
+
+       If  an ACL does not contain additional user and additional
+       group entries, the permissions in the group entry for  the
+       object  owning group and the class entry must be the same.
+       Therefore, if the -d option is specified and results in no
+       additional  user  entries and no additional group entries,
+       the class entry permissions will be set equal to the  per-
+       missions  of the owning group entry (this is equivalent to
+       using the -r option).
+
+       A directory may contain default ACL entries.  If a file is
+       created in a directory which contains default ACL entries,
+       the entries will be added to the newly created file.   The
+       default  permissions  specified  for  the file owner, file
+       owning group, and others, will be constrained by the umask
+       and  the  mode specified in the file creation call.  If an
+       ACL does not contain  additional  default:user  and  addi-
+       tional  default:group entries and a default:group entry is
+       specified  for   the   object   owning   group,   then   a
+       default:class  entry  must also be specified, and the per-
+       missions in the default:group entry for the object  owning
+       group and the permissions for the default:class entry must
+       be the same.
+
+       This command may be executed on a file  system  that  does
+       not  support  ACLs,  to  set the permissions for the three
+       base entries for the file owner, file  owning  group,  and
+       others.   Additional  entries and default entries will not
+       be allowed in this case.
+
+FFiilleess
+       user IDs group IDs
+
+EExxaammpplleess
+       To add one ACL entry to file filea ,  giving  user  archer
+       read  permission  only,  type:  setacl  -m user:archer:r--
+       filea
+
+       If an entry for user archer already exists,  this  command
+       will set the permissions in that entry to r--.
+
+       To  replace  the entire ACL for file filea, adding entries
+       for  users  archer,  and  fletcher,  allowing   read/write
+       access,  an  entry for the file owner allowing all access,
+
+                                                                3
+
+setacl(1)                                               setacl(1)
+
+       an entry for the file group allowing read access only, and
+       an  entry  for others disallowing all access, type: setacl
+       -r    -s     user::rwx,user:archer:rw-,user:fletcher:rw-,\
+            group::r--,class:---,other:--- filea
+
+       Following  this command, the file permission bits would be
+       set to -rwxrw---- Even though the file  owning  group  has
+       only read permission, the maximum permissions available to
+       all  additional  user  ACL  entries,  and  all  group  ACL
+       entries, are read and write, since the two additional user
+       entries both specify these permissions.
+
+       To set the same ACL on file filea as in the above example,
+       using the -f option, type: setacl -r -f filea.acl filea
+
+       with   file   filea.acl   edited   to  contain:  user::rwx
+       user:archer:rw- user:fletcher:rw- group::r-- other:---
+
+       Because the -r option was specified, no  class  entry  was
+       needed.   If  a class entry had been present it would have
+       been ignored.
+
+RReeffeerreenncceess
+
+                                                                4
+

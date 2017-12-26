@@ -1,0 +1,326 @@
+
+
+fprof(1)                                                 fprof(1)
+
+SSyynnooppssiiss
+       fprof  -C  [Logging=on|off,]  [StartState=on|off,]  [Accu-
+       racy=best|accurate|normal,]      [LogPrefix=pathname]
+
+       fprof -s [-C[Logging=on|off,] [StartState=on|off,]  [Accu-
+       racy=best|accurate|normal,]          [LogPrefix=pathname]]
+       command-line
+
+       fprof [-o|-O] [-m] log [log] . . .
+
+       fprof [-i] [log] . . .
+
+       fprof [-c] [log] . . .
+
+DDeessccrriippttiioonn
+       fprof is the controlling program for  the  flow  profiling
+       features.   Flow  profiling  is  a form of tracing used to
+       analyze performance and locality of reference of text.
+
+       Profiling revolves around running experiments.  An experi-
+       ment consists of running the program that you want to ana-
+       lyze with profiling compiled into the program.   For  flow
+       profiling,  the -qf option must be given to or When a pro-
+       gram being  profiled  is  running  (i.e.,  a  flow-profile
+       experiment is running), the current time is recorded every
+       time a function is called and every time it exits.
+
+       There are three different uses for fprof: Setting up flow-
+       profile  experiment parameters Controlling the activity of
+       a running experiment Viewing the results of experiments
+
+       The first 2 uses are optional.  If the default  configura-
+       tion  is  the  way you want it and the experiment needs no
+       fine control, you can just compile your program with  flow
+       profiling,  run  the  program and analyze the results.  If
+       this is all you need, viewing the results  of  experiments
+       is described below.
+
+       Setting  up  flow-profile  experiment parameters is accom-
+       plished in one of three ways:   system-wide  configuration
+       files,  environment  variables  or per-experiment command-
+       line arguments.  There are four configuration  parameters:
+       Controls whether any logging will be performed on programs
+       that were compiled for flow-profiling.  By  default,  log-
+       ging is on.  Controls whether the logging state is on when
+       the experiment is begun.  (The  logging  state  is  on  by
+       default.)   If  StartState  is  set to off, logging may be
+       turned on while the program is running.  The  only  reason
+       to  use this parameter is to preclude start-up information
+       from a flow-profile log.  Set to one of best, accurate  or
+       normal.   Accurate  logs use the hardware time stamp capa-
+       bilities of the Pentium CPU to write time  stamp  informa-
+       tion  accurate to the microsecond (at least).  Normal logs
+       will contain timestamps that are accurate to  1/100  of  a
+
+                                                                1
+
+fprof(1)                                                 fprof(1)
+
+       second.   Note  that  typical or default system configura-
+       tions restrict use of the accurate system  timer  to  pro-
+       grams  running  with  root privilege.  To enable user mode
+       access to the timer, set the kernel tunable USER_RDTSC  to
+       1.  The best accuracy option will attempt to use the accu-
+       rate timer if it is available.  If the RDTSC timer is  not
+       available,  not supported in the hardware or not available
+       in user mode, fprof will default to normal accuracy  mode.
+       Best  accuracy is the default.  Allows you to choose where
+       you would like the logs to be stored.  When a  program  is
+       begun  that  has logging turned on, an output file is cre-
+       ated with the name LogPrefix.pid (where pid  is  the  pro-
+       cess-id of the running program).  By default, LogPrefix is
+       set to /tmp/out.  This means that for a process with a pid
+       of 12, its log will be the file /tmp/out.12.
+
+       Setting  up  system-wide configuration parameters requires
+       the root privilege and is done with fprof -C (with  no  -s
+       option).   Once  this is accomplished all experiments will
+       use these parameters.  The configuration is stored in  the
+       file /usr/ccs/lib/fprof.cfg.
+
+       The  system-wide  configuration  may be superseded through
+       the environment variables _FprofLogging, _FprofStartState,
+       _FprofAccuracy and _FprofLogPrefix.
+
+       A  third  way to specify the configuration for a flow-pro-
+       file experiment is to start the experiment using fprof -s.
+       This  sets  the  four environment variables above and exe-
+       cutes the command-line specified in its argument.
+
+       Controlling the activity of a running experiment is accom-
+       plished  using  the third form of the command shown above.
+       Control, in this case, means starting and stopping logging
+       or putting marks in the log.
+
+       To specify which running processes are to be controlled, a
+       set of log files are given as  arguments  (each  log  file
+       corresponds to a process).  The -o option sets the logging
+       state to on.  The -O option sets the logging state to off.
+       The  -m  option  places  a mark record into the log at its
+       current point.
+
+       Viewing the results  of  experiments  is  done  using  the
+       fourth  form  of  fprof.  This form sets up an interactive
+       shell for the user.  The interface is that of the command,
+       but  more  commands  are available.  These commands can be
+       used like any shell commands, that is, they can be  piped,
+       redirected, etc.
+
+       A  set of logs may be specified on the command-line.  This
+       is equivalent to starting fprof with no arguments and giv-
+       ing  an  open  command  to the interpreter with those logs
+       (see open below).  The -i option  requests  that  an  info
+
+                                                                2
+
+fprof(1)                                                 fprof(1)
+
+       (see  below) command be done on the specified logs.  It is
+       common practice to call fprof -i right after an experiment
+       to  make sure that the log turned out the way you expected
+       it to.
+
+   TTiimmee rreepprreesseennttaattiioonn
+       fprof may present time as either real time or  compensated
+       time.   Real time is the physical time that has elapsed as
+       the experiment is run.   Compensated  time  is  real  time
+       minus the overhead of the profiling code added to the user
+       code.  All statistics  are  calculated  using  compensated
+       time.   Time  may  be  printed  with the output command as
+       either compensated  time  or  real  time.   Real  time  is
+       denoted by an 'r' suffix.  The mode to be used when print-
+       ing time may be changed using the timescale command.
+
+       Due to precision limitations, the  maximum  time  interval
+       representable  in  fprof  is  about 70 minutes.  Therefore
+       experiments should be limited to that interval.
+
+   PPoossiittiioonnss
+       An analysis session consists of reading a log file or mul-
+       tiple  log  files  using the idea of the current position.
+       Initially this position is the the beginning of the  file.
+       As  the  position is moved forward or backward through the
+       file, activities can be proformed with  these  records  as
+       they  are  passed.   The  current  position  always points
+       between two records.
+
+       To avoid ambiguity, discussion of bidirectional  traversal
+       through  the log will be expressed in the following terms:
+       earlier / later - in time sequence order from the start of
+       the  log  to  the  end of the log file before (backward) /
+       after (forward) - in traversal order.  If a file is  being
+       traversed  in  a backwards direction, the "later" position
+       will  occur "before" the "earlier" position
+
+   MMaarrkkss
+       Marks are means to locate quickly some  interesting  posi-
+       tions  in  the log file.  Marks can be added to a log file
+       during an experiment by using fprof -m.
+
+       In addition to marks made by the user  in  the  log  file,
+       fprof  can detect some interesting situations and consider
+       them as virtual marks.  fprof  recognizes  long  intervals
+       between records and occurences of a specific symbol.
+
+       If  multiple marks are at the same position, they are con-
+       sidered one mark.
+
+       Long intervals occur if the time  difference  between  two
+       consecutive  records  is  not  smaller  than the specified
+       value.  The value may be given in real time or in  compen-
+       sated  time.   The  default  interval  is  set  to 0.5s in
+
+                                                                3
+
+fprof(1)                                                 fprof(1)
+
+       compensated time.  The interval can be changed later using
+       timescale.   Setting  the  interval  to  zero disables the
+       marks on long intervals.
+
+       Virtual marks on symbols occur when the name of the symbol
+       in  a  record matches the regular expression set by a com-
+       mand marksym.  When log  files  are  opened,  the  virtual
+       marks on symbols are disabled.
+
+   LLaabbeellss
+       A  label  describes some absolute position in the log file
+       for the purpose  of  returning  to  that  position  later.
+       Labels  are  not  identifiers, but are tokens of an unpub-
+       lished format and specific to the version of  fprof  being
+       used  and  the  set of files being analyzed.  These tokens
+       may be assigned as values to shell variables for use as  a
+       position  later  in  the  analysis  process,  for example,
+       X=`label`.
+
+   SSppeecciiffyyiinngg ppoossiittiioonnss
+       Positions in the log may be described  as  absolute  posi-
+       tions  or  relative  to  the  current position in the log.
+       Positions may be expressed in 4 possible formats.  A nega-
+       tive value indicates a backwards direction.
+
+       Count:   [-|+]number
+
+       Count  of  records relative to the current position.  Zero
+       is not a valid number in this context.
+
+       Mark:   m[-|+]number
+
+       The number of marks from the  current  position.   If  the
+       current  position  is  located at a mark, this mark is not
+       counted.
+
+       Time:   t[-|+]number[unit]
+
+       The position immediately earlier than the record with  the
+       specified  real time.  A time not preceded by a sign is an
+       absolute time; a signed time is relative  to  the  current
+       time.   The  current  time  is the time of the last record
+       traversed.  A number without a unit  specification  desig-
+       nates  microseconds.   Time units may be specified with an
+       'm' for milleseconds or 's' for seconds.
+
+       Label:   $<label_var>
+
+       The absolute position indicated by a label.  Labels are an
+       internal  representation  of an absolute position in a log
+       file.  This internal representation  can  be  assigned  as
+       values of shell variables.  The label of the current posi-
+       tion may be obtained using the 'label' command.
+
+                                                                4
+
+fprof(1)                                                 fprof(1)
+
+   CCoommmmaannddss
+       The available commands are: Takes a list of logs and opens
+       them  for reading.  This also closes any previously opened
+       log files.  Writes information about the open logs to  the
+       standard  output.   Closes logs opened by an open command.
+       Writes records from the start-position  through  end-posi-
+       tion  to  the  standard  output.   If only one position is
+       specified, it is taken as the end-position and the  start-
+       position  is  the current position. If the end-position is
+       specified as a relative position, it is  calculated  rela-
+       tive  to  the start-position.  If no position is given, 10
+       records are written starting at the current position as if
+       'output  10' was the command.  Writes records to the stan-
+       dard output until it reaches the end of all logs or  until
+       it  sees  a marked entry.  Searches for the next log entry
+       whose function call matches  the  regular  expression  and
+       writes  the  record  to the standard output.  The optional
+       '-' specifies that the search is backwards, otherwise for-
+       wards.   Writes  all records between the previous mark and
+       the next mark to the standard output.   Set  to  automati-
+       cally  mark  symbols  matching the regular expression.  If
+       used without an argument, automatic marks  on  symbols  is
+       disabled.   Returns  to  the  beginning  of the first log.
+       Seek to the given position.  Writes  the label of the cur-
+       rent  position  to  standard output.  Seeks forward to the
+       next (or backwards to the previous if the '-' is  present)
+       mark.  Without options, prints the current timerepresenta-
+       tion mode, real or compensated. Option -r' sets  the  mode
+       to  real  mode;  option  -c  sets the mode to compensated.
+       Gathers statistics on any subset of the log (or the  whole
+       log);  there  is no output.  Positions may be specified in
+       any form.  If  only  one  position  is  specified,  it  is
+       treated  as the starting position and statistics are accu-
+       mulated to to end of file.  If  no  arguments  are  given,
+       statistics  are  gathered  for  the  entire file.  The end
+       position may not be earlier than the start-position.   For
+       example,  count  m-1  m+1 would gather statistics from the
+       previous mark to  the  next;  count  t-1000  t+1000  would
+       gather  statistics  from  the  previous millisecond to the
+       next; count t1000 would gather statistics  from  one  mil-
+       lisecond  into  the  log  until  the end.  Prints out call
+       statistics gathered by  count.   It  shows  each  function
+       called,  how  many  times  it was called, how much time it
+       spent running (time at top of stack) and how much time  it
+       or  any  function it called spent running (time on stack).
+       Prints out  caller  statistics  gathered  by  count.   The
+       optional -d limits the output to only direct callers.  For
+       each function that matches any of the regular expressions,
+       print  out  the:  number  of  calls  to  the function that
+       resulted from the execution of each other  function,  per-
+       centage  of  time spent in the function that resulted from
+       the direct call by each other  function,  percentage  time
+       the  function  spent  on  the stack that resulted from the
+       execution of each other function.
+
+                                                                5
+
+fprof(1)                                                 fprof(1)
+
+       For example, assume there is a function x that is  consum-
+       ing  a lot of time on the stack (not necessarily on top of
+       the stack), callers will tell you in its  3rd  column  how
+       much  of  that  time was spent from a call from each other
+       function.  Prints out callee statistics gathered by count.
+       The  optional  -d  limits  the  output  to only the direct
+       callees.  This is  similar  to  callers.   Used  when  one
+       notices  that a certain function is spending a lot of time
+       somewhere on the stack.  The term compile is often associ-
+       ated with flow-profile logs.  Compiling a log is analogous
+       to compiling a program.  It means that  the  log  is  con-
+       verted  to  a format that can be read faster.  As a log is
+       read for the first time by either fprof or (which analyzes
+       the results of a flow-profiling experiment for locality of
+       reference tuning), the log is compiled so that it  can  be
+       read  faster  the  next  time.   During that time, the log
+       file(s) may exist in a partially compiled state and should
+       not  be  processed  by  multiple fprof sessions.  To fully
+       compile a log file, use the  final  form  of  the  command
+       shown above.
+
+FFiilleess
+       /usr/ccs/lib/fprof.cfg   system-wide configuration file
+
+RReeffeerreenncceess
+
+                                                                6
+

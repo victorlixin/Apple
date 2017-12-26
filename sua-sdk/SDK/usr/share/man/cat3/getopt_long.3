@@ -1,0 +1,219 @@
+getopt_long(3)                                                  getopt_long(3)
+
+NNAAMMEE
+     ggeettoopptt__lloonngg, ggeettoopptt__lloonngg__oonnllyy - get long options from command line argu-
+     ment list
+
+SSYYNNOOPPSSIISS
+     ##iinncclluuddee <<ggeettoopptt..hh>>
+
+     _e_x_t_e_r_n _c_h_a_r _*_o_p_t_a_r_g_;
+     _e_x_t_e_r_n _i_n_t _o_p_t_i_n_d_;
+     _e_x_t_e_r_n _i_n_t _o_p_t_o_p_t_;
+     _e_x_t_e_r_n _i_n_t _o_p_t_e_r_r_;
+     _e_x_t_e_r_n _i_n_t _o_p_t_r_e_s_e_t_;
+
+     _i_n_t
+     ggeettoopptt__lloonngg(_i_n_t _a_r_g_c, _c_h_a_r _* _c_o_n_s_t _*_a_r_g_v, _c_o_n_s_t _c_h_a_r _*_o_p_t_s_t_r_i_n_g,
+             _c_o_n_s_t _s_t_r_u_c_t _o_p_t_i_o_n _*_l_o_n_g_o_p_t_s, _i_n_t _*_l_o_n_g_i_n_d_e_x);
+
+     _i_n_t
+     ggeettoopptt__lloonngg__oonnllyy(_i_n_t _a_r_g_c, _c_h_a_r _* _c_o_n_s_t _*_a_r_g_v, _c_o_n_s_t _c_h_a_r _*_o_p_t_s_t_r_i_n_g,
+             _c_o_n_s_t _s_t_r_u_c_t _o_p_t_i_o_n _*_l_o_n_g_o_p_t_s, _i_n_t _*_l_o_n_g_i_n_d_e_x);
+
+DDEESSCCRRIIPPTTIIOONN
+     The ggeettoopptt__lloonngg() function is similar to getopt(3) but it accepts options
+     in two forms: words and characters.  The ggeettoopptt__lloonngg() function provides
+     a superset of the functionality of getopt(3).  ggeettoopptt__lloonngg() can be used
+     in two ways.  In the first way, every long option understood by the pro-
+     gram has a corresponding short option, and the option structure is only
+     used to translate from long options to short options.  When used in this
+     fashion, ggeettoopptt__lloonngg() behaves identically to getopt(3).  This is a good
+     way to add long option processing to an existing program with the minimum
+     of rewriting.
+
+     In the second mechanism, a long option sets a flag in the _o_p_t_i_o_n struc-
+     ture passed, or will store a pointer to the command line argument in the
+     _o_p_t_i_o_n structure passed to it for options that take arguments.  Addition-
+     ally, the long option's argument may be specified as a single argument
+     with an equal sign, e.g.
+
+     myprogram --myoption=somevalue
+
+     When a long option is processed the call to ggeettoopptt__lloonngg() will return 0.
+     For this reason, long option processing without shortcuts is not back-
+     wards compatible with getopt(3).
+
+     It is possible to combine these methods, providing for long options pro-
+     cessing with short option equivalents for some options.  Less frequently
+     used options would be processed as long options only.
+
+     The ggeettoopptt__lloonngg() call requires a structure to be initialized describing
+     the long options.  The structure is:
+
+     struct option {
+             char *name;
+             int has_arg;
+             int *flag;
+             int val;
+     };
+
+     The _n_a_m_e field should contain the option name without the leading double
+     dash.
+
+     The _h_a_s___a_r_g field should be one of:
+
+     no_argument        no argument to the option is expect.
+
+     required_argument  an argument to the option is required.
+
+     optional_argument  an argument to the option may be presented.
+
+     If _f_l_a_g is not NULL, then the integer pointed to by it will be set to the
+     value in the _v_a_l field.  If the _f_l_a_g field is NULL, then the _v_a_l field
+     will be returned.  Setting _f_l_a_g to NULL and setting _v_a_l to the corre-
+     sponding short option will make this function act just like getopt(3).
+
+     If the _l_o_n_g_i_n_d_e_x field is not NULL, then the integer pointed to by it
+     will be set to the index of the long option relative to _l_o_n_g_o_p_t_s.
+
+     The last element of the _l_o_n_g_o_p_t_s array has to be filled with zeroes.
+
+     The ggeettoopptt__lloonngg__oonnllyy() function behaves identically to ggeettoopptt__lloonngg() with
+     the exception that long options may start with `-' in addition to `--'.
+     If an option starting with `-' does not match a long option but does
+     match a single-character option, the single-character option is returned.
+
+RREETTUURRNN VVAALLUUEESS
+     If the _f_l_a_g field in struct option is NULL, ggeettoopptt__lloonngg() and
+     ggeettoopptt__lloonngg__oonnllyy() return the value specified in the _v_a_l field, which is
+     usually just the corresponding short option.  If _f_l_a_g is not NULL, these
+     functions return 0 and store _v_a_l in the location pointed to by _f_l_a_g.
+     These functions return `' if there was a missing option argument, `?' if
+     the user specified an unknown or ambiguous option, and -1 when the argu-
+     ment list has been exhausted.
+
+EEXXAAMMPPLLEESS
+     int bflag, ch, fd;
+     int daggerset;
+
+     /* options descriptor */
+     static struct option longopts[] = {
+             { "buffy",      no_argument,            NULL,           'b' },
+             { "fluoride",   required_argument,      NULL,           'f' },
+             { "daggerset",  no_argument,            &daggerset,     1 },
+             { NULL,         0,                      NULL,           0 }
+     };
+
+     bflag = 0;
+     while ((ch = getopt_long(argc, argv, "bf:", longopts, NULL)) != -1)
+             switch (ch) {
+             case 'b':
+                     bflag = 1;
+                     break;
+             case 'f':
+                     if ((fd = open(optarg, O_RDONLY, 0)) == -1)
+                             err(1, "unable to open %s", optarg);
+                     break;
+             case 0:
+                     if (daggerset) {
+                             fprintf(stderr,"Buffy will use her dagger to "
+                                 "apply fluoride to dracula's teeth\n");
+                     }
+                     break;
+             default:
+                     usage();
+     }
+     argc -= optind;
+     argv += optind;
+
+IIMMPPLLEEMMEENNTTAATTIIOONN DDIIFFFFEERREENNCCEESS
+     This section describes differences between the GNU implementation found in
+     glibc-2.1.3 and the Subsystem for Unix Applications (SUA) implementation:
+
+     o    handling of - as first char of option string in presence of environ-
+          ment variable POSIXLY_CORRECT:
+
+          GNU      ignores POSIXLY_CORRECT and returns non-options as argu-
+                   ments to option '\1'.
+
+          SUA      honors POSIXLY_CORRECT and stops at the first non-option.
+
+     o    handling of - within the option string (not the first character):
+
+          GNU      treats a `-' on the command line as a non-argument.
+
+          SUA      a `-' within the option string matches a `-' (single dash)
+                   on the command line.  This functionality is provided for
+                   backward compatibility with programs, such as su(1), that
+                   use `-' as an option flag.  This practice is wrong, and
+                   should not be used in any current development.
+
+     o    handling of :: in options string in presence of POSIXLY_CORRECT:
+
+          Both     GNU and SUA ignore POSIXLY_CORRECT here and take :: to
+                   mean the preceding option takes an optional argument.
+
+     o    return value in case of missing argument if first character (after +
+          or -) in option string is not ':':
+
+          GNU      returns '?'
+
+          SUA      returns ':' (since SUA's getopt does).
+
+     o    handling of --a in getopt:
+
+          GNU      parses this as option '-', option 'a'.
+
+          SUA      parses this as '--', and returns -1 (ignoring the a).
+                   (Because the original getopt does.)
+
+     o    setting of optopt for long options with flag != NULL:
+
+          GNU      sets optopt to val.
+
+          SUA      sets optopt to 0 (since val would never be returned).
+
+     o    handling of -W with W; in option string in getopt (not getopt_long):
+
+          GNU      causes a segfault.
+
+          SUA      no special handling is done; ``W;'' is interpreted as two
+                   separate options, neither of which take an argument.
+
+     o    setting of optarg for long options without an argument that are
+          invoked via -W (W; in option string):
+
+          GNU      sets optarg to the option name (the argument of -W).
+
+          SUA      sets optarg to NULL (the argument of the long option).
+
+     o    handling of -W with an argument that is not (a prefix to) a known
+          long option (W; in option string):
+
+          GNU      returns -W with optarg set to the unknown option.
+
+          SUA      treats this as an error (unknown option) and returns '?'
+                   with optopt set to 0 and optarg set to NULL (as GNU's man
+                   page documents).
+
+     o    The error messages are different.
+
+     o    SUA does not permute the argument vector at the same points in
+          the calling sequence as GNU does.  The aspects normally used by the
+          caller (ordering after -1 is returned, value of optind relative to
+          current positions) are the same, though.  (We do fewer variable
+          swaps.)
+
+EENNVVIIRROONNMMEENNTT
+     POSIXLY_CORRECT  If set, option processing stops when the first non-
+                      option is found and a leading `-' or `+' in the
+                      _o_p_t_s_t_r_i_n_g is ignored.
+
+SSEEEE AALLSSOO
+     getopt(3)
+
+NNOOTTEESS
+     The _a_r_g_v argument is not really const as its elements may be permuted
+     (unless POSIXLY_CORRECT is set).
+

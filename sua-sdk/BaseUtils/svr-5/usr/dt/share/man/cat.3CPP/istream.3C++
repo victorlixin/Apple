@@ -1,0 +1,259 @@
+
+
+istream(3C++)                                       istream(3C++)
+
+SSyynnooppssiiss
+       #include <iostream.h>
+
+       typedef  long  streamoff,  streampos;  class ios { public:
+            enum seek_dir { beg, cur, end };       enum open_mode
+       {  in,  out,  ate,  app,  trunc,  nocreate,  noreplace } ;
+            /*  flags  for  controlling  format  */        enum {
+       skipws=01,               left=02,  right=04, internal=010,
+                   dec=020, oct=040, hex=0100,              show-
+       base=0200, showpoint=0400, uppercase=01000, showpos=02000,
+                    scientific=04000,  fixed=010000,
+       unitbuf=020000,  stdio=040000 };      // and lots of other
+       stuff, see ios(3C++) ...  } ;
+
+       class    istream    :     public     ios     {     public:
+                 istream(streambuf*);              int  gcount();
+            istream&  get(char* ptr, int len,  char  delim='\n');
+            istream&  get(unsigned   char*   ptr,int   len,  char
+       delim='\n');
+
+            istream&  get(unsigned                        char&);
+            istream&  get(char&);        istream&  get(streambuf&
+       sb,     char      delim      ='\n');           int  get();
+            istream&  getline(char*    ptr,    int    len,   char
+       delim='\n');       istream&  getline(unsigned  char*  ptr,
+       int   len,   char  delim='\n');       istream&  ignore(int
+       len=1,int    delim=EOF);         int  ipfx(int    need=0);
+            int  peek();                 istream&  putback(char);
+            istream&  read(char*        s,        int         n);
+            istream&  read(unsigned     char*    s,    int    n);
+            istream&  seekg(streampos);
+            istream&  seekg(streamoff,                 seek_dir);
+            int  sync();      streampos tellg();
+
+            istream&  operator>>(char*);         istream&  opera-
+       tor>>(char&);                istream&  operator>>(short&);
+            istream&  operator>>(int&);          istream&  opera-
+       tor>>(long&);                istream&  operator>>(float&);
+            istream&  operator>>(double&);       istream&  opera-
+       tor>>(long   double&);       istream&  operator>>(unsigned
+       char*);          istream&  operator>>(unsigned     char&);
+            istream&  operator>>(unsigned                short&);
+            istream&  operator>>(unsigned                  int&);
+            istream&  operator>>(unsigned                 long&);
+            istream&  operator>>(streambuf*);
+            istream&  operator>>(istream&         (*)(istream&));
+            istream&  operator>>(ios& (*)(ios&)); };
+
+       class    istream_withassign    :    public    istream    {
+                 istream_withassign();           istream&  opera-
+       tor=(istream&);           istream&  operator=(streambuf*);
+            istream_withassign& operator=(istream_withassign&);
+       };
+
+                                                                1
+
+istream(3C++)                                       istream(3C++)
+
+       extern istream_withassign cin;
+
+       istream&  ws(istream&)   ; ios& dec(ios&) ; ios& hex(ios&)
+       ; ios& oct(ios&) ;
+
+DDeessccrriippttiioonn
+       istreams support interpretation of characters fetched from
+       an associated streambuf.  These are commonly  referred  to
+       as  input  or  extraction  operations.  The istream member
+       functions and related functions are described below.
+
+       In the following descriptions assume that
+       -- ins is an istream.
+       -- inwa is an istream_withassign.
+       -- insp is an istream*.
+       -- c is a char&
+       -- delim is a char.
+       -- ptr is a char* or unsigned char*.
+       -- sb is a streambuf&.
+       -- i, n, len, d, and need are ints.
+       -- pos is a streampos.
+       -- off is a streamoff.
+       -- dir is a seek_dir.
+       -- manip is a function with type istream& (*)(istream&).
+
+   CCoonnssttrruuccttoorrss aanndd aassssiiggnnmmeenntt::
+       Initializes ios state variables and associates  buffer  sb
+       with the istream..  Does no initialization.  Associates sb
+       with inswa and initializes  the  entire  state  of  inswa.
+       Associates  ins->rdbuf()  with  inswa  and initializes the
+       entire state of inswa.
+
+   IInnppuutt pprreeffiixx ffuunnccttiioonn::
+       If ins's error state is  non-zero,  returns  zero  immedi-
+       ately.  If necessary (and if it is non-null), any ios tied
+       to ins is  flushed  (see  the  description  ios::tie()  in
+       Flushing  is  considered necessary if either need==0 or if
+       there are fewer than need  characters  immediately  avail-
+       able.   If  ios::skipws  is set in ins.flags() and need is
+       zero, then leading  whitespace  characters  are  extracted
+       from  ins.   ipfx()  returns zero if an error occurs while
+       skipping whitespace; otherwise it returns non-zero.
+
+       Formatted input functions call ipfx(0), while  unformatted
+       input functions call ipfx(1); see below.
+
+   FFoorrmmaatttteedd iinnppuutt ffuunnccttiioonnss ((eexxttrraaccttoorrss))::
+       Calls ipfx(0) and if that returns non-zero, extracts char-
+       acters from ins and converts them according to the type of
+       x.   It stores the converted value in x.  Errors are indi-
+       cated by setting the error  state  of  ins.   ios::failbit
+       means  that characters in ins were not a representation of
+       the required type.  ios::badbit indicates that attempts to
+       extract characters failed.  ins is always returned.
+
+                                                                2
+
+istream(3C++)                                       istream(3C++)
+
+       The  details  of  conversion depend on the values of ins's
+       format state flags and variables (see and the type  of  x.
+       Except  that extractions that use width reset it to 0, the
+       extraction operators do not change the value of  ostream's
+       format  state.   Extractors  are defined for the following
+       types, with conversion rules as described below.   Charac-
+       ters  are  stored  in  the  array  pointed at by x until a
+       whitespace character is found  in  ins.   The  terminating
+       whitespace  is left in ins.  If ins.width() is non-zero it
+       is taken to be the size of the array,  and  no  more  than
+       ins.width()-1  characters  are  extracted.   A terminating
+       null character (0) is always  stored  (even  when  nothing
+       else  is done because of ins's error status).  ins.width()
+       is reset to 0.  A character is extracted and stored in  x.
+       Characters  are  extracted  and  converted  to an integral
+       value according to the conversion specified in ins's  for-
+       mat  flags.   Converted  characters  are stored in x.  The
+       first character may be a sign (+ or -).   After  that,  if
+       ios::oct, ios::dec, or ios::hex is set in ins.flags(), the
+       conversion is  octal,  decimal,  or  hexadecimal,  respec-
+       tively.   Conversion  is  terminated  by  the first ``non-
+       digit,'' which is left in ins.  Octal digits are the char-
+       acters  '0'  to  '7'.  Decimal digits are the octal digits
+       plus '8' and '9'.  Hexadecimal digits are the decimal dig-
+       its  plus  the letters 'a' through 'f' (in either upper or
+       lower case).  If none of the conversion base format  flags
+       is  set,  then  the number is interpreted according to C++
+       lexical conventions.  That is,  if  the  first  characters
+       (after  the optional sign) are 0x or 0X a hexadecimal con-
+       version is  performed  on  following  hexadecimal  digits.
+       Otherwise, if the first character is a 0, an octal conver-
+       sion is performed, and in all other cases a  decimal  con-
+       version is performed.  ios::failbit is set if there are no
+       digits (not counting the 0 in 0x or 0X during hex  conver-
+       sion) available.  Converts the characters according to C++
+       syntax for a floating point type, and stores the result in
+       x.   ios::failbit  is set if there are no digits available
+       in ins or if it does not begin with a well formed floating
+       point number.
+
+       The  type  and  name (operator>>) of the extraction opera-
+       tions are chosen to give a convenient syntax for sequences
+       of input operations.  The operator overloading of C++ per-
+       mits extraction functions to be declared for  user-defined
+       classes.   These operations can then be used with the same
+       syntax  as  the  member  functions  described  here.    If
+       ios.ipfx(0) returns non-zero, extracts characters from ios
+       and inserts them into sb.  Extraction stops  when  EOF  is
+       reached.  Always returns ins.
+
+   UUnnffoorrmmaatttteedd iinnppuutt ffuunnccttiioonnss::
+       These  functions  call  ipfx(1)  and  proceed  only  if it
+       returns non-zero: Extracts characters and stores  them  in
+
+                                                                3
+
+istream(3C++)                                       istream(3C++)
+
+       the  byte  array  beginning  at  ptr and extending for len
+       bytes.  Extraction stops when delim is encountered  (delim
+       is left in ins and not stored), when ins has no more char-
+       acters, or when the array has only  one  byte  left.   get
+       always  stores  a  terminating  null,  even  if it doesn't
+       extract any characters from ins because of its error  sta-
+       tus.  ios::failbit is set only if get encounters an end of
+       file before it stores any characters.  Extracts  a  single
+       character  and  stores  it in c.  Extracts characters from
+       ins.rdbuf() and stores them  into  sb.   It  stops  if  it
+       encounters  end  of file or if a store into sb fails or if
+       it encounters delim (which it leaves in ins).   ios::fail-
+       bit  is  set  if it stops because the store into sb fails.
+       Extracts a character and returns it.  i is EOF if  extrac-
+       tion  encounters  end of file.  ios::failbit is never set.
+       Does the same thing  as  ins.get(ptr,len,delim)  with  the
+       exception  that  it extracts a terminating delim character
+       from ins.  In case delim occurs when exactly  len  charac-
+       ters  have been extracted, termination is treated as being
+       due to the array being filled, and this delim is  left  in
+       ins.   Extracts  and  throws  away  up  to  n  characters.
+       Extraction stops prematurely if d is extracted or  end  of
+       file  is reached.  If d is EOF it can never cause termina-
+       tion.  Extracts n characters and stores them in the  array
+       beginning  at  ptr.   If  end  of file is reached before n
+       characters have been extracted, read  stores  whatever  it
+       can  extract and sets ios::failbit.  The number of charac-
+       ters extracted can be determined via ins.gcount().
+
+   OOtthheerr mmeemmbbeerrss aarree::
+       Returns the number of characters  extracted  by  the  last
+       unformatted input function.  Formatted input functions may
+       call unformatted input functions and  thereby  reset  this
+       number.   Begins  by  calling  ins.ipfx(1).   If that call
+       returns zero or if ins is at end of file, it returns  EOF.
+       Otherwise it returns the next character without extracting
+       it.  Attempts to back up ins.rdbuf().  c must be the char-
+       acter  before  ins.rdbuf()'s  get  pointer.  (Unless other
+       activity is modifying ins.rdbuf() this is the last charac-
+       ter  extracted  from  ins.)   If  it is not, the effect is
+       undefined.  putback may fail (and set  the  error  state).
+       Although it is a member of istream, putback never extracts
+       characters, so it does not call ipfx.  It  will,  however,
+       return  without  doing anything if the error state is non-
+       zero.   Establishes  consistency  between  internal   data
+       structures  and  the external source of characters.  Calls
+       ins.rdbuf()->sync(), which is a virtual function,  so  the
+       details depend on the derived class.  Returns EOF to indi-
+       cate errors.   Equivalent  to  manip(ins).   Syntactically
+       this  looks  like an extractor operation, but semantically
+       it does an arbitrary operation rather  than  converting  a
+       sequence of characters and storing the result in manip.  A
+       predefined manipulator, ws, is described below.
+
+                                                                4
+
+istream(3C++)                                       istream(3C++)
+
+   MMeemmbbeerr ffuunnccttiioonnss rreellaatteedd ttoo ppoossiittiioonniinngg::
+       Repositions ins.rdbuf()'s get pointer.  See for a  discus-
+       sion   of   positioning.   Repositions  ins.rdbuf()'s  get
+       pointer.  See for a discussion of positioning.   The  cur-
+       rent  position  of  ios.rdbuf()'s  get pointer.  See for a
+       discussion of positioning.
+
+   MMaanniippuullaattoorr::
+       Extracts whitespace characters.  Sets the conversion  base
+       format  flag  to  10.  See Sets the conversion base format
+       flag to 16.  See Sets the conversion base format  flag  to
+       8.  See
+
+NNoottiicceess
+       There  is no overflow detection on conversion of integers.
+       There should be, and overflow should cause the error state
+       to be set.
+
+RReeffeerreenncceess
+
+                                                                5
+

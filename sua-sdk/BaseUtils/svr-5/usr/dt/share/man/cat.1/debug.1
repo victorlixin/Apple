@@ -1,0 +1,1896 @@
+
+
+debug(1)                                                 debug(1)
+
+SSyynnooppssiiss
+       debug    [opts][[-f    none|procs|all][-r][-l   start_loc]
+       cmd_line]
+
+       debug    [opts][-f     none|procs|all][-l     object_file]
+       live_object ...
+
+       debug [opts] -c core_file object_file
+
+       opts:     [-V][-i     c|x][-X     opt][-d     defaults][-s
+       path][-Yitem,dir]
+
+DDeessccrriippttiioonn
+       debug is a tool that facilitates the finding of errors  in
+       user  programs  by allowing the user to control the execu-
+       tion of a program and examine its  state.   The  user  can
+       create a new process from an executable program, take over
+       control of an existing process, or examine the state of  a
+       process  that  terminated abnormally with a core dump (see
+       Live programs can be  executed  one  source  statement  or
+       machine instruction at a time, or can be instructed to run
+       until some event occurs.  Program variables and  the  pro-
+       cessor registers may be examined or modified, and the user
+       can request a trace back of active functions,  disassembly
+       of  a  portion  of  the program's executable code or a raw
+       dump of any area of the program's memory.
+
+       To take full advantage of  the  symbolic  capabilities  of
+       debug,  the  programs  examined  and  controlled  by debug
+       should be compiled with the -g option to the compiler [see
+       If  the  controlled program has not been compiled with -g,
+       the capabilities of debug will be limited, but the program
+       can still be controlled and examined.
+
+       debug provides both a command line interface and an X Win-
+       dows based graphical user  interface.   Only  the  command
+       line interface is described here.
+
+   IInnvvooccaattiioonn
+       debug  can be invoked in one of three ways.  In the first,
+       the user may specify a cmd_line.  cmd_line consists of one
+       or  more executable files, and their associated arguments.
+       The individual  commands  can  be  linked  by  shell-style
+       pipes,  and  the  input  and output of the cmd_line can be
+       redirected  (characters  special  to  the  shell  must  be
+       quoted).   debug creates a new controlled process for each
+       command specified in cmd_line, taking care of  any  neces-
+       sary  redirections of input and output.  The processes are
+       set up to  stop  at  the  starting  address  specified  by
+       start_loc.  If no start_loc is supplied, the processes are
+       set up to stop at the symbol main, if  present,  otherwise
+       at  the  starting  address  specified  by the object file.
+       debug then exec's each command, passing each the specified
+       arguments.
+
+                                                                1
+
+debug(1)                                                 debug(1)
+
+       If  no cmd_line is specified, debug simply enters interac-
+       tive mode.
+
+       In the second form of invocation, the user  specifies  one
+       or   more   existing   processes   by  giving  a  list  of
+       live_objects:  either  pathnames  (entries  in  the  /proc
+       directory)  or  process ids.  In either case, the debugger
+       attempts to control the specified  objects  as  live  pro-
+       cesses and, if successful, suspends their execution.
+
+       Finally, the user may specify an executable program in one
+       of the object file formats understood by debug, along with
+       a  core_file.   debug interprets the core_file as a record
+       of the process state at the time of the death of the  pro-
+       cess  associated  with  the  object_file and lets the user
+       examine the contents of the process stack,  registers  and
+       data segments.
+
+       debug  associates  the  name of each object (program name)
+       with all processes derived from the current invocation  of
+       that  object.   This  name may be used in any command that
+       accepts a process list.  If the object  name  matches  the
+       name  of  an already existing debugger-controlled program,
+       the debugger will create a new name for the program.   The
+       default program name may be reset using the rename command
+       (see below).
+
+   OOppttiioonnss
+       The following options are recognized: Associate  the  core
+       image core_file with the specified object_file.  Specify a
+       defaults  file  containing  debugger  commands.    If   no
+       defaults  is  given,  debug  will search for a file called
+       .debugrc in the user's home directory.  If a default  com-
+       mand  file exists, debug executes the commands it contains
+       before it processes any other command line options or user
+       requests.   Specify  whether  debug  will follow all child
+       processes created by any of the live_objects or by any  of
+       the  programs  given  in the cmd_line, ( procs, or all) or
+       none of the child processes ( none).  See
+
+       The interface mode for the debugger.  -i c instructs debug
+       to  use  the command line interface.  -i x instructs debug
+       to use the X Window based interface.  If no -i  option  is
+       given, debug uses the X Window interface, if the necessary
+       hardware and software is present, otherwise, it  uses  the
+       command line interface.  For the first form of invocation,
+       specify the location at which debug will stop the  process
+       after  it  is created.  For the second form of invocation,
+       specify an alternate object_file from which to  load  sym-
+       bolic  information  when  debugging  a live_object.  If no
+       alternate object is specified, debug finds the object file
+       from  which the process image was created.  If -l is used,
+       only one live_object may be  specified.   See  create  and
+       grab under ``Commands''.
+
+                                                                2
+
+debug(1)                                                 debug(1)
+
+       Redirect  input  and  output  of  the created objects to a
+       pseudo-terminal (this does not affect subsequent  redirec-
+       tion by the shell or the processes themselves).  See
+
+       Specify   initial   value  for  the  global  search  path,
+       %global_path.  The path  is  a  colon  separated  list  of
+       directory pathnames.  See
+
+       Print out version information about debug.  Specify option
+       to be passed to  the  X  Windows  initialization  routine.
+       This  option  may  be specified multiple times.  Specify a
+       new directory dir for the location of item.  item can con-
+       sist  of any of the following: file containing definitions
+       of built-in aliases for debug graphical user interface for
+       debug
+
+   CCoommmmaanndd llaanngguuaaggee
+       debug provides a simple, user-extensible command language,
+       with a syntax similar to in style, using keywords and dash
+       options.  Command options may appear in any order.  Multi-
+       ple options may be specified together, as in  symbols  -lf
+       or  separately,  as  in symbols -l -f, but multiple occur-
+       rences of the same option letter are invalid.
+
+       Several commands separated by semi-colons (;) may be given
+       on  a  single  line.  A backslash (\) at the end of a line
+       indicates that the command is continued on  the  following
+       line.  The output of a command may be redirected to a file
+       or shell pipeline using the sh syntax  of  >,  >>  and  |.
+       (For example, symbols -g | pg).  As in the shell, > and >>
+       may appear anywhere within a command, but | must appear at
+       the  end of a debugger command, since the rest of the line
+       is treated as a shell command that will receive the output
+       of  the debugger command.  A sequence of debugger commands
+       may be enclosed in curly braces ({}),  forming  a  command
+       block.   The output of such a block may be redirected as a
+       whole.  A debugger comment is introduced by a  pound  sign
+       (#).  Any characters following a pound sign on a line will
+       be ignored.
+
+       Many debugger commands have built-in aliases.   These  are
+       one  or  two character names that may be used wherever the
+       full command is used.  The user can redefine  any  of  the
+       built-in  aliases,  or  may define his or her own aliases.
+       An  alias  can  consist  of  any  valid  debugger  command
+       sequence  and may take parameters.  See alias under ``Com-
+       mands'' for more details.
+
+       On-line help is available for all debugger commands and on
+       many other topics, as well.  See help for details.
+
+   BBuuiilltt--iinn vvaarriiaabblleess
+       debug  maintains  a set of special variables that describe
+       the current debugger state and allow the user to customize
+
+                                                                3
+
+debug(1)                                                 debug(1)
+
+       certain debugger features.  These variables all begin with
+       a percent sign (%).  The processor registers are also con-
+       sidered  to  be built-in variables and use the same naming
+       convention.  The current value of a debugger variable  may
+       be seen with the print or symbols commands.  Some built-in
+       variables are read-only.  Those that can be  modified  may
+       be changed using the set command.
+
+   UUsseerr--ddeeffiinneedd vvaarriiaabblleess
+       The  user  may also define variables in the debugger.  The
+       names of these variables consist of a dollar sign followed
+       by a C-style identifier ($username).  A user-defined vari-
+       able is defined by assigning it an initial value using the
+       set command, and may subsequently be modified.  All of the
+       user's environment  variables  are  imported  to  debugger
+       variables of the same name when debug is invoked.
+
+       User-defined  variables  are  polymorphic,  having  either
+       string or numeric values, according to  the  type  of  the
+       last  value  assigned  to  them.   Any variable, string or
+       numeric, may be used where a string value is required, and
+       any  string-valued  variable  which  is  convertible to an
+       integer via the function may be used where a numeric value
+       is required.
+
+   CCoommmmaanndd eeddiittiinngg aanndd hhiissttoorryy
+       debug supports a subset of the command-line editing facil-
+       ity [see Both vi and emacs modes are available.  The  ini-
+       tial  mode  is  determined  by examining the values of the
+       VISUAL and EDITOR environment variables, as in  ksh.   The
+       current  mode  is available in the debugger built-in vari-
+       able mode, and may be changed using the set command.   The
+       debugger  command history is written to the file specified
+       by the environment variable DEBUG_HISTORY, if  this  vari-
+       able  exists and is non-null.  Otherwise, the command his-
+       tory is written to the file .debug_hist in the user's home
+       directory.  The debugger command history file is
+       preserved  across  invocations  of debug and is subject to
+       the ksh history file size monitoring constraints.
+
+       debug also supports the ksh fc command, which allows  com-
+       mand history searching, editing, listing and rerunning.
+
+   PPrroocceessss ccoonnttrrooll
+       An  application  designed  to  run in the UNIX(R) System V
+       environment can consist of one or more  processes  coordi-
+       nated  through  some interprocess communication mechanism.
+       These processes may have been created from a common ances-
+       tor  via or may have no particular ancestral relationship.
+       A process is derived from an object file and zero or  more
+       static  or dynamic shared libraries via and is modified by
+       attaching or detaching dynamic shared libraries during its
+       execution.
+
+                                                                4
+
+debug(1)                                                 debug(1)
+
+       Each process may consist of a single thread of control, or
+       of multiple threads  of  control,  all  sharing  a  common
+       address  space.  The threads abstraction is implemented by
+       a set of  library  interfaces  (see,  for  example,  These
+       interfaces are, in turn, built on top of an operating sys-
+       tem abstraction known as light-weight processes, or  LWPs.
+
+       debug  provides  control over both single and multiprocess
+       applications and over both single and  multithreaded  pro-
+       cesses.   For each active process under its control, debug
+       detects when the object program and shared library associ-
+       ation changes and maintains current knowledge of the asso-
+       ciations.  In particular, processes may attach  or  detach
+       shared  objects  into/from  their address spaces using the
+       interfaces
+
+       debug provides control of an arbitrary number  of  threads
+       within  a  given  process.   These  threads  may  be bound
+       threads or multiplexed threads (see thr_create).  The only
+       restriction is that the user may not start (run or step) a
+       multiplexed thread that is not  currently  running  on  an
+       LWP.   Note  that  debug provides control of multithreaded
+       applications only via the library threads abstraction.  It
+       does not provide direct access to LWPs.
+
+       By default, debug detects when a new process is created by
+       one of its controlled threads or  processes  and  includes
+       the new object in its set of controlled objects.  The user
+       can release such newly created objects from debugger  con-
+       trol  by  using  the  release  command  (see  below).  The
+       default behavior may be overridden by individual create or
+       grab  commands,  or may be changed by setting the value of
+       the built-in variable %follow.  Legal values are:  Do  not
+       control  child  processes.   Follow  all  child processes.
+       Follow all child processes (same as procs).
+
+       debug assigns a unique  identifier  to  each  process  and
+       thread  under its control.  Process identifiers are in the
+       form pid (p1, p2, p3, ...).  Thread identifiers are in the
+       form  pid.id  (p1.1,  p1.2, p2.5, ...).  debug maintains a
+       record of the current process  in  the  built-in  variable
+       %proc.   The  current thread is maintained in the built-in
+       variable %thread.  For all debugger commands  that  accept
+       an  optional  list  of  threads and processes, the default
+       action, if no such list is given, is to apply the  command
+       to  the  current  thread (or the current process, if it is
+       single-threaded).
+
+       When debug begins execution, the current process is set to
+       the first process specified on the command line, whether a
+       live process or one the  debugger  creates.   The  current
+       thread  is  set to the first thread, for a process created
+       by the debugger, and to an arbitrary thread for a  grabbed
+       process.  The user may change the debugger's notion of the
+
+                                                                5
+
+debug(1)                                                 debug(1)
+
+       current thread or process  by  changing  the  contents  of
+       %thread or %proc with the set command.
+
+   FFoorreeggrroouunndd aanndd bbaacckkggrroouunndd eexxeeccuuttiioonn
+       Most  users  of  traditional  single-process debuggers are
+       accustomed to a synchronous interface with  the  debugger:
+       the  user  enters a command that sets a process in motion,
+       and the debugger suspends its own execution until the pro-
+       cess stops, only then returning control to the user.  In a
+       multiprocess or multithreaded application, if  a  debugger
+       synchronously  watches one process or thread for too long,
+       or takes too long to address a breakpoint or  other  event
+       in  some  component, the timing of process interactions is
+       affected.  While it is impossible to avoid the problem  of
+       affecting  the  subject application entirely, the debugger
+       can minimize this effect by reacting very quickly  to  all
+       threads  and  processes  at  the  same time.  This implies
+       asynchronous process interaction, which in turn implies an
+       asynchronous user interface.
+
+       When  the  user  enters  a  command that sets a controlled
+       object in motion, debug, by default, waits for that object
+       to  stop  before  returning  control  to the user.  If the
+       debugger built-in variable %wait is set to  0  or  no,  or
+       background,  the  debugger  does not wait for the affected
+       object to stop.  The default behavior may  be  re-asserted
+       by  setting %wait to 1 or yes, or foreground.  This global
+       behavior may be overridden by each  command  that  sets  a
+       process in motion.
+
+   RReeddiirreeccttiioonn ooff pprroocceessss II//OO
+       When  debugging  a  multiprocess or multithreaded applica-
+       tion, a user can quickly get confused by output coming  to
+       the  terminal  from several different processes or threads
+       at once, especially if several processes  or  threads  are
+       running  in  asynchronous mode.  There is also a potential
+       for confusion if more than one object is waiting for input
+       from the user.
+
+       When  the user creates a debugger-controlled object, debug
+       does not, by default, attempt to intercept  the  input  or
+       output  for the generated processes.  Subject process out-
+       put is unlabeled, and the subject competes with the debug-
+       ger  for  the  terminal  input.   If the debugger variable
+       %redir is set to 1 or yes, the process or  thread  I/O  is
+       redirected  to  a  pseudo-terminal.   All output from that
+       process or thread is labeled with an indication  of  which
+       pseudo-terminal has been written.  Subsequent input to the
+       process or thread must be made through the  input  command
+       (see  below).   The default behavior may be re-asserted by
+       setting %redir to 0 or no.  This global  behavior  may  be
+       overridden by an individual create command.
+
+       debug  does  not  attempt  to  redirect the I/O of grabbed
+
+                                                                6
+
+debug(1)                                                 debug(1)
+
+       processes, or of the child processes of some created  sub-
+       ject,  since  it cannot tell what those processes may have
+       already done to redirect their own I/O.  Note,  too,  that
+       all of the processes and threads that result from a single
+       create command read and write from/to the same pseudo-ter-
+       minal.
+
+   PPrroocceessss lliissttss
+       A  process  list is a way to specify one or more processes
+       and threads as the target of  a  command.   Many  debugger
+       commands  take  an argument (-p  proc_list) that lists the
+       names of those  processes  and  threads  which  should  be
+       affected by the command.  A program is the set of all pro-
+       cesses and threads created as the  result  of  invoking  a
+       single  binary  executable.  It does not include processes
+       created from different executables when a process within a
+       program execs.
+
+       The  command  language  represents process lists as comma-
+       separated lists of  process  names.   A  process  name  is
+       defined  as  either:  the  keyword  all, denoting all con-
+       trolled processes and threads, a user  or  debugger-gener-
+       ated program name, denoting all processes and threads cre-
+       ated from the current invocation of the same executable, a
+       debugger-generated  thread  id, of the form pinteger.inte-
+       ger, denoting a specific controlled  thread,  a  debugger-
+       generated  process  id,  of  the  form  pinteger, denoting
+       either all threads that belong to  a  specific  controlled
+       process, or, if the process is not multithreaded, the pro-
+       cess itself,  the  debugger  built-in  variable  %program,
+       denoting all active processes and threads derived from the
+       current program, the debugger built-in  variable  %thread,
+       the  current thread, the debugger built-in variable %proc,
+       the current process, or all threads derived from the  cur-
+       rent  process,  a  decimal  integer,  denoting the process
+       which has the given integer as  its  system  pid  (or  all
+       threads derived from that process), any user-defined vari-
+       able that has an integer value, interpreted  as  a  system
+       pid,  any  user-defined  variable that has a string value,
+       which can be interpreted as one of the above forms, or  as
+       a list of the above forms.
+
+   CCoonntteexxtt vvaarriiaabblleess
+       The  context  for  the execution of most debugger commands
+       that describe the state of controlled  objects  is  deter-
+       mined  by  a  subset  of  the debugger built-in variables.
+       %program, %proc and %thread  determine  the  object(s)  to
+       which  a command applies.  Setting one affects the others.
+       In addition, there is a set of context variables  specific
+       to  each  thread  or process.  For each controlled object,
+       the following debugger built-in variables  are  available:
+       The  source  language of the current context.  The current
+       frame (an integer representing  the  frame  number).   The
+       current  function.   The current source file.  The current
+
+                                                                7
+
+debug(1)                                                 debug(1)
+
+       source line number.  The next file to be displayed by  the
+       list  command.   The next line to be displayed by the list
+       command.  The current program address.
+
+       These variables are reset whenever the thread  or  process
+       that  owns  them  stops  for  any  reason.   %frame may be
+       explicitly set by the user to any active frame and changes
+       the  value  of  the  other  context variables accordingly.
+       %func may be explicitly set to any function  with  a  cur-
+       rently  active  frame and results in setting %frame to the
+       most recent instance of that function.   %db_lang,  %file,
+       %line,  and  %loc  are read-only.  If no debugging or sym-
+       bolic information is available for the  current  function,
+       %db_lang, %func, %file, %list_file, %line, and %list_line,
+       may be null.
+
+   VVeerrbboossiittyy lleevveellss
+       When a user process or thread under the debugger's control
+       stops for any reason, single step, breakpoint, signal, and
+       so on, the debugger  generates  output  to  the  terminal.
+       This output can sometimes be more voluminous than the user
+       would desire.  For that reason the amount of  user-visible
+       output  can  be  adjusted on a global basis by setting the
+       %verbose variable.  The legal values  are:  No  output  is
+       generated  for debugger events.  The debugger displays the
+       next source or disassembly line.  If the process stops for
+       an  event (system call, signal or stop event) the debugger
+       announces the type of event and the current location.  For
+       all  stops, it displays the next source line.  This is the
+       same as events, except that the  debugger  announces  each
+       single step in addition to all of the events.  The highest
+       verbosity level.  Currently, this is the same as reason.
+
+       Certain commands allow the user to specify the quiet  ver-
+       bosity  level,  with  a  -q  option, overriding the global
+       %verbose setting.
+
+   TThhrreeaadd ssttaattee cchhaannggeess
+       A thread may undergo  several  different  kinds  of  state
+       changes  during  its lifetime: it is created and it exits;
+       it can be suspended or continued; and a multiplexed thread
+       may give up its LWP or be picked up by an LWP.  The debug-
+       ger variable %thread_change governs the  behavior  of  the
+       debugger when any of these state changes occur.  The valid
+       values are: The debugger will not print a message announc-
+       ing  the change or stop the thread involved.  A newly cre-
+       ated or continued thread, or a thread picked up by an  LWP
+       will be set running, if possible.  The debugger will print
+       a message announcing the state change but  will  not  stop
+       the thread involved.  A newly created or continued thread,
+       or a thread picked up by an LWP will be  set  running,  if
+       possible.   The  debugger  will print a message announcing
+       the state change and stop the thread involved,  if  possi-
+       ble.   A  continued thread or a thread picked up by an LWP
+
+                                                                8
+
+debug(1)                                                 debug(1)
+
+       will be stopped (or in the Off  LWP  state).   For  thread
+       creation,  the  thread that created the new thread will be
+       stopped and the new thread will stop when it  reaches  the
+       function specified in the thr_create call.
+
+   DDiirreeccttoorryy sseeaarrcchh ppaatthhss
+       To associate program addresses with source listings, debug
+       must know where to look for the  source  of  the  programs
+       being  debugged.   The built-in variable %global_path con-
+       tains  a  colon-separated  list  of  directory  pathnames.
+       debug  combines  this information with the names of source
+       files it derives from the  debugging  information  in  the
+       object  file,  to  search for source code.  In addition to
+       the global path, each program may have a  program-specific
+       path.  This path is stored in the built-in variable %path.
+       Each program has its own version of this  variable.   When
+       attempting  to  find the source for a given program, debug
+       searches first the list of directories in  that  program`s
+       %path   variable,   and   then   the   list  specified  by
+       %global_path.
+
+   EEvveennttss
+       Events in the  debugger  are  triggers  in  the  execution
+       sequence of a process or thread that cause control to pass
+       from the process or thread to the debugger.   These  trig-
+       gers  are  activated  at the user's request and consist of
+       changes in the process address space, signals,  exceptions
+       and  entry  to or exit from system calls.  Events may also
+       consist of user-specified actions taken  by  the  debugger
+       when a controlled entity stops for any reason.
+
+       Event  triggers  may apply to a given thread or process or
+       to a set of threads and processes.  The event fires if any
+       of  the specified objects encounter the trigger.  Commands
+       that create events apply, by default, to the current  pro-
+       gram, rather than the current thread.
+
+       With each event, the user may specify an optional debugger
+       command block.  This block is executed whenever the  event
+       triggers.   Events  and  their  associated commands can be
+       deleted, or temporarily deactivated and then  reactivated.
+
+       For  each  user-specified  event,  debug  assigns a unique
+       identifier in a common name space.  This identifier may be
+       used in the commands that delete, enable, disable and list
+       events.  The last event identifier assigned is  maintained
+       in the special variable %lastevent, which is updated auto-
+       matically by the debugger.  When an event triggers,  debug
+       executes  the  commands  associated  with the event, after
+       setting the special variables  %program,  %proc,  %thread,
+       %file,  %line,  %func,  %frame, %loc, %db_lang to indicate
+       the context in which the event occurred, and %thisevent to
+       the  event number of the triggered event.  These variables
+       are set only for the execution of the commands  associated
+
+                                                                9
+
+debug(1)                                                 debug(1)
+
+       with  the triggering event.  They revert to their previous
+       values (or are updated to reflect the new debugger  state)
+       when those commands complete.
+
+       The  default  action  for  each  event  is to announce the
+       occurrence of the event and  display  the  current  source
+       line  (or  current instruction, if no line number informa-
+       tion or source is available).
+
+       When a controlled process dies, debug remembers the events
+       created for that process.  If a new process is created for
+       the same program, all events that applied  to  the  entire
+       program (the default) are re-instantiated for the new pro-
+       cess.  Events that were created to apply only to a  single
+       process  within  a  multiprocess  program  or  to a single
+       thread, are not recreated.  Similarly, when a process cre-
+       ates  a new child process via all events that apply to the
+       entire program from which the parent  process  is  derived
+       are copied in the child process.  Events that apply to the
+       parent process only or to a single thread are not  copied.
+
+       When  a new thread is created within a process, all events
+       that applied to the entire process or the  entire  program
+       are  copied  in  the  sibling thread.  Events that applied
+       only to the original thread that created  the  new  thread
+       are not copied.
+
+   EExxpprreessssiioonnss
+       Many debugger commands accept programming language expres-
+       sions.  Each expression is evaluated using the syntax  and
+       semantics  of  the  current  language, subject to possible
+       limitations of the debugger on that language.  The current
+       language,  %db_lang,  is  determined  dynamically from the
+       source language of the current file.  The debugging infor-
+       mation  in  an  object  file supplies a language attribute
+       describing the programming language of  the  source  file.
+       If the debugger cannot determine the program's source lan-
+       guage, %db_lang defaults to C.  The user may override  the
+       information  in  the  object  file by setting the variable
+       %lang.  If the user sets %lang to the  null  string  (""),
+       the  debugger reverts to using %db_lang.  Expressions ref-
+       erencing variables defined in files compiled from  differ-
+       ent languages do not change the current language.
+
+       debug  accepts  expressions  containing any combination of
+       program variables or functions, qualified names,  built-in
+       debugger  variables,  and user-defined debugger variables.
+       A qualified name specifies a program identifier  that  may
+       not  be  visible  in  the current context.  The syntax is:
+       [[thread  id]@][[source  file]@][[function]@][[line   num-
+       ber]@]identifier or [[thread id]@][[source file]@][[header
+       file]@]identifier or [[thread id]@]frame number@identifier
+       or   [[thread  id]@]object  name@[[source  file]@][[header
+       file]@]identifier
+
+                                                               10
+
+debug(1)                                                 debug(1)
+
+       The qualified name is evaluated left to right, and may  be
+       disambiguated  by  supplying  @'s as needed.  frame number
+       and function must refer to functions  that  are  currently
+       active.   thread  id  may  refer  to  a  thread or single-
+       threaded process.  object name refers to any object  (exe-
+       cutable  file  or  shared  library) making up the process.
+       header file may be used  to  find  a  static  function  or
+       object defined in a header file.  If header file is speci-
+       fied without specifying source file and the debugger  can-
+       not  find  the header within the current file, it will ask
+       if the search should continue through all the  compilation
+       units  making  up  the program.  The search will stop when
+       the first instance of header file is found.
+
+       Expressions beginning with a dash (-) or containing  char-
+       acter  sequences  with  special  meanings to debug must be
+       enclosed in parentheses, square brackets or curly  braces.
+       The  special character sequences are: >, >>, |, ||, &&, #,
+       `,', ;, newline.
+
+   SSuuppppoorrtt ffoorr tthhee CC llaanngguuaaggee
+       When %db_lang is set to C, debug  supports  evaluation  of
+       all legal ANSI C expressions, except those involving macro
+       expansion.
+
+       debug evaluates  C  expressions  using  ANSI  C  semantics
+       rather than the pre-ANSI C (or transition mode) semantics.
+       The main effect is on type promotions involving unsigned
+       types, where ANSI C semantics are value preserving  rather
+       than  unsigned  preserving.   The  debugger's behavior may
+       differ from the behavior of programs compiled with cc  -Xt
+       (for transition mode).
+
+   SSuuppppoorrtt ffoorr tthhee CC++++ llaanngguuaaggee
+       When %db_lang is set to C++, the debugger accepts a subset
+       of C++ expressions, including:  all  expressions  accepted
+       when  %db_lang  is C, calls to member functions, including
+       virtual member functions,  static  member  functions,  and
+       conversion   functions,  calls  to  overloaded  functions,
+       expressions  referencing  members  of  anonymous   unions,
+       expressions  using  type  names  as  typedefs, expressions
+       using  overloaded  operator  functions,  and   expressions
+       accessing  class  members  with an implied "this" pointer,
+       when the process is stopped in a class member function.
+
+       debug accepts and prints names as they appear in  the  C++
+       source, not as they appear in the object file.
+
+       The print and set commands have a verbose option (-v) that
+       prints the function prototype for any functions the debug-
+       ger  calls  in  evaluating the expression.  This is useful
+       for understanding what's happening  in  expressions  using
+       overloaded functions or operators.  The -v option to print
+       will also display compiler-generated structure  and  class
+
+                                                               11
+
+debug(1)                                                 debug(1)
+
+       members, such as pointers to virtual function tables.
+
+       If  given  a  pointer  to a base class object with virtual
+       functions, and if debug can determine that the type of the
+       object  pointed to is a class derived from the base class,
+       the whatis command will display both the  base  class  and
+       the  derived  class.   The print command will also display
+       the object in terms of the derived type.
+
+       When printing the contents of a structure  or  class,  the
+       print  command will display static class members, with the
+       notation that they are static.  Note that symbols -v  does
+       not display static members.
+
+       Breakpoints  (stop  events)  may  be  set on: class member
+       functions, including constructors, destructors,  and  con-
+       version functions, template functions, overloaded operator
+       functions, and overloaded functions, using the full proto-
+       type,  or  overloaded  functions,  without  the  prototype
+       information.  In that case, debug will display a  list  of
+       the  functions, and ask the user to pick one or all of the
+       choices.
+
+       A stop event may also be created on a specific object  and
+       member   function  combination,  using  the  syntax:  stop
+       pointer->function stop object.function
+
+       debug will stop the process or thread  upon  entering  the
+       function  only  if the ``this'' pointer matches the speci-
+       fied object.  If the function is a virtual function, debug
+       will  set  the  breakpoint  on  the appropriate overriding
+       function.
+
+       Events may also be created to take action when  an  excep-
+       tion  of  a  specific  type is thrown or caught.  While an
+       exception is in effect, the debugger  variable  %eh_object
+       represents  the  thrown object.  The print and whatis com-
+       mands may be used to examine the value  and  type  of  the
+       thrown object.  If an exception is thrown while an expres-
+       sion is being  evaluated,  the  debugger  will  abort  the
+       expression  evaluation.   Any  side effects of the expres-
+       sion, such as objects created on the stack, will  be  left
+       in  an indeterminate state.  Note that %eh.object will not
+       be available in a multi-threaded core image or in a multi-
+       threaded live process that was grabbed rather than created
+       by debug.
+
+   DDeeffiinniittiioonnss
+       The syntax and semantics for each  command  are  described
+       below.   The  following terms are used in the synopses and
+       descriptions: A constant, user-defined variable,  built-in
+       variable or register name that evaluates to an address (an
+       integer or pointer value).  A list of  commands,  enclosed
+       in  braces, separated by newlines or semicolons.  A system
+
+                                                               12
+
+debug(1)                                                 debug(1)
+
+       call name or number.  Case is not significant.   A  simple
+       command  or a block.  A shell-style command line (possibly
+       including shell scripts, environment variables, pipes, and
+       I/O  redirection)  which will be interpreted by the shell,
+       but the resulting processes  will  be  controlled  by  the
+       debugger.   The  relative  or  complete pathname of a file
+       which was created by the kernel upon abnormal  termination
+       of  some  process.   An  unsigned decimal integer.  Any of
+       onstop,  stop,  signal  or  syscall.   A  small   integer,
+       assigned  by  the debugger when any event is created, that
+       identifies the resulting set of actions.  An expression in
+       the  current language.  See above.  The name of a function
+       in the current process.  A designation of an address in  a
+       subject  process.  It includes shared object or executable
+       names, line numbers, program symbols, processor registers,
+       and  limited  expressions involving these components.  The
+       syntax  is:  [thread  id@][object@]address[+-constant]   #
+       includes    debugger    and    user    variables   [thread
+       id@][object@][source file@][header  file@]func_name[+-con-
+       stant]    [thread    id@][object@][source    file@][header
+       file@]line_number The relative or complete pathname of  an
+       executable  object file (an ``a.out'') in COFF or ELF for-
+       mat.  Simple regular expressions used to restrict  a  list
+       of  names.   syntax is used.  A system process identifier.
+       See
+
+       A simple internationalized regular  expression  using  the
+       syntax accepted by A signal name or number.  A signal name
+       may be specified with or without the SIG prefix, and  case
+       is  not  significant.   An  expression denoting conditions
+       under which specified processes should  be  stopped.   See
+       stop.   Denotes  optional repetition of the preceding ele-
+       ment.  Denotes that either xxx or yyy, but not  both,  may
+       appear.
+
+   CCoommmmaannddss
+       This  command  passes  the  entire  command line, less the
+       exclamation mark, to the shell ($SHELL, if  set,  or  else
+       /usr/bin/sh)  for  execution.   Note  that any redirection
+       will be interpreted by the shell, not the debugger.
+
+       If the shell escape operator is given twice, with no argu-
+       ments,  that  is,  !!,  debug  re-executes  the last shell
+       escape specified.  The alias command, with  no  arguments,
+       lists  the  current aliases and their definitions.  If the
+       -r option is present, it removes the alias with the  given
+       name  from  the  list of aliases.  If no -r option is pre-
+       sent, but a name is given, the alias command displays  the
+       definition,  if  any,  for the alias with the given name .
+       If any characters, other than spaces, tabs,  or  comments,
+       follow  the  name  argument, the command establishes a new
+       alias for the name , consisting of all the  characters  up
+       to, but not including, the comment or newline.
+
+                                                               13
+
+debug(1)                                                 debug(1)
+
+       Alias  definitions may contain the special identifiers $1,
+       $2, . . .  Each such special identifier  $n  in  an  alias
+       definition  is  replaced  by  the nth argument in an alias
+       invocation, where the arguments are numbered beginning  at
+       1.   Each  argument  must be preceded by whitespace and is
+       terminated by whitespace, a newline, the comment character
+       (#)  or the beginning of a block ({).  The special identi-
+       fiers $1, $2, . . . will not be replaced within  a  quoted
+       string.
+
+       If an alias definition contains the special identifier $#,
+       it will be replaced during invocation of  the  alias  with
+       the  number  of arguments actually used during the current
+       alias invocation.  If an  alias  definition  contains  the
+       special  identifier $*, it will be replaced during invoca-
+       tion of the alias with a list of all arguments passed dur-
+       ing  the current alias invocation, each separated from the
+       next by a single space.
+
+       Aliases may be defined in terms of other aliases, but  not
+       recursively.   At  least 20 levels of nested alias defini-
+       tions are supported.
+
+       If the name given is the same  as  any  existing  built-in
+       command, a warning will be generated.  Aliases take prece-
+       dence over built-in commands.  break causes  the  debugger
+       to  exit  from  the  innermost  enclosing  while loop (see
+       while).  cancel takes a list of signals, that  are  speci-
+       fied as in the kill command.  If debug has intercepted any
+       of the listed signals for any of the specified objects, it
+       will  ensure  that  those objects do not see the specified
+       signals when they continue execution.  If no  signals  are
+       specified, debug cancels all pending signals for the spec-
+       ified objects.  The cd command changes the debugger's cur-
+       rent  working  directory  to  pathname.  If no pathname is
+       given, cd uses the directory specified by the  environment
+       variable HOME.  The change command allows the user to mod-
+       ify  various  attributes  associated  with  a   previously
+       assigned  event.   event_num must come before the optional
+       stop expression, signal, system call or exception specifi-
+       cations  and  must  be the number of an event that is cur-
+       rently defined (although it may be disabled).
+
+       The list of threads and processes to which  the  event  is
+       applied may be changed with the -p option.
+
+       The  -q  option specifies that debug will not announce the
+       occurrence of the event.   -v  specifies  that  the  event
+       occurrence will be announced.
+
+       The  -e and -x options work as in the syscall command, and
+       specify whether the system call will be trapped on  entry,
+       exit or both entry and exit.
+
+                                                               14
+
+debug(1)                                                 debug(1)
+
+       The -c option specifies the number of times the event must
+       occur before it triggers.  The -c option is valid only for
+       stop and syscall events.
+
+       Alternate  expressions,  signals,  system calls, exception
+       type and/or an alternate command block, may be  specified.
+       For  exception events, whether the event occurs on throws,
+       catches or both may be specified.
+
+       The resulting event will have the  same  event  number  as
+       event_num  .   Note that the change command does not allow
+       the type of event: onstop, stop, signal syscall or  excep-
+       tion,  to  be changed.  Further note that the command list
+       must be in the form of a block (that  is,  with  enclosing
+       braces)  to  distinguish it from a stop expression, system
+       call, signal name or exception type.  The continue command
+       causes  the debugger to begin execution of the next itera-
+       tion of the innermost enclosing while loop.  The  debugger
+       continues by re-evaluating the expr part of the while com-
+       mand (see while).  cmd_line consists of one or  more  exe-
+       cutable  files,  in  any of the object file formats under-
+       stood by the debugger,  and  their  associated  arguments.
+       The  individual  commands  can  be  linked  by shell-style
+       pipes, and the input and output of  the  cmd_line  can  be
+       redirected.   Shell  meta-characters  need  not be quoted.
+       The length of cmd_line is limited only by  the  length  of
+       the argument list accepted by exec (ARG_MAX).
+
+       debug  creates  a  new controlled process for each command
+       specified in cmd_line , taking care of any necessary redi-
+       rections of input and output.  The processes are set up to
+       stop at  the  location  specified  by  start_loc.   If  no
+       start_loc  is  supplied, the processes are set up to start
+       at the symbol main, if it exists, otherwise at the  start-
+       ing  address  specified  by  the  object file.  debug then
+       exec's each command, passing each the specified arguments.
+
+       If  no  cmd_line is specified to create, debug re-executes
+       the last create command issued, (first  killing  all  pro-
+       cesses  created as a result of the last create command, if
+       they still exist) in effect, re-running the  last  process
+       (or processes) created with the same set of arguments.
+
+       If  the -r option is specified, debug redirects the I/O of
+       the resulting subjects to a pseudo-terminal, as  described
+       above.   If  the  -d  option  is  given  no redirection is
+       attempted.  If neither -r nor -d is specified, the default
+       is  determined  by  the  value  of  the  debugger variable
+       %redir.
+
+       debug resets its notion of  the  current  program  to  the
+       first  executable specified on the cmd_line .  The current
+       process is reset to the process generated from  that  exe-
+       cutable.  The current thread is set to the first thread in
+
+                                                               15
+
+debug(1)                                                 debug(1)
+
+       that process, if the program uses the threads  interfaces.
+
+       The  -f option may be used to specify whether the debugger
+       should take control of child processes, and overrides  the
+       default behavior of the debugger.  The arguments to the -f
+       option have the same meanings as do the legal  values  for
+       the %follow built-in variable (see
+
+       debug  associates  the  name of each object (program name)
+       with all processes derived from the current invocation  of
+       that  object.   This  name may be used in any command that
+       accepts a process list.  If the command name  matches  the
+       name  of  an already existing debugger-controlled program,
+       debug creates a new name for  the  program.   The  default
+       program  name  may  be  reset with the rename command (see
+       below).  delete can be invoked in one of two ways.  In the
+       first,  the  user  specifies a list of previously assigned
+       event identifiers.  debug deletes any  associated  events,
+       removing the planted breakpoint or canceling the signal or
+       system call trigger.
+
+       In the second form, all debugger events  for  the  current
+       thread  or  process  (or  all  events  associated with the
+       optional proc_list ) are  deleted.   If  an  event_command
+       (exception,  onstop,  stop,  signal  or syscall) is given,
+       only events of the type specified are  deleted.   The  dis
+       command with no arguments displays the result of disassem-
+       bling %num_lines instructions.  %num_lines starts  out  at
+       10  and  may  be  reset by the user.  If an instr_count is
+       given, dis displays instr_count instructions, instead.
+
+       If a location is given, dis begins disassembling  at  that
+       address.   If no location has been specified, and the con-
+       text for the specified process or thread has  not  changed
+       since  the  last dis invocation on that object, dis begins
+       with the address following the last instruction  displayed
+       for  that  object.  Otherwise, dis begins its display with
+       the current location, as specified by the  debugger  vari-
+       able  %loc,  which  is  reset whenever the context for the
+       specified process or thread changes.
+
+       If an end_location is given, disassembly ends at the given
+       location  in  each specified process.  If -c and end_loca-
+       tion are both supplied, then the closest value to location
+       has  precedence.  end_location is ignored if it is a value
+       before location.
+
+       If more than one thread or process  is  specified  by  the
+       proc_list  argument,  the disassembly request is performed
+       for each thread or process in turn.
+
+       The output of dis normally contains only the  disassembled
+       machine instructions.  (This is also the behavior asserted
+
+                                                               16
+
+debug(1)                                                 debug(1)
+
+       by the -n option).  If the -s  option  is  specified,  the
+       debugger will also attempt to display the source line cor-
+       responding to the disassembled instructions.   The  source
+       line will be displayed only if there is debugging informa-
+       tion for the range of addresses being disassembled and  if
+       the  debugger  can find the corresponding source file.  If
+       neither the -n nor the -s options are specified, the  out-
+       put  mode  is governed by the value of the %dis_mode vari-
+       able.
+
+       disable can be invoked in one of two ways.  In the  first,
+       the  user  specifies  a  list of previously assigned event
+       identifiers.  The debugger marks any associated events  as
+       inactive, but does not delete them.  The event identifiers
+       are still valid, but the actions specified by  the  events
+       are not performed.
+
+       In  the  second  form, all debugger events for the current
+       thread or process  (or  all  events  associated  with  the
+       optional  proc_list) are disabled.  If an event_command is
+       given, only events of the  type  specified  are  disabled.
+       dump  displays  the  contents of memory for each specified
+       thread or process.  It evaluates the expression  and  uses
+       the result as an address.  Any valid expression that eval-
+       uates to an address in the process may be  entered.   dump
+       displays byte_count bytes, 16 bytes per line, in hexadeci-
+       mal and ASCII, starting at the address it has  calculated.
+       If no byte_count is given, dump displays %num_bytes bytes.
+       %num_bytes starts out at 256 and may be changed.
+
+       dump normally tries to organize its output into words,  of
+       a  size appropriate for the target architecture.  For lit-
+       tle-endian architectures, this means that the  hexadecimal
+       values for each byte will appear in a different order than
+       the values actually appear in memory.  The  -b  option  to
+       dump suppresses this word organization.  When -b is speci-
+       fied, dump will output each byte individually,  as  it  is
+       laid  out  in memory.  enable can be invoked in one of two
+       ways.  In the first, the user specifies a list  of  previ-
+       ously  assigned event identifiers.  For each, if the asso-
+       ciated event is currently disabled, the  debugger  reacti-
+       vates it.
+
+       In  the  second form, all disabled debugger events for the
+       current thread or process (or all events  associated  with
+       the optional proc_list ) are enabled.  If an event_command
+       is given, only events of the type specified  are  enabled.
+       The events command without any arguments prints the entire
+       list of user-specified events  for  the  current  program.
+       For each event, the event identifier and status (active or
+       disabled), event type, list of associated threads and pro-
+       cesses,  the  event trigger (stop expression, system call,
+       signal, or exception type) and the beginning of the  asso-
+       ciated command list is printed.
+
+                                                               17
+
+debug(1)                                                 debug(1)
+
+       If  a proc_list is specified, those events associated with
+       the list of threads or processes are printed.  If  a  list
+       of  event  numbers is given, a more detailed record of the
+       specified events is printed, including  the  full  set  of
+       associated  commands.   The  exception  command  specifies
+       actions to take when an exception is thrown or  caught  in
+       one  of  the  debugger's subject processes or threads.  By
+       default, when an exception is thrown or caught, the debug-
+       ger  announces  its  occurrence  and  stops the process or
+       thread.  The exception command  allows  you  to  tell  the
+       debugger not to stop for exception events.  It also allows
+       you to specify a set of commands that  will  get  executed
+       when a given exception is thrown or caught.
+
+       The  exception  command has two forms.  When the -d option
+       is given, the command sets up the default exception  event
+       behavior for the entire debugger.  Each process created or
+       grabbed by the debugger inherits  this  default  exception
+       event  behavior.  When the debugger starts up, the default
+       action for all exceptions is  set  so  that  the  debugger
+       stops   on   each  throw-point  or  exception  handler  as
+       described above.  The -i option with either throw or catch
+       (or  both)  specifies  that  the debugger will ignore (not
+       stop for  or  announce)  exceptions  that  are  thrown  or
+       caught,  respectively.   Issuing the command again without
+       the -i option re-establishes the default action.  If  nei-
+       ther  throw  nor catch is given, exception -d displays the
+       current default behavior.
+
+       Without the -d option, the exception  command  applies  to
+       the  current  program,  or to the list of threads and pro-
+       cesses given by the proc_list.  Using  exception  in  this
+       way  allows you to change the exception action for a given
+       process without changing the default actions inherited  by
+       other processes.
+
+       Note  that exception -d does not affect the default excep-
+       tion event behavior  of  any  process  already  under  the
+       debugger's control.
+
+       The  exception  command  without the -d option may also be
+       used to specify debugger behavior when an exception  of  a
+       particular  type  is  thrown  or caught.  This form of the
+       exception command establishes an event that may be deleted
+       or  enabled,  as  can  stop,  onstop,  syscall, and signal
+       events.  The event action overrides the  default  behavior
+       and  stops  the process or thread.  Multiple events may be
+       assigned for the same type.  Deleting  all  events  for  a
+       given  exception  type re-establishes the default debugger
+       action for that exception type.
+
+       The actions for an event  will  apply  to  any  thrown  or
+       caught  assignment-compatible  object, as specified by the
+       C++ language definition.  This  includes  derived  classes
+
+                                                               18
+
+debug(1)                                                 debug(1)
+
+       and  const-or-volatile  qualified objects.  The type given
+       may be any valid C++ type,  or  an  ellipsis  (...)  which
+       matches any type.
+
+       The  -q option specifies that the exception event will not
+       be announced.
+
+       With no arguments, the exception command lists the  excep-
+       tion  event  actions  for  the  list of processes given by
+       proc_list, or for the current program.  The export command
+       makes  a  user-defined variable and its value available in
+       the debugger's environment.  The  variable  is  thereafter
+       passed to all processes created by debug.  If the value of
+       $username is changed using the set command, after  it  has
+       been  exported,  it must be explicitly re-exported for the
+       new value to be visible in the environment.  $username  is
+       exported without the leading $ sign.
+       In  the first form, a range of commands from first to last
+       is selected from the last HISTSIZE  commands  (environment
+       variable,  default  128) that were entered.  The arguments
+       first and last may be specified as numbers or as  strings.
+       A  string is used to locate the most recent command start-
+       ing with the given string.  A negative number is  used  as
+       an offset to the current command number.  If the -l option
+       is given, the commands  are  listed  on  standard  output.
+       Otherwise, the editor program ename is invoked on a tempo-
+       rary file containing the commands.  If ename is  not  sup-
+       plied,  the  value  of  the  environment  variable  FCEDIT
+       (default /usr/bin/ed) is used as the editor.  When editing
+       is completed, the edited commands are executed.
+
+       If  first  is  not  specified, the default is the previous
+       command for editing and the previous 16 commands for list-
+       ing.   The  -r  option reverses the order of the commands;
+       the -n option suppresses command numbers when listing.
+
+       In the second form, the command is re-executed  after  the
+       substitution old=new is performed.  If command is not sup-
+       plied, the default is the previous command.  The grab com-
+       mand  can  take  one of two forms.  In the first, the user
+       specifies one or more existing processes by giving a  list
+       of  live_objects  (either  pathnames, entries in the /proc
+       directory,  or  process  ids).   In  either  case,   debug
+       attempts  to  control  the  specified objects as live pro-
+       cesses  and,  if  successful,  suspends  their  execution.
+       debug resets its notion of the current program to the exe-
+       cutable  from  which  the  first  process  specified   was
+       derived.   The  current process is reset to the first pro-
+       cess specified.  The current thread is set to an arbitrary
+       thread  within the current process, if it uses the threads
+       interfaces.
+
+       debug, by default, loads symbolic information for the pro-
+       cess  from  the  object  file  from  which the process was
+
+                                                               19
+
+debug(1)                                                 debug(1)
+
+       created.  The -l option specifies an alternate object_file
+       from  which  to load symbolic information.  If -l is used,
+       only one live_object may be  specified.   This  option  is
+       useful  when debugging long running applications that have
+       no symbol information.
+
+       The -f option may be used to specify whether the  debugger
+       should  take control of child processes, and overrides the
+       default behavior of the debugger.  The arguments to the -f
+       option  have  the same meanings as do the legal values for
+       the %follow built-in variable (see
+
+       In the second form of grab, the  user  specifies  an  exe-
+       cutable  program  in one of the object file formats under-
+       stood by the debugger.  debug interprets the core_file  as
+       a  kernel-created  record of the process state at the time
+       of  the  death  of  the  process   associated   with   the
+       object_file  and lets the user examine the contents of the
+       process stack, registers and data segments.
+
+       debug associates the name of each  object  with  all  pro-
+       cesses derived from the current invocation of that object.
+       This name may be used in any command that accepts  a  pro-
+       cess  list.   If  the  command name matches the name of an
+       already existing debugger-controlled program,  debug  cre-
+       ates a new name for the program.  The default program name
+       may be reset using the rename command (see below).   debug
+       instructs  the specified threads or processes to stop exe-
+       cution and waits for them to stop.  The help command, with
+       no arguments, lists all of the available commands and help
+       topics.  If a command name is given, it gives  a  detailed
+       syntax  and  usage  message for that command.  If a ``help
+       topic'' name is given, it lists the help available on that
+       topic.   Each  debugger  command  has a help message which
+       describes its syntax, options, and usage, and gives  exam-
+       ples of its use.  In addition, there are help topics which
+       are not also command names, to explain the syntax for pro-
+       cess  lists,  expressions,  command output redirection and
+       ``locations,'' and to list  the  available  languages  for
+       expression   evaluation.   identify  provides  information
+       about a particular location of memory.  expression may  be
+       an  address,  expression,  symbol or any value that can be
+       interpreted as a memory  location.  The  information  dis-
+       played  may  contain  the  memory size (if allocated), its
+       location in a function, its name, its location in the pro-
+       cess  map  and  frame position in the stack if applicable.
+       When used in conjunction with  MALLOC_CHECKS,  (see  addi-
+       tional  memory  debugging  information  becomes available.
+       This is the traditional conditional branch statement, sim-
+       ilar  to  that present in C, with the exception that semi-
+       colons are not necessary, except to separate multiple com-
+       mands on a single line.
+
+                                                               20
+
+debug(1)                                                 debug(1)
+
+       expr  can  be any valid expression in the current language
+       (see
+
+       The expression  is  evaluated,  and  if  it  evaluates  to
+       ``true'' in the semantics of the current language, the cmd
+       associated with the if clause is executed.  Otherwise,  if
+       there  is  an  else  clause, the cmd associated with it is
+       executed.
+
+       The if construct is more likely to  be  used  in  commands
+       associated  with  events,  or in scripts, than to be typed
+       interactively as a top-level command.  The  input  command
+       is used to send user input to a process whose I/O has been
+       redirected by the debugger to a pseudo-terminal (see
+
+       The first argument may be either the name of a single pro-
+       gram  or  process (as specified in a process list), or the
+       name of a pseudo-terminal, as used by debug to label  pro-
+       cess output.  If a proc_name is specified, debug finds the
+       pseudo-terminal (if any) associated with that program.  If
+       neither  a  program  nor  a  pseudo-terminal is specified,
+       debug attempts to find a pseudo-terminal  associated  with
+       the current program.
+
+       debug  sends the input string to the specified pseudo-ter-
+       minal, after appending a new-line.  If the  -n  option  is
+       given, no new-line is appended.
+
+       It  is  an error if the specified proc_name has no associ-
+       ated  pseudo-terminal.   location  may  be  any   debugger
+       expression that resolves to an address in one of the spec-
+       ified threads or processes.  For each  thread  or  process
+       specified,  if  the given object is currently stopped, and
+       if the specified location is valid for that process, debug
+       adjusts  the program counter for that object to that loca-
+       tion.  Subsequent run or step  commands  for  that  object
+       continue  execution  from  the specified location .  debug
+       does not attempt to adjust the thread or process stack  if
+       the  specified  location is in a different function.  kill
+       sends a single signal to the current thread or process  or
+       to   the  list  of  threads  and  processes  specified  by
+       proc_list.  Unlike most other debugger commands, if a pro-
+       cess  identifier  is given in the proc_list, the signal is
+       sent to the process as a whole, rather than to each thread
+       in the process.
+
+       If no signal is specified, the default is SIGKILL.  signal
+       may be  either  a  valid  signal  number  (as  defined  in
+       <sys/signal.h>)  or a symbolic name, formed from the mani-
+       fest constant name listed in <sys/signal.h>, with or with-
+       out  the  SIG  prefix.  Case is ignored.  The list command
+       displays source lines for the specified  threads  or  pro-
+       cesses.  The default is the current thread or process.
+
+                                                               21
+
+debug(1)                                                 debug(1)
+
+       If  no  count argument is given, the list command displays
+       %num_lines source lines.  %num_lines starts out at 10  and
+       may  be reset by the user.  If a count is given, list dis-
+       plays count lines, instead.
+
+       The starting place for the listing  may  be  specified  in
+       several  ways.  If a regular expression is given, the cur-
+       rent file is searched for the next occurrence  of  a  line
+       which  matches the given reg_exp , beginning from the line
+       immediately following the current line (preceding, if  the
+       reg_exp  is  surrounded by question marks).  If a match is
+       found, and no count is given, only the line containing the
+       match is listed.  If a count is given, the line containing
+       the match begins the display.  syntax is used for  regular
+       expressions.
+
+       A  function name as an argument causes the list command to
+       begin its display at the first line of the named function.
+       The function may be specified as in the location syntax: a
+       name, the debugger built-in variable %func, or a qualified
+       name ([source file@][header file@]func_name).  A line num-
+       ber may be specified as in the location syntax:  a  single
+       decimal constant, the debugger built-in variables %line or
+       %list_line, or a  qualified  name  ([source  file@][header
+       file@]line).   List may be used to display the source of a
+       header file, but header file must be specified in terms of
+       a  primary source file that includes it.  If only one file
+       name is given, the debugger  looks  first  for  a  primary
+       source  file with that name, then for a header file within
+       the current compilation unit.  If neither is found,  debug
+       will  ask  if  the  search should continue through all the
+       compilation units until it finds one  that  includes  that
+       header file.
+
+       If  no  starting  location  is specified, the list command
+       begins the display with %list_file@%list_line.  %list_file
+       is  set  to the current file (%file) and %list_line is set
+       to the current line (%line) whenever the  current  context
+       changes.   In addition, %list_line is set to the last line
+       displayed each time list is invoked.  Thus, if the current
+       context has not changed and no starting location is speci-
+       fied, list begins with the last line displayed in the pre-
+       vious  list  invocation.  The logoff command stops session
+       logging.  The logon command starts debugger  session  log-
+       ging.   All debugger input and output are sent to filename
+       in addition to being echoed at the terminal.  Output lines
+       are printed as comments.
+
+       If no filename is given, the last filename used in a logon
+       command is assumed, and new debugger commands  and  output
+       are  appended  to that file.  The map command prints out a
+       list of all mapped segments for the  current  process,  or
+       for  each  thread  or process specified in proc_list.  The
+       listing includes the  virtual  address  range  and  access
+
+                                                               22
+
+debug(1)                                                 debug(1)
+
+       permissions  for  all  segments, and the pathname, for all
+       segments associated with the a.out and  associated  shared
+       libraries.
+
+       Note  that since all threads within a process share a com-
+       mon address space, the virtual memory map will be  identi-
+       cal for each thread within a process.  The onstop command,
+       by default, applies to all threads  or  processes  derived
+       from  the  current  program.   The  onstop command with no
+       arguments prints out the list of onstop events with  their
+       associated commands.
+
+       cmd  is  a  debugger command block.  The commands are exe-
+       cuted whenever the specified list of processes  stops  for
+       any  reason.   The  print  command displays the results of
+       evaluating the (comma-separated) list of expressions.  The
+       expressions  are  evaluated  in the context of the current
+       thread or process, unless other threads or  processes  are
+       specified  in  the  proc_list  argument.  If more than one
+       thread or process is specified, the expressions are evalu-
+       ated  and printed in the context of each specified object,
+       with the %proc and %thread debugger variables set  to  the
+       process  and thread identifiers of the object in which the
+       expressions are being  evaluated.   Except  for  exception
+       events,  all  events  which  would  be triggered as a side
+       effect of evaluating an expression (breakpoints in a func-
+       tion, a call to which appears in the expression, for exam-
+       ple) are ignored, as if they had been disabled.
+
+       The -f option allows specification of  a  list  of  format
+       expressions to be used when printing values.  The fmt is a
+       string enclosed in quotation marks ("") and may contain  a
+       subset of the format expressions accepted by printf [see A
+       format   expression   may   have   the   following   form:
+            %[flags][width][.[precision]][conversion] specifier
+
+       The  flags,  width,  precision, and conversion fields have
+       the same meanings as  in  the  printf  routine,  with  the
+       exception  that  positional  parameters  are not accepted.
+       The specifier may  be  one  of  the  following  characters
+       (specifiers  marked with an asterisk (*) may not be avail-
+       able on all systems):
+       floating-point in hexadecimal with exponent (as  power  of
+       two)  unsigned binary integer wide character unsigned char
+       signed   decimal   integer   floating   point   in   style
+       [-]d.ddde+-dd  floating point in style [-] ddd.dddd float-
+       ing point in either of above 2 styles unsigned octal inte-
+       ger  void  *  (generic  data pointer; hexadecimal address)
+       wide character  string  string  unsigned  decimal  integer
+       unsigned  hexadecimal  integer  debugger default style for
+       the expression %
+
+       Any character in the fmt that is  not  part  of  a  format
+       expression  is printed as given.  The default format for a
+
+                                                               23
+
+debug(1)                                                 debug(1)
+
+       particular expression  is  determined  by  the  expression
+       evaluator for the current language.  The expression evalu-
+       ators will attempt to present information formatted  in  a
+       way  that is meaningful for the given language.  For exam-
+       ple, for C, a pointer to a character would be printed as a
+       character  string,  a reference to an array variable would
+       print all  members  of  that  array  and  dereferencing  a
+       pointer  to  a  structure  would print each member of that
+       structure.  Each expr may be any valid expression  in  the
+       current language (see
+
+       Each  expression in the list is converted to its printable
+       representation, a newline is added, and  the  result  dis-
+       played.  This process is repeated for each object named in
+       the proc_list .  If a fmt is given, no terminating newline
+       is  printed  unless  specified in the fmt .  The -v option
+       specifies verbose mode.  The debugger prints the  function
+       prototype  of  any function that was called as a result of
+       evaluating the given expressions.   This  is  particularly
+       useful in evaluating C++ expressions to see how overloaded
+       functions or operators are resolved.  The -v  option  will
+       also  display  compiler-generated structure and class mem-
+       bers, such as pointers to virtual function tables.  The ps
+       command prints the debugger-generated identifiers, kernel-
+       generated identifiers, current  state,  location,  if  the
+       object  is  stopped,  and  object  name for all controlled
+       threads and processes, or for only those objects specified
+       by  the -p option, if present.  The pwd command prints the
+       debugger's current working directory.  The current working
+       directory  may  be changed using the cd command.  The quit
+       command causes the debugger to exit, releasing and running
+       any grabbed processes and killing any processes created by
+       the debugger.
+
+       If a user wishes to leave  a  grabbed  process  suspended,
+       perhaps  to  be  grabbed  at a later time from a different
+       invocation of the debugger,  he  or  she  should  use  the
+       release  command  with the -s option before quitting.  The
+       regs command displays in hexadecimal the contents  of  the
+       processor registers for the current thread or process.  If
+       more than one  thread  or  process  is  specified  by  the
+       proc_list  argument, the register display is performed for
+       each object in turn.  debug  removes  all  planted  break-
+       points   from   all  threads  or  processes  specified  in
+       proc_list and relinquishes control over  them.   Releasing
+       all  threads  within  a  given  process  is  equivalent to
+       releasing the entire process.  If the -s option is  speci-
+       fied,  the processes are released, but halted.  Otherwise,
+       the released objects are allowed  to  continue  execution.
+       The  -s  option  is  ignored  for threads.  If the current
+       thread or process is released, debug chooses a new  object
+       to become current.
+
+                                                               24
+
+debug(1)                                                 debug(1)
+
+       Processes  released  in the halted state may be grabbed by
+       the debugger in a different debug session.
+
+       release can be used on core images as well  as  live  pro-
+       cesses.   The  debugger deletes the core image and associ-
+       ated object file from the list  of  objects  that  can  be
+       examined.   The rename command changes the name by which a
+       related group of processes are  known.   All  threads  and
+       processes  derived  from  a  single invocation of the exe-
+       cutable from which prog_name was derived, can be  referred
+       to  by the new name.  name can be used in any command that
+       accepts a proc_list and will appear in any debugger output
+       that  would have used prog_name.  debug starts the current
+       thread or single-threaded process or each object specified
+       by   proc_list.   Execution  continues  from  the  program
+       address at which it was suspended when  the  given  object
+       last  stopped,  or at the address specified in a preceding
+       jump command.
+
+       The -f and -b options allow the global behavior set by the
+       %wait  debugger  variable  to be overridden.  -f specifies
+       foreground execution for the  threads  or  processes.   -b
+       specifies background execution.
+
+       The  -r  option  causes debug to continue execution of the
+       given object until each returns  from  its  current  stack
+       frame,  that  is,  until the return address of the current
+       function is reached (or until some other event causes exe-
+       cution to halt).
+
+       The  -u option specifies that debug continues execution of
+       the specified objects until the address specified by loca-
+       tion  is  reached (or until some other event causes execu-
+       tion to halt).
+
+       A multiplexed thread that is not currently running  on  an
+       LWP  cannot  be set running.  The script command reads and
+       executes debugger commands from the named file.   Commands
+       are  echoed  before  execution,  unless  the  -q option is
+       given.
+
+       Scripts may nest; the  debugger  implementation  does  not
+       place  a  limit  on the number of nested scripts (although
+       external limits, such as the number  of  open  files  sup-
+       ported  by  stdio,  may  apply).   The set command has two
+       forms.  In the first, expr may be any valid expression  in
+       the current language (see
+
+       While any valid language expression may be given, the typ-
+       ical use of the set  command  is  to  evaluate  assignment
+       expressions.   The  -v option specifies verbose mode.  The
+       debugger prints the function  prototype  of  any  function
+       that  was  called  as  a  result  of  evaluating the given
+       expressions.  This is particularly  useful  in  evaluating
+
+                                                               25
+
+debug(1)                                                 debug(1)
+
+       C++  expressions to see how overloaded functions or opera-
+       tors are resolved.
+
+       In the second form of the command, set is used  to  change
+       the  value  of  a debugger built-in variable name or user-
+       defined variable name.  Debugger  built-in  variables  may
+       have  special  semantics  associated  with  them,  such as
+       %path, which requires a string value having  a  particular
+       structure,  or  %frame,  which  denotes a frame number and
+       must be within the range of currently  active  frame  num-
+       bers.   Setting  a  built-in  variable such as %frame, may
+       cause the values of other built-in variables to change  as
+       well  (for  example,  %line  or  %func).  There is also an
+       implied  string  concatenation  operator.   Any  pair   of
+       string-valued expressions which appear separated by commas
+       will be concatenated into a single  string-valued  expres-
+       sion before the assignment is performed.
+
+       The  debug_or_user_var  and expr are both evaluated in the
+       context of the current thread or single-threaded  process,
+       unless  one  or  more other threads or processes have been
+       specified in the proc_list argument.   If  more  than  one
+       thread  or process is specified, the set command is evalu-
+       ated in the context of each of the specified  objects,  in
+       turn.   When  a  signal is posted to one of its controlled
+       processes, the debugger, by default, intercepts the signal
+       and  announces  its  occurrence.   The  user  then has the
+       chance to cancel the signal before  the  process  receives
+       it.   The  signal  command allows you to tell the debugger
+       not to intercept a given signal or  set  of  signals.   It
+       also allows you to specify a set of commands that will get
+       executed when a given signal is intercepted.
+
+       The signal command has two forms.  When the -d  option  is
+       given, the command sets up the default signal behavior for
+       the entire debugger.  Each process created or  grabbed  by
+       the  debugger inherits this default signal behavior.  When
+       the debugger starts up, the default action for all signals
+       is  set  so  that  the  debugger intercepts each signal as
+       described above.  The -i option with one  or  more  signal
+       names  or  numbers  (see kill) specifies that the debugger
+       will ignore those signals (not intercept them).  A  signal
+       name  may be given with or without the initial SIG prefix.
+       Case is not  significant.   Specifying  the  signal  again
+       without  the  -i  option re-establishes the default action
+       for that signal.  If no signal names are given, signal  -d
+       displays  the  current  default  signal  settings  for the
+       debugger.
+
+       Without the -d option, the signal command applies  to  the
+       current  program,  or to the list of threads and processes
+       given by the proc_list.  Using signal in this  way  allows
+       you  to change the signal action for a given process with-
+       out  changing  the  default  actions  inherited  by  other
+
+                                                               26
+
+debug(1)                                                 debug(1)
+
+       processes.
+
+       Note  that  signal  -d does not affect the signal state of
+       any process already under the debugger's control.
+
+       The signal command without the -d option may also be  used
+       to specify a list of commands to be executed when a signal
+       is posted to a given process.  The signal will  be  inter-
+       cepted,  even if the current setting for that signal is to
+       ignore it.
+
+       If a command is given with a set of signals, the  debugger
+       establishes  an  event  for  that  set.  This event may be
+       deleted, or enabled,  as  can  stop,  onstop,  syscall  or
+       exception events.  Multiple events may be assigned for the
+       same signal.  Deleting all events for a given  signal  re-
+       establishes  the  current debugger action for that signal.
+       That is, if a signal was being ingored for  a  given  pro-
+       cess,  it  will  again be ignored once all events for that
+       signal are deleted.  If a signal was being intercepted, it
+       will  continue  to  be intercepted, even though all events
+       relating to that signal have been deleted.
+
+       The -q option specifies that the signal event will not  be
+       announced.
+
+       With  no  arguments,  the  signal command lists the signal
+       actions for the list of processes given by  proc_list,  or
+       for  the current program.  The stack command with no argu-
+       ments prints the entire call stack for the current  thread
+       or  process.   Displays  begin  with the top of the stack,
+       unless the -f option is given, in which  case  they  begin
+       with  frame.   The count argument restricts the display to
+       at most count frames from each stack.  The  current  stack
+       frame  (%frame)  is  marked with an asterisk (*).  If more
+       than one object is specified by  the  proc_list  argument,
+       the stack request is performed for each object in turn.
+
+       By  default, frames are numbered from 0 for the top of the
+       stack (most recent frame).  Setting the debugger  variable
+       %frame_numbers  to down causes the most recent frame to be
+       the highest numbered, and the remaining frames to be  num-
+       bered   down   to  0,  for  the  initial  frame.   Setting
+       %frame_numbers to up restores the default behavior.
+
+       The address and stack arguments may  be  used  to  specify
+       beginning  values  for  the  program  counter and/or stack
+       pointer, respectively.  This can be useful when attempting
+       to print a stack trace for a process that has jumped to an
+       illegal address or whose stack pointer has been corrupted.
+       Both  the  address and stack arguments must be hexadecimal
+       numbers.  The step command continues execution of the cur-
+       rent  thread  or single-threaded process or of each object
+       specified by proc_list.  The -i option specifies  stepping
+
+                                                               27
+
+debug(1)                                                 debug(1)
+
+       at  the  machine instruction level.  The specified objects
+       are instructed to execute a single machine instruction, or
+       count instructions, if a count is specified.
+
+       The  default  is  stepping  at the source statement level.
+       debug continues execution until  the  object  reaches  the
+       next source statement as defined by the compiler-generated
+       debugging information.   If  a  count  is  specified,  the
+       debugger  repeats  the  step command count times, or until
+       execution is interrupted by some other event.  An explicit
+       count of zero is interpreted to mean ``step forever.''
+
+       The  -o  option  specifies  stepping  over function calls.
+       When the debugger encounters a subroutine call while step-
+       ping  with  the  -o option, it will set a temporary break-
+       point at the return point of the call and  run  at  ``full
+       speed''  until the temporary breakpoint is reached.  Step-
+       ping over  function  calls  is  available  with  both  the
+       instruction and source level stepping.
+
+       The -f and -b options allow the global behavior set by the
+       %wait debugger variable to be  overridden.   -f  specifies
+       foreground  execution  for  the  threads or processes.  -b
+       specifies background execution.
+
+       The -q option specifies quiet stepping: the debugger  does
+       not announce the step action nor the new source line.
+
+       A  multiplexed  thread that is not currently running on an
+       LWP cannot be stepped.  The stop command specifies  condi-
+       tions  in  the  address  space  of  one or more controlled
+       objects that should cause a list of threads  or  processes
+       to  stop.   By  default,  the  stop command applies to all
+       threads or processes derived from the current program.
+
+       A stop_expr consists of one or more stop events  ,  joined
+       by  the  special  debugger conjunction (&&) or disjunction
+       (||) operators.  These operators are left-associative, and
+       debug does not guarantee the order in which their operands
+       are evaluated.  A stop event can take one of three  forms:
+       location * lvalue (expr)
+
+       Each  type  of  stop event has some action that will cause
+       the event to be noticed by the  debugger.   When  such  an
+       action  occurs,  the  entire  stop_expr  is  evaluated for
+       ``truth''.  If true, the event triggers in the normal  way
+       (debug  informs  the  user  of  the event and executes any
+       associated commands).
+
+       A location is an address in the process's text where debug
+       can  set a breakpoint.  When the thread or process reaches
+       the specified location debug notices the event. For  loca-
+       tion stop events that refer to function names, the expres-
+       sion is true as long as  that  function  is  active.   For
+
+                                                               28
+
+debug(1)                                                 debug(1)
+
+       location stop events that apply to a particular address or
+       line number, the expression is true only when  the  thread
+       or process is at that address or line.
+
+       lvalue  may be any expression in the current language that
+       would be valid on the  left-hand  side  of  an  assignment
+       statement  in  that  language.   The debugger notices this
+       event when the  contents  of  the  location  change.   The
+       change itself makes this kind of stop event true.
+
+       expr  can be any valid expression in the current language.
+       The debugger notices the stop event when any of the  iden-
+       tifiers  involved  in  the  expression  changes value. The
+       entire expression is then evaluated in the context of  the
+       current language.
+
+       stop events are evaluated continuously while the thread or
+       process is executing.  The  debugger  is  free  to  choose
+       whatever  means  it  has available to achieve this effect.
+       This may include hardware support or may involve  continu-
+       ous single stepping of the object.
+
+       The  optional  count  specifies  the  number  of times the
+       stop_expr must evaluate to true before the event triggers.
+       After  count  times,  the  event  triggers  each  time the
+       stop_expr evaluates to true.
+
+       The -q option specifies that debug will not  announce  the
+       occurrence of the event.
+
+       The  stop  command  with no stop_expr arguments prints the
+       list of  user-specified  stop  expressions  including  the
+       event  identifier and current status (active or disabled).
+       The symbols command with no arguments  displays  ``local''
+       symbols;  that  is,  names  of variables which are defined
+       within the current function (%frame) and are visible  from
+       the current location.  This is also the behavior of the -l
+       option.
+
+       The -g option displays only the names of global  variables
+       which   are  visible  from  the  current  location.   This
+       includes only those symbols  defined  within  the  current
+       object  (executable  program  or  shared library).  The -o
+       option, in conjunction with  -g,  displays  the  names  of
+       global variables in the named object.
+
+       The  -f  option displays only the names of variables which
+       are local to the current file (  %file)  and  are  visible
+       from  the  current  location  (%loc).  If the -n option is
+       used, the symbols local to filename are displayed instead.
+
+       The  -d  option  displays the debugger built-in variables.
+       The -u  option  displays  the  debugger-maintained,  user-
+       defined variables.
+
+                                                               29
+
+debug(1)                                                 debug(1)
+
+       If  a  pattern is given, the display is further restricted
+       to symbols which match the pattern.  syntax is used.
+
+       If the -v option is specified, the value of each symbol is
+       displayed,  along  with  its name.  The -t option displays
+       the type of the variable.
+
+       If more than one thread or process  is  specified  by  the
+       proc_list  argument,  the  symbols request is performed in
+       the context of each object in turn.  The syscall  command,
+       by  default,  applies  to all threads or processes derived
+       from the current program.  The  syscall  command  with  no
+       call  arguments  prints the current list of user-specified
+       system call actions, including the  event  identifier  and
+       current  status  (active  or disabled), list of associated
+       processes, system call name and the beginning of any asso-
+       ciated command block.
+
+       Each  call may be given as either a system call entry num-
+       ber, or as the name used in the C  language  interface  to
+       the  call.  The -e option specifies system call entry, and
+       is the default.  The -x option specifies system call exit.
+       Both  may  be  given on a single invocation of the syscall
+       command.  For each call listed, the debugger arranges  for
+       the  specified  objects  to  stop on entry to or exit from
+       that call, or on both entry and exit.  The  resulting  set
+       of actions is then assigned a unique event identifier.
+
+       The  optional count specifies the number of times the call
+       must occur before the event triggers.  After count  times,
+       the event triggers each time the call occurs.
+
+       The  -q  option specifies that debug will not announce the
+       occurrence of the system call.  whatis prints the type  of
+       expr as evaluated in the current context.  expr can be any
+       valid expression in the current language.
+
+       If no proc_list is given, the type of expr is evaluated in
+       the  context of the current thread or process.  Otherwise,
+       it  is  evaluated  for  each  object  specified   by   the
+       proc_list, in turn.
+
+       If  a  variable is a structure or class type, whatis vari-
+       able will display the name  of  the  structure  or  class.
+       whatis structure_tag_name or whatis type_name will display
+       all known information about that type, including structure
+       members or enumeration constants.
+
+       If  given  an  unadorned identifier, whatis will print all
+       objects, functions, or types with that name that are visi-
+       ble  from  the current scope, along with information about
+       where they are defined.
+
+       If %db_lang is set to C++ and the expression  given  is  a
+
+                                                               30
+
+debug(1)                                                 debug(1)
+
+       pointer  to a base class object with virtual functions, if
+       the debugger can determine that the  type  of  the  object
+       pointed  to is a class derived from the base class, whatis
+       will print the names of both the base and derived classes.
+       This  is the traditional conditional loop statement, simi-
+       lar to that present in C, with the  exception  that  semi-
+       colons are not necessary, except to separate multiple com-
+       mands on a single line.
+
+       expr can be any valid expression in the  current  language
+       (see
+
+       The  expression  is  evaluated,  and  if  it  evaluates to
+       ``true'' in the semantics of the current language, the cmd
+       is executed.  The expression is then re-evaluated.
+
+       Unlike  if,  the while construct is often useful as a top-
+       level command.
+
+   BBuuiilltt--IInn ccoommmmaanndd aalliiaasseess
+       stop quit help fc -l list step -o step -o step  -io  print
+       quit run fc -e - step step -i signal symbols syscall stack
+
+   SSuummmmaarryy ooff bbuuiilltt--iinn vvaarriiaabblleess
+       The current language as determined from  the  object  file
+       (read-only,  thread  specific).   Control disassembly mode
+       (global).  Valid values are nosource (default, disassembly
+       only  is  displayed)  and source (source is displayed when
+       possible, interspersed with the disassembly).  The  object
+       that  is thrown or caught during exception handling (read-
+       only, thread specific).  Its value may be displayed  using
+       print;  its  type may be displayed using whatis.  The cur-
+       rent file (read-only, thread specific).  Should debug fol-
+       low  child  processes?   Valid values are none, procs, all
+       (global).   The  current  active  stack  frame.    Affects
+       %db_lang,  %func,  %file,  %line,  %list_file, %list_line,
+       %loc (thread specific).  Controls direction  of  numbering
+       for   stack   displays  (global).   Valid  values  are  up
+       (default, stack frames are numbered from 0  for  the  most
+       recent  frame)  and  down  (the  most recent frame has the
+       highest number).  The current  function.   Affects  %frame
+       (thread  specific).   The list of directory pathnames used
+       to search for source files for  all  processes.   Searched
+       after  the program specific list %path (global).  The cur-
+       rent language.  Setting %lang overrides  the  language  as
+       determined from the object file and maintained in %db_lang
+       (global) .  The id of the last event  created  (read-only,
+       global).   The  current line (read-only, thread specific).
+       The name of the file to be displayed by the list  command.
+       Reset  when the current context changes (thread specific).
+       The number of the next source line to be displayed by  the
+       list  command.   Reset  when  the current context changes.
+       Set to the last line displayed by any invocation  of  list
+
+                                                               31
+
+debug(1)                                                 debug(1)
+
+       (thread   specific).   The  current  location  (read-only,
+       thread specific).  Mode for command line editing (global).
+       Valid  values  are  vi  and  emacs.  Setting %mode to NULL
+       turns off command line editing.   The  default  number  of
+       bytes  printed  by the dump command (global).  The default
+       number of lines printed  by  the  dis  and  list  commands
+       (global).   The list of directory pathnames used to search
+       for source files for a given program.  Searched before the
+       global  list %global_path (program specific).  The current
+       process (global).   The  current  program  (global).   The
+       string used by debug to prompt the user for input; default
+       is debug> (global).  Should process I/O be redirected to a
+       pseudo-terminal  for  processes  created  by debug?  Valid
+       values are 0, 1, no, yes
+       (global).  The result status of any debugger  command.   0
+       indicates  success,  non-zero failure (read-only, global).
+       The id of the event whose associated command list is  cur-
+       rently  being  executed  (read-only, global).  The current
+       thread (global).  Control debugger behavior when a  thread
+       changes  state  (global).   Level  of  verbosity for event
+       notification (global).  Valid values  are  quiet,  source,
+       events,  reason, all.  Should threads and processes run in
+       the foreground or background?   Valid  values  are  0,  1,
+       background,  foreground,  no, yes (global).  The processor
+       registers.
+
+DDiiaaggnnoossttiiccss
+       If debug is invoked with invalid arguments,  it  prints  a
+       diagnostic  message and exits with a non-zero exit status.
+       If the command-line processing fails for any other reason,
+       debug  continues  execution,  allowing  the  user to enter
+       requests interactively.  debug prints diagnostics for  any
+       failure in processing user requests.  The result status of
+       each command is recorded in the debugger variable %result.
+       A  value  of  0 indicates successful execution; a non-zero
+       value indicates failure.
+
+       If debug cannot create or execute processes for any of the
+       commands  specified  in cmd_line, it acts as if the entire
+       cmd_line request had failed.  In particular, any processes
+       that had been created as part of the same cmd_line request
+       are killed.
+
+       On the other hand, if debug cannot gain control of one  or
+       more  of  the live_objects specified in the second form of
+       invocation, it continues to attempt to control  the  other
+       objects specified.
+
+       If  debug is invoked with the -i x option and cannot start
+       the X Window based interface, it prints a diagnostic  mes-
+       sage and exits with a non-zero exit status.
+
+NNoottiicceess
+       This  command has been updated to handle Intel Pentium III
+
+                                                               32
+
+debug(1)                                                 debug(1)
+
+       Streaming SIMD instructions;  see for more information.
+
+FFiilleess
+       command history log defaults file built-in  alias  defini-
+       tions  graphical  interface  usually  /usr/ccs/lib default
+       message file language-specific message  file  X  interface
+       default message file X interface language-specific message
+       file help screens default help messages  language-specific
+       help messages
+
+RReeffeerreenncceess
+
+                                                               33
+

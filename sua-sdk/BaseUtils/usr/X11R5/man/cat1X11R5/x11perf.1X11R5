@@ -1,0 +1,759 @@
+x11perf(1X11R5)                                         x11perf(1X11R5)
+
+  xx1111ppeerrff
+
+  NNAAMMEE
+
+    x11perf - X11 server performance test program
+
+  SSYYNNOOPPSSIISS
+
+    x11perf [[-option ... ]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The xx1111ppeerrff(1X11R5) program runs one or more performance tests and reports
+    how quickly an X server can execute the tests.
+
+    Many graphics benchmarks assume that the graphics device is used to
+    display the output of a single fancy graphics application, and that the
+    user actually works on some other device, like a terminal. Such benchmarks
+    usually measure drawing speed for lines, polygons, text, and so on.
+
+    Because workstations are used not as standalone graphics engines, but as
+    super-terminals, xx1111ppeerrff(1X11R5) measures window management performance as
+    well as traditional graphics performance. The xx1111ppeerrff(1X11R5) utility
+    includes benchmarks for the time it takes to create and map windows (as
+    when you start up an application); to map a preexisting set of windows
+    onto the screen (as when you deiconify an application or pop up a menu);
+    and to rearrange windows (as when you slosh windows to and fro trying to
+    find the one you want).
+
+    The xx1111ppeerrff(1X11R5) utility also measures graphics performance for
+    operations not normally used in standalone graphics displays, but are
+    nonetheless used frequently by X applications. Such operations include
+    CopyPlane (used to map bitmaps into pixels), scrolling (used in text
+    windows), and various stipples and tiles (used for computer-aided design
+    (CAD) and color half-toning, respectively).
+
+    The xx1111ppeerrff(1X11R5) utility should be used to analyze particular strengths
+    and weaknesses of servers, and is most useful to a server writer who wants
+    to analyze and improve a server. The xx1111ppeerrff(1X11R5) utility is meant to
+    comprehensively exercise just about every X11 operation you can perform;
+    it does not purport to be a representative sample of the operations that
+    X11 applications actually use. Although it can be used as a benchmark, it
+    was written and is intended as a performance-testing tool.
+
+    As such, xx1111ppeerrff(1X11R5) ddooeess nnoott whittle down measurements to a single
+    "HeXStones" or "MeXops" number. We consider such numbers to be
+    uninformative at best and misleading at worst. Some servers that are very
+    fast for certain applications can be very slow for others. No single
+    number or small set of numbers is sufficient to characterize how an X
+    implementation will perform on all applications. Knowing your favorite
+    application, however, will improve your ability to use the numbers
+    xx1111ppeerrff(1X11R5) reports to predict its performance on a given X
+    implementation.
+
+    That said, you might also want to look at xx1111ppeerrffccoommpp(1X11R6), a program
+    to compare the outputs of different xx1111ppeerrff(1X11R5) runs. You provide a
+    list of files containing results from xx1111ppeerrff(1X11R5) and it presents them
+    out in a useful, tabular format.
+
+    For repeatable results, xx1111ppeerrff(1X11R5) should be run using a local
+    connection on a freshly started server. The default configuration runs
+    each test five times to determine whether each trial takes approximately
+    the same amount of time. Strange glitches should be examined; if they are
+    non-repeatable, you might chalk them up to daemons and network traffic.
+    Each trial is run for five seconds to reduce random time differences. The
+    number of objects processed per second is displayed to three significant
+    digits, but you'll be lucky on most systems if the numbers are actually
+    consistent to two digits. The xx1111ppeerrff(1X11R5) utility moves the cursor out
+    of the test window; be careful not to bump the mouse and move it back into
+    the window. (A prize to people who correctly explain why!!).
+
+    Before running a test, xx1111ppeerrff(1X11R5) determines what the round-trip time
+    to the server is, and factors this out of the final timing reported. It
+    ensures that the server has actually performed the work requested by
+    fetching a pixel back from the test window, which means that servers
+    talking to graphics accelerators cannot claim that they are done, while,
+    in the meantime, the accelerator is painting madly.
+
+    By default, xx1111ppeerrff(1X11R5) automatically calibrates the number of
+    repetitions of each test, so that each should take approximately the same
+    length of time to run across servers of widely differing speeds. Because
+    each test must be run to completion at least once, however, some slow
+    servers might take a very long time, particularly on the window moving and
+    resizing tests, and on the arc drawing tests.
+
+    All timing reports are for the smallest object involved. For example, the
+    line tests use a PolyLine request to paint several lines at once, but
+    report how many lines per second the server can paint, not how many
+    PolyLine requests per second. Text tests paint a line of characters, but
+    report on the number of characters per second. Some window tests map,
+    unmap, or move a single parent window, but report on how many children
+    windows per second the server can map, unmap, or move.
+
+    The current program is mostly the responsibility of Joel McCormack. It is
+    based upon the xx1111ppeerrff developed by Phil Karlton, Susan Angebranndt, and
+    Chris Kent, who wanted to assess performance differences between various
+    servers. Mary Walker, Todd Newman, and several tests were added in order
+    to write and tune the PMAX (DECStation 3100) servers. For a general
+    release to the world, xx1111ppeerrff(1X11R5) was rewritten to ease making
+    comparisons between widely varying computers, to cover most important (and
+    unimportant) X functionality, and to exercise graphics operations in as
+    many different orientations and alignments as possible.
+
+  OOPPTTIIOONNSS
+
+    The xx1111ppeerrff(1X11R5) utility is solely Xlib based, and accepts the
+    following options:
+    --ddiissppllaayy host:dpy
+        Specifies which display to use.
+
+    --ssyynncc
+        Runs the tests in synchronous mode. Normally only useful for debugging
+        xx1111ppeerrff(1X11R5).
+
+    --ppaacckk
+        Runs rectangle tests so that they pack rectangles right next to each
+        other. This makes it easy to debug server code for stipples and tiles;
+        if the pattern looks ugly, you have alignment problems.
+    --rreeppeeaatt <n>
+        Repeats each test n times (by default each test is run five times).
+    --ttiimmee <s>
+        Specifies how long in seconds each test should be run (default five
+        seconds).
+
+    --aallll
+        Runs all tests. This might take a while.
+    --rraannggee <test1>[,<test2>]
+        Runs all the tests starting from the specified name test1 until the
+        name test2, including both the specified tests. The test names should
+        be one of the options starting from -dot. (eg) -range line100 will
+        perform the tests from the 100 pixel line test, and go on till the
+        last test, -range line100,dline10 will do the tests from line100 to
+        dline10.
+
+    --llaabbeellss
+        Generates just the descriptive labels for each test specified. See
+        xx1111ppeerrffccoommpp(1X11R6) for more details.
+    --ffgg color
+        Specifies the foreground color to use.
+    --bbgg color
+        Specifies the background color to use.
+    --rroopp <rop0 rop1 ...>
+        Use specified raster ops (default is GXcopy). This option only affects
+        graphics benchmarks in which the graphics function is actually used.
+    --ppmm <pm0 pm1 ...>
+        Use specified planemasks (default is ~0). This option only affects
+        graphics benchmarks in which the planemask is actually used.
+    --ddeepptthh <depth>
+        Use a visual with <depth> planes per pixel (default is the default
+        visual).
+    --rreeppss <n>
+        Fix the rep count. (default = auto scale).
+    --ssuubbss <s0 s1 ...>
+        A list of the number of sub-windows to use.
+    --vv11..22 <s0 s1 ...>
+        Perform only v1.2 tests using old semantics.
+
+    --ddoott
+        Dot.
+
+    --rreecctt11
+        1x1 solid-filled rectangle.
+
+    --rreecctt1100
+        10x10 solid-filled rectangle.
+
+    --rreecctt110000
+        100x100 solid-filled rectangle.
+
+    --rreecctt550000
+        500x500 solid-filled rectangle.
+
+    --ssrreecctt11
+        1x1 transparent stippled rectangle, 8x8 stipple pattern.
+
+    --ssrreecctt1100
+        10x10 transparent stippled rectangle, 8x8 stipple pattern.
+
+    --ssrreecctt110000
+        100x100 transparent stippled rectangle, 8x8 stipple pattern.
+
+    --ssrreecctt550000
+        500x500 transparent stippled rectangle, 8x8 stipple pattern.
+
+    --oossrreecctt11
+        1x1 opaque stippled rectangle, 8x8 stipple pattern.
+
+    --oossrreecctt1100
+        10x10 opaque stippled rectangle, 8x8 stipple pattern.
+
+    --oossrreecctt110000
+        100x100 opaque stippled rectangle, 8x8 stipple pattern.
+
+    --oossrreecctt550000
+        500x500 opaque stippled rectangle, 8x8 stipple pattern.
+
+    --ttiilleerreecctt11
+        1x1 tiled rectangle, 4x4 tile pattern.
+
+    --ttiilleerreecctt1100
+        10x10 tiled rectangle, 4x4 tile pattern.
+
+    --ttiilleerreecctt110000
+        100x100 tiled rectangle, 4x4 tile pattern.
+
+    --ttiilleerreecctt550000
+        500x500 tiled rectangle, 4x4 tile pattern.
+
+    --bbiiggssrreecctt11
+        1x1 stippled rectangle, 161x145 stipple pattern.
+
+    --bbiiggssrreecctt1100
+        10x10 stippled rectangle, 161x145 stipple pattern.
+
+    --bbiiggssrreecctt110000
+        100x100 stippled rectangle, 161x145 stipple pattern.
+
+    --bbiiggssrreecctt550000
+        500x500 stippled rectangle, 161x145 stipple pattern.
+
+    --bbiiggoossrreecctt11
+        1x1 opaque stippled rectangle, 161x145 stipple pattern.
+
+    --bbiiggoossrreecctt1100
+        10x10 opaque stippled rectangle, 161x145 stipple pattern.
+
+    --bbiiggoossrreecctt110000
+        100x100 opaque stippled rectangle, 161x145 stipple pattern.
+
+    --bbiiggoossrreecctt550000
+        500x500 opaque stippled rectangle, 161x145 stipple pattern.
+
+    --bbiiggttiilleerreecctt11
+        1x1 tiled rectangle, 161x145 tile pattern.
+
+    --bbiiggttiilleerreecctt1100
+        10x10 tiled rectangle, 161x145 tile pattern.
+
+    --bbiiggttiilleerreecctt110000
+        100x100 tiled rectangle, 161x145 tile pattern.
+
+    --bbiiggttiilleerreecctt550000
+        500x500 tiled rectangle, 161x145 tile pattern.
+
+    --eesscchheerrttiilleerreecctt11
+        1x1 tiled rectangle, 215x208 tile pattern.
+
+    --eesscchheerrttiilleerreecctt1100
+        10x10 tiled rectangle, 215x208 tile pattern.
+
+    --eesscchheerrttiilleerreecctt110000
+        100x100 tiled rectangle, 215x208 tile pattern.
+
+    --eesscchheerrttiilleerreecctt550000
+        500x500 tiled rectangle, 215x208 tile pattern.
+
+    --sseegg11
+        1-pixel thin line segment.
+
+    --sseegg1100
+        10-pixel thin line segment.
+
+    --sseegg110000
+        100-pixel thin line segment.
+
+    --sseegg550000
+        500-pixel thin line segment.
+
+    --sseegg110000cc11
+        100-pixel thin line segment (1 obscuring rectangle).
+
+    --sseegg110000cc22
+        100-pixel thin line segment (2 obscuring rectangles).
+
+    --sseegg110000cc33
+        100-pixel thin line segment (3 obscuring rectangles).
+
+    --ddsseegg1100
+        10-pixel thin dashed segment (3 on, 2 off).
+
+    --ddsseegg110000
+        100-pixel thin dashed segment (3 on, 2 off).
+
+    --ddddsseegg110000
+        100-pixel thin double-dashed segment (3 fg, 2 bg).
+
+    --hhsseegg1100
+        10-pixel thin horizontal line segment.
+
+    --hhsseegg110000
+        100-pixel thin horizontal line segment.
+
+    --hhsseegg550000
+        500-pixel thin horizontal line segment.
+
+    --vvsseegg1100
+        10-pixel thin vertical line segment.
+
+    --vvsseegg110000
+        100-pixel thin vertical line segment.
+
+    --vvsseegg550000
+        500-pixel thin vertical line segment.
+
+    --wwhhsseegg1100
+        10-pixel wide horizontal line segment.
+
+    --wwhhsseegg110000
+        100-pixel wide horizontal line segment.
+
+    --wwhhsseegg550000
+        500-pixel wide horizontal line segment.
+
+    --wwvvsseegg1100
+        10-pixel wide vertical line segment.
+
+    --wwvvsseegg110000
+        100-pixel wide vertical line segment.
+
+    --wwvvsseegg550000
+        500-pixel wide vertical line segment.
+
+    --lliinnee11
+        1-pixel thin (width 0) line.
+
+    --lliinnee1100
+        10-pixel thin line.
+
+    --lliinnee110000
+        100-pixel thin line.
+
+    --lliinnee550000
+        500-pixel thin line.
+
+    --ddlliinnee1100
+        10-pixel thin dashed line (3 on, 2 off).
+
+    --ddlliinnee110000
+        100-pixel thin dashed line (3 on, 2 off).
+
+    --ddddlliinnee110000
+        100-pixel thin double-dashed line (3 fg, 2 bg).
+
+    --wwlliinnee1100
+        10-pixel line, line width 1.
+
+    --wwlliinnee110000
+        100-pixel line, line width 10.
+
+    --wwlliinnee550000
+        500-pixel line, line width 50.
+
+    --wwddlliinnee110000
+        100-pixel dashed line, line width 10 (30 on, 20 off).
+
+    --wwddddlliinnee110000
+        100-pixel double-dashed line, line width 10 (30 fg, 20 bg).
+
+    --oorreecctt1100
+        10x10 thin rectangle outline.
+
+    --oorreecctt110000
+        100-pixel thin vertical line segment.
+
+    --oorreecctt550000
+        500-pixel thin vertical line segment.
+
+    --wwoorreecctt1100
+        10x10 wide rectangle outline.
+
+    --wwoorreecctt110000
+        100-pixel wide vertical line segment.
+
+    --wwoorreecctt550000
+        500-pixel wide vertical line segment.
+
+    --cciirrccllee11
+        1-pixel diameter thin (line width 0) circle.
+
+    --cciirrccllee1100
+        10-pixel diameter thin circle.
+
+    --cciirrccllee110000
+        100-pixel diameter thin circle.
+
+    --cciirrccllee550000
+        500-pixel diameter thin circle.
+
+    --ddcciirrccllee110000
+        100-pixel diameter thin dashed circle (3 on, 2 off).
+
+    --ddddcciirrccllee110000
+        100-pixel diameter thin double-dashed circle (3 fg, 2 bg).
+
+    --wwcciirrccllee1100
+        10-pixel diameter circle, line width 1.
+
+    --wwcciirrccllee110000
+        100-pixel diameter circle, line width 10.
+
+    --wwcciirrccllee550000
+        500-pixel diameter circle, line width 50.
+
+    --wwddcciirrccllee110000
+        100-pixel diameter dashed circle, line width 10 (30 on, 20 off).
+
+    --wwddddcciirrccllee110000
+        100-pixel diameter double-dashed circle, line width 10 (30 fg, 20 bg).
+
+    --ppcciirrccllee1100
+        10-pixel diameter thin partial circle, orientation and arc angle
+        evenly distributed.
+
+    --ppcciirrccllee110000
+        100-pixel diameter thin partial circle.
+
+    --wwppcciirrccllee1100
+        10-pixel diameter wide partial circle.
+
+    --wwppcciirrccllee110000
+        100-pixel diameter wide partial circle.
+
+    --ffcciirrccllee11
+        1-pixel diameter filled circle.
+
+    --ffcciirrccllee1100
+        10-pixel diameter filled circle.
+
+    --ffcciirrccllee110000
+        100-pixel diameter filled circle.
+
+    --ffcciirrccllee550000
+        500-pixel diameter filled circle.
+
+    --ffccppcciirrccllee1100
+        10-pixel diameter partial filled circle, chord fill, orientation and
+        arc angle evenly distributed.
+
+    --ffccppcciirrccllee110000
+        100-pixel diameter partial filled circle, chord fill.
+
+    --ffssppcciirrccllee1100
+        10-pixel diameter partial filled circle, pie-slice fill, orientation
+        and arc angle evenly distributed.
+
+    --ffssppcciirrccllee110000
+        100-pixel diameter partial filled circle, pie-slice fill.
+
+    --eelllliippssee1100
+        10-pixel diameter thin (line width 0) ellipse, major and minor axis
+        sizes evenly distributed.
+
+    --eelllliippssee110000
+        100-pixel diameter thin ellipse.
+
+    --eelllliippssee550000
+        500-pixel diameter thin ellipse.
+
+    --ddeelllliippssee110000
+        100-pixel diameter thin dashed ellipse (3 on, 2 off).
+
+    --ddddeelllliippssee110000
+        100-pixel diameter thin double-dashed ellipse (3 fg, 2 bg).
+
+    --wweelllliippssee1100
+        10-pixel diameter ellipse, line width 1.
+
+    --wweelllliippssee110000
+        100-pixel diameter ellipse, line width 10.
+
+    --wweelllliippssee550000
+        500-pixel diameter ellipse, line width 50.
+
+    --wwddeelllliippssee110000
+        100-pixel diameter dashed ellipse, line width 10 (30 on, 20 off).
+
+    --wwddddeelllliippssee110000
+        100-pixel diameter double-dashed ellipse, line width 10 (30 fg, 20
+        bg).
+
+    --ppeelllliippssee1100
+        10-pixel diameter thin partial ellipse.
+
+    --ppeelllliippssee110000
+        100-pixel diameter thin partial ellipse.
+
+    --wwppeelllliippssee1100
+        10-pixel diameter wide partial ellipse.
+
+    --wwppeelllliippssee110000
+        100-pixel diameter wide partial ellipse.
+
+    --ffeelllliippssee1100
+        10-pixel diameter filled ellipse.
+
+    --ffeelllliippssee110000
+        100-pixel diameter filled ellipse.
+
+    --ffeelllliippssee550000
+        500-pixel diameter filled ellipse.
+
+    --ffccppeelllliippssee1100
+        10-pixel diameter partial filled ellipse, chord fill.
+
+    --ffccppeelllliippssee110000
+        100-pixel diameter partial filled ellipse, chord fill.
+
+    --ffssppeelllliippssee1100
+        10-pixel diameter partial filled ellipse, pie-slice fill.
+
+    --ffssppeelllliippssee110000
+        100-pixel diameter partial filled ellipse, pie-slice fill.
+
+    --ttrriiaannggllee11
+        Fill 1-pixel/side triangle.
+
+    --ttrriiaannggllee1100
+        Fill 10-pixel/side triangle.
+
+    --ttrriiaannggllee110000
+        Fill 100-pixel/side triangle.
+
+    --ttrraapp1100
+        Fill 10x10 trapezoid.
+
+    --ttrraapp110000
+        Fill 100x100 trapezoid.
+
+    --ssttrraapp1100
+        Fill 10x10 transparent stippled trapezoid, 8x8 stipple pattern.
+
+    --ssttrraapp110000
+        Fill 100x100 transparent stippled trapezoid, 8x8 stipple pattern.
+
+    --oossttrraapp1100
+        Fill 10x10 opaque stippled trapezoid, 8x8 stipple pattern.
+
+    --oossttrraapp110000
+        Fill 100x100 opaque stippled trapezoid, 8x8 stipple pattern.
+
+    --ttiilleettrraapp1100
+        Fill 10x10 tiled trapezoid, 4x4 tile pattern.
+
+    --ttiilleettrraapp110000
+        Fill 100x100 tiled trapezoid, 4x4 tile pattern.
+
+    --bbiiggssttrraapp1100
+        Fill 10x10 transparent stippled trapezoid, 161x145 stipple pattern.
+
+    --bbiiggssttrraapp110000
+        Fill 100x100 transparent stippled trapezoid, 161x145 stipple pattern.
+
+    --bbiiggoossttrraapp1100
+        Fill 10x10 opaque stippled trapezoid, 161x145 stipple pattern.
+
+    --bbiiggoossttrraapp110000
+        Fill 100x100 opaque stippled trapezoid, 161x145 stipple pattern.
+
+    --bbiiggttiilleettrraapp1100
+        Fill 10x10 tiled trapezoid, 161x145 tile pattern.
+
+    --bbiiggttiilleettrraapp110000
+        Fill 100x100 tiled trapezoid, 161x145 tile pattern.
+
+    --eesscchheerrttiilleettrraapp1100
+        Fill 10x10 tiled trapezoid, 216x208 tile pattern.
+
+    --eesscchheerrttiilleettrraapp110000
+        Fill 100x100 tiled trapezoid, 216x208 tile pattern.
+
+    --ccoommpplleexx1100
+        Fill 10-pixel/side complex polygon.
+
+    --ccoommpplleexx110000
+        Fill 100-pixel/side complex polygon.
+
+    --fftteexxtt
+        Character in 80-char line (6x13).
+
+    --ff88tteexxtt
+        Character in 70-char line (8x13).
+
+    --ff99tteexxtt
+        Character in 60-char line (9x15).
+
+    --ff1144tteexxtt1166
+        2-byte character in 40-char line (k14).
+
+    --ttrr1100tteexxtt
+        Character in 80-char line (Times-Roman 10).
+
+    --ttrr2244tteexxtt
+        Character in 30-char line (Times-Roman 24).
+
+    --ppoollyytteexxtt
+        Character in 20/40/20 line (6x13, Times-Roman 10, 6x13).
+
+    --ffiitteexxtt
+        Character in 80-char image line (6x13).
+
+    --ff88iitteexxtt
+        Character in 70-char image line (8x13).
+
+    --ff99iitteexxtt
+        Character in 60-char image line (9x15).
+
+    --ff1144iitteexxtt1166
+        2-byte character in 40-char image line (k14).
+
+    --ttrr1100iitteexxtt
+        Character in 80-char image line (Times-Roman 10).
+
+    --ttrr2244iitteexxtt
+        Character in 30-char image line (Times-Roman 24).
+
+    --ssccrroollll1100
+        Scroll 10x10 pixels vertically.
+
+    --ssccrroollll110000
+        Scroll 100x100 pixels vertically.
+
+    --ssccrroollll550000
+        Scroll 500x500 pixels vertically.
+
+    --ccooppyywwiinnwwiinn1100
+        Copy 10x10 square from window to window.
+
+    --ccooppyywwiinnwwiinn110000
+        Copy 100x100 square from window to window.
+
+    --ccooppyywwiinnwwiinn550000
+        Copy 500x500 square from window to window.
+
+    --ccooppyyppiixxwwiinn1100
+        Copy 10x10 square from pixmap to window.
+
+    --ccooppyyppiixxwwiinn110000
+        Copy 100x100 square from pixmap to window.
+
+    --ccooppyyppiixxwwiinn550000
+        Copy 500x500 square from pixmap to window.
+
+    --ccooppyywwiinnppiixx1100
+        Copy 10x10 square from window to pixmap.
+
+    --ccooppyywwiinnppiixx110000
+        Copy 100x100 square from window to pixmap.
+
+    --ccooppyywwiinnppiixx550000
+        Copy 500x500 square from window to pixmap.
+
+    --ccooppyyppiixxppiixx1100
+        Copy 10x10 square from pixmap to pixmap.
+
+    --ccooppyyppiixxppiixx110000
+        Copy 100x100 square from pixmap to pixmap.
+
+    --ccooppyyppiixxppiixx550000
+        Copy 500x500 square from pixmap to pixmap.
+
+    --ccooppyyppllaannee1100
+        Copy 10x10 1-bit deep plane.
+
+    --ccooppyyppllaannee110000
+        Copy 100x100 1-bit deep plane.
+
+    --ccooppyyppllaannee550000
+        Copy 500x500 1-bit deep plane.
+
+    --ppuuttiimmaaggee1100
+        PutImage 10x10 square.
+
+    --ppuuttiimmaaggee110000
+        PutImage 100x100 square.
+
+    --ppuuttiimmaaggee550000
+        PutImage 500x500 square.
+
+    --sshhmmppuutt1100
+        PutImage 10x10 square, MIT shared memory extension.
+
+    --sshhmmppuutt110000
+        PutImage 100x100 square, MIT shared memory extension.
+
+    --sshhmmppuutt550000
+        PutImage 500x500 square, MIT shared memory extension.
+
+    --ggeettiimmaaggee1100
+        GetImage 10x10 square.
+
+    --ggeettiimmaaggee110000
+        GetImage 100x100 square.
+
+    --ggeettiimmaaggee550000
+        GetImage 500x500 square.
+
+    --nnoooopp
+        X protocol NoOperation.
+
+    --aattoomm
+        GetAtomName.
+
+    --pprroopp
+        GetProperty.
+
+    --ggcc
+        Change graphics context.
+
+    --ccrreeaattee
+        Create child window and map using MapSubwindows.
+
+    --uuccrreeaattee
+        Create unmapped window.
+
+    --mmaapp
+        Map child window through MapWindow on parent.
+
+    --uunnmmaapp
+        Unmap child window through UnmapWindow on parent.
+
+    --ddeessttrrooyy
+        Destroy child window through DestroyWindow parent.
+
+    --ppooppuupp
+        Hide/expose window through Map/Unmap popup window.
+
+    --mmoovvee
+        Move window.
+
+    --uummoovvee
+        Moved unmapped window.
+
+    --mmoovveettrreeee
+        Move window by using MoveWindow on parent.
+
+    --rreessiizzee
+        Resize window.
+
+    --uurreessiizzee
+        Resize unmapped window.
+
+    --cciirrccuullaattee
+        Circulate lowest window to top.
+
+    --uucciirrccuullaattee
+        Circulate unmapped window to top.
+
+  XX DDEEFFAAUULLTTSS
+
+    There are no X defaults used by this program.
+
+  SSEEEE AALLSSOO
+
+    _X(5X11R5)
+
+    _x_1_1_p_e_r_f_c_o_m_p(1X11R6)
+

@@ -1,0 +1,145 @@
+getopt(3)                                                     getopt(3)
+
+  ggeettoopptt(())
+
+  NNAAMMEE
+
+    getopt() - get option character from command line argument list
+
+  SSYYNNOOPPSSIISS
+
+    #include <unistd.h>
+    extern char *optarg;
+    extern int optind;
+    extern int optopt;
+    extern int opterr;
+    extern int optreset;
+
+    int getopt (int argc, char * const *argv, const char *optstring)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _gg_ee_tt_oo_pp_tt(3) function incrementally parses a command line argument list
+    argv and returns the next known option character. An option character is
+    known if it has been specified in the string of accepted option
+    characters, optstring.
+
+    The option string optstring may contain the following elements: individual
+    characters, and characters followed by a colon to indicate an option
+    argument is to follow. For example, an option string x recognizes an
+    option --x and an option string x: recognizes an option and argument --
+    xx argument. It does not matter to _gg_ee_tt_oo_pp_tt(3) if a following argument has
+    leading white space.
+
+    On return from _gg_ee_tt_oo_pp_tt(3), optarg points to an option argument, if it is
+    anticipated, and the variable optind contains the index to the next argv
+    argument for a subsequent call to _gg_ee_tt_oo_pp_tt(3). The variable optopt saves the
+    last known option character returned by _gg_ee_tt_oo_pp_tt(3).
+
+    The variables opterr and optind are both initialized to 1. The optind
+    variable may be set to another value before a set of calls to _gg_ee_tt_oo_pp_tt(3) in
+    order to skip over more or less argv entries.
+
+    In order to use _gg_ee_tt_oo_pp_tt(3) to evaluate multiple sets of arguments, or to
+    evaluate a single set of arguments multiple times, the variable optreset
+    must be set to 1 before the second and each additional set of calls to
+    _gg_ee_tt_oo_pp_tt(3), and the variable optind must be reinitialized.
+
+    The double dash argument (--) stops option processing and is skipped, so
+    the argument following -- is considered the first positional argument.
+
+    A single dash argument (-) stops option processing but isn't skipped;
+    optind is set so that - is the first positional argument.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The _gg_ee_tt_oo_pp_tt(3) function returns the next option character specified on the
+    command line, and handles the following special cases:
+
+    It returns a colon (:) if there is a missing argument and the first
+    character of optstring was a colon.
+
+    It returns a question mark (?) if it encounters an option character not in
+    the optstring or there is a missing argument and the first character of
+    optstring was not a colon.
+
+    Otherwise, _gg_ee_tt_oo_pp_tt(3) returns -1 when all command line options have been
+    parsed.
+
+    The interpretation of options in the argument list may be cancelled by the
+    option -- (double dash) which causes _gg_ee_tt_oo_pp_tt(3) to signal the end of
+    argument processing and return -1. When all options have been processed
+    (i.e., up to the first non-option argument), _gg_ee_tt_oo_pp_tt(3) returns -1.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    If the _gg_ee_tt_oo_pp_tt(3) function encounters a character not found in the string
+    optarg or detects a missing option argument it writes an error message and
+    returns ? to the stderr. Setting opterr to a zero will disable these error
+    messages. If optstring has a leading : then a missing option argument
+    causes a : to be returned in addition to suppressing any error messages.
+
+    Option arguments are allowed to begin with -; this is reasonable but
+    reduces the amount of error checking possible.
+
+  EEXXAAMMPPLLEE
+
+    extern char *optarg;
+    extern int optind;
+    int bflag, ch, fd;
+    bflag = 0;
+    while ((ch = getopt(argc, argv, "bf:")) != -1)
+         switch(ch) {
+         case 'b':
+              bflag = 1;
+              break;
+         case 'f':
+              if ((fd = open(optarg, O_RDONLY, 0)) < 0) {
+                   (void)fprintf(stderr,
+                       "myname: %s: %s\n", optarg, strerror(errno));
+                   exit(1);
+              }
+              break;
+         case '?':
+         default:
+              usage();
+    }
+    argc -= optind;
+    argv += optind;
+
+  BBUUGGSS
+
+    A single dash - may be specified as an character in optstring, however it
+    should never have an argument associated with it. This allows _gg_ee_tt_oo_pp_tt(3) to
+    be used with programs that expect - as an option flag. This practice is
+    wrong, and should not be used in any current development. It is provided
+    for backward compatibility only. By default, a single dash causes
+    _gg_ee_tt_oo_pp_tt(3) to return -1.
+
+    It is also possible to handle digits as option letters. This allows
+    _gg_ee_tt_oo_pp_tt(3) to be used with programs that expect a number (-3) as an option.
+    This practice is wrong, and should not be used in any current development.
+    It is provided for backward compatibility only The following code fragment
+    works in most cases.
+
+    int length;
+    char *p;
+    while ((c = getopt(argc, argv, "0123456789")) != -1)
+         switch (c) {
+         case '0': case '1': case '2': case '3': case '4':
+         case '5': case '6': case '7': case '8': case '9':
+              p = argv[optind - 1];
+              if (p[0] == '-' && p[1] == ch && !p[2])
+                   length = atoi(++p);
+              else
+                   length = atoi(argv[optind] + 1);
+              break;
+         }
+    }
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The ggeettoopptt function is not thread safe.
+
+    The ggeettoopptt function is not async-signal safe.
+

@@ -1,0 +1,233 @@
+
+
+font(5)                                                   font(5)
+
+SSyynnooppssiiss
+       troff -T ptty . . .
+
+DDeessccrriippttiioonn
+       For  each  typesetter  or  printer  type  supported by and
+       available on this system, there is a directory  containing
+       files describing the device and its fonts.  This directory
+       is named /usr/lib/font/devptty where ptty is the  abbrevi-
+       ated  name  of  the typesetter or printer type.  Currently
+       supported devices are aps for the  Autologic  APS-5,  post
+       for PostScript printers, and i10 for the Imagen Imprint 10
+       laser printer.
+
+       For a particular phototypesetter,  ptty,  the  ASCII  file
+       DESC  in the directory /usr/lib/font/devptty describes its
+       characteristics.  Each line starts with a word identifying
+       the characteristic which is followed by appropriate speci-
+       fiers.  Blank lines and  lines  beginning  with  a  #  are
+       ignored.
+
+       The  legal  lines  for  DESC  are: resolution of device in
+       basic increments per  inch  smallest  unit  of  horizontal
+       motion smallest unit of vertical motion pointsize in which
+       widths are specified  scaling  for  fractional  pointsizes
+       width  of  paper  in  basic  increments length of paper in
+       basic increments maximum size of a font available for  use
+       list  of pointsizes available on typesetter number of ini-
+       tial fonts followed by the names of the fonts.  For  exam-
+       ple:       fonts  4  R I B S this always comes last in the
+       file and is on a line by itself.  Following it is the list
+       of  special  character  names  for this device.  Names are
+       separated by a space or a newline.  The  list  can  be  as
+       long as necessary.  Names not in this list are not allowed
+       in the font description files.
+
+       res is the basic resolution of the  device  in  increments
+       per inch.  hor and vert describe the relationships between
+       motions in the horizontal and vertical directions.  If the
+       device  is capable of moving in single basic increments in
+       both directions, both hor and vert would have values of 1.
+       If  the  vertical  motions only take place in multiples of
+       two basic units while the horizontal motions take place in
+       the  basic  increments,  then  hor  would be 1, while vert
+       would be 2.  The unitwidth is the pointsize in  which  all
+       width  tables  in  the  font  description files are given.
+       troff automatically scales the widths from  the  unitwidth
+       size  to  the  pointsize it is working with.  sizescale is
+       not currently used and is 1.  paperwidth is the  width  of
+       the  paper  in basic increments.  The APS-5 is 6120 incre-
+       ments wide.  paperlength is the length of a sheet of paper
+       in  the basic increments.  biggestfont is the maximum num-
+       ber of characters on a font.
+
+       For each font supported by the phototypesetter,  there  is
+
+                                                                1
+
+font(5)                                                   font(5)
+
+       also  an  ASCII file with the same name as the font (e.g.,
+       R, 4).  The format for a font description file is: name of
+       the  font,  such as R or 4 internal name of font sets flag
+       indicating that the font is special Sets  flag  indicating
+       font  has ligatures.  The list of ligatures follows and is
+       terminated by a zero.  Accepted ligatures are:  ff  fi  fl
+       ffi  ffl.   available  for use width of space if something
+       other than 1/3 of -- is desired as a space.  The character
+       set  must  come  at the end.  Each line following the word
+       charset describes one character in the  font.   Each  line
+       has one of two formats:      name width     kerning   code
+            name "
+
+       where name is either a single ASCII character or a special
+       character  name from the list found in DESC.  The width is
+       in basic increments.  The kerning information is 1 if  the
+       character descends below the line, 2 if it rises above the
+       letter 'a', and 3 if it  both  rises  and  descends.   The
+       kerning information for special characters is not used and
+       so may be 0.  The code is the number sent to the  typeset-
+       ter  to  produce the character.  The second format is used
+       to indicate that the character has  more  than  one  name.
+       The  double  quote  indicates  that this name has the same
+       values as the preceding line.  The kerning and code fields
+       are  not used if the width field is a double quote charac-
+       ter.  The total number of  different  characters  in  this
+       list  should  not be greater than the value of biggestfont
+       in the DESC file (see above).
+
+       troff and its postprocessors like dpost read this informa-
+       tion  from binary files produced from the ASCII files by a
+       program distributed with troff called makedev.  For  those
+       with  a need to know, a description of the format of these
+       files follows.
+
+       The file DESC.out starts with the dev  structure,  defined
+       by dev.h: /*
+        * dev.h: characteristics of a typesetter
+        */
+
+       struct  dev { unsigned short filesize;  /* number of bytes
+       in file, */                   /*  excluding  dev  part  */
+       short     res;        /*  basic resolution in goobies/inch
+       */  short     hor;        /*   goobies   horizontally   */
+       short     vert; short     unitwidth;      /* size at which
+       widths are given*/ short     nfonts;     /*  number  fonts
+       physically  available */ short     nsizes;    /* number of
+       pointsizes */  short     sizescale;       /*  scaling  for
+       fractional  pointsizes */ short     paperwidth;     /* max
+       line length in units */ short     paperlength;     /*  max
+       paper length in units */ short     nchtab;    /* number of
+       funny names in chtab */ short     lchname;   /* length  of
+       chname  table  */  short     biggestfont;     /*  max # of
+       chars in a font */ short     spare2; };
+
+                                                                2
+
+font(5)                                                   font(5)
+
+       filesize is  just  the  size  of  everything  in  DESC.out
+       excluding the dev structure.  nfonts is the number of dif-
+       ferent font positions available.  nsizes is the number  of
+       different pointsizes supported by this typesetter.  nchtab
+       is the number of special character names.  lchname is  the
+       total  number  of  characters,  including nulls, needed to
+       list all the special character names.  At the end  of  the
+       structure are two spares for later expansions.
+
+       Immediately  following  the  dev structure are a number of
+       tables.  First is the sizes table, which contains nsizes +
+       1 shorts (a null at the end), describing the pointsizes of
+       text available on this device.  The second  table  is  the
+       funny_char_index_table.   It  contains  indices  into  the
+       table  which  follows  it,  the  funny_char_strings.   The
+       indices  point  to the beginning of each special character
+       name which is stored in the funny_char_strings table.  The
+       funny_char_strings table is lchname characters long, while
+       the funny_char_index_table is nchtab shorts long.
+
+       Following the dev structure  will  occur  nfonts  font.out
+       files,  which  are  used to initialize the font positions.
+       These font.out files, which also exist as separate  files,
+       begin  with a font structure and then are followed by four
+       character arrays: struct    font {      /* characteristics
+       of  a  font */ char nwfont;     /* number of width entries
+       */ char specfont;   /* 1  ==  special  font  */  char lig-
+       font;      /*  1  ==  ligatures  exist  on  this  font  */
+       char spare1;     /* unused for now  */  char namefont[10];
+       /*  name  of  this  font, e.g., R */ char intname[10];  /*
+       internal name of font, in ASCII */ };
+
+       The font structure tells how many defined characters there
+       are  in  the  font, whether the font is a ``special'' font
+       and if it contains ligatures.  It also has the ASCII  name
+       of  the  font,  which should match the name of the file it
+       appears in, and the internal name of the font on the type-
+       setting  device  (intname).  The internal name is indepen-
+       dent of the font position and name that troff knows about.
+       For example, you might say mount R in position 4, but when
+       asking the typesetter to actually produce a character from
+       the R font, the postprocessor which instructs the typeset-
+       ter would use intname.
+
+       The first three character arrays are specific for the font
+       and  run  in  parallel.  The first array, widths, contains
+       the  width  of  each  character  relative  to   unitwidth.
+       unitwidth  is defined in DESC.  The second array, kerning,
+       contains kerning information.  If a character rises  above
+       the letter 'a', 02 is set.  If it descends below the line,
+       01 is set.  The third array, codes, contains the code that
+       is sent to the typesetter to produce the character.
+
+       The  fourth  array is defined by the device description in
+
+                                                                3
+
+font(5)                                                   font(5)
+
+       DESC.  It is the font_index_table.   This  table  contains
+       indices  into the width, kerning, and code tables for each
+       character.  The order  that  characters  appear  in  these
+       three tables is arbitrary and changes from one font to the
+       next.  In order for troff to be  able  to  translate  from
+       ASCII  and  the special character names to these arbitrary
+       tables, the font_index_table  is  created  with  an  order
+       which  is constant for each device.  The number of entries
+       in this table is 96 plus the number of  special  character
+       names for this device.  The value 96 is 128 - 32, the num-
+       ber of printable characters in  the  ASCII  alphabet.   To
+       determine  whether  a normal ASCII character exists, troff
+       takes the ASCII value of the character, subtracts 32,  and
+       looks in the font_index_table.  If it finds a 0, the char-
+       acter is not defined in this font.  If it  finds  anything
+       else,  that  is  the index into widths, kerning, and codes
+       that describe that character.
+
+       To look up a special character name, for example \(pl, the
+       mathematical  plus  sign, and determine whether it appears
+       in a particular font or not, the  following  procedure  is
+       followed.  A counter is set to 0 and an index to a special
+       character name is picked out of the counter'th position in
+       the  funny_char_index_table.   A string comparison is per-
+       formed             between              funny_char_strings
+       [funny_char_index_table[counter]]  and the special charac-
+       ter name, in our example pl, and if it matches, then troff
+       refers  to  this  character  as  ( 96 + counter).  When it
+       wants to determine whether a specific font  supports  this
+       character,  it  looks in font_index_table[(96 + counter)],
+       (see below), to see whether there  is  a  0,  meaning  the
+       character does not appear in this font, or a number, which
+       is the index into the widths, kerning, and codes tables.
+
+       Notice that since a value of  0  in  the  font_index_table
+       indicates that a character does not exist, the 0th element
+       of the width, kerning, and codes arrays are not used.  For
+       this reason the 0th element of the width array can be used
+       for a special purpose, defining the width of a space for a
+       font.   Normally  a space is defined by troff to be 1/3 of
+       the width of the \(em character, but if the 0th element of
+       the  width  array is non-zero, then that value is used for
+       the width of a space.
+
+RReeffeerreenncceess
+FFiilleess
+       ---------------------------------------------------------------------------
+       /usr/lib/font/devX/DESC.out   description file for phototypesetter X
+       /usr/lib/font/devX/font.out   font description files for phototypesetter X
+
+                                                                4
+

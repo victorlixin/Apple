@@ -1,0 +1,61 @@
+
+
+elf_rawfile(3elf)                               elf_rawfile(3elf)
+
+SSyynnooppssiiss
+       cc [flag . . . ] file . . . -lelf [library] . . .
+
+       #include <libelf.h>
+
+       char *elf_rawfile(Elf *elf, size_t *ptr);
+
+DDeessccrriippttiioonn
+       elf_rawfile  returns  a  pointer  to an uninterpreted byte
+       image of the file.  This function should be used  only  to
+       retrieve  a file being read.  For example, a program might
+       use elf_rawfile to retrieve the bytes for an archive  mem-
+       ber.
+
+       A  program may not close or disable [see the file descrip-
+       tor  associated  with  elf  before  the  initial  call  to
+       elf_rawfile,  because  elf_rawfile  might have to read the
+       data from the file if it does not already have the  origi-
+       nal  bytes  in  memory.   Generally, this function is more
+       efficient for unknown file types than  for  object  files.
+       The  library implicitly translates object files in memory,
+       while it leaves unknown files unmodified.  Thus asking for
+       the  uninterpreted  image  of  an object file may create a
+       duplicate copy in memory.
+
+       elf_rawdata [see is a related function,  providing  access
+       to sections within a file.
+
+       If  ptr  is  non-null,  the library also stores the file's
+       size, in bytes, in the location to which ptr  points.   If
+       no  data  is present, elf is null, or an error occurs, the
+       return value is  a  null  pointer,  with  zero  optionally
+       stored through ptr.
+
+RReeffeerreenncceess
+NNoottiicceess
+       A  program  that uses elf_rawfile and that also interprets
+       the same file as an object file potentially has two copies
+       of  the  bytes  in memory.  If such a program requests the
+       raw image first, before it asks for translated information
+       (through  such  functions as elf_getehdr, elf_getdata, and
+       so on), the library ``freezes'' its original  memory  copy
+       for  the  raw image.  It then uses this frozen copy as the
+       source for creating translated  objects,  without  reading
+       the file again.  Consequently, the application should view
+       the raw file image returned by elf_rawfile as a  read-only
+       buffer, unless it wants to alter its own view of data sub-
+       sequently translated.  In any case,  the  application  may
+       alter  the translated objects without changing bytes visi-
+       ble in the raw image.
+
+       Multiple calls to elf_rawfile with the same ELF descriptor
+       return  the same value; the library does not create dupli-
+       cate copies of the file.
+
+                                                                1
+

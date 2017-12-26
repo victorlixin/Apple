@@ -1,0 +1,150 @@
+
+
+rsh(1tcp)                                               rsh(1tcp)
+
+SSyynnooppssiiss
+       rsh [-n] [-l username] hostname command
+       rsh hostname [-n] [-l username] command
+
+DDeessccrriippttiioonn
+       The  rsh  command  connects  to the specified hostname and
+       executes the specified command.
+
+   OOppttiioonnss
+       rsh takes the  following  options:  Use  username  as  the
+       remote  user name instead of your local user name.  In the
+       absence of this option, the remote user name is  the  same
+       as  your  local  user  name.  Redirect the input of rsh to
+       /dev/null.  You sometimes need this option to avoid unfor-
+       tunate  interactions  between  rsh  and  the  shell  which
+       invokes it.  For example,  if  you  are  running  rsh  and
+       invoke  a  rsh  in  the background without redirecting its
+       input away from the terminal, it will  block  even  if  no
+       reads  are  posted  by  the remote command.  The -n option
+       will prevent this.  The type  of  remote  shell  (sh,  the
+       restricted  shell /usr/lib/rsh, or other) is determined by
+       the user's entry in the file  /etc/passwd  on  the  remote
+       system.
+
+   FFiilleess
+       language-specific message file (See LANG on
+
+UUssaaggee
+       rsh  copies  its standard input to the remote command, the
+       standard output of the remote command to its standard out-
+       put,  and  the standard error of the remote command to its
+       standard error.  Interrupt, quit and terminate signals are
+       propagated  to the remote command; rsh normally terminates
+       when the remote command does.
+
+       If you omit command, instead of executing  a  single  com-
+       mand, rsh logs you in on the remote host using
+
+       Shell  metacharacters  that are not quoted are interpreted
+       on the local  machine,  while  quoted  metacharacters  are
+       interpreted  on  the  remote  machine.   See  the examples
+       below.
+
+       Hostnames are given in the hosts data base, which  may  be
+       contained in the /etc/hosts file, the Internet domain name
+       data base, or both.  Each host has one official name  (the
+       first  name  in the data base entry) and optionally one or
+       more nicknames.  Official host names or nicknames  may  be
+       given as hostname.
+
+       If the name of the file from which rsh is executed is any-
+       thing other than rsh, rsh takes this name as its  hostname
+       argument.   This  allows  you to create a symbolic link to
+       rsh in the name of  a  host  which,  when  executed,  will
+
+                                                                1
+
+rsh(1tcp)                                               rsh(1tcp)
+
+       invoke  a remote shell on that host.  By creating a direc-
+       tory and populating it with symbolic links in the names of
+       commonly  used hosts, then including the directory in your
+       shell's search path, you can run rsh by typing hostname to
+       your shell.
+
+       Each remote machine may have a file named /etc/hosts.equiv
+       containing a list of trusted  host  names  with  which  it
+       shares  user names.  Users with the same user name on both
+       the local and remote machine may  rsh  from  the  machines
+       listed  in  the  remote  machine's /etc/hosts file without
+       supplying a password.  Individual users may set up a simi-
+       lar  private  equivalence  list  with  the file .rhosts in
+       their home directories.  Each line in this  file  contains
+       two names: a hostname and a username separated by a space.
+       An entry in a remote user's .rhosts file permits the  user
+       named  username  who is logged into hostname to use rsh to
+       access the remote machine as the remote user without  sup-
+       plying  a  password.  If the name of the local host is not
+       found in the /etc/hosts.equiv file on the remote  machine,
+       and the local user name and host name are not found in the
+       remote user's .rhosts file, then the remote  machine  will
+       prompt   for   a  password.   Host  names  listed  in  the
+       /etc/hosts.equiv and .rhosts files must  be  the  official
+       host  names  listed  in the hosts data base; nicknames may
+       not be used in either of these files.
+
+       To counter security problems, the  .rhosts  file  must  be
+       owned by either the remote user or by a privileged user.
+
+       rsh  will not prompt for a password if access is denied on
+       the remote machine unless the command argument is omitted.
+
+WWaarrnniinnggss
+       When  a system is listed in hosts.equiv, its security must
+       be as good as local security.  One insecure system  listed
+       in  hosts.equiv  can compromise the security of the entire
+       system.
+
+       The current local environment is not passed to the  remote
+       shell.
+
+       You  cannot run an interactive command (such as using rsh.
+       Use rlogin if you want to do so.
+
+       Sometimes the -n option is needed  for  reasons  that  are
+       less than obvious.  For example, the command: rsh somehost
+       dd if=/dev/nrmt0 bs=20b | tar xvpBf - will put your  shell
+       into a strange state.  Evidently, what happens is that the
+       tar terminates before the rsh.   The  rsh  then  tries  to
+       write into the ``broken pipe'' and, instead of terminating
+       neatly, proceeds to compete with your shell for its  stan-
+       dard  input.   Invoking rsh with the -n option avoids such
+       incidents.
+
+                                                                2
+
+rsh(1tcp)                                               rsh(1tcp)
+
+       This bug occurs only when rsh is at  the  beginning  of  a
+       pipeline  and  is  not reading standard input.  Do not use
+       the -n if rsh actually needs to read standard input.   For
+       example,  tar cf - . | rsh sundial dd of=/dev/rmt0 obs=20b
+       does not produce the bug.  If you were to use the -n in  a
+       case  like this, rsh would incorrectly read from /dev/null
+       instead of from the pipe.
+
+       Prior to Release 4, the rsh command invoked the restricted
+       shell.   This restricted shell command is /usr/lib/rsh and
+       can be executed by using the full pathname.
+
+       Stop signals stop the local  rsh  process  only;  this  is
+       arguably  wrong, but currently hard to fix for reasons too
+       complicated to explain here.
+
+RReeffeerreenncceess
+EExxaammpplleess
+       The command: rsh lizard cat  lizard.file  >>  example.file
+       appends  the  remote  file  lizard.file  from  the machine
+       called lizard to the file called example.file on the local
+       machine,  while  the  command:  rsh lizard cat lizard.file
+       ">>" lizard.file2 appends  the  file  lizard.file  on  the
+       machine  called lizard to the file lizard.file2 which also
+       resides on the machine called lizard.
+
+                                                                3
+

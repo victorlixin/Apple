@@ -1,0 +1,1571 @@
+#!/bin/ksh
+
+# Copyright (c) Microsoft Corporation.  All rights reserved.
+# 
+# This Software Source is the unpublished, valuable, confidential property
+# of Microsoft Corporation.  Use is authorised only under the terms and
+# conditions set out in the source code licence agreement protecting this
+# Software Source.  Any unauthorised use or disclosure of this Software 
+# Source is prohibited.
+#
+# THIS SOFTWARE IS PROVIDED ``AS IS'' BY MICROSOFT CORPORATION AND
+# ANY EXPRESS OR IMPLIED WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE
+# IMPLIED WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
+# ARE DISCLAIMED.  IN NO EVENT SHALL MICROSOFT CORPORATION BE LIABLE
+# FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
+# OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
+# HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT, STRICT
+# LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY
+# OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
+# SUCH DAMAGE.
+#
+# RcsID = $Id: c89.ksh,v 1.63 1999/09/23 20:38:55 mark Exp $
+#
+
+#set -x  # DEBUGGING ON
+
+#
+# c89 -- Interface to map c89 options (plus a few "UNIX" options) to 
+#        MSVC 4.0.
+#
+
+progname=${0##*/}
+
+# make sure we only get OpenNT executables
+#
+export PATH="$INTERIX_ROOT/bin:$PATH"
+
+
+#
+#  ---- FUNCTION Definitions -----
+#
+#
+
+function mutexBegin {
+    trap '' INT HUP KILL
+}
+
+function mutexEnd {
+    trap alldone INT HUP KILL
+}
+
+function alldone {
+    mutexBegin
+    rm -f "$TMPFILE1" "$TMPFILE2" "$TMPFILE3" "$TMPFILE4"
+    if [ "$1" = "" ]; then
+        exit 1
+    else
+        exit "$1"
+    fi
+    cleanup
+}
+
+function printerror {
+    ( 
+        # first remove the file name that CL emits to stderr.
+        #
+        read -r line; [ "$filename" != "$line" ] && print -r "$line"; 
+      
+        # now read the rest of the file
+        #
+        while read -r line; do
+            print -r "$line"
+        done
+    ) < "$1"
+}
+
+function cleanup {
+    # remove all temporary .o files
+    if [ "${builtfiles}" != "" ]; then
+        rm -f "${builtfiles[@]}"
+    fi
+}
+
+#
+# try to set proper ownership of $1
+# This function needed because CL is a win32 program.
+# In Win32, all users in the Administrators group, will create files
+# owned by "Administrators". This is not what we want.
+# Luckily, usually newly created files have the "Take Ownership" bit on
+# and thus, we can usually change the ownership to the POSIX user.
+#
+function setowner {
+    typeset owner    # local variable
+
+    if [ "$1" != "" -a -f "$1" ]; then
+        owner="$(id -un)"
+
+        if [ "$owner" != "" ]; then  
+            # don't display any error messages. If it doesn't work, don't care.
+            #
+            chown "$owner" "$1" > /dev/null 2>&1 
+        fi
+    fi
+}
+
+#
+# set proper POSIX permissions on $1
+#
+function setperms {
+    # local variables
+    typeset umask
+    typeset permbits
+
+    if [ "$1" != "" -a -f "$1" ]; then
+        #
+        # set the proper permission bits (777 masked by bits in user's umask )
+        #
+        # [ if any of the commands fails, then use the default 744 value ]
+        #
+        defperm=$((8#744))
+
+        umask="$(umask)"
+        # mask off the umask bits
+        permbits="$((8#777 & ~8#${umask}))" || permbits=${defperm}
+
+        if [ "$permbits" = "" ]; then
+            permbits=${defperm}
+        fi
+
+        # get the octal value 
+        permbits=$(printf "%o" ${permbits}) || permbits=${defperm}
+
+        if [ "$permbits" = "" ]; then
+            permbits=${defperm}
+        fi
+
+        chmod "$permbits" "$1" > /dev/null 2>&1 
+    fi
+}
+
+#
+# function to get total initial data segment requirements 
+# for the executable specified by $1
+#
+function fixdataseg {
+    
+    typeset datasize
+
+    datasize=$(size -A "$1" \
+           | (read hdr; \
+              read junk; \
+              read a bss b; \
+              read a rdata b; \
+              read a data b; \
+              read a idata b; \
+              let "total = bss + rdata + data + idata";
+              print $total))
+
+}
+
+#
+# optimize level
+#
+function optimize {
+    # support all numbered levels identically for now
+    #
+    case "$1" in
+       "")
+        # do nothing
+        ;;
+       [0-9])
+        #
+        # for MSVC4:
+        # - /O2 is equivalent to:
+        #               /Og /Oi /Ot /Oy /Ob1 /Gs /Gf /Gy
+        #
+        set -A cppoptions ${set_args} "${cppoptions[@]}" "/O2"
+        set -A coptions ${set_args} "${coptions[@]}" "/O2"
+       ;;
+    esac
+}
+
+function warn {
+    print "$progname: $1" 1>&2
+}
+
+function usage {
+    print "usage:  $progname [-bcEgGMOPRsSux] [-B dynamic|static|dll] [-D name[=value]] [-I directory]"
+    print "            [-L directory] [-m x86|amd64|ia64] [-o executableName] [-p pdbfilename]"
+    print "            [-U name] [-X CL_options] [-Y LINK_options]"
+    print "            [-N stdc|nostdlib|nostdlibdir|nostdinc|nostdc] operands ..."
+    alldone 2
+}
+
+#
+#  ---- SETUP environment variables -----
+#
+#  C89_COMPILER     - user supplied path to compiler (use CL.EXE by default)
+#  C89_LINKER     - user supplied path to linker (use LINK.EXE by default)
+#  TMP         - used by CL compiler (we need to flip to NT path format)
+#  C89_ECHO     - verbose option
+#
+
+# check COMPILER environment variable.
+# If not set, then use CL.EXE as the default
+# if it is set, make sure its in Interix pathname format.
+#
+if [ "${C89_COMPILER}" != "" ]; then
+    C89_COMPILER=$(ntpath2posix -c "${C89_COMPILER}")
+fi
+
+cl="${C89_COMPILER:-CL.EXE}"
+
+cnt=0
+foundit=FALSE
+while [ "$cnt" -lt 10 ]; do
+    # quick check to ensure it exists
+    compiler=$(whence "$cl")
+
+    # if we couldn't find the compiler, also try lower case
+    if [ "$compiler" == "" ]; then
+        typeset -l cl_lower="$cl"
+        compiler=$(whence "$cl_lower")
+    fi
+
+    # check for error status AND empty string 
+    #
+    if [ $? = 0 -a "$compiler" != "" ]; then
+        foundit=TRUE
+        break;
+    fi
+
+    # try again ...
+    let "cnt = cnt + 1"
+
+done
+
+if [ $foundit != TRUE ]; then
+    print "$progname: Cannot find compiler '$cl' in PATH"
+    print "$progname: Either set the C89_COMPILER environment variable or add the"
+    print "     directory that contains the CL.EXE program to PATH"
+    alldone 127
+fi
+unset cnt
+
+#
+# check C89_LINKER environment variable for user defined path to linker.
+# If not set, then use LINK.EXE as the default
+#
+# if it is set, make sure its in Interix pathname format.
+#
+if [ "${C89_LINKER}" != "" ]; then
+    C89_LINKER=$(ntpath2posix -c "${C89_LINKER}")
+fi
+
+link="${C89_LINKER:-LINK.EXE}"
+
+cnt=0
+foundit=FALSE
+while [ "$cnt" -lt 10 ]; do
+    # quick check to ensure it exists
+    linker=$(whence "$link")
+
+    # if we couldn't find the linker, also try lower case
+    if [ "$linker" == "" ]; then
+        typeset -l link_lower="$link"
+        linker=$(whence "$link_lower")
+    fi
+
+    # check for error status AND empty string 
+    #
+    if [ $? = 0 -a "$linker" != "" ]; then
+        foundit=TRUE
+        break;
+    fi
+
+    # try again ...
+    let "cnt = cnt + 1"
+
+done
+
+if [ "$foundit" != TRUE ]; then
+    print "$progname: Cannot find linker '$link' in PATH"
+    print "$progname: Either set the C89_LINKER environment variable or add the"
+    print "     directory that contains the LINK.EXE program to PATH"
+    alldone 127
+fi
+unset cnt
+
+#
+# setup any special env variables (e.g TMP) that Win32 compilers use
+# Since TMP is used by win32 compiler, we need to make sure its
+# in DOS pathname format
+#
+
+
+
+# make sure TMPDIR is set up
+if [ "$TMPDIR" = "" ]; then
+    TMPDIR=/tmp
+fi
+export TMPDIR
+
+# make TMP point to a known established directory.
+# Make it the same as TMPDIR
+#
+# Make sure it is in Windows filename format
+#
+TMP="$(unixpath2win "$TMPDIR")"
+export TMP
+
+
+# create tmp file names for use internally
+TMPFILE1="$TMPDIR/cc_tmp1_$$"
+TMPFILE2="$TMPDIR/cc_tmp2_$$"
+TMPFILE3="$TMPDIR/cc_tmp3_$$"
+TMPFILE4="$TMPDIR/cc_tmp4_$$"
+
+
+# unset any env variables that could be used by C compiler
+# that we don't want it to see
+#
+unset MSC_CMD_FLAGS
+unset MSC_IDE_FLAGS
+
+LIB=""        # clear LIB - don't inherit user's previous value
+unset lib    # clear all versions of 'lib' in environment 
+unset Lib    # This to avoid problem with case insensitive win32 environment
+unset LIb
+unset LiB
+
+unset INCLUDE
+unset include
+unset Include
+unset TARGET_MACHINE
+
+# set up signal handler to clean up on a signal
+trap alldone INT HUP KILL
+
+# check which version of KSH we're running.
+# The 'set' command in Version 5.2.12 doesn't support  '--'
+#
+set_args="--"
+case "$KSH_VERSION" in
+    *v5.2.12*)
+        set_args=""
+        ;;
+esac
+
+#------------------
+
+# imported env. variables
+#   - C89_ECHO=0
+#   - C89_DEBUG
+
+# local shell variables
+#
+DEBUG=0
+Mflag=0
+RES_FILE=""        # resource file name 
+cpp_only=0
+compile_only=0
+assemble_only=0
+mkDll=false
+outputFile="";
+outputFile_unix="";
+executableFile="a.out";
+dllFile="a.dll"
+usestdlibdir=true
+usestdlib=true
+usestdinc=true
+usestdc=true
+gsflag=true
+strip=false
+dynamic=false        # default is to build static binaries
+gflag=false
+linkdll=false
+lp64_mode=false
+rearch=false
+crtfile="safecrt0.o"
+addedcpplib=false
+debugset=false
+l2ll_flag=true
+pflag=false
+case $PROCESSOR_ARCHITECTURE in
+       x86)
+           TARGET_MACHINE="X86"
+           ;;
+       AMD64)
+           TARGET_MACHINE="AMD64"
+           lp64_mode=true;
+           ;;       
+       IA64)
+           TARGET_MACHINE="IA64"
+           lp64_mode=true;
+           ;;        
+       *)
+           print "$progname: Architecture Not Supported"
+           alldone 127
+esac
+
+# all the variables that may contain a file name
+# are arrays (in order to preserve embedded spaces)
+unset cloptions 
+unset linkoptions
+unset incloptions
+unset cppoptions
+unset coptions
+unset cmd
+unset pre_cmd
+unset builtfiles
+unset srcfiles
+unset objfiles
+unset libdirs        # -L options
+
+typeset out
+
+#------------------
+#
+# __OPENNT    : to indicate that user is compiling on an OPENNT system
+#               (to be withdrawn - __INTERIX is the replacement)
+# __INTERIX   : to indicate that user is compiling on an OPENNT system
+# _ALL_SOURCE : to enable all symbols and definitions in header files
+#               This provides the historical UNIX environment
+# unix        : historical symbol on a UNIX systems
+# _WIN32      : MSVC compilers defined this. We undefine it. This only works
+#               if using the OpenNT2.1 release of the new headers that are 
+#               independent of MSVC headers.
+#
+#
+
+set -A cppoptions ${set_args} /nologo /D__OPENNT /D__INTERIX /D_POSIX_ /U_WIN32
+
+if [ "$progname" = "cc" ]; then
+    set -A cppoptions ${set_args} "${cppoptions[@]}" /Dunix /D_ALL_SOURCE /D__STDC__
+    usestdc=false    # don't use strict ANSI-C, use MSVC extensions
+fi
+
+set -A coptions ${set_args} "${cppoptions[@]}"
+
+set -A ldoptions ${set_args} /subsystem:posix /nologo /nodefaultlib
+#
+# NXCOMPAT and dynamic base options are supported with VS2005 SP1 onwards (Not supported with VS2005). Hence not
+# providing them as default options in c89 script. If required, User has to specify them explicitly while building
+# their own binaries.
+#
+if [ "$Nxflag" = 1 ]; then
+set -A ldoptions ${set_args} "${ldoptions[@]}" /NXCOMPAT /DYNAMICBASE
+fi
+
+set -A ldoptions ${set_args} "${ldoptions[@]}" /ignore:4078
+
+entryPoint="/entry:__PosixProcessStartup"
+
+DEF_LIBRARIES="libcsafe.a libpsxdll.a"
+
+let "defHeapSize    =  8 * 1024 * 1024"  # 8 Meg default reserve
+let "defHeapCommit  = 32 * 1024"         # commit 32K initially
+
+let "defStackSize   =  4 * 1024 * 1024"  # 4 Meg default reserve
+let "defStackCommit = 64 * 1024"         # commit 64K initially
+
+
+#------------------
+
+optimizelevel=""
+lastopt=""
+while getopts  ":12B:bcD:EgGI:l:L:m:MN:o:OPp:RsSuU:xX:Y:" opt; do
+    case "$opt" in
+        [1-2])  # only support -O[1-2]
+            #
+            # handle -O#  (or -O -#)
+            #
+            if [ "$lastopt" = "O" ]; then
+                optimizelevel="$opt"
+            else
+                warn "unknown option -${opt}."
+                usage
+            fi
+            ;;
+        #
+        # -c
+        # Just compile, no link.
+        #
+        c)
+            compile_only=1;
+            ;;
+        # -b
+        # Generate PDB.
+        b)
+            if [ "$debugset" = false ]
+            then
+                set -A ldoptions ${set_args} "${ldoptions[@]}" /debug 
+                debugset=true
+            fi
+            ;;
+
+        B)  # -B static
+            # -B dynamic
+            #
+            case "$OPTARG" in
+                dynamic)
+                    dynamic=true
+                    linkdll=false
+                    ;;
+                static)
+                    dynamic=false
+                    linkdll=false
+                    if [ ! -z "$DEF_LIBRARIES" ]
+                    then
+                        DEF_LIBRARIES="libcsafe.a libpsxdll.a"
+                    fi
+                    ;;
+                dll)
+                    linkdll=true
+                    dynamic=false
+                    crtfile="crtexe.o"
+                    if [ ! -z "$DEF_LIBRARIES" ]
+                    then
+                        DEF_LIBRARIES="psxlibc.lib libpsxdll.a"
+                    fi
+                    # if the application assumes to use libc.dll this flag is 
+                    # necessary to import the global variables from libc.dll 
+                    # to the app at compile time
+                    set -A cppoptions ${set_args} "${cppoptions[@]}"  "/D_REENTRANT" "/D_IMPORT_LIBCDLL_GLOBALS"
+                    set -A coptions ${set_args} "${coptions[@]}"  "/D_REENTRANT" "/D_IMPORT_LIBCDLL_GLOBALS"               
+                    ;;    
+               *)
+                    warn "unrecognized specifier '$OPTARG' after -B"
+                    usage
+                    ;;
+            esac
+            ;;
+
+        #
+        # -D name[=value]
+        #
+        D)
+            set -A coptions ${set_args} "${coptions[@]}" "-${opt}${OPTARG}"
+            set -A cppoptions ${set_args} "${cppoptions[@]}" "-${opt}${OPTARG}"
+            ;;
+
+        #
+        # OPTION: -E
+        # Only run cpp, send to standard output
+        #
+        E)
+            set -A cppoptions ${set_args} "${cppoptions[@]}" "/E"
+            cpp_only=1;
+            ;;
+        #
+        # OPTION: -G
+        #   Build a DLL
+        #
+        G)     
+            mkDll=true
+
+            # 
+            # DllMainCRTStartup is a function that we (OpenNT) must
+            # define and put in a static library that links with
+            # DLL's (when the -G option is specified)
+            # This function must do C++ runtime startup for the DLL
+            # before calling the user's DllMain
+
+            entryPoint="/entry:DllMainCRTStartup"
+            set -A ldoptions ${set_args} "${ldoptions[@]}" "-dll"
+            set -A cppoptions ${set_args} "${cppoptions[@]}"  /D_REENTRANT
+            set -A coptions ${set_args} "${coptions[@]}"  /D_REENTRANT               
+            DEF_LIBRARIES="psxlibc.lib libpsxdll.a"
+            ;;
+
+        #
+        # OPTION: -g
+        # Debug info needs to be built in.
+        #
+        g)     
+            gflag=true
+            ;;
+
+        I)
+            set -A incloptions ${set_args} "${incloptions[@]}" \
+                   "/I$(unixpath2win "$OPTARG")"
+            ;;
+
+        #
+        # -l libraryname 
+        #
+        # This is NOT a valid option, this is only used as an operand
+        #
+        l)
+            warn "-l must be used as an operand, not an option"
+            usage
+            ;;
+
+        #
+        # OPTION: -L <dir> 
+        # Specify library directory.  
+        # To get this info to MSVC we have to flip the pathname and prepend 
+        # to the LIB env variable.
+        L)
+    
+            # save libdirs options for use by ld
+            set -A libdirs ${set_args} "${libdirs[@]}" "-L" "$OPTARG"
+
+            dir=$(unixpath2win "$OPTARG")
+            if [ "$LIB" = "" ]; then
+                LIB="$dir";
+            else
+                LIB="$LIB;$dir";
+            fi
+            ;;
+
+        M)    # create a map file
+            Mflag=1;
+            set -A ldoptions ${set_args} "${ldoptions[@]}" "-map"
+            ;;
+
+        #
+        # -mamd64,-mia64 enables LP64 mode for compiling over 64-Bit.
+        #
+        m)
+            case "$OPTARG" in
+		amd64)
+		    TARGET_MACHINE="AMD64"
+		    lp64_mode=true;
+		    ;;
+		ia64)
+		    TARGET_MACHINE="IA64"
+	            lp64_mode=true;
+	            ;;
+	        x86)
+		    TARGET_MACHINE="X86"
+	            lp64_mode=false;
+	            ;;                    		
+                *)
+                    warn "unrecognized specifier '$OPTARG' after -m"
+                    usage
+                    ;;
+            esac
+            ;;
+
+        #
+        # -N option
+        #
+        N)
+            case "$OPTARG" in
+                stdc)
+                    usestdc=true
+                    ;;
+                nostdc)
+                    usestdc=false
+                    ;;
+                nostdlib)
+                    usestdlib=false
+                    DEF_LIBRARIES=""
+                    ;;
+                nostdlibdir)
+                    usestdlibdir=false
+                    ;;
+                nostdinc)
+                    usestdinc=false
+                    ;;
+                nogs)
+                    gsflag=false
+                    ;;
+		nol2ll)
+	    	    l2ll_flag=false
+    		    ;;		    
+                *)
+                    warn "invalid argument '$OPTARG' following -N option"
+                    usage
+                    ;;
+            esac
+            ;;
+
+        #
+        # OPTION: -o <exe-name>
+        # Name output file (rather than a.out :-)
+        #
+        o)
+            outputFile_unix="$OPTARG"
+
+            case "$OPTARG" in
+                # absolute pathnames need to be converted to WINDOWS format 
+                # to ensure the pathname is correct
+                #
+                /*)
+                    outputFile=$(unixpath2win "$OPTARG")
+                    ;;
+                *)
+                    outputFile="$OPTARG"
+                    ;;
+            esac
+            ;;
+
+        O) # -O : general compilation optimization
+            optimizelevel=0
+            ;;
+
+        p)
+        
+            pdbfile=$(unixpath2win "$OPTARG")
+            set -A ldoptions ${set_args} "${ldoptions[@]}" /pdb:"$pdbfile"
+            if [ "$debugset" = false ]
+            then
+                set -A ldoptions ${set_args} "${ldoptions[@]}" /debug 
+                debugset=true
+            fi
+	    pflag=true
+            ;;
+
+        #
+        # -P    run proprocessor and put into file.i file
+        #
+        P)
+            set -A cppoptions ${set_args} "${cppoptions[@]}" "/P"
+            cpp_only=1
+            ;;
+
+        #
+        # -R for Rearchitecture. Creates mixedmode applications
+        #
+        R)
+            rearch=true
+            entryPoint="/entry:__MixedModeProcessStartup"
+            set -A ldoptions ${set_args} /subsystem:console /nologo /nodefaultlib
+	   if [ "$Nxflag" = 1 ]; then
+		set -A ldoptions ${set_args} "${ldoptions[@]}" /NXCOMPAT /DYNAMICBASE
+		fi
+
+		set -A ldoptions ${set_args} "${ldoptions[@]}" /ignore:4078
+            ;;
+
+        # -s    create a stripped executable
+        s)
+            strip=true
+            ;;
+
+        S)     # assembler listing
+            assemble_only=1
+            ;;
+        
+        # -u
+        #   undefine all pre-defines
+        #
+        u)
+            set -A cppoptions ${set_args} "${cppoptions[@]}" "/u"
+            set -A coptions ${set_args} "${coptions[@]}" "/u"
+            ;;
+        
+        #
+        # -U name
+        #
+        U)
+            set -A cppoptions ${set_args} "${cppoptions[@]}" "/${opt}${OPTARG}"
+            set -A coptions ${set_args} "${coptions[@]}" "/${opt}${OPTARG}"
+            ;;
+
+        #
+        # -X clOptions
+        #
+        X)
+            # pass thur whatever follows as arguments to CL
+            set -A cloptions ${set_args} "${cloptions[@]}" "${OPTARG}"
+            ;;
+
+        #
+        # -Y link_options
+        #
+        Y)
+            # pass thur whatever follows as arguments to LINK
+            #
+            set -A linkoptions ${set_args} "${linkoptions[@]}" "${OPTARG}"
+
+            # check for special options that we normally set by default.
+            # If user specifies one of these, then unset our value
+            # so there's no conflict
+            # This will flag the link step
+            # not to use these defaults anymore
+            #
+            case $OPTARG in
+               *[-/]stack:*|*[/-]STACK:*)
+                   defStackSize=""
+                   ;;
+               *[-/]heap:*|*[-/]HEAP:*)
+                   defHeapSize=""
+                   ;;
+               *[-/]entry:*|*[-/]ENTRY:*)
+                   entryPoint=""
+                   ;;
+            esac
+            ;;
+
+        #
+        # -x  : turn on debugging of this script
+        #
+        x)
+            C89_ECHO=1;
+            C89_DEBUG=1
+            set -x
+            ;;
+
+        ':')
+            warn "missing argument after -${OPTARG}."
+            usage
+            ;;
+            
+        '?')
+            warn "unknown option -${OPTARG}."
+            usage
+            ;;
+        *)
+            # failsafe - in case there's extra options in 
+            # the option string that I forgot to create a case label 
+            #
+            warn "unknown option -${opt}."
+            usage
+            ;;
+
+    esac
+    lastopt="$opt"
+done
+
+shift $OPTIND-1
+
+# use MSVC's C7 compatability so that a PDB is _not_ generated
+# Thus, all the debugging information is stored in the obj file
+#
+if [ "$gflag" = true -a "$dynamic" = false ]; then
+    set -A coptions ${set_args} "${coptions[@]}" "/Zi" 
+    set -A ldoptions ${set_args} "${ldoptions[@]}" -debug
+fi
+
+# include any optimization flags
+#
+optimize "$optimizelevel"
+
+#
+# now gather up the operands
+#
+while true ; do
+    if [ "$progname" = "cc" ]; then
+        #
+        # special case for 'cc':
+        #   it can handle certain options anywhere in the command line
+        #   This for compat. with GNU configure scripts
+        #       
+        case $1 in 
+            -L*)  # -L directory
+                dir=${1#-L}
+                if [ "$dir" = "" ]; then
+                    # next argument contains directory name
+                    shift
+                    dir="$1"
+                fi
+                if [ "$dir" = "" ] ; then
+                    warn "directory name missing following the -L option"
+                    usage
+                fi
+
+                # save libdirs options for use by ld
+                set -A libdirs ${set_args} "${libdirs[@]}" "-L" "$dir"
+
+                dir=$(unixpath2win "$dir")
+                if [ "$LIB" = "" ]; then
+                    LIB="$dir";
+                else
+                    LIB="$LIB;$dir";
+                fi
+                shift
+                continue
+                ;;
+
+            -O2)
+                optimize 2
+                ;;
+
+            -o*) #  -o <exe-name>
+                out=${1#-o}
+                if [ "$out" = "" ]; then
+                    # next argument contains outputfile name
+                    shift
+                    out="$1"
+                fi
+                if [ "$out" = "" -o "${out##-}" != "$out" ] ; then
+                    warn "target name missing following the -o option"
+                    usage
+                fi
+
+                outputFile_unix="${out}";
+                case "${out}" in
+                    # absolute pathnames need to be converted to WINDOWS format 
+                    # to ensure the pathname is correct
+                    #
+                    /*)
+                        outputFile=$(unixpath2win "$out")
+                        ;;
+                    *)
+                        outputFile="${out}"
+                        ;;
+                esac
+                shift     # move past <exe-name> arg and continue
+                continue
+                ;;
+        esac
+    fi
+
+    case $1 in 
+        -l*)  # -l libname  (e.g:  -lsocket )
+
+            libname="${1#-l}"
+            if [ "$libname" = "" ]; then   # next argument contains library name
+            shift
+                libname="$1"
+            fi
+            if [ "$libname" = "" ] ; then
+                warn "library name missing following the -l option"
+                usage
+            fi
+            if [ "$libname" = "stdc++" ] ; then
+                # if libstdc++.a is linked explicitly then crt0.o should not
+                # be added because libstdc++.a already has its own crt0.o
+                crtfile=""
+            fi
+
+            if [ "$dynamic" = true ]; then
+                # set  library name the way GNU ld expects it
+                set -A objfiles ${set_args} "${objfiles[@]}" "-l${libname}"
+            elif [ "$linkdll" = true ]; then
+                if [ "$libname" = "c" ]; then
+                    # only in the case if libc create a name as 'psxlibc.lib'
+                    set -A objfiles ${set_args} "${objfiles[@]}" "psxlib${libname}.lib"
+                else
+                    # in all other cases create a name with '.a'
+                    set -A objfiles ${set_args} "${objfiles[@]}" "lib${libname}.a"
+                fi
+            else
+                if [ "$libname" = "c" ]; then
+                    # only in the case if libc create a name as 'libcsafe.lib'
+                    set -A objfiles ${set_args} "${objfiles[@]}" "libcsafe.a"
+                else
+                    # set library name the way LINK.EXE expects it
+                    set -A objfiles ${set_args} "${objfiles[@]}" "lib${libname}.a"
+                fi
+            fi
+            ;;
+        *.a|*.lib|*.Lib|*.LIB)    # library files
+            if [ "$dynamic" = true ]; then
+                set -A objfiles ${set_args} "${objfiles[@]}" "$1"
+            else
+                case $1 in
+                    /*)
+                    set -A objfiles ${set_args} "${objfiles[@]}" "$(unixpath2win "$1")"
+                    ;;
+                    *)
+                    set -A objfiles ${set_args} "${objfiles[@]}" "$1"
+                    ;;
+                esac
+            fi
+            ;;
+
+        *.c)
+            #NOTE:
+            #  the order in which src and obj files are specified on the
+            #  command line are important.
+            #  Thus, we have to create the list of object files (for LINK)
+            #  in the same order as specified. Thus, we need to create
+            #  the object file name here.
+            #  (Even though we may do it again below when compiling 
+            #   the src files!)
+            
+            # rip off prefix, up to last '/' character
+            # The object file will be created in the current directory,
+            # *not* where the src file is.
+            #
+            filename="${1##*/}"
+            basename="${filename%.c}"    # now rip off the .c extension
+
+            set -A objfiles ${set_args} "${objfiles[@]}" "${basename}.o"
+            set -A srcfiles ${set_args} "${srcfiles[@]}" "$1"
+            # NOTE: srcfile conversion to NT format is done below 
+
+            ;;
+
+        *.cpp|*.C|*.c++|*.cxx|*.cc)
+            filename="${1##*/}"
+            case $filename in
+                *.cpp)
+                    basename="${filename%.cpp}" # now rip off the .cpp extension
+                    ;;
+
+		*.c++)
+                    basename="${filename%.c++}" # now rip off the .c++ extension
+                    ;;
+                *.cxx)
+                    basename="${filename%.cxx}" # now rip off the .cxx extension
+                    ;;
+                *.C)
+                    basename="${filename%.C}"   # now rip off the .C extension
+                    ;;
+                *.cc)
+                    basename="${filename%.cc}"   # now rip off the .cc extension
+                    ;;
+
+            esac
+            set -A objfiles ${set_args} "${objfiles[@]}" "${basename}.o"
+            set -A srcfiles ${set_args} "${srcfiles[@]}" "$1"
+            if [ "$addedcpplib" = false ]
+            then
+                usestdc=false
+                crtfile=""
+                set -A coptions ${set_args} "${coptions[@]}" "/EHsc"
+                set -A coptions ${set_args} "${coptions[@]}" "/D_PSX_LIB" "/D_MT" "/D_MS_SUA_"  "/D_CTYPE_DISABLE_MACROS"
+                set -A cppoptions ${set_args} "${cppoptions[@]}" "/D_PSX_LIB" "/D_MT" "/D_MS_SUA_" "/D_CTYPE_DISABLE_MACROS"
+                #echo $DEF_LIBRARIES
+                if [ ! -z "$DEF_LIBRARIES" ] 
+                then
+                    if [ "$linkdll" = true -o "$mkDll" = true ]
+                    then
+                        set -A DEF_LIBRARIES ${set_args} "libstdc++.lib libm.a psxlibc.lib libpsxdll.a"
+                    elif [ "$dynamic" = true ]
+                    then
+                        warn "-B dynamic not supported with libstdc++"
+                        alldone 1
+                    else
+                        set -A DEF_LIBRARIES ${set_args} "libstdc++.a libm.a libcsafe.a libpsxdll.a"
+                    fi
+                fi
+                addedcpplib=true
+            fi
+            ;;
+
+
+# CL doesn't handle .s files
+#
+#        *.asm)    # assembler files
+#        basename=${1%.asm}
+#        objfiles="${objfiles} ${basename}.o"
+#        srcfiles="${srcfiles} $1"
+#        ;;
+
+        *.o|*.obj|*.res|*.exp) # object files
+       	    if [ "$progname" = "cc89" ]; then
+               if [ ! -z "$DEF_LIBRARIES" ]
+               then
+                   if [ "$linkdll" = true -o "$mkDll" = true ]
+                   then
+                       set -A DEF_LIBRARIES ${set_args} "libstdc++.lib libm.a psxlibc.lib libpsxdll.a"
+                   elif [ "$dynamic" = true ]
+                   then
+                       warn "-B dynamic not supported with libstdc++"
+                       alldone 1
+                   else
+		         set -A DEF_LIBRARIES ${set_args} "libstdc++.a libm.a libcsafe.a libpsxdll.a"
+                   fi
+               fi
+	       crtfile=""
+	    fi
+            case $1 in
+                # absolute pathnames need to be converted to WINDOWS format 
+                # to ensure the pathname is correct
+                #
+                /*)
+                    set -A objfiles ${set_args} "${objfiles[@]}" "$(unixpath2win "$1")"
+                    ;;
+                *)
+                    set -A objfiles ${set_args} "${objfiles[@]}" "$1"
+                    ;;
+            esac
+            ;;
+
+        "") # no more arguments
+            break;
+            ;;
+
+        *)
+            #invalid option or invalid file extension
+            #
+            warn "unknown file extension in '$1'."
+            usage
+            ;;
+    esac
+
+    # get next argument
+    shift 1    
+
+done
+
+
+if [ "$dynamic" = false -a $TARGET_MACHINE = "X86" -a "$addedcpplib" = false ]; then
+    set -A ldoptions ${set_args} "${ldoptions[@]}" 
+fi
+
+# Dump
+
+if [ "$objfiles" = "" ]; then
+    warn "No source or object files!";
+    alldone 1;
+fi
+
+#
+# Set various flags according to target machine type
+# Assume proper CL.EXE and LINK.EXE are set in PATH,
+# So no need to take care about that.
+#
+# As of now, not fixing for appropriate libc, libpsxdll etc
+# Also setting various flags under coptions, it may fall under other group
+# but it doesn't matter as of now.
+#
+case "$TARGET_MACHINE" in
+    "AMD64")
+        set -A coptions ${set_args} "/Dlp64" "${coptions[@]}"
+        set -A ldoptions ${set_args} "/MACHINE:AMD64" "${ldoptions[@]}"
+        ;;
+    "IA64")
+        set -A coptions ${set_args} "/Dlp64" "${coptions[@]}"
+        set -A ldoptions ${set_args} "/MACHINE:IA64" "${ldoptions[@]}"
+        ;;
+    "X86")
+        #nothing to do
+        set -A ldoptions ${set_args} "/MACHINE:X86" "${ldoptions[@]}"
+        ;;
+esac
+
+# Enabling /GS compilation
+if [ "$gsflag" = true ]; then
+	set -A coptions ${set_args} "/GS-" "${coptions[@]}"
+else
+	set -A coptions ${set_args} "/GS-" "${coptions[@]}"
+fi
+
+#
+# If -o option specified and there's more than 1 source file,
+#  then check if -c or -S options also specified.
+#
+if [ "${outputFile}" != "" -a "${#srcfiles[@]}" -gt 1 ]; then
+    if [ "$compile_only" = 1 ] ; then
+        warn "Only one source file can be specified when using -c and -o"
+        alldone 1
+    elif [ "$assemble_only" = 1 ]; then
+        warn "Only one source file can be specified when using -S and -o"
+        alldone 1
+    fi
+fi
+
+if [ "$usestdc" = true ]; then
+    # use ANSI-C mode
+    set -A cppoptions ${set_args} "/Za" "${cppoptions[@]}"
+    set -A coptions ${set_args} "/Za" "${coptions[@]}"
+else
+    # do not use std C. Turn on MSVC 'extended' mode 
+    #/Ze is default option, from MS Cl 13.XX.XX.XX compilers.
+    # Removing the /Ze option because VC 80 Compilers crib about it.
+    set -A cppoptions ${set_args}  "${cppoptions[@]}"
+    set -A coptions ${set_args}  "${coptions[@]}"
+fi
+
+
+
+if [ "$usestdinc" = true ]; then
+    # add default include directory to end of user specified -I options
+    #
+    
+    if [ "$DefInclDir" = "" ]; then
+        DefInclDir=/usr/include
+    fi    
+
+    if [ "$DefInclDir" != "" ]; then
+        #convert to NT format
+        DefInclDir=$(unixpath2win "$DefInclDir")
+
+        if [ "$addedcpplib" = false ] 
+        then
+            set -A incloptions ${set_args} "${incloptions[@]}" "/I${DefInclDir}"
+        else
+            set -A incloptions ${set_args} "${incloptions[@]}" \
+                "/I${DefInclDir}" "/I${DefInclDir}\\\\c++"
+        fi
+    fi
+fi
+
+
+#
+# If we are only invoking cpp, ...
+#
+if [ "$cpp_only" = 1 ]; then
+
+    unset names
+    for i in ${srcfiles[@]}; do
+
+        # get last component of file name
+        filename="${i##*/}"    # remove up to rightmost '/' character
+
+        # create DOS format pathname 
+        msfname="$(unixpath2win "$i")"
+
+        # invoke the compiler
+        set -A cmd ${set_args} "$compiler" "${incloptions[@]}" "${cppoptions[@]}" \
+                       "${msfname}" "${cloptions[@]}"
+        
+        if [ "$C89_ECHO" = 1 ]; then
+            print -r "${cmd[@]}"
+        fi
+        
+        # redirect output to a file for 2 reasons:
+        #  1) to work around 'pipe'  problems with win32 
+        #     executable programs.
+        #  2) to ensure we remove the 1st line that MSVC CL.exe emits
+        #     (which is the filename) which we don't want to see
+        #     (GNU configure doesn't expect it)
+        #
+        # redirect input from /dev/null because:
+        #   If this is a pipe, and $cmd is a Win32 program, then
+        #   Interix will 'pump' all the data in stdin to the Win32 program.
+        #   This is how Win32 pipe's work.
+        #   By redirecting stdin before the call to CL.EXE, we avoid
+        #   this problem.
+        #
+        "${cmd[@]}" > "$TMPFILE1" 2> "$TMPFILE2" < /dev/null
+        exitStatus=$?
+
+        # get rid of trailing ^M characters
+        flip -u "$TMPFILE1" "$TMPFILE2"
+
+        # print stderr stuff first
+        #   NOTE: for "CL /E",  CL puts the filename in stderr (TMPFILE2),
+        #         not to stdout like other cases.
+        ( 
+              # first remove the file name that CL emits to stderr.
+              #
+              read -r line; [ "$filename" != "$line" ] && print -r "$line"; 
+          
+              # now read the rest of the file
+              #
+              while read -r line; do 
+                  print -r "$line"
+              done
+        ) < "$TMPFILE2" 1>&2
+
+        # print stdout stuff
+        cat "$TMPFILE1"
+    done
+
+    alldone $exitStatus
+fi
+
+#
+# ... otherwise, compile all .c files (one at a time - see note below)
+#
+for i in "${srcfiles[@]}"; do
+
+    # Do each C source file one at a time - in order to create
+    # proper object file names (e.g foobar.o)
+    # This is necessary because default behaviour of MSVC compiler will be
+    # to create object files with ".obj" extension,
+    # instead of the required ".o"
+    #
+    # Split the src name into its path components.
+    # Because we only want the last component.
+    # The object file should be created in the current working directory
+    # NOT the directory where the src file is located.
+    #  (e.g if src file is ../foo/bar.c ,
+    #       we want bar.o  - NOT ../foo/bar.o)
+    #
+    
+    filename="${i##*/}"    # remove up to leftmost '/' character
+    basename="${filename%.*}"  # remove extension letter
+    objname="${basename}.o"
+    asmname="${basename}.s"
+    TMPFILE4="${TMPFILE3}_${filename}"
+
+    # convert src basename to Microsoft syntax
+    #
+    msfname="$(unixpath2win "$i")"
+    
+    if [ "$C89_DEBUG" = 1 ]; then
+        print "DEBUG $progname: incloption:  ${incloptions[@]}"
+        print "DEBUG $progname: coptions:    ${coptions[@]}"
+        print "DEBUG $progname: cloptions:   ${cloptions[@]}"
+        print "DEBUG $progname: objname:     ${objname[@]}"
+        print "DEBUG $progname: file:        $i"
+        print "DEBUG $progname: msfname:     $msfname"
+    fi
+
+    
+    # Put $cloptions at end of command line - CL doesn't care
+    # about the order - thus, its safer for us to put at end.
+    #
+
+
+    # 
+    #
+    #  4. Convert all valid "long" to "long long" in the temporary file.
+    #     Validity => 
+    #     * long is not inside any string (e.g. in printf's).
+    #     * long is not a part of 'long long', 'long double' or 'long int long'.
+    #     Please note that comments are stripped by preprocessing here and 'long int'
+    #     is getting converted to 'long long int'.
+    #  5. Add 'L' in the end if the suffix is ['l'|'L'] or a combination of ['u'|'U'] 
+    #     & ['l'|'L']. 
+    if [ "$lp64_mode" = true -a "$l2ll_flag" = true ]; then
+        if [ ! -x /bin/l2ll  ]; then
+            print "$progname: Cannot find l2ll in /bin"
+            alldone 127        
+        fi
+        if [ "$assemble_only" = 1 -a "$outputFile" != "" ]; then
+            set -A pre_cmd ${set_args} "$compiler" "/E" "${incloptions[@]}" \
+                "${coptions[@]}" "/Fa${outputFile}" "$msfname" "${cloptions[@]}"
+        elif [ "$assemble_only" = 1 ]; then
+            set -A pre_cmd ${set_args} "$compiler" "/E" "${incloptions[@]}" \
+                "${coptions[@]}" "/Fa${asmname}" "$msfname" "${cloptions[@]}"
+        elif [ "$compile_only" = 1 -a "$outputFile" != "" ]; then
+            set -A pre_cmd ${set_args} "$compiler" "/E" "${incloptions[@]}" \
+                "${coptions[@]}" "/Fo${outputFile}" "$msfname" "${cloptions[@]}"
+        else
+            set -A pre_cmd ${set_args} "$compiler" "/E" "${incloptions[@]}" \
+                "${coptions[@]}" "/Fo$objname" "$msfname" "${cloptions[@]}"
+        fi
+	# Treat .C files like .cpp files before compiling preprocessed file.
+    	#
+	case $filename in
+        	*.C|*.cc|*.c++|*.cxx)
+	            set -A pre_cmd "${pre_cmd[@]}" "/TP"
+        	    ;;
+	esac
+       	
+        "${pre_cmd[@]}" > "$TMPFILE3" 2> "$TMPFILE2" < /dev/null
+	if [ $? -ne 0 ]; then
+		flip -u "$TMPFILE2"
+		printerror "$TMPFILE2"
+		alldone 127
+	fi
+        flip -u "$TMPFILE3"
+        l2ll "$TMPFILE3" "$TMPFILE4" 2>"$TMPFILE2"
+        exitStatus=$?
+        if [ "$exitStatus" != 0 ]; then
+		alldone $exitStatus;
+	fi
+        # Now we should compile above changed preprocessed file.
+	msfname="$(unixpath2win "$TMPFILE4")"
+	filename="${TMPFILE4##*/}"
+    fi
+
+        
+    if [ "$assemble_only" = 1 -a "$outputFile" != "" ]; then
+        set -A cmd ${set_args} "$compiler" "/c" "${incloptions[@]}" "${coptions[@]}" \
+               "/Fa${outputFile}" "$msfname" "${cloptions[@]}"
+    elif [ "$assemble_only" = 1 ]; then
+        set -A cmd ${set_args} "$compiler" "/c" "${incloptions[@]}" "${coptions[@]}" \
+               "/Fa${asmname}" "$msfname" "${cloptions[@]}"
+    elif [ "$compile_only" = 1 -a "$outputFile" != "" ]; then
+        set -A cmd ${set_args} "$compiler" "/c" "${incloptions[@]}" "${coptions[@]}" \
+               "/Fo${outputFile}" "$msfname" "${cloptions[@]}"
+    else
+        set -A cmd ${set_args} "$compiler" "/c" "${incloptions[@]}" "${coptions[@]}" \
+               "/Fo$objname" "$msfname" "${cloptions[@]}"
+    fi
+
+    # Treat .C files like .cpp files
+    #
+    case $filename in
+	*.C|*.cc|*.c++|*.cxx)
+            set -A cmd "${cmd[@]}" "/TP"
+            ;;
+    esac
+
+    if [ "$C89_ECHO" = 1 ]; then
+        print -r "${cmd[@]}"
+    fi
+
+    # redirect output to a file for 2 reasons:
+    #  1) to work around 'pipe'  problems with win32 executable programs.
+    #  2) to ensure we remove the 1st line that MSVC CL.exe emits
+    #     This is the filename) which we don't want to see
+    #     (GNU configure doesn't expect it)
+    #
+    "${cmd[@]}" > "$TMPFILE1" 2> "$TMPFILE2" < /dev/null
+    exitStatus=$?
+
+    # get rid of trailing ^M characters
+    flip -u "$TMPFILE1" "$TMPFILE2"
+
+    # print stderr stuff first
+    cat "$TMPFILE2" 1>&2
+
+    # print stdout next
+    printerror "$TMPFILE1"
+
+    if [ "$exitStatus" != 0 ]; then
+        alldone $exitStatus;
+    fi
+
+    set -A builtfiles ${set_args} "${builtfiles[@]}" "$objname"
+
+    if [ "$assemble_only" = 1 ]; then
+        setowner "$asmname"
+        setperms "$asmname"
+    else
+        setowner "$objname"
+        setperms "$objname"
+    fi
+    rm -f "$TMPFILE4"
+done
+
+if [ "$compile_only" = 1 -o "$assemble_only" = 1 ]; then
+    alldone 0;
+fi
+
+# use default executable file name if output file is not defined
+#
+if [ "$outputFile" = "" ]; then
+    if [ "$mkDll" = "false" ]; then
+        outputFile="$executableFile"
+        outputFile_unix="$executableFile"
+    else
+        outputFile="$dllFile"
+        outputFile_unix="$dllFile"
+    fi  
+fi    
+
+if [ "$gflag" = true -a "$dynamic" = false ]; then
+   if [ "$pflag" = false ]; then
+   	set -A ldoptions ${set_args} "${ldoptions[@]}" /pdb:"$outputFile.pdb"
+   else
+	set -A ldoptions ${set_args} "${ldoptions[@]}" 
+   fi
+fi
+
+if [ "$C89_DEBUG" = 1 ]; then
+    print "DEBUG $progname: linker:    $linker"
+    print "DEBUG $progname: ldoptions: ${ldoptions[@]}"
+    print "DEBUG $progname: Objs:      ${objfiles[@]}"
+fi
+
+
+# now initialize and export the LIB env. variable for use by the linker. 
+# This is a ';' separated list of directories in which the linker
+# will search for library files.
+#
+# if dynamic is true, then using GNU ld, 
+# so don't have to set LIB env. variable
+#
+if [ "$usestdlibdir" = true -a "$dynamic" != true ]; then
+    x="$(getconf CS_LIBDIR)"
+
+    # Point to correct lib for cross-compilation
+    typeset -u HOST_MACHINE=$PROCESSOR_ARCHITECTURE
+    if [ "$HOST_MACHINE" != "$TARGET_MACHINE" ]; then
+        typeset -l LIB_SUFFIX=$TARGET_MACHINE
+        x="$x/$LIB_SUFFIX"
+    fi
+
+    if [ "$LIB" = "" ]; then
+        LIB="$(unixpath2win "$x")"
+    else
+        LIB="$LIB;$(unixpath2win "$x")"
+    fi
+fi
+
+
+if [ "$mkDll" = "false" ]; then
+    #
+    # set a default heap and stack size if not already specified
+    #
+    if [ "$defHeapSize" != "" ]; then
+        set -A ldoptions ${set_args} "${ldoptions[@]}" \
+                "/heap:$defHeapSize,$defHeapCommit"
+    fi
+    if [ "$defStackSize" != "" ]; then
+        set -A ldoptions ${set_args} "${ldoptions[@]}" \
+                "/stack:$defStackSize,$defStackCommit"
+    fi
+fi
+
+if [ "$entryPoint" != "" ]; then
+    set -A ldoptions ${set_args} "${ldoptions[@]}" "${entryPoint}"
+fi
+
+    set -A ldoptions ${set_args} "${ldoptions[@]}" "/merge:.CRT=.rdata"
+
+if [ "$mkDll" = "true" ]; then
+    set -A cmd ${set_args} "$linker" "${ldoptions[@]}" \
+                    "/out:${outputFile}" "${objfiles[@]}" "crtdll.o" ${RES_FILE:+"${RES_FILE}"} \
+                    $DEF_LIBRARIES "${linkoptions[@]}"
+else
+    if [ "$dynamic" = true ]; then
+        unset ldoptions        # scrap options targeted for LINK.EXE
+
+        if [ "$gflag" = true ]; then
+            set -A ldoptions ${set_args} "-g"
+        fi
+
+        if [ "$rearch" = true ]; then 
+            set -A ldoptions ${set_args} "${ldoptions[@]}" -subsystem console \
+            -e ___MixedModeProcessStartup  
+        else
+            set -A ldoptions ${set_args} "${ldoptions[@]}" -subsystem posix
+        fi    
+
+        # use GNU's ld to create binaries that use .so archives
+        set -A cmd ${set_args} ld -stack 0x400000,0x10000 \
+            -Bdynamic -o "${outputFile_unix}" "${ldoptions[@]}" 
+
+        if [ "$LIBROOT" != "" ]; then
+            # Microsoft internal build environment
+            set -A cmd ${set_args} "${cmd[@]}" \
+                "-L $(LIBROOT)/opt/gcc.3.3/lib/gcc-lib/i586-pc-interix3/3.3"
+            set -A cmd ${set_args}  "${cmd[@]}" "-L${LIBROOT}"
+            set -A cmd ${set_args}  "${cmd[@]}" "${LIBROOT}/crt0.o"
+        else
+            LDLIB="/usr/lib"
+            # Point to correct lib for cross-compilation
+            typeset -u HOST_MACHINE=$PROCESSOR_ARCHITECTURE
+            if [ "$HOST_MACHINE" != "$TARGET_MACHINE" ]; then
+                typeset -l LIB_SUFFIX=$TARGET_MACHINE
+                LDLIB="/usr/lib/$LIB_SUFFIX"
+            fi
+            set -A cmd ${set_args} "${cmd[@]}" \
+                "-L /opt/gcc.3.3/lib/gcc-lib/i586-pc-interix3/3.3"
+            set -A cmd ${set_args}  "${cmd[@]}" "-L$LDLIB"
+            set -A cmd ${set_args}  "${cmd[@]}" "$LDLIB/crt0.o"
+        fi
+
+        # now add the -L options
+        set -A cmd ${set_args}  "${cmd[@]}" "${libdirs[@]}"
+
+        # now add the object files
+        # NOTE: gnu ld cannot handle .res files (unrecognized format !)
+        #      so we have to ignore the resource file
+        #
+##    set -A cmd ${set_args}  "${cmd[@]}" "${objfiles[@]}" ${RES_FILE:+"${RES_FILE}"}
+        set -A cmd ${set_args}  "${cmd[@]}" "${objfiles[@]}"
+
+        # now add the default libraries
+        set -A cmd ${set_args}  "${cmd[@]}" "-lc" "-lpsxdll"
+
+    else
+    
+        set -A cmd ${set_args} "$linker" "${ldoptions[@]}" \
+                "/out:${outputFile}" $crtfile \
+                "${objfiles[@]}" ${RES_FILE:+"${RES_FILE}"}  \
+                $DEF_LIBRARIES "${linkoptions[@]}"
+    fi
+fi
+
+if [ "$C89_ECHO" = 1 ]; then
+    print -r "LIB=$LIB  ${cmd[@]}"
+fi
+
+
+# if outputFile is not writeable, LINK.EXE will complain AND remove the file.
+# So, to avoid the complaints, we try to remove to file first.
+# Don't do anything if this is unsuccessful, since LINK.EXE will then
+# print out a diagnostic message which the user should see.
+#
+rm -f "${outputFile_unix}" > /dev/null 2>&1
+
+export LIB
+
+"${cmd[@]}" < /dev/null
+exitStatus=$?
+
+setowner "${outputFile_unix}"
+setperms "${outputFile_unix}"
+
+cleanup
+
+alldone $exitStatus
+
+#---- DONE -----

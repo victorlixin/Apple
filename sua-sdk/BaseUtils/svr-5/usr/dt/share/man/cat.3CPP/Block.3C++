@@ -1,0 +1,202 @@
+
+
+Block(3C++)                                           Block(3C++)
+
+SSyynnooppssiiss
+       #include <Block.h> #include <Blockio.h> namespace SCO_SC {
+
+       template <class T> class Block { public:
+
+       //  Constructors, destructor
+
+           Block();
+           Block(unsigned n);
+           ~Block();
+
+       //  Copy and assign
+
+           Block(const Block(T)& b);
+           Block<T>& operator=(const Block<T>& b);
+
+       //  Access elements
+
+           operator T*();
+           T* end();
+           T& operator[](int i);
+           T& operator[](unsigned i);
+
+           operator const T*()const;
+           const T* end()const;
+           const T& operator[](int i)const;
+           const T& operator[](unsigned i)const;
+
+       //  Length
+
+           unsigned size()const;
+           unsigned size(unsigned n);
+           int reserve(unsigned i);
+
+       //  Miscellaneous
+
+           void swap(Block<T>& b); };
+
+       //  Stream insertion
+
+       template <class T> ostream& operator<<(ostream& os,  const
+       Block<T>& b); }
+
+DDeessccrriippttiioonn
+       A  Block<T> is a contiguous region of memory in which ele-
+       ments of type T are stored in consecutive cells.   At  the
+       client's request, the number of cells may be changed (this
+       does not happen automatically).  Such requests are carried
+       out  in  three  steps:  (1) allocate a new region (2) copy
+       elements from the old region to the  new  region  (3)  de-
+       allocate  the  old  region.   Like  arrays, the cells of a
+       Block may be accessed using an integer index  or  ordinary
+       pointer  operations,  but  care  must  be taken not to use
+       pointers or references to obsolete regions.
+
+                                                                1
+
+Block(3C++)                                           Block(3C++)
+
+       T may be any type having T() T(T&) operator=
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Block(); A Block of size 0.
+
+       Block(unsigned n); A Block of size n.  If n  cells  cannot
+       be  acquired,  size() will subsequently return zero.  Ele-
+       ments are initialized  with  the  value  of  an  otherwise
+       uninitialized static object of type T.
+
+       ~Block(); Destructor.  Frees all size() cells.
+
+   CCooppyy aanndd aassssiiggnn
+       Copying  or  assigning  a  Block<T>  creates a copy of its
+       value.  For both operations, the size of the  result  will
+       be zero if b.size() cells cannot be acquired.
+
+       Block(const  Block<T>&  b);  Copy  constructor.   Acquires
+       b.size() cells.
+
+       Block<T>&  operator=(const   Block<T>&   b);   Assignment.
+       Acquires b.size() cells and frees size() cells.
+
+   AAcccceessss eelleemmeennttss
+       The  functions  in this group yield pointers or references
+       to cells.  Such pointers or references are valid  only  as
+       long  as  same  storage region remains associated with the
+       Block.
+
+       operator T*(); A pointer to the first cell  of  the  Block
+       (the cell with index 0).  Useful as an implicit conversion
+       in contexts involving pointer arithmetic.  For example, if
+       b is a Block, then b+i is equivalent to (T*)b+i.
+
+       T*  end(); A pointer just beyond the last cell.  For exam-
+       ple, if b is  a  Block,  then  b.end()  is  equivalent  to
+       (T*)b+b.size().
+
+       T&  operator[](int  i); A reference to the cell with index
+       i.
+
+       T& operator[](unsigned i); A reference to  the  cell  with
+       index i.
+
+       operator const T*()const;
+
+       const T* end()const;
+
+       const T& operator[](int i)const;
+
+       const  T& operator[](unsigned i)const; Like the above, but
+       these can be used on  constant  as  well  as  non-constant
+       Blocks.
+
+                                                                2
+
+Block(3C++)                                           Block(3C++)
+
+   LLeennggtthh
+       unsigned size()const; The number of cells in the Block.
+
+       unsigned  size(unsigned  n);  Changes the region of memory
+       associated with the Block to a new region having  n  cells
+       and  copies  elements  from  the  old  region into the new
+       region.  If the new region is larger  than  the  old,  the
+       excess element are set to the value of an otherwise unini-
+       tialized static object of type T.  Otherwise, only  enough
+       elements  are  copied  to fill the new region.  If n cells
+       cannot be acquired, the size is set to zero.  Returns  the
+       new size.
+
+       int reserve(unsigned i); Increases the size, if necessary,
+       to some value strictly greater than i.   In  other  words,
+       calling  reserve(i)  is  a way of guaranteeing that i is a
+       valid index (see the Example).  If  the  size  is  already
+       greater  than  i,  the  operation  is very fast and has no
+       effect.  If the size must  be  increased  but  enough  new
+       cells  cannot  be  acquired,  the  size  is  set  to zero.
+       Returns nonzero if the operation succeeds.
+
+   SSttrreeaamm iinnsseerrttiioonn
+       ostream&  operator<<(ostream&   os,const   Block<T>&   b);
+       Inserts  an ASCII representation of b into os.  The repre-
+       sentation has the form [e1,e2,...en] where the e's are the
+       elements of b.
+
+   MMiisscceellllaanneeoouuss
+       void  swap(Block<T>&  b); The memory associated with b and
+       the memory associated with this  Block  are  swapped.   No
+       result is returned and no elements are copied or moved.
+
+CCoommpplleexxiittyy
+       Block is implemented by straightforward use of the new and
+       delete operators, with the sole  exception  of  reserve().
+       Calling  b.reserve(i)  checks inline that the size of b is
+       greater then  i;  if  it  isn't,  the  size  may  well  be
+       increased  considerably  beyond i (the present strategy is
+       to multiply the current size by the smallest power of  1.5
+       needed to increase it beyond i).
+
+EExxaammppllee
+       reserve() was designed to be used in the following way:
+           unsigned i = 0;
+           Block<int> b;
+           int x;
+           while(cin >> x){
+               b.reserve(i);   guarantee that i is a valid index
+               b[i++] = x;
+           }
+
+BBuuggss
+       Elements   are   copied   during   reallocation  by  using
+
+                                                                3
+
+Block(3C++)                                           Block(3C++)
+
+       T::operator= instead of T(T&).  Functions that access ele-
+       ments  yield  pointers or references that are only good as
+       long as the as same storage region remains associated with
+       the Block.
+
+EErrrroorrss
+       The only error detected is running out of memory.  This is
+       indicated in all cases by setting the size  of  the  Block
+       for which the allocation failed to zero.
+
+NNootteess
+       Array  algorithms  (see  Array_alg(3C++)) implement nearly
+       100 algorithms on  blocks  of  contiguously  stored  data,
+       including  algorithms  for  searching, sorting, inserting,
+       removing, and partitioning.  These algorithms can be  used
+       on  either  arrays or Blocks.  For parameterized variable-
+       size arrays with non-integral index types, see  Map(3C++).
+
+RReeffeerreenncceess
+
+                                                                4
+

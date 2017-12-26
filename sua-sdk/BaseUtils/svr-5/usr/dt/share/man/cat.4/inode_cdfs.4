@@ -1,0 +1,90 @@
+
+
+inode_cdfs(4)                                       inode_cdfs(4)
+
+SSyynnooppssiiss
+       #include  <sys/param.h>  #include  <sys/types.h>  #include
+       <sys/vnode.h> #include <sys/fs/cdfs_inode.h>
+
+DDeessccrriippttiioonn
+       For each file and directory in a cdfs file system that  is
+       currently  being  referenced,  an  in-core data structure,
+       struct cdfs_inode, is used to store all of the information
+       related to that file or directory.
+
+       The  information  includes items such as: the Group ID and
+       User ID of the file or directory the number  of  bytes  in
+       the  file  the  file or directory's permissions (read/exe-
+       cute) the date and time the file or directory was  created
+       the  type  of  file (regular, directory, block, character,
+       symbolic link, pipe).
+
+       The cdfs_inode structure is defined  in  the  cdfs_inode.h
+       header  file,  and  is  as  follows:  struct  cdfs_inode {
+            struct cdfs_inode  *i_FreeFwd;    /* Free  list  for-
+       ward  link  */       struct cdfs_inode   *i_FreeBack;   /*
+       Free     list     backward     link     */          struct
+       cdfs_inode   *i_HashFwd;    /*  Hash  list forward link */
+            struct cdfs_inode  *i_HashBack;   /* Hash list  back-
+       ward link */      uint_t    i_Flags;  /* Inode flags - See
+       CDFS struct */      struct cdfs_fid     i_Fid;    /*  File
+       ID info */      struct cdfs_fid     i_ParentFid;   /* Par-
+       ent's File ID info */      uid_t     i_UserID; /* User  ID
+       */         gid_t     i_GroupID;     /*    Group    ID   */
+            uint_t    i_Mode;   /* File type, Mode, and Perms  */
+            uint_t    i_Size;   /*  Total  #  of bytes in file */
+            uint_t    i_LinkCnt;     /* # of  links  to  file  */
+            dev_t     i_DevNum; /*   Device  #  of  BLK/CHR  file
+       type*/      ulong_t   i_LockOwner;   /* Process # of owner
+       of lock */      short     i_Count;  /* # of inode locks by
+       lock owner */      uint_t    i_DRcount;     /* # of Direc-
+       tory  Records */      struct vfs     *i_vfs;   /* File sys
+       associated with inode */       daddr_t   i_NextByte;    /*
+       Next  read-ahead  offset  (Byte) */      int  i_mapsz;  /*
+       kmem_alloc'ed size */      long i_mapcnt; /*  mappings  to
+       file  pages  */      struct cdfs_drec    *i_DirRec;     /*
+       1st   link-list   Dir   Rec   of   file   */        struct
+       cdfs_xar     *i_Xar;   /*  XAR  info  from last Dir Rec */
+            struct cdfs_rrip  *i_Rrip;  /* RRIP  info  from  last
+       Dir  Rec */      struct vnode   *i_Vnode; /* Vnode associ-
+       ated with Inode */
+            timestruc_t    i_AccessDate;  /*     File      Access
+       date/time  */       timestruc_t    i_ModDate;     /*  File
+       Modification                 date/time                  */
+            timestruc_t    i_CreateDate;  /*     File    Creation
+       date/time  */       timestruc_t    i_ExpireDate;  /*  File
+       Expiration                   date/time                  */
+            timestruc_t    i_EffectDate;  /*    File    Effective
+       date/time  */       timestruc_t    i_AttrDate;    /*  File
+
+                              CD-ROM                            1
+
+inode_cdfs(4)                                       inode_cdfs(4)
+
+       Attribute          Change           date/time           */
+            timestruc_t    i_BackupDate;  /*      File     Backup
+       date/time    */         struct     pathname     i_SymLink;
+            off_t     i_DirOffset;   /*  Dir offset of last ref'd
+       entry  */       ulong     i_VerCode;     /*  version  code
+       attribute  */      daddr_t   i_ReadAhead;   /* File offset
+       of read-ahead byte */      /*      * The following  fields
+       cause storage to be allocated for the      * corresponding
+       data structures.  Since each  inode  will  usually       *
+       need  each of these structures, this is a simple mechanism
+       for      * getting the needed storage.  Reference to these
+       structures  should       *  be  done via the corresponding
+       pointers allocated above.  Thus,      * if the storage  is
+       to be dynamically allocated, very little      * code needs
+       to          change.                */               struct
+       cdfs_drec    i_DirRecStorage;    /*   Static  storage  for
+       i_DirRec  */       struct   cdfs_xar     i_XarStorage;  /*
+       Static     storage     for     i_Xar     */         struct
+       cdfs_rrip    i_RripStorage; /* Static storage  for  i_Rrip
+       */      struct vnode   i_VnodeStorage;     /* Static stor-
+       age for i_Vnode */ }
+
+RReeffeerreenncceess
+       cdfs-specific cdfs-specific
+
+                              CD-ROM                            2
+

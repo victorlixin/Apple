@@ -1,0 +1,83 @@
+
+
+getvfsent(3G)                                       getvfsent(3G)
+
+SSyynnooppssiiss
+       cc [flag . . . ] file . . . -lgen [library] . . .
+
+       #include <stdio.h> #include <sys/vfstab.h>
+
+       int getvfsent (FILE *fp, struct vfstab *vp);
+
+       int  getvfsfile  (FILE  *fp, struct vfstab *vp, const char
+       *file);
+
+       int getvfsspec (FILE *fp, struct vfstab  *vp,  const  char
+       *spec);
+
+       int  getvfsany  (FILE *fp, struct vfstab *vp, const struct
+       vfstab *vref);
+
+DDeessccrriippttiioonn
+       getvfsent, getvfsfile, getvfsspec, and getvfsany each fill
+       in  the  structure  pointed  to  by vp with the broken-out
+       fields of a line in the /etc/vfstab file.   Each  line  in
+       the  file  contains  a  vfstab  structure, declared in the
+       sys/vfstab.h     header      file:      char *vfs_special;
+       char *vfs_fsckdev;   char *vfs_mountp;   char *vfs_fstype;
+       char *vfs_fsckpass; char *vfs_automnt;  char *vfs_mntopts;
+       char *vfs_macceiling;
+
+       If  the fields have meaning, the meanings are described in
+       Fields with no valid information are set to point  at  the
+       null string.
+
+       getvfsent  returns  a pointer to the next vfstab structure
+       in the file; so successive calls can be used to search the
+       entire  file.   getvfsfile searches the file referenced by
+       fp until a mount point matching file is found and fills vp
+       with  the  fields  from  the line in the file.  getvfsspec
+       searches the file referenced by fp until a special  device
+       matching  spec  is found and fills vp with the fields from
+       the line in the file.  spec will try to  match  on  device
+       type  (block  or  character  special)  and major and minor
+       device numbers.  If it cannot match in this  manner,  then
+       it compares the strings.  getvfsany searches the file ref-
+       erenced by fp until a match is found between a line in the
+       file  and  vref.   vref  matches  the line if all non-null
+       entries in vref match  the  corresponding  fields  in  the
+       file.
+
+       Note that these routines do not open, close, or rewind the
+       file.
+
+   FFiilleess
+       /etc/vfstab
+
+   RReettuurrnn vvaalluueess
+       If the next entry is successfully read by getvfsent  or  a
+
+                                                                1
+
+getvfsent(3G)                                       getvfsent(3G)
+
+       match  is found with getvfsfile, getvfsspec, or getvfsany,
+       0 is returned.  If an end-of-file is encountered on  read-
+       ing,  these  functions  return -1.  If an error is encoun-
+       tered, a value greater than 0 is returned.
+
+   EErrrroorrss
+       The possible error values are:
+
+       A line in the file exceeded the internal  buffer  size  of
+       VFS_LINE_MAX.   A  line  in  the  file  contains  too many
+       fields.  A line in the file contains too few fields.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The members of the vfstab structure point  to  information
+       contained  in a static area, so it must be copied if it is
+       to be saved.
+
+                                                                2
+

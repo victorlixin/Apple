@@ -1,0 +1,118 @@
+
+
+directory(3Cbsd)                                 directory(3Cbsd)
+
+SSyynnooppssiiss
+       /usr/ucb/cc [flag . . . ] file . . .
+
+       #include <sys/types.h> #include <sys/dir.h>
+
+       DIR *opendir(const char *filename);
+
+       struct direct *readdir(DIR *dirp);
+
+       long telldir(DIR *dirp);
+
+       void seekdir(DIR *dirp, long loc);
+
+       void rewinddir(DIR *dirp);
+
+       int closedir(DIR *dirp);
+
+DDeessccrriippttiioonn
+       These  routines  are supplied for use by applications that
+       require BSD system compatibility only;  all other applica-
+       tions  should  use  the standard libc interfaces, instead;
+       see
+
+       opendir opens the directory named by filename and  associ-
+       ates  a  directory  stream  with  it.   opendir  returns a
+       pointer to be used to identify  the  directory  stream  in
+       subsequent operations.  The directory stream is positioned
+       at the first entry.  A null pointer is returned  if  file-
+       name  cannot  be  accessed or is not a directory, or if it
+       cannot malloc enough memory to hold a DIR structure  or  a
+       buffer for the directory entries.
+
+       readdir  returns  a  pointer  to the next active directory
+       entry and positions  the  directory  stream  at  the  next
+       entry.  No inactive entries are returned.  It returns NULL
+       upon reaching the end of the directory or  upon  detecting
+       an  invalid  location  in  the directory.  readdir buffers
+       several directory entries per actual read operation; read-
+       dir  marks  for update the st_atime field of the directory
+       each time the directory is actually read.
+
+       telldir returns the current location associated  with  the
+       named directory stream.
+
+       seekdir  sets  the  position of the next read operation on
+       the directory stream.  The new  position  reverts  to  the
+       position  associated with the directory stream at the time
+       the telldir operation that  provides  loc  was  performed.
+       Values returned by telldir are valid only if the directory
+       has not changed because of compaction or expansion.   This
+       situation  is not a problem with System V, but it may be a
+       problem with some file system types.
+
+       rewinddir resets  the  position  of  the  named  directory
+
+                     BSD System Compatibility                   1
+
+directory(3Cbsd)                                 directory(3Cbsd)
+
+       stream  to the beginning of the directory.  It also causes
+       the directory stream to refer to the current state of  the
+       corresponding directory, as a call to opendir would.
+
+       closedir  closes  the named directory stream and frees the
+       DIR structure.
+
+       The following errors can occur as a result of these opera-
+       tions.
+
+       opendir  returns  NULL on failure and sets errno to one of
+       the following values: A component of  filename  is  not  a
+       directory.   A component of filename denies search permis-
+       sion.  Read permission is denied on the  specified  direc-
+       tory.   The  maximum  number  of file descriptors are cur-
+       rently open.  The system file  table  is  full.   filename
+       points outside the allocated address space.  Too many sym-
+       bolic links were encountered in translating filename.  The
+       length of the filename argument exceeds {PATH_MAX}, or the
+       length of a filename component  exceeds  {NAME_MAX}  while
+       {_POSIX_NO_TRUNC}  is  in effect.  A component of filename
+       does not exist or is a null pathname.
+
+       readdir returns NULL on failure and sets errno to  one  of
+       the  following  values:  The  current file pointer for the
+       directory is not located  at  a  valid  entry.   The  file
+       descriptor  determined  by  the  DIR  stream  is no longer
+       valid.  This result occurs if  the  DIR  stream  has  been
+       closed.
+
+       closedir  returns -1 on failure and sets errno to the fol-
+       lowing value: The file descriptor determined  by  the  DIR
+       stream is no longer valid.  This results if the DIR stream
+       has been closed.
+
+   EExxaammpplleess
+       Here is a sample program that prints the names of all  the
+       files   in   the  current  directory:  #include  <stdio.h>
+       #include <sys/types.h> #include <sys/dir.h>
+
+       main() {      DIR *dirp;      struct direct *directp;
+
+            dirp = opendir( "." );      while ( (directp =  read-
+       dir(  dirp  ))  !=  NULL )           (void)printf( "%s\n",
+       directp->d_name );      closedir( dirp );      return (0);
+       }
+
+RReeffeerreenncceess
+RReeffeerreenncceess
+NNoottiicceess
+       rewinddir  is  implemented  as  a  macro,  so its function
+       address cannot be taken.
+
+                     BSD System Compatibility                   2
+

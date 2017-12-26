@@ -1,0 +1,84 @@
+init(1)                                                         init(1)
+
+  iinniitt
+
+  NNAAMMEE
+
+    init - initialize processes at startup
+
+  SSYYNNOOPPSSIISS
+
+    /usr/sbin/init
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The iinniitt utility is the first process that runs when the Subsystem for UNIX-based Applications (SUA)
+    starts. It is similar to //eettcc//iinniitt on traditional UNIX systems, except
+    that the SUA version does not use //eettcc//iinniittttaabb because SUA runs
+    only at level 2.
+
+    When iinniitt starts, it executes in alphabetic order all scripts in //eettcc//
+    rrcc22..dd using the following command:
+
+    /bin/ksh /etc/rc2.d/scriptname start >> /var/adm/lob/init.log
+
+    The //eettcc//rrcc22..dd directory does not contain the scripts themselves, but
+    rather contains symbolic links to the actual scripts located in //eettcc//
+    iinniitt..dd. The scripts are typically used to start and stop SUA daemons
+    or to perform other tasks required when the system initializes or shuts
+    down. The scripts in //eettcc//iinniitt..dd can be named to indicate their function,
+    while the symbolic links in //eettcc//rrcc22..dd are named according to whether the
+    script is to be run at startup or shutdown and according to the order in
+    which the scripts are to be run. The names of the links in //eettcc//rrcc22..dd
+    begin either with the letter SS or KK, followed by a two-digit number that
+    determines the sequence in which the scripts are executed.
+
+    The iinniitt utility has two states: up and down. When iinniitt starts, it starts
+    in the up state, and only the scripts of the links whose names start with
+    the letter S are executed. If iinniitt receives a SIGHUP signal, it switches
+    from one state to the other. If this places iinniitt into the down state, it
+    executes the scripts of the links whose names start with the letter K
+    using the following command:
+
+    /bin/ksh /etc/rc2.d/scriptname stop >> /var/adm/log/init.log
+
+    If iinniitt receives a SIGTERM or SIGQUIT signal, it terminates after it
+    executes all of the scripts whose symbolic links begin with K.
+
+    The administrator can change the names of symbolic links in //eettcc//rrcc22..dd to
+    do the following:
+
+    *     Control the order in which utilities are run or daemons are started
+          or stopped by changing the sequence number.
+    *     Control whether a utility is run or a daemon is started or stopped
+          by adding or removing the letter S or K to the beginning of the name
+          of the symbolic link.
+
+  EExxaammppllee ssccrriipptt
+
+    # filename:    /etc/init.d/cron
+    # function:    to start/stop the cron daemon
+
+    # first get generic functions
+    . /etc/init.d/funcs
+
+    # set the PATH properly to find the appropriate utils
+    PATH=/bin:/usr/contrib/bin:/usr/contrib
+
+    # now either 'start' or 'stop'  the service - depends on the 1st argument
+    #
+    case $1 in
+            start)
+    	     # start the cron daemon
+                    /usr/sbin/cron
+                    [ $? = 0 ] && echo "cron started"
+                    ;;
+            stop)
+    	    # stop all instances of the cron daemon
+    	    #
+                    killall cron
+                    [ $? = 0 ] && echo "cron stopped"
+                    ;;
+            esac
+    exit 0
+

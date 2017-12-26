@@ -1,0 +1,155 @@
+
+
+OFBinding(3sadm)                                 OFBinding(3sadm)
+
+SSyynnooppssiiss
+       CC ... -lsysadm -lvtcl -ltclx -ltcl -lsocket -lgen -lm
+
+       #include <scoadmin/osaStdDef.h>
+
+       void    OFBinding(errStatusPtr,   className,   attributes,
+       attributeCount,
+                      groups,  groupCount,   operations,   opera-
+       tionCount,
+                      requestProcessor, osaDataPtr)
+
+DDeessccrriippttiioonn
+       This  procedure  allows  C/C++ to bind a class description
+       table (CDT) to  the  admin  services  library  connection.
+       After  such  a binding the admin services library can look
+       into the class's CDT and call the appropriate OSA  defined
+       procedures.
+
+   AArrgguummeennttss
+       A  pointer  to the error stack data structure. If an error
+       occurs the appropriate error will be placed in  the  error
+       stack. This data can be referenced using the library func-
+       tions associated with the error stack.  A pointer  to  the
+       string  containing  the name of the class being described.
+       An array of attribute descriptions that  outline  all  the
+       attributes  in the class being bound.  A count of the num-
+       ber of attributes described in the previous array  parame-
+       ter.   An array of group descriptions that outline all the
+       groups in the class being bound.  A count of the number of
+       groups  described  in  the  previous  array parameter.  An
+       array of operation descriptions that outline all the oper-
+       ations in the class being bound.  A count of the number of
+       operations described in the previous array  parameter.   A
+       pointer  to  the  optional requestProcessor() routine sup-
+       plied by the OSA class. Set to NULL if no such routine  is
+       supplied.   A  handle  to  any  data  segment that the OSA
+       wishes to assign to a specific class.  Set to NULL if  not
+       used.    OFBinding   needs  three  tables  describing  the
+       attributes, groups and operations that compose a class. It
+       also needs a formal name for the class so that invokers of
+       the class will have some sort of handle on it. The  tables
+       that  the  class  needs are described in the sections that
+       follow.
+
+   AAttttrriibbuuttee ttaabbllee
+       struct OSAAttr_t {
+           attributeName_pt  name;
+           attributeToken_t  token;
+           char             *validOperations;
+           filterToken_t     validFilters;
+           OSACheckBit_t      dataType;  }  These  describe  each
+       attribute  that  can be accessed by this class. The fields
+       in  the  OSAAttr_t  are  defined  in  the  following  way.
+       attributeName_pt  name  is  the name by which the users of
+
+                                                                1
+
+OFBinding(3sadm)                                 OFBinding(3sadm)
+
+       the OSA will identify the attribute.  The attributeToken_t
+       token  is an integer by which the OSA itself will identify
+       the attribute when it gets or returns data to or from  the
+       admin  services  library.  The char *validOperations is an
+       string list of all the operations (besides  create)  which
+       are  allowed  to work on this attribute.  create is always
+       allowed to work on  any  attribute  (have  that  attribute
+       include  in  the command line passed from the client). The
+       filterToken_t validFilters is a union  of  all  the  valid
+       filter  operations  that  are  allowed  to  reference this
+       attribute. The filterToken_ts are defined in  the  <scoad-
+       min/osaStdDef.h>  file.   The  OSACheckBit_t dataType is a
+       union of either ATTR_SINGLE  or  ATTR_SET  and  ATTR_LONG,
+       ATTR_DOUBLE,  or  ATTR_STRING.  This describes the type of
+       data that the attribute contains.
+
+   GGrroouupp ttaabbllee
+       struct OSAGroup_t {
+           attributeName_pt  name;
+           char             *assocAttrs; }  These  described  the
+       all  the attribute groups that can be accessed by users of
+       the class being bound.  Any of the  attributes  listed  in
+       the OSAAttr_t table can be grouped together and referenced
+       as one for convince sake. Only the Get  and  Replace-with-
+       default  actions  can  work on grouped attributes. The two
+       fields in the  OSAGroup_t  arrays  are  as  follows.   The
+       attributeName_pt  name  field represents what the users of
+       the OSA will access the group of attributes by.  The  char
+       *assocAttrs is a list of attributes found in the OSAAttr_t
+       table which the admin services library will substitute the
+       group name for before calling any OSA functions.
+
+   OOppeerraattiioonn ttaabbllee
+       struct OSAOp_t {
+           operationName_pt       name;
+           executionProcedure_fpt executionProcedure;
+           OSACheckBit_t           callPerAttribute; } This table
+       defines all the operations that users  of  the  class  can
+       call on.  Each operations must list how it is to be called
+       by the user (operationName_pt name), what  C/C++  function
+       the  admin services library should call when the operation
+       is to be performed (executionProcedure_fpt executionProce-
+       dure), and in what synchronization the procedure should be
+       called (OSACheckBit_t callPerAttribute, which should  con-
+       tain either OP_PER_ATTR or OP_PER_OBJECT).
+
+       The  OFBinding  routine  also allows the OSA to specify an
+       request processor to handle incoming BMIP requests. If the
+       OSA  needs  to  perform such specialized functions as con-
+       tainment, synchronization, scoping or first  pass  valida-
+       tion; then it should provide a request processor and point
+       to its location with this parameter.
+
+       The OFBinding routine also allows the OSA to attach a void
+
+                                                                2
+
+OFBinding(3sadm)                                 OFBinding(3sadm)
+
+       pointer  with every declared class. This pointer can point
+       to anything, and is a useful way for multiple classes that
+       are  identical  in function but not in data to be created.
+       Simply call OFBinding once for each class, with  the  osa-
+       DataPtr  pointing  to  different  data storage areas. This
+       variable is never examined by the  services  library,  and
+       is  forwarded  to  all  functions in the OSA called by the
+       library.
+
+DDiiaaggnnoossttiiccss
+       The procedure can return the following errors:  The  func-
+       tion has been called more than once and a previous invoca-
+       tion has used the same className value.  The variable exe-
+       cutionProcedure_fpt  executionProcedure has been left NULL
+       in the OSAOp_t description of one of the operations.   The
+       variable   executionProcedure_fpt  executionProcedure  has
+       been left NULL in the OSAOp_t description  of  the  filter
+       operation.   The  operation  array OSAOp_t operations[] is
+       empty and contains no data.  The  list  of  operations  in
+       OSAAttr_t's  char  *validOperations  variable  can  not be
+       interpreted by OFBinding().  One of the operations  listed
+       in  the  OSAAttr_t's char *validOperations variable is not
+       listed in the OSAOp_t array.  The list  of  attributes  in
+       OSAGroup_t's  char  *assocAttrs variable can not be inter-
+       preted by OFBinding().  One of the  attributes  listed  in
+       the  OSAGroup_t's  char *assocAttrs variable is not listed
+       in the OSAAttr_t array.   The  attribute  array  OSAAttr_t
+       attributes[] is empty and contains no data.
+
+RReeffeerreenncceess
+
+                                                                3
+

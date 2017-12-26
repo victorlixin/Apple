@@ -1,0 +1,107 @@
+
+
+kill(2)                                                   kill(2)
+
+SSyynnooppssiiss
+       #include <sys/types.h> #include <signal.h>
+
+       int kill(pid_t pid, int sig);
+
+DDeessccrriippttiioonn
+       kill  sends a signal to a process or a group of processes.
+       The process or group of processes to which the  signal  is
+       to  be sent is specified by pid.  The signal that is to be
+       sent is specified by sig and is either one from  the  list
+       given in signal [see or 0.  If sig is 0 (the null signal),
+       error checking is performed  but  no  signal  is  actually
+       sent.  This can be used to check the validity of pid.
+
+       In  order  to send the signal to the target process (pid),
+       the sending process must have permission to do so, subject
+       to  the  following  ownership  restrictions:  The  real or
+       effective user ID of the sending process  must  match  the
+       real  or  saved  [from exec] user ID of the receiving pro-
+       cess, unless the sending process has  the  P_OWNER  privi-
+       lege,  or  sig  is SIGCONT and the sending process has the
+       same session ID as the receiving process.
+
+       The process with ID 0 and the process with ID 1  are  spe-
+       cial processes [see and will be referred to below as proc0
+       and proc1, respectively.
+
+       If pid is greater than 0, sig will be sent to the  process
+       whose process ID is equal to pid, subject to the ownership
+       restrictions, above.  pid may equal 1.
+
+       If pid is negative but not (pid_t)-1, sig will be sent  to
+       all processes whose process group ID is equal to the abso-
+       lute value of pid and for which the process has permission
+       to send a signal.
+
+       If  pid  is 0, sig will be sent to all processes excluding
+       proc0 and proc1 whose process group ID  is  equal  to  the
+       process  group  ID of the sender.  Permission is needed to
+       send a signal to process groups.
+
+       If pid is (pid_t)-1 and the sending process does not  have
+       the  P_OWNER  privilege, sig will be sent to all processes
+       excluding proc0 and proc1 whose real user ID is  equal  to
+       the effective user ID of the sender.
+
+       If  pid  is  (pid_t)-1  and  the  sending  process has the
+       P_OWNER privilege, sig  will  be  sent  to  all  processes
+       excluding proc0 and proc1.
+
+   RReettuurrnn vvaalluueess
+       On  success, kill returns 0.  On failure, kill returns -1,
+       sets errno to identify the error, and sends no signal.
+
+                                                                1
+
+kill(2)                                                   kill(2)
+
+   EErrrroorrss
+       In the following conditions, kill fails and sets errno to:
+       sig  is not a valid signal number.  sig is SIGKILL and pid
+       is (pid_t)1 (i.e., pid specifies proc1).  The sending pro-
+       cess  does  not  have  the  P_OWNER privilege, the real or
+       effective user ID of the sending process  does  not  match
+       the  real  or  saved user ID of the receiving process, and
+       the calling process is not sending SIGCONT  to  a  process
+       that  shares  the  same session ID.  No process or process
+       group can be found corresponding to that specified by pid.
+       Also see ``Standards conformance'', below.
+
+SSttaannddaarrddss ccoonnffoorrmmaannccee
+       The  default  behavior  of  kill conforms to X/Open System
+       Headers and Interfaces, Volume 4, Issue 2.
+
+       The default behavior of kill is to fail with  ESRCH  if  a
+       process  table  entry is found matching pid, but that pro-
+       cess is a zombie (a process that  has  exited,  but  whose
+       entries  have  not  yet  been removed from system tables).
+       Federal  Information  Processing  Standard  (FIPS)   151-2
+       requires  that  kill  applied to a zombie process (or to a
+       set of processes all of  which  are  zombies)  to  succeed
+       instead  of  failing  with  ESRCH.   To get this behavior,
+       change the PROCSET_ZOMBIES  system  tunable  from  0  (the
+       default value) to 1 and rebuild the kernel.
+
+RReeffeerreenncceess
+NNoottiicceess
+       sigsend  is  a  more versatile way to send signals to pro-
+       cesses.  The user is encouraged to use sigsend instead  of
+       kill.
+
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Signals can be posted from one process to another via kill
+       but not to specific threads within the receiving  process.
+       See  for  further details.  See for intra-process, thread-
+       to-thread signaling.
+
+   CCoonnssiiddeerraattiioonnss ffoorr lliigghhttwweeiigghhtt pprroocceesssseess
+       Additionally, signals from one process cannot be addressed
+       to specific LWPs in the receiving process.
+
+                                                                2
+

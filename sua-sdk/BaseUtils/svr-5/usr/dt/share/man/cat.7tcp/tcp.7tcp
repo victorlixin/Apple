@@ -1,0 +1,258 @@
+
+
+tcp(7tcp)                                               tcp(7tcp)
+
+SSyynnooppssiiss
+       Programmer's  interface:  #include  <sys/types.h> #include
+       <sys/socket.h> #include  <netinet/in.h>
+
+       s = socket(AF_INET, SOCK_STREAM, 0); s =  socket(AF_INET6,
+       SOCK_STREAM, 0);
+
+       #include    <paths.h>    #include    <fcntl.h>    #include
+       <netinet/ip_var.h>
+
+       #include   <netinet/tcp.h>   #include   <netinet/in_pcb.h>
+       #include <netinet/tcp_timer.h>
+
+       #include <netinet/tcp_var.h>
+
+       fd  =  open(_PATH_TCP,  flags);  fd  = open(_PATH_TCPIPV6,
+       flags);
+
+DDeessccrriippttiioonn
+       The TCP protocol provides reliable, flow-controlled,  two-
+       way  transmission  of  data.  It is a byte-stream protocol
+       used to support the SOCK_STREAM abstraction. TCP uses  the
+       standard  Internet  address formats and, in addition, pro-
+       vides a per-host collection of port addresses. Thus,  each
+       address  is composed of an Internet address specifying the
+       host, with a specific TCP port on the host identifying the
+       peer entity.
+
+       Sockets  using  the TCP protocol are either active or pas-
+       sive. Active sockets initiate connections to passive sock-
+       ets.  By default TCP sockets are created active; to create
+       a passive socket the system call must be used after  bind-
+       ing  the socket with the system call. Only passive sockets
+       may use the call  to  accept  incoming  connections.  Only
+       active sockets may use the call to initiate connections.
+
+       Passive  sockets  may underspecify their location to match
+       incoming connection requests from multiple networks.  This
+       technique,  called  wildcard  addressing,  allows a single
+       server to provide service to clients on multiple networks.
+       To  create a socket that listens on all IPv4 networks, the
+       Internet address INADDR_ANY must be bound.   To  create  a
+       socket  that listens on all IPv6 networks (including those
+       which have IPv4-mapped addresses),  the  Internet  address
+       in6addr_any  must  be  bound.   The  TCP port may still be
+       specified at this time; if the port is not  specified  the
+       system  will assign one. Once a connection has been estab-
+       lished, the socket's address is fixed by the peer entity's
+       location.   The address assigned the socket is the address
+       associated with the network interface through which  pack-
+       ets  are  being  transmitted  and received.  Normally this
+       address corresponds to the peer entity's network.
+
+       TCP supports several socket options  which  are  set  with
+
+                                                                1
+
+tcp(7tcp)                                               tcp(7tcp)
+
+       setsockopt and tested with getsockopt (see
+
+       Under  most  circumstances, TCP sends data when it is pre-
+       sented; when outstanding data has not  yet  been  acknowl-
+       edged,  it gathers small amounts of output to be sent in a
+       single packet once an acknowledgment is  received.  For  a
+       small  number of clients, such as window systems that send
+       a stream of mouse events which receive  no  replies,  this
+       packetization may cause significant delays. Therefore, TCP
+       provides   a    boolean    option,    TCP_NODELAY    (from
+       <netinet/tcp.h>,  to  defeat  this  algorithm.  The option
+       level for the setsockopt call is IPPROTO_TCP.
+
+       It is possible to retrieve or change the value being  used
+       for  the maximum segment size of an active connection with
+       the TCP_MAXSEG option.  TCP_MAXSEG  cannot  be  set  to  a
+       value  larger than TCP has already determined; it can only
+       be made smaller.
+
+       The TCP_KEEPIDLE option can be used to control  the  start
+       interval  for  TCP  keep-alive  messages.   Normally, when
+       enabled via SO_KEEPALIVE, keep-alives do not  start  until
+       the connection has been idle for 2 hours.  This option can
+       be used to alter this interval.  The option  value  should
+       be  specified in seconds.  The minimum is restricted to 10
+       seconds.  Setting TCP_KEEPIDLE to  0  restores  the  keep-
+       alive start interval to the default value.
+
+       Normally  TCP will send a keep-alive every 75 seconds once
+       the connection has been  idle  for  the  KEEPIDLE  period.
+       Keep-alives  may  be  sent  more  frequently  by using the
+       TCP_KEEPINTVL option to specify the interval  in  seconds.
+       The  minimum is restricted to 1 second.  Setting TCP_KEEP-
+       INTVL to 0 restores the keep-alive interval to the default
+       value.
+
+       Normally  TCP  will send 8 keep-alives prior to giving up.
+       This number may be altered by using the  TCP_NKEEP  option
+       to specify the desired number of keep-alives.  The minimum
+       value is constrained to be  1.   Setting  TCP_NKEEP  to  0
+       restores the keep-alive interval to the default value.
+
+       Normally TCP will try to retransmit for 511 seconds before
+       dropping a connection.  This value can  be  changed  using
+       the  TCP_MAXRXT  option.   Setting  TCP_MAXRXT  to a value
+       between 180 and 2^32-2 causes TCP to wait that  number  of
+       seconds   before  giving  up.   Setting  TCP_MAXRXT  to  0
+       restores the retransmission interval to the default value.
+       Setting the retransmission interval to 2^32-1 (0xffffffff)
+       causes TCP  to  retransmit  forever.   The  retransmission
+       period  cannot be set to less than three minutes (180 sec-
+       onds).
+
+       Note that many of the default values may be changed by the
+
+                                                                2
+
+tcp(7tcp)                                               tcp(7tcp)
+
+       system administrator using or may be used to determine the
+       current system default values.
+
+       Options at the IP network level may be used with TCP;  see
+       and  Incoming  connection  requests that are source-routed
+       are noted,  and  the  reverse  source  route  is  used  in
+       responding.
+
+       TCP  is also available as a TLI connection-oriented proto-
+       col via the special file /dev/inet/tcp.   Interpreted  TCP
+       options are supported via the TLI options mechanism (see
+
+       TCP provides a facility, one-packet mode, that attempts to
+       improve performance over Ethernet interfaces  that  cannot
+       handle back-to-back packets. One-packet mode may be set by
+       for such an interface. On a connection that uses an inter-
+       face  for which one-packet mode has been set, TCP attempts
+       to prevent the remote machine  from  sending  back-to-back
+       packets  by  setting the window size for the connection to
+       the maximum segment size for the interface.
+
+       Certain TCP implementations  have  an  internal  limit  on
+       packet  size that is less than or equal to half the adver-
+       tised maximum segment  size.  When  connected  to  such  a
+       machine,  setting  the  window size to the maximum segment
+       size would still allow the sender to send two packets at a
+       time.  To  prevent  this,  a small packet size and a small
+       packet threshold may be specified when setting  one-packet
+       mode.  If,  on  a  connection  over an interface with one-
+       packet mode enabled, TCP receives a number of  consecutive
+       packets of the small packet size equal to the small packet
+       threshold, the window size is  set  to  the  small  packet
+       size.
+
+       A  TCP  endpoint  can  also be obtained by opening the TCP
+       driver directly. Networking statistics can be gathered  by
+       issuing  ioctl  directives  to  the  driver. The following
+       ioctl  commands,   defined   in   <netinet/ip_var.h>   and
+       <netinet/tcp_var.h>,  are  supported by the TCP driver: to
+       set the inpcb associated with the end-point as  a  manage-
+       ment  inpcb  (to  distinguish it from others, when network
+       statistics are gathered) and link it in the list  of  man-
+       agement  inpcbs.   to  extract  TCP  statistics  and other
+       related information.  The following structure is passed as
+       an  argument  to  the  I_STR  ioctl to extract the desired
+       information:  struct  tcp_stuff  {        struct   tcpstat
+       tcp_stat;         int       tcp_rto_algorithm;         int
+       tcp_max_rto;          int        tcp_min_rto;          int
+       tcp_max_conn;       int     tcp_urgbehavior;   }; to fetch
+       the entire TCP connection table. It is a transparent ioctl
+       since  the  size of the TCP connection table is not fixed.
+       This ioctl is also used to fetch the  size  of  the  table
+       before  extracting  it.  In  order  to  extract the entire
+       table, enough space needs to be  allocated  to  store  the
+
+                                                                3
+
+tcp(7tcp)                                               tcp(7tcp)
+
+       table.  So extracting the table involves two steps: First,
+       invoke the ioctl STIOCGTCB with gi_size set  to  0.   This
+       returns  the  size  of the table.  Second, allocate suffi-
+       cient memory (found in step 1) and issue the  ioctl  again
+       with  gi_size  set to the value returned in the step above
+       (or any value greater than 0). The TCP  driver  will  copy
+       the  TCP  connection  table  to  the  user allocated area.
+       tcb_entry is the format of the entries  extracted  by  the
+       ioctl.   Structures  gi_arg  and  tcb_entry are as defined
+       below: struct gi_arg {       caddr_t   gi_where;  /*  user
+       addr. */      unsigned gi_size;  /* table size */ };
+
+       struct  tcb_entry  {      struct inpcb in_pcb;      struct
+       tcpcb tcp_pcb; }; deletes a TCP  connection.   This  ioctl
+       takes  the  following  argument: typedef struct _tcpconn {
+            struct    in_addr                      local_ip_addr;
+            u_short   local_port;               struct    in_addr
+       rmt_ip_addr;       u_short   rmt_port;  }  TcpConn_t;  The
+       local  and  remote  addresses  and ports serve to uniquely
+       identify an active TCP connection.  Only root may use this
+       ioctl.   is  used  to  retrieve TCP debugging information.
+       This is an I_STR ioctl that is intended to be used in  two
+       passes.   This  ioctl operates on a tcp_dbg_hdr structure,
+       which has the following definition: struct tcp_dbg_hdr {
+          caddr_t tcp_where; /* where to copy-out result */
+          u_int tcp_size;  /* size of buffer */
+          u_int tcp_debx;  /* current slot in debug ring */
+          u_int tcp_ndebug; /* number  of  debug  records  */  };
+       First  issue  the  ioctl  with  tcp_where  pointing to the
+       address of the structure and tcp_size set to the  size  of
+       the  structure.   TCP will fill in the number of debugging
+       entries in the tcp_ndebug field.  This information can  be
+       used  to allocate a buffer large enough to hold the debug-
+       ging information.   The  buffer  size  is  calculated  as:
+       sizeof(struct  tcp_dbg_hdr)  +  sizeof(struct tcp_debug) *
+       tcp_ndebug Issuing the ioctl again with tcp_where  set  to
+       the  start  of  the buffer and tcp_size set to the size as
+       computed above will return  a  buffer  consisting  of  the
+       tcp_dbg_hdr  structure  followed  by  tcp_ndebug tcp_debug
+       structures. The tcp_debx field will be set to the  current
+       offset into the buffer.
+
+DDiiaaggnnoossttiiccss
+       A  socket  operation  may  fail  with one of the following
+       errors returned: when trying to establish a connection  on
+       a socket which already has one when the system runs out of
+       memory for an internal data structure when the system runs
+       out of STREAMS resources when a connection was dropped due
+       to excessive retransmissions when the remote  peer  forces
+       the  connection to be closed when the remote peer actively
+       refuses connection establishment (usually because no  pro-
+       cess  is listening to the port) when an attempt is made to
+       create a socket with a port which has already  been  allo-
+       cated  when  an  attempt is made to create a socket with a
+
+                                                                4
+
+tcp(7tcp)                                               tcp(7tcp)
+
+       network address for which no network interface  exists  An
+       ioctl  operation may fail with the errno set to one of the
+       following: when a non-root user attempts to delete  a  TCP
+       connection  when  no argument or a NULL argument is passed
+       to the driver, or when the command in the copyresp  struc-
+       ture  is not valid, or when the ioc_count is not TRANSPAR-
+       ENT for a  transparent  ioctl  when  the  associated  file
+       descriptor is no longer open/valid
+
+RReeffeerreenncceess
+       on the manual page
+
+       RFC 1337
+
+       RFC 793, RFC 1122
+
+                                                                5
+

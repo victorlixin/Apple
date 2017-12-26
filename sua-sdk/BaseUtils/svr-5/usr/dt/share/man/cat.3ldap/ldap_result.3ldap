@@ -1,0 +1,84 @@
+
+
+ldap_result(3ldap)                             ldap_result(3ldap)
+
+SSyynnooppssiiss
+       #include <lber.h> #include <ldap.h>
+
+       int  ldap_result(lDAP  *ld,  int  msgid,  int  all, struct
+       timeval *timeout,
+           LDAPMessage **result);
+
+       int ldap_msgfree(LDAPMessage *msg);
+
+DDeessccrriippttiioonn
+       The ldap_result routine is used to wait for and return the
+       result  of an operation previously initiated by one of the
+       LDAP asynchronous operation routines (for example, and  so
+       on). Those routines all return -1 in case of error, and an
+       invocation identifier upon successful  initiation  of  the
+       operation.  The  invocation  identifier  is  picked by the
+       library and is guaranteed to be  unique  across  the  LDAP
+       session.  It  can  be used to request the result of a spe-
+       cific operation from ldap_result through the msgid parame-
+       ter.
+
+       The  ldap_result routine will block or not, depending upon
+       the setting of the timeout parameter. If timeout is not  a
+       NULL  pointer, it specifies a maximum interval to wait for
+       the selection to complete. If timeout is a  NULL  pointer,
+       the  select  blocks  indefinitely.  To  effect a poll, the
+       timeout argument should be a non-NULL pointer, pointing to
+       a zero-valued timeval structure.
+
+       If  the  result of a specific operation is required, msgid
+       should be set to the invocation identifier  returned  when
+       the operation was initiated, otherwise LDAP_RES_ANY should
+       be supplied. The all parameter only has meaning for search
+       responses  and is used to select whether a single entry of
+       the search response should be returned, or all results  of
+       the search should be returned.
+
+       A  search  response  is  made  up  of  zero or more search
+       entries followed by a search result. If all is set  to  0,
+       search entries will be returned one at a time as they come
+       in, via separate calls to ldap_result. If it is set to  1,
+       the search response will only be returned in its entirety,
+       that is, after all entries and  the  final  search  result
+       have been received.
+
+       Upon  success, the type of the result received is returned
+       and the result parameter will contain the  result  of  the
+       operation.  This result should be passed to the LDAP pars-
+       ing routines, as documented on the manual page, for inter-
+       pretation.
+
+       The   possible   result   types   returned   are:  #define
+       LDAP_RES_BIND                      0x61L           #define
+       LDAP_RES_SEARCH_ENTRY              0x64L           #define
+
+                                                                1
+
+ldap_result(3ldap)                             ldap_result(3ldap)
+
+       LDAP_RES_SEARCH_RESULT    0x65L  #define   LDAP_RES_MODIFY
+       0x67L   #define   LDAP_RES_ADD              0x69L  #define
+       LDAP_RES_DELETE           0x6bL  #define   LDAP_RES_MODRDN
+       0x6dL    #define    LDAP_RES_COMPARE           0x6fL   The
+       ldap_msgfree routine is used to free the memory  allocated
+       for  a result by ldap_result or by the routines documented
+       on the manual page. It takes a pointer to the result to be
+       freed and returns the type of the message it freed.
+
+RReettuurrnn vvaalluueess
+       ldap_result  returns -1 on failure, and 0 if the specified
+       timeout was exceeded.
+
+WWaarrnniinnggss
+       This routine malloc's memory for results that it receives.
+       The memory can be freed by calling ldap_msgfree.
+
+RReeffeerreenncceess
+
+                                                                2
+

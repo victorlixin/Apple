@@ -1,0 +1,175 @@
+
+
+lio_listio(3aio)                                 lio_listio(3aio)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <aio.h>
+
+       int lio_listio(int mode, struct aiocb *list[],
+                      int nent,struct sigevent *sig);
+
+       int lio_listio64(int mode, struct aiocb64 *list[],
+                      int nent,struct sigevent *sig);
+
+DDeessccrriippttiioonn
+       lio_listio  supports issuing a list of I/O requests with a
+       single function call.
+
+       The mode argument takes one  of  the  values  LIO_WAIT  or
+       LIO_NOWAIT  and  determines  whether  the function returns
+       when the I/O operations have been completed, or as soon as
+       the  operations have been queued.  If the mode argument is
+       LIO_WAIT, the function waits until all I/O is complete and
+       the sig argument is ignored.
+
+       When  LIO_WAIT  is  selected,  lio_listio  waits  for  all
+       requests that were successfully queued to complete  before
+       returning.   If  no  requests were successfully queued, it
+       returns immediately.
+
+       If the mode argument is LIO_NOWAIT, the  function  returns
+       immediately,  and completion notification occurs according
+       to the sig argument, when all the I/O operations complete.
+       If  sig  is  NULL,  no notification occurs.  If sig is not
+       NULL, notification occurs according to the same  rules  as
+       the aio_sigevent aiocb field.
+
+       The  list argument is an array of pointers to aiocb struc-
+       tures.  The array contains nent elements.  The  array  may
+       contain NULL elements which are ignored.
+
+       The  I/O  requests  enumerated by list are submitted in an
+       unspecified order.
+
+       The aio_lio_opcode field of each aiocb structure specifies
+       the  operation  to be performed.  The supported operations
+       are LIO_READ, LIO_WRITE, and LIO_NOP.  The LIO_NOP  opera-
+       tion  causes  the  list  entry  to  be  ignored.   If  the
+       aio_lio_opcode element is equal to LIO_READ, an I/O opera-
+       tion  is  submitted  as  if by a call to aio_read with the
+       aiocb equal to the address of the aiocb structure.  If the
+       aio_lio_opcode element is equal to LIO_WRITE, an I/O oper-
+       ation is submitted as if by a call to aio_write  with  the
+       aiocb equal to the address of the aiocb structure.
+
+       Other  aiocb  structure members (i.e. aio_fildes, aio_buf,
+       aio_nbytes, etc) are set in a  manner  equivalent  to  how
+
+                                                                1
+
+lio_listio(3aio)                                 lio_listio(3aio)
+
+       they  would  be  set  if  you use them in a direct call to
+       aio_write or aio_read.
+
+       The nent argument specifies how many elements are  members
+       of the list, or the length of the array.
+
+       The  sig  argument is a pointer to a signal control struc-
+       ture,  used  when  the  mode  argument   has   the   value
+       LIO_NOWAIT,  which  defines  the notification to be issued
+       when the entire list of I/O requests have been  completed.
+
+       The  behavior  of  lio_listio  is altered according to the
+       definitions of synchronized I/O data integrity  completion
+       and synchronized I/O file integrity completion if synchro-
+       nized I/O is enabled  on  the  file  associated  with  the
+       requests.
+
+       Mixing  of  requests with and without the AIO_RAW flag set
+       in aio_flags is supported.  The implementation should, but
+       is  not required to, return an error if this is attempted.
+       The setting of the AIO_RAW flag can be determined by exam-
+       ing the first request in list.
+
+   RReettuurrnn vvaalluueess
+       If  the  mode  argument  has  the  value  LIO_NOWAIT,  the
+       lio_listio and lio_listio64  functions  return  the  value
+       zero if the I/O operations are successfully queued; other-
+       wise, they return the value -1 and set errno  to  indicate
+       the error.
+
+       If  the mode argument has the value LIO_WAIT, the lio_lis-
+       tio and lio_listio64 functions return zero  when  all  the
+       indicated  I/O  has  completed  successfully.   Otherwise,
+       lio_listio and lio_listio64 return a value of -1  and  set
+       errno to indicate the error.
+
+       Both  of  these return values only indicate the success or
+       failure of the lio_listio  and  lio_listio64  calls  them-
+       selves, not the status of the individual I/O requests.  In
+       some cases one or more of the I/O  requests  contained  in
+       the  list may fail.  Failure of an individual request does
+       not prevent completion of any  other  individual  request.
+       To determine the outcome of each I/O request, the applica-
+       tion  examines  the  error  status  associated  with  each
+       lio_aiocb  control block.  The error statuses returned are
+       identical to those returned as the result of  an  aio_read
+       or aio_write function.
+
+   EErrrroorrss
+       If  any  of the following conditions occur, the lio_listio
+       function   returns   -1   and   sets   errno    to:    The
+       aiocbp->aio_lio_opcode is LIO_WRITE, the file is a regular
+       file, aiocbp->aio_nbytes is greater than 0, and the start-
+       ing  offset in aiocbp->aio_offset is greater than or equal
+
+                                                                2
+
+lio_listio(3aio)                                 lio_listio(3aio)
+
+       to the offset maximum in the open file descriptor  associ-
+       ated   with  aio_fildes.   The  aiocbp->aio_lio_opcode  is
+       LIO_READ, the file is a regular  file,  aiocbp->aio_nbytes
+       is  greater  than  0, and the aiocbp->aio_offset is before
+       the end-of-file and is greater than or equal to the offset
+       maximum  in  the  open  file  descriptor  associated  with
+       aio_fildes.
+
+       If any of the following conditions occur,  the  lio_listio
+       and  the lio_listio64 function return -1 and set errno to:
+       The resources necessary to queue all the I/O requests were
+       not available.  The application may check the error status
+       for each aiocb to determine the individual request(s) that
+       failed.   The  number  of  entries indicated by nent would
+       cause the system-wide limit {AIO_MAX} to be exceeded.  All
+       entries return EAGAIN when queried with aio_error.  A mem-
+       ory fault occurred  while  accessing  a  lio_listio  or  a
+       lio_listio64   request.   In  this  case,  lio_listio  and
+       lio_listio64 return immediately without processing  subse-
+       quent requests in the list.  On some implementations, mem-
+       ory faults might result in a SIGSEGV signal  being  deliv-
+       ered to the processes instead of returning the error code.
+       The mode argument is not a proper  value.   the  value  of
+       nent  was  greater  than  {AIO_LISTIO_MAX} (see or nent is
+       zero.  All requests are NULL or have their lio_listio  set
+       to  LIO_NOP.  A signal was delivered while waiting for all
+       I/O requests to  complete  during  a  LIO_WAIT  operation.
+       Note  that, since each I/O operation invoked by lio_listio
+       or lio_listio64 may possibly provoke a signal when it com-
+       pletes,  this error return may be caused by the completion
+       of one (or more) of the very I/O operations being awaited.
+       Outstanding  I/O requests are not canceled, and the appli-
+       cation  shall  examine  each  list  element  to  determine
+       whether  the request was initiated, canceled or completed.
+       One or more of the individual I/O operations failed.   The
+       application  may  check  the  error  status for each aiocb
+       structure to  determine  the  individual  request(s)  that
+       failed.   There were no internal kernal aio control blocks
+       available to service the request  (number  of  kernel  aio
+       control blocks is tunable via the NUMAIO kernel parameter;
+       see The I/O request is trying to write beyond  the  offset
+       maximum established in the open file descriptor associated
+       with aio_fildes.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       lio_listio64 supports large files, but is otherwise  iden-
+       tical to lio_listio.  For details on programming for large
+       file capable applications, see on intro(2).
+
+                                                                3
+

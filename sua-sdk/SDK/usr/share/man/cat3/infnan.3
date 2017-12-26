@@ -1,0 +1,86 @@
+infnan(3)                                                     infnan(3)
+
+  iinnffnnaann(())
+
+  NNAAMMEE
+
+    infnan() - signals invalid floating-point operations
+
+  SSYYNNOOPPSSIISS
+
+    #include <math.h>
+
+    double infnan (int iarg)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The Invalid, Overflow and Divide-by-Zero exceptions of the IEEE standard
+    are approximated on Subsystem for UNIX-based Applications by calls to a procedure _ii_nn_ff_nn_aa_nn(3) in
+    appropriate places in _ll_ii_bb_mm(3). This is a portability decision. As
+    exception-handling is improved on various systems, only _ii_nn_ff_nn_aa_nn(3) among
+    the codes in lliibbmm(3) will have to be changed. And users of lliibbmm(3) can
+    design their own _ii_nn_ff_nn_aa_nn(3) now to insulate themselves from future changes.
+
+    Whenever an elementary function code in lliibbmm(3) has to simulate one of the
+    aforementioned IEEE exceptions, it calls iinnffnnaann(iarg) with an appropriate
+    value of iarg. Then a reserved operand fault stops computation. But
+    _ii_nn_ff_nn_aa_nn(3) could be replaced by a function with the same name that returns
+    some plausible value, assigns an apt value to the global variable errno,
+    and allows computation to resume. Alternatively, the Reserved Operand
+    Fault Handler could be changed to respond by returning that plausible
+    value, etc. instead of aborting.
+
+    In the table below, the first two columns show various exceptions signaled
+    by the IEEE standard, and the default result it prescribes. Currently
+    _ii_nn_ff_nn_aa_nn(3) stops computation under all those circumstances. The last two
+    columns offer an alternative; they suggest a setting for errno and a value
+    for a revised _ii_nn_ff_nn_aa_nn(3) to return. And a C program to implement that
+    suggestion follows.
+    IIEEEEEE SSiiggnnaall     IIEEEEEE DDeeffaauulltt     SSuuggggeesstteedd eerrrrnnoo     SSuuggggeesstteedd rreettuurrnn
+
+    Invalid         Infinity         EDOM                0
+
+    Overflow        NaN              EDOM                0
+
+    Overflow        Infinity         ERANGE              0
+
+    Div-by-0        Infinity         ERANGE or EDOM      +-HUGE
+    (HUGE = 1.7e38 ... nearly 2.0**127)
+
+    ALTERNATIVE _ii_nn_ff_nn_aa_nn(3):
+
+    #include  <math.h>
+    #include  <errno.h>
+    extern int     errno ;
+    double    infnan(iarg)
+    int  iarg ;
+    {
+         switch(iarg) {
+         case  ERANGE:  errno = ERANGE; return(HUGE);
+         case -ERANGE:  errno = EDOM;  return(-HUGE);
+         default:       errno = EDOM;  return(0);
+         }
+    }
+
+  EERRRROORRSS
+
+    The _ii_nn_ff_nn_aa_nn(3) function can generate the following errors:
+
+    [EDOM]
+
+    [ERANGE]
+
+  SSEEEE AALLSSOO
+
+    _m_a_t_h(3)
+
+    _e_r_r_n_o(3)
+
+    _s_i_g_n_a_l(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The iinnffnnaann function is not thread safe.
+
+    The iinnffnnaann function is not async-signal safe.
+

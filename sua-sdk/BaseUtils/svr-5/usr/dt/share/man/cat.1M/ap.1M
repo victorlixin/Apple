@@ -1,0 +1,191 @@
+
+
+ap(1M)                                                     ap(1M)
+
+SSyynnooppssiiss
+       ap -d [ -g ] [ -v ] [ usernames ]
+
+       ap -r -f file [ -p password ] [ -o ] [ -v ] [ usernames ]
+
+       ap  -u directory [ -p password ] [ -o ] [ -v ] [ usernames
+       ]
+
+DDeessccrriippttiioonn
+       ap provides a simple method of  propagating  user  account
+       profiles between &geminiRELtm; or 2.1 systems.
+
+       The  version  of  ap(ADM)  in  &everestTM;  can  also dump
+       account profiles. ap in &gemini; can  read  such  profiles
+       and  recreate  the  associated user accounts on a &gemini;
+       system.
+
+       An account profile entry consists of a user's  entry  from
+       the  password file followed by all relevant parts of their
+       I&A (&gemini;) or Protected Password (&everest;)  database
+       entry.   The  following database fields are irrelevant and
+       are not copied: time of last unsuccessful password  change
+       time of last successful and last unsuccessful login termi-
+       nal of last successful and last unsuccessful login  number
+       of consecutive unsuccessful logins ap understands the fol-
+       lowing options: Write an  account  profile  entry  to  the
+       standard  output  for each username specified. If no user-
+       names are specified, account profiles are written for  all
+       users  listed  in  the password file.  Specify a file con-
+       taining user profile information created by ap on  another
+       system.   Include  group membership in the account profile
+       information that is written out by the -d  option.   Over-
+       write  an existing account profile which has the same user
+       name and user ID as one being restored. If the  -o  option
+       is  not  specified,  ap  prints  a warning message and the
+       existing entries are not overwritten.  If the user  ID  of
+       an  account  to  be  restored  is currently being aged, ap
+       prints a warning and does not create the account.  The  -o
+       option  cannot be used to override the warning.  Specify a
+       new login password for users whose  passwords  are  longer
+       than  8  characters. The password argument is specified in
+       clear text (unencrypted). Because of  differences  in  the
+       way  that &everest; and &gemini; systems handle long pass-
+       words, ap otherwise  truncates  passwords  longer  than  8
+       characters  so that they are exactly 8 characters long (13
+       characters when encrypted).  These users must supply  only
+       the  first 8 characters of their passwords to log in.  All
+       migrated users with long passwords  will  be  required  to
+       change  their  password when they first log in, whether or
+       not the -p option was  specified.   Create  accounts  from
+       profile  information  in  the  file  specified  by  the -f
+       option.  If a list of user names (usernames) is not speci-
+       fied,  all  the account profiles contained in the file are
+       restored; otherwise, only the  account  profiles  for  the
+
+                                                                1
+
+ap(1M)                                                     ap(1M)
+
+       specified  users  are  restored.   Update  the system with
+       account profile information copied from &everest; systems.
+       The   directory  specified  is  expected  to  contain  the
+       /etc/passwd  and  /tcb/files/auth/?/*   file   hierarchies
+       copied  or  NFS-mounted from an &everest; system.  To pre-
+       serve group membership, the /etc/group file  may  (option-
+       ally)  also  be  included under the directory.  If no user
+       names are specified, all the account profiles contained in
+       the files under the specified directory are restored; oth-
+       erwise, only the account profiles for the specified  users
+       are  restored.   Print a message to the standard error for
+       each account profile dumped or restored.
+
+FFiilleess
+       Common files: group file  password  file  shadow  password
+       file  &everest;  only:  user and group defaults' file Pro-
+       tected Password database Subsystem Authorizations database
+       &gemini;  only: user defaults' file aged user ID file mas-
+       ter audit file (if auditing is installed) I&A master index
+       file I&A master database system command privilege database
+       user authorizations administrative role authorizations
+
+AAuutthhoorriizzaattiioonn
+       ap requires the invoking  user  to  be  root  or  to  have
+       dacread and dacwrite privileges.
+
+EExxiitt vvaalluueess
+       If  ap  detects  a fatal error, it displays an appropriate
+       error message and exits with status greater than zero.  If
+       no errors are encountered, ap exits with status zero.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Account profiles dumped on one &gemini; system can only be
+       restored on  another  &gemini;  systems.  They  cannot  be
+       restored to an &everest; system because &gemini; encrypted
+       passwords are not transferable to &everest;.
+
+       You cannot use the UDK to run the &geminiREL;  version  of
+       ap  on  &gemini;  2.1 because long passwords are only sup-
+       ported in &geminiREL;.
+
+       As &gemini; systems may have different system default val-
+       ues, the same profile transferred to another &gemini; sys-
+       tem  may  give  the  user  different  capabilities  simply
+       because  different default values are picked up for fields
+       that are not present in the profile entry for a user.
+
+       As the file containing the dumped account profile informa-
+       tion is used to update the password and Identification and
+       Authentication (I&A) database, it must be  protected  from
+       unauthorized  access  in  the same way that entries in the
+       I&A database themselves are protected.
+
+                                                                2
+
+ap(1M)                                                     ap(1M)
+
+       Privileges are not mapped between &everest;  and  &gemini;
+       systems,  however,  some  audit  events are. Default audit
+       values for AUDIT_MASK in /etc/default/useradd are included
+       in  addition  to  any mapped events when a user profile is
+       restored. The table below  shows  how  events  are  mapped
+       between &everest; and &gemini; systems.
+       -----------------------------------------------------------
+       &everest; event&gemini; event      Description
+       -----------------------------------------------------------
+       boot/down       init (fixed)       startup or shutdown
+       login          login, logoff       successful   or  unsuc-
+                                          cessful login attempts
+       process        exec,  exit,   fork,creation or termination
+                      kill                of processes
+       ob_available   sem,            msg,file,          message,
+                      file_access, mount  semaphore   opens   and
+                                          filesystem mounts
+       ob_map         exec                program execution
+       ob_modify      open_wr             file writes
+       ob_unavailable sem,            msg,file,          message,
+                      file_access, umount semaphore   closes  and
+                                          filesystem unmounts
+       ob_create      sem,            msg,file,    message    and
+                      file_access         semaphore creation
+       ob_delete      sem,            msg,file,    message    and
+                      file_access         semaphore terminations
+       dac_chg        dac                 file,          message,
+                                          semaphore  ownership or
+                                          permission changes
+       access_denial  priv                denied permissions
+       sysadm         tfadmin             administrative tasks
+       insuff_priv    priv                failed tasks due to  to
+                                          insufficient privileges
+       rsc_denial     res_limit           resource limits
+       ipc            kill                sending   signals   and
+                                          messages to processes
+       proc_mod       process             effective  identity  or
+                                          working       directory
+                                          changes
+       audit          audit (fixed)       enable    or    disable
+                                          auditing
+       database       -                   no mapping available
+       subsystem      -                   no mapping available
+       privilege      tfadmin             administrative commands
+
+SSttaannddaarrddss ccoommpplliiaannccee
+       ap  is not part of any currently supported standard; it is
+       an extension of AT&T System V provided by The  Santa  Cruz
+       Operation, Inc.
+
+EExxaammpplleess
+       To  dump  the account profiles for users fred and guest on
+       an &everest; system to a file called profiles, and display
+       a  message  after  each  account profile is dumped: ap -dv
+
+                                                                3
+
+ap(1M)                                                     ap(1M)
+
+       fred guest > profiles.acct This file can  then  be  trans-
+       ferred to a &gemini; machine.
+
+       To restore the account profile for user fred on a &gemini;
+       system, overwriting any existing profile, and substituting
+       the  password  ``clydenw''  if  the  existing  password is
+       longer than 8  characters:  ap  -ro  -f  profiles.acct  -p
+       clydenw fred
+
+                                                                4
+

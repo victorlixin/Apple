@@ -1,0 +1,140 @@
+_controlfp(3)                                             _controlfp(3)
+
+  __ccoonnttrroollffpp(())
+
+  NNAAMMEE
+
+    _controlfp() - get and set floating point control word
+
+  SSYYNNOOPPSSIISS
+
+    #include <float.h>
+
+    unsigned int _controlfp(unsigned int new, unsigned int mask)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ____cc_oo_nn_tt_rr_oo_ll_ff_pp(3) call is a platform-independent way to set the floating
+    point control word. You can change the precision, rounding, and infinity
+    modes in the floating-point math package, and mask or unmask floating-
+    point exceptions.
+
+    The new argument is the set of new control-word bit values, and the mask
+    argument is the mask for the new control-word bits to set. For any bit
+    that is set to 1 in mask, the corresponding bit in new is used to update
+    the control word. That is, for a floating-point control word fpcntrl:
+
+    fpcntrl = ((fpcntrl & ~mask) | (new & mask))
+
+    If the value for mask is 0, the ____cc_oo_nn_tt_rr_oo_ll_ff_pp(3) call gets the current
+    floating point control word. If mask is non-zero, it sets the floating
+    point control word.
+
+    By default, all floating-point exceptions are masked.
+
+    This call is very similar to the Intel platform-specific call
+    ____cc_oo_nn_tt_rr_oo_ll_88_77(3). The ____cc_oo_nn_tt_rr_oo_ll_ff_pp(3) is more portable. The ____cc_oo_nn_tt_rr_oo_ll_88_77(3) call
+    modifies the DENORMAL OPERAND exception mask, while the ____cc_oo_nn_tt_rr_oo_ll_ff_pp(3) call
+    does not. For example:
+
+    _control87(_EM_INVALID, _MCW_EM); /* DENORMAL unmasked */
+    _controlfp(_EM_INVALID, _MCW_EM); /* DENORMAL not changed */
+
+    DDeennoorrmmaall ccoonnttrrooll:: (This value is ignored; it is used with the Intel-
+    specific ____cc_oo_nn_tt_rr_oo_ll_88_77(3) call, which is nearly identical to ____cc_oo_nn_tt_rr_oo_ll_ff_pp(3).)
+    MMaasskk        VVaalluuee          CCoonnssttaanntt      VVaalluuee
+
+    _MCW_DN     0x03000000
+
+                               _DN_SAVE      0x00000000
+
+                               _DN_FLUSH     0x01000000
+
+    IInntteerrrruupptt eexxcceeppttiioonn ccoonnttrrooll::
+    MMaasskk        VVaalluuee          CCoonnssttaanntt           VVaalluuee
+
+    _MCW_EM     0x0008001F
+
+                               _EM_INVALID        0x00000010
+
+                               _EM_DENORMAL       0x00080000
+
+                               _EM_ZERODIVIDE     0x00000008
+
+                               _EM_OVERFLOW       0x00000004
+
+                               _EM_UNDERFLOW      0x000000002
+
+                               _EM_INEXACT        0x000000001
+
+    IInnffiinniittyy ccoonnttrrooll::
+    MMaasskk               VVaalluuee          CCoonnssttaanntt     VVaalluuee
+
+    _MCW_IC            0x00040000
+
+    _IC_AFFINE         0x00040000
+
+    _IC_PROJECTIVE     0x00000000
+
+    RRoouunnddiinngg ccoonnttrrooll::
+    MMaasskk        VVaalluuee          CCoonnssttaanntt     VVaalluuee
+
+    _MCW_RC     0x00000300
+
+                               _RC_CHOP     0x00000300
+
+                               _RC_UP       0x00000200
+
+                               _RC_DOWN     0x00000100
+
+                               _RC_NEAR     0x00000000
+
+    PPrreecciissiioonn ccoonnttrrooll:: (The number after the underscore is the number of bits
+    of precision.)
+    MMaasskk        VVaalluuee          CCoonnssttaanntt     VVaalluuee
+
+    _MCW_PC     0x00030000
+
+                               _PC_24       0x00020000
+
+                               _PC_53       0x00010000
+
+                               _PC_64       0x00000000
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The ____cc_oo_nn_tt_rr_oo_ll_ff_pp(3) call returns an iinntt that describes the current state of
+    floating-point control.
+
+  EEXXAAMMPPLLEE
+
+    The following program turns on floating-point exceptions:
+
+    #include <stdio.h>
+    #include <float.h>
+
+    main()
+    {
+        double x, y;
+        unsigned int mask;
+        x = 1.0;
+        y = 0.0;
+        mask = _controlfp(0,0);
+        printf("old floating-point control mask = %#x\n", mask);
+        printf("%g=\n", x / y);
+        /* turn on floating point exceptions */
+        mask = _controlfp(0, _MCW_EM);
+        printf("new floating-point control mask = %#x\n", mask);
+        printf("%g\n", x / y );
+    }
+
+  NNOOTTEESS
+
+  SSEEEE AALLSSOO
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The __ccoonnttrroollffpp function is not thread safe.
+
+    The __ccoonnttrroollffpp function is not async-signal safe.
+

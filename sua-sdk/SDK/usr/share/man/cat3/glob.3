@@ -1,0 +1,225 @@
+glob(3)                                                         glob(3)
+
+  gglloobb(())
+
+  NNAAMMEE
+
+    glob(), globfree() - generate pathnames matching a pattern
+
+  SSYYNNOOPPSSIISS
+
+    #include <glob.h>
+
+    int glob (const char *pattern, int flags,
+             const int (*errfunc)(const char *, int), glob_t *pglob)
+    void globfree (glob_t *pglob)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _gg_ll_oo_bb(3) function is a pathname generator that implements the rules for
+    file name pattern matching used by the standard shell.
+
+    The include file <<gglloobb..hh>> defines the structure type glob_t, which
+    contains at least the following fields:
+
+    typedef struct {
+         int gl_pathc;       /* count of total paths so far */
+         int gl_matchc;      /* count of paths matching pattern */
+         int gl_offs;        /* reserved at beginning of gl_pathv */
+         int gl_flags;       /* returned flags */
+         char **gl_pathv;    /* list of paths matching pattern */
+    } glob_t;
+
+    The argument pattern is a pointer to a pathname pattern to be expanded.
+    The _gg_ll_oo_bb(3) argument matches all accessible pathnames against the pattern
+    and creates a list of the pathnames that match. In order to have access to
+    a pathname, _gg_ll_oo_bb(3) requires search permission on every component of a
+    path except the last and read permission on each directory of any filename
+    component of pattern that contains any of the special characters *, ? or
+    [.
+
+    The _gg_ll_oo_bb(3) argument stores the number of matched pathnames into the
+    gl_pathc field, and a pointer to a list of pointers to pathnames into the
+    gl_pathv field. The first pointer after the last pathname is NULL. If the
+    pattern does not match any pathnames, the returned number of matched paths
+    is set to zero.
+
+    It is the caller's responsibility to create the structure pointed to by
+    pglob. The _gg_ll_oo_bb(3) function allocates other space as needed, including the
+    memory pointed to by gl_pathv.
+
+    The argument flags is used to modify the behavior of _gg_ll_oo_bb(3). The value of
+    flags is the bitwise inclusive OR of any of the following values defined
+    in <<gglloobb..hh>>:
+
+    GLOB_APPEND
+        Append pathnames generated to the ones from a previous call (or calls)
+        to _gg_ll_oo_bb(3). The value of gl_pathc will be the total matches found by
+        this call and the previous call(s). The pathnames are appended to, not
+        merged with the pathnames returned by the previous call(s). Between
+        calls, the caller must not change the setting of the GLOB_DOOFFS flag,
+        nor change the value of gl_offs when GLOB_DOOFFS is set, nor
+        (obviously) call _gg_ll_oo_bb_ff_rr_ee_ee(3) for pglob.
+
+    GLOB_DOOFFS
+        Make use of the gl_offs field. If this flag is set, gl_offs is used to
+        specify how many NULL pointers to prepend to the beginning of the
+        gl_pathv field. In other words, gl_pathv will point to gl_offs NULL
+        pointers, followed by gl_pathc pathname pointers, followed by a NULL
+        pointer.
+
+    GLOB_ERR
+        Causes _gg_ll_oo_bb(3) to return when it encounters a directory that it cannot
+        open or read. Ordinarily, _gg_ll_oo_bb(3) continues to find matches.
+
+    GLOB_MARK
+        Each pathname that is a directory that matches pattern has a slash
+        appended.
+
+    GLOB_NOCHECK
+        If pattern does not match any pathname, then _gg_ll_oo_bb(3) returns a list
+        consisting of only pattern, with the number of total pathnames is set
+        to 1, and the number of matched pathnames set to 0. If GLOB_QUOTE is
+        set, its effect is present in the pattern returned.
+
+    GLOB_NOSORT
+        By default, the pathnames are sorted in ascending ASCII order; this
+        flag prevents that sorting (speeding up _gg_ll_oo_bb(3)).
+
+    The following values may also be included in flags, however, they are non-
+    standard extensions to
+
+    GLOB_ALTDIRFUNC
+        The following additional fields in the pglob structure have been
+        initialized with alternate functions for _gg_ll_oo_bb(3) to use to open, read,
+        and close directories and to get stat information on names found in
+        those directories.
+        void *(*gl_opendir)(const char * name);
+        struct dirent *(*gl_readdir)(void *);
+        void (*gl_closedir)(void *);
+        int (*gl_lstat)(const char *name, struct stat *st);
+        int (*gl_stat)(const char *name, struct stat *st);
+        This extension is provided to allow programs such as rreessttoorree() to
+        provide globbing from directories stored on tape.
+
+    GLOB_BRACE
+        Pre-process the pattern string to expand {pat,pat,...} strings like
+        _CC_ss_hh(1)The {} is left unexpanded for historical reasons (_CC_ss_hh(1) does
+        the same thing to ease typing of ffiinndd() patterns).
+
+    GLOB_MAGCHAR
+        Set by the _gg_ll_oo_bb(3) function if the pattern included globbing
+        characters. See the description of the usage of the gl_matchc
+        structure member for more details.
+
+    GLOB_NOMAGIC
+        Is the same as GLOB_NOCHECK but it only appends the pattern if it does
+        not contain any of the special characters "*", "?" or "[".
+        GLOB_NOMAGIC is provided to simplify implementing the historic _cc_ss_hh(1)
+        globbing behavior and should probably not be used anywhere else.
+
+    GLOB_QUOTE
+        Use the backslash (\ character for quoting: every occurrence of a
+        backslash followed by a character in the pattern is replaced by that
+        character, avoiding any special interpretation of the character.
+
+    GLOB_TILDE
+        Expand patterns that start with ~ to user name home directories.
+
+    If, during the search, a directory is encountered that cannot be opened or
+    read and errfunc is non-NULL, _gg_ll_oo_bb(3) calls (*errfunc This may be
+    unintuitive: a pattern like */Makefile will try to _ss_tt_aa_tt(2) foo/Makefile
+    even if foo is not a directory, resulting in a call to errfunc. The error
+    routine can suppress this action by testing for ENOENT and ENOTDIR;
+    however, the GLOB_ERR flag will still cause an immediate return when this
+    happens.
+
+    If errfunc returns non-zero, _gg_ll_oo_bb(3) stops the scan and returns GLOB_ABEND
+    after setting gl_pathc and gl_pathv to reflect any paths already matched.
+    This also happens if an error is encountered and GLOB_ERR is set in flags,
+    regardless of the return value of errfunc, if called. If GLOB_ERR is not
+    set and either errfunc is NULL or errfunc returns zero, the error is
+    ignored.
+
+    The _gg_ll_oo_bb_ff_rr_ee_ee(3) function frees any space associated with pglob from a
+    previous call(s) to _gg_ll_oo_bb(3).
+
+  RREETTUURRNN VVAALLUUEESS
+
+    On successful completion, _gg_ll_oo_bb(3) returns zero. In addition the fields of
+    pglob contain the values described below:
+
+    gl_pathc
+        contains the total number of matched pathnames so far. This includes
+        other matches from previous invocations of _gg_ll_oo_bb(3) if GLOB_APPEND was
+        specified.
+
+    gl_matchc
+        contains the number of matched pathnames in the current invocation of
+        _gg_ll_oo_bb(3).
+
+    gl_flags
+        contains a copy of the flags parameter with the bit GLOB_MAGCHAR set
+        if pattern contained any of the special characters "*", "?" or "[",
+        cleared if not.
+
+    gl_pathv
+        contains a pointer to a NULL-terminated list of matched pathnames.
+        However, if gl_pathc is zero, the contents of gl_pathv are undefined.
+
+    If _gg_ll_oo_bb(3) terminates due to an error, it sets errno and returns one of
+    the following non-zero constants, which are defined in the include file
+    <<gglloobb..hh>>:
+
+    GLOB_NOSPACE
+        An attempt to allocate memory failed.
+
+    GLOB_ABEND
+        The scan was stopped because an error was encountered and either
+        GLOB_ERR was set or (*errfunc returned non-zero.
+
+    The arguments pglob->gl_pathc and pglob->gl_pathv are still set as
+    specified above.
+
+  EEXXAAMMPPLLEE
+
+    A rough equivalent of ls -l *.c *.h can be obtained with the following
+    code:
+
+    glob_t g;
+    g.gl_offs = 2;
+    glob("*.c", GLOB_DOOFFS, NULL, &g);
+    glob("*.h", GLOB_DOOFFS | GLOB_APPEND, NULL, &g);
+    g.gl_pathv[0] = "ls";
+    g.gl_pathv[1] = "-l";
+    execvp("ls", g.gl_pathv);
+
+  NNOOTTEE
+
+    The file name matching implemented by _gg_ll_oo_bb(3) is the basic set of matches
+    specified by the Open Group's specification. It treats the characters **,
+    ??, and [[ as special. It does not support all of the special matches that
+    are part of the KornShell (such as **(()), for example).
+
+  SSEEEE AALLSSOO
+
+    _s_h(1)
+
+    _f_n_m_a_t_c_h(3)
+
+    _r_e_g_e_x_e_c(3)
+
+  BBUUGGSS
+
+    Patterns longer than {MAXPATHLEN} may cause unchecked errors.
+
+    The _gg_ll_oo_bb(3) argument may fail and set errno for any of the errors
+    specified for the library routines _ss_tt_aa_tt(2), _cc_ll_oo_ss_ee_dd_ii_rr(3), _oo_pp_ee_nn_dd_ii_rr(3),
+    _rr_ee_aa_dd_dd_ii_rr(2), _mm_aa_ll_ll_oo_cc(3), and _ff_rr_ee_ee(3).
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

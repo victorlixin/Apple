@@ -1,0 +1,772 @@
+ncurses(3)                                                   ncurses(3)
+
+  ccuurrsseess(())
+
+  NNAAMMEE
+
+    ncurses - CRT screen handling and optimization package
+
+  SSYYNNOOPPSSIISS
+
+    #include <curses.h>
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ccuurrsseess library routines give the user a terminal-independent method of
+    updating character screens with reasonable optimization. This
+    implementation is "new curses" (ncurses) and is the approved replacement
+    for 4.4BSD classic curses, which is being discontinued.
+
+    The nnccuurrsseess routines emulate the ccuurrsseess(3) library of System V Release 4,
+    and the XPG4 curses standard (XSI curses) but the nnccuurrsseess library is
+    freely redistributable in source form. Differences from the SVr4 curses
+    are summarized under the EXTENSIONS and BUGS sections below and described
+    in detail in the EXTENSIONS and BUGS sections of individual man pages.
+
+    A program using these routines must be linked with the --llnnccuurrsseess option,
+    or (if it has been generated) with the debugging library --llnnccuurrsseess__gg. The
+    ncurses_g library generates trace logs (in a file called 'trace' in the
+    current directory) that describe curses actions.
+
+    The nnccuurrsseess package supports: overall screen, window and pad manipulation;
+    output to windows and pads; reading terminal input; control over terminal
+    and ccuurrsseess input and output options; environment query routines; color
+    manipulation; use of soft label keys; terminfo capabilities; and access to
+    low-level terminal-manipulation routines.
+
+    To initialize the routines, the routine iinniittssccrr or nneewwtteerrmm must be called
+    before any of the other routines that deal with windows and screens are
+    used. The routine eennddwwiinn must be called before exiting. To get character-
+    at-a-time input without echoing (most interactive, screen oriented
+    programs want this), the following sequence should be used:
+
+    initscr();
+    cbreak();
+    noecho();
+
+    Most programs would additionally use the sequence:
+
+    nonl();
+    intrflush(stdscr, FALSE);
+    keypad(stdscr, TRUE);
+
+    Before a ccuurrsseess program is run, the tab stops of the terminal should be
+    set and its initialization strings, if defined, must be output. This can
+    be done by executing the
+
+    $$ tput init
+
+    command after the shell environment variable TERM has been exported.
+    _t_s_e_t(1) is usually responsible for doing this. (See _t_e_r_m_i_n_f_o(5) for
+    further details.)
+
+    The ccuurrsseess library permits manipulation of data structures, called
+    wwiinnddoowwss, which can be thought of as two-dimensional arrays of characters
+    representing all or part of a CRT screen. A default window called stdscr
+    which is the size of the terminal screen, is supplied. Others may be
+    created with _nn_ee_ww_ww_ii_nn(3).
+
+    Note that ccuurrsseess does not handle overlapping windows, that's done by the
+    ppaanneellss((33xx)) library. This means that you can either use stdscr or divide
+    the screen into tiled windows and not using stdscr at all. Mixing the two
+    will result in unpredictable, and undesired, effects.
+
+    Windows are referred to by variables declared as WWIINNDDOOWW **. These data
+    structures are manipulated with routines described here and elsewhere in
+    the nnccuurrsseess manual pages. Among which the most basic routines are _mm_oo_vv_ee(3)
+    and _aa_dd_dd_cc_hh(3). More general versions of these routines are included with
+    names beginning with ww, allowing the user to specify a window. The
+    routines not beginning with ww affect stdscr
+
+    After using routines to manipulate a window, _rr_ee_ff_rr_ee_ss_hh(3) is called, telling
+    ccuurrsseess to make the user's CRT screen look like stdscr The characters in a
+    window are actually of type cchhttyyppee (character and attribute data), so that
+    other information about the character may also be stored with each
+    character.
+
+    Special windows called ppaaddss may also be manipulated. These are windows
+    which are not constrained to the size of the screen and whose contents
+    need not be completely displayed. See _c_u_r_s___p_a_d(3) for more information.
+
+    In addition to drawing characters on the screen, video attributes and
+    colors may be supported, causing the characters to show up in such modes
+    as underlined, in reverse video, or in color on terminals that support
+    such display enhancements. Line drawing characters may be specified to be
+    output. On input, ccuurrsseess is also able to translate arrow and function keys
+    that transmit escape sequences into single values. The video attributes,
+    line drawing characters, and input values use names, defined in
+    <<ccuurrsseess..hh>>, such as A_REVERSE, ACS_HLINE, and KEY_LEFT.
+
+    If the environment variables LINES and COLUMNS are set, or if the program
+    is executing in a window environment, line and column information in the
+    environment will override information read by tteerrmmiinnffoo This would effect a
+    program running in an AT&T 630 layer, for example, where the size of a
+    screen is changeable.
+
+    If the environment variable TERMINFO is defined, any program using ccuurrsseess
+    checks for a local terminal definition before checking in the standard
+    place. For example, if TERM is set to aatttt44442244, then the compiled terminal
+    definition is found in
+
+    $$TTEERRMMIINNFFOO//aa//aatttt44442244.
+
+    (The aa is copied from the first letter of aatttt44442244 to avoid creation of
+    huge directories.) However, if TERMINFO is set to $$HHOOMMEE//mmyytteerrmmss, ccuurrsseess
+    first checks
+
+    $HOME/myterms/a/att4424
+
+    and if that fails, it then checks
+
+    /a/att4424
+
+    This is useful for developing experimental definitions or when write
+    permission in  is not available.
+
+    The integer variables LINES and COLS are defined in <<ccuurrsseess..hh>> and will be
+    filled in by _ii_nn_ii_tt_ss_cc_rr(3) with the size of the screen. The constants TRUE
+    and FALSE have the values 1 and 0, respectively.
+
+    The ccuurrsseess routines also define the WWIINNDDOOWW ** variable curscr which is used
+    for certain low-level operations like clearing and redrawing a screen
+    containing garbage. The curscr can be used in only a few routines.
+
+  RRoouuttiinnee aanndd AArrgguummeenntt NNaammeess
+
+    Many ccuurrsseess routines have two or more versions. The routines prefixed with
+    ww require a window argument. The routines prefixed with pp require a pad
+    argument. Those without a prefix generally use stdscr
+
+    The routines prefixed with mmvv require a y and x coordinate to move to
+    before performing the appropriate action. The mmvv routines imply a call to
+    _mm_oo_vv_ee(3) before the call to the other routine. The coordinate y always
+    refers to the row (of the window), and x always refers to the column. The
+    upper left-hand corner is always (0,0), not (1,1).
+
+    The routines prefixed with mmvvww take both a window argument and x and y
+    coordinates. The window argument is always specified before the
+    coordinates.
+
+    In each case, win is the window affected, and pad is the pad affected; win
+    and pad are always pointers to type WWIINNDDOOWW.
+
+    Option setting routines require a Boolean flag bf with the value TRUE or
+    FALSE; bf is always of type bbooooll. The variables ch and attrs below are
+    always of type cchhttyyppee. The types WWIINNDDOOWW, SSCCRREEEENN, bbooooll, and cchhttyyppee are
+    defined in <<ccuurrsseess..hh>>. The type TTEERRMMIINNAALL is defined in <<tteerrmm..hh>>. All other
+    arguments are integers.
+
+  RRoouuttiinnee NNaammee IInnddeexx
+
+    The following table lists each ccuurrsseess routine and the name of the manual
+    page on which it is described. Routines flagged with `*' are nnccuurrsseess not
+    described by XPG4 or present in SVr4.
+
+    ccuurrsseess RRoouuttiinnee NNaammee     MMaannuuaall PPaaggee NNaammee
+
+    addch()                 curs_addch
+
+    addchnstr()             curs_addchstr
+
+    addchstr()              curs_addchstr
+
+    addnstr()               curs_addstr
+
+    addstr()                curs_addstr
+
+    attroff()               curs_attr
+
+    attron()                curs_attr
+
+    attrset()               curs_attr
+
+    baudrate()              curs_termattrs
+
+    beep()                  curs_beep
+
+    bkgd()                  curs_bkgd
+
+    bkgdset()               curs_bkgd
+
+    border()                curs_border
+
+    box()                   curs_border
+
+    can_change_color()      curs_color
+
+    cbreak()                curs_inopts
+
+    clear()                 curs_clear
+
+    clearok()               curs_outopts
+
+    clrtobot()              curs_clear
+
+    clrtoeol()              curs_clear
+
+    color_content()         curs_color
+
+    copywin()               curs_overlay
+
+    curs_set()              curs_kernel
+
+    def_prog_mode()         curs_kernel
+
+    def_shell_mode()        curs_kernel
+
+    del_curterm()           curs_terminfo
+
+    delay_output()          curs_util
+
+    delch()                 curs_delch
+
+    deleteln()              curs_deleteln
+
+    delscreen()             curs_initscr
+
+    delwin()                curs_window
+
+    derwin()                curs_window
+
+    doupdate()              curs_refresh
+
+    dupwin()                curs_window
+
+    echo()                  curs_inopts
+
+    echochar()              curs_addch
+
+    endwin()                curs_initscr
+
+    erase()                 curs_clear
+
+    erasechar()             curs_termattrs
+
+    filter()                curs_util
+
+    flash()                 curs_beep
+
+    flushinp()              curs_util
+
+    getbegyx()              curs_getyx
+
+    getch()                 curs_getch
+
+    getmaxyx()              curs_getyx
+
+    getmouse()              curs_mouse*
+
+    getparyx()              curs_getyx
+
+    getstr()                curs_getstr
+
+    getsyx()                curs_kernel
+
+    getwin()                curs_util
+
+    getyx()                 curs_getyx
+
+    halfdelay()             curs_inopts
+
+    has_colors()            curs_color
+
+    has_ic()                curs_termattrs
+
+    has_il()                curs_termattrs
+
+    hline()                 curs_border
+
+    idcok()                 curs_outopts
+
+    idlok()                 curs_outopts
+
+    immedok()               curs_outopts
+
+    inch()                  curs_inch
+
+    inchnstr()              curs_inchstr
+
+    inchstr()               curs_inchstr
+
+    init_color()            curs_color
+
+    init_pair()             curs_color
+
+    initscr()               curs_initscr
+
+    innstr()                curs_instr
+
+    insch()                 curs_insch
+
+    insdelln()              curs_deleteln
+
+    insertln()              curs_deleteln
+
+    insnstr()               curs_insstr
+
+    insstr()                curs_insstr
+
+    instr()                 curs_instr
+
+    intrflush()             curs_inopts
+
+    is_linetouched()        curs_touch
+
+    is_wintouched()         curs_touch
+
+    isendwin()              curs_initscr
+
+    keyname()               curs_util
+
+    keypad()                curs_inopts
+
+    killchar()              curs_termattrs
+
+    leaveok()               curs_outopts
+
+    longname()              curs_termattrs
+
+    meta()                  curs_inopts
+
+    mouseinterval()         curs_mouse*
+
+    mousemask()             curs_mouse*
+
+    move()                  curs_move
+
+    mvaddch()               curs_addch
+
+    mvaddchnstr()           curs_addchstr
+
+    mvaddchstr()            curs_addchstr
+
+    mvaddnstr()             curs_addstr
+
+    mvaddstr()              curs_addstr
+
+    mvcur()                 curs_terminfo
+
+    mvdelch()               curs_delch
+
+    mvderwin()              curs_window
+
+    mvgetch()               curs_getch
+
+    mvgetstr()              curs_getstr
+
+    mvinch()                curs_inch
+
+    mvinchnstr()            curs_inchstr
+
+    mvinchstr()             curs_inchstr
+
+    mvinnstr()              curs_instr
+
+    mvinsch()               curs_insch
+
+    mvinsnstr()             curs_insstr
+
+    mvinsstr()              curs_insstr
+
+    mvinstr()               curs_instr
+
+    mvprintw()              curs_printw
+
+    mvscanw()               curs_scanw
+
+    mvwaddch()              curs_addch
+
+    mvwaddchnstr()          curs_addchstr
+
+    mvwaddchstr()           curs_addchstr
+
+    mvwaddnstr()            curs_addstr
+
+    mvwaddstr()             curs_addstr
+
+    mvwdelch()              curs_delch
+
+    mvwgetch()              curs_getch
+
+    mvwgetstr()             curs_getstr
+
+    mvwin()                 curs_window
+
+    mvwinch()               curs_inch
+
+    mvwinchnstr()           curs_inchstr
+
+    mvwinchstr()            curs_inchstr
+
+    mvwinnstr()             curs_instr
+
+    mvwinsch()              curs_insch
+
+    mvwinsnstr()            curs_insstr
+
+    mvwinsstr()             curs_insstr
+
+    mvwinstr()              curs_instr
+
+    mvwprintw()             curs_printw
+
+    mvwscanw()              curs_scanw
+
+    napms()                 curs_kernel
+
+    newpad()                curs_pad
+
+    newterm()               curs_initscr
+
+    newwin()                curs_window
+
+    nl()                    curs_outopts
+
+    nocbreak()              curs_inopts
+
+    nodelay()               curs_inopts
+
+    noecho()                curs_inopts
+
+    nonl()                  curs_outopts
+
+    noqiflush()             curs_inopts
+
+    noraw()                 curs_inopts
+
+    notimeout()             curs_inopts
+
+    overlay()               curs_overlay
+
+    overwrite()             curs_overlay
+
+    pair_content()          curs_color
+
+    pechochar()             curs_pad
+
+    pnoutrefresh()          curs_pad
+
+    prefresh()              curs_pad
+
+    printw()                curs_printw
+
+    putp()                  curs_terminfo
+
+    putwin()                curs_util
+
+    qiflush()               curs_inopts
+
+    raw()                   curs_inopts
+
+    redrawwin()             curs_refresh
+
+    refresh()               curs_refresh
+
+    reset_prog_mode()       curs_kernel
+
+    reset_shell_mode()      curs_kernel
+
+    resetty()               curs_kernel
+
+    restartterm()           curs_terminfo
+
+    ripoffline()            curs_kernel
+
+    savetty()               curs_kernel
+
+    scanw()                 curs_scanw
+
+    scr_dump()              curs_scr_dump
+
+    scr_init()              curs_scr_dump
+
+    scr_restore()           curs_scr_dump
+
+    scr_set()               curs_scr_dump
+
+    scrl()                  curs_scroll
+
+    scroll()                curs_scroll
+
+    scrollok()              curs_outopts
+
+    set_curterm()           curs_terminfo
+
+    set_term()              curs_initscr
+
+    setscrreg()             curs_outopts
+
+    setsyx()                curs_kernel
+
+    setterm()               curs_terminfo
+
+    setupterm()             curs_terminfo
+
+    slk_attroff()           curs_slk
+
+    slk_attron()            curs_slk
+
+    slk_attrset()           curs_slk
+
+    slk_clear()             curs_slk
+
+    slk_init()              curs_slk
+
+    slk_label()             curs_slk
+
+    slk_noutrefresh()       curs_slk
+
+    slk_refresh()           curs_slk
+
+    slk_restore()           curs_slk
+
+    slk_set()               curs_slk
+
+    slk_touch()             curs_slk
+
+    standend()              curs_attr
+
+    standout()              curs_attr
+
+    start_color()           curs_color
+
+    subpad()                curs_pad
+
+    subwin()                curs_window
+
+    syncok()                curs_window
+
+    termattrs()             curs_termattrs
+
+    termname()              curs_termattrs
+
+    tigetflag()             curs_terminfo
+
+    tigetnum()              curs_terminfo
+
+    tigetstr()              curs_terminfo
+
+    timeout()               curs_inopts
+
+    touchline()             curs_touch
+
+    touchwin()              curs_touch
+
+    tparm()                 curs_terminfo
+
+    tputs()                 curs_terminfo
+
+    typeahead()             curs_inopts
+
+    unctrl()                curs_util
+
+    ungetch()               curs_getch
+
+    ungetmouse()            curs_mouse*
+
+    untouchwin()            curs_touch
+
+    use_env()               curs_util
+
+    vidattr()               curs_terminfo
+
+    vidputs()               curs_terminfo
+
+    vline()                 curs_border
+
+    vwprintw()              curs_printw
+
+    vwscanw()               curs_scanw
+
+    waddch()                curs_addch
+
+    waddchnstr()            curs_addchstr
+
+    waddchstr()             curs_addchstr
+
+    waddnstr()              curs_addstr
+
+    waddstr()               curs_addstr
+
+    wattroff()              curs_attr
+
+    wattron()               curs_attr
+
+    wattrset()              curs_attr
+
+    wbkgd()                 curs_bkgd
+
+    wbkgdset()              curs_bkgd
+
+    wborder()               curs_border
+
+    wclear()                curs_clear
+
+    wclrtobot()             curs_clear
+
+    wclrtoeol()             curs_clear
+
+    wcursyncup()            curs_window
+
+    wdelch()                curs_delch
+
+    wdeleteln()             curs_deleteln
+
+    wechochar()             curs_addch
+
+    wenclose()              curs_mouse*
+
+    werase()                curs_clear
+
+    wgetch()                curs_getch
+
+    wgetnstr()              curs_getstr
+
+    wgetstr()               curs_getstr
+
+    whline()                curs_border
+
+    winch()                 curs_inch
+
+    winchnstr()             curs_inchstr
+
+    winchstr()              curs_inchstr
+
+    winnstr()               curs_instr
+
+    winsch()                curs_insch
+
+    winsdelln()             curs_deleteln
+
+    winsertln()             curs_deleteln
+
+    winsnstr()              curs_insstr
+
+    winsstr()               curs_insstr
+
+    winstr()                curs_instr
+
+    wmove()                 curs_move
+
+    wnoutrefresh()          curs_refresh
+
+    wprintw()               curs_printw
+
+    wredrawln()             curs_refresh
+
+    wrefresh()              curs_refresh
+
+    wresize()               curs_resize*
+
+    wscanw()                curs_scanw
+
+    wscrl()                 curs_scroll
+
+    wsetscrreg()            curs_outopts
+
+    wstandend()             curs_attr
+
+    wstandout()             curs_attr
+
+    wsyncdown()             curs_window
+
+    wsyncup()               curs_window
+
+    wtimeout()              curs_inopts
+
+    wtouchln()              curs_touch
+
+    wvline()                curs_border
+
+  RREETTUURRNN VVAALLUUEE
+
+    Routines that return an integer return ERR upon failure and an integer
+    value other than ERR upon successful completion, unless otherwise noted in
+    the routine descriptions.
+
+    All macros return the value of the w version, except _ss_ee_tt_ss_cc_rr_rr_ee_gg(3),
+    _ww_ss_ee_tt_ss_cc_rr_rr_ee_gg(3), _gg_ee_tt_yy_xx(3), _gg_ee_tt_bb_ee_gg_yy_xx(3), _gg_ee_tt_mm_aa_xx_yy_xx(3). The return values of
+    _ss_ee_tt_ss_cc_rr_rr_ee_gg(3), _ww_ss_ee_tt_ss_cc_rr_rr_ee_gg(3), _gg_ee_tt_yy_xx(3), _gg_ee_tt_bb_ee_gg_yy_xx(3), and _gg_ee_tt_mm_aa_xx_yy_xx(3) are
+    undefined (i.e., these should not be used as the right-hand side of
+    assignment statements).
+
+    Routines that return pointers return NULL on error.
+
+  PPOORRTTAABBIILLIITTYY
+
+    The ccuurrsseess library is intended to be BASE-level conformant with the XSI
+    Curses standard. Certain portions of the EXTENDED XSI Curses functionality
+    (including color support) are supported. The following EXTENDED XSI Curses
+    calls in support of wide (multibyte) characters are not yet implemented
+    (in alphabetical order):
+
+    aadddd__wwcchh(3), aadddd__wwcchhnnssttrr(3), aadddd__wwcchhssttrr(3), aaddddnnwwssttrr(3), aaddddwwssttrr(3),
+    bbkkggrrnndd(3), bbkkggrrnnddsseett(3), bboorrddeerr__sseett(3), bbooxx__sseett(3), eecchhoo__wwcchhaarr(3),
+    eerraasseewwcchhaarr(3), ggeett__wwcchh(3), ggeett__wwssttrr(3), ggeettbbkkggrrnndd(3), ggeettnn__wwssttrr(3),
+    ggeettwwcchhttyyppee(3), hhlliinnee__sseett(3), iinn__wwcchh(3), iinnnnwwssttrr(3), iinnss__nnwwssttrr(3),
+    iinnss__wwcchh(3), iinnss__wwssttrr(3), iinnwwcchhnnssttrr(3), iinnwwcchhssttrr(3), iinnwwssttrr(3),
+    kkiillllwwcchhaarr(3), mmvvaadddd__wwcchh(3), mmvvaadddd__wwcchhnnssttrr(3), mmvvaadddd__wwcchhssttrr(3),
+    mmvvaaddddnnwwssttrr(3), mmvvaaddddwwssttrr(3), mmvvggeett__wwcchh(3), mmvvggeett__wwssttrr(3), mmvvggeettnn__wwssttrr(3),
+    mmvvhhlliinnee__sseett(3), mmvviinn__wwcchh(3), mmvviinnnnwwssttrr(3), mmvviinnss__nnwwssttrr(3), mmvviinnss__wwcchh(3),
+    mmvviinnss__wwssttrr(3), mmvviinnwwcchhnnssttrr(3), mmvviinnwwcchhssttrr(3), mmvviinnwwcchhssttrr(3), mmvviinnwwssttrr(3),
+    mmvvvvlliinnee__sseett(3), mmvvwwaadddd__wwcchh(3), mmvvwwaadddd__wwcchhnnssttrr(3), mmvvwwaadddd__wwcchhssttrr(3),
+    mmvvwwaaddddnnwwssttrr(3), mmvvwwggeett__cchh(3), mmvvwwggeett__wwssttrr(3), mmvvwwggeettnn__wwssttrr(3),
+    mmvvwwhhlliinnee__sseett(3), mmvvwwiinn__wwcchh(3), mmvvwwiinnnnwwssttrr(3), mmvvwwiinnss__nnwwssttrr(3),
+    mmvvwwiinnss__wwcchh(3), mmvvwwiinnss__wwssttrr(3), mmvvwwiinnwwcchhnnssttrr(3), mmvvwwiinnwwssttrr(3),
+    mmvvwwvvlliinnee__sseett(3), vvhhlliinnee__sseett(3), wwaadddd__wwcchh(3), wwaadddd__wwcchhnnssttrr(3),
+    wwaadddd__wwcchhssttrr(3), wwaaddddnnwwssttrr(3), wwaaddddwwssttrr(3), wwbbkkggrrnndd(3), wwbbkkggrrnnddsseett(3),
+    wwbboorrddeerr__sseett(3), wweecchhoo__wwcchhaarr(3), wwggeett__wwcchh(3), wwggeett__wwssttrr(3), wwggeettbbkkggrrnndd(3),
+    wwggeettnn__wwssttrr(3), wwhhlliinnee__sseett(3), wwiinn__wwcchh(3), wwiinnnnwwssttrr(3), wwiinnss__nnwwssttrr(3),
+    wwiinnss__wwcchh(3), wwiinnss__wwssttrr(3), wwiinnwwcchhnnssttrr(3), wwiinnwwcchhssttrr(3), wwiinnwwssttrr(3),
+    wwvvlliinnee__sseett(3).
+
+    A small number of local differences (that is, individual differences
+    between the XSI Curses and ccuurrsseess calls) are described in PPOORRTTAABBIILLIITTYY
+    sections of the library man pages.
+
+    The terminfo format supported by ccuurrsseess is binary-compatible with SVr4,
+    but not conformant with XSI curses. This is because the XSI Curses
+    drafters, in a remarkable fit of braindamage, changed the undocumented
+    SVr4 capability ggeettmm from a string to a boolean, changing the binary
+    offsets of all capabilities after it in the SVr4 order and making it
+    impossible for any SVr4-compatible implementation to be fully conformant.
+
+    The routines ggeettmmoouussee(3), mmoouusseemmaasskk(3), uunnggeettmmoouussee(3), mmoouusseeiinntteerrvvaall(3),
+    and wweenncclloossee(3) relating to mouse interfacing are not part of XPG4, nor
+    are they present in SVr4. They are also not supported under the Subsystem for UNIX-based Applications
+    subsystem. See the _c_u_r_s___m_o_u_s_e(3) manual page for details.
+
+    The routine _ww_rr_ee_ss_ii_zz_ee(3) is not part of XPG4, nor is it present in SVr4. See
+    the _c_u_r_s___r_e_s_i_z_e(3) manual page for details.
+
+    In historic curses versions, delays embedded in the capabilities ccrr, iinndd,
+    ccuubb11, ffff and ttaabb activated corresponding delay bits in the tty driver. In
+    this implementation, all padding is done by NUL sends. This method is
+    slightly more expensive, but narrows the interface to the kernel
+    significantly and increases the package's portability correspondingly.
+
+    In the XSI standard and SVr4 manual pages, many entry points have
+    prototype arguments of the form cchhaarr **ccoonnsstt (or cccchhaarr__tt **ccoonnsstt, or wwcchhaarr__tt
+    *const, or vvooiidd **ccoonnsstt). Depending on one's interpretation of the ANSI C
+    standard (see section 3.5.4.1), these declarations are either (a)
+    meaningless, or (b) meaningless and illegal. The declaration ccoonnsstt cchhaarr *x
+    is a modifiable pointer to unmodifiable data, but cchhaarr **ccoonnsstt xx' is an
+    unmodifiable pointer to modifiable data. Given that C passes arguments by
+    value, <<ttyyppee>> **ccoonnsstt as a formal type is at best dubious. Some compilers
+    choke on the prototypes. Therefore, in this implementation, they have been
+    changed to ccoonnsstt <<ttyyppee>> ** globally.
+
+  NNOOTTEESS
+
+    The header file <<ccuurrsseess..hh>> automatically includes the header files
+    <<ssttddiioo..hh>> and <<uunnccttrrll..hh>>.
+
+    If standard output from a ccuurrsseess program is re-directed to something which
+    is not a tty, screen updates will be directed to standard error. This was
+    an undocumented feature of AT&T System V Release 3 curses.
+
+  SSEEEE AALLSSOO
+
+    _t_e_r_m_i_n_f_o(5) and pages whose names begin curs_ for detailed routine
+    descriptions.
+

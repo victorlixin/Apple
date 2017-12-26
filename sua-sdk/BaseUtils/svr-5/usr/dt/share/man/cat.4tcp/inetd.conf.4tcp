@@ -1,0 +1,93 @@
+
+
+inetd(1Mtcp)                                         inetd(1Mtcp)
+
+SSyynnooppssiiss
+       inetd [-d] [-s] [-t] [configuration-file]
+
+DDeessccrriippttiioonn
+       The  Internet  services  daemon, inetd, is normally run at
+       boot time by the Service  Access  Facility  (SAF).   inetd
+       listens  for  connections on the Internet addresses of the
+       services specified in its configuration file.  When a con-
+       nection  is  found, inetd invokes the server daemon speci-
+       fied by that configuration file for the requested service.
+       Once  a server process exits, inetd continues to listen on
+       the socket.
+
+       Rather than having several daemon processes with  sparsely
+       distributed  requests  each  running  concurrently,  inetd
+       reduces the  load  on  the  system  by  invoking  Internet
+       servers only as they are needed.
+
+       inetd  itself  provides  a number of simple TCP-based ser-
+       vices.  These include echo,  discard,  chargen  (character
+       generator),   daytime  (human  readable  time),  and  time
+       (machine readable time, in the form of the number of  sec-
+       onds  since  midnight,  January  1, 1900).  For details of
+       these services, consult the  appropriate  RFC,  as  listed
+       below, from the Network Information Center.
+
+FFiilleess
+       the inetd configuration file the inetd process id file (if
+       started via SAF) protocols database services database
+
+UUssaaggee
+       When started, inetd reads  its  configuration  information
+       from     configuration-file,     the     default     being
+       /etc/inetd.conf.  See for more information on  the  format
+       of  this file.  inetd rereads its configuration file when-
+       ever it receives a hangup signal,  SIGHUP.   New  services
+       can  be  activated, and existing services deleted or modi-
+       fied in between whenever the file is reread.
+
+   OOppttiioonnss
+       Run inetd  ``stand-alone,''  outside  the  Service  Access
+       Facility  (SAF).   When  the  -s option is not used, inetd
+       must be run under SAF via the command.  Enable  debugging.
+       In  debug  mode,  TCP  connections  will have the SO_DEBUG
+       option enabled via setsockopt (see SO_DEBUG is needed  for
+       Note  that when -d option is used, inetd runs in the fore-
+       ground.  Put inetd into  calltrace  mode,  which  produces
+       additional entries.
+
+   TTCCPPMMUUXX pprroottooccooll
+       inetd  implements  the TCPMUX protocol as described in RFC
+       1078: ``A TCP client connects to a  foreign  host  on  TCP
+       port 1.  It sends the service name followed by a carriage-
+       return line-feed (CR LF).  The service name is never  case
+
+                                                                1
+
+inetd(1Mtcp)                                         inetd(1Mtcp)
+
+       sensitive.   The  server  replies  with a single character
+       indicating positive (+) or  negative  (-)  acknowledgment,
+       immediately  followed  by  an optional message of explana-
+       tion, terminated with a CR LF.  If the reply was positive,
+       the  selected protocol begins; otherwise the connection is
+       closed.''  The program is passed  the  TCP  connection  as
+       file descriptors 0 and 1.
+
+       If  the  TCPMUX  service  name  begins with a ``+'', inetd
+       returns the positive reply for the program.   This  allows
+       you  to  invoke  programs  that  use  stdin/stdout without
+       putting any special server code in them.
+
+       The special service name ``help'' causes inetd to list the
+       TCPMUX services currently configured in /etc/inetd.conf.
+
+RReeffeerreenncceess
+       RFC 862, RFC 863, RFC 864, RFC 867, RFC 868
+
+EExxaammpplleess
+       To  have  SAF  start  inetd  if it is not already running:
+       sacadm  -s  -p  inetd  You  can  force  inetd  to  re-read
+       /etc/inetd.conf  by  sending  it a SIGHUP signal. If inetd
+       was started by SAF rather than from the command line,  use
+       the following command: kill -HUP `cat /etc/saf/inetd/_pid`
+       ALternatively, use the SAF  to  stop  and  restart  inetd:
+       sacadm -k -p inetd sacadm -s -p inetd
+
+                                                                2
+

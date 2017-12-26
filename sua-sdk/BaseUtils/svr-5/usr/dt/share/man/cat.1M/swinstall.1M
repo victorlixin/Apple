@@ -1,0 +1,455 @@
+
+
+swinstall(1M)                                       swinstall(1M)
+
+SSyynnooppssiiss
+       /usr/sbin/swinstall  [-p]  [-r] [-v] [-c catalog] [-C ses-
+       sion_file]
+            [-f software_file] [-s source] [-S session_file]  [-t
+       target_file]
+            [-x option=value] [-X option_file]
+            [software_selections] [@ target_selections]
+
+       /usr/sbin/swcopy  [-p]  [-v]  [-C  session_file] [-f soft-
+       ware_file]
+            [-s source] [-S session_file] [-t target_file]
+            [-x option=value] [-X option_file]
+            [software_selections] [@ target_selections]
+
+DDeessccrriippttiioonn
+       The swinstall command  installs  the  software  selections
+       (given  by  software_selections) from a software source to
+       the local host or to one or more target selections  (given
+       by target_selections).
+
+       By default, the software is configured for use on the tar-
+       get after it is installed.  (The software is  not  config-
+       ured when installed under an alternate root directory.)
+
+       The  swcopy  command  copies or merges software selections
+       from a software source to one or more software depot  tar-
+       get  selections.   These  depots can then be accessed as a
+       software source by swinstall.  If you want to use a  depot
+       on  a  CD  you must use the -nmconv option of For example:
+       mount -Fcdfs -r /dev/cdrom -nmconv=c /mountpoint If you do
+       not use this option, the SM tools will be unable to detect
+       the depot.
+
+   FFeeaattuurreess aanndd ddiiffffeerreenncceess bbeettwweeeenn sswwiinnssttaallll aanndd sswwccooppyy
+       The key difference between swinstall and  swcopy  is  that
+       swinstall  installs software for actual (or eventual) use,
+       while swcopy copies  software  into  a  depot,  making  it
+       available  as a source for installation by swinstall.  Use
+       to  copy  to  a  tape.   Other  features  and  differences
+       include:   swinstall   executes   several  vendor-supplied
+       scripts during the installation and configuration  of  the
+       software   selections.   swcopy  does  not  execute  these
+       scripts.
+
+       swinstall supports the following scripts:  A  script  that
+       asks the user questions and stores responses in a response
+       file.  This file can then  be  used  by  configuration  or
+       other scripts.  A script executed during the analysis of a
+       target selection to check that  the  installation  can  be
+       attempted.   If  this check fails, the software product is
+       not installed.  A script executed immediately  before  the
+       software  is  installed.   A  script  executed immediately
+       after the software is installed.  A script executed during
+       the configuration of a target selection. It configures the
+
+                                                                1
+
+swinstall(1M)                                       swinstall(1M)
+
+       target for the software (and the software for the target).
+       The preinstall and postinstall scripts are not intended to
+       be used for configuration tasks.  They are to be used  for
+       simple  file  management  needs, such as removing obsolete
+       files from the previous revision (which was just updated).
+       A  script  executed  immediately  after  the  software  is
+       restored, if the software install failed and  the  autore-
+       cover_product  default  option is set to true.  The script
+       undoes the steps performed by the  preinstall  script.   A
+       script   executed   immediately  before  the  software  is
+       restored, if the software install failed, and the  autore-
+       cover_product  default  option is set to true.  The script
+       undoes the steps  performed  by  the  postinstall  script.
+       When  a depot is created or modified using swcopy, catalog
+       files are built that describe the depot (as opposed to the
+       Installed  Products Database (IPD) files that are built by
+       swinstall).  By default, swinstall only allows the  selec-
+       tion  of  compatible  software from the source.  This con-
+       straint ensures that  the  architecture  of  the  software
+       matches  that  of the target selections.  No compatibility
+       checks are performed by swcopy.  (A depot can be a reposi-
+       tory  of  software targeted for a variety of architectures
+       and operating systems.)  By  default,  swinstall  supports
+       updates  to  higher  revisions of software.  If a software
+       selection of the same revision is already installed, swin-
+       stall  will not reinstall it.  If a software selection has
+       a lower revision than the same software which  is  already
+       installed, swinstall will not reinstall it.  (The user can
+       override these behaviors with default options.)  swinstall
+       creates hard links and symbolic links as specified for the
+       software.  If a symbolic link is encountered where a regu-
+       lar  file is expected, swinstall follows the symbolic link
+       and updates the file to which it points.   swinstall  does
+       not remove a product's current files before installing the
+       new ones: a fileset's install scripts can do that, if nec-
+       essary.   Files being replaced are overwritten unless they
+       are in use. If in use,  they  are  unlinked  or  moved  to
+       #file. If the autorecover_product default option is set to
+       true, all files are saved to #file, and  restored  if  the
+       install fails.  swinstall supports kernel building scripts
+       and rebooting. Before or after software that modifies  the
+       kernel is installed or updated, swinstall executes system-
+       specific scripts to prepare for, or build, the new version
+       of  the kernel. The remaining software selections are then
+       installed.
+
+       These  scripts,   defined   by   the   options,   include:
+       install_setup_cmd,  system_prep_cmd, kernel_build_cmd, and
+       install_cleanup_cmd.
+
+       After software that requires a system reboot is  installed
+       or  updated,  swinstall  automatically reboots the system.
+       The reboot command  is  defined  by  the  swagent  option,
+       reboot_cmd.   The  following  information  may change in a
+
+                                                                2
+
+swinstall(1M)                                       swinstall(1M)
+
+       future release:
+
+       When updating the operating system, you must  install  the
+       kernel  software to ensure that a new kernel can be gener-
+       ated before the rest of the operating system  is  updated.
+       After   all   the   software  selections  are  updated  or
+       installed, swinstall reboots the new kernel, then executes
+       the  configure scripts for each software selection.  After
+       these scripts finish, the  system  is  rebooted  again  to
+       restore  the  normal  state.  No kernel building or system
+       reboots are  performed  by  swcopy.   Both  swinstall  and
+       swcopy perform various checks prior to installing or copy-
+       ing the software selections; for example, disk space anal-
+       ysis.
+
+   OOppttiioonnss
+       swinstall and swcopy support the following options: Speci-
+       fies the pathname  of  an  exported  catalog  that  stores
+       copies  of the response file or files created by a request
+       script (if the -x ask=true or -x ask=as_needed options are
+       specified).   The  response  files  are also stored in the
+       Installed Products Database (IPD) after  the  installation
+       process  is  complete.   Saves  the  current  options  and
+       operands to session_file.  You can  enter  a  relative  or
+       absolute  path  with  the filename.  The default directory
+       for session files is $HOME/.sw/sessions/.  You can  recall
+       a  session  file  with the -S session_file option. You can
+       save session information with the -C session_file  option.
+       In  addition, each command automatically creates a session
+       file  of  the  most  recent  session  information   called
+       $HOME/.sw/sessions/swcommand.last.    Reads  the  list  of
+       software selections from software_file, instead of (or  in
+       addition  to)  the  command  line operands (given by soft-
+       ware_selections).  Previews an install task by running the
+       session  through the analysis phase only.  Causes the com-
+       mand to operate on target selections that are  alternative
+       root directories (that is, root filesystems other than /).
+
+       Note that you cannot use this option to relocate  software
+       during installation. You must use the l=location syntax in
+       the software selection component.   Specifies  the  source
+       depot  (or  tape)  from  which  software  is  installed or
+       copied.  (SM can read both tar and cpio tape depots.)  The
+       default  source type is directory.  source has the follow-
+       ing format: [host][:][directory] A host may  be  specified
+       by  its  hostname,  domain  name,  or  Internet address. A
+       directory must be specified with an absolute  path.   Runs
+       swinstall or swcopy with options and operands saved from a
+       previous session to session_file.  You  can  save  session
+       information  to  a  file  with the -C session_file option.
+       Reads the list  of  target  selections  from  target_file,
+       instead  of  (or in addition to) the command line operands
+       (given by target_selections).  Turns on verbose output  to
+       stdout.  (The  command  log  file  is not affected by this
+
+                                                                3
+
+swinstall(1M)                                       swinstall(1M)
+
+       option.) By default, verbose output is enabled for all the
+       SM  commands.  Sets the default option to value, and over-
+       rides the default  value  (or  a  value  in  an  alternate
+       option_file  specified  with  the -X option).  Multiple -x
+       options can be specified.  Reads the default  options  and
+       behaviors  from  option_file.   These  values override the
+       default values.  swinstall and swcopy support the  follow-
+       ing  format  for  each  software  selection: bundle[.prod-
+       uct[.subproduct][.fileset]][,version]    product[.subprod-
+       uct][.fileset][,version]  The  version  component  has the
+       following format: [,r op revision][,a op arch][,v op  ven-
+       dor]  [,c  op category][,l=location][,fr op revision] [,fa
+       op arch] Refer to the manual  page  for  more  details  of
+       specifying  software selections.  The swinstall and swcopy
+       support the following syntax for  each  target  selection:
+       [host][:][/directory] The : is required if both a host and
+       directory are specified.
+
+       A host may be specified by its hostname, domain  name,  or
+       Internet  address.  A  directory  must  be specified by an
+       absolute path.
+
+   DDeeffaauulltt ooppttiioonnss
+       In addition to the standard options, several SM  behaviors
+       and  policy  options  can  be changed by modifying default
+       values   listed   in    the    master    defaults    file,
+       /usr/lib/sw/sys.defaults.   Refer  to  the manual page for
+       information about each of these default options and how to
+       modify them.
+
+       The  following  options  are  supported  by  swinstall and
+       swcopy.  Those marked with a c apply to only swcopy; those
+       marked with a i apply to only swinstall.
+       agent_auto_exit                     os_name (i)
+       agent_timeout_minutes               os_release (i)
+       allow_downdate (i)                  patch_filter
+       allow_incompatible (i)              patch_match_target
+       allow_multiple_versions (i)         patch_save_files (i)
+       ask (i)                             polling_interval
+       autoreboot (i)                      mount_all_filesystems
+       autorecover (i)                     recopy (c)
+       autorecover_product (i)             register_new_depot (c)
+       autoselect_dependencies             register_new_root (i)
+       autoselect_patches                  reinstall (i)
+       autoselect_reference_bundles        reinstall_files
+       compress_files (c)                  reinstall_files_use_cksum
+       controller_source                   remove_obsolete_filesets (c)
+       create_target_path                  retry_rpc
+       defer_configure (i)                 retry_rpc_interval
+       distribution_source_directory       rpc_binding_info
+       distribution_target_directory (c)   rpc_timeout
+       enforce_dependencies                select_local
+       enforce_dsa                         software
+
+                                                                4
+
+swinstall(1M)                                       swinstall(1M)
+
+       enforce_kernbld_failure (i)         software_view
+       enforce_scripts (i)                 source_cdrom (i)
+       fix_explicit_directories            source_depot_audit (i)
+       installed_software_catalog          source_tape
+       layout_version                      source_type
+       logdetail                           targets
+       logfile                             uncompress_files (c)
+       loglevel                            use_alternate_source
+       log_msgid                           verbose
+       match_target (i)                    write_remote_files
+       max_targets
+
+   SSeessssiioonn ffiilleess
+       Each  invocation of swinstall or swcopy defines an instal-
+       lation or copy session.  The  invocation  options,  source
+       information,  software  selections,  and  target hosts are
+       saved before the actual installation or copy task  starts.
+       This  lets  you re-execute the command even if the session
+       ends before proper completion.  Refer to the  manual  page
+       for further details.
+
+   SSooffttwwaarree aanndd ttaarrggeett lliissttss
+       swinstall  and  swcopy support software selections, target
+       selections, and  patch  filter  selections  from  separate
+       input  files.   You can specify software and target selec-
+       tion lists with the -f and -t options. Software  and  tar-
+       gets  specified  in these files are selected for operation
+       instead of (or in addition to) files listed on the command
+       line.
+
+       swinstall  and swcopy read a default list of patch filters
+       that you can use as selection criteria for patch software.
+       The lists can be found in: the system-wide default list of
+       patch filters the user-specific default list of patch fil-
+       ters
+
+       The  list  of  patch filters is enclosed in curly brackets
+       ({}) and  separated  by  whitespace.  For  example:  swin-
+       stall.patch_filter_choices={ *.*,c=enhancement *.*,c=crit-
+       ical   }    swcopy.patch_filter_choices={    Product.File-
+       set,c=halts_system }
+
+   EEnnvviirroonnmmeenntt vvaarriiaabblleess
+       Refer  to  the  manual page for details of the environment
+       variables that affect swinstall and swcopy.
+
+   SSiiggnnaallss
+       swinstall and swcopy catch SIGQUIT and SIGINT signals.  If
+       these  are received, the command writes a message, sends a
+       Remote Procedure Call (RPC) to the agents to wrap up,  and
+       then exits.
+
+       Each agent completes the install or copy task (if the exe-
+       cution phase has already started) before it wraps up. This
+
+                                                                5
+
+swinstall(1M)                                       swinstall(1M)
+
+       avoids leaving software in a corrupt state.
+
+   LLoocckkiinngg
+       SM commands use a common locking mechanism for reading and
+       modifying the Installed Products Database (IPD) and  soft-
+       ware  depots.  This  mechanism allows multiple readers but
+       only one writer on an IPD  or  depot:  swinstall  commands
+       that modify the IPD are restricted from simultaneous modi-
+       fication using locking on  the  file  IPD_location/swlock;
+       for example, /var/adm/sw/products/swlock.
+
+       swcopy   commands   that   modify  a  software  depot  are
+       restricted  from  simultaneous  modification  using  fcntl
+       locking  on  the  file depot_directory/catalog/swlock; for
+       example, /var/spool/sw/catalog/swlock.  Both swinstall and
+       swcopy  set  fcntl  read  locks on source depots using the
+       swlock file above.  When a read lock is set,  it  prevents
+       all  SM  commands  from performing modifications, that is,
+       from setting write locks.
+
+FFiilleess
+       Contains the user-specific default values for some or  all
+       SM  options.  If  this  file  does not exist, SM looks for
+       user-specific defaults  in  $HOME/.sw/defaults.   Contains
+       the user-specific default list of patch filters.  Contains
+       session files automatically saved by the SM  commands,  or
+       explicitly saved by the user.  Contains the master list of
+       current SM options with their  default  values.   Contains
+       all  of the configurable and non-configurable data for SM.
+       This directory is also the default location of log  files.
+       Contains the active system-wide default values for some or
+       all SM options.  Contains the system-wide default list  of
+       patch  filters.   The Installed Products Database (IPD): a
+       catalog of all products installed on a system.
+
+EExxiitt ccooddeess
+       An interactive swinstall or swcopy session always  returns
+       0.
+
+       A non-interactive swinstall or swcopy session returns: the
+       software selections were successfully installed/copied the
+       install/copy operation failed on all target selections the
+       install/copy operation failed on some target selections
+
+DDiiaaggnnoossttiiccss
+       swinstall and swcopy write to stdout, stderr, and to  spe-
+       cific log files.
+
+   SSttaannddaarrdd oouuttppuutt
+       swinstall and swcopy write messages for significant events
+       to stdout.  These include: a begin and end session message
+       selection,  analysis, and execution task messages for each
+       target selection
+
+                                                                6
+
+swinstall(1M)                                       swinstall(1M)
+
+   SSttaannddaarrdd eerrrroorr
+       swinstall and write messages for  all  WARNING  and  ERROR
+       conditions to stderr.
+
+   LLoogg ffiilleess
+       Both  interactive and non-interactive swinstall and swcopy
+       sessions log summary events at the host where the  command
+       was  invoked.   They  log  detailed events to the log file
+       associated with each target selection.
+
+       The log files are: swinstall and swcopy log all stdout and
+       stderr    messages    to   /var/adm/sw/swinstall.log   and
+       /var/adm/sw/swcopy.log respectively.  The user can specify
+       a  different  log  file  by  modifying the logfile default
+       option.  A swagent process performs the actual install  or
+       copy  operation  at  each  target  selection.  For install
+       tasks, swagent  logs  messages  to  var/adm/sw/swagent.log
+       beneath the root directory (for example, / or an alternate
+       root directory).  For copy tasks, the  swagent  logs  mes-
+       sages  to  swagent.log  beneath  the  depot directory (for
+       example, /var/spool/sw).  The system administrator at  the
+       source  depot  machine  can  track  which user pulls which
+       software (and when) from a depot on  the  source  machine.
+       (Note  that a user running swinstall or swcopy from a tar-
+       get machine cannot set this option; only the administrator
+       of   the   source  depot  machine  can  set  it.  See  the
+       source_depot_audit default option on the manual page.)
+
+RReeffeerreenncceess
+NNoottiicceess
+   AAuutthhoorr
+       swinstall and swcopy were developed by the Hewlett-Packard
+       Company and Mark H. Colburn.
+
+EExxaammpplleess
+   sswwiinnssttaallll eexxaammpplleess
+       To  select  the  C  and  Pascal  products from the network
+       source  software  server  swserver,  enter:  swinstall  -s
+       swserver  cc  pascal  To  update  VisionFS  from  a CD-ROM
+       mounted at /cd, enter: swinstall -s  /cd/swmedia  VisionFS
+       To  install  an  incompatible  version  of  VisionFS  into
+       /exports,  enter:  swinstall  -x   allow_incompatible=true
+       -s/products                VisionFS,a=arch               \
+                                        @ /exports To install all
+       products  from  the cartridge tape /dev/rmt/ctape1, enter:
+       swinstall -s /dev/rmt/ctape1 \* To re-install the software
+       selections  listed  in /tmp/install.products, on the hosts
+       listed in tmp/install.hosts,  enter:  swinstall  -x  rein-
+       stall=true            -f/tmp/install.products            \
+                                        -t/tmp/install.hosts   To
+       use  swinstall using the session file /tmp/case.selections
+       as a basis, enter: swinstall  -S  /tmp/case.selections  To
+       install  all  the  software  from  local  depot  /tmp/sam-
+       ple.depot.1, using any response files generated by request
+
+                                                                7
+
+swinstall(1M)                                       swinstall(1M)
+
+       scripts,   enter:   swinstall  -s  /tmp/sample.depot.1  -x
+       ask=true  \*  To  install  product1  from   remote   depot
+       /tmp/sample.depot.1  on  host  sysA,  and  use an existing
+       response  file  (previously  generated   by   located   in
+       /tmp/bar.depot,   enter:   swinstall   -s   sysA:/tmp/sam-
+       ple.depot.1 -c  /tmp/bar.depot  product1  To  install  all
+       products in remote depot /tmp/sample.depot.1 on host sysA,
+       use any response files generated by request scripts,  cre-
+       ate catalog /tmp/bar.depot, and copy all response files to
+       the  new  catalog,  enter:  swinstall  -s   sysA:/tmp/sam-
+       ple.depot.1          -c          /tmp/bar.depot          \
+                                        -x ask=true \* To install
+       all  products  in remote depot /tmp/sample.depot.1 on host
+       sysA, use response files, run request scripts only when  a
+       response  file  is  absent, create catalog /tmp/bar.depot,
+       and copy all response files to  the  new  catalog,  enter:
+       swinstall       -s       sysA:/tmp/sample.depot.1       -c
+       sysA:/tmp/bar.depot \                                   -x
+       ask=as_needed  \* To install all patches in the depot that
+       correspond to currently installed software, and  that  are
+       of   category  critical,  enter:  swinstall  -s  /tmp/sam-
+       ple.depot.1       -x       patch_match_target=true       \
+                                        -x   patch_filter=\""*.*,
+       c=critical\""
+
+   sswwccooppyy eexxaammpplleess
+       To   copy   all   products   from   the   cartridge   tape
+       /dev/rmt/ctape1  to  the  default depot on the local host,
+       enter: swcopy -s /dev/rmt/ctape1 \* To load  the  software
+       selections listed in /tmp/load.products, using the default
+       source/depot, enter: swcopy -f /tmp/load.products To  copy
+       existing product (from the default depot) into an existing
+       (or new) depot -- swcopy creates new depots if  necessary,
+       enter:      swcopy      sysA:/var/spool/sw      BASH     @
+       sysB:/var/spool/newdepot To copy a product from CD-ROM  to
+       the  default  depot  where  the  CD-ROM is mounted, enter:
+       swcopy /CD BASH @ /var/spool/targetdepot
+
+                                                                8
+

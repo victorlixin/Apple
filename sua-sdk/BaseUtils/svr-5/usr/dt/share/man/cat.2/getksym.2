@@ -1,0 +1,99 @@
+
+
+getksym(2)                                             getksym(2)
+
+SSyynnooppssiiss
+       #include <sys/ksym.h> #include <sys/elf.h>
+
+       int  getksym(char *symname, unsigned long *value, unsigned
+       long *info);
+
+DDeessccrriippttiioonn
+       getksym, given a symname, looks for a  global  (STB_GLOBAL
+       or  STB_WEAK)  symbol  of that name in the symbol table of
+       the running kernel (including all currently loaded  kernel
+       modules).   If it finds a match, getksym returns the value
+       associated with that symbol (typically its address) in the
+       space  pointed to by value, and the type of that symbol in
+       the space pointed to by info.  The types returned are:
+
+       ----------------------------------------------
+       STT_NOTYPE   unknown type
+       STT_FUNC     text symbol (typically function)
+       STT_OBJECT   data symbol
+
+       The symbol name can be no more  than  MAXSYMNMLEN  charac-
+       ters.  If more than one symbol of the given name exists in
+       the search space, the one (if any) in the statically bound
+       kernel  or,  if  not  there, the first one found among the
+       loaded modules will be returned.
+
+       If getksym is given a valid address in the running  kernel
+       in  the  space pointed to by value, it will return, in the
+       space pointed to by symname, the name of the symbol  whose
+       value  is  the closest one less than or equal to the given
+       value and, in space pointed to  by  info,  the  difference
+       between  the  address  given  and  the value of the symbol
+       found.  The space pointed to by symname must be  at  least
+       MAXSYMNMLEN characters long.
+
+   RReettuurrnn vvaalluueess
+       On  failure, getksym returns -1 and sets errno to identify
+       the error.
+
+   EErrrroorrss
+       In the following conditions, getksym fails and sets  errno
+       to: Invalid pointer for symname, value, or info The length
+       of the symbol name exceeds the maximum length of the char-
+       acters.   symname  is  not  found  in  the  running kernel
+       (including loaded modules) or value is outside  the  range
+       of the static kernel and any loaded modules.
+
+RReeffeerreenncceess
+NNoottiicceess
+       As  a  consequence of the dynamically loadable kernel mod-
+       ules feature, a dynamic symbol table is now  kept  in  the
+       kernel  address space representing all defined global sym-
+       bols in the static kernel and all  currently  loaded  mod-
+       ules.   When a module is loaded, its symbol information is
+
+                                                                1
+
+getksym(2)                                             getksym(2)
+
+       added to this table; when a module is unloaded, its symbol
+       information is deleted.
+
+       Finding  out  the  address of a particular kernel variable
+       was commonly done by using on  /stand/unix.   This  is  no
+       longer  an  accurate  way  to  get that information, since
+       /stand/unix only contains the symbol table for the  static
+       kernel.   The  symbol  tables for the loadable modules are
+       elsewhere on the system, but which modules are loaded  and
+       from  where  changes  over time.  So, as part of this fea-
+       ture, two new ways of getting  at  information  associated
+       with kernel symbols have been provided.
+
+       The  system  call  provides  the  kind of information on a
+       given kernel symbol or address  that  provided.   However,
+       the  symbol  name/address  association may not be valid by
+       the time it is returned to the user (for example,  if  the
+       symbol  is defined in a loadable module and that module is
+       unloaded), unless the user takes special steps like  keep-
+       ing the module loaded by making sure there is an outstand-
+       ing open, mount, . . .
+
+       Because of this later complication and because most inter-
+       est  in  kernel addresses is related to reading or writing
+       from /dev/kmem, an alternate atomic method of reading  and
+       writing in the kernel address space based on a symbol name
+       is provided.  Three new ioctl commands now exist in the mm
+       memory  driver for the /dev/kmem minor device [see In this
+       way, a user gets the  desired  IO  operation  accomplished
+       without  fear that a module may be unloaded in the middle.
+       Of course, this user must still  open  /dev/kmem  for  the
+       correct  type  of  IO  and  so the appropriate protections
+       against unauthorized access still exist.
+
+                                                                2
+

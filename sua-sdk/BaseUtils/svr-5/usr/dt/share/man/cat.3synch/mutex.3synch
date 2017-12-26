@@ -1,0 +1,109 @@
+
+
+mutex(3synch)                                       mutex(3synch)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <synch.h>
+
+       int mutex_init(mutex_t *mutex, int type, void *arg);
+
+       int mutex_lock(mutex_t *mutex);
+
+       int mutex_trylock(mutex_t *mutex);
+
+       int mutex_unlock(mutex_t *mutex);
+
+       int mutex_destroy(mutex_t *mutex);
+
+DDeessccrriippttiioonn
+       Mutual  exclusion locks, or mutexes, are used to serialize
+       the execution of threads.   They  are  typically  used  to
+       ensure  that  only  one  thread  at a time accesses shared
+       data.  Note that mutexes protect data only when  the  con-
+       vention  of  acquiring  the  mutex  is faithfully followed
+       before any access of the data.
+
+       The Threads Library provides five routines  to  manipulate
+       mutexes;  these  are  outlined below and described in more
+       detail on individual manual pages.
+
+   PPaarraammeetteerrss
+       pointer to mutex to be initialized, locked,  unlocked,  or
+       destroyed USYNC_THREAD or USYNC_PROCESS NULL (reserved for
+       future use)
+
+   mmuutteexx__iinniitt((33ssyynncchh))
+       mutex_init initializes a mutex to be of type type  and  in
+       the unlocked state.
+
+   mmuutteexx__lloocckk((33ssyynncchh))
+       mutex_lock  locks the mutex pointed to by mutex.  If mutex
+       is already locked, the calling  thread  is  blocked  until
+       mutex becomes available.  When mutex_lock returns success-
+       fully, the caller has locked mutex.
+
+   mmuutteexx__ttrryylloocckk((33ssyynncchh))
+       mutex_trylock attempts once to lock the mutex  pointed  to
+       by mutex.
+
+       If  mutex is available, mutex_trylock will return success-
+       fully with mutex locked.   If  mutex  is  already  locked,
+       mutex_trylock  immediately  returns  EBUSY  to  the caller
+       without acquiring mutex or blocking.
+
+   mmuutteexx__uunnlloocckk((33ssyynncchh))
+       mutex_unlock unlocks the mutex pointed to by mutex.
+
+                                                                1
+
+mutex(3synch)                                       mutex(3synch)
+
+       If there are one or more threads waiting  for  mutex  when
+       mutex_unlock  is  called,  at  least one waiting thread is
+       allowed to try again to lock mutex.
+
+   mmuutteexx__ddeessttrrooyy((33ssyynncchh))
+       mutex_destroy destroys the  mutex  pointed  to  by  mutex.
+       This  includes  invalidating mutex and freeing any associ-
+       ated implementation-allocated dynamic resources.
+
+   UUSSYYNNCC__TTHHRREEAADD aanndd UUSSYYNNCC__PPRROOCCEESSSS mmuutteexxeess
+       Mutexes  are  initialized  to  be  one   of   two   types:
+       USYNC_THREAD  or  USYNC_PROCESS.  USYNC_THREAD mutexes are
+       available only to  threads  within  the  current  process.
+       USYNC_PROCESS  mutexes can be used by threads in different
+       processes.
+
+   GGeenneerraall iinnffoorrmmaattiioonn
+       Mutexes must be initialized,  either  with  or  statically
+       (see  mutex_init), before being passed to any of the other
+       mutex routines.
+
+       Locks acquired with mutex_lock or  mutex_trylock  must  be
+       released with mutex_unlock.
+
+       From  the  point  of  view  of  the  caller, mutex_lock is
+       atomic: even if interrupted by a signal  or  forkall  (see
+       mutex_lock  will  not  return  until  it  holds the locked
+       mutex.  As a consequence, if mutex_lock is interrupted, an
+       error  indication  such  as EINTR is never returned to the
+       caller.
+
+WWaarrnniinnggss
+       Operations on mutexes  are  not  recursive--a  thread  can
+       deadlock  if it attempts to relock a mutex that it already
+       has locked.
+
+       If a thread exits while holding a mutex,  the  mutex  will
+       not  be  unlocked, and other threads waiting for the mutex
+       will wait forever.  Similarly, if a  process  exits  while
+       holding  a  USYNC_PROCESS  mutex,  the  mutex  will not be
+       unlocked, and other processes or threads waiting  for  the
+       mutex will wait forever.
+
+RReeffeerreenncceess
+
+                                                                2
+

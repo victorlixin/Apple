@@ -1,0 +1,146 @@
+nftw(3)                                                         nftw(3)
+
+  nnffttww(())
+
+  NNAAMMEE
+
+    nftw() - walk a file tree
+
+  SSYYNNOOPPSSIISS
+
+    #include <ftw.h>
+
+    struct FTW {
+         int base;
+         int level;
+    };
+
+    int nftw (const char *path, int (*fn)(const char *,
+              const struct stat *, int, struct FTW *), int depth,
+              int flag)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _nn_ff_tt_ww(3) call recursively descends the directory hierarchy rooted in
+    path, much like _ff_tt_ww(3). However, _nn_ff_tt_ww(3) takes an additional argument
+    flag, which is a bitwise inclusive OR of zero or more of these flags:
+
+    FTW_CHDIR
+        Changes the current working directory to each directory as it reports
+        the files in that directory. If not set, _nn_ff_tt_ww(3) does not change the
+        current working directory.
+
+    FTW_DEPTH
+        Perform a depth-wise search. If this is set, _nn_ff_tt_ww(3) reports files in
+        a directory before reporting the directory itself. Otherwise, _nn_ff_tt_ww(3)
+        reports the directory before reporting the files in that directory
+        (the same behavior as _ff_tt_ww(3)).
+
+    FTW_MOUNT
+        Only report files in the same filesystem as path. If this bit is
+        clear, _nn_ff_tt_ww(3) reports all files encountered in the walk.
+
+    FTW_PHYS
+        Do a physical walk, ignoring symbolic links. If this bit is clear,
+        _nn_ff_tt_ww(3) follows symbolic links instead of reporting them, and does not
+        report the same file twice.
+
+    The depth argument is similar to the _ff_tt_ww(3) ndirs argument; it sets the
+    maximum number of file descriptors used by _nn_ff_tt_ww(3) while traversing the
+    tree. At most one is used per directory level. If depth is 0, limitless
+    recursion is allowed.
+
+    For each object it encounters, _nn_ff_tt_ww(3) calls the function pointed to by fn
+    with four arguments:
+
+    *     The object's pathname.
+    *     A pointer to the stat buffer, containing information on the object.
+    *     An integer containing other information. The integer is one of:
+
+          FTW_D
+              The object is a directory.
+
+          FTW_DNR
+              The object is a directory that cannot be read. In this case,
+              children of the directory are not read.
+
+          FTW_DP
+              The object is a directory and subdirectories have been visited.
+              (This is only reported if the FTW_DEPTH bit is set in the flag.)
+
+          FTW_F
+              The object is a file.
+
+          FTW_NS
+              The object was not successfully _ss_tt_aa_tt(2)'ed. In this case, the
+              ssttaatt function will contain undefined values. For example, a file
+              with read but not execute/search permission can cause this
+              value.
+
+          FTW_SL
+              The object is a symbolic link. (This is only reported if the
+              FTW_PHYS bit is set in the flag.)
+
+          FTW_SLN
+              The object is a symbolic link and does not point to an existing
+              file. (This is only reported if the FTW_PHYS bit is not set in
+              the flag.)
+    *     A pointer to an FFTTWW structure: The bbaassee value is the offset of the
+          object's filename in the pathname passed as the first argument to
+          ffnn(). The lleevveell indicates the depth relative to the root of the
+          walk; the root level is 0. For example, if path is /, the file /a/b/
+          c has a base (offset) of 5 and a level of 3.
+
+    The _nn_ff_tt_ww(3) function uses at most one file descriptor for each level in
+    the tree.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The _ff_tt_ww(3) function returns 0 when the tree is exhausted. If the function
+    pointed to by fn returns a non-zero value or an error (other than
+    [EACCES]), the _ff_tt_ww(3) function stops and returns that value. If _ff_tt_ww(3)
+    detects an error, it returns -1 and sets errno.
+
+  EERRRROORR VVAALLUUEESS
+
+    The _ff_tt_ww(3) function may fail for the following reasons:
+
+    [EACCES]
+        The process does not have permission to read or search a component of
+        path.
+
+    [EINVAL]
+        The ndirs argument is invalid.
+
+    [ELOOP]
+        There were too many symbolic links.
+
+    [ENAMETOOLONG]
+        The path is more than {PATH_MAX} characters long, or a path component
+        is more than {NAME_MAX} characters long.
+
+    [ENOENT]
+        Either a component of path doesn't exist, or path is an empty string.
+
+    [ENOMEM]
+        There is not enough memory.
+
+    [ENOTDIR]
+        A component of path is not a directory.
+
+  SSEEEE AALLSSOO
+
+    _f_t_w(3)
+
+    _o_p_e_n_d_i_r(3)
+
+    _r_e_a_d_d_i_r(2)
+
+    _s_t_a_t(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The nnffttww function is not thread safe.
+
+    The nnffttww function is not async-signal safe.
+

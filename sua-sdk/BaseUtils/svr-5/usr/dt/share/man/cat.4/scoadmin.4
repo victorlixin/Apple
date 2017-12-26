@@ -1,0 +1,157 @@
+
+
+scoadmin(4)                                           scoadmin(4)
+
+SSyynnooppssiiss
+       Each  management  application  in the admin launcher has a
+       corresponding object in the admin  object  hierarchy.   To
+       add  a  management  application  to the admin desktop, you
+       must create a management object to be added to the hierar-
+       chy  in  the appropriate place.  The required contents are
+       as follows:
+                     foo.obj
+                        |
+                        |
+              -------------------
+              |                 | activate.scoadmin      en_US
+                                |
+                                |
+                              title
+
+DDeessccrriippttiioonn
+       Each management application listed in the  admin  launcher
+       has  a  corresponding  object directory in this hierarchy.
+       When a new management application is to be  added  to  the
+       admin launcher, an object directory is added for it in the
+       hierarchy.  These object directories have names which  end
+       with the extension .obj.  The intention is that management
+       objects should be placed into this hierarchy in a  logical
+       grouping.   Folders  in the hierarchy represent a grouping
+       of applications.
+
+       admin applications and hierarchies must be configured  and
+       maintained using the command.
+
+       The  admin  management  object  hierarchy  is  located in:
+       /usr/lib/scoadmin
+
+       At installation, the admin object hierarchy is  preconfig-
+       ured   into   an  initial  state.   This  preconfiguration
+       includes the following standard folders (application cate-
+       gories):  Hardware Networking Printers Software_Management
+       System
+
+   TThhee aaccttiivvaattee..ssccooaaddmmiinn ffiillee
+       The  activate.scoadmin  file  permits  the  object  to  be
+       invoked  from  This  file  must be a valid executable type
+       (such as a binary, shell or tcl script).  scoadmin  simply
+       invokes  the  file assuming it is an executable.  If acti-
+       vate.scoadmin is a script, then the #!  mechanism must  be
+       used to invoke the appropriate interpreter.  The suggested
+       permissions are 0555.
+
+       If this file is not found when a user attempts  to  invoke
+       the application from scoadmin, a message is displayed that
+       the application cannot be invoked.
+
+       Two environment variables are set by scoadmin in the envi-
+       ronment      of     activate.scoadmin:     informs     the
+
+                                                                1
+
+scoadmin(4)                                           scoadmin(4)
+
+       activate.scoadmin executable of the  display  environment.
+       The possible values are MOTIF and CHARM.  This can be used
+       to prevent a graphical-only application  from  being  exe-
+       cuted  in the character environment.  Example uses of this
+       variable are found in contains the name of the  management
+       object  selected,  mimicking the variable of the same name
+       set by X.desktop when a user double-clicks on  an  object.
+       It  includes  the full path name of the .obj directory for
+       the corresponding management application.   It  is  conve-
+       nient  to use this variable when referring to files within
+       the management object.
+
+   TThhee llaanngguuaaggee ddiirreeccttoorryy
+       Language directories are used within objects to store lan-
+       guage  specific  data for the purpose of internationaliza-
+       tion.  The current  directories  are:  ja_JP,  ja_JP.SJIS,
+       fr_FR,  de_DE,  and en_US.  The launcher maps the value of
+       the LANG environment variable to one of these values.   If
+       LANG is not set or if its value does not map to one of the
+       recognized values, the default is en_US.   This  directory
+       should be provided with every management object.
+
+       The  following  subsections  describe  the  data which may
+       reside in the language directories.
+
+   TThhee ttiittllee ffiillee
+       This file should contain the title of the  application  in
+       the  corresponding language.  The title file can contain a
+       multi-line title.  scoadmin uses the title  in  presenting
+       the  user  with  a  list of the available applications.  A
+       file named title should reside in  each  of  the  language
+       directories of a management object.
+
+       If  the  desktop cannot find a language directory matching
+       the current language setting or an en_US  language  direc-
+       tory,  it uses the name of the management object directory
+       as the title of the application.  The same applies if  the
+       desktop finds the appropriate language directory, but does
+       not find a title file in it.  In either of those cases, if
+       the  management  object  directory was named Printer Setup
+       Manager.obj then it will use Printer Setup Manager as  the
+       title.   It is recommended that management object directo-
+       ries have meaningful names.  In the example given here,  a
+       space  character is used in the name of the directory such
+       that the title appears more legible.
+
+   AA cchhaarraacctteerr//mmoottiiff aapppplliiccaattiioonn
+       This example application is capable of running in both the
+       character and MOTIF environments.  &VTcl; applications are
+       an example of this type of application.  The following  is
+       a simple executable script: #! /bin/sh
+
+       /usr/bin/fooGUI  Note  that  the  first  line  invokes the
+       shell.  This file could have also been a or
+
+                                                                2
+
+scoadmin(4)                                           scoadmin(4)
+
+        Visual Tcl executable, including a binary executable.
+
+   AA cchhaarraacctteerr oonnllyy aapppplliiccaattiioonn
+       In this example, the application is capable of running  in
+       a character environment only: #! /bin/sh
+
+       if  [  "$ADMIN_UIMODE"  =  CHARM ] then      mkdev hd else
+            scoterm -title "mkdev hd" -e sh -c "mkdev hd" fi Note
+       the  use  of  the ADMIN_UIMODE environment variable.  When
+       scoadmin executes this script,  it  sets  ADMIN_UIMODE  to
+       either  MOTIF  or  CHARM according to the display environ-
+       ment.  It is then  up  to  the  character-only  management
+       object  to  ensure  that  the  management  application  is
+       invoked correctly.  In this example, if the MOTIF environ-
+       ment is detected, the application is run in a scoterm.
+
+   AA mmoottiiff oonnllyy aapppplliiccaattiioonn
+       This example uses scomail as an application which can only
+       run in a MOTIF environment.  Here the  ADMIN_UIMODE  envi-
+       ronment  variable is used to identify the display environ-
+       ment.  In a character environment, the application  cannot
+       be  invoked  and  scoadmin is used to display a message to
+       that effect: #! /bin/sh
+
+       if [ "$ADMIN_UIMODE" = CHARM ] then      scoadmin -m "This
+       application  must  be  run  in a MOTIF environment."  else
+            /usr/bin/X11/scomail fi
+
+FFiilleess
+       admin desktop activation file application title
+
+RReeffeerreenncceess
+
+                                                                3
+

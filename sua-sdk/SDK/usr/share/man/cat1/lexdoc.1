@@ -1,0 +1,1723 @@
+lexdoc(1)                                                     lexdoc(1)
+
+  lleexxddoocc
+
+  NNAAMMEE
+
+    lexdoc - documentation for lex, fast lexical analyzer generator
+
+  SSYYNNOOPPSSIISS
+
+    lex [[-78BbcdFfhIiLlnpsTtVvw]] [[-C[[aefFmr]]]] [[-Pprefix]]
+        [[-Sskeleton]] [[filename ...]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The lleexx(1) utility is a tool for generating scanners, which are programs
+    that recognized lexical patterns in text. The lleexx(1) utility reads the
+    given input files, or its standard input if no file names are given, for a
+    description of a scanner to generate. The description is in the form of
+    pairs of regular expressions and C code, called rules. The lleexx(1) utility
+    generates as output a C source file, lleexx..yyyy..cc, which defines the routine
+    yyyylleexx(). This file is compiled and linked with the --llll library to produce
+    an executable. When the executable is run, it analyzes its input for
+    occurrences of the regular expressions. Whenever it finds one, it executes
+    the corresponding C code.
+
+  SSIIMMPPLLEE EEXXAAMMPPLLEESS
+
+    These simple examples illustrate how to use lleexx(1).
+
+    The following lleexx(1) input specifies a scanner that, whenever it
+    encounters the string "username", will replace it with the user's login
+    name:
+
+    %%
+    username    printf( "%s", getlogin() );
+
+    By default, any text not matched by a lleexx(1) scanner is copied to the
+    output. The effect of this scanner is to copy its input file to its output
+    with each occurrence of "username" expanded. In this input, there is one
+    rule. The element "username" is the pattern, and "printf" is the action.
+    The "%%" marks the beginning of the rules.
+
+    Another simple example follows:
+
+        int num_lines = 0, num_chars = 0;
+    %%
+    \n      ++num_lines; ++num_chars;
+    %%
+    main()
+            {
+            yylex();
+            printf( "# of lines = %d, # of chars = %d\n",
+                    num_lines, num_chars );
+            }
+
+    This scanner counts the number of characters and the number of lines in
+    its input. It produces no output other than the final report on the
+    counts. The first line declares two globals, "num_lines" and "num_chars",
+    which are accessible both inside yyyylleexx() and in the mmaaiinn() routine
+    declared after the second "%%". There are two rules, one that matches a
+    newline ("\n") and increments both the line count and the character count,
+    and one that matches any character other than a newline (indicated by the
+    "." regular expression).
+
+    The next example is slightly more complicated:
+
+    /* scanner for a toy Pascal-like language */
+    %{
+    /* need this for the call to atof() below */
+    #include <math.h>
+    %}
+    DIGIT    [0-9]
+    ID       [a-z][a-z0-9]*
+
+    %%
+    {DIGIT}+    {
+                printf( "An integer: %s (%d)\n", yytext,
+                        atoi( yytext ) );
+                }
+    {DIGIT}+"."{DIGIT}*        {
+                printf( "A float: %s (%g)\n", yytext,
+                        atof( yytext ) );
+                }
+    if|then|begin|end|procedure|function        {
+                printf( "A keyword: %s\n", yytext );
+                }
+    {ID}        printf( "An identifier: %s\n", yytext );
+    "+"|"-"|"*"|"/"   printf( "An operator: %s\n", yytext );
+    "{"[^}\n]*"}"     /* consume one-line comments */
+    [ \t\n]+          /* consume white space */
+
+    %%
+    main( argc, argv )
+    int argc;
+    char **argv;
+        {
+        ++argv, --argc;  /* skip over program name */
+        if ( argc > 0 )
+                yyin = fopen( argv[0], "r" );
+        else
+                yyin = stdin;
+        yylex();
+        }
+
+    This is the beginning of a simple scanner for a language like Pascal. It
+    identifies different types of tokens and reports what it has seen.
+
+    The details of this example will be explained in the following sections.
+
+  FFOORRMMAATT OOFF TTHHEE IINNPPUUTT FFIILLEE
+
+    The lleexx(1) input file consists of three sections, separated by a line with
+    just %%%% in it:
+
+    definitions %% rules %% user code
+
+    The definitions section contains declarations of simple name definitions
+    to simplify the scanner specification, and declarations of start
+    conditions, which are explained in a later section.
+
+    Name definitions have the form:
+
+    name definition
+
+    The name is a word beginning with a letter or an underscore ('_'),
+    followed by zero or more letters, digits, underscores ('_'), or dashes ('-
+    '). The definition is taken to begin at the first non-white-space
+    character following the name and continuing to the end of the line. The
+    definition can subsequently be referred to using "{name}", which will
+    expand to "(definition)". For example,
+
+    DIGIT    [0-9]
+    ID       [a-z][a-z0-9]*
+
+    defines "DIGIT" to be a regular expression that matches a single digit,
+    and "ID" to be a regular expression that matches a letter followed by zero
+    or more letters or digits. A subsequent reference to:
+
+    {DIGIT}+"."{DIGIT}*
+
+    is identical to:
+
+    ([0-9])+"."([0-9])*
+
+    and matches one or more digits followed by a '.' that is followed by zero
+    or more digits.
+
+    The rules section of the lleexx(1) input contains a series of rules of the
+    form:
+
+    pattern   action
+
+    where the pattern must be unindented and the action must begin on the same
+    line.
+
+    Patterns and actions are described in more detail later in this topic.
+
+    Finally, the user code section is simply copied to lleexx..yyyy..cc verbatim. It
+    is used for companion routines that call or are called by the scanner. The
+    presence of this section is optional; if it is missing, the second %%%% in
+    the input file can also be skipped.
+
+    In the definitions and rules sections, any indented text or text enclosed
+    by %%{{ and %%}} is copied verbatim to the output (with instances of %%{{}}
+    removed). The instances of %%{{}} must appear unindented on lines by
+    themselves.
+
+    In the rules section, any indented or %%{{}} text appearing before the first
+    rule can be used to declare variables that are local to the scanning
+    routine and (after the declarations) code that will be executed whenever
+    the scanning routine is entered. Other indented or %%{{}} text in the rule
+    section is still copied to the output, but its meaning is not well
+    defined, and it might cause compile-time errors (this feature is present
+    for POSIX compliance).
+
+    In the definitions section (but not in the rules section), an unindented
+    comment (that is, a line beginning with //**) is also copied verbatim to the
+    output up to the next **//.
+
+  PPAATTTTEERRNNSS
+
+    Patterns in the input are written using an extended set of regular
+    expressions. These are described in the following table:
+
+    PPaatttteerrnn            MMaattcchheess
+
+    x                  Match the character 'x'.
+
+    .                  Any character except newline.
+
+    [xyz]              A "character class"; in this case, the pattern matches
+                       either an 'x', 'y', or 'z'.
+
+    [abj-oZ]           A "character class" that contains a range; matches an
+                       'a', 'b', any letter from 'j' through 'o', or a 'Z'.
+
+    [^A-Z]             A "negated character class" (that is, any character
+                       except those in the class. In this case, any character
+                       except an uppercase letter).
+
+    [^A-Z\n]           Any character except an uppercase letter or a newline.
+
+    r*                 Zero or more instances of r, where r is any regular
+                       expression.
+
+    r+                 One or more instances of r.
+
+    r?                 Zero or one instance ofr (that is, an optional r).
+
+    r{2,5}             Two to five instances of r.
+
+    r{2,}              Two or more instances of r.
+
+    r{4}               Exactly four instances of r.
+
+    {name}             The expansion of the name definition.
+
+    "[xyz]\"star"      The literal string: [xyz]"star.
+
+    \X                 If X is an 'a', 'b', 'f', 'n', 'r', 't', or 'v', the
+                       ANSI C interpretation of \x. Otherwise, a literal 'X'
+                       (used to escape operators such as '*').
+
+    \123               The character with octal value 123.
+
+    \x2a               The character with hexadecimal value 2a
+
+    (r)                Match an r; parentheses are used to override precedence
+                       (discussed later in this topic).
+
+    rs                 "Concatenation:" the regular expression r followed by
+                       the regular expression s.
+
+    r|s                Either an r or an s.
+
+    r/s                An r, but only if it is followed by an s. The s is not
+                       part of the matched text. This type of pattern is
+                       called "trailing context".
+
+    ^r                 An r, but only at the beginning of a line.
+
+    r$                 An r, but only at the end of a line. Equivalent to "r/
+                       \n".
+
+    <s>r               An r, but only in start condition s. (See the
+                       discussion of start conditions later in this topic.)
+
+    <s1,s2,s3>r        Same, but in any of start conditions s1, s2, or s3.
+
+    <*>r               An r in any start condition, even an exclusive one.
+
+    <<EOF>>            An end-of-file.
+
+    <s1,s2><<EOF>>     An end-of-file when in start condition s1 or s2.
+
+    Note that inside a character class, all regular-expression operators lose
+    their special meaning except escape ('\') and the character class
+    operators, '-', ']', and, at the beginning of the class, '^'.
+
+    The regular expressions listed above are grouped according to precedence,
+    from highest precedence at the top to lowest at the bottom. Those grouped
+    together have equal precedence. For example,
+
+    cat|dog*
+
+    is the same as
+
+    (cat)|(do(g*))
+
+    because the '*' operator has higher precedence than concatenation, and
+    concatenation higher than alternation ('|').Therefore, this pattern
+    matches either the string "cat" or the string "do" followed by zero or
+    more instances of g. To match "cat" or zero or more instances of "dog",
+    use:
+
+    cat|(dog)*
+
+    and to match zero or more instances of "cat" or "dog" use:
+
+    (cat|dog)*
+
+    Some notes on patterns:
+
+    *     A negated character class such as the example "[^A-Z]" above will
+          match a newline unless "\n" (or an equivalent escape sequence) is
+          one of the characters explicitly present in the negated character
+          class (for example: "[^A-Z\n]"). This is different from the way many
+          other regular expression tools treat negated character classes.
+          Unfortunately, however, the inconsistency is historically
+          entrenched. Matching newlines means that a pattern like [^"]* can
+          match the entire input unless there is another quote in the input.
+    *     A rule can have no more than one instance of trailing context (the
+          '/' operator or the '$' operator). The start condition, '^', and
+          "<<EOF>>" patterns can only occur at the beginning of a pattern,
+          and, like '/' and '$', cannot be grouped inside parentheses. A '^'
+          that does not occur at the beginning of a rule loses its special
+          properties and is treated as a normal character. This is also true
+          of a '$' that does not occur at the end of a rule.
+    *     You cannot use the following:
+          cat/dog$
+          <sc1>cat<sc2>dog
+          You can, however, write the first of these as:
+          cat/dog\n
+    *     The following will result in '$' or '^' being treated as a normal
+          character:
+          cat|(dog$)
+          cat|^dog
+          If you want a "cat", or you want a dog followed by a newline, the
+          following could be used (the special '|' action is explained below):
+          cat      |
+          dog$     /* action goes here */
+          A similar trick will work for matching a cat or matching a dog at
+          the beginning of a line.
+
+  HHOOWW IINNPPUUTT IISS MMAATTCCHHEEDD
+
+    When the generated scanner is run, it analyzes its input looking for
+    strings that match any of its patterns. If it finds more than one match,
+    it takes the one matching the most text (for trailing-context rules, this
+    includes the length of the trailing part, even though it will then be
+    returned to the input). If it finds two or more matches of the same
+    length, the rule listed first in the lleexx(1) input file is chosen.
+
+    Once the match is determined, the text corresponding to the match (called
+    the I token ) is made available in the global-character pointer yytext and
+    its length in the global integer yyleng. The action corresponding to the
+    matched pattern is then executed (a more detailed description of actions
+    follows), and then the remaining input is scanned for another match.
+
+    If no match is found, the default rule is executed: the next character in
+    the input is considered matched and copied to the standard output. Thus,
+    the simplest correct lleexx(1) input is:
+
+    %%
+
+    which generates a scanner that simply copies its input (one character at a
+    time) to its output.
+
+    Note that yytext can be defined in two ways: either as a character pointer
+    or as a character array. You can control which definition lleexx(1) uses by
+    including one of the special directives %%ppooiinntteerr or %%aarrrraayy in the first
+    (definitions) section of your lleexx input. The default is %%ppooiinntteerr, unless
+    you use the --ll AT&T lleexx compatibility option, in which case yytext will be
+    an array. The advantage of using %%ppooiinntteerr is that it provides
+    substantially faster scanning and no buffer overflow when matching very
+    large tokens (unless you run out of dynamic memory). The disadvantage is
+    that you are restricted in how your actions can modify yytext (see the
+    next section), and calls to the iinnppuutt() and uunnppuutt() functions destroy the
+    present contents of yytext. This can make moving between different lleexx(1)
+    versions difficult.
+
+    The advantage of %%aarrrraayy is that you can modify yytext as much as you want,
+    and calls to iinnppuutt() and uunnppuutt() do not destroy yytext. Furthermore,
+    existing AT&T lleexx(1) programs sometimes access yytext externally using
+    declarations of the form:
+
+    extern char yytext[];
+
+    This definition is erroneous when used with %%ppooiinntteerr, but correct for
+    %%aarrrraayy.
+
+    %%aarrrraayy defines yytext to be an array of YYLMAX characters, which defaults
+    to a fairly large value. You can change the size by simply defining YYLMAX
+    to a different value in the first section of your lleexx(1) input. As
+    mentioned above, with %%ppooiinntteerr yytext grows dynamically to accommodate
+    large tokens. Although your %%ppooiinntteerr scanner can accommodate very large
+    tokens (such as matching entire blocks of comments), each time the scanner
+    must resize yytext, it also must rescan the entire token from the
+    beginning, so matching such tokens can prove slow. AT present, yytext does
+    not dynamically grow if a call to uunnppuutt() results in too much text being
+    pushed back. Instead, a run-time error results.
+
+  AACCTTIIOONNSS
+
+    Each pattern in a rule has a corresponding action, which can be any
+    arbitrary C statement. The pattern ends at the first non-escaped white-
+    space character. The remainder of the line is its action. If the action is
+    empty, when the pattern is matched, the input token is simply discarded.
+    For example, here is the specification for a program that deletes all
+    occurrences of "delete this string" from its input:
+
+    %%
+    "delete this string"
+
+    (It will copy all other characters in the input to the output since they
+    will be matched by the default rule.)
+
+    The following program compresses multiple blanks and tabs down to a single
+    blank, and throws away whites pace found at the end of a line:
+
+    %%
+    [ \t]+        putchar( ' ' );
+    [ \t]+$       /* ignore this token */
+
+    If the action contains a '{', the action spans the point up to which the
+    balancing '}' is found; the action can cross multiple lines. The lleexx(1)
+    utility knows about C strings and comments and will not be mislead by
+    braces found within them. It allows actions to begin with %%{{ and will
+    consider the action to be all the text up to the next %%}} (regardless of
+    ordinary braces inside the action).
+
+    An action consisting solely of a vertical bar ('|') means "same as the
+    action for the next rule."
+
+    Actions can include arbitrary C code, including rreettuurrnn statements to
+    return a value to the routine that called yyyylleexx(). Each time yyyylleexx() is
+    called it continues processing tokens from the point at which it last left
+    off until it either reaches the end of the file or executes a return.
+
+    Actions can modify yytext, except for lengthening it (adding characters to
+    its end--these will overwrite later characters in the input stream).
+    Modifying the final character of yytext might alter whether rules anchored
+    with '^' are active when scanning resumes. Specifically, changing the
+    final character of yytext to a newline will activate such rules on the
+    next scan, and changing it to anything else will deactivate the rules.
+    Users should not rely on this behavior being present in future releases.
+    Finally, note that none of this paragraph applies when using %%aarrrraayy.
+
+    Actions can to modify yyleng except they should not do so if the action
+    also includes use of yyyymmoorree().
+
+    There are a number of special directives that can be included within an
+    action:
+
+    EECCHHOO
+        Copies yytext to the scanner's output.
+
+    BBEEGGIINN
+        Followed by the name of a start condition places the scanner in the
+        corresponding start condition (see later in this topic).
+
+    RREEJJEECCTT
+        Directs the scanner to proceed on to the "second best" rule that
+        matched the input (or a prefix of the input). The rule is chosen as
+        described above in "How input is Matched"; yytext and yyleng set up
+        appropriately. It can either be one which that as much text as the
+        originally chosen rule but came later in the lleexx(1) input file, or one
+        that matched less text. For example, the following will count the
+        words in the input and call the routine ssppeecciiaall() whenever "frob" is
+        seen:
+            int word_count = 0;
+        %%
+        frob        special(); REJECT;
+        [^ \t\n]+   ++word_count;
+        Without the RREEJJEECCTT, any instances of "frob" in the input would not be
+        counted as words, since the scanner normally executes only one action
+        per token. Multiple occurrences of RREEJJEECCTT are allowed, each one
+        finding the next best choice to the currently active rule. For
+        example, when the following scanner scans the token "abcd", it will
+        write "abcdabcaba" to the output:
+        %%
+        a        |
+        ab       |
+        abc      |
+        abcd     ECHO; REJECT;
+        .|\n     /* consume any unmatched character */
+        (The first three rules share the action of the fourth because they use
+        the special '|' action.) RREEJJEECCTT is a particularly expensive feature in
+        terms scanner performance; if it is used in any of the scanner's
+        actions it will slow down all of the scanner's matching. Furthermore,
+        RREEJJEECCTT cannot be used with the --CCff or --CCFF options (discussed later in
+        this topic).
+        Note also that unlike the other special actions, RREEJJEECCTT is a branch;
+        code immediately following it in the action will not be executed.
+    yyyymmoorree()
+        Tells the scanner that the next time it matches a rule, the
+        corresponding token should be appended onto the current value of
+        yytext rather than replacing it. For example, given the input "hot-
+        sun" the following will write "hot-hot-sun" to the output:
+        %%
+        hot-   ECHO; yymore();
+        sun   ECHO;
+        First "hot-" is matched and echoed to the output. Then "sun" is
+        matched, but the previous "hot-" is still hanging around at the
+        beginning of yytext so the EECCHHOO for the "sun" rule will actually write
+        "hot-sun". The presence of yyyymmoorree() in the scanner's action entails a
+        minor performance penalty in the scanner's matching speed.
+    yyyylleessss(n)
+        Returns all but the first n characters of the current token back to
+        the input stream, where they will be rescanned when the scanner looks
+        for the next match. yytext and yyleng are adjusted appropriately (for
+        example, yyleng will now be equal to n ). On the input "catdog" the
+        following will write out "catdogdog":
+        %%
+        catdog    ECHO; yyless(3);
+        [a-z]+    ECHO;
+        An argument of 0 to yyyylleessss() will cause the entire current input
+        string to be scanned again. Unless you have changed how the scanner
+        will subsequently process its input (using BBEEGGIINN, for example), this
+        will result in an endless loop.
+        Note that yyyylleessss is a macro and can only be used in the lleexx input
+        file, not from other source files.
+    uunnppuutt(c)
+        Puts the character c back onto the input stream. It will be the next
+        character scanned. The following action will take the current token
+        and cause it to be rescanned enclosed in parentheses.
+        {
+        int i;
+        unput( ')' );
+        for ( i = yyleng - 1; i >= 0; --i )
+            unput( yytext[i] );
+        unput( '(' );
+        }
+        Note that since each uunnppuutt() puts the given character back at the
+        beginning of the input stream, pushing back strings must be done back-
+        to-front. Also note that you cannot put back EEOOFF to attempt to mark
+        the input stream with an end-of-file.
+    iinnppuutt()
+        Reads the next character from the input stream. For example, the
+        following is one way to consume C comments:
+        %%
+        "/*"        {
+                    register int c;
+                    for ( ; ; )
+                        {
+                        while ( (c = input()) != '*' &&
+                                c != EOF )
+                            ;    /* consume text of comment */
+                    if ( c == '*' )
+                            {
+                            while ( (c = input()) == '*' )
+                                ;
+                            if ( c == '/' )
+                                break;    /* found the end */
+                            }
+                    if ( c == EOF )
+                            {
+                            error( "EOF in comment" );
+                            break;
+                            }
+                        }
+                    }
+        (Note that if the scanner is compiled using CC++++ then iinnppuutt() is
+        instead referred to as yyyyiinnppuutt(), in order to avoid a name clash with
+        the CC++++ stream by the name of iinnppuutt
+    yyyytteerrmmiinnaattee()
+        Can be used instead of a return statement in an action. It terminates
+        the scanner and returns a 0 to the scanner's caller, indicating "all
+        done". By default, yyyytteerrmmiinnaattee() is also called when an end-of-file is
+        encountered. It is a macro and can be redefined.
+
+  TTHHEE GGEENNEERRAATTEEDD SSCCAANNNNEERR
+
+    The output of lleexx(1) is the file lleexx..yyyy..cc, which contains the scanning
+    routine yyyylleexx(), a number of tables used by it for matching tokens, and a
+    number of auxiliary routines and macros. By default, yyyylleexx() is declared
+    as follows:
+
+    int yylex()
+        {
+        ... various definitions and the actions are placed here ...
+        }
+
+    (If your environment supports function prototypes, it will be "int yylex(
+    void )".) This definition can be changed by defining the "YY_DECL" macro.
+    For example, you could use:
+
+    #define YY_DECL float lexscan( a, b ) float a, b;
+
+    to give the scanning routine the name lleexxssccaann(1), returning a float, and
+    taking two floats as arguments. Note that if you give arguments to the
+    scanning routine using a K&R-style, non-prototyped function declaration,
+    you must terminate the definition with a semicolon (;;).
+
+    Whenever yyyylleexx() is called, it scans tokens from the global input file
+    yyin (which defaults to stdin). It continues until it either reaches an
+    end-of-file (at which point it returns the value 0) or one of its actions
+    executes a return statement.
+
+    If the scanner reaches an end-of-file, subsequent calls are undefined
+    unless either yyin is pointed at a new input file (in which case scanning
+    continues from that file), or yyyyrreessttaarrtt() is called. yyyyrreessttaarrtt() takes one
+    argument, a FFIILLEE ** pointer, and initializes yyin for scanning from that
+    file. Essentially there is no difference between just assigning yyin to a
+    new input file or using yyyyrreessttaarrtt() to do so; the latter is available for
+    compatibility with previous versions of lleexx,,(1) and because it can be used
+    to switch input files in the middle of scanning. It can also be used to
+    throw away the current input buffer, by calling it with an argument of
+    yyin.
+
+    If yyyylleexx() stops scanning due to executing a return statement in one of
+    the actions, the scanner can be called again, and it will resume scanning
+    where it left off.
+
+    By default (and for purposes of efficiency), the scanner uses block-reads
+    rather than simple _gg_ee_tt_cc(3) calls to read characters from yyin. The nature
+    of how it gets its input can be controlled by defining the YY_INPUT macro.
+    YY_INPUT's calling sequence is "YY_INPUT(buf,result,max_size)". Its action
+    is to place up to max_size characters in the character array buf and
+    return in the integer variable result either the number of characters read
+    or the constant YY_NULL (traditionally 0) to indicate EOF. The default
+    YY_INPUT reads from the global file pointer "yyin".
+
+    A sample definition of YY_INPUT (in the definitions section of the input
+    file):
+
+    %{
+    #define YY_INPUT(buf,result,max_size) \
+        { \
+        int c = getchar(); \
+        result = (c == EOF) ? YY_NULL : (buf[0] = c, 1); \
+        }
+    %}
+
+    This definition will change the input processing to occur one character at
+    a time.
+
+    You can also use this approach to add things, like keeping track of the
+    input line number. If you do so, however, your scanner might not go very
+    fast.
+
+    When the scanner receives an end-of-file indication from YY_INPUT, it
+    checks the yyyywwrraapp() function. If yyyywwrraapp() returns false (zero), it is
+    assumed that the function has set up yyin to point to another input file,
+    and scanning continues. If it returns true (non-zero), the scanner
+    terminates, returning 0 to its caller.
+
+    The default yyyywwrraapp() always returns 1.
+
+    The scanner writes its EECCHHOO output to the yyout global (default, stdout),
+    which may be redefined by the user simply by assigning it to some other
+    FFIILLEE pointer.
+
+  SSTTAARRTT CCOONNDDIITTIIOONNSS
+
+    The lleexx(1) utility provides a mechanism for conditionally activating
+    rules. Any rule whose pattern is prefixed with "<sc>" will be active only
+    when the scanner is in the start condition named "sc". For example,
+
+    <STRING>[^"]*        { /* consume the string body ... */
+                ...
+                }
+
+    will be active only when the scanner is in the "STRING" start condition,
+    and
+
+    <INITIAL,STRING,QUOTE>\.        { /* handle an escape ... */
+                ...
+                }
+
+    will be active only when the current start condition is either "INITIAL",
+    "STRING", or "QUOTE".
+
+    Start conditions are declared in the definitions (first) section of the
+    input using unindented lines beginning with either %%ss or %%xx followed by a
+    list of names. The former declares inclusive start conditions, the latter
+    exclusive start conditions. A start condition is activated using the BBEEGGIINN
+    action. Until the next BBEEGGIINN action is executed, rules with the given
+    start condition will be active, and rules with other start conditions will
+    be inactive. If the start condition is inclusive, rules with no start
+    conditions will also be active. If it is exclusive, only rules qualified
+    with the start condition will be active. A set of rules contingent on the
+    same exclusive start condition describe a scanner that is independent of
+    any of the other rules in the lleexx(1) input. Because of this, exclusive
+    start conditions make it easy to specify "mini-scanners" which scan
+    portions of the input that are syntactically different from the rest (such
+    as comments).
+
+    The following example illustrates the connection between inclusive and
+    exclusive start conditions. The set of rules:
+
+    %s example
+    %%
+    <example>cat           /* do something */
+
+    is equivalent to
+
+    %x example
+    %%
+    <INITIAL,example>cat   /* do something */
+
+    Also note that the special start-condition specifier <<**>> matches every
+    start condition. Thus, the above example could also have been written;
+
+    %x example
+    %%
+    <*>cat   /* do something */
+
+    The default rule (to EECCHHOO any unmatched character) remains active in start
+    conditions.
+
+    BBEEGGIINN((00)) returns to the original state where only rules with no start
+    conditions are active. This state can also be referred to as the start-
+    condition "INITIAL", so BBEEGGIINN((IINNIITTIIAALL)) is equivalent to BBEEGGIINN((00)). (The
+    parentheses around the start condition name are not required but are
+    considered good style.)
+
+    BBEEGGIINN actions can also be given as indented code at the beginning of the
+    rules section. For example, the following will cause the scanner to enter
+    the "SPECIAL" start condition whenever yyyylleexx() is called and the global
+    variable
+
+    enter_special
+
+    is true:
+
+        int enter_special;
+    %x SPECIAL
+    %%
+            if ( enter_special )
+                BEGIN(SPECIAL);
+    <SPECIAL>something here
+    ...more rules follow...
+
+    The following scanner illustrates the uses of start conditions. It gives
+    two different interpretations of a string like "123.456". By default, it
+    will treat it as as three tokens, the integer "123", a dot ('.'), and the
+    integer "456". But if the string is preceded earlier in the line by the
+    string "expect-floats" it will treat it as a single token, the floating-
+    point number 123.456:
+
+    %{
+    #include <math.h>
+    %}
+    %s expect
+
+    %%
+    expect-floats        BEGIN(expect);
+    <expect>[0-9]+"."[0-9]+      {
+                printf( "found a float, = %f\n",
+                        atof( yytext ) );
+                }
+
+    <expect>\n           {
+                /* that's the end of the line, so
+                 * we need another "expect-number"
+                 * before we'll recognize any more
+                 * numbers
+                 */
+                BEGIN(INITIAL);
+                }
+
+    [0-9]+      {
+                printf( "found an integer, = %d\n",
+                        atoi( yytext ) );
+                }
+    "."         printf( "found a dot\n" );
+
+    The following scanner recognizes (and discards) C comments while
+    maintaining a count of the current input line:
+
+    %x comment
+    %%
+            int line_num = 1;
+    "/*"         BEGIN(comment);
+    <comment>[^*\n]*        /* consume anything that is not a '*' */
+    <comment>"*"+[^*/\n]*   /* consume occurrences of '*' not followed by a '/
+    ' */
+    <comment>\n             ++line_num;
+    <comment>"*"+"/"        BEGIN(INITIAL);
+
+    This scanner will try to match as much text as possible with each rule. In
+    general, when attempting to write a high-speed scanner, it is advisable to
+    try to match as much possible in each rule.
+
+    Note that start-condition names are really integer values and can be
+    stored as such. Thus, the above could be extended in the following
+    fashion:
+
+    %x comment cat
+    %%
+            int line_num = 1;
+            int comment_caller;
+    "/*"         {
+                 comment_caller = INITIAL;
+                 BEGIN(comment);
+                 }
+    ...
+    <cat>"/*"    {
+                 comment_caller = cat;
+                 BEGIN(comment);
+                 }
+    <comment>[^*\n]*        /* consume anything that is not a '*' */
+    <comment>"*"+[^*/\n]*   /* consume '*'s not followed by '/'s */
+    <comment>\n             ++line_num;
+    <comment>"*"+"/"        BEGIN(comment_caller);
+
+    You can also access the current start condition using the integer-valued
+    YY_START macro. For example, the above assignments to comment_caller could
+    instead be written
+
+    comment_caller = YY_START;
+
+    Note that start conditions do not have their own name space; %%ss and %%xx
+    declare names the same as ##ddeeffiinnee does.
+
+    The following example illustrates how to match C-style quoted strings
+    using exclusive start conditions, including expanded escape sequences (but
+    not including checking for a string that is too long):
+
+    %x str
+    %%
+            char string_buf[MAX_STR_CONST];
+            char *string_buf_ptr;
+    \"      string_buf_ptr = string_buf; BEGIN(str);
+
+    <str>\"        { /* saw closing quote - all done */
+            BEGIN(INITIAL);
+            *string_buf_ptr = '\0';
+            /* return string constant token type and
+             * value to parser
+             */
+            }
+
+    <str>\n        {
+            /* error - unterminated string constant */
+            /* generate error message */
+            }
+
+    <str>\\[0-7]{1,3} {
+            /* octal escape sequence */
+            int result;
+            (void) sscanf( yytext + 1, "%o", &result );
+            if ( result > 0xff )
+                    /* error, constant is out-of-bounds */
+            *string_buf_ptr++ = result;
+            }
+
+    <str>\\[0-9]+ {
+            /* generate error - bad escape sequence; something
+             * like '\48' or '\0777777'
+             */
+            }
+
+    <str>\\n  *string_buf_ptr++ = '\n';
+    <str>\\t  *string_buf_ptr++ = '\t';
+    <str>\\r  *string_buf_ptr++ = '\r';
+    <str>\\b  *string_buf_ptr++ = '\b';
+    <str>\\f  *string_buf_ptr++ = '\f';
+
+    <str>\\(.|\n)  *string_buf_ptr++ = yytext[1];
+    <str>[^\\\n\"]+        {
+            char *yytext_ptr = yytext;
+            while ( *yytext_ptr )
+                    *string_buf_ptr++ = *yytext_ptr++;
+            }
+
+  MMUULLTTIIPPLLEE IINNPPUUTT BBUUFFFFEERRSS
+
+    Some scanners (such as those that support include files) require reading
+    from several input streams. Because lleexx(1) scanners do a large amount of
+    buffering, one cannot control where the next input will be read from by
+    simply writing a YY_INPUT that is sensitive to the scanning context.
+    YY_INPUT is only called when the scanner reaches the end of its buffer.
+    This can be a long time after scanning a statement such as an "include"
+    that requires switching the input source.
+
+    To alleviate these types of problems, lleexx(1) provides a mechanism for
+    creating and switching between multiple input buffers. An input buffer is
+    created by using:
+
+    YY_BUFFER_STATE yy_create_buffer( FILE *file, int size )
+
+    This takes a FFIILLEE pointer and a size and creates a buffer associated with
+    the given file that is large enough to hold size characters (when in
+    doubt, use YY_BUF_SIZE for the size). It returns a YY_BUFFER_STATE handle,
+    which can be passed to other routines:
+
+    void yy_switch_to_buffer( YY_BUFFER_STATE new_buffer )
+
+    switches the scanner's input buffer so subsequent tokens will come from
+    new_buffer Note that yyyy__sswwiittcchh__ttoo__bbuuffffeerr() can be used by yyyywwrraapp() to set
+    things up for continued scanning, instead of opening a new file and
+    pointing yyin at it.
+
+    void yy_delete_buffer( YY_BUFFER_STATE buffer )
+
+    is used to reclaim the storage associated with a buffer.
+
+    yyyy__nneeww__bbuuffffeerr() is an alias for yyyy__ccrreeaattee__bbuuffffeerr(), and is provided for
+    compatibility with the C++ use of new and delete for creating and
+    destroying dynamic objects.
+
+    Finally, the YY_CURRENT_BUFFER macro returns a YY_BUFFER_STATE handle to
+    the current buffer.
+
+    The following example illustrates how to use these features to write a
+    scanner that expands include files (the <<<<EEOOFF>>>> feature is discussed later
+    in this topic):
+
+    /* the "incl" state is used for picking up the name
+     * of an include file
+     */
+    %x incl
+    %{
+    #define MAX_INCLUDE_DEPTH 10
+    YY_BUFFER_STATE include_stack[MAX_INCLUDE_DEPTH];
+    int include_stack_ptr = 0;
+    %}
+
+    %%
+    include             BEGIN(incl);
+    [a-z]+              ECHO;
+    [^a-z\n]*\n?        ECHO;
+    <incl>[ \t]*      /*consume the white space */
+    <incl>[^ \t\n]+   { /* got the include file name */
+            if ( include_stack_ptr >= MAX_INCLUDE_DEPTH )
+                {
+                fprintf( stderr, "Includes nested too deeply" );
+                exit( 1 );
+                }
+            include_stack[include_stack_ptr++] =
+                YY_CURRENT_BUFFER;
+            yyin = fopen( yytext, "r" );
+
+        if ( ! yyin )
+                error( ... );
+            yy_switch_to_buffer(
+                yy_create_buffer( yyin, YY_BUF_SIZE ) );
+            BEGIN(INITIAL);
+            }
+
+    <<EOF>> {
+            if ( --include_stack_ptr < 0 )
+                {
+                yyterminate();
+                }
+            else
+                {
+                yy_delete_buffer( YY_CURRENT_BUFFER );
+                yy_switch_to_buffer(
+                     include_stack[include_stack_ptr] );
+                }
+            }
+
+  EENNDD--OOFF--FFIILLEE RRUULLEESS
+
+    The special rule "<<EOF>>" indicates actions to be taken when an end-of-
+    file is encountered and yyyywwrraapp() returns non-zero (that is, indicates no
+    further files to process). The action must finish by doing one of four
+    things:
+
+    *     Assign yyin to a new input file (in previous versions of lleexx, after
+          doing the assignment you had to call the special action YY_NEW_FILE;
+          this is no longer necessary).
+    *     Execute a rreettuurrnn statement.
+    *     Execute the special yyyytteerrmmiinnaattee() action.
+    *     Switch to a new buffer using yyyy__sswwiittcchh__ttoo__bbuuffffeerr(), as shown in the
+          example above.
+
+    <<EOF>> rules cannot be used with other patterns; they can only be
+    qualified with a list of start conditions. If an unqualified <<EOF>> rule
+    is given, it applies to all start conditions that do not already have
+    <<EOF>> actions. To specify an <<EOF>> rule for only the initial start
+    condition, use
+
+    <INITIAL><<EOF>>
+
+    These rules are useful for catching things like unclosed comments, as in
+    the following example:
+
+    %x quote
+    %%
+    ...other rules for dealing with quotes...
+    <quote><<EOF>>   {
+             error( "unterminated quote" );
+             yyterminate();
+             }
+    <<EOF>>  {
+             if ( *++filelist )
+                 yyin = fopen( *filelist, "r" );
+             else
+                yyterminate();
+             }
+
+  MMIISSCCEELLLLAANNEEOOUUSS MMAACCRROOSS
+
+    The macro YY_USER_ACTION can be defined to provide an action that is
+    always executed prior to the action of the matched rule. For example, it
+    could be defined (using ##ddeeffiinnee) to call a routine to convert yytext to
+    lowercase.
+
+    The macro YY_USER_INIT can be defined to provide an action that is always
+    executed before the first scan (and before the scanner's internal
+    initializations are done). For example, it could be used to call a routine
+    to read in a data table or open a logging file.
+
+    In the generated scanner, the actions are all gathered in one large switch
+    statement and separated using YY_BREAK, which may be redefined. By
+    default, it is simply a "break", to separate each rule's action from
+    action of the following rule. Redefining YY_BREAK allows, for example, C++
+    users to ##ddeeffiinnee YY_BREAK to do nothing (while being very careful that
+    every rule ends with a "break" or a "return") to avoid getting unreachable
+    statement warnings, where, because a rule's action ends with "return", the
+    YY_BREAK is inaccessible.
+
+  IINNTTEERRFFAACCIINNGG WWIITTHH YYAACCCC
+
+    One of the ways to use lleexx(1) is as a companion to the yyaacccc(1) parser-
+    generator. The yyaacccc(1) parsers expect to call a routine named yyyylleexx() to
+    find the next input token. The routine is supposed to return the type of
+    the next token, as well as putting any associated value in the global
+    yylval To use lleexx(1) with yyaacccc(1), one specifies the --dd option to yyaacccc(1).
+    This instructs yyaacccc(1) to generate the file yy..ttaabb..hh, which contains
+    definitions of all the %%ttookkeennss appearing in the yyaacccc(1) input. This file
+    is then included in the lleexx(1) scanner. For example, if one of the tokens
+    is "TOK_NUMBER", part of the scanner might look like:
+
+    %{
+    #include "y.tab.h"
+    %}
+    %%
+    [0-9]+        yylval = atoi( yytext ); return TOK_NUMBER;
+
+  LLEEXX OOPPTTIIOONNSS
+
+    The lleexx(1) utility has the following options:
+
+    --77
+        Generate a seven-bit scanner, which can save considerable table space,
+        especially when using --CCff or --CCFF (and, at most sites, --77 is on by
+        default for these options. To see if this is the case, use the --
+        vv verbose flag and check the flag summary it reports).
+
+    --88
+        Generate an eight-bit scanner. This is the default, except for the --CCff
+        and --CCFF compression options, for which the default is site-dependent,
+        and can be checked by inspecting the flag summary generated by the --
+        vv option.
+
+    --BB
+        Generate a batch scanner instead of an interactive scanner (see --
+        II later in this discussion). Scanners using --CCff or --CCFF compression
+        options also specify this option automatically .
+
+    --bb
+        Generate backing-up information to lleexx..bbaacckkuupp(1). This provides a list
+        of scanner states that require backing up, and the input characters on
+        which they do so. By adding rules, one can remove backing-up states.
+        If all backing-up states are eliminated and either --CCff or --CCFF is used,
+        the generated scanner will run faster.
+
+    --CC[[aaeeffFFmmrr]]
+        Specify the degree of table compression and scanner optimization.
+
+    --CCaa
+        Trade off larger tables in the generated scanner for faster
+        performance because the elements of the tables are better aligned for
+        memory access and computation. This option can double the size of the
+        tables used by your scanner.
+
+    --CCee
+        Construct equivalence; that is, sets of characters that have identical
+        lexical properties. Equivalence classes usually give dramatic
+        reductions in the final table/object file sizes (typically a factor of
+        2-5) and have little impact on performance (one array look-up per
+        character scanned).
+
+    --CCff
+        Generate full scanner tables. The lleexx(1) utility should not compress
+        the tables by taking advantages of similar transition functions for
+        different states.
+
+    --CCFF
+        Use the alternate fast-scanner representation (described in
+        lleexxddoocc(1)).
+
+    --CCmm
+        Construct meta-equivalence classes, which are sets of equivalence
+        classes (or characters, if equivalence classes are not being used)
+        that are commonly used together. Meta-equivalence classes are often
+        effective when using compressed tables, but they have a moderate
+        impact on performance (one or two "if" tests and one array look-up per
+        character scanned).
+
+    --CCrr
+        Bypass using stdio for input in generated scanner. In general this
+        option results in a minor performance gain only worthwhile if used in
+        conjunction with --CCff or --CCFF. It can cause surprising behavior if you
+        use stdio yourself to read from yyyyiinn prior to calling the scanner.
+
+    --CC
+        Alone, compress scanner tables, but use neither equivalence classes
+        nor meta-equivalence classes.
+
+    The options --CCff or --CCFF and --CCmm do not make sense together; there is no
+    opportunity for meta-equivalence classes if the table is not being
+    compressed. Otherwise, the options can be freely mixed.
+
+    The default setting is --CCeemm, which specifies that lleexx(1) should generate
+    equivalence classes and meta-equivalence classes. This setting provides
+    the highest degree of table compression. You can trade off faster-
+    executing scanners at the cost of larger tables with the following
+    generally being true:
+
+        Slowest and smallest
+            --CCeemm
+            --CCmm
+            --CCee
+            --CC
+            --CC{{ff,,FF}}ee
+            --CC{{ff,,FF}}
+            --CC{{ff,,FF}}aa
+        Fastest and largest
+
+    --CC options are cumulative.
+
+    --cc
+        Does nothing; a deprecated option included for POSIX compliance.
+
+    NNOOTTEE::
+        In previous releases of lleexx(1) --cc specified table-compression options.
+        This functionality is now given by the --CC flag. To ease the impact of
+        this change, when lleexx(1) encounters --cc, it currently issues a warning
+        message and assumes that you wanted --CC instead. In the future this
+        "promotion" of --cc to --CC will be eliminated in the name of full POSIX
+        compliance (unless the POSIX meaning is removed first).
+
+    --dd
+        Run the generated scanner in debug mode. Whenever a pattern is
+        recognized and the global yy_flex_debug is non-zero (which is the
+        default), the scanner will write to stderr a line of the form:
+        ----aacccceeppttiinngg rruullee aatt lliinnee 5533 ((""tthhee mmaattcchheedd tteexxtt""))
+        The line number refers to the location of the rule in the file
+        defining the scanner (that is, the file that was provided to lleexx).
+        Messages are also generated when the scanner backs up, accepts the
+        default rule, reaches the end of its input buffer (or encounters a
+        NUL; to the scanner's concerned, the two look identical), or reaches
+        an end-of-file.
+
+    --FF
+        Use fast scanner table representation (and bypass stdio). This
+        representation is about as fast as the full-table representation (--ff)),
+        and for some sets of patterns will be considerably smaller (and for
+        others, larger). See lleexxddoocc(1) for more details.
+        This option is equivalent to --CCFFrr (discussed later in this topic).
+
+    --ff
+        Use fast scanner. No table compression is done and stdio is bypassed.
+        The result is large but fast. This option is equivalent to --CCffrr
+        (discussed later in this topic).
+
+    --hh
+        Generate a "help" summary of lleexx''ss(1) options to stderr and then exit.
+
+    --II
+        Generate an interactive scanner, that is, a scanner that stops
+        immediately rather than looking ahead if it knows that the currently
+        scanned text cannot be part of a longer rule's match. This is the
+        opposite of batch scanners (see --BB above). See lleexxddoocc(1) for details.
+        Note that --II cannot be used in conjunction with full or fast tables;
+        that is, the --ff, --FF, --CCff, or --CCFF flags. For other table-compression
+        options, --II is the default.
+
+    --ii
+        Generate a case-insensitive scanner. The case of letters given in the
+        lleexx(1) input patterns will be ignored, and tokens in the input will be
+        matched regardless of case. The matched text given in yytext will have
+        the preserved case (that is, it will not be folded).
+
+    --LL
+        Do not generate ##lliinnee directives in lleexx..yyyy..cc. The default is to
+        generate such directives so error messages in the actions will be
+        correctly located with respect to the original lleexx(1) input file, and
+        not to the relatively meaningless line numbers of lleexx..yyyy..cc.
+
+    --ll
+        Turn on maximum compatibility with the original AT&T lex
+        implementation, at a considerable performance cost. This option is
+        incompatible with --ff, --FF, --CCff, and --CCFF. See lleexxddoocc(1) for details.
+
+    --nn
+        Does nothing. Another deprecated option included only for POSIX
+        compliance.
+    --PPprefix
+        Change the default yy prefix used by lleexx(1) to be prefix instead. See
+        lleexxddoocc(1) for a description of all the global variables and file names
+        that this affects.
+
+    --pp
+        Generate a performance report to stderr. The report consists of
+        comments regarding features of the lleexx(1) input file that will cause a
+        loss of performance in the resulting scanner. If you give the flag
+        twice, you will also get comments regarding features that lead to
+        minor performance losses.
+    --SSskeleton_file
+
+        Use skeleton_file to construct the scanner instead of the default
+        file. You will never need this option unless you are performing lleexx(1)
+        maintenance or development.
+
+    --ss
+        Suppress the default rule (that unmatched scanner input is echoed to
+        stdout). If the scanner encounters input that does not match any of
+        its rules, it aborts with an error.
+
+    --TT
+        Run in trace mode. It will generate many messages to stderr concerning
+        the form of the input and the resultant non-deterministic and
+        deterministic finite automata. This option is mostly for use in
+        maintaining lleexx(1).
+
+    --tt
+        Write the scanner it generates to standard output instead of lleexx..yyyy..cc.
+
+    --VV
+        Print the version number to stderr and exits.
+
+    --vv
+        Write to stderr a summary of statistics regarding the scanner it
+        generates.
+
+    --ww
+        Suppress warning messages.
+
+  PPEERRFFOORRMMAANNCCEE CCOONNSSIIDDEERRAATTIIOONNSS
+
+    The main design goal of lleexx(1) is to generate high-performance scanners.
+    It has been optimized for dealing well with large sets of rules. Aside
+    from the effects on scanner speed of the table-compression --CC options
+    outlined above, there are a number of options and actions that degrade
+    performance. These are provided below, from most to lease expensive, (with
+    the first three having considerable impact on performance, and the last
+    two having little impact on performance):
+
+    *     RREEJJEECCTT
+    *     Pattern sets that require backing up
+    *     Arbitrary trailing context
+    *     yyyymmoorree()
+    *     The ^^ beginning-of-line operator
+
+    Note also that uunnppuutt() is implemented as a routine call that potentially
+    does quite a bit of work, while the yyyylleessss() macro has little impact on
+    performance; so if you are simply putting back some excess text you
+    scanned, use yyyylleessss().
+
+    Avoid RREEJJEECCTT at all costs when performance is important. It is a
+    particularly expensive option.
+
+    Eliminating backing up is difficult and can be an enormous amount of work
+    for a complicated scanner. In principal, one begins by using the --bb flag
+    to generate a lleexx..bbaacckkuupp file. For example, on the input
+
+    %%
+    cat        return TOK_KEYWORD;
+    catdog     return TOK_KEYWORD;
+
+    the file appears as follows:
+
+    State #6 is non-accepting -
+     associated rule line numbers:
+           2       3
+     out-transitions: [ o ]
+     jam-transitions: EOF [ \001-n  p-\177 ]
+    State #8 is non-accepting -
+     associated rule line numbers:
+           3
+     out-transitions: [ a ]
+     jam-transitions: EOF [ \001-'  b-\177 ]
+    State #9 is non-accepting -
+     associated rule line numbers:
+           3
+     out-transitions: [ r ]
+     jam-transitions: EOF [ \001-q  s-\177 ]
+    Compressed tables always back up.
+
+    The first few lines indicate that a scanner state exists in which it can
+    make a transition on an 'a' but not on any other character. These lines
+    also indicate that, in that state, the currently scanned text does not
+    match any rule. The state occurs when trying to match the rules found at
+    lines 2 and 3 in the input file. If the scanner is in that state and then
+    reads something other than an 'a', it will have to back up to find a rule
+    that is matched. It becomes apparent that this must be the state the
+    scanner is in when it has seen "ca". When this has happened, if anything
+    other than another 'a' is seen, the scanner will have to back up to simply
+    match the 'c' (by the default rule).
+
+    The comment regarding State #8 indicates that there is a problem when
+    "catd" has been scanned. Indeed, on any character other than an 'o', the
+    scanner will have to back up to accept "cat". Similarly, the comment for
+    State #9 concerns when "catdo" has been scanned and a 'g' does not follow.
+
+    The final comment is a reminder that it is not useful to remove backing up
+    from the rules unless --CCff or --CCFF is being used, since there is no gain in
+    performance doing so with compressed scanners.
+
+    The way to remove the backing up is to add "error" rules:
+
+    %%
+    cat         return TOK_KEYWORD;
+    catdog      return TOK_KEYWORD;
+    catdo       |
+    catd        |
+    ca         {
+                /* false alarm, not really a keyword */
+                return TOK_ID;
+                }
+
+    Eliminating backing up among a list of keywords can also be done using a
+    "catch-all" rule:
+
+    %%
+    cat         return TOK_KEYWORD;
+    catdog     return TOK_KEYWORD;
+    [a-z]+      return TOK_ID;
+
+    This is usually the best solution when appropriate.
+
+    Backing up messages tend to cascade. With a complicated set of rules, it
+    is not uncommon to get hundreds of messages. If one can decipher them,
+    however, it often only takes about a dozen rules to eliminate the backing
+    up. (It is easy, however, to make a mistake and have an error rule
+    accidentally match a valid token. A possible future lleexx(1) feature might
+    automatically add rules to eliminate backing up).
+
+    Variable trailing context (where both the leading and trailing parts do
+    not have a fixed length) entails almost the same performance loss as
+    RREEJJEECCTT (that is, substantial). So when possible a rule like:
+
+    %%
+    mouse|rat/(cat|dog)   run();
+
+    is better written:
+
+    %%
+    mouse/cat|dog         run();
+    rat/cat|dog           run();
+
+    or as
+
+    %%
+    mouse|rat/cat         run();
+    mouse|rat/dog         run();
+
+    Note that here the special '|' action does not have a positive impact on
+    performance, and could even have a negative impact.
+
+    A final note regarding performance: dynamically resizing yytext to
+    accommodate huge tokens is a slow process because it presently requires
+    that the (huge) token be rescanned from the beginning. If performance is
+    vital, you should attempt to match "large" quantities of text but not
+    "huge" quantities, where the cutoff between the two is at about 8 KB
+    characters/token.
+
+    Another area where you can increase a scanner's performance (and one that
+    is easier to implement) arises from the fact that the longer the tokens
+    that are matched, the faster the scanner will run. This is because with
+    long tokens the processing of most input characters takes place in the
+    (short) inner scanning loop, and does not often have to go through the
+    additional work of setting up the scanning environment (such as yytext for
+    the action. Recall the scanner for C comments:
+
+    %x comment
+    %%
+            int line_num = 1;
+    "/*"         BEGIN(comment);
+    <comment>[^*\n]*
+    <comment>"*"+[^*/\n]*
+    <comment>\n             ++line_num;
+    <comment>"*"+"/"        BEGIN(INITIAL);
+
+    This could be sped up by writing it as:
+
+    %x comment
+    %%
+            int line_num = 1;
+    "/*"         BEGIN(comment);
+    <comment>[^*\n]*
+    <comment>[^*\n]*\n      ++line_num;
+    <comment>"*"+[^*/\n]*
+    <comment>"*"+[^*/\n]*\n ++line_num;
+    <comment>"*"+"/"        BEGIN(INITIAL);
+
+    Instead of each newline requiring the processing of another action, the
+    recognition of the newlines is "distributed" over the other rules to keep
+    the matched text as long as possible. Note that adding rules does not slow
+    down the scanner. The speed of the scanner is independent of the number of
+    rules or (modulo the considerations given at the beginning of this
+    section) how complicated the rules are with regard to operators such as
+    '*' and '|'.
+
+    The following is a final example for speeding up a scanner. It presumes
+    that you want to scan through a file that contains identifiers and
+    keywords, one per line and with no other extraneous characters,
+    recognizing all the keywords. The example provides a logical first
+    approach:
+
+    %%
+    asm      |
+    auto     |
+    break    |
+    ... etc ...
+    volatile |
+    while    /* it is a keyword */
+    .|\n     /* it is not a keyword */
+
+    To eliminate the back-tracking, introduce a catch-all rule:
+
+    %%
+    asm      |
+    auto     |
+    break    |
+    ... etc ...
+    volatile |
+    while    /* it is a keyword */
+    [a-z]+   |
+    .|\n     /* it is not a keyword */
+
+    If it is certain that there is exactly one word per line, the total number
+    of matches can be reduced by half by merging in the recognition of
+    newlines with that of the other tokens:
+
+    %%
+    asm\n    |
+    auto\n   |
+    break\n  |
+    ... etc ...
+    volatile\n |
+    while\n  /* it is a keyword */
+    [a-z]+\n |
+    .|\n     /* it is not a keyword */
+
+    Caution should be used as backing up into the scanner has been
+    reintroduced. In particular, while you might know that there will never be
+    any characters in the input stream other than letters or newlines, lleexx(1)
+    cannot know this; it will plan for possibly needing to back up when it has
+    scanned a token like "auto" and the next character is something other than
+    a newline or a letter. Previously, it would then just match the "auto"
+    rule and be done, but now it has no "auto" rule, only a "auto\n" rule. To
+    eliminate the possibility of backing up, you could either duplicate all
+    rules without final newlines, or, because you never expect to encounter
+    such input, and therefore do not know how it is classified, you could
+    introduce one more catch-all rule, this one, which does not include a
+    newline:
+
+    %%
+    asm\n    |
+    auto\n   |
+    break\n  |
+    ... etc ...
+    volatile\n |
+    while\n  /* it is a keyword */
+    [a-z]+\n |
+    [a-z]+   |
+    .|\n     /* it is not a keyword */
+
+    Compiled with --CCff, this is about as fast as one can get a lleexx(1) scanner
+    to go for this particular problem.
+
+    A final note: lleexx(1) is slow when matching NULs, particularly when a token
+    contains multiple NULs. It is best to write rules that match short amounts
+    of text if you anticipate that the text will often include NULs.
+
+  IINNCCOOMMPPAATTIIBBIILLIITTIIEESS WWIITTHH AATT&&TT LLEEXX AANNDD PPOOSSIIXX
+
+    This lleexx(1) is a rewrite of the AT&T lleexx(1) tool (the two implementations
+    do not share any code, however), with some extensions and
+    incompatibilities, both of which are of concern to those who want to write
+    scanners acceptable to either implementation. The POSIX lleexx(1)
+    specification is closer to the behavior of this implementation of lleexx(1)
+    than to the original AT&T lleexx(1) implementation. Some incompatibilities
+    remain, however, between this lleexx(1) and POSIX. The intent is that,
+    ultimately, this lleexx(1) will be fully POSIX-conformant. This section
+    discusses all of the known areas of incompatibility.
+
+    The lleexx(1) --ll option turns on maximum compatibility with the original AT&T
+    lleexx(1) implementation, at the cost of a major loss in the generated
+    scanner's performance. The incompatibilities that can be overcome using
+    the --ll option are discussed later in this section.
+
+    The lleexx(1) utility is fully compatible with AT&T lleexx(1) with the following
+    exceptions:
+
+    *     The undocumented AT&T lleexx(1) scanner internal variable yylineno is
+          not supported unless --ll is used.
+    *     The yylineno variable is not part of the POSIX specification.
+    *     The iinnppuutt() routine is not redefinable, though it can be called to
+          read characters following whatever has been matched by a rule. If
+          iinnppuutt() encounters an end-of-file, the normal yyyywwrraapp() processing is
+          done. A "real" end-of-file is returned by iinnppuutt() as EOF.
+    *     Input is controlled instead by defining the YY_INPUT macro.
+    *     The lleexx(1) restriction that iinnppuutt() cannot be redefined is in
+          accordance with the POSIX specification, which simply does not
+          specify any way of controlling the scanner's input other than by
+          making an initial assignment to yyin
+    *     These lleexx(1) scanners are not as reentrant as AT&T lleexx(1) scanners.
+          In particular, if you have an interactive scanner, and an interrupt
+          handler that long-jumps out of the scanner, and the scanner is
+          subsequently called again, you might get the following message:
+
+    ffaattaall lleexx ssccaannnneerr iinntteerrnnaall eerrrroorr----eenndd ooff bbuuffffeerr mmiisssseedd
+
+    To reenter the scanner, first use
+
+    yyrestart( yyin );
+
+    Note that this call will discard any buffered input; usually this is not a
+    problem with an interactive scanner.
+
+    The oouuttppuutt() function is not supported. Output from the EECCHHOO macro is done
+    to the file-pointer yyout (default stdout).
+
+    oouuttppuutt() is not part of the POSIX specification.
+
+    AT&T lleexx(1) does not support exclusive start conditions (%%xx) even though
+    they are in the POSIX specification.
+
+    When definitions are expanded, lleexx(1) encloses them in parentheses. With
+    AT&T lleexx, the following:
+
+    NAME    [A-Z][A-Z0-9]*
+    %%
+    cat{NAME}?      printf( "Found it\n" );
+    %%
+
+    will not match the string "cat" because when the macro is expanded the
+    rule is equivalent to "cat[A-Z][A-Z0-9]*?" and the precedence is such that
+    the '?' is associated with "[A-Z0-9]*". With this lleexx(1), the rule will be
+    expanded to "cat([A-Z][A-Z0-9]*)?" and so the string "cat" will match.
+
+    Note that if the definition begins with ^^ or ends with $$, it is not
+    expanded with parentheses, which allows these operators to appear in
+    definitions without losing their special meanings. But the <<ss>>, //, and
+    <<<<EEOOFF>>>> operators cannot be used in a lleexx(1) definition.
+
+    Using --ll results in the AT&T lleexx(1) behavior; there are no parentheses
+    around the definition.
+
+    The POSIX specification is that the definition be enclosed in parentheses.
+
+    The AT&T lleexx(1) %%rr (generate a Ratfor scanner) option is not supported. It
+    is not part of the POSIX specification. After a call to uunnppuutt(), yytext
+    and yyleng are undefined until the next token is matched, unless the
+    scanner was built using %%aarrrraayy. This is not the case with AT&T lleexx(1) or
+    the POSIX specification. The --ll option eliminates with this
+    incompatibility.
+
+    The precedence of the {{}} (numeric range) operator is different. AT&T
+    lleexx(1) interprets "abc{1,3}" as "match one, two, or three occurrences of
+    'abc'"; whereas lleexx(1) interprets it as "match 'ab' followed by one, two,
+    or three occurrences of 'c'". The latter is in agreement with the POSIX
+    specification.
+
+    The precedence of the ^^ operator is different. AT&T lleexx(1) interprets
+    "^cat|dog" as "match either 'cat' at the beginning of a line, or 'dog'
+    anywhere"; whereas lleexx(1) interprets it as "match either 'cat' or 'dog' if
+    they come at the beginning of a line". The latter is in agreement with the
+    POSIX specification.
+
+    AT&T lleexx(1) initializes yyin to be stdin; lleexx,,(1), on the other hand,
+    initializes yyin to NULL, and then assigns it to stdin the first time the
+    scanner is called, providing yyin has not already been assigned to a non-
+    NULL value. The difference is subtle, but the effect is that with lleexx(1)
+    scanners, yyin does not have a valid value until the scanner has been
+    called.
+
+    The --ll option eliminates this incompatibility.
+
+    The special table-size declarations such as %%aa supported by AT&T and POSIX
+    lleexx(1) are not required by lleexx(1) scanners; lleexx(1) ignores them.
+
+    The name FLEX_SCANNER is defined (by ##ddeeffiinnee) so that scanners can be
+    written for use with either this lleexx(1) (which is actually a version of
+    the flex scanner-generator) or AT&T lleexx(1).
+
+    The following lleexx(1) features are not included in AT&T lleexx(1) or the POSIX
+    specification:
+
+    *     yyyytteerrmmiinnaattee()
+    *     <<EOF>>
+    *     <*>
+    *     YY_DECL
+    *     YY_START
+    *     YY_USER_ACTION
+    *     #line directives
+    *     The placement of %%{{}} around actions
+    *     Multiple actions on a line
+    *     Almost all of the lleexx(1) flags
+
+    The next-to-last feature in the list refers to the fact that, with lleexx(1),
+    you can put multiple actions on the same line, separated with semicolons,
+    while with AT&T lleexx,,(1) the following
+
+    cat    handle_cat(); ++num_cats_seen;
+
+    is (rather surprisingly) truncated to
+
+    cat   handle_cat();
+
+    The lleexx(1) utility does not truncate the action. Actions that are not
+    enclosed in braces are simply terminated at the end of the line.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    The lleexx(1) utility produces the following diagnostic messages:
+
+    warning, rule cannot be matched
+        Indicates that the given rule cannot be matched because it follows
+        other rules that will always match the same text as it. For example,
+        in the following "dog" cannot be matched because it comes after an
+        identifier "catch-all" rule:
+        [a-z]+    got_identifier();
+        dog       got_dog();
+        Using RREEJJEECCTT in a scanner suppresses this warning.
+
+    warning, -s option given but default rule can be matched
+        It is possible (perhaps only in a particular start condition) that the
+        default rule (match any single character) is the only one that will
+        match a particular input. Since --ss was given, presumably this is not
+        intended.
+
+    reject_used_but_not_detected undefined
+        This is a compile-time error; the scanner uses RREEJJEECCTT but lleexx(1) did
+        not find it in the first two sections. Usually, this happens because
+        the reference is implicit (through an #include file, for example).
+        Make an explicit reference to the action in your lleexx(1) input file.
+        (Note that previously lleexx(1) supported a %%uusseedd mechanism for dealing
+        with this problem. Although this feature is still supported, it is now
+        deprecated.)
+
+    yymore_used_but_not_detected undefined
+        This is a compile-time error; the scanner uses yyyymmoorree(3) but lleexx(1)
+        did not find it in the first two sections. Usually this happens
+        because the reference is implicit (through an #include file, for
+        example). Make an explicit reference to the action in your lleexx(1)
+        input file. (Note that previously lleexx(1) supported a %%uusseedd mechanism
+        for handling this problem. Although this feature is still supported,
+        it is now deprecated.)
+
+    lex scanner jammed
+        A scanner compiled with --ss has encountered an input string which was
+        not matched by any of its rules. This error can also occur due to
+        internal problems.
+
+    token too large, exceeds YYLMAX
+        Your scanner uses %%aarrrraayy, and one of its rules matched a string longer
+        than the YYLMAX constant (eight KB bytes by default). You can increase
+        the value by defining (using ##ddeeffiinnee) YYLMAX in the definitions
+        section of your lleexx(1) input.
+
+    scanner requires -8 flag to use the character 'x'
+        Your scanner specification includes recognizing the eight-bit
+        character 'x', you did not specify the --88 flag, and your scanner
+        defaulted to seven-bit because you used the --CCff or --CCFF table-
+        compression options. See the discussion of the --77 flag for details.
+
+    lex scanner push-back overflow
+        You used uunnppuutt() to push back so much text that the scanner's buffer
+        could not hold both the pushed-back text and the current token in
+        yytext Ideally, the scanner should dynamically resize the buffer in
+        this case; at present, however, it does not.
+
+    input buffer overflow, can't enlarge buffer because scanner uses REJECT
+        The scanner was working on matching an extremely large token and
+        needed to expand the input buffer. This does not work with scanners
+        that use RREEJJEECCTT.
+
+    fatal lex scanner internal error--end of buffer missed
+        This can occur in an scanner that is reentered after a long-jump has
+        jumped out (or over) the scanner's activation frame. Before reentering
+        the scanner, use:
+        yyrestart( yyin );
+
+    too many start conditions in <> construct!
+        You listed more start conditions in a <> construct than exist (you
+        must have listed at least one of them twice).
+
+  FFIILLEESS
+
+    See lleexx(1).
+
+  DDEEFFIICCIIEENNCCIIEESS // BBUUGGSS
+
+    See lleexx(1).
+
+  AAUUTTHHOORR
+
+    Vern Paxson, with the help of many ideas and much inspiration from Van
+    Jacobson. Original version by Jef Poskanzer. The fast table representation
+    is a partial implementation of a design done by Van Jacobson. The
+    implementation was done by Kevin Gong and Vern Paxson.
+
+    Thanks to the many _l_e_x(1) beta-testers, feedbackers, and contributors,
+    especially Francois Pinard, Casey Leedom, Nelson H.F. Beebe,
+    benson@odi.com, Peter A. Bigot, Keith Bostic, Frederic Brehm, Nick
+    Christopher, Jason Coughlin, Bill Cox, Dave Curtis, Scott David Daniels,
+    Chris G. Demetriou, Mike Donahue, Chuck Doucette, Tom Epperly, Leo Eskin,
+    Chris Faylor, Jon Forrest, Kaveh R. Ghazi, Eric Goldman, Ulrich Grepel,
+    Jan Hajic, Jarkko Hietaniemi, Eric Hughes, John Interrante, Ceriel Jacobs,
+    Jeffrey R. Jones, Henry Juengst, Amir Katz, ken@ken.hilco.com, Kevin B.
+    Kenny, Marq Kole, Ronald Lamprecht, Greg Lee, Craig Leres, John Levine,
+    Steve Liddle, Mohamed el Lozy, Brian Madsen, Chris Metcalf, Luke Mewburn,
+    Jim Meyering, G.T. Nicol, Landon Noll, Marc Nozell, Richard Ohnemus, Sven
+    Panne, Roland Pesch, Walter Pelissero, Gaumond Pierre, Esmond Pitt, Jef
+    Poskanzer, Joe Rahmeh, Frederic Raimbault, Rick Richardson, Kevin Rodgers,
+    Jim Roskind, Doug Schmidt, Philippe Schnoebelen, Andreas Schwab, Alex
+    Siegel, Mike Stump, Paul Stuart, Dave Tallman, Chris Thewalt, Paul
+    Tuinenga, Gary Weik, Frank Whaley, Gerhard Wilhelms, Kent Williams, Ken
+    Yap, Nathan Zelle, David Zuhn, and those whose names have slipped my
+    marginal mail-archiving skills but whose contributions are appreciated all
+    the same.
+
+    Thanks to Keith Bostic, Jon Forrest, Noah Friedman, John Gilmore, Craig
+    Leres, John Levine, Bob Mulcahy, G.T. Nicol, Francois Pinard, Rich Salz,
+    and Richard Stallman for help with various distribution headaches.
+
+    Thanks to Esmond Pitt and Earle Horton for 8-bit character support; to
+    Benson Margulies and Fred Burke for C++ support; to Kent Williams and Tom
+    Epperly for C++ class support; to Ove Ewerlid for support of NUL's; and to
+    Eric Hughes for support of multiple buffers.
+
+    This work was primarily done when I was with the Real Time Systems Group
+    at the Lawrence Berkeley Laboratory in Berkeley, CA. Many thanks to all
+    there for the support I received.
+
+    Send comments to:
+
+    Vern Paxson Systems Engineering Bldg. 46A, Room 1123 Lawrence Berkeley
+    Laboratory University of California Berkeley, CA 94720 vern@ee.lbl.gov
+
+  SSEEEE AALLSSOO
+
+    _l_e_x(1)
+
+    _y_a_c_c(1)
+
+    _s_e_d(1)
+
+    _a_w_k(1)
+
+    M. E. Lesk and E. Schmidt, LEX - Lexical Analyzer Generator
+

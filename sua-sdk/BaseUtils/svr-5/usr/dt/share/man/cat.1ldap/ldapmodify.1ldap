@@ -1,0 +1,208 @@
+
+
+ldapmodify(1ldap)                               ldapmodify(1ldap)
+
+SSyynnooppssiiss
+       ldapmodify  [-a]  [-b]  [-c] [-r] [-n] [-v] [-F] [-d debu-
+       glevel] [-D binddn] [-w passwd]  [-W]  [-h  ldaphost]  [-p
+       ldapport] [-f file]
+
+       ldapadd  [-b] [-c] [-r] [-n] [-v] [-F] [-d debuglevel] [-D
+       binddn] [-w passwd] [-W] [-h ldaphost] [-p  ldapport]  [-f
+       file]
+
+DDeessccrriippttiioonn
+       ldapmodify  is  a  shell-accessible  interface  to the and
+       library functions. ldapadd is implemented as a  hard  link
+       to  the  ldapmodify  tool. When invoked as ldapadd, the -a
+       (add new entry) option is turned on automatically.
+
+       ldapmodify opens a connection to an  LDAP  server,  binds,
+       and  modifies  or  adds  entries. The entry information is
+       read from standard input or from file through the  use  of
+       the -f option.
+
+   OOppttiioonnss
+       Add  new  entries. The default for ldapmodify is to modify
+       existing entries. If invoked as ldapadd,  this  option  is
+       always  set.   Assume  that  any  values that start with a
+       slash (/) are binary values and that the actual  value  is
+       in  a file whose path is specified in the place where val-
+       ues normally appear.  Continuous  operation  mode.  Errors
+       are  reported, but ldapmodify will continue with modifica-
+       tions. The default is to exit after  reporting  an  error.
+       Replace  existing  values  by default.  Show what would be
+       done, but don't actually modify entries. Useful for debug-
+       ging  in conjunction with -v.  Use verbose mode, with many
+       diagnostics written to standard output.  Force application
+       of  all  changes regardless of the contents of input lines
+       that begin with  ``replica:''  (by  default,  ``replica:''
+       lines  are  compared against the LDAP server host and port
+       in use to decide if a replog  record  should  actually  be
+       applied).   Set  the  LDAP  debugging level to debuglevel.
+       Specify the Distinguished Name to be used  in  binding  to
+       the directory.
+
+       binddn  should  be  a string-represented DN, as defined in
+       RFC 1779 or its successor.
+
+       If a -D binddn option is not supplied,  the  command  will
+       take the binddn value from the LDAP_BINDDN_CHANGE environ-
+       ment variable, if set. If LDAP_BINDDN_CHANGE  specifies  a
+       null  string,  it  is  assumed  that  an anonymous bind is
+       required.
+
+       If a -D option is not supplied, and LDAP_BINDDN_CHANGE  is
+       not  used  to  specify the bind DN, the configuration file
+       /etc/ldap_defaults will be examined for a default value to
+       be used.  If no default is supplied, a value of "" will be
+
+                                                                1
+
+ldapmodify(1ldap)                               ldapmodify(1ldap)
+
+       assumed.  Use passwd as the password for simple  authenti-
+       cation.   Read  the password from the terminal. This is an
+       alternative to supplying a  password  via  the  -w  passwd
+       option.
+
+       The  password is prompted for in a non-echoing input mode.
+       If ldapmodify has no controlling terminal, then the  pass-
+       word  will  be read from standard input.  Specify the LDAP
+       servers to connect to.
+
+       More than one server can be specified, in which  case  the
+       servers  are  tried  in the order specified, stopping with
+       the first one to which a successful connection is made.
+
+       The servers can be specified either  as  hostnames  or  as
+       dotted strings giving IP addresses.
+
+       A server port may be specified along with the server names
+       or addresses by using the  notation  servername:portnumber
+       or  serverIPaddr:portnumber.  If  a  port  number  is  not
+       explicitly specified for the particular server, a  default
+       port (as described for the -p option) is used.
+
+       If  a  null string is supplied, the local host is assumed.
+       See the -p option for how the local port is selected.
+
+       If no -h option is supplied, the  command  will  take  the
+       ldaphost  value  from the LDAP_HOST  environment variable,
+       if this is present.
+
+       If no -h option is supplied, and  LDAP_HOST  is  not  set,
+       then  the  configuration  file  /etc/ldap_defaults will be
+       examined for a default value to be used.
+
+       If no default is supplied, a value  of  "",  implying  the
+       local  host, will be assumed.  Specify the TCP port number
+       to connect to (using the notation  server:portnumber),  if
+       not specified via the -h option.
+
+       If no port number is explicitly supplied, the default LDAP
+       port is assumed.  Read the entry modification  information
+       from file instead of from standard input.
+
+   IInnppuutt ffoorrmmaatt
+       The contents of file (or standard input if no -f option is
+       given on the command line) should conform  to  the  format
+       defined in with the exceptions noted below.
+
+       If the first line of a record consists of a decimal number
+       (entry ID), it is ignored.
+
+       Lines that begin with ``replica:'' are matched against the
+       LDAP server host and port in use to decide if a particular
+       replog record should be  applied.  Any  other  lines  that
+
+                                                                2
+
+ldapmodify(1ldap)                               ldapmodify(1ldap)
+
+       precede the ``dn:'' line are ignored. The -F option can be
+       used to force  ldapmodify  to  apply  all  of  the  replog
+       changes,  regardless  of  the  presence  or absence of any
+       ``replica:'' lines.
+
+       If no ``changetype:'' line  is  present,  the  default  is
+       ``add''  if  the  -a  option is set (or if the program was
+       invoked as ldapmodify), and ``modify'' otherwise.
+
+       If changetype is ``modify'' and no ``add:'', ``replace:'',
+       or ``delete:'' lines appear, the default is ``replace'' if
+       the -r option is set and ``add'' otherwise.
+
+       Note that the above exceptions to the format allow entries
+       to be used as input to ldapmodify or ldapadd.
+
+   AAlltteerrnnaattiivvee iinnppuutt ffoorrmmaatt
+       An alternative input format is supported for compatibility
+       with older versions of ldapmodify. This format consists of
+       one  or  more entries separated by blank lines, where each
+       entry  looks  like:  Distinguished  Name  (DN)  attr=value
+       [attr=value  ...]  where attr is the name of the attribute
+       and value is the value.
+
+       By default, values are  added.  If  the  -r  command  line
+       option is given, the default is to replace existing values
+       with the new one.  Note that it is permissible for a given
+       attribute  to  appear  more than once (for example, to add
+       more than one value for an attribute). Also note that  you
+       can  use a trailing ``\\'' to continue values across lines
+       and preserve newlines in the value itself (this is  useful
+       for modifying QUIPU iattr attributes among others).
+
+       attr  should  be  preceded  by  a - to remove a value. The
+       ``='' and value should be  omitted  to  remove  an  entire
+       attribute.
+
+       attr should be preceded by a + to add a value in the pres-
+       ence of the -r option.
+
+EExxiitt ccooddeess
+       Exit status is 0 if no errors occur. Errors  result  in  a
+       non-zero  exit status and a diagnostic message being writ-
+       ten to standard error.
+
+EExxaammpplleess
+       Assume that the file /tmp/entrymods has the following con-
+       tents:  dn:  cn=Modify  Me, o=University of Michigan, c=US
+       changetype:  modify  replace:  mail  mail:  modme@termina-
+       tor.rs.itd.umich.edu  -  add:  title title: Grand Poobah -
+       add:  jpegPhoto  jpegPhoto:  /tmp/modme.jpeg   -   delete:
+       description  -  In such a case, the command: ldapmodify -b
+       -r -f /tmp/entrymods will  replace  the  contents  of  the
+       ``Modify  Me''  entry's  mail  attribute  with  the  value
+
+                                                                3
+
+ldapmodify(1ldap)                               ldapmodify(1ldap)
+
+       ``modme@terminator.rs.itd.umich.edu'',  add  a  title   of
+       ``Grand   Poobah'',   and   the   contents   of  the  file
+       /tmp/modme.jpeg as a jpegPhoto, and completely remove  the
+       description attribute. The same modifications as above can
+       be performed using the  older  ldapmodify  in/out  format:
+       cn=Modify    Me,    o=University    of    Michigan,   c=US
+       mail=modme@terminator.rs.itd.umich.edu +title=Grand Poobah
+       +jpegPhoto=/tmp/modme.jpeg  -description  Assume  the file
+       /tmp/newentry has the following contents:  dn:  cn=Barbara
+       Jensen, o=University of Michigan, c=US objectClass: person
+       cn: Barbara Jensen cn: Babs Jensen sn: Jensen  title:  the
+       world's  most famous mythical manager mail: bjensen@termi-
+       nator.rs.itd.umich.edu uid: bjensen In such  a  case,  the
+       following  command  will  add a new entry for Babs Jensen,
+       using the values from the file /tmp/newentry:  ldapadd  -f
+       /tmp/entrymods  Assume the file /tmp/newentry has the fol-
+       lowing contents: dn: cn=Barbara  Jensen,  o=University  of
+       Michigan, c=US changetype: delete In such a case, the fol-
+       lowing command will remove Babs Jensen's entry: ldapmodify
+       -f /tmp/entrymods
+
+RReeffeerreenncceess
+       Kille, S., A String Representation of Distinguished Names,
+       RFC 1779, ISODE Consortium, March 1995.
+
+                                                                4
+

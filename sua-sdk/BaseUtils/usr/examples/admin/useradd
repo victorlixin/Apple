@@ -1,0 +1,214 @@
+#!/bin/ksh
+#
+# Copyright (c) Microsoft Corporation. All rights reserved.
+#
+# srcId = $Id: useradd#1 2004/09/23 05:45:17 FAREAST\\ranas $
+# 
+#
+# This script is similar to the SYSV4 useradd command
+# If you have a default profile, change the DEFAULT_PROFILE
+# to something valid, and the script will add it to the
+# new home directory if you create one.
+#
+# Note! This utility will create a user without a home directory
+#
+NTROOT=//C/WINNT/system32
+DEFAULT_PROFILE=This_file_can_not_possibly_exist
+CMD_NET=$NTROOT/net.exe
+CMD_CACLS=$NTROOT/cacls.exe
+#
+# We need a couple temporary files
+T1=${TMPDIR}/.file1.$$
+T2=${TMPDIR}/.file2.$$
+# Verbose
+V=FALSE
+#
+# DEBUG=echo
+# to show commands rather than executing them
+DEBUG=
+
+#
+# Huston, we have a
+problem()
+{
+	echo $*
+	exit 1
+}
+
+#
+# How does this thing work?
+usage()
+{
+	echo "usage: useradd [-g group ] [-G group[[,group]...]] [-d dir ]"
+	echo "       [-c comment ] [-p password ] username"
+	exit 1
+}
+
+#
+# Process the options
+while getopts "G:c:p:g:d:V" opt; do
+	case "$opt" in
+		p) P="$OPTARG" ;;
+		g) G="$OPTARG" ;;
+		d) D="$OPTARG" ;;
+		c) C="$OPTARG" ;;
+		G) S="$OPTARG" ;;
+		V) V="TRUE" ;;
+		*) echo "Bad option -$opt"; usage ;;
+	esac
+done
+
+check_valid_group()
+{
+	GRP=$1
+	echo ${localgroups} | grep "${GRP}" > /dev/null 2>&1
+	[ $? != 0 ] && { problem "Group \"${GRP}\" does not exist"; }
+	GROUP="${GROUP} ${GRP}"
+}
+
+#
+# This function will add a user to a group.
+# There seems to be a problem with executing the NET.EXE localgroup
+# so I've come up with this workaround.  I'm not sure why, but no time
+# to investigate.
+# Also, we don't want to fail at this point, so we just issue warnings
+# not fatal problems.
+#
+add_user_to_group()
+{
+	#net.exe group groupname username /ADD
+	#
+	# I save the errors from the command in case I need them
+	# I'm not using it now, but I might later
+	#
+	NGRP=$1
+cat << EEE > ${T1}
+${CMD_NET} localgroup \\\"${NGRP}\\\" ${USER} /ADD  > ${T2} 2>&1
+EEE
+	${DEBUG} sh ${T1}
+	ret=$?
+	[ -n "${DEBUG}" ] && cat ${T1}
+	rm -f ${T1} ${T2}
+	if [ $ret != 0 ] 
+	then
+		# The user may already be in the group
+		[ $ret != 2 ] && { echo "Couldn't add $USER to ${NGRP}"; }
+	fi
+	[ $V = TRUE ] && echo "$USER added to group ${NGRP}"
+}
+
+#
+# get the user, notice that we only take one user at a time
+#
+shift $OPTIND-1
+set -- $*
+USER=${1}
+[ -z "$USER" ] && usage
+
+#
+# Checking these variables for validity is fairly inexpensive
+# performance-wise, so we'll check these before we even findout
+# whether the user exists.
+#
+
+if [ -n "$P" ] # include password
+then
+	PASS="${P}"
+	[ "$V" = "TRUE" ] && echo "Setting password to ${PASS}"
+fi
+
+if [ -n "$D" ]  # make the directory
+then
+	echo "${D}" | grep "^//[A-Z]/" >/dev/null 2>&1
+	[ $? = 0 ] || { problem "Directory must include drive, ex. -d //C${D}"; }
+	DD=`posixpath2nt ${D}`
+	DIR="/HOMEDIR:${DD}"
+	[ "$V" = "TRUE" ] && echo "Setting directory to ${D}"
+fi
+
+if [ -n "${C}" ] # Comment
+then
+	COMMENT="/FULLNAME:\"${C}\""
+	[ "$V" = "TRUE" ] && echo "Setting COMMENT to ${COMMENT}"
+fi
+
+#
+# Find out whether the user exists
+#
+${CMD_NET} users ${USER} > /dev/null 2>&1
+[ $? = 0 ] && { problem "User \"${USER}\" exists"; }
+
+#
+# Create the list of local groups
+# It would be really nice if NT could just leave off the headers and
+# extraneous stuff
+#
+${CMD_NET} localgroup > ${T1} 2>/dev/null
+grep "\*" ${T1} | sed "s/\*//g" |
+sed 's/^/"/' | sed 's/  *$/"/' | sed 's/   */" "/g' > ${T2}
+flip -u ${T2}
+localgroups=`cat ${T2}`
+rm -f ${T1} ${T2}
+
+#
+# Only one of -g or -G please
+# And then check the validity of the group name you've been handed
+# Build a string of groups
+#
+[ -n "${G}" -a -n "${S}" ] && { problem "can't do -g and -G"; }
+[ -n "${G}" ] && STR="${G}"
+[ -n "${S}" ] && STR="${S}"
+IFS=","
+for g in ${STR}
+do
+	check_valid_group $g
+done
+IFS=" "
+
+[ "$V" = "TRUE" ] && echo $localgroups
+
+#
+# This command creates the account
+#
+${DEBUG} ${CMD_NET} USER ${USER} ${PASS} /ADD ${COMMENT} ${DIR} >${T1} 2>&1
+[ $? != 0 ] && { problem "Couldn't create account ${USER}"; }
+[ -n "${DEBUG}" ] && { cat ${T1}; rm -f ${T1}; }
+#
+# Create the directory for the newly created user if specified one
+# Note that we don't do this if we couldn't make the account.
+#
+if [ -n "${D}" ]
+then
+	${DEBUG} mkdir -p ${D}
+	[ $? != 0 ] && { problem "Couldn't create directory ${D}"; }
+	[ -f ${DEFAULT_PROFILE} ] && ${DEBUG} cp ${DEFAULT_PROFILE} ${D}
+	#
+	# Make sure that the user can take permission of the directory
+	${DEBUG} ${CMD_CACLS} ${DD} /E /G ${USER}:F > ${T1} 2>&1
+	[ $? != 0 ] && { rm ${T1}; problem "Couldn't change ACLS"; }
+	rm ${T1}
+	echo "Be sure to have the owner take possession of ${D}"
+	chmod 775 ${D} >/dev/null 2>&1
+fi
+	
+#
+# Now complete the transaction and add the user to groups
+# if specified
+#
+if [ -n "${G}" -o -n "${S}" ] 
+then
+	[ -n "${G}" ] && STR="${G}"
+	[ -n "${S}" ] && STR="${S}"
+	IFS=","
+	for grp in ${STR}
+	do
+		add_user_to_group ${grp}
+	done
+	IFS=" "
+fi
+
+#
+# tell of your success
+#
+echo "${USER} Account Created"
+

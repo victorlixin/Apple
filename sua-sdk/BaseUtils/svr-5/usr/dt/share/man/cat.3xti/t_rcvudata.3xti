@@ -1,0 +1,97 @@
+
+
+t_rcvudata(3xti)                                 t_rcvudata(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       int  t_rcvudata(int  fd,  struct t_unitdata *unitdata, int
+       *flags);
+
+DDeessccrriippttiioonn
+       This function is a TLI/XTI data transfer routine  used  in
+       connectionless  mode  to  receive a data unit from another
+       transport user.  Data is received  through  the  transport
+       endpoint  specified  by  fd.  On return, unitdata contains
+       the information associated with the data unit,  and  flags
+       points to a value that indicates whether the complete data
+       unit was received.
+
+       This function is a  service  of  connectionless  transport
+       providers  and  is supported only if the provider returned
+       service type T_CLTS on t_open or t_getinfo.
+
+   PPaarraammeetteerrss
+       the file descriptor for  the  transport  endpoint  through
+       which the data will be received.  points to the t_unitdata
+       structure associated with the received data unit.   points
+       to a value set on return if the complete data unit was not
+       received.
+
+   SSttrruuccttuurree ddeeffiinniittiioonnss
+       The unitdata argument points  to  a  t_unitdata  structure
+       containing  the  following  members:  struct  netbuf addr;
+       /* address      */  struct  netbuf  opt;       /*  options
+       */  struct  netbuf  udata;    /* user data    */ netbuf is
+       described in The maxlen field of addr, opt, and udata must
+       be  set before issuing this function to indicate the maxi-
+       mum size of the buffer for each.
+
+       On return from this  call,  addr  specifies  the  protocol
+       address  of the sending user, opt identifies protocol-spe-
+       cific options that were associated with  this  data  unit,
+       and udata specifies the user data that was received.
+
+       If  the  buffer  defined in the udata field of unitdata is
+       not large enough to hold the current data unit, the buffer
+       will  be  filled and T_MORE will be set in flags on return
+       to indicate that another t_rcvudata should  be  issued  to
+       retrieve the rest of the data unit.  Subsequent t_rcvudata
+       call(s) will return 0 for the length of  the  address  and
+       options until the full data unit has been received.
+
+   SSttaattee ttrraannssiittiioonnss
+       On entry, T_IDLE; unchanged on exit.
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+                                                                1
+
+t_rcvudata(3xti)                                 t_rcvudata(3xti)
+
+UUssaaggee
+       By default, t_rcvudata operates in  synchronous  mode  and
+       will  wait  for a data unit to arrive if none is currently
+       available.  However, if O_NONBLOCK is set (via  t_open  or
+       fcntl),  t_rcvudata  will execute in asynchronous mode and
+       will fail if no data units are available.
+
+RReettuurrnn vvaalluueess
+       t_rcvudata returns 0 on successful completion  and  -1  on
+       failure and t_errno is set to indicate the error.
+
+   EErrrroorrss
+       On  failure,  t_errno  may be set to one of the following:
+       The specified file descriptor does not refer to  a  trans-
+       port  endpoint.  O_NONBLOCK was set, but no data units are
+       currently available from the transport provider.  The num-
+       ber  of  bytes (maxlen) allocated for an incoming argument
+       is greater than zero but not sufficient to store the value
+       of  that  argument.   The  unit  data  information  to  be
+       returned in unitdata will be discarded.   An  asynchronous
+       event  has occurred on the transport endpoint specified by
+       fd and requires immediate attention.  This function is not
+       supported by the underlying transport provider.  The func-
+       tion was issued in the wrong  sequence  on  the  transport
+       endpoint  referenced  by  fd.  A system error has occurred
+       during execution of this function.  A communication  prob-
+       lem  has  been  detected  with  the transport provider and
+       there is no other value of t_errno to describe  the  error
+       condition.
+
+RReeffeerreenncceess
+
+                                                                2
+

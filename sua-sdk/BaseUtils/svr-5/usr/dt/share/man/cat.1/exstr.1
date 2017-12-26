@@ -1,0 +1,151 @@
+
+
+exstr(1)                                                 exstr(1)
+
+SSyynnooppssiiss
+       exstr file . . .
+
+       exstr -e file . . .
+
+       exstr -r [-d] file . . .
+
+DDeessccrriippttiioonn
+       The  exstr  utility is used to extract strings from C lan-
+       guage source files and replace them by calls to  the  mes-
+       sage retrieval function (see This utility will extract all
+       character strings surrounded by double  quotes,  not  just
+       strings  used  as  arguments  to the printf command or the
+       printf routine.   In  the  first  form,  exstr  finds  all
+       strings  in  the source files and writes them on the stan-
+       dard output.  Each string is preceded by the  source  file
+       name  and  a  colon.   The  meanings  of  the options are:
+       Extract a list of strings from the named C language source
+       files, with positional information.  This list is produced
+       on   standard   output   in    the    following    format:
+       file:line:position:msgfile:msgnum:string
+
+       The meanings of the fields are as follows: the name of a C
+       language source file line number  in  the  file  character
+       position in the line null null the extracted text string
+
+       Normally you would redirect this output into a file.  Then
+       you would edit this file to add the values you want to use
+       for  msgfile  and  msgnum: the file that contains the text
+       strings that will replace string.  A file with  this  name
+       must  be created and installed in the appropriate place by
+       the utility.  the sequence number of the  string  in  msg-
+       file.
+
+       The  next  step  is  to use exstr -r to replace strings in
+       file.  Replace strings in a C language  source  file  with
+       function  calls  to the message retrieval function gettxt.
+       This option is used together with the -r option.   If  the
+       message  retrieval  fails  when  gettxt  is invoked at run
+       time, then the extracted string is printed.
+
+       You would use the  capability  provided  by  exstr  on  an
+       application  program that needs to run in an international
+       environment and have messages print in more than one  lan-
+       guage.   exstr  replaces  text strings with function calls
+       that point at strings in a message database.  The database
+       used depends on the runtime value of the LC_MESSAGES envi-
+       ronment variable (see
+
+       The first step is to use exstr -e to  extract  a  list  of
+       strings  and  save  it in a file.  Next, examine this list
+       and determine which strings can be translated  and  subse-
+       quently  retrieved  by  the  message  retrieval  function.
+       Then, modify this file by deleting  lines  that  can't  be
+
+                                                                1
+
+exstr(1)                                                 exstr(1)
+
+       translated  and,  for  lines  that  can  be translated, by
+       adding the message file names and the message  numbers  as
+       the fourth (msgfile) and fifth (msgnum) entries on a line.
+       The message files named must  have  been  created  by  and
+       exist  in  /usr/lib/locale/locale/LC_MESSAGES.  The direc-
+       tory locale corresponds to the language in which the  text
+       strings  are  written  (see  The message numbers used must
+       correspond to the sequence numbers of strings in the  mes-
+       sage files.
+
+       Now use this modified file as input to exstr -r to produce
+       a new version of the original C language  source  file  in
+       which  the strings have been replaced by calls to the mes-
+       sage retrieval function gettxt.  The  msgfile  and  msgnum
+       fields are used to construct the first argument to gettxt.
+       The second argument to gettxt is printed  if  the  message
+       retrieval  fails  at  run time.  This argument is the null
+       string, unless the -d option is used.
+
+       This utility cannot replace strings in all instances.  For
+       example,  a  static initialized character string cannot be
+       replaced by a function call, or a string could be  in  the
+       form  of an escape sequence that cannot be translated.  In
+       order not to break existing code,  the  files  created  by
+       invoking  exstr  -e  must be examined and lines containing
+       strings not replaceable by function calls must be deleted.
+       In  some  cases the code may require modifications so that
+       strings can be extracted and replaced by calls to the mes-
+       sage retrieval function.
+
+EExxaammpplleess
+       The following examples show uses of exstr.
+
+       Assume  that the file foo.c contains two strings: main() {
+            printf("This is  an  example\n");       printf("Hello
+       world!\n"); }
+
+       The  exstr  utility,  invoked  with  the  argument  foo.c,
+       extracts strings from the named file and  prints  them  on
+       the standard output.
+
+       exstr  foo.c  produces the following output: foo.c:This is
+       an example\n foo.c:Hello world!\n
+
+       exstr -e foo.c >  foo.stringsout  produces  the  following
+       output  in the file foo.stringsout: foo.c:3:8:::This is an
+       example\n foo.c:4:8:::Hello world!\n
+
+       You must edit foo.stringsout to add the values you want to
+       use for the msgfile and msgnum fields before these strings
+       can be replaced by calls to the retrieval function.  If UX
+       is  the  name of the message file, and the numbers 1 and 2
+       represent the sequence number of the strings in the  file,
+       here  is what foo.stringsout looks like after you add this
+
+                                                                2
+
+exstr(1)                                                 exstr(1)
+
+       information:   foo.c:3:8:UX:1:This   is    an    example\n
+       foo.c:4:8:UX:2:Hello world!\n
+
+       The exstr utility can now be invoked with the -r option to
+       replace the strings in the source file  by  calls  to  the
+       message retrieval function gettxt.
+
+       exstr  -r  foo.c  <foo.stringsout  >intlfoo.c produces the
+       following  output:  extern  char   *gettxt();   main()   {
+            printf(gettxt("UX:1",      ""));          printf(get-
+       txt("UX:2", "")); }
+
+       exstr  -rd  foo.c  <foo.stringsout  >intlfoo.c  uses   the
+       extracted  strings as a second argument to gettxt.  extern
+       char *gettxt(); main() {      printf(gettxt("UX:1",  "This
+       is   an  example\n"));       printf(gettxt("UX:2",  "Hello
+       world!\n")); }
+
+FFiilleess
+       files created by
+
+RReeffeerreenncceess
+DDiiaaggnnoossttiiccss
+       The error messages produced by exstr are  intended  to  be
+       self-explanatory.   They  indicate  errors  in the command
+       line or format errors encountered within the input file.
+
+                                                                3
+

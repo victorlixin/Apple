@@ -1,0 +1,141 @@
+
+
+getaddrinfo(3N)                                   getaddrinfo(3N)
+
+SSyynnooppssiiss
+       cc  [options] file -lsocket -lnsl #include  <sys/socket.h>
+       #include  <netdb.h>
+
+       int getaddrinfo(const char  *name,  const  char  *service,
+            const struct addrinfo *req, struct addrinfo **pai)
+
+       void freeaddrinfo(struct addrinfo *ai);
+
+       char *gai_strerror(int ecode);
+
+DDeessccrriippttiioonn
+       getaddrinfo  translates  the  name  of  a service location
+       (typically, a hostname) and/or a service name into  a  set
+       of  socket  addresses  and  their related information. The
+       addresses and related information can then be used to cre-
+       ate a socket to the specified service.
+
+       Use  the name argument to specify a pointer to a null ter-
+       minated string containing the service location.  The  ser-
+       vice  location  can be a descriptive name or an address in
+       either IPv4 or IPv6 address notation.  If  you  specify  a
+       NULL  value  for  name,  the requested service location is
+       assumed to be local. If a specific protocol family is  not
+       specified in the addrinfo.ai_family (described later), and
+       the service name is interpreted as valid  within  multiple
+       supported  families,  address  information may be returned
+       for multiple families.
+
+       Use the service argument to specify a pointer  to  a  null
+       terminated  string  containing  the  service  name. If you
+       specify a  NULL  value  for  service,  the  network  level
+       address  of  the  service  location  specified  in name is
+       returned.  If you specify NULL values for  both  name  and
+       service, getaddrinfo will terminate and return EAI_NONAME.
+       Use the req argument to specify a pointer to  an  addrinfo
+       structure  that contains parameters to be used when trans-
+       lating name and/or  service.  The  addrinfo  structure  is
+       shown below: struct addrinfo {
+          int      ai_flags;                 /* input flags */
+          int       ai_family;                 /* protocol family
+       for socket */
+          int      ai_socktype;              /* socket type */
+          int       ai_protocol;               /*  protocol   for
+       socket */
+          int       ai_addrlen;               /* length of socket
+       address */
+          struct sockaddr *   ai_addr;    /* socket  address  for
+       socket */
+          char  *               ai_canonname;   /* canonical name
+       for service location */
+          struct addrinfo *   ai_next;       /* pointer  to  next
+       in  list  */  };  You can specify values for the following
+       structure members when using  getaddrinfo.   The  ai_flags
+
+                                                                1
+
+getaddrinfo(3N)                                   getaddrinfo(3N)
+
+       member  can  be  set to 0, AI_PASSIVE and/or AI_CANONNAME.
+       Set AI_PASSIVE if the returned socket information is to be
+       used  for accepting incoming connections for the specified
+       service. Do not set AI_PASSIVE if  you  want  to  use  the
+       returned  socket information to create a connection to the
+       specified service.
+
+       Set AI_CANONNAME if you want  the  canonical  name  corre-
+       sponding  to the name pointed to by name to be returned in
+       ai_canonname. If the  canonical  name  is  not  available,
+       ai_canonname will point to the same location as name.  Use
+       ai_family to specify the protocol family  related  to  the
+       service  specified  by  name and service.  Possible values
+       are: Internet Protocol version 4 (IPv4) Internet  Protocol
+       version  6  (IPv6)  return  all matching protocol families
+       (the order is  implementation  dependent,  and  cannot  be
+       guaranteed  to  be the same on other systems) Use ai_sock-
+       type to specify the socket type you want returned.  Possi-
+       ble socket types are:
+
+       If you specify 0 for ai_socktype all matching socket types
+       are returned (the order is implementation  dependent,  and
+       cannot  be  guaranteed  to  be the same on other systems).
+       Use ai_protocol to specify the protocol to use in conjunc-
+       tion  with  the  protocol  family  specified in ai_family.
+       Valid protocols include: TCP UDP raw IP
+
+       If you specify 0 for ai_protocol, the default protocol  is
+       used  for  the  family/socket type. See freeaddrinfo frees
+       addrinfo structures referred to by ai along with any asso-
+       ciated  additional  storage.  If ai_next is not NULL, that
+       is, there is a chain of addrinfo structures,  freeaddrinfo
+       frees the entire chain.
+
+       gai_strerror  returns a pointer to a character string that
+       describes the meaning of one  of  the  EAI_*  error  codes
+       (ecodes) returned by getaddrinfo. If the error code is not
+       one of these, the string  returned  indicates  an  unknown
+       error.
+
+RReettuurrnn vvaalluueess
+       Upon  successful  return, getaddrinfo sets the pai pointer
+       to point to a linked list of addrinfo structures, each  of
+       which  specify  a  socket-address  and related information
+       that can be used to create the required sockets. The  list
+       always  includes  at  least  one  addrinfo  structure. The
+       ai_next member of each structure contains either a pointer
+       to the next structure in the list, or NULL if it is in the
+       last structure in the list.
+
+       Each structure in the list includes values for use with  a
+       call  to socket, and a socket address for use with connect
+       or, if AI_PASSIVE  is  set,  with  bind.   The  ai_family,
+       ai_socktype  and ai_protocol fields are set to appropriate
+
+                                                                2
+
+getaddrinfo(3N)                                   getaddrinfo(3N)
+
+       values to be used as  arguments  to  socket  to  create  a
+       socket suitable for use with the returned address.
+
+       The ai_addr and ai_addrlen fields can be used as arguments
+       to connect or bind depending on whether AI_PASSIVE was set
+       in the original call.
+
+RReeffeerreenncceess
+       RFC 2133
+
+NNoottiicceess
+       In &geminiREL; the sockaddr structure has been modified to
+       support variable length sockets. The net  result  of  this
+       modification  is that the family member has been shortened
+       to 8 bits and a new 8-bit member inserted before it (len).
+       For more information on the new sockaddr structures, see
+
+                                                                3
+

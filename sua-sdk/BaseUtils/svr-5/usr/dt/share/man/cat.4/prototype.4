@@ -1,0 +1,274 @@
+
+
+prototype(4)                                         prototype(4)
+
+DDeessccrriippttiioonn
+       prototype  is an ASCII file used to specify package infor-
+       mation.  Each entry in the file describes a single  deliv-
+       erable  object.   An object can be a data file, directory,
+       source file, or executable object.  This file is generated
+       by the package developer.
+
+       Entries  in  a prototype file consist of several fields of
+       information separated by white space.  Comment lines begin
+       with  a # and are ignored.  The fields are described below
+       and must appear in the order  shown.   An  optional  field
+       designating  the  part number in which the object resides.
+       A part is a collection of files, and is the atomic unit by
+       which a package is processed.  A developer can choose cri-
+       teria for grouping files into a part (for  example,  based
+       on  class).  If this field is not used, part 1 is assumed.
+       A one-character  field  which  indicates  the  file  type.
+       Valid  values  are:  a  standard executable or data file a
+       file to be edited upon installation  or  removal  volatile
+       file (one whose contents are expected to change) directory
+       an exclusive directory (See  NOTICES)  linked  file  named
+       pipe character special device block special device instal-
+       lation script or information file symbolic link
+
+       Once a file has the file type attribute v, it will  always
+       be  volatile.   For  example,  if  a  file being installed
+       already exists and has the file  type  attribute  v,  then
+       even  if  the  version  of the file being installed is not
+       specified as volatile, the file type attribute will remain
+       volatile.   The  installation  class  to  which  the  file
+       belongs.  This name must contain only alphanumeric charac-
+       ters  and  be  no longer than 12 characters.  The field is
+       not specified for installation scripts.   (admin  and  all
+       classes  beginning with capital letters are reserved class
+       names.)  The pathname where the file will  reside  on  the
+       target    machine,    for    example,   /usr/bin/mail   or
+       bin/ras_proc.  Relative pathnames (those that do not begin
+       with  a slash) indicate that the file is relocatable.  The
+       form path1=path2 can be used for two purposes: to define a
+       link and to define local pathnames.
+
+       For  linked  files, path1 indicates the destination of the
+       link and path2 indicates the source file.  (This format is
+       mandatory for linked files.)
+
+       For  symbolically  linked  files, when path2 is a relative
+       pathname starting with path2 is  not  considered  relocat-
+       able.   For  example,  if you enter a line such as:      s
+       /foo/bar/etc/mount=../usr/sbin/mount                 path1
+       (/foo/bar/etc/mount)   will   be   a   symbolic   link  to
+       ../usr/sbin/mount.
+
+       For local  pathnames,  path1  indicates  the  pathname  an
+       object should have on the machine where the entry is to be
+
+                                                                1
+
+prototype(4)                                         prototype(4)
+
+       installed and path2 indicates either a relative  or  fixed
+       pathname  to a file on the host machine which contains the
+       actual contents.
+
+       A pathname can contain  a  variable  specification,  which
+       will be resolved at the time of installation.  This speci-
+       fication should have the form
+       $[A-Z] (see NOTICES).
+
+       Special  characters,  such  as  an  equal  sign  (=),  are
+       included  in  pathnames by surrounding the entire pathname
+       in single quotes (as in, for example, '/usr/lib/~=').  The
+       major  device  number.   The  field  is only specified for
+       block or character special devices.  The minor device num-
+       ber.   The  field is only specified for block or character
+       special devices.  The octal mode of the file (for example,
+       0664).   A  question mark (?) indicates that the mode will
+       be left unchanged, implying that the file  already  exists
+       on  the  target machine.  If the directory does not exist,
+       the default is 0755. If it's a file, the default is  0644.
+       This  field  is  not  used  for  linked files or packaging
+       information files.  The owner of the  file  (for  example,
+       bin  or  root).   The field is limited to 14 characters in
+       length.  A question mark (?) indicates that the owner will
+       be  left  unchanged, implying that the file already exists
+       on the target  machine.   If  it  does  not  exist,  owner
+       defaults to root.  This field is not used for linked files
+       or packaging information files.
+
+       Can be a variable specification in the form of $[A-Z] (see
+       NOTICES).   Will  be  resolved  at installation time.  The
+       group to which the file belongs (for example, bin or sys).
+       The  field is limited to 14 characters in length.  A ques-
+       tion mark (?)  indicates  that  the  group  will  be  left
+       unchanged,  implying  that  the file already exists on the
+       target machine.  If it does not exist, group  defaults  to
+       other.  This field is not used for linked files or packag-
+       ing information files.
+
+       Can be a variable specification in the form of $[A-Z] (see
+       NOTICES).  Will be resolved at installation time.
+
+       The  following  three  optional  fields  must be used as a
+       group (all three must be specified if any  is  specified):
+       The Mandatory Access Control (MAC) Level Identifier (LID),
+       an integer value that specifies a combination of a hierar-
+       chical  classification  and  zero or more non-hierarchical
+       categories.  A question mark (?) indicates  that  the  mac
+       field  will  be  left  unchanged,  implying  that the file
+       already exists on the target machine.  This field can only
+       be  applied  to a file on a sfs-type filesystem and is not
+       used for linked  files  or  packaging  information  files.
+       Mandatory Access Control is not supported in this release;
+       this field  is  present  for  compatibility  with  earlier
+
+                                                                2
+
+prototype(4)                                         prototype(4)
+
+       release  only.   A  value  of 0 should be used if you must
+       specify this  field.   A  comma-separated  list  of  valid
+       mnemonic fixed privilege names as defined for the filepriv
+       command.  The string NULL is used in place of  the  comma-
+       separated  list when fixed privileges are not to be speci-
+       fied.  A question mark (?) indicates that the fixed  field
+       will  be  left  unchanged,  implying that the file already
+       exists on the target machine.  This field is not used  for
+       linked files or packaging information files.  If the fixed
+       attribute is not supplied, then files are  installed  with
+       no  fixed  privileges.   A  comma-separated  list of valid
+       mnemonic inherited privilege  names  as  defined  for  the
+       filepriv command.  The string NULL is used in place of the
+       comma-separated list when privilege is not  to  be  speci-
+       fied.   A  question  mark (?) indicates that the inherited
+       field will be  left  unchanged,  implying  that  the  file
+       already  exists  on the target machine.  This field is not
+       used for linked files or packaging information files.   If
+       the  inherited  attribute  is not supplied, then files are
+       installed with no inheritable privileges.
+
+       NOTE: inheritable privileges have no effect in the current
+       release.  This capability is maintained solely for compat-
+       ibility with earlier releases.
+
+       An exclamation point (!) at the beginning of a line  indi-
+       cates  that  the  line contains a command.  These commands
+       are used to incorporate files  in  other  directories,  to
+       locate  objects  on  a  host machine, and to set permanent
+       defaults.  The following commands are available: Specifies
+       a list of directories (separated by white space) to search
+       for when looking for file contents on  the  host  machine.
+       The  basename of the path field is appended to each direc-
+       tory in the ordered list until the file is located.   This
+       command  should  not  be  specified in prototype files for
+       packages that are to be compressed.  Specifies a  pathname
+       which  points  to another prototype file to include.  Note
+       that search requests do not span include files.  Specifies
+       a  list of attributes (mode, owner, group, mac, fixed, and
+       inherited) to be used by default if attribute  information
+       is  not  provided  for prototype entries which require the
+       information.   If  either  the  mode,  owner,   or   group
+       attribute  is supplied, all three of these attributes must
+       be supplied.
+
+       If either the mac, fixed, or inherited attribute  is  sup-
+       plied, all three security attributes must be supplied.  If
+       the  security  attributes  are  supplied  and  the   other
+       attributes  are  not  supplied, use ``-'' for mode, owner,
+       and group.
+
+       The defaults do not apply to entries in include  prototype
+       files.   Values  specified for mac and inherited will have
+       no effect, because these features are not supported in the
+
+                                                                3
+
+prototype(4)                                         prototype(4)
+
+       current  release.   Places  the indicated parameter in the
+       current environment.
+
+       The above commands can have variable substitutions  embed-
+       ded within them, as demonstrated in the two example proto-
+       type files below.
+
+       Before files are overwritten during installation, they are
+       copied  to  a  temporary  pathname.  The exception to this
+       rule is files  whose  mode  includes  execute  permission,
+       unless  the  file  is editable (that is, ftype is e).  For
+       files which meet this exception, the existing  version  is
+       linked  to  a temporary pathname, and the original file is
+       removed.  This allows processes which are executing during
+       installation to be overwritten.
+
+EExxaammpplleess
+       Example 1: !PROJDIR=/usr/proj !BIN=$PROJDIR/bin !CFG=$PRO-
+       JDIR/cfg  !LIB=$PROJDIR/lib  !HDRS=$PROJDIR/hdrs   !search
+       /usr/myname/usr/bin   /usr/myname/src  /usr/myname/hdrs  i
+       pkginfo=/usr/myname/wrap/pkginfo                         i
+       depend=/usr/myname/wrap/depend            i           ver-
+       sion=/usr/myname/wrap/version d none /usr/wrap  0755  root
+       bin  d  none  /usr/wrap/bin  0755  root  bin 0 NULL NULL !
+       search $BIN f none /usr/wrap/bin/INSTALL 0755 root  bin  f
+       none   /usr/wrap/bin/REMOVE   0755   root   bin   f   none
+       /usr/wrap/bin/addpkg 0755 root bin !default 755 root bin 0
+       NULL  NULL  f  none  /usr/wrap/bin/audit 0 audit,setplevel
+       NULL    f    none     /usr/wrap/bin/listpkg     f     none
+       /usr/wrap/bin/pkgmk  # The logfile starts as a zero length
+       file, since the source # file has zero length. Later,  the
+       size    of   logfile   grows.    v   none   /usr/wrap/log-
+       file=/usr/wrap/log/zero_length 0644 root bin # the follow-
+       ing     specifies     a    link    (dest=src)    l    none
+       /usr/wrap/src/addpkg=/usr/wrap/bin/rmpkg  !  search   $SRC
+       !default  644  root other f src /usr/wrap/src/INSTALL.sh f
+       src /usr/wrap/src/REMOVE.sh f src /usr/wrap/src/addpkg.c f
+       src  /usr/wrap/src/audit.c f src /usr/wrap/src/listpkg.c f
+       src /usr/wrap/src/pkgmk.c d none /usr/wrap/data 0755  root
+       bin   d   none   /usr/wrap/save   0755  root  bin  d  none
+       /usr/wrap/spool 0755 root bin d  none  /usr/wrap/tmp  0755
+       root bin d src /usr/wrap/src 0755 root bin
+
+       Example  2: # this prototype is generated by 'pkgproto' to
+       refer # to  all  prototypes  in  my  src  directory  !PRO-
+       JDIR=/usr/dew/projx   !include  $PROJDIR/src/cmd/prototype
+       !include $PROJDIR/src/cmd/audmerg/protofile !include $PRO-
+       JDIR/src/lib/proto
+
+RReeffeerreenncceess
+NNoottiicceess
+       Normally,  if  a file is defined in the prototype file but
+       does not exist, that file is created at the time of  pack-
+       age  installation.  However, if the file pathname includes
+
+                                                                4
+
+prototype(4)                                         prototype(4)
+
+       a directory that does not exist, the file will not be cre-
+       ated.   For example, if the prototype file has the follow-
+       ing entry: f none /usr/dev/bin/command
+
+       and that file does not exist, it will be  created  if  the
+       directory  /usr/dev/bin already exists or if the prototype
+       also  has  an  entry  defining  the  directory:   d   none
+       /usr/dev/bin
+
+       An  exclusive  directory  type  (file)  type  x) specifies
+       directories that are constrained  to  contain  only  files
+       that   appear   in   the  software  installation  database
+       (/var/sadm/install/contents).  If there are other files in
+       the  directory,  they  will  be  removed  by pkgchk -fx as
+       described on the man page.
+
+       Variable specifications for the pathname, owner, and group
+       fields  are  defined  in  the  pkginfo file.  For example,
+       owner could be $OWNER in the  pkgmap  file;  if  OWNER  is
+       defined  as  root in the pkginfo file, $OWNER will get the
+       value root when the file gets installed.
+
+       MAC levels (mac) are always installed on sfs file systems,
+       but  have  no  effect because MAC is not supported in this
+       release.
+
+       Fixed and inheritable privileges (fixed and inherited)  on
+       files, if present, are always installed.  When a file with
+       fixed privileges is executed,  the  fixed  privileges  are
+       propagated  to  the  new  process.  Inheritable privileges
+       have no effect.
+
+                                                                5
+

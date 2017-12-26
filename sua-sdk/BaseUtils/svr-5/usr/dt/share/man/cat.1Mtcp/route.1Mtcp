@@ -1,0 +1,176 @@
+
+
+route(1Mtcp)                                         route(1Mtcp)
+
+SSyynnooppssiiss
+       Add a route:
+       route  [  -nqv  ]  add  [  -netmask new_mask ] [ [ -lock |
+       -lockrest ] -metric value ] . . .  [ [ -ifa|-ifp ]  inter-
+       face_spec  ]  [ modifier . . . ] [ -host | -net ] destina-
+       tion [ -interface | -gateway ] gateway
+
+       Change a route's parameters:
+       route [ -nqv ] change [ -netmask new_mask ] [  [  -lock  |
+       -lockrest  ] -metric value ] . . .  [ [ -ifa|-ifp ] inter-
+       face_spec ] [ modifier . . . ] [ -host | -net  ]  destina-
+       tion [ -interface | -gateway ] gateway
+
+       Delete a route:
+       route  [  -nqv  ]  delete  [  -host | -net ] destination [
+       -interface | -gateway ] gateway
+
+       Flush routes:
+       route [ -nqv ] flush [ -inet ]
+
+       Get a route:
+       route [ -nqv ] get [  -host  |  -net  ]  destination  [  [
+       -interface | -gateway ] gateway ]
+
+       Monitor routes:
+       route [ -n ] monitor
+
+DDeessccrriippttiioonn
+       The  route  command  allows  you to manipulate the network
+       routing tables.
+
+       Only root may use the route command.
+
+       route understands the following options: Prevents attempts
+       to  print host and network names symbolically when report-
+       ing actions. This can speed up  actions.   Suppresses  all
+       output. This can speed up actions such as flushing routes.
+       Displays additional details (verbose mode).  route accepts
+       the  following  commands: Add a route.  Change the parame-
+       ters of a route,  such  as  its  metrics,  whether  it  is
+       rejected,  and whether it uses path MTU discovery.  Delete
+       a specific route.  Remove all  gateway  entries  from  the
+       routing  tables.  Look up and display the route for a des-
+       tination.  Continuously report any changes to the  routing
+       information base, routing lookup misses, or suspected sub-
+       network partitioning.  destination specifies the  destina-
+       tion  host  or  network.   gateway  specifies the next-hop
+       gateway to which packets should be addressed.  The  desti-
+       nation  and  gateway  can  be specified by IP addresses or
+       names.  route looks up all symbolic names specified for  a
+       destination  or  a gateway using If this fails, it uses to
+       interpret the name as that of a network.
+
+       For those  destinations  that  do  not  require  a  unique
+
+                                                                1
+
+route(1Mtcp)                                         route(1Mtcp)
+
+       routing table entry, use default as the destination param-
+       eter.  In the following example, gator is the hostname  of
+       the gateway machine: route add default gator route accepts
+       the following command modifiers.  Note that some modifiers
+       only  work  with  certain  commands:  Mark  a route via an
+       interface as suitable for cloning.  For example,  this  is
+       used  to  derive  new  multicast routes from the multicast
+       address 224.  Specify a gateway.  Force destination to  be
+       interpreted  as  a  host.   Specify  that gateway is to be
+       interpreted as the address of an interface  on  this  host
+       rather than as the address of a remote gateway.  The spec-
+       ified interface will be used as a route for  transmission.
+       This modifier is equivalent to the old and deprecated syn-
+       tax of specifying ``0'' after gateway.
+
+       This option may also be specified  as  -iface.   Interpret
+       interface_spec  as  an  interface address.  This option is
+       only needed when the destination and gateway are not  suf-
+       ficient  to identify the route for add or change commands.
+       Interpret  interface_spec  as  an  interface  name.   This
+       option is only needed when the destination and gateway are
+       not sufficient to identify the route  for  add  or  change
+       commands.   Flush only those routes whose destinations use
+       version 4 of the  Internet  protocol.   Lock  the  initial
+       value  of  an  individual metric option.  Lock the initial
+       value of all metrics subsequently specified on the command
+       line.  Provide initial values for metrics and other param-
+       eters maintained in the routing entry.  Available  -metric
+       options  are: Specify the expiry time of the route in sec-
+       onds.  An expiry time of 0 implies that the route will not
+       expire.   Specify the number of hops.  Specify the maximum
+       transmission unit in bytes.  Specify the bandwidth of  the
+       receive  pipe  in  bytes.   Specify the round-trip time in
+       milliseconds.  Specify the variance in round-trip time  in
+       milliseconds.   Specify  the bandwidth of the send pipe in
+       bytes.  Specify the slow start threshold  size  in  bytes.
+       Specify the type of service as defined in RFC 1349.
+
+       Note  that  most routing protocols only use or calculate a
+       subset of these metrics, and  so  route  get  may  display
+       their  values  as  0.  For example, RIP uses the hop count
+       metric.
+
+       Values may be locked by specifying -lock before the metric
+       option.  Force destination to be interpreted as a network.
+       Override the implicit network mask with new_mask.  Pretend
+       that  route has been added by the kernel or a routing dae-
+       mon.  Prevent  network  traffic  from  using  this  route.
+       Allow  network  traffic  to use this route.  Mark route as
+       having been added manually.  If one of the  options  -host
+       or  -net is not specified, routes to a particular host are
+       distinguished from those to a network by interpreting  the
+       IP  address  associated with destination.  If the destina-
+       tion has a local address part  of  INADDR_ANY  or  if  the
+
+                                                                2
+
+route(1Mtcp)                                         route(1Mtcp)
+
+       destination  is  the symbolic name of a network, the route
+       is assumed to be to a network; otherwise, it is assumed to
+       be  a route to a host. This is demonstrated in the follow-
+       ing table:
+       -----------------------------------------------------------
+       Destination entry                       Interpreted as
+       -----------------------------------------------------------
+       128.32                                  -host 128.0.0.32
+       -net 128.32                             -net 128.32.0.0
+       128.32.130                              -host 128.32.0.130
+       -net 128.32.130                         -net 128.32.130.0
+       The kernel variables  ipforwarding,  ipsendredirects,  and
+       ipnonlocalsrcroute  are  relevant  to  systems  set  up as
+       routers.  For more information about these variables, see
+
+DDiiaaggnnoossttiiccss
+   EErrrroorr mmeessssaaggeess
+       An attempt to add  a  route  failed  because  the  gateway
+       listed was not on a directly-connected network.  The next-
+       hop  gateway  must  be  given.   A  delete  operation  was
+       attempted for an entry which wasn't present in the tables.
+       An add operation was attempted, but the system was low  on
+       resources  and was unable to allocate memory to create the
+       new entry.
+
+   CCoonnffiirrmmaattiioonn mmeessssaaggeess
+       The specified route to  a  host  is  being  added  to  the
+       tables.   The  values  printed  are from the routing table
+       entry supplied in the ioctl call.  If the gateway  address
+       used  was not the primary address of the gateway (that is,
+       the first one  returned  by  gethostbyname),  the  gateway
+       address  is  printed  numerically as well as symbolically.
+       As above, but when adding a network entry.  As above,  but
+       when deleting a host entry.  As above, but when deleting a
+       network entry.  When the flush command is specified,  each
+       routing table entry deleted is indicated with a message of
+       this form.
+
+RReeffeerreenncceess
+EExxaammpplleess
+       Display information about the route to network 152.106.1.0
+       via  the  gateway  152.106.7.1: route get -net 152.106.1.0
+       -gateway 152.106.7.1 Add a route to the  host  152.106.2.1
+       via the gateway 152.106.7.12 using a hop count of 1: route
+       add -hopcount 1 -host  152.106.2.1  -gateway  152.106.7.12
+       Set  the  MTU  value  to  296  for  the  route to the host
+       152.106.2.1 via the  gateway  152.106.7.12:  route  change
+       -mtu  296  -host  152.106.2.1 -gateway 152.106.7.12 Delete
+       the  route  to  the  host  152.106.2.1  via  the   gateway
+       152.106.7.12:  route  delete  -host  152.106.2.1  -gateway
+       152.106.7.12
+
+                                                                3
+

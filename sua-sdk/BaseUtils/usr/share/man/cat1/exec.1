@@ -1,0 +1,93 @@
+exec(1)                                                         exec(1)
+
+  eexxeecc
+
+  NNAAMMEE
+
+    exec - execute commands and manipulate file descriptors
+
+  SSYYNNOOPPSSIISS
+
+    exec [[command [[argument ...]] ]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    This command is a built-in command of the shell.
+
+    The eexxeecc(1) command runs the specified command with the specified
+    argument. The command replaces the current shell without creating a new
+    process.
+
+    If no command is specified, eexxeecc(1) manipulates file descriptors in the
+    shell. (It is recommended that you read the section Redirections in the
+    manual page topic sshh(1) page before trying complicated tasks with
+    eexxeecc(1).)
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    If a command was specified, the return value is the return value of the
+    process which replaced the shell, or 127 if the command was not found.
+
+    If no command was specified, eexxeecc(1) returns 0 for success. If a
+    redirection error occurred, the shell itself exits with an error in the
+    range of 1-125. See the shell reference page for more information.
+
+  EEXXAAMMPPLLEESS
+
+    Use the following to replace the current shell with a copy of the Korn
+    shell:
+
+    exec ksh
+
+    The eexxeecc(1) is frequently used in shell scripts to manipulate file
+    descriptors. To open a file for reading on file descriptor 4, type the
+    following:
+
+    exec 4< inputfile
+
+    To open the file oouuttppuuttffiillee for writing on file descriptor 3, type:
+
+    exec 3> outputfile
+
+    To close the file associated with file descriptor 9, type:
+
+    exec 9<&-
+
+    More complicated examples use the m>>&&n syntax, which points file
+    descriptor n to the same file as descriptor m For example, to swap
+    standard output and standard error for a process, type:
+
+    command 3>&2 2>&1 1>&3
+
+    The first redirection assigns standard error to descriptor 3, the second
+    assigns standard input to descriptor 2, and the third assigns descriptor 3
+    (the original standard error) to descriptor 1. File descriptor 3 is
+    necessary as a placeholder; otherwise (if you had done 2>&1 1>&2) standard
+    output would have been assigned to 2 along with standard error, and
+    standard error and standard output would have been assigned to file
+    descriptor 1.
+
+    The following shell script excerpt reads a line from the file $$ssccrriipptt,
+    takes output from the terminal, and then combines them in the file $$mmeerrggee.
+    Note that the redirection for the loop is done at the end of the loop:
+
+    exec 4<&0    # save original stdin as descriptor 4
+    while read prompt
+    do
+         echo -n "$prompt"
+         exec 5<&0    # save $script file descriptor in 5
+         exec 0<&4    # use the original input to read $reply
+         read reply
+         exec 0<&5      # reconnect $script file to stdin
+         echo "$prompt $reply" 1>&3 ;;
+    done < "$script" 3> "$merge"
+
+    A better example of this script can be found in the book UNIX Power Tools
+    published by O'Reilly & Associates/Bantam.
+
+  SSEEEE AALLSSOO
+
+    _k_s_h(1)
+
+    _s_h(1)
+

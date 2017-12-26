@@ -1,0 +1,284 @@
+
+
+Fsm(3C++)                                               Fsm(3C++)
+
+SSyynnooppssiiss
+       #include <Fsm.h> namespace SCO_SC {
+
+       class  ostream;            // See iostream(3C++) //  Types
+       of functions to be supplied  by  the  client  typedef  int
+       Fsm_action(Fsm& f,unsigned inp); typedef void
+           Fsm_tracer(const  Fsm& f,int s1,int inp,int s2); class
+       Fsm{ public: //  Constructors, destructor
+           Fsm(unsigned n, unsigned init=0, Fsm_action* act=0);
+            ~Fsm(); //  Copy and assign
+           Fsm(const Fsm& f);
+           Fsm& operator=(const Fsm& f); //  Specify transitions
+           void trans(
+               unsigned s1,
+               unsigned inp,
+               unsigned s2,
+               Fsm_action* act=0
+           );
+           void trans(
+               unsigned s1,
+               unsigned lo,
+               unsigned hi,
+               unsigned s2,
+               Fsm_action* act=0
+           );
+           void trans(
+               unsigned s1,
+               const char* reg,
+               unsigned s2,
+               Fsm_action* act=0
+           ); //  Examine the machine
+           unsigned nstates()const;
+           unsigned nactions()const;
+           unsigned state()const;
+           unsigned initial_state()const;
+           Fsm_action* action(unsigned state,unsigned inp)const;
+           unsigned action_number(unsigned state,
+               unsigned inp)const;
+           unsigned target(unsigned state,unsigned inp)const;  //
+       Change the state of the machine
+           int fire(unsigned inp);
+           void go(unsigned state);
+           void reset();
+           void abort(); //  Trace state changes
+           trace(Fsm_tracer* tracer); //  Stream insertion
+           friend  ostream& operator<<(ostream& os,const Fsm& f);
+       }; }
+
+DDeessccrriippttiioonn
+       A deterministic finite state machine (Fsm) consists  of  a
+       set  of  states,  among  which one is distinguished as the
+       initial state,  and  a  set  of  transitions  among  those
+       states.   A  transition  from a given state is fired by an
+       integer  input  and  causes  a  programmer-defined  action
+
+                                                                1
+
+Fsm(3C++)                                               Fsm(3C++)
+
+       routine  to  be  called.  Upon return from the action rou-
+       tine, the machine state changes to a unique target  state.
+       Inputs  and  states must be unsigned integers in the range
+       [0,255].  A maximum of 256 unique action routines  can  be
+       defined for any given machine.
+
+       An  Fsm  is  constructed by giving (1) the total number of
+       states N (2) an optional initial state (which defaults  to
+       0)  and  (3) an optional programmer-defined default action
+       routine (which defaults to the null action).  The  result-
+       ing  default  machine  has  N  states  implicitly numbered
+       0,...,N-1 and occupies the specified initial  state.   For
+       every  (state,input)  combination,  the transitions of the
+       default machine are defined as  follows:  first  call  the
+       default  action  routine and then go to state 0.  To rede-
+       fine any one of these transitions, the client must specify
+       a  4-tuple  (start state, input, target state, action rou-
+       tine).  Three functions named  trans()  allow  clients  to
+       specify transitions in three different ways.  One of these
+       is convenient when  working  with  inputs  that  represent
+       printable  characters; it accepts an ed(1)-style one-char-
+       acter regular expression and defines a transition for each
+       printable character that matches the expression.
+
+       Transitions are effected by calling fire() with an integer
+       input.  fire() calls the action  routine  in  the  current
+       state  and places the machine in the target state when the
+       action routine returns.  Arbitrary state  changes  can  be
+       forced by calling go(), reset(), or abort().  If an action
+       routine should  itself  call  fire(),  go(),  reset(),  or
+       abort(),  the  state change that would normally take place
+       upon return from the action routine will not occur.
+
+       State changes may be traced by  supplying  a  user-defined
+       trace routine.
+
+   TTyyppeess ooff ffuunnccttiioonnss ttoo bbee ssuupppplliieedd bbyy tthhee cclliieenntt
+       typedef  int Fsm_action(Fsm& f,unsigned inp); User-defined
+       action routine.  Action routines are  called  by  function
+       Fsm::fire()  with  two pieces of information: (1) a refer-
+       ence to the machine and (2)  the  input  that  caused  the
+       transition.   This information is sufficient for a routine
+       to perform any desired action, including one that modifies
+       the  machine  state  (for  example, by recursively calling
+       fire()).  The return value may be any integer; it  is  not
+       interpreted  by  the  machine,  but merely returned to the
+       client as the result of function fire().
+
+       typedef void
+           Fsm_tracer(const Fsm& f,int s1,int inp,int s2);  User-
+       defined  trace  routine.   Trace  routines are called each
+       time a state change occurs, upon arrival in the new state.
+       Their  four  parameters are: (1) a (constant) reference to
+       machine, (2) the start state, (3) the input (if any)  that
+
+                                                                2
+
+Fsm(3C++)                                               Fsm(3C++)
+
+       caused the state change (4) the target state.  A call to a
+       trace routine resulting from  a  state  change  caused  by
+       go(),  abort(),  or reset() will have a negative value for
+       inp.
+
+   CCoonnssttrruuccttoorrss,, ddeessttrruuccttoorr
+       Fsm(unsigned n, unsigned  init=0,  Fsm_action*  act=0);  A
+       machine  with  nstates()  set  to  n (the legal states are
+       implicitly numbered 0,1,...,n-1), initial_state()  set  to
+       init,  default_action()  set  to  act,  and state() set to
+       init.  The transitions of the machine are defined as  fol-
+       lows:  For  every  legal state number S and legal input I,
+       action(S,I) is set toact and  target(S,I)  is  set  to  0.
+       Preconditions: init must be a legal state number.
+
+       ~Fsm(); Destructor.
+
+   CCooppyy aanndd aassssiiggnn
+       Fsm(const Fsm& f);
+
+       Fsm&  operator=(const Fsm& f); Copying or assigning an Fsm
+       creates a copy of its value.
+
+   SSppeecciiffyy ttrraannssiittiioonnss
+       void trans(
+           unsigned s1,
+           unsigned inp,
+           unsigned s2,
+           Fsm_action* act=0
+           );  Redefines  a   single   transition   as   follows:
+       action(s1,inp)  is set to act and target(s1,inp) is set to
+       s2.  Preconditions: s1 and s2 must be legal state numbers;
+       inp  must  be  a legal input; if act is a new action, then
+       fewer than 256 unique action routines  have  already  been
+       specified.
+
+       void trans(
+           unsigned s1,
+           unsigned lo,
+           unsigned hi,
+           unsigned s2,
+           Fsm_action* act=0
+           ); Redefines hi-lo+1 transitions as follows: for every
+       integer I between lo and hi,  inclusive,  action(s1,I)  is
+       set  to act and target(s1,I) is set to s2.  Preconditions:
+       s1 and s2 must be legal state numbers; lo and hi  must  be
+       legal  inputs; if act is a new action, then fewer than 256
+       unique action routines have already been specified.
+
+       void trans(
+           unsigned s1,
+           const char* reg,
+           unsigned s2,
+           Fsm_action* act=0
+
+                                                                3
+
+Fsm(3C++)                                               Fsm(3C++)
+
+           ); For every integer I  for  which  the  corresponding
+       printable  ASCII character matches the one-character regu-
+       lar expression reg, redefine one  transition  as  follows:
+       action(s1,I)  is set to act and target(s1,I) is set to s2.
+       Has no effect if reg is zero or if no printable characters
+       match  the  expression.   Preconditions: s1 and s2 must be
+       legal state numbers: if act is a new  action,  then  fewer
+       than  256  unique action routines have already been speci-
+       fied.
+
+   EExxaammiinnee tthhee mmaacchhiinnee
+       unsigned nstates()const; The number of states.
+
+       unsigned nactions()const; The number of unique action rou-
+       tines  that have been passed to the machine (equivalently,
+       one greater than the current highest-assigned action  num-
+       ber).
+
+       unsigned state()const; The current machine state.
+
+       unsigned initial_state()const; The initial state.
+
+       Fsm_action*   action(unsigned   state,unsigned  inp)const;
+       Returns a pointer to the action  routine  associated  with
+       the  transition  from state state on input inp.  Precondi-
+       tions: state must be a legal state number; inp must  be  a
+       legal input.
+
+       unsigned  action_number(unsigned state,unsigned inp)const;
+       Returns the action number of the action routine associated
+       with the transition from state state on input inp.  Action
+       numbers  are  assigned  as  follows:  the  default  action
+       defined  by  the  constructor is assigned action number 0;
+       each unique action routine subsequently encountered by the
+       machine  is assigned an action number one greater than the
+       previously highest-assigned action number.  Preconditions:
+       state  must  be  a legal state number; inp must be a legal
+       input.
+
+       unsigned target(unsigned state,unsigned inp)const; Returns
+       the target state associated with the transition from state
+       state on input inp.  Preconditions: state must be a  legal
+       state number; inp must be a legal input.
+
+   CChhaannggee tthhee ssttaattee ooff tthhee mmaacchhiinnee
+       int  fire(unsigned inp); Effects the transition associated
+       with input inp in  the  current  state.   That  is,  calls
+       action(state(),inp)   and   then   goes   to   state  tar-
+       get(state(),inp).  If the  action  routine  should  invoke
+       either fire(), reset(), go(), or abort(), the machine will
+       not make a state change upon return from the  action  rou-
+       tine.   The return value is the return value of the action
+       routine, or zero if the null action was specified for this
+       transition.  Preconditions: inp must be a legal input.
+
+                                                                4
+
+Fsm(3C++)                                               Fsm(3C++)
+
+       void  go(unsigned  state);  Forces  the machine into state
+       state.  Preconditions: state must be a legal state number.
+
+       void   reset();   Forces   the  machine  into  state  ini-
+       tial_state().
+
+       void abort(); Equivalent to  go(state()).   This  function
+       only  has an effect when called from within an action rou-
+       tine, in which case it cancels any pending state change.
+
+   TTrraaccee ssttaattee cchhaannggeess
+       trace(Fsm_tracer* tracer); A zero argument  turns  tracing
+       off if it is currently on, and has no effect otherwise.  A
+       non-zero argument turns tracing on if it is currently off,
+       and  defines a new tracing routine if tracing is currently
+       turned on.  When tracing is turned on,  tracer()  will  be
+       called  each  time the machine state changes, upon arrival
+       in the new state.
+
+   SSttrreeaamm iinnsseerrttiioonn
+       friend ostream&  operator<<(ostream&  os,const  Fsm&  f);"
+       Inserts an ASCII representation of f into ostream os.  The
+       representation is a table with  one  row  for  each  input
+       value  and one column for each state.  The intersection of
+       each row and column is a transition  displayed  as  (A,T),
+       where T is the target state associated with the transition
+       and A is the action number of the action  routine  associ-
+       ated  with the transition.  The table is compressed in the
+       sense that any rows with all entries equal  to  (0,0)  are
+       omitted.   May  be replaced by a programmer-defined stream
+       insertion operator as long as the user's  object  file  is
+       seen by the linker prior to the library's version.
+
+CCoommpplleexxiittyy
+       Constructors,  destructors,  and  assignment,  run in O(N)
+       (where N is the number of states), plus the time for calls
+       to new and delete.  Assuming user-defined action and trace
+       routines to run in O(1), all other  operations  are  O(1).
+       An Fsm occupies 256*(2N+4) bytes of storage.
+
+RReeffeerreenncceess
+
+                                                                5
+

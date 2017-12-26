@@ -1,0 +1,227 @@
+
+
+exec(2)                                                   exec(2)
+
+SSyynnooppssiiss
+       #include <unistd.h>
+
+       int  execl  (const  char  *path,  const char *arg0, .../*,
+            const char *argn, (char *)0*/);
+
+       int execv (const char *path, char *const *argv);
+
+       int execle (const char *path,  const  char  *arg0,  .../*,
+            const char *argn, (char *)0, const char *envp[]*/);
+
+       int execve (const char *path, char *const *argv,      char
+       *const *envp);
+
+       int execlp (const char *file,  const  char  *arg0,  .../*,
+            const char *argn, (char *)0*/);
+
+       int execvp (const char *file, char *const *argv);
+
+DDeessccrriippttiioonn
+       exec  in  all its forms overlays a new process image on an
+       old process.  The new process image is constructed from an
+       ordinary  executable  file.   This  file is either an exe-
+       cutable object file or a file of data for an  interpreter.
+       There  can be no return from a successful exec because the
+       calling process image  is  overlaid  by  the  new  process
+       image.
+
+       An  interpreter  file  begins  with  a line of the form #!
+       pathname [arg]
+
+       where pathname is the path of the interpreter, and arg  is
+       an  optional argument.  When you exec an interpreter file,
+       the system execs the specified interpreter.  The  pathname
+       specified in the interpreter file is passed as arg0 to the
+       interpreter.  If arg  was  specified  in  the  interpreter
+       file,  it  is  passed  as  arg1  to  the interpreter.  The
+       remaining arguments to the interpreter  are  arg0  through
+       argn of the originally executed file.
+
+       When a C program is executed, it is called as follows: int
+       main (int argc, char *argv[], char *envp[]);
+
+       where argc is the argument count,  argv  is  an  array  of
+       character  pointers  to the arguments themselves, and envp
+       is an  array  of  character  pointers  to  null-terminated
+       strings  that  constitute the environment for the new pro-
+       cess.  The value of the argument argc is conventionally at
+       least one.  The initial member of the array argv points to
+       a string containing the name of the file.
+
+       The argument path points to a pathname that identifies the
+       new  process  file.   For  execlp and execvp, the argument
+       file points to the new process file.  If the file argument
+
+                                                                1
+
+exec(2)                                                   exec(2)
+
+       does  not  contain  a slash character, the path prefix for
+       this file is obtained by searching the directories  passed
+       as  the  environment variable PATH [see The environment is
+       supplied typically by the shell [see
+
+       If the new executable file is  not  an  executable  object
+       file  and  not  an interpreter file, execlp and execvp use
+       the contents of that file as standard input to the  user's
+       default shell.
+
+       The  arguments  arg0,  ... are pointers to null-terminated
+       character strings.  These strings constitute the  argument
+       list available to the new process.  The list is terminated
+       by a null pointer.  By convention, at least arg0  is  pre-
+       sent  and  points  to a string that is the same as file or
+       path (or its last  component),  point  to  null-terminated
+       character  strings.   It  will become the name of the pro-
+       cess, as displayed by the ps command.  The list  of  argu-
+       ment strings is terminated by a (char *)0 argument.
+
+       argv  is an array of character pointers to null-terminated
+       strings.   These  strings  constitute  the  argument  list
+       available to the new process.  By convention, argv[0] must
+       have at least one member, and it should point to a  string
+       that  is the same as file or path (or its last component).
+       argv is terminated by a null pointer.
+
+       The argument envp is an array  of  character  pointers  to
+       null-terminated  strings.   These  strings  constitute the
+       environment  for  the  new  process.    A   null   pointer
+       terminates  envp.   For  execl, execv, execvp, and execlp,
+       the C run-time start-off routine places a pointer  to  the
+       environment  of  the  calling process in the global object
+       extern char **environ, and it is used to pass the environ-
+       ment of the calling process to the new process image.
+
+       File  descriptors  open in the calling process remain open
+       in the new process image, except for those whose close-on-
+       exec  flag  is  set  [see  For those file descriptors that
+       remain open, the file pointer remains  unchanged  and  all
+       file locks associated with the file are preserved.
+
+       Signals being caught by the calling process are set to the
+       default disposition in the new process image  [see  Other-
+       wise,  the  new process image inherits the signal disposi-
+       tions of the calling process.
+
+       If the set-user-ID-on-execution mode bit of the  new  pro-
+       cess file is set, the exec routines set the effective user
+       ID of the new process to the owner ID of the  new  process
+       file  [see  Similarly, if the set-group-ID mode bit of the
+       new process file is set, the effective group ID of the new
+       process  is  set  to the group ID of the new process file.
+       The real user ID, real group ID  and  supplementary  group
+
+                                                                2
+
+exec(2)                                                   exec(2)
+
+       IDs  of  the  new  process remain the same as those of the
+       calling process.  The saved user and group IDs of the  new
+       process  image are set to the effective user and group IDs
+       of the calling process.  Set-user-ID and  set-group-ID  on
+       execution shall occur for interpreter files.
+
+       If  the  calling  process  has the P_SYSOPS privilege, the
+       set-user-ID and set-group-ID bits  are  honored  when  the
+       process  is  being  controlled by ptrace;  otherwise, they
+       are not honored by ptrace.
+
+       The shared memory segments attached to the calling process
+       will not be attached to the new process image [see
+
+       Profiling is disabled for the new process image [see
+
+       The   new  process  image  also  preserves  the  following
+       attributes across this system call.
+
+       [see scheduler class and priority [see [see [see and  [see
+       request 0] [see [see [see [see [see and [see [see
+
+       If  exec  succeeds, it marks for update the st_atime field
+       of the file.
+
+       If exec succeeds, an internal  reference  to  the  process
+       image  file  is  created.   This reference is removed some
+       time later, but not later than process termination or suc-
+       cessful completion of a subsequent call to one of the exec
+       functions.
+
+   RReettuurrnn vvaalluueess
+       On success, exec overlays the calling process  image  with
+       the  new process image and there is no return to the call-
+       ing process.  If exec fails while it can still  return  to
+       the calling process, it returns -1 and sets errno to iden-
+       tify the error.  If exec fails after a point of no  return
+       to  the  calling  process,  the  calling process is sent a
+       SIGKILL signal.  This can occur during startup, under cer-
+       tain  resource  depletion conditions.  For example, it can
+       occur if the system is running out of swap  space,  or  if
+       there are problems with the exec header, shared libraries,
+       or dynamic libraries.
+
+   EErrrroorrss
+       If exec returns to the calling LWP, an error has occurred.
+       In  this event, no side effect is suffered.  That is, nei-
+       ther the calling LWP nor the other LWPs in the process are
+       terminated.   In  the following conditions, exec fails and
+       sets errno to: Search permission is denied for a directory
+       listed  in the new executable file's path prefix.  The new
+       executable file is not an ordinary file.  Execute  permis-
+       sion  on the new executable file is denied.  The number of
+       bytes in the argument list of the  new  process  image  is
+
+                                                                3
+
+exec(2)                                                   exec(2)
+
+       greater  than the system-imposed limit of {ARG_MAX} bytes.
+       The argument list limit is sum of the size of the argument
+       list  plus  the  size  of the environment's exported shell
+       variables.  Total amount of system memory  available  when
+       reading via raw I/O is temporarily insufficient.  Required
+       hardware is not present.  An argument points to an illegal
+       address.  A signal was caught during the exec system call.
+       A required shared library does not  have  execute  permis-
+       sion.  Trying to exec a shared library directly.  Too many
+       symbolic links were encountered  in  translating  path  or
+       file.   Components  of  path  require  hopping to multiple
+       remote machines and the file system type  does  not  allow
+       it.   The  length  of  the  file  or path argument exceeds
+       {PATH_MAX}, or the length of  a  file  or  path  component
+       exceeds  {NAME_MAX}  while  _POSIX_NO_TRUNC  is in effect.
+       One or more components of the pathname of  the  executable
+       file  do  not  exist,  or  path or file points to an empty
+       string.  Failure in loading a  loadable  exec  module.   A
+       component  of the pathname of the executable file is not a
+       directory.  The exec is not an execlp or execvp,  and  the
+       new  executable file has the appropriate access permission
+       but an invalid magic number in its header.  The  new  pro-
+       cess   image   requires   more   memory  than  allowed  by
+       RLIMIT_VMEM [see path points to a remote machine  and  the
+       link to that machine is no longer active.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       A  successful  exec will effectively terminate all but one
+       thread of a multithreaded process.  The process starts the
+       new program with a single multiplexed (that is, not bound)
+       thread.  In the case of failure and  return  of  an  error
+       condition  to  the calling thread, sibling threads are not
+       affected.
+
+   CCoonnssiiddeerraattiioonnss ffoorr lliigghhttwweeiigghhtt pprroocceesssseess
+       The process starts the new program with a single LWP.   In
+       general,  the  LWPID number of that single LWP need not be
+       that of the LWP of the calling  thread;  however,  if  the
+       process  is  being  accessed  via  /proc  (that  is, being
+       debugged) the LWPID is preserved across  the  exec  system
+       call.
+
+                                                                4
+

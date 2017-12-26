@@ -1,0 +1,228 @@
+
+
+mount(1Mnfs)                                         mount(1Mnfs)
+
+SSyynnooppssiiss
+       mount  [-F  nfs] [-r] [-o specific_options] [server:path |
+       mountpoint]
+
+       mount [-F  nfs]  [-r]  [-o  specific_options]  server:path
+       mountpoint
+
+       umount [-o specific_options] {server:path | mountpoint}
+
+DDeessccrriippttiioonn
+       The -specific mount command attaches a named path residing
+       on machine server to the filesystem hierarchy at the path-
+       name  location mountpoint, which must already exist. mount
+       maintains a table of mounted filesystems  in  /etc/mnttab,
+       described in
+
+       The    -specific    umount    command    is   located   in
+       /usr/lib/fs/nfs/umount and is called by the generic umount
+       command.  umount  unmounts  a  filesystem  and removes the
+       appropriate entry from /etc/mnttab.
+
+   OOppttiioonnss
+       The following options are available to the mount  command:
+       Specifies  the File System Type (FSType). If the -F option
+       is omitted, mount will attempt to determine the filesystem
+       type  automatically.  Mount the specified filesystem read-
+       only.  Specify filesystem specific options in a comma-sep-
+       arated  list  of  words  from  the  following list: (NFSv3
+       only.) Specifies  how  long  to  cache  access  permission
+       entries.  The  default  period is 30 seconds. A value of 0
+       turns off caching.  Hold cached  attributes  for  no  more
+       than  n seconds after directory update. The default is 60.
+       Hold cached attributes for at least n seconds after direc-
+       tory  update.  The  default is 30.  Hold cached attributes
+       for no more than n seconds after  file  modification.  The
+       default is 60.  Hold cached attributes for at least n sec-
+       onds after file modification. The default is 3.  Set mini-
+       mum and maximum times for regular files and directories to
+       n  seconds.  This  option  is   equivalent   to   setting:
+       acdirmin=acdirmax=acregmin=acregmax=n  (NFSv3  only.)  All
+       writes to the filesystem will be performed asynchronously.
+       This  may improve performance but carries with it the risk
+       of data loss on server  crashes.   If  the  first  attempt
+       fails,  retry as a background process, or, as a foreground
+       process. The default isfg.  Create a file with its GID set
+       to the effective GID of the calling process. This behavior
+       may be overridden on a per-directory basis by setting  the
+       set-GID bit of the parent directory; in this case, the GID
+       is set to the GID of the parent directory (see  and  Files
+       created on filesystems that are not mounted with the grpid
+       option will obey BSD semantics; that is, the GID is uncon-
+       ditionally  inherited  from  that of the parent directory.
+       Allow keyboard interrupts to kill a process that  is  hung
+       while waiting for a response on a hard-mounted filesystem.
+
+                                                                1
+
+mount(1Mnfs)                                         mount(1Mnfs)
+
+       Set the maximum number of  asynchronous  I/O  threads  for
+       this mount point to n threads. The default is 4.  Suppress
+       attribute caching.  The server IP port number. The default
+       is  NFS_PORT.   Allow  mounting from pre-SVR4.0 systems or
+       other older implementations. This option  should  be  used
+       when the  server does not allow a client user to belong to
+       more than eight groups. If the pre4.0 option is  not  used
+       with  such  a  server,  the mount command will fail on the
+       client and the following message will display: nfs  mount:
+       server:path server not responding:
+
+       RPC:  Authentication  error;  why = Invalid client creden-
+       tial.  Specifies a transport  provider  (netid).   If  not
+       specified,  mount  defaults  to  connectionless  transport
+       (udp).  Note that tcp is  not  currently  supported  as  a
+       transport provider.  Mount a remote filesystem shared as a
+       publicly-accessible WebNFS directory.  If a filesystem  is
+       mounted  read-only,  remounts  the  filesystem read-write.
+       Set the number of  retransmissions to n for  soft  mounts.
+       The  default is 5.  The number of times to retry the mount
+       operation. The default is 10000.  Set the read buffer size
+       to  n  bytes. The default is 8192.  server:path is mounted
+       read-write or read-only. The default is rw.   Use  a  more
+       secure  protocol  for  transactions.  (NFSv3 only.) Speci-
+       fies how long to cache symbolic  link  target  paths.  The
+       default  period  is  30  seconds.  A  value of 0 turns off
+       caching.  Return an error if the server does not  respond,
+       or  continue  the retry request until the server responds.
+       The default is hard.  Execution of setuid allowed or  dis-
+       allowed.  The  default  is  suid.   Set  the  timeout to n
+       tenths of a second. The default is 10.  Specifies the ver-
+       sion  of  NFS  (v2  or v3) that should be used. mount will
+       only attempt to use the specified version of NFS.   If  no
+       version  is  specified,  mount  first  uses  NFSv3, and if
+       unsuccessful, retries using NFSv2.  Set the  write  buffer
+       size to n bytes. The default is 8192.  The following argu-
+       ments are applicable to the  -specific  mount  and  umount
+       commands:  Where server is the machine that has the remote
+       resource and path is the pathname of  the  resource.   The
+       name  of the local directory where the remote resource has
+       been mounted.
+
+   BBaacckkggrroouunndd vveerrssuuss ffoorreeggrroouunndd
+        Filesystems mounted with  the  bg  option  indicate  that
+       mount  is to retry as a background process if the server's
+       mount daemon, does not respond. mount retries the  request
+       up to the count specified in the retry=n option.
+
+   HHaarrdd vveerrssuuss ssoofftt
+       Once  the filesystem is mounted, each  request made in the
+       kernel waits timeo=n tenths of a second for a response. If
+       no  response  arrives, the time-out is multiplied by 2 and
+       the request is retransmitted. When the number of  retrans-
+       missions has reached the number specified in the retrans=n
+
+                                                                2
+
+mount(1Mnfs)                                         mount(1Mnfs)
+
+       option, a filesystem mounted with the soft option  returns
+       an  error on the request; one mounted with the hard option
+       prints a  warning  message  and  continues  to  retry  the
+       request. If an  server is down, a process trying to access
+       a filesystem from that server mounted with the hard option
+       will hang until the server comes up again.
+
+   RReeaadd--wwrriittee vveerrssuuss rreeaadd--oonnllyy
+        Filesystems  that  are mounted rw (read-write) should use
+       the hard option. If the server goes down when  a  user  is
+       writing  a  file,  the  write will continue when the serve
+       comes back up, and the data  being  written  will  not  be
+       lost.
+
+   FFiillee aattttrriibbuutteess
+       The attribute cache retains file attributes on the client.
+       Attributes for a file are assigned a time  to  be  flushed
+       (updated).  If the file is modified before the flush time,
+       then the flush time is extended by the time since the last
+       modification (under the assumption that files that changed
+       recently are likely to change soon). There  is  a  minimum
+       and maximum flush time extension for regular files and for
+       directories.  Setting actimeo=n extends flush  time  by  n
+       seconds for both regular files and directories.
+
+FFiilleess
+       Table   of   mounted   filesystems.   Default  distributed
+       filesystem   type.    Table   of   automatically   mounted
+       resources.
+
+UUssaaggee
+       If  mountpoint  has any contents prior to the mount opera-
+       tion, the contents remain hidden until the server:path  is
+       once  again  unmounted.  If  server:path  is listed in the
+       vfstab  file,  the  command  line   can   specify   either
+       server:path  or  mountpoint, and mount will consult vfstab
+       for  more  information.   If  the  directory  on  which  a
+       filesystem  is  to  be  mounted  is  a  symbolic link, the
+       filesystem is mounted on the directory to which  the  sym-
+       bolic link refers, rather than being mounted on top of the
+       symbolic link itself.  Only a privileged user can  execute
+       these commands.
+
+EExxiitt ccooddeess
+       The  following  values are returned by the -specific mount
+       command: Successful exit Usage error Could not open mnttab
+       Could not lock mnttab Retry mount operation Gave up retry-
+       ing  mount  operation  Specify  host:path  Invalid  option
+       Server not responding Could not get nfs service addr Could
+       not negotiate secure protocol Access denied No such direc-
+       tory  The  following  values are returned by the -specific
+       umount command: Successful  exit  Usage  error  Permission
+       denied Directory/Resource not mounted Mount point busy
+
+                                                                3
+
+mount(1Mnfs)                                         mount(1Mnfs)
+
+WWaarrnniinnggss
+       Applications  may  experience unexpected or unreproducible
+       errors if they access
+        filesystems that have been mounted using the soft  option
+       or  the  hard,intr  option  combination. It is recommended
+       that you do not specify either soft or intr when  mounting
+       filesystems  that  are writable or that contain executable
+       files.
+
+       If you are mounting resources on a  slow  machine  from  a
+       much  faster  server,  it  is  advised  that  you  use the
+       rsize=1024,wsize=1024 mount options. This is because  fast
+       servers  can cause data overruns on the network adapter of
+       slow client machines. One symptom of this problem has  the
+       following  message  being  written  to  the console of the
+       client machines: RPC: Timed out Another  symptom  of  this
+       problem may be that the client machine appears to be hung,
+       with the following message being written to the console of
+       the  client  machine:  NFS server hostname not responding,
+       still trying When a single file is mounted over , it  can-
+       not  be opened with the O_CREAT flag.  See for information
+       on O_CREAT.
+
+EExxaammpplleess
+       The -F nfs option  specified  in  these  examples  is  not
+       strictly  required  and  could be omitted.  Here it serves
+       merely as a reminder of the filesystem type.  To  mount  a
+       remote  filesystem: mount -F nfs serv:/usr/src /usr/src To
+       soft mount a remote  filesystem:  mount  -F  nfs  -o  soft
+       serv:/usr/src  /usr/src To hard mount a remote filesystem:
+       mount -F nfs -o hard serv:/usr/src  /usr/src  To  mount  a
+       filesystem  with  rsize set to 1024 bytes: mount -F nfs -o
+       rsize=1024 serv:/usr/src /usr/src To  mount  a  filesystem
+       and  allow  the  mount command to only be retried 3 times:
+       mount -F nfs -o retry=3 serv:/usr/src /usr/src To mount  a
+       remote   filesystem   using  mount  -F  nfs  -o  proto=xxx
+       serv:/usr/src /usr/src To unmount a remote filesystem with
+       server:path umount serv:/usr/src where serv is the name of
+       the server and /usr/src is the name of the path.
+
+       To unmount a  remote  filesystem  with  mountpoint  umount
+       /usr/src  where  /usr/src is the mountpoint of the mounted
+       resource.
+
+RReeffeerreenncceess
+
+                                                                4
+

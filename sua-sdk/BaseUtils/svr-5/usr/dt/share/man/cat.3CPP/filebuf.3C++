@@ -1,0 +1,149 @@
+
+
+filebuf(3C++)                                       filebuf(3C++)
+
+SSyynnooppssiiss
+       #include <iostream.h>
+
+       typedef  long  streamoff,  streampos;  class ios { public:
+            enum seek_dir { beg, cur, end };       enum open_mode
+       {  in,  out,  ate,  app,  trunc,  nocreate,  noreplace } ;
+            // and lots of other stuff, see ios(3C++) ...  } ;
+
+       #include <fstream.h>
+
+       class filebuf : public  streambuf  {  public:       static
+       const  int  openprot ;      /* default protection for open
+       */
+
+                 filebuf()     ;                ~filebuf()      ;
+                 filebuf(int  d);            filebuf(int d, char*
+       p, int len) ;
+
+            filebuf*  attach(int d) ;       int       detach()  ;
+            filebuf*  close();                         int  fd();
+            int  is_open();      filebuf*  open(char  *name,  int
+       omode,            int           prot=openprot)           ;
+            streampos seekoff(streamoff, seek_dir, int  omode)  ;
+            streampos seekpos(streampos,     int     omode)     ;
+            streambuf*     setbuf(char*    p,    int    len)    ;
+            int  sync() ; };
+
+DDeessccrriippttiioonn
+       filebufs  specialize  streambufs to use a file as a source
+       or sink of characters.  Characters are consumed  by  doing
+       writes to the file, and are produced by doing reads.  When
+       the file is seekable, a filebuf allows  seeks.   At  least
+       four  characters of putback are guaranteed.  When the file
+       permits reading and  writing,  the  filebuf  permits  both
+       storing  and  fetching.   No  special  action  is required
+       between gets and puts (unlike stdio).  A filebuf  that  is
+       connected  to a file descriptor is said to be open.  Files
+       are opened by default with a protection mode of  openprot,
+       which is 0644.
+
+       The reservearea (or buffer, see and is allocated automati-
+       cally if one is not specified explicitly with a  construc-
+       tor  or  a  call  to  setbuf.   filebufs  can also be made
+       unbuffered with certain arguments to  the  constructor  or
+       setbuf, in which case a system call is made for each char-
+       acter that is read or written.  The get and  put  pointers
+       into the reserve area are conceptually tied together; they
+       behave as a single pointer.  Therefore,  the  descriptions
+       below refer to a single get/put pointer.
+
+       In the descriptions below, assume:
+       -- f is a filebuf.
+       -- pfb is a filebuf*.
+       -- psb is a streambuf*.
+
+                                                                1
+
+filebuf(3C++)                                       filebuf(3C++)
+
+       -- i, d, len, and prot are ints.
+       -- name and ptr are char*s.
+       -- mode is an int representing an open_mode.
+       -- off is a streamoff.
+       -- p and pos are streampos's.
+       -- dir is a seek_dir.
+
+       Constructors:  Constructs  an  initially  closed  filebuf.
+       Constructs a filebuf connected to file descriptor d.  Con-
+       structs  a filebuf connected to file descriptor d and ini-
+       tialized to use the reserve area starting at  p  and  con-
+       taining  len  bytes.  If p is null or len is zero or less,
+       the filebuf will be unbuffered.
+
+       Members: Connects f to an open file descriptor, d.  attach
+       normally  returns  &f, but returns 0 if f is already open.
+       Flushes any waiting output to the file associated with the
+       file  descriptor, and disconnects the file descriptor from
+       f.  The file descriptor is returned.   Applications  which
+       do  not  want the attached file descriptor to be closed by
+       close should call this function before close.  Flushes any
+       waiting  output,  closes  the file descriptor, and discon-
+       nects f.  Unless an error occurs, f's error state will  be
+       cleared.   close  returns &f unless errors occur, in which
+       case it returns 0.  Even if errors occur,  close()  leaves
+       the  file  descriptor  and  f closed.  Returns i, the file
+       descriptor f is connected to.  If f is closed, i  is  EOF.
+       Returns non-zero when f is connected to a file descriptor,
+       and zero otherwise.  Opens file name and connects f to it.
+       If  the file does not already exist, an attempt is made to
+       create it with protection mode prot, unless  ios::nocreate
+       is  specified in mode.  By default, prot is filebuf::open-
+       prot, which is 0644.  Failure occurs if f is already open.
+       open  normally  returns  &f,  but  if  an  error occurs it
+       returns 0.  The members of open_mode are bits that may  be
+       or'ed  together.  (Because the or'ing returns an int, open
+       takes an int rather  than  an  open_mode  argument.)   The
+       meanings  of these bits in mode are described in detail in
+       Moves the get/put pointer as designated by  off  and  dir.
+       It  may  fail  if  the file that f is attached to does not
+       support seeking, or if the attempted motion  is  otherwise
+       invalid  (such  as attempting to seek to a position before
+       the beginning of file).  off is  interpreted  as  a  count
+       relative  to  the  place  in  the file specified by dir as
+       described in mode is ignored.  seekoff returns p, the  new
+       position, or EOF if a failure occurs.  The position of the
+       file after a failure is undefined.  Moves the  file  to  a
+       position  pos  as  described  in mode is ignored.  seekpos
+       normally returns pos, but on failure it returns EOF.  Sets
+       up the reserve area as len bytes beginning at ptr.  If ptr
+       is null or len is less than or  equal  to  0,  f  will  be
+       unbuffered.  setbuf normally returns &f.  However, if f is
+       open and a buffer has been allocated, no changes are  made
+       to the reserve area or to the buffering status, and setbuf
+
+                                                                2
+
+filebuf(3C++)                                       filebuf(3C++)
+
+       returns 0.  Attempts to force the  state  of  the  get/put
+       pointer  of f to agree (be synchronized) with the state of
+       the file f.fd().  This means it may  write  characters  to
+       the  file if some have been buffered for output or attempt
+       to reposition (seek) the file if characters have been read
+       and  buffered for input.  Normally, sync returns 0, but it
+       returns EOF if synchronization is not possible.  Sometimes
+       it  is  necessary to guarantee that certain characters are
+       written together.  To do this, the program should use set-
+       buf()  (or  a  constructor)  to guarantee that the reserve
+       area is at least as large as the number of characters that
+       must  be  written together.  It can then call sync(), then
+       store the characters, then call sync() again.
+
+UUssaaggee
+       attach and  the  constructors  should  test  if  the  file
+       descriptor they are given is open.
+
+       There is no way to force atomic reads.
+
+       The   system  does  not  usually  report  failures of seek
+       (e.g., on a tty), so a filebuf does not either.
+
+RReeffeerreenncceess
+
+                                                                3
+

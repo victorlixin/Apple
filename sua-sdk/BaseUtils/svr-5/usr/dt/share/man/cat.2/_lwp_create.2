@@ -1,0 +1,105 @@
+
+
+_lwp_create(2)                                     _lwp_create(2)
+
+SSyynnooppssiiss
+       #include   <sys/types.h>   #include  <sys/lwp.h>  #include
+       <ucontext.h>
+
+       int _lwp_create(ucontext_t *context, unsigned long flags,
+            lwpid_t *new_lwp);
+
+   PPaarraammeetteerrss
+       pointer to the new LWP's context attributes  for  the  new
+       LWP  pointer  to  the  identifier  for the new LWP, set by
+       _lwp_create
+
+DDeessccrriippttiioonn
+       _lwp_create creates  an  independent  lightweight  process
+       (LWP).  A stack area must have been allocated by user code
+       before this function is called.  The stack  area  must  be
+       reclaimed by user code after termination of the LWP.
+
+       _lwp_create  may  fail  if the process is being traced via
+       ptrace.
+
+       The new LWP's scheduling class and priority are  inherited
+       from its creator.
+
+   ccoonntteexxtt ppaarraammeetteerr
+       The  context  parameter is a pointer to the new LWP's con-
+       text.  The new LWP's signal mask is set from the ucontext,
+       with  no  signals pending.  Any per-LWP timers are cleared
+       in the new LWP.
+
+   ffllaaggss ppaarraammeetteerr
+       The flags parameter specifies attributes for the new  LWP.
+       Two  flags are defined: create the new LWP in the detached
+       state. This means that the LWP resources can be  reclaimed
+       as  soon  as the LWP terminates -- the DETACHED state is a
+       recycling hint to the implementation.  create the new  LWP
+       in  a  suspended  state.   This state is orthogonal to all
+       other stopped states, and requires a call to _lwp_continue
+       before the created LWP can start its actual execution.
+
+   nneeww__llwwpp ppaarraammeetteerr
+       _lwp_create sets the location pointed to by new_lwp to the
+       unique identifier that can be used to refer to the  newly-
+       created LWP in subsequent function calls.  Since an imple-
+       mentation may recycle LWP identifiers, care should be used
+       in the application of lwpid_t values.
+
+   RReettuurrnn vvaalluueess
+       _lwp_create  returns  zero for success and an error number
+       on failure, as described below.
+
+   EErrrroorrss
+       If  any  of  the   following   conditions   is   detected,
+
+                                                                1
+
+_lwp_create(2)                                     _lwp_create(2)
+
+       _lwp_create returns the corresponding value: The parameter
+       context points to an  illegal  address.   A  system  limit
+       would  be  exceeded  if  this call were completed success-
+       fully, for example, a limit on number  of  LWPs  per  real
+       user  ID  would  be exceeded.  The process is being traced
+       via ptrace.
+
+       A SIGSEGV may be generated  instead  of  an  EFAULT  error
+       indication.
+
+UUssaaggee
+       Unlike  threads, the start function called for _lwp_create
+       returns void.  This means that there is  no  return  value
+       available  through  _lwp_wait,  and  that less information
+       from an LWP context needs to be retained past _lwp_exit.
+
+       The kernel is not responsible for LWP stack allocation and
+       cleanup,  so  the responsibility for storage management is
+       with the user.  The stack is allocated at user level,  and
+       should be freed at or near the call of _lwp_exit.
+
+       Caching  stacks of consistent size in user space should be
+       a useful performance enhancement for threads packages  and
+       other applications that use LWPs directly.
+
+       A detached LWP works well for a bound and detached thread,
+       automatically cleaning up after thr_exit.  This  mechanism
+       also  allows for automatic shrinking of the pool of parked
+       LWPs.
+
+   EExxaammpplleess
+       context = malloc(sizeof(*context));
+       stackbase = malloc(stacksize);
+       _lwp_makecontext(&context, func, arg, private, stackbase, stacksize);
+       new = _lwp_create(&context, 0L, &newid);
+
+RReeffeerreenncceess
+NNoottiicceess
+       Lightweight processes (LWPs) are internal  interfaces  and
+       are subject to change.  Their use should be avoided.
+
+                                                                2
+

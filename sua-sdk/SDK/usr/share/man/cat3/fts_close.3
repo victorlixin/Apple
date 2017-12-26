@@ -1,0 +1,389 @@
+fts_close(3)                                               fts_close(3)
+
+  ffttss__ooppeenn(())
+
+  NNAAMMEE
+
+    fts_open(), fts_read(), fts_children(), fts_set(), fts_close() - traverse
+    a file hierarchy
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/types.h>
+    #include <sys/stat.h>
+    #include <fts.h>
+
+    FTS * fts_open (char *const *path_argv, int options, int
+                   *ccoommppaarr(const FTSENT **, const FTSENT **))
+    FTSENT * fts_read (FTS *ftsp)
+    FTSENT * fts_children (FTS *ftsp, int options)
+    int fts_set (FTS ftsp, FTSENT *f, int options)
+    int fts_close (FTS *ftsp)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _ff_tt_ss(3) functions are provided for traversing file hierarchies. A
+    simple overview is that the _ff_tt_ss____oo_pp_ee_nn(3) function returns a handle on a
+    file hierarchy, which is then supplied to the other _ff_tt_ss(3) functions. The
+    function _ff_tt_ss____rr_ee_aa_dd(3) returns a pointer to a structure describing one of
+    the files in the file hierarchy. The function _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3) returns a
+    pointer to a linked list of structures, each of which describes one of the
+    files contained in a directory in the hierarchy. In general, directories
+    are visited two distinguishable times; in pre-order (before any of their
+    descendants are visited) and in post-order (after all of their descendants
+    have been visited). Files are visited once. It is possible to walk the
+    hierarchy logically or physically, order the walk of the hierarchy or
+    prune and/or re-visit portions of the hierarchy.
+
+    Two structures are defined (and ttyyppeeddeeff'd) in the include file <<ffttss..hh>>.
+    The first is FFTTSS, the structure that represents the file hierarchy itself.
+    The second is FFTTSSEENNTT, the structure that represents a file in the file
+    hierarchy. Normally, an FFTTSSEENNTT structure is returned for every file in the
+    file hierarchy. In this manual page, file and FTSENT structure are
+    generally interchangeable. The FFTTSSEENNTT structure contains at least the
+    following fields, which are described in greater detail below:
+
+    typedef struct _ftsent {
+       u_short fts_info;     /* flags for FTSENT structure */
+       char * fts_accpath;   /* access path */
+       char * fts_path;      /* root path */
+       short fts_pathlen;    /* strlen(fts_path) */
+       char * fts_name;      /* file name */
+       short fts_namelen;    /* strlen(fts_name) */
+       short fts_level;      /* depth (-1 to N) */
+       int fts_errno;        /* file errno */
+       long fts_number;      /* local numeric value */
+       void * fts_pointer;   /* local address value */
+       struct ftsent * fts_parent;  /* parent directory */
+       struct ftsent * fts_link;    /* next file structure */
+       struct ftsent * fts_cycle;   /* cycle structure */
+       struct stat * fts_statp;     /* stat() information */
+    } FTSENT;
+
+    These fields are defined as follows:
+
+    fts_info
+        One of the following flags describing the returned FFTTSSEENNTT structure
+        and the file it represents. With the exception of directories without
+        errors (FTS_D), all of these entries are terminal, that is, they will
+        not be revisited, nor will any of their descendants be visited.
+
+        FTS_D
+            A directory being visited in pre-order.
+
+        FTS_DC
+            A directory that causes a cycle in the tree. (The fts_cycle field
+            of the FFTTSSEENNTT structure will be filled in as well.)
+
+        FTS_DEFAULT
+            Any FFTTSSEENNTT structure that represents a file type not explicitly
+            described by one of the other fts_info values.
+
+        FTS_DNR
+            A directory which cannot be read. This is an error return, and the
+            fts_errno field will be set to indicate what caused the error.
+
+        FTS_DOT
+            A file named . or .. which was not specified as a file name to
+            _ff_tt_ss____oo_pp_ee_nn(3) (see FTS_SEEDOT).
+
+        FTS_DP
+            A directory being visited in post-order. The contents of the
+            FFTTSSEENNTT structure will be unchanged from when it was returned in
+            pre-order, i.e. with the fts_info field set to FTS_D.
+
+        FTS_ERR
+            This is an error return, and the fts_errno field will be set to
+            indicate what caused the error.
+
+        FTS_F
+            A regular file.
+
+        FTS_NS
+            A file for which no _ss_tt_aa_tt(2) information was available. The
+            contents of the fts_statp field are undefined. This is an error
+            return, and the fts_errno field will be set to indicate what
+            caused the error.
+
+        FTS_NSOK
+            A file for which no _ss_tt_aa_tt(2) information was requested. The
+            contents of the fts_statp field are undefined.
+
+        FTS_SL
+            A symbolic link.
+
+        FTS_SLNONE
+            A symbolic link with a non-existent target. The contents of the
+            fts_statp field reference the file characteristic information for
+            the symbolic link itself.
+
+    fts_accpath
+        A path for accessing the file from the current directory.
+
+    fts_path
+        The path for the file relative to the root of the traversal. This path
+        contains the path specified to _ff_tt_ss____oo_pp_ee_nn(3) as a prefix.
+
+    fts_pathlen
+        The length of the string referenced by fts_path.
+
+    fts_name
+        The name of the file.
+
+    fts_namelen
+        The length of the string referenced by fts_name.
+
+    fts_level
+        The depth of the traversal, numbered from -1 to N, where this file was
+        found. The FFTTSSEENNTT structure representing the parent of the starting
+        point (or root) of the traversal is numbered -1, and the FFTTSSEENNTT
+        structure for the root itself is numbered 0.
+
+    fts_errno
+        Upon return of a FFTTSSEENNTT structure from the _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3) or
+        _ff_tt_ss____rr_ee_aa_dd(3) functions, with its fts_info field set to FTS_DNR, FTS_ERR
+        or FTS_NS, the fts_errno field contains the value of the external
+        variable errno specifying the cause of the error. Otherwise, the
+        contents of the fts_errno field are undefined.
+
+    fts_number
+        This field is provided for the use of the application program and is
+        not modified by the _ff_tt_ss(3) functions. It is initialized to 0.
+
+    fts_pointer
+        This field is provided for the use of the application program and is
+        not modified by the _ff_tt_ss(3) functions. It is initialized to NULL.
+
+    fts_parent
+        A pointer to the FFTTSSEENNTT structure referencing the file in the
+        hierarchy immediately above the current file, i.e. the directory of
+        which this file is a member. A parent structure for the initial entry
+        point is provided as well, however, only the fts_level fts_number and
+        fts_pointer fields are guaranteed to be initialized.
+
+    fts_link
+        Upon return from the _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3) function, the fts_link field
+        points to the next structure in the NULL-terminated linked list of
+        directory members. Otherwise, the contents of the fts_link field are
+        undefined.
+
+    fts_cycle
+        If a directory causes a cycle in the hierarchy (see FTS_DC), either
+        because of a hard link between two directories, or a symbolic link
+        pointing to a directory, the fts_cycle field of the structure will
+        point to the FFTTSSEENNTT structure in the hierarchy that references the
+        same file as the current FFTTSSEENNTT structure. Otherwise, the contents of
+        the fts_cycle field are undefined.
+
+    fts_statp
+        A pointer to _ss_tt_aa_tt(2) information for the file.
+
+    A single buffer is used for all of the paths of all of the files in the
+    file hierarchy. Therefore, the fts_path and fts_accpath fields are
+    guaranteed to be NULL-terminated only for the file most recently returned
+    by _ff_tt_ss____rr_ee_aa_dd(3). To use these fields to reference any files represented by
+    other FFTTSSEENNTT structures will require that the path buffer be modified
+    using the information contained in that FFTTSSEENNTT structure's fts_pathlen
+    field. Any such modifications should be undone before further calls to
+    _ff_tt_ss____rr_ee_aa_dd(3) are attempted. The fts_name field is always NULL -terminated.
+
+  FFTTSS__OOPPEENN
+
+    The _ff_tt_ss____oo_pp_ee_nn(3) function takes a pointer to an array of character pointers
+    naming one or more paths which make up a logical file hierarchy to be
+    traversed. The array must be terminated by a NULL pointer.
+
+    There are a number of options, at least one of which (either FTS_LOGICAL
+    or FTS_PHYSICAL) must be specified. The options are selected by OR'ing the
+    following values:
+
+    FTS_COMFOLLOW
+        This option causes any symbolic link specified as a root path to be
+        followed immediately whether or not FTS_LOGICAL is also specified.
+
+    FTS_LOGICAL
+        This option causes the _ff_tt_ss(3) routines to return FFTTSSEENNTT structures for
+        the targets of symbolic links instead of the symbolic links
+        themselves. If this option is set, the only symbolic links for which
+        FFTTSSEENNTT structures are returned to the application are those
+        referencing non-existent files. Either FTS_LOGICAL or FTS_PHYSICAL
+        must be provided to the _ff_tt_ss____oo_pp_ee_nn(3) function.
+
+    FTS_NOCHDIR
+        As a performance optimization, the _ff_tt_ss(3) functions change directories
+        as they walk the file hierarchy. This has the side-effect that an
+        application cannot rely on being in any particular directory during
+        the traversal. The FTS_NOCHDIR option turns off this optimization, and
+        the _ff_tt_ss(3) functions will not change the current directory. Note that
+        applications should not themselves change their current directory and
+        try to access files unless FTS_NOCHDIR is specified and absolute
+        pathnames were provided as arguments to _ff_tt_ss____oo_pp_ee_nn(3).
+
+    FTS_NOSTAT
+        By default, returned FFTTSSEENNTT structures reference file characteristic
+        information (the statp field) for each file visited. This option
+        relaxes that requirement as a performance optimization, allowing the
+        _ff_tt_ss(3) functions to set the fts_info field to FTS_NSOK and leave the
+        contents of the statp field undefined.
+
+    FTS_PHYSICAL
+        This option causes the _ff_tt_ss(3) routines to return FFTTSSEENNTT structures for
+        symbolic links themselves instead of the target files they point to.
+        If this option is set, FFTTSSEENNTT structures for all symbolic links in the
+        hierarchy are returned to the application. Either FTS_LOGICAL or
+        FTS_PHYSICAL must be provided to the _ff_tt_ss____oo_pp_ee_nn(3) function.
+
+    FTS_SEEDOT
+        By default, unless they are specified as path arguments to
+        _ff_tt_ss____oo_pp_ee_nn(3), any files named . or .. encountered in the file hierarchy
+        are ignored. This option causes the _ff_tt_ss(3) routines to return FFTTSSEENNTT
+        structures for them.
+
+    FTS_XDEV
+        This option prevents _ff_tt_ss(3) from descending into directories that have
+        a different device number than the file from which the descent began.
+
+    The argument ccoommppaarr() specifies a user-defined function which may be used
+    to order the traversal of the hierarchy. It takes two pointers to pointers
+    to FFTTSSEENNTT structures as arguments and should return a negative value,
+    zero, or a positive value to indicate if the file referenced by its first
+    argument comes before, in any order with respect to, or after, the file
+    referenced by its second argument. The fts_accpath, fts_path and
+    fts_pathlen fields of the FFTTSSEENNTT structures may never be used in this
+    comparison. If the fts_info field is set to FTS_NS or FTS_NSOK, the
+    fts_statp field may not either. If the ccoommppaarr() argument is NULL, the
+    directory traversal order is in the order listed in path_argv for the root
+    paths, and in the order listed in the directory for everything else.
+
+  FFTTSS__RREEAADD
+
+    The _ff_tt_ss____rr_ee_aa_dd(3) function returns a pointer to an FFTTSSEENNTT structure
+    describing a file in the hierarchy. Directories (that are readable and do
+    not cause cycles) are visited at least twice, once in pre-order and once
+    in post-order. All other files are visited at least once. (Hard links
+    between directories that do not cause cycles or symbolic links to symbolic
+    links may cause files to be visited more than once, or directories more
+    than twice.)
+
+    If all the members of the hierarchy have been returned, _ff_tt_ss____rr_ee_aa_dd(3)
+    returns NULL and sets the external variable errno to 0. If an error
+    unrelated to a file in the hierarchy occurs, _ff_tt_ss____rr_ee_aa_dd(3) returns NULL and
+    sets errno appropriately. If an error related to a returned file occurs, a
+    pointer to an FFTTSSEENNTT structure is returned, and errno may or may not have
+    been set (see fts_info).
+
+    The FFTTSSEENNTT structures returned by _ff_tt_ss____rr_ee_aa_dd(3) may be overwritten after a
+    call to _ff_tt_ss____cc_ll_oo_ss_ee(3) on the same file hierarchy stream, or, after a call
+    to _ff_tt_ss____rr_ee_aa_dd(3) on the same file hierarchy stream unless they represent a
+    file of type directory, in which case they will not be overwritten until
+    after a call to _ff_tt_ss____rr_ee_aa_dd(3) after the FFTTSSEENNTT structure has been returned
+    by the function _ff_tt_ss____rr_ee_aa_dd(3) in post-order.
+
+  FFTTSS__CCHHIILLDDRREENN
+
+    The _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3) function returns a pointer to an FFTTSSEENNTT structure
+    describing the first entry in a NULL-terminated linked list of the files
+    in the directory represented by the FFTTSSEENNTT structure most recently
+    returned by _ff_tt_ss____rr_ee_aa_dd(3). The list is linked through the fts_link field of
+    the FFTTSSEENNTT structure, and is ordered by the user-specified comparison
+    function, if any. Repeated calls to _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3) will recreate this
+    linked list.
+
+    As a special case, if _ff_tt_ss____rr_ee_aa_dd(3) has not yet been called for a hierarchy,
+    _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3) will return a pointer to the files in the logical
+    directory specified to _ff_tt_ss____oo_pp_ee_nn(3), i.e. the arguments specified to
+    _ff_tt_ss____oo_pp_ee_nn(3). Otherwise, if the FFTTSSEENNTT structure most recently returned by
+    _ff_tt_ss____rr_ee_aa_dd(3) is not a directory being visited in pre-order, or the
+    directory does not contain any files, _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3) returns NULL and
+    sets errno to zero. If an error occurs, _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3) returns NULL and
+    sets errno appropriately.
+
+    The FFTTSSEENNTT structures returned by _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3) may be overwritten after
+    a call to _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3), _ff_tt_ss____cc_ll_oo_ss_ee(3) or _ff_tt_ss____rr_ee_aa_dd(3) on the same file
+    hierarchy stream.
+
+    Option may be set to the following value:
+
+    FTS_NAMEONLY
+        Only the names of the files are needed. The contents of all the fields
+        in the returned linked list of structures are undefined with the
+        exception of the fts_name and fts_namelen fields.
+
+  FFTTSS__SSEETT
+
+    The function _ff_tt_ss____ss_ee_tt(3) allows the user application to determine further
+    processing for the file f of the stream ftsp. The _ff_tt_ss____ss_ee_tt(3) function
+    returns 0 on success, and -1 if an error occurs. Option must be set to one
+    of the following values:
+
+    FTS_AGAIN
+        Re-visit the file; any file type may be revisited. The next call to
+        _ff_tt_ss____rr_ee_aa_dd(3) will return the referenced file. The fts_stat and fts_info
+        fields of the structure will be reinitialized at that time, but no
+        other fields will have been changed. This option is meaningful only
+        for the most recently returned file from _ff_tt_ss____rr_ee_aa_dd(3). Normal use is
+        for post-order directory visits, where it causes the directory to be
+        re-visited (in both pre and post-order) as well as all of its
+        descendants.
+
+    FTS_FOLLOW
+        The referenced file must be a symbolic link. If the referenced file is
+        the one most recently returned by _ff_tt_ss____rr_ee_aa_dd(3), the next call to
+        _ff_tt_ss____rr_ee_aa_dd(3) returns the file with the fts_info and fts_statp fields
+        reinitialized to reflect the target of the symbolic link instead of
+        the symbolic link itself. If the file is one of those most recently
+        returned by _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3), the fts_info and fts_statp fields of the
+        structure, when returned by _ff_tt_ss____rr_ee_aa_dd(3), will reflect the target of
+        the symbolic link instead of the symbolic link itself. In either case,
+        if the target of the symbolic link does not exist the fields of the
+        returned structure will be unchanged and the fts_info field will be
+        set to FTS_SLNONE.
+        If the target of the link is a directory, the pre-order return,
+        followed by the return of all of its descendants, followed by a post-
+        order return, is done.
+
+    FTS_SKIP
+        No descendants of this file are visited. The file may be one of those
+        most recently returned by either _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3) or _ff_tt_ss____rr_ee_aa_dd(3).
+
+  FFTTSS__CCLLOOSSEE
+
+    The _ff_tt_ss____cc_ll_oo_ss_ee(3) function closes a file hierarchy stream ftsp and restores
+    the current directory to the directory from which _ff_tt_ss____oo_pp_ee_nn(3) was called
+    to open ftsp. The _ff_tt_ss____cc_ll_oo_ss_ee(3) function returns 0 on success, and -1 if an
+    error occurs.
+
+  EERRRROORRSS
+
+    The function _ff_tt_ss____oo_pp_ee_nn(3) may fail and set errno for any of the errors
+    specified for the library functions _oo_pp_ee_nn(2) and _mm_aa_ll_ll_oo_cc(3).
+
+    The function _ff_tt_ss____cc_ll_oo_ss_ee(3) may fail and set errno for any of the errors
+    specified for the library functions _cc_hh_dd_ii_rr(2) and _cc_ll_oo_ss_ee(2).
+
+    The functions _ff_tt_ss____rr_ee_aa_dd(3) and _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3) may fail and set errno for
+    any of the errors specified for the library functions _cc_hh_dd_ii_rr(2), _mm_aa_ll_ll_oo_cc(3),
+    _oo_pp_ee_nn_dd_ii_rr(3), _rr_ee_aa_dd_dd_ii_rr(2) and _ss_tt_aa_tt(2).
+
+    In addition, _ff_tt_ss____cc_hh_ii_ll_dd_rr_ee_nn(3), _ff_tt_ss____oo_pp_ee_nn(3) and _ff_tt_ss____ss_ee_tt(3) may fail and set
+    errno as follows:
+
+    [EINVAL]
+        The options were invalid.
+
+  SSEEEE AALLSSOO
+
+    _f_i_n_d(1)
+
+    _c_h_d_i_r(2)
+
+    _s_t_a_t(2)
+
+    _q_s_o_r_t(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    None of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

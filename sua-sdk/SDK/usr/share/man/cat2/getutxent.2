@@ -1,0 +1,134 @@
+getutxent(2)                                               getutxent(2)
+
+  eenndduuttxxeenntt(())
+
+  NNAAMMEE
+
+    endutxent(), getutxent(), getutxid(), getutxline(), pututxline(),
+    setutxent() - user accounting database (utmpx) functions
+
+  SSYYNNOOPPSSIISS
+
+    #include <utmpx.h>
+
+    void endutxent(void)
+    struct utmpx *getutxent (void)
+    struct utmpx *getutxid (const struct utmpx *id)
+    struct utmpx *getutxline (const struct utmpx *line)
+    struct utmpx *pututxline (const struct utmpx *utmpx)
+    struct utmpx *setutxent (void)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    These functions provide access to the user accounting database, usually
+    stored in the file //vvaarr//aaddmm//uuttmmppxx. These functions are not reentrant.
+
+    The _gg_ee_tt_uu_tt_xx_ee_nn_tt(2) function reads the next entry. If the uuttmmppxx file isn't
+    open, the function opens it. If the function reaches the end of the uuttmmppxx
+    file, it fails.
+
+    The _gg_ee_tt_uu_tt_xx_ii_dd(2) function searches forward in the database from the current
+    point for a matching entry. The id is a uuttmmppxx structure; the match depends
+    upon the value of the uutt__ttyyppee value in the structure.
+    *     If the value is BOOT_TIME, OLD_TIME, or NEW_TIME, the search stops
+          at the next entry with a matching value.
+    *     If the value is INIT_PROCESS, LOGIN_PROCESS, USER_PROCESS, or
+          DEAD_PROCESS, the search stops at the next entry with one of those
+          types and whose uutt__iidd member matches the uutt__iidd member in id.
+
+    The _gg_ee_tt_uu_tt_xx_ii_dd(2) function fails if it reaches the end of the database
+    without a match.
+
+    The _gg_ee_tt_uu_tt_xx_ll_ii_nn_ee(2) function searches forward in the database from the
+    current point for an entry with a value of uutt__lliinnee that matches the value
+    in line, and that has a uutt__ttyyppee of LOGIN_PROCESS or USER_PROCESS. The
+    function fails if it reaches the end of the database without finding a
+    match.
+
+    The _pp_uu_tt_uu_tt_xx_ll_ii_nn_ee(2) function writes out the information in the structure
+    utmpx to the database. The process must have the appropriate privileges to
+    do this. It searches the database for a matching entry (using
+    _gg_ee_tt_uu_tt_xx_ii_dd(2)); if it finds a match, the existing information is replaced
+    with the information in utmpx. If it doesn't find a match, the new
+    information is added at the end of the file.
+
+    The _ss_ee_tt_uu_tt_xx_ee_nn_tt(2) function resets input to the beginning of the database.
+
+    The _ee_nn_dd_uu_tt_xx_ee_nn_tt(2) function closes the database.
+
+    The functions _gg_ee_tt_uu_tt_xx_ii_dd(2) and _gg_ee_tt_uu_tt_xx_ll_ii_nn_ee(2) may cache the data. When using
+    _gg_ee_tt_uu_tt_xx_ll_ii_nn_ee(2) to search for multiple occurrences, zero out the static data
+    after each success, or _gg_ee_tt_uu_tt_xx_ll_ii_nn_ee(2) will repeatedly return a pointer to
+    the same uuttmmppxx structure. (The implicit read done by _pp_uu_tt_uu_tt_xx_ll_ii_nn_ee(2) doesn't
+    modify the static structure.)
+
+    The uuttmmppxx structure is described in the file <<uuttmmppxx..hh>>. It consists of at
+    least these members:
+    char               ut_user[]     user login name
+
+    char               ut_id[]       initialization process identifier
+
+    char               ut_line[]     device name
+
+    pid_t              ut_pid        process ID
+
+    short int          ut_type       type of entry -- see list
+
+    struct timeval     ut_tv         time entry was made.
+
+    The uutt__ttyyppee member is used for matches, as described above. It can have
+    the following values:
+    EMPTY             No valid information
+
+    BOOT_TIME         Time of system boot (not stored)
+
+    OLD_TIME          Time when system clock changed (not stored)
+
+    NEW_TIME          Time after system clock changed (not stored)
+
+    USER_PROCESS      Identifies a process
+
+    INIT_PROCESS      Process was spawned by the init process
+
+    LOGIN_PROCESS     Session leader of the logged-in user
+
+    DEAD_PROCESS      Session leader has exited
+
+    The values BOOT_TIME, OLD_TIME, NEW_TIME, and INIT_PROCESS do not show up
+    in Subsystem for UNIX-based Applications systems.
+
+  RREETTUURRNN VVAALLUUEE
+
+    Upon completing successfully, the functions _gg_ee_tt_uu_tt_xx_ee_nn_tt(2), _gg_ee_tt_uu_tt_xx_ii_dd(2), and
+    _gg_ee_tt_uu_tt_xx_ll_ii_nn_ee(2) return a pointer to a uuttmmppxx structure which contains a copy
+    of the requested entry. The structure is in a static area which may be
+    overwritten by subsequent calls. On failure, they return a null pointer.
+
+    Upon completing successfully, the function _pp_uu_tt_uu_tt_xx_ll_ii_nn_ee(2) returns a pointer
+    to a uuttmmppxx structure containing the user information entered in the user
+    database. On failure, it returns a null pointer.
+
+    The _ee_nn_dd_uu_tt_xx_ee_nn_tt(2) and _ss_ee_tt_uu_tt_xx_ee_nn_tt(2) functions return no value.
+
+  EERRRROORRSS
+
+    The _pp_uu_tt_uu_tt_xx_ll_ii_nn_ee(2) function may fail for this reason:
+
+    [EPERM]
+        The process does not have privileges to write to //vvaarr//aaddmm//uuttmmppxx.
+
+  NNOOTTEESS
+
+    This set of APIs is new to Subsystem for UNIX-based Applications with release 2.1. Programs written to
+    use these APIs will not run on Subsystem for UNIX-based Applications 2.0 systems.
+
+  SSEEEE AALLSSOO
+
+    _w_h_o(1)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    None of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

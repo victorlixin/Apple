@@ -1,0 +1,96 @@
+
+
+ttysrch(4)                                             ttysrch(4)
+
+DDeessccrriippttiioonn
+       ttysrch  is  an  optional  file used by the administrative
+       command.   The  ttymap  command  creates   a   map   file,
+       /var/tmp/ttymap,  used  by  for  fast  lookups of terminal
+       device names.
+
+       The ttysrch file lists the names of  directories  in  /dev
+       that  contain  terminal and terminal-related device files,
+       as well as the names of directories that contain  no  such
+       files.  The purpose of this file is to improve the perfor-
+       mance of ttyname by identifying subdirectories in /dev  to
+       be searched first and subdirectories to be ignored.  These
+       subdirectory names must appear on separate lines and  must
+       begin  with /dev.  Those path names that do not begin with
+       /dev are ignored and a warning is  sent  to  the  console.
+       Blank  lines (lines containing only white space) and lines
+       beginning  with  the  comment  character  #  are  ignored.
+       ttymap  writes entries into the mapfile /var/tmp/ttymap in
+       the order in which they occur in the ttysrch file.  Subdi-
+       rectories  to be ignored are also specified as such in the
+       mapfile.  With the exception of /dev, entries in the ttys-
+       rch  file  are  used  recursively  to identify a directory
+       sub-tree.
+
+       When ttyname searches for device files, it tries to find a
+       file  whose major/minor device number, file system identi-
+       fier, and inode number match those of the file  descriptor
+       it was given as an argument.  If it does not find a match,
+       it settles for a match of just major/minor device and file
+       system  identifier,  if one can be found.  However, if the
+       file descriptor is associated with a  cloned  device  [see
+       this algorithm does not work efficiently because the inode
+       number of the  device  file  associated  with  a  clonable
+       device never matches the inode number of the file descrip-
+       tor that was returned by the open of that clonable device.
+       To help with these situations, entries can be put into the
+       /etc/ttysrch  file  to  improve  performance  when  cloned
+       devices  are  used  as  terminals  on a system (for remote
+       login, for example).  However, this is useful only if  the
+       minor  devices  related  to a cloned device are put into a
+       subdirectory.  (It is important to note that device  files
+       need  not  exist  for  cloned devices; if they do, ttyname
+       fails.)  For example, if /dev/xxxxlan is a cloned  device,
+       there  could  be  a  subdirectory  /dev/xlan that contains
+       files 0, 1, 2, . . . that correspond to the minor  devices
+       of the xxxxlan driver.
+
+       An  optional second field is used in the /etc/ttysrch file
+       to indicate the matching criteria.  This  field  is  sepa-
+       rated  from the first field by whitespace (any combination
+       of blanks or tabs).  The field is made up of a combination
+       of  the  following letters: major/minor device number file
+       system identifier inode number ignore this directory  com-
+       pletely
+
+                                                                1
+
+ttysrch(4)                                             ttysrch(4)
+
+       If  this  field is not specified for an entry, the default
+       is MFI, which means try to match on all three.  For cloned
+       devices the field should be MF, which indicates that it is
+       not necessary to match on the inode number.
+
+       Without the /etc/ttysrch file, ttymap maps the /dev direc-
+       tory  by  first  looking  in  the  directories  /dev/term,
+       /dev/pts,  and  /dev/xt,  and  by  ignoring  /dev/dsk  and
+       /dev/rdsk.   If a system has terminal devices installed in
+       directories other than these, it may help  performance  if
+       the  ttysrch  file  is  created  and contains that list of
+       directories.
+
+EExxaammppllee
+       A sample /etc/ttysrch file  follows:  /dev/term        MFI
+       /dev/pts        MFI /dev/xt         MFI /dev/slan       MF
+       /dev/dsk        X /dev/rdsk       X
+
+       This file  tells  ttyname  that  it  should  first  search
+       through  those  directories  listed,  that  when searching
+       through the /dev/slan directory, if a file is  encountered
+       whose major/minor devices and file system identifier match
+       those of the file descriptor  argument  to  ttyname,  this
+       device name should be considered a match, and that neither
+       /dev/dsk nor /dev/rdsk need be searched.
+
+   FFiilleess
+       /etc/ttysrch
+
+RReeffeerreenncceess
+
+                                                                2
+

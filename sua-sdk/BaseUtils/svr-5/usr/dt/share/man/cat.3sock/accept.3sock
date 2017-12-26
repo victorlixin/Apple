@@ -1,0 +1,104 @@
+
+
+accept(3sock)                                       accept(3sock)
+
+SSyynnooppssiiss
+       cc  [options]  file  -lsocket -lnsl #include <sys/types.h>
+       #include <sys/socket.h>
+
+       int accept(int s, struct sockaddr *addr, size_t *addrlen);
+
+DDeessccrriippttiioonn
+       The  argument  s  is  a  socket that has been created with
+       socket and bound to an address with bind, and that is lis-
+       tening  for  connections  after  a call to listen.  accept
+       extracts the first connection on the queue of pending con-
+       nections,  creates  a new socket with the properties of s,
+       and allocates a new file descriptor, ns, for  the  socket.
+       If no pending connections are present on the queue and the
+       socket is not marked as non-blocking (O_NONBLOCK),  accept
+       blocks  the  caller until a connection is present.  If the
+       socket is marked as non-blocking and  no  pending  connec-
+       tions are present on the queue, accept returns an error as
+       described below.  accept uses the netconfig file to deter-
+       mine the STREAMS device file name associated with s.  This
+       is the device on which  the  connect  indication  will  be
+       accepted.   The  accepted  socket, ns, is used to read and
+       write data to and from the socket that connected to ns; it
+       is  not  used  to  accept  more connections.  The original
+       socket (s) remains open for accepting further connections.
+
+       The  argument addr is a result parameter that is filled in
+       with the address of the connecting entity as it  is  known
+       to the communications layer.  The exact format of the addr
+       parameter is determined by the domain in which the  commu-
+       nication occurs.
+
+       addrlen  is  a value-result parameter.  Initially, it con-
+       tains the amount of space pointed to by addr; on return it
+       contains the length in bytes of the address returned.
+
+       accept  is  used  with connection-based socket types, cur-
+       rently with SOCK_STREAM.
+
+       It is possible to select a socket for the  purpose  of  an
+       accept  by selecting it for read.  However, this will only
+       indicate when a connect indication is pending; it is still
+       necessary to call accept.
+
+FFiilleess
+       /usr/lib/locale/locale/LC_MESSAGES/uxnsl
+
+RReettuurrnn vvaalluueess
+       accept  returns -1 on error.  If it succeeds, it returns a
+       non-negative integer that is a descriptor for the accepted
+       socket.
+
+   EErrrroorrss
+       accept  will  fail  if:  The  descriptor  is invalid.  The
+
+                                                                1
+
+accept(3sock)                                       accept(3sock)
+
+       connection was aborted.  The connection  was  interrupted.
+       An  invalid argument was passed.  Ran out of file descrip-
+       tors.  Ran out of file table entries.  Ran out  of  memory
+       for  STREAMS  or  socket buffers.  The protocol family and
+       type corresponding to s could not be found in the  netcon-
+       fig file.  There was insufficient user memory available to
+       complete the operation.  There were  insufficient  STREAMS
+       resources   available  to  complete  the  operation.   The
+       descriptor does not reference a  socket.   The  referenced
+       socket  is  not of type SOCK_STREAM.  A protocol error has
+       occurred; for example, the STREAMS protocol stack has  not
+       been  initialized.   The  socket is marked as non-blocking
+       and no connections are present to be accepted.
+
+RReeffeerreenncceess
+       RFC 2133
+
+NNoottiicceess
+       The type of address structure passed to accept depends  on
+       the address family.
+        domain  sockets  (address family AF_UNIX) require a sock-
+       addr_un structure as defined in sys/un.h; Internet  domain
+       IPv4  sockets  (address  family  AF_INET)  require a sock-
+       addr_in structure as  defined  in  netinet/in.h;  Internet
+       domain  IPv6  sockets  (address family AF_INET6) require a
+       sockaddr_in6 structure as defined in netinet/in.h.   Other
+       address  families  may  require other structures.  Use the
+       structure appropriate to  the  address  family;  cast  the
+       structure  address  to  a generic struct sockaddr * in the
+       call to accept and pass the size of the structure  in  the
+       addrlen argument.
+
+       In &geminiREL; the sockaddr structure has been modified to
+       support variable length sockets. The net  result  of  this
+       modification  is that the family member has been shortened
+       to 8 bits and a new 8-bit member inserted before it called
+       len.  For more information on the new sockaddr structures,
+       see: and
+
+                                                                2
+

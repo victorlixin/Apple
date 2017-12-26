@@ -1,0 +1,129 @@
+
+
+auditevt(2)                                           auditevt(2)
+
+SSyynnooppssiiss
+       #include <sys/types.h> #include <audit.h>
+
+       int auditevt(int cmd, struct aevt *aevtp, int size);
+
+DDeessccrriippttiioonn
+       The  auditevt  system  call gets or sets auditable events,
+       depending on the value of cmd.  The  following  values  of
+       cmd  are  supported:  AGETSYS,  ASETSYS,  AGETUSR, ASETME,
+       AGETME, AGETLVL, ACNTLVL, ASETLVL, ASETUSR,  AYAUDIT,  and
+       ANAUDIT.   The  auditable event bit mask (emask) is repre-
+       sented by an integer type, adtemask_t.  The value  of  uid
+       in  the  aevt  structure  is  used to identify users to be
+       audited on the system.
+
+       The aevtp argument points to a structure of type aevt that
+       contains the following elements: struct aevt {
+           adtemask_t  emask;       /*  event  mask  to be set or
+       retrieved */
+           uid_t      uid;        /* user's event mask to be set
+                                     or retrieved */
+           uint       flags;      /* event mask flags */
+           uint        nlvls;       /*  size  of  the  individual
+       object level
+                                     table */
+           level_t    *lvl_minp;    /* minimum object level range
+       criteria */
+           level_t   *lvl_maxp;   /* maximum object  level  range
+       criteria */
+           level_t    *lvl_tblp;    /*  address of the individual
+       object level
+                                     table */ }
+
+       When the specified cmd is AGETSYS, the system  wide  event
+       mask  (adt_sysemask) is copied to emask in the aevt struc-
+       ture, and the entire structure is returned.  All  elements
+       of the aevt structure except emask are ignored.
+
+       When  the  specified cmd is ASETSYS, the value of emask in
+       the aevt structure  is  OR'ed  with  the  fixed  auditable
+       events  and  then  copied into the system wide event mask.
+       If auditing is enabled, then every process audit structure
+       is  updated  to  reflect  the change.  All elements in the
+       aevt structure except emask are ignored.
+
+       When the specified cmd is AGETUSR, the active process list
+       is searched for a process that belongs to the uid given in
+       the aevt structure.  If one is located, the value  of  the
+       user's  emask  is  copied into the emask field in the aevt
+       structure, and the entire structure is returned.  All ele-
+       ments  of  the  structure  except  for  emask  and uid are
+       ignored.
+
+       When the specified cmd is AGETME,  the  invoking  process'
+
+                                                                1
+
+auditevt(2)                                           auditevt(2)
+
+       user's  emask is retrieved and copied into the emask field
+       in the aevt structure.   All  elements  of  the  structure
+       except emask are ignored.
+
+       When  the  specified  cmd is ASETME, the value of emask is
+       copied into the user's event mask field of the user's pro-
+       cess  audit  structure  and  then combined by a bitwise OR
+       with the system wide event mask to create  a  new  process
+       event mask for the invoking process only.  All elements of
+       the structure except for emask are ignored.
+
+       When the specified cmd is ASETUSR, the active process list
+       is  searched for every process belonging to the given uid.
+       When a valid active process is located, the value of emask
+       is  copied into the user's event mask field of the process
+       audit structure and then combined by a bitwise OR with the
+       system wide event mask to create a new process event mask.
+       This processing continues until it finds  and  sets  every
+       valid  active process belonging to the specified uid.  All
+       elements of the structure except for  emask  and  uid  are
+       ignored.
+
+       When the specified cmd is ANAUDIT, the current process and
+       any later forked process is  exempt  from  auditing.   All
+       elements of the structure are ignored.
+
+       When  the specified cmd is AYAUDIT, the current process is
+       made auditable again.  All elements of the  structure  are
+       ignored.
+
+       The  commands AGETLVL, ACNTLVL and ASETLVL, and the fields
+       flags, nlvls, lvl_minp, lvl_maxp  and  lvl_tblp  are  only
+       used when the Enhanced Security package is installed.
+
+       The  size  argument is used to verify the size of the aevt
+       structure being passed to determine the version of  audit-
+       ing.
+
+       Auditing  must  be installed on the system for this system
+       call to be used.  Use of the auditevt system call requires
+       the appropriate privilege(P_AUDIT).
+
+   RReettuurrnn vvaalluueess
+       On  success,  auditevt  returns  0.   On failure, auditevt
+       returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, auditevt fails and sets errno
+       to:  The cmd is AGETSYS, ASETSYS, AGETUSR, ASETUSR, ASETME
+       or AGETME, and aevtp is invalid.  The size of aevt is  not
+       equal  to  size.  The cmd is invalid.  The cmd is ACNTLVL,
+       AGETLVL,  and  ASETLVL,  and  the  MAC  feature   is   not
+       installed.   The invoking subject does not have the appro-
+       priate privilege(P_AUDIT).  The cmd  is  ASETUSR  and  the
+
+                                                                2
+
+auditevt(2)                                           auditevt(2)
+
+       specified  uid  value is not active.  The audit package is
+       not installed.
+
+RReeffeerreenncceess
+
+                                                                3
+

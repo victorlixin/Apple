@@ -1,0 +1,1046 @@
+
+
+kdb(1M)                                                   kdb(1M)
+
+SSyynnooppssiiss
+       kdb
+
+DDeessccrriippttiioonn
+       KDB  is a kernel debugger that works like a Reverse Polish
+       Notation (RPN) calculator.  KDB can set breakpoints,  dis-
+       play  kernel  stack  traces and various kernel structures,
+       and modify the contents of  memory,  I/O,  and  registers.
+       The  debugger supports basic arithmetic operations, condi-
+       tional execution, variables, and macros.  KDB does conver-
+       sions  from  a  kernel symbol name to its virtual address,
+       from a virtual address to the value at that  address,  and
+       from  a  virtual address to the name of the nearest kernel
+       symbol.  You have a choice  of  different  numeric  bases,
+       address spaces, and operand sizes.
+
+       This  is  an  advanced  tool, only for those who are thor-
+       oughly familiar with the  kernel.  Because   systems  dif-
+       fer, you could damage your system by following some of the
+       examples in this discussion.
+
+       You can invoke the debugger by using the  kdb  command  or
+       the  sysi86(SI86TODEMON)  system  call  on  all systems, D
+       (from the console only) on an AT-bus system, or the inter-
+       rupt  character (from the console only) on a Multibus sys-
+       tem.  In addition, KDB is entered automatically under var-
+       ious conditions, such as panics and breakpoint traps.  Any
+       time the kdb>> prompt appears, you are  in  the  debugger.
+       I/O is done via the console (kd), or a serial terminal.
+
+       To exit the debugger, type q or D.
+
+       When you exit and re-enter the debugger, its state is pre-
+       served, including the contents of the value stack.
+
+UUssiinngg kkddbb aass aa ccaallccuullaattoorr
+       KDB operates as an RPN calculator, similar to This  calcu-
+       lator  has  a 32-level value stack for storing results and
+       intermediate values.  Commands and values you enter  oper-
+       ate  on  the value stack, which is an internal data struc-
+       ture in KDB.  It has no connection with the  kernel  stack
+       or any other stack in the system.
+
+       To  use  KDB,  at  the kdb>> prompt type one or more items
+       (values or commands)  on  a  line.   Separate  items  with
+       spaces  or  tabs.   Press  to end a line and send its con-
+       tents to KDB for processing.  Each item is processed sepa-
+       rately, from left to right.
+
+       The  values  can  be:  Use  positive or negative integers.
+       Numbers must begin with a digit, or a minus sign for nega-
+       tive numbers.  Begin octal numbers with 0o and hex numbers
+       with 0x.  Otherwise, numbers are  assumed  to  be  in  the
+       default  base -- the default is hex, unless you change it.
+
+                                                                1
+
+kdb(1M)                                                   kdb(1M)
+
+       (See for instructions.)  You can have KDB convert  charac-
+       ters to a number by entering one to four characters inside
+       single quotes.  C-style escapes are supported in character
+       constants.    Use  C-style  strings,  enclosed  in  double
+       quotes.  When you type a kernel symbol name,  its  address
+       is pushed onto the value stack.
+
+       When you enter a number or a string, it is pushed onto the
+       value stack, becoming the new Top Of Stack (TOS).   Values
+       remain  on  the value stack until they are popped off as a
+       result of a command.
+
+       In the descriptions below, [TOS] means the  value  on  the
+       top  of  the stack and [TOS-1] means the value immediately
+       below it (pushed previously).
+
+   SSttaacckk ooppeerraattiioonnss
+       KDB provides these commands for examining or changing  the
+       value  stack:  Print  all  values on the stack Print [TOS]
+       Push [TOS] Pop 1 value Pop all values
+
+   SSttaacckk ooppeerraattiioonn eexxaammpplleess
+       Displays the entire stack.  For example, starting with  an
+       empty value stack, the input: 5 "xyzzy" 7 stk produces the
+       output: 5 "xyzzy" 7 Displays the top value on  the  stack.
+       In  the  example,  this  is: 7 The next example uses the p
+       command to display the address of a  kernel  symbol.   The
+       input:  lbolt p produces an address, for example: D01821BC
+       Uses a value twice in a calculation.  For example: 5  3  *
+       dup  2  +  *  p  would produce the output: FF which is the
+       value of (((5 * 3) + 2) * (5 * 3)).  Removes the top value
+       from  the value stack.  For example, if this is the stack:
+       5 "xyzzy" 7 the input: pop stk removes the top value  from
+       the  stack  and  displays  the  resulting stack: 5 "xyzzy"
+       Clears the value stack.  Remember that the contents of the
+       stack are saved when you exit and re-enter KDB.
+
+   AArriitthhmmeettiicc ooppeerraattiioonnss
+       You  can perform arithmetic operations on the top two val-
+       ues on the stack: compute [TOS-1] +  [TOS];  pop  2;  push
+       result compute [TOS-1] - [TOS]; pop 2; push result compute
+       [TOS-1] * [TOS]; pop 2;  push  result  compute  [TOS-1]  /
+       [TOS];  pop 2; push result compute [TOS-1] % [TOS]; pop 2;
+       push result compute [TOS-1] >> [TOS]; pop 2;  push  result
+       compute  [TOS-1]  <<  [TOS];  pop  2;  push result compute
+       [TOS-1] < [TOS]; pop 2;  push  result  compute  [TOS-1]  >
+       [TOS]; pop 2; push result compute [TOS-1] == [TOS]; pop 2;
+       push result compute [TOS-1] != [TOS]; pop 2;  push  result
+       compute  [TOS-1]  &  [TOS];  pop  2;  push  result compute
+       [TOS-1] | [TOS]; pop 2;  push  result  compute  [TOS-1]  ^
+       [TOS]; pop 2; push result compute [TOS-1] && [TOS]; pop 2;
+       push result compute [TOS-1] || [TOS]; pop 2;  push  result
+       replace  [TOS]  with  ![TOS]  replace [TOS] with [TOS] + 1
+       replace [TOS] with [TOS] - 1
+
+                                                                2
+
+kdb(1M)                                                   kdb(1M)
+
+       For example, this input (subtracting 5 from 7): 7  5  -  p
+       would produce this output: 2 The power of KDB's calculator
+       feature lies in its ability to evaluate  expressions  like
+       this:  callout  16  This pushes the address of the callout
+       table on the stack and adds 16 to it.  If the  size  of  a
+       callout  table entry is 16 bytes, the result of the calcu-
+       lation is the address of the second entry in  the  callout
+       table.  (Use the size command of to find the sizes of com-
+       mon system tables.)  Make sure the divide operator  (slash
+       character)  is  both  preceded and followed by spaces.  If
+       any other character appears next to the  slash,  it  indi-
+       cates a suffix instead of division.
+
+RReeaaddiinngg aanndd wwrriittiinngg ttoo mmeemmoorryy
+       These  commands  operate  like an RPN calculator, but they
+       perform specific debugging operations instead of  calcula-
+       tions.   To  examine  and  set the contents of memory (and
+       I/O) use the commands: Replace [TOS]  with  the  value  at
+       virtual address [TOS].  Write [TOS-1] into virtual address
+       [TOS]; pop  2.   Show  [TOS]  bytes  starting  at  virtual
+       address  [TOS-1];  pop 2.  Show [TOS-1] formatted items at
+       [TOS-2] with format [TOS]; pop 3.
+
+   EExxaammpplleess
+       You can find, for example, the value of the (long)  kernel
+       variable, lbolt, by typing: lbolt r p
+
+       This  puts  the  virtual  address  of  lbolt on the stack,
+       replaces it with the value  found  at  that  address,  and
+       prints  the result.  To change the value of lbolt to 2000,
+       type: 2000 lbolt w
+
+       This writes 2000 at lbolt's virtual address.
+
+       You could increment lbolt by typing: lbolt r ++ lbolt w
+
+       This puts the virtual  address  of  lbolt  on  the  stack,
+       replaces  it  with the value found at that address, adds 1
+       to the value, and writes the  result  at  lbolt's  virtual
+       address.  This command displays a range of memory, both in
+       hex and ASCII.  For example, if you typed: putbuf 10  dump
+       This  shows  10  bytes, starting at the virtual address of
+       putbuf, you would see something  like:  ........  ........
+       ........  61746F74   D0108C50   ............tota  6572206C
+       6D206C61 726F6D65 ........  D0108C60  l real memor....  In
+       each  line, the block of four values on the left shows the
+       values of 16 bytes, displayed as four 4-byte longwords  in
+       hex.   The  dots represent values outside of the requested
+       range.  (dump may also display question marks  here:  that
+       means  the  address  is  invalid.)  The next column is the
+       address of the first of the 16 bytes.  The last column  is
+       the same 16 bytes displayed in ASCII.  Dots represent val-
+       ues outside the requested range,  or  unprintable  charac-
+       ters.  This command displays an arbitrary memory structure
+
+                                                                3
+
+kdb(1M)                                                   kdb(1M)
+
+       in a formatted fashion according to a format string.   The
+       syntax  for  fdump  is:  address count format_string fdump
+       This displays count items  starting  at  address  address.
+       fdump  keeps track of a memory address called dot while it
+       is processing the  format  string;  some  format  commands
+       change  the value of dot; others use dot to access memory;
+       dot is initially set to address.
+
+       format_string is  a  (double-quoted)  string  which  is  a
+       sequence  of  any  of the command characters listed below.
+       Any digits (0-9) in the format string are  interpreted  as
+       the  current  number (num), which can modify the following
+       command; most commands reset num after they have finished.
+       Any other character in the format string is printed liter-
+       ally.  Print value at dot  in  hex  (base  16),  unsigned.
+       Print  value  at  dot  in octal (base 8), unsigned.  Print
+       value at dot in decimal (base 10), signed.  Print value at
+       dot  in  decimal  (base  10),  unsigned.  byte (char) half
+       (short) int long Print value at dot as a character.  Print
+       value  at  dot as a (null-terminated) string.  Print value
+       at dot as a machine instruction.  Print value at dot  sym-
+       bolically.   Print dot symbolically (hex if num non-zero).
+       Print a newline character.  Print a tab  character.   Move
+       dot to register num.  Move register num to dot.  Move num2
+       to register num.  Move register num to num.  Move  num  to
+       dot.   Move  num  to num2.  Push dot; move value at dot to
+       dot.  Pop dot from  indirection  stack.   Print  the  next
+       character  literally.   Print  the  characters between the
+       quotes literally.  Increment dot  (by  num  if  non-zero).
+       Decrement  dot  (by num if non-zero).  Repeat next command
+       num times.  Group commands together.
+
+       All print commands advance dot by the size of  the  object
+       printed.   Print  commands  are  modified  by non-zero num
+       and/or num2 as follows.  For number and  instruction  com-
+       mands,  num specifies the output field width.  For charac-
+       ter and string commands, num specifies the style of  char-
+       acter  printing: default is that all non-printable charac-
+       ters show as a dot (.); 1 means to  use  control-character
+       style  which prints control characters as a caret (^) fol-
+       lowed by the control-character letter.   For  string  com-
+       mands,  num2 specifies the maximum number of characters to
+       be printed.
+
+       Note that the stack used for pushes and pops in the  indi-
+       rection  commands is not the KDB value stack; it is a spe-
+       cial stack just for those commands.
+
+       As an example of using fdump, consider the following  ker-
+       nel data structure: struct cdevsw {      int  (*d_open)();
+            int  (*d_close)();                  int  (*d_read)();
+            int  (*d_write)();                 int  (*d_ioctl)();
+            int  (*d_mmap)();                 int  (*d_segmap)();
+            int  (*d_poll)();      int  (*d_msgio)();      struct
+
+                                                                4
+
+kdb(1M)                                                   kdb(1M)
+
+       streamtab  *d_str;       char *d_name;       int  *d_flag;
+            int  d_cpu;  }  cdevsw[]; The following fdump command
+       could be used to print out three elements from this cdevsw
+       array:  cdevsw 3 "7;(p, )nt3;(p, )'*s', ^4+*x, ^4+d" fdump
+       The output from this command would be something like this:
+       wdopen,  wdclose,  wdread,  wdwrite,  nodev, nodev, nodev,
+            nodev,  nodev,  0x00000000,  'wd',  112,  0  nulldev,
+       nulldev,  nodev,  nodev,  nodev, nodev, nodev,      nodev,
+       nodev, scinfo,  'sc',  100,  0  mmopen,  mmclose,  mmread,
+       mmwrite,   mmioctl,   mmmap,   nodev,       nodev,  nodev,
+       0x00000000, 'mm', 100, 0
+
+   SSuuffffiixxeess
+       Suffixes can be  appended  to  many  KDB  commands.   They
+       always  begin  with the slash character (/).  Do not leave
+       spaces before or after the /.  When the / is preceded  and
+       followed  by  a  space, it indicates division instead of a
+       suffix.  The r, w and dump commands  can  also  work  with
+       units  of  bytes  and words, as well as the default longs.
+       To do this, append one of these suffixes to  the  command:
+       byte  word (2 bytes) long (4 bytes) -- this is the default
+       long long (8 bytes)
+
+       For example, to display the  value  of  a  short  (2-byte)
+       variable at address 0xD0008120, type: 0xD0008120 r/w p
+
+       Entering  the dump command with /b displays 16 1-byte val-
+       ues per line, with /w displays  eight  2-byte  values  per
+       line, and with /l (or nothing) displays four 4-byte values
+       per line.  The r, w and dump commands,  by  default,  work
+       with kernel virtual addresses.  You can change to physical
+       addresses,  I/O  addresses,  or   user   process   virtual
+       addresses  by  appending one of these suffixes to the com-
+       mand: kernel virtual -- this is the default  physical  I/O
+       port  user  process  number n virtual (n is a process slot
+       number in hex) CPU number n (n is in hex) same as /cpun
+
+   EExxaammpplleess ooff uussiinngg ssuuffffiixxeess
+       For example, to dump 40 (hex)  bytes  in  longword  format
+       from physical address 2000, type: 2000 40 dump/p
+
+       The default address is kernel virtual, so the /p suffix is
+       required for the physical address.  Note that an  operand-
+       size  suffix is not required, because long is the default.
+       For example, to read from port 300 (in bytes) and  display
+       the  result,  type:  300  r/io/b p For example, to dump 20
+       longwords from process 16's u-area at an offset  of  1000,
+       type:  1000 u + 20 dump/u16 For example, to print a stack-
+       trace of CPU  5's  stack,  type:  stack/cpu5  or  stack/c5
+       Address-space  suffixes  can be combined with operand-size
+       suffixes; only the first slash is required.  For  example,
+       to do the read from I/O port 300 shown above, any of these
+       command lines is acceptable: 300  r/io/b  300  r/b/io  300
+       r/iob  300 r/bio Suffixes can also be attached directly to
+
+                                                                5
+
+kdb(1M)                                                   kdb(1M)
+
+       an address as shorthand for read and  print.   Thus,  2000
+       r/p p can be shortened to 2000/p.
+
+       Since  the  default  address-space  is kernel virtual, the
+       common operation of read and print from kernel virtual can
+       be  even further shortened.  Type lbolt/ to read and print
+       the value of the (long) kernel variable, lbolt.
+
+DDiissppllaayyiinngg aanndd wwrriittiinngg ttoo rreeggiisstteerrss
+       You can examine the  CPU's  general  registers  (and  some
+       pseudo-registers)  with  these  commands:  This pushes the
+       contents of the 32-, 16- or 8-bit register.  register  can
+       be any of the following:
+
+       eax, ebx, ecx, edx, esi, edi, ebp, esp, eip, efl
+
+       cs, ds, es, fs, gs, ax, bx, cx, dx, si, di, bp, sp, ip, fl
+
+       al, ah, bl, bh, cl, ch, dl, dh push the trap  number  push
+       the interrupt priority level
+
+       You  can  modify  the  values of general-purpose registers
+       with these commands: write [TOS] into register  (with  the
+       exception  of  stack  pointer w%esp and w%sp); pop 1 write
+       [TOS] into the trap number pseudo-register; pop 1
+
+   RReeggiisstteerr sseettss
+       The commands listed above can also be used to access  spe-
+       cific  register  sets.  Multiple sets of general registers
+       may have been saved on the  kernel  stack  (one  for  each
+       interrupt, trap, and so on).  For more information see
+
+       Register  sets are numbered from 0 to 19, with 0 being the
+       current (most recent) set.  By default, the general-regis-
+       ter commands use register set 0, but you can override this
+       with a register-set suffix: register  set  number  n  Note
+       that by combining suffixes, you can access any register of
+       any process.  For example, you can get  the  eax  register
+       from process 5's register set 1 by typing: %eax/u5rs1
+
+       This  command  will  push  the  contents  of that register
+       (%eax) in register set 1 (/rs1) of user process 5 (/u5).
+
+   CCPPUU ccoonnttrrooll rreeggiisstteerrss
+       In addition to the general registers, you can examine  the
+       values  of CPU control registers with these commands: push
+       the contents of register cr0 push the contents of register
+       cr2 push the contents of register cr3 push the contents of
+       register cr4
+
+CCrreeaattiinngg ddeebbuuggggeerr vvaarriiaabblleess
+       KDB allows you to create named variables that  are  stored
+       in  the  debugger  and  hold  debugger  values (numbers or
+       strings).  Two KDB  commands  apply  to  variables:  store
+
+                                                                6
+
+kdb(1M)                                                   kdb(1M)
+
+       [TOS]  in  [variable]; pop 1 show values of debugger vari-
+       ables
+
+   EExxaammpplleess
+       This command assigns a value to a debugger variable.   For
+       example:  5  = abc creates the variable abc if it does not
+       exist, and sets the variable equal to 5.  Now whenever you
+       use the variable name, its value is pushed onto the stack.
+       For example: abc abc + 2 - p will yield 8 (5 + 5 - 2).
+
+       Note that variable  names  share  the  same  namespace  as
+       debugger  macros  and  kernel global symbols.  Look at all
+       the existing variables.  Variables are shown in  the  fol-
+       lowing  format:  name  = value The vars command also lists
+       macros, in this format: name :: value
+
+SSeettttiinngg bbrreeaakkppooiinnttss
+       Set and modify breakpoints with these commands: Either  of
+       the  following:  set  breakpoint  number  [TOS] at address
+       [TOS-1]; pop 2 set  breakpoint  number  [TOS]  at  address
+       [TOS-2]  with  command string [TOS-1]; pop 3 Either of the
+       following: set first free breakpoint address [TOS]; pop  1
+       set  first free breakpoint at address [TOS-1] with command
+       string [TOS]; pop 2  set  breakpoint  (like  b)  and  push
+       breakpoint  number  disable breakpoint number [TOS]; pop 1
+       re-enable breakpoint  number  [TOS];  pop  1  disable  all
+       breakpoints   re-enable  all  (disabled)  breakpoints  set
+       breakpoint number [TOS] trace  count  to  [TOS-1];  pop  2
+       clear breakpoint number [TOS]; pop 1 clear all breakpoints
+       clear all breakpoints for address [TOS]; pop  1  push  the
+       current  breakpoint  number,  or  -1 if not entered from a
+       breakpoint show current breakpoint settings
+
+       You can have up to 20 breakpoints, numbered 0 through  19,
+       set  at  one  time.   The  B command lets you set specific
+       breakpoints, while the b command automatically  picks  the
+       first un-set breakpoint.
+
+       This  example  sets  breakpoint  3  at a specific address:
+       0xD0125098 3 B Normally, you will just set a breakpoint at
+       a  certain  address.   For  example:  read  b This sets an
+       instruction breakpoint at the beginning of the kernel read
+       routine, using the next available breakpoint number.  When
+       the specified address is executed (after exiting from  the
+       debugger),  you  enter  the debugger again, with a message
+       indicating which breakpoint was triggered.
+
+       Debugger command strings can be added  to  the  breakpoint
+       commands.   Enter  a  quoted  string of commands after the
+       address: read "stack" b which  is  used  as  a  series  of
+       debugger commands that are executed when the breakpoint is
+       triggered.  If there are several items in the string, sep-
+       arate  them  with  spaces: ie6unitdata_req "300 r/bio p" b
+       After these commands are executed, you  are  prompted  for
+
+                                                                7
+
+kdb(1M)                                                   kdb(1M)
+
+       debugger  commands,  as usual, unless the q (quit) command
+       is executed in the command string.
+
+       The bn command works like b  except  that  it  leaves  the
+       breakpoint  number on the value stack.  This is useful for
+       macros.
+
+       You can append breakpoint-type suffixes to the  breakpoint
+       commands  (B,  b,  and  bn).   By default, breakpoints are
+       instruction breakpoints, which trigger when the  specified
+       address  is  executed.   The suffixes cause breakpoints to
+       trigger on data  accesses  instead.   The  breakpoint-type
+       suffixes  are:  data  access breakpoint data modify break-
+       point instruction execution  breakpoint  --  this  is  the
+       default I/O port access
+
+       With  access  and  modify  breakpoints,  you  can also use
+       operand-size suffixes to control the size of  the  address
+       range that will trigger the breakpoint.  The default is /l
+       (4 bytes); you can also use /w (word) and /b (byte).  (See
+       the  discussion  of  suffixes  in  for  more information.)
+       These commands let you temporarily disable and re-enable a
+       breakpoint,  instead  of  clearing it with clrbrk and then
+       re-entering it later.  This is especially handy for break-
+       points  with  command  strings.  This command sets a trace
+       count for a breakpoint.  This causes the debugger to  just
+       print  a  message  and decrement the count when the break-
+       point is triggered,  instead  of  entering  the  debugger,
+       until  the  count  reaches zero.  Commands attached to the
+       breakpoint are not executed.  Use this command  to  deter-
+       mine the current breakpoint settings.  Each set breakpoint
+       is displayed with: the breakpoint number, the  address  in
+       hex,  the  symbolic  address,  the  current state, and the
+       type: 0: 0xD003907C(read) ON /i The possible  states  are:
+       set  and enabled set, but currently disabled un-set (these
+       breakpoints are not displayed by ?brk)
+
+       The possible types (in this example /i) are  the  same  as
+       the breakpoint-type suffixes described earlier.
+
+       If  a  breakpoint has a non-zero trace count, that is dis-
+       played after the breakpoint state.  If a breakpoint has  a
+       command  string,  it  is displayed at the end of the line.
+       For example, with a count of 5 and a  stack  command,  the
+       above  breakpoint would display as: 0: 0xD003907C(read) ON
+       0x5 /i "stack"
+
+SSiinnggllee--sstteeppppiinngg tthhrroouugghh iinnssttrruuccttiioonnss
+       You can use these  commands  for  single-stepping:  single
+       step  1  instruction single step [TOS] instructions; pop 1
+       single step 1  instruction  (passing  calls)  single  step
+       [TOS] instructions (passing calls); pop 1
+
+       s  and  ss single-step all instructions.  S and SS single-
+
+                                                                8
+
+kdb(1M)                                                   kdb(1M)
+
+       step all instructions except call instructions.   They  do
+       not  step  down  into the called routine, but instead skip
+       ahead to the return from the call, treating the whole sub-
+       routine sequence as a single instruction.
+
+BBrraanncchh--sstteeppppiinngg tthhrroouugghh iinnssttrruuccttiioonnss
+       Four  commands  are  available for branch-stepping: branch
+       step: execute until a branch is taken branch step  through
+       [TOS]  branches;  pop 1 show from-and to- address for last
+       branch taken as call but using long long  (8  bytes)  show
+       from- and to- address for last interrupt or exception
+
+       Some  advanced CPUs support a branch-stepping feature that
+       allows instruction execution to  proceed  until  the  next
+       jump  or call instruction which causes a branch in program
+       flow.  These commands  allow  use  of  this  feature  when
+       available.   On  CPUs that do not support branch-stepping,
+       these commands will not be active.
+
+EExxaammiinniinngg kkeerrnneell ddaattaa ssttrruuccttuurreess
+       The ps command shows information about each active process
+       in  the  system.   This  information includes process IDs,
+       flags, and command names, on one line, with an  additional
+       line per LightWeight Process (LWP) within the process with
+       LWP IDs, flags, states, and scheduling  information.   The
+       CPU  field  of  an LWP line is blank for non-running LWPs;
+       otherwise it is the CPU number on which that LWP  is  cur-
+       rently running.
+
+PPrriinnttiinngg kkeerrnneell ssttaacckk ttrraacceess
+       KDB  provides  the  following  commands  to look at kernel
+       stack traces: kernel stack trace for the  current  process
+       kernel stack trace for LWP [TOS]; pop 1 kernel stack trace
+       for process; pop 1 try kernel stack trace from [TOS];  pop
+       1 set maximum number of arguments in stack trace to [TOS];
+       pop 1 The argument to lstack can be  specified  either  as
+       the address of the LWP structure or -1 for the current LWP
+       for the given CPU.  (-1 lstack is equivalent to the  stack
+       command.)   tstack  is sometimes useful if lstack or stack
+       fail to give a full stack trace  for  some  reason.   (For
+       example, another CPU might be hung and fails to respond to
+       the stack-trace request.)  It  takes  a  single  argument,
+       which  is  a  stack  pointer value, and attempts to find a
+       potentially valid trace starting from some  stack  address
+       greater than or equal to that value.
+
+       The  output of stack, lstack and tstack have the same for-
+       mat.  A typical stack  trace  (for  the  current  process,
+       entered  using  D)  looks like this: (current) idle stack:
+       DEBUGGER ENTERED FROM USER REQUEST
+        kdcksysrq(D101FD40  D00DE624  81  20)........esp:FFFE9C94
+       ret:D008F592
+       *kdintr+0x186(1)...........................esp:FFFE9CD8
+       ret:D0011A3A  INTERRUPT  TO  devint0+0x78  from 8:D001218A
+
+                                                                9
+
+kdb(1M)                                                   kdb(1M)
+
+       (r0ptr:FFFE9CEC)
+          eax:       8 ebx:  -------  ecx:FFFFFFFF  edx:        8
+       efl:    246
+          esi:  -------  edi:  -------  esp:FFFE9D04 ebp: -------
+       regset: 0
+        idle(0  D00EDDD0   D106BC00).................esp:FFFE9D0C
+       ret:D006F11F                   *swtch(0                  0
+       0)..............................esp:FFFE9D40  ret:D002464C
+       >use_private+0xAB()  The  stack  trace  shows a history of
+       which routine called which other  routine,  up  until  the
+       point  the  debugger was entered (or in the case of a non-
+       current process, until the  process  was  context-switched
+       out).
+
+       The  most-recently-entered  routine  is shown on the first
+       line.  In the  example,  the  debugger  was  entered  from
+       kdcksysrq,  which, in turn, was called by kdintr; idle was
+       called from swtch, and so on.  The stack trace ends at the
+       point  the kernel was entered from user mode.  In the case
+       of a system process or an idle stack (as shown here) where
+       there  is  no  user mode, the stack trace ends at the top-
+       level routine (use_private in this case).  (An idle  stack
+       is  a  per-CPU private stack which is used when the CPU is
+       idle or is otherwise not running an LWP.)
+
+   RRoouuttiinnee ttrraaccee ffoorrmmaatt
+       The trace for each routine has four  parts:  its  address,
+       the  arguments passed to it, the value of the esp register
+       on entry to the routine,  and  its  return  address.   For
+       example:        kdcksysrq(D101FD40       D00DE624       81
+       20)........esp:FFFE9C94 ret:D008F592 The address that  was
+       called  usually  appears in symbolic form.  A routine name
+       may also include: This means the routine was called  indi-
+       rectly.   There  is  insufficient information in the stack
+       format to be 100% sure of the correctness of indirect call
+       traces.
+
+       Whenever  you see an asterisk in a stack trace, there is a
+       small chance that some part of the stack trace  from  that
+       point  on  is  incorrect.   The  offset  may mean that the
+       actual address called was somewhere past the start of  the
+       indicated routine.  This will most likely happen if a sub-
+       routine was declared static.  Since the debugger only  has
+       access  to  global symbols, it finds the nearest preceding
+       global symbol.
+
+       The offset may also mean that  the  exact  address  called
+       cannot  be determined.  The address displayed in this case
+       is the return address into this routine from  the  routine
+       it  called.   This will most likely happen if this routine
+       was called indirectly via a function pointer.   The  argu-
+       ments  passed  to the routine appear as a list of hex num-
+       bers, enclosed in parentheses.  Since the actual number of
+       arguments  passed  cannot  be determined, KDB assumes that
+
+                                                               10
+
+kdb(1M)                                                   kdb(1M)
+
+       each routine has no more than a certain maximum number  of
+       arguments.  The  default  is  three, but you can change it
+       with the stackargs command.  If a  routine  actually  has:
+       Only  the  first  ones  are  real.  In rare cases when the
+       debugger can deduce that a routine  could  not  have  been
+       called with the maximum number of arguments (because there
+       is not enough room on the stack),  it  displays  only  the
+       maximum  possible number of arguments.  In the above stack
+       trace, the call to kdintr is shown with only one  argument
+       (1).   Increase the number with stackargs and then display
+       the stack trace again, or dump out a portion of the  stack
+       directly  in  order  to see all the arguments (continue to
+       for details).  The value of the esp register on  entry  to
+       the routine is shown as a hex number following esp:.  This
+       value can be used as a frame pointer to  access  arguments
+       and  local  variables for the routine.  The following dia-
+       gram illustrates the stack layout:          |        .   .
+       .          |          +-------------------------+
+        [ESP]   +   8    |   argument   2                |
+       +-------------------------+
+        [ESP]  +   4    |   argument   1                |
+       +-------------------------+
+        [ESP]    --->   |   return   address            |
+       +-------------------------+
+        [ESP]  -  4   |  local  or   saved   register   |
+       +-------------------------+
+        [ESP]   -   8    |   local  or  saved  register  |
+       +-------------------------+            |         .   .   .
+       |  For  example, if you want to see all the arguments to a
+       routine that takes five arguments, find its esp value from
+       the  stack trace -- say 0xD2473CD4 -- and enter these com-
+       mands: 0xD2473CD4 4 + 5 4  *  dump  or,  more  succinctly:
+       0xD2473CD8  14  dump This is the address within its caller
+       to which the routine returns.  It is shown as a hex number
+       following ret:.
+
+   TTrraapp ffrraammeess
+       In  addition  to lines for each routine, stack traces will
+       often include trap frames created  when  an  event  causes
+       suspension of current processing, saving all register val-
+       ues on the stack.  Typical events are interrupts, hardware
+       exceptions, and system calls.  Trap frames are three lines
+       each, starting with  an  uppercase,  non-indented  keyword
+       (like  INTERRUPT  in  the following example). The next two
+       lines contain the values of the registers at the time  the
+       event  occurred.  The first line of a trap frame is in one
+       of  these  formats:   INTERRUPT   TO   devint0+0x78   from
+       8:D001218A   (r0ptr:E0000D84)  TRAP  0x1  from  8:D001218A
+       (r0ptr:E0000D94)  TRAP  EVENT  from   17:830676D   (r0ptr:
+       E0000D94,  ss:esp: 1F:80468E8) SYSTEM CALL from 17:830676D
+       (r0ptr:  E0000D94,  ss:esp:   1F:80468E8)   SIGNAL    from
+       17:830676D  (r0ptr:  E0000D94,  ss:esp:  1F:80468E8) These
+       represent interrupts, hardware exception traps, trap event
+       processing,  system  calls,  and  returns  from  old-style
+
+                                                               11
+
+kdb(1M)                                                   kdb(1M)
+
+       signal handlers, respectively.  The number after  TRAP  is
+       the hardware exception number; the most common are 0x1 for
+       breakpoint  traps  and   0xE   for   page   faults.    See
+       /usr/include/sys/trap.h for a full list of trap numbers.
+
+       The  colon-separated  numbers  after the word from are the
+       segment and offset (cs and eip)  at  the  time  the  event
+       occurred.   The values in parentheses show the r0ptr value
+       for the beginning of the  trap  frame  (for  example,  the
+       address     of     the    saved    eax    register;    see
+       /usr/include/sys/reg.h for the layout of saved registers),
+       and  the user stack pointer segment and offset at the time
+       the event occurred.  The user stack  information  is  only
+       displayed  if the trap frame is for an entry into the ker-
+       nel from user mode.
+
+RReesseettttiinngg tthhee nnuummeerriicc bbaassee
+       If you do not start numbers with 0o (for octal) or 0x (for
+       hex),  KDB  assumes  they are in the default numeric base.
+       Initially, the defaults for both input and output are  set
+       to  16  (hex),  but  you  can use these commands to change
+       them: set default input base to [TOS]; pop 1  set  default
+       input  base  to  2 set default input base to 8 set default
+       input base to 10 set default input base to 16  set  output
+       base  to [TOS]; pop 1 set output base to 8 set output base
+       to 10 set output base to 16
+
+CCoonnvveerrttiinngg aaddddrreessss ssppaacceess
+       Use these commands to convert a virtual address to a phys-
+       ical  address:  convert  kernel  virtual  address [TOS] to
+       physical convert user proc number [TOS] address [TOS-1] to
+       physical; pop 1
+
+PPeerrffoorrmmiinngg ccoonnddiittiioonnaall eexxeeccuuttiioonn
+       KDB  provides  two  commands for conditional execution: if
+       [TOS] = 0, skip to endif; pop 1 end scope of then command
+
+       In other words, a sequence like: condition  then  commands
+       endif  executes  commands  if and only if the condition is
+       true (non-zero).
+
+       These are mostly useful for macros and breakpoint  command
+       strings.   For  example,  imagine you wish to set a break-
+       point for when the function inb is called with 2E  as  its
+       first  argument.  Use the following command: inb "%esp 4 +
+       r 2E != then q" b This  sets  a  breakpoint  at  inb,  but
+       enters the debugger only if the content of %esp+4 is equal
+       to 2E.  This  works  because  esp  points  to  the  return
+       address  on  the stack, and the longword after that is the
+       first argument.  For the second argument, you would add  8
+       instead of 4 (see for details of the stack layout).
+
+       If  you do a ?brk command, the display for that breakpoint
+       includes   the   string   of   debugger    commands:    0:
+
+                                                               12
+
+kdb(1M)                                                   kdb(1M)
+
+       0xD003907C(inb) ON  /i "%esp 4 + r 2E != then q"
+
+CCaalllliinngg aa kkeerrnneell ffuunnccttiioonn
+       Use  these  commands to call an arbitrary kernel function:
+       call the function at address [TOS-1] with [TOS] arguments,
+       given by: [TOS-([TOS]+1)],...[TOS-2]; pop [TOS]+2 call the
+       function at address [TOS-1] with  [TOS]  arguments,  given
+       by:  [TOS-([TOS]+1)],...[TOS-2];  pop [TOS]+2 as call, but
+       using long long arguments
+
+       Use the call command to call a function  which  returns  a
+       value;  this  value  will  be the [TOS] value on the value
+       stack after the call command.  Use the vcall  (void  call)
+       command to call a function with no return value.
+
+       To  call  psignal  with two arguments, the current process
+       and 9, type: curproc r 9 psignal 2 call  curproc  r  gives
+       the  value of the current process, the first argument, and
+       9 is the second argument.  psignal is converted  into  the
+       address at which that function can be called, and 2 speci-
+       fies the number of arguments to pass to psignal.
+
+PPeerrffoorrmmiinngg aa ssyysstteemm dduummpp
+       Some systems support dumping all of memory to disk with  a
+       sysdump  kernel function.  For these systems, you can take
+       a dump by calling this function with the command:  sysdump
+       0  vcall  All of memory and the current state is dumped to
+       the dump partition on the disk, so you can  use  to  do  a
+       postmortem.
+
+MMiisscceellllaanneeoouuss ccoommmmaannddss
+       Some  miscellaneous  KDB commands are: Print kernel symbol
+       with address closest to [TOS];  pop  1  Disassemble  [TOS]
+       instructions  starting at address [TOS-1]; pop 2 Turn ver-
+       bose mode off Turn  verbose  mode  on  Switch  to  another
+       debugger on next debugger entry Print a help message Print
+       a help message (same as help) Print a list of all debugger
+       commands
+
+WWrriittiinngg mmaaccrrooss
+       KDB provides the ability to assign a string of commands to
+       a single new command name, called a macro.  When a  debug-
+       ging task involves repeating the same set of commands many
+       times (possibly doing other things in between), it is eas-
+       ier to define a macro and use it in place of the whole set
+       of commands.
+
+       These commands are used for macros: define macro  as  com-
+       mand  string  [TOS];  pop 1 print [TOS] in raw form; pop 1
+       print    [TOS]    values     in     raw     form,     from
+       [TOS-[TOS]],...[TOS-1];  pop [TOS]+1 show values of debug-
+       ger macros and variables
+
+                                                               13
+
+kdb(1M)                                                   kdb(1M)
+
+   EExxaammpplleess
+       Use this command to define macros.  For example:  "curproc
+       r  16 - p" :: newaddr Note that macro names share the same
+       namespace as debugger variables and kernel global symbols.
+       These  commands  are provided to aid in writing macros.  P
+       and PP print values in raw form,  without  the  embellish-
+       ments  provided  by  the  p command, such as quotes around
+       strings and automatic newlines  after  each  value.   This
+       allows complete control over formatting.  For example, the
+       input: "The value of curproc is " curproc  r  ".\n"  3  PP
+       might   produce  the  output:  The  value  of  curproc  is
+       0xD1011E80 To put something like this into a  macro  means
+       putting strings inside strings, so you will have to escape
+       the inner quotes: "\"The value of curproc is \" curproc  r
+       \".\n\"  3  PP"  ::  pcurproc Use this command to show the
+       macro definitions.  Macros are shown in this format:  name
+       ::  value Note that the vars command also shows the values
+       of variables, in this format: name = value
+
+OOuuttppuutt ccoonnttrrooll
+       Some KDB commands send a  great  deal  of  output  to  the
+       screen.   There  are  various ways you can slow the output
+       down if necessary: XON/XOFF  flow  control  is  supported,
+       using  the  Q/S keys.  Output may be interrupted (and com-
+       mand execution aborted) with either the  or C key.  Output
+       is automatically paginated.  That is, after each screenful
+       of output, a [MORE]--- prompt is output, and KDB waits for
+       an  input  key before continuing.  The number of lines per
+       screen is controlled by  the  db_nlines  global  variable.
+       You  can  change  the number of lines to, for example, 60,
+       with: 60 db_nlines w
+
+EExxeeccuuttiinngg ddeebbuuggggeerr ccoommmmaannddss aatt bboooott ttiimmee
+       KDB allows you to specify an arbitrary command sequence to
+       be  executed  at  boot time, when the system is coming up.
+       You can do this by writing  the  commands  into  the  file
+       /stand/kdb.rc, then rebuilding the kernel with
+
+       The  following  line  needs to be added to the /stand/boot
+       file: files+=kdb.rc See for more information.
+
+       At boot time, after the (possibly blank)  string  is  exe-
+       cuted, the system enters KDB at the kdb>> prompt, unless a
+       q command was executed as part of the string -- just  like
+       conditional  breakpoints.   (A non-existent or zero-length
+       kdb.rc file acts as a single q  command,  so  KDB  is  not
+       entered.)
+
+UUssiinngg aa sseerriiaall tteerrmmiinnaall
+       KDB can be used from a serial terminal as well as the con-
+       sole.  This is particularly useful if you  are  trying  to
+       debug  a  scenario that involves graphics or multiple vir-
+       tual terminals on the console.
+
+                                                               14
+
+kdb(1M)                                                   kdb(1M)
+
+       Before you attempt to use the debugger from a serial  ter-
+       minal,  make  sure there is a or running on it.  It may be
+       either logged in or waiting at  the  login  prompt.   This
+       ensures  that the baud rate and other parameters are prop-
+       erly set.
+
+       You can switch from the console to a terminal,  and  vice-
+       versa,   with   the  newterm  command.   This  immediately
+       switches you to the new terminal.  The debugger  continues
+       to use this terminal until you give it the newterm command
+       again, even if you exit and re-enter KDB.
+
+       The newterm command takes two arguments.  The first  argu-
+       ment  is  a  string which is the device name of a console-
+       capable device driver (for  example,  iasy).   The  second
+       argument  is the unit number of the actual device (usually
+       the minor device number) you wish to use.
+
+       For example the following command switches control of  KDB
+       to  a  terminal on the first serial port: "iasy" 0 newterm
+       Likewise, the following command returns control of KDB  to
+       the  console  (where  kd  is  device  name  of the console
+       driver): "kd" 0 newterm
+
+       Once you exit from KDB,  you  can  invoke  it  again  from
+       either the console or a serial terminal.  Use the kdb com-
+       mand to invoke the debugger from a terminal; D only  works
+       from the console.  Regardless of where you invoke KDB, its
+       I/O appears where you directed it during the last KDB ses-
+       sion.
+
+EEnntteerriinngg tthhee ddeebbuuggggeerr ffrroomm aa ddrriivveerr
+       If  you  are  debugging a device driver or another part of
+       the kernel, you can directly invoke the kernel debugger by
+       including  this  code  in  your driver: #include <sys/xde-
+       bug.h>
+
+       (*cdebugger)  (DR_OTHER,  NO_FRAME);  DR_OTHER  tells  the
+       debugger  that  the  reason  for  entering  is other.  See
+       sys/xdebug.h for a list of other reason codes.
+
+       Note that this mechanism  cannot  be  used  for  debugging
+       early  kernel  startup code or driver init routines, since
+       the  debugger  cannot  be  used  until  its  init  routine
+       (kdb_init) has been called.
+
+CCoonnffiigguurriinngg KKDDBB
+       The  Kernel  Debugger (KDB) can be configured two ways: it
+       can be enabled at all times, or it can be enabled only  on
+       demand.  If  demand  mode  is chosen, KDB must be manually
+       enabled before it can be invoked.
+
+   EEnnaabblliinngg KKDDBB
+       KDB can be invoked by a console key sequence, by a  system
+
+                                                               15
+
+kdb(1M)                                                   kdb(1M)
+
+       crash,  or  by  the  kdb  command. However, it can only be
+       invoked if it is enabled. KDB is enabled when it is loaded
+       into the kernel.
+
+       If you choose to enable it always, KDB will be loaded into
+       the kernel at all times and can be invoked at any time.
+
+       If you choose to enable it on demand, KDB  must  first  be
+       loaded  with  the modadmin -l kdb command before it can be
+       invoked.  KDB can be unloaded with  the  modadmin  -U  kdb
+       command.
+
+       The advantage to having KDB always enabled is that it will
+       be ready even for unanticipated use. The  disadvantage  is
+       that  whenever  it  is enabled, KDB consumes about 250K of
+       main memory.  Most of this memory is used for  the  kernel
+       symbol  table,  which  is locked in memory whenever KDB is
+       loaded, unless the PAGESYMTAB tunable is set to  2.   This
+       will affect system performance on systems with small memo-
+       ries.
+
+SSeeccuurriittyy cchheecckkss
+       KDB also provides optional security checks which  prohibit
+       an unauthorized user from invoking the kernel debugger. If
+       you do not turn  on  these  security  checks,  the  kernel
+       debugger  can  be  entered from a key sequence on the con-
+       sole, presenting a potential security breach if your  con-
+       sole is not physically secure.
+
+   DDiissaabblliinngg tthhee DD sseeqquueennccee
+       If  the  security  check is not enabled, a user can type a
+       key sequence at the console without having to log into the
+       computer and enter the kernel debugger. Unless the console
+       is in a room that is locked or accessible to only  a  con-
+       trolled  group  of  people,  this security check should be
+       enabled to prevent a security breach.   KDB  can  only  be
+       called  from  the console using D if the kdb_security flag
+       was set to 0 when the kernel was built.  To disable the  D
+       key   sequence,  reset  the  kdb_security  flag  by  using
+       /etc/conf/bin/idtune to change the KDBSECURITY tunable  to
+       1.   Note  that  the  flag setting does not affect the kdb
+       command.  In order to enter the debugger  after  disabling
+       this  key  sequence,  the  user must log into the computer
+       using a privileged account and then type the kdb  command.
+
+CCoommmmaanndd ssuummmmaarryy
+       compute  [TOS-1]  +  [TOS];  pop  2;  push  result compute
+       [TOS-1] - [TOS]; pop 2;  push  result  compute  [TOS-1]  *
+       [TOS];  pop 2; push result compute [TOS-1] / [TOS]; pop 2;
+       push result compute [TOS-1] % [TOS]; pop  2;  push  result
+       compute  [TOS-1]  >>  [TOS];  pop  2;  push result compute
+       [TOS-1] << [TOS]; pop 2; push  result  compute  [TOS-1]  <
+       [TOS];  pop 2; push result compute [TOS-1] > [TOS]; pop 2;
+       push result compute [TOS-1] == [TOS]; pop 2;  push  result
+
+                                                               16
+
+kdb(1M)                                                   kdb(1M)
+
+       compute  [TOS-1]  !=  [TOS];  pop  2;  push result compute
+       [TOS-1] & [TOS]; pop 2;  push  result  compute  [TOS-1]  |
+       [TOS];  pop 2; push result compute [TOS-1] ^ [TOS]; pop 2;
+       push result compute [TOS-1] && [TOS]; pop 2;  push  result
+       compute [TOS-1] || [TOS]; pop 2; push result replace [TOS]
+       with ![TOS] replace [TOS] with [TOS]  +  1  replace  [TOS]
+       with  [TOS] - 1 push the contents of the 32-, 16- or 8-bit
+       register.  register can be any of the following:
+
+       eax, ebx, ecx, edx, esi, edi, ebp, esp, eip, efl
+
+       cs, ds, es, fs, gs, ax, bx, cx, dx, si, di, bp, sp, ip, fl
+
+       al,  ah,  bl, bh, cl, ch, dl, dh push the trap number push
+       the interrupt priority level store  [TOS]  in  [variable];
+       pop  1 define [macro] as command string [TOS]; pop 1 print
+       a help message (same as help) show current breakpoint set-
+       tings Either of the following: set breakpoint number [TOS]
+       at address [TOS-1]; pop 2 set breakpoint number  [TOS]  at
+       address  [TOS-2] with command string [TOS-1]; pop 3 Either
+       of the following: set first free breakpoint address [TOS];
+       pop  1  set  first free breakpoint at address [TOS-1] with
+       command string [TOS]; pop 2 set breakpoint  (like  b)  and
+       push  breakpoint  number  disable breakpoint number [TOS];
+       pop 1 re-enable breakpoint number [TOS]; pop 1 disable all
+       breakpoints  re-enable  all  (disabled) breakpoints branch
+       step: execute until a branch is taken branch step  through
+       [TOS] branches; pop 1 call the function at address [TOS-1]
+       with [TOS] arguments, given by [TOS-([TOS]+1)],...[TOS-2];
+       pop  [TOS]+2;  push function return value clear all break-
+       points for address [TOS]; pop 1  clear  breakpoint  number
+       [TOS];  pop 1 clear all breakpoints pop all values print a
+       list of all debugger commands push the contents of  regis-
+       ter  cr0  push  the contents of register cr2 push the con-
+       tents of register cr3 push the contents  of  register  cr4
+       push  the  current breakpoint number, or -1 if not entered
+       from a breakpoint disassemble [TOS] instructions  starting
+       at  address  [TOS-1];  pop  2 show [TOS] bytes starting at
+       virtual address [TOS-1]; pop 2 push  [TOS]  end  scope  of
+       then  command  print kernel symbol with address closest to
+       [TOS]; pop 1 show [TOS-1] formatted items at [TOS-2]  with
+       format [TOS]; pop 3 print a help message set default input
+       base to [TOS]; pop 1 set  default  input  base  to  2  set
+       default  input base to 10 set default input base to 16 set
+       default input base to 8 convert kernel virtual addr  [TOS]
+       to  physical  show  from-  and to- address for last branch
+       taken show from- and to- address  for  last  interrupt  or
+       exception  kernel  stack trace for LWP [TOS]; pop 1 switch
+       KDB console I/O to device [TOS-1] unit number [TOS]; pop 2
+       switch  to  another  debugger  on next debugger entry turn
+       verbose mode off set output base to [TOS]; pop 1 set  out-
+       put  base to 10 set output base to 16 set output base to 8
+       print [TOS] in raw form; pop 1  print  [TOS]  print  [TOS]
+       values  in  raw  form,  from  [TOS-[TOS]],...[TOS-1];  pop
+
+                                                               17
+
+kdb(1M)                                                   kdb(1M)
+
+       [TOS]+1 pop 1 value show process information kernel  stack
+       trace  for  process;  pop 1 exit from the debugger replace
+       [TOS] with the value at virtual address [TOS] single  step
+       1  instruction  (passing  calls) single step 1 instruction
+       single step [TOS] instructions (passing calls); pop 1 sin-
+       gle  step [TOS] instructions; pop 1 kernel stack trace for
+       the current process set the maximum number of arguments in
+       the  stack  trace  to [TOS]; pop 1 print all values on the
+       stack if [TOS] = 0, skip to endif; pop  1  set  breakpoint
+       number  [TOS]  trace  count  to  [TOS-1]; pop 2 try kernel
+       stack trace from [TOS]; pop 1 convert user process  number
+       [TOS]  address  [TOS-1]  to physical; pop 1 show values of
+       debugger variables call the function  at  address  [TOS-1]
+       with [TOS] arguments, given by [TOS-([TOS]+1)],...[TOS-2];
+       pop [TOS]+2 turn verbose mode on write [TOS-1]  into  vir-
+       tual address [TOS]; pop 2 write [TOS] into register; pop 1
+       write [TOS] into the trap number pseudo-register; pop 1
+
+   CCoommmmaanndd ssuuffffiixxeess
+       byte word (2 bytes) long (4 bytes) -- this is the  default
+       long  long (8 bytes) kernel virtual -- this is the default
+       physical I/O port user process number n virtual CPU number
+       n  -- valid only for multiprocessors CPU number n (same as
+       cpun) -- valid only for multiprocessors register set  num-
+       ber  n  data  access  breakpoint  data  modify  breakpoint
+       instruction execution breakpoint -- this is the default
+
+RReeffeerreenncceess
+NNoottiicceess
+       To reboot from the prompt, enter the following: kdb>> 1  0
+       mdboot  2  call  Loading  dynamically  does not enable the
+       Debug Extension bit  of  cr4  on  Pentium  processors  and
+       higher. Use statically linked kdb on these processors.  On
+       some multi-processor  systems,  the  keyboard  may  become
+       irrecoverably  corrupted  while is running. The only solu-
+       tion to this is to press the restart button  on  the  com-
+       puter.  This command has been updated to handle Intel Pen-
+       tium III Streaming SIMD instructions;  see for more infor-
+       mation.
+
+                                                               18
+

@@ -1,0 +1,90 @@
+
+
+devio(1)                                                 devio(1)
+
+SSyynnooppssiiss
+       devio  -[I|O]  pathname [-p -v -h 'header key (50 bytes)']
+       [-G file]      [-M message] [-b]
+
+DDeessccrriippttiioonn
+       The devio command is used for writing/reading data to/from
+       removable media (for example, floppies or tapes).
+
+       In  output  mode  (-O),  it reads its stdin and writes the
+       data to the device named by pathname.
+
+       In input mode (-I), it reads the  device  pathname  (which
+       must  contain  the  output of a previous devio -O command)
+       and writes the data to its stdout.
+
+       If the data will not fit on a single volume, devio prompts
+       the  user for a new volume and waits for a response before
+       continuing.
+
+   CCoommmmaanndd ooppttiioonnss
+       By default, devio will print a prompt for the first volume
+       and  wait  for  a  response before beginning.  With the -p
+       option, this first prompt is skipped.  (Subsequent volumes
+       will  be prompted for if necessary.)  The -v option causes
+       devio to operate in verbose mode.  A '.'  is  printed  for
+       every  4096 bytes, and some totals information at the end.
+       All verbose output is to stderr.  The argument to  the  -h
+       option is an arbitrary string (use quoting if necessary to
+       prevent the shell from interpreting  any  of  the  string)
+       which  devio  uses  as  a label for each of the volumes it
+       processes.  If the -h option is used in output mode  (-O),
+       then the same argument must be provided to -h when reading
+       the data back  in  input  mode  (-I).   Applications  that
+       invoke  devio  can use the -h option to ascertain that the
+       volume inserted  by  the  user  does  indeed  contain  the
+       expected  data.  This option is intended for use by front-
+       end or application programs that invoke devio.  If  you're
+       running  devio at the shell level, you probably won't need
+       this option.  The -G option allows a  program  to  specify
+       file  as  the  interface  through  which  devio writes the
+       prompts to the user's input.  By default, /dev/tty is  the
+       interface.   However, in some situations (such as graphics
+       application  environments),  /dev/tty  is  not  available.
+       Therefore, an alternative interface, such as a pseudo-tty,
+       may be needed.  Define a message  to  use  when  switching
+       media.   You  can  use  this  option to define the message
+       printed when you reach the end of the medium.  One %d  can
+       be  placed  in message to print the sequence number of the
+       next medium needed to continue.  message may contain  sup-
+       plementary  code  set  characters.   Batch  mode.   The -b
+       option is typically used when invoking devio from a  batch
+       or  at job.  It prevents all prompting from occurring.  If
+       the data to be processed needs more than one volume, devio
+       will   fail  rather  than  prompt  for  the  next  volume.
+
+                                                                1
+
+devio(1)                                                 devio(1)
+
+       Although the primary intent is for the  pathname  argument
+       to be a device, it may also be a regular file.  If so, the
+       data will simply be written to (read from) the file,  with
+       no  prompting for subsequent volumes.  (The prompt for the
+       first volume is still done if the -p option is not  used.)
+
+EExxaammpplleess
+       The cpio command already has this media-spanning-prompting
+       capability built into it, making it unnecessary to pipe it
+       through  devio.   But if there is any other processing you
+       want to do to the cpio output before  putting  it  on  the
+       media  (for example, compression or encryption), devio may
+       be necessary.  We will use compression as an example:
+
+       find . -print | cpio -oc | compress | devio -O /dev/rdsk/f0t -vp -h "compressed cpio archive"
+
+       This will create a cpio archive of everything in the  cur-
+       rent  directory,  compress  it, and write it to the floppy
+       driver, prompting for new floppies as needed.
+
+       To restore the archive:
+       devio -I /dev/rdsk/f0t -pv -h "compressed cpio archive" | zcat | cpio -idum
+
+RReeffeerreenncceess
+
+                                                                2
+

@@ -1,0 +1,199 @@
+
+
+pfmt(3C)                                                 pfmt(3C)
+
+SSyynnooppssiiss
+       #include <pfmt.h>
+
+       int  pfmt(FILE *stream, long flags, char *format, . . . /*
+       args */); #include <stdarg.h> #include <pfmt.h>
+
+       int vpfmt(FILE *stream, long flags, char *format,  va_list
+       ap);
+
+DDeessccrriippttiioonn
+   ppffmmtt
+       pfmt  uses  a format string for printf style formatting of
+       args.  The output is displayed on stream.   pfmt  encapsu-
+       lates the output in the standard error message format.
+
+       If the printf format string is to be retrieved from a mes-
+       sage database, the format argument must have the following
+       structure: [[catalog]:[msgnum]:]defmsg.
+
+       defmsg can only appear alone if flags include MM_NOGET.
+
+       catalog  indicates  the message database that contains the
+       localized version of the format string.  catalog  must  be
+       limited  to  14  characters.   These  characters  must  be
+       selected from a set of all characters values, excluding \0
+       (null) and the ASCII codes for / (slash) and : (colon).
+
+       msgnum  must be a positive number that indicates the index
+       of the string into the message database.
+
+       If catalog does not exist in the locale (specified by  the
+       last  call  to  setlocale  using the LC_ALL or LC_MESSAGES
+       categories), or if the message number is  out  of  bounds,
+       pfmt  attempts  to retrieve the message from the C locale.
+       If this second retrieval fails, pfmt uses the defmsg  part
+       of the format argument.
+
+       If  catalog  is  omitted,  pfmt  attempts  to retrieve the
+       string from the default catalog specified by the last call
+       to setcat.  In this case, the format argument has the fol-
+       lowing structure: msgnum:defmsg.
+
+       pfmt outputs Message not found!! . . .
+
+       as the format string if:
+
+       catalog is not a valid catalog name as  defined  above  no
+       catalog  is  specified  (either  explicitly or via setcat)
+       msgnum is not a  positive  number,  no  message  could  be
+       retrieved and defmsg was omitted
+
+       The  flags  determine the type of output (that is, whether
+       the format should be interpreted as is or encapsulated  in
+       the  standard  message  format), and the access to message
+
+                                                                1
+
+pfmt(3C)                                                 pfmt(3C)
+
+       catalogs to retrieve a localized version of format.
+
+       The flags are composed of several groups, and can take the
+       following values (one from each group):
+
+       do  not  use the standard message format, interpret format
+       as a printf format.  Only  catalog  access  control  flags
+       should  be  specified if MM_NOSTD is used; all other flags
+       will be ignored.  output using the standard message format
+       (default,  value  0).  do not retrieve a localized version
+       of format.  In this case, only the defmsg part of the for-
+       mat is specified.  retrieve a localized version of format,
+       from the catalog, using msgnum as the index and defmsg  as
+       the  default  message  (default,  value  0).   generates a
+       localized version of HALT.  generates a localized  version
+       of  ERROR  (default, value 0).  generates a localized ver-
+       sion of WARNING.  generates a localized version of INFO.
+
+       Additional severities can be defined.   Add-on  severities
+       can  be defined with number-string pairs with numeric val-
+       ues from the range [5-255], using The numeric  value  ORed
+       with other flags will generate the specified severity.
+
+       If the severity is not defined, pfmt uses the string SEV=N
+       where N is replaced by the integer severity  value  passed
+       in flags.
+
+       Multiple  severities  passed in flags will not be detected
+       as an error.  Any combination of severities will be summed
+       and  the  numeric value will cause the display of either a
+       severity string (if defined) or the string SEV=N (if unde-
+       fined).   specifies an action message.  Any severity value
+       is superseded and replaced by a localized  version  of  TO
+       FIX.
+
+   SSttaannddaarrdd eerrrroorr mmeessssaaggee ffoorrmmaatt
+       pfmt  displays  error  messages  in  the following format:
+       label: severity: text
+
+       If no label was defined by a call to setlabel, the message
+       is displayed in the format: severity: text
+
+       If  pfmt is called twice to display an error message and a
+       helpful action or recovery message, the  output  can  look
+       like: label: severity: text label: TO FIX: text
+
+   vvppffmmtt
+       vpfmt  is  the  same  as pfmt except that instead of being
+       called with a variable number of arguments, it  is  called
+       with  an  argument  list as defined by the stdarg.h header
+       file.
+
+       The stdarg.h header file defines the type  va_list  and  a
+       set  of  macros  for advancing through a list of arguments
+
+                                                                2
+
+pfmt(3C)                                                 pfmt(3C)
+
+       whose number and types may vary.  The argument ap to vpfmt
+       is  of  type  va_list.   This  argument  is  used with the
+       stdarg.h header file macros va_start,  va_arg  and  va_end
+       [see  va_start,  va_arg,  and va_end in The USAGE sections
+       below show their use.
+
+       The macro va_alist is used as  the  parameter  list  in  a
+       function definition as in the function called error in the
+       example below.  The macro va_start(ap, )
+
+       where ap is of type va_list, must  be  called  before  any
+       attempt  to  traverse and access unnamed arguments.  Calls
+       to va_arg(ap, atype)
+
+       traverse the argument  list.   Each  execution  of  va_arg
+       expands  to  an  expression with the value and type of the
+       next argument in the list ap, which  is  the  same  object
+       initialized  by  va_start.  The argument atype is the type
+       that the returned argument is expected to be.
+
+       The va_end(ap)
+
+       macro must be invoked when all desired arguments have been
+       accessed.  [The argument list in ap can be traversed again
+       if va_start is called again after va_end.]  In the example
+       below,  va_arg  is  executed  first to retrieve the format
+       string passed to error.  The  remaining  error  arguments,
+       arg1,  arg2, . . ., are given to vpfmt in the argument ap.
+
+   RReettuurrnn vvaalluueess
+       On success, pfmt and vpfmt  return  the  number  of  bytes
+       transmitted.  On failure, they return a negative value:
+
+   EErrrroorrss
+       write error to stream
+
+UUssaaggee
+   ppffmmtt eexxaammppllee 11
+       setlabel("UX:test"); pfmt(stderr, MM_ERROR, "test:2:Cannot
+       open file: %s\n",
+         strerror(errno));
+
+       displays the message: UX:test: ERROR: Cannot open file: No
+       such file or directory
+
+   ppffmmtt eexxaammppllee 22
+       setlabel("UX:test");      setcat("test");     pfmt(stderr,
+       MM_ERROR, ":10:Syntax error\n");  pfmt(stderr,  MM_ACTION,
+       ":55:Usage ...\n");
+
+       displays the message UX:test: ERROR: Syntax error UX:test:
+       TO FIX: Usage ...
+
+                                                                3
+
+pfmt(3C)                                                 pfmt(3C)
+
+   vvppffmmtt eexxaammppllee
+       The following demonstrates how  vpfmt  could  be  used  to
+       write   an   error  routine:  #include  <pfmt.h>  #include
+       <stdarg.h> . . .  /*
+        *   error should be called like
+        *         error(format, arg1, ...);
+        */ void error(const char *format, ...)
+
+       {
+           va_list ap;
+
+           va_start(ap, );
+           (void) vpfmt(stderr, MM_ERROR, format, ap);
+           va_end(ap);
+           (void) abort(); }
+
+RReeffeerreenncceess
+
+                                                                4
+

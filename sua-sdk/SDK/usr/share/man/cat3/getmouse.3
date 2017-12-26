@@ -1,0 +1,174 @@
+getmouse(3)                                                 getmouse(3)
+
+  ccuurrss__mmoouussee(())
+
+  NNAAMMEE
+
+    getmouse(), ungetmouse(), mousemask() - mouse interface through curses
+
+  SSYYNNOOPPSSIISS
+
+    #include <curses.h>
+
+    typedef unsigned long mmask_t;
+
+    typedef struct
+    {
+        short id;         /* ID to distinguish multiple devices */
+        int x, y, z;      /* event coordinates */
+        mmask_t bstate;   /* button state bits */
+    }
+    MEVENT;
+
+    int getmouse(MEVENT *event);
+    int ungetmouse(MEVENT *event);
+    mmask_t mousemask(mmask_t newmask, mmask_t *oldmask);
+    bool wenclose(WINDOW *win, int y, int x)
+    int mouseinterval(int erval)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    These functions provide an interface to mouse events from nnccuurrsseess Mouse
+    events are represented by KEY_MOUSE pseudo-key values in the _ww_gg_ee_tt_cc_hh(3)
+    input stream.
+
+    To make mouse events visible, use the _mm_oo_uu_ss_ee_mm_aa_ss_kk(3) function. This will set
+    the mouse events to be reported. By default, no mouse events are reported.
+    The function will return a mask to indicate which of the specified mouse
+    events can be reported; on complete failure it returns 0. If oldmask is
+    non-NULL, this function fills the indicated location with the previous
+    value of the given window's mouse event mask.
+
+    As a side effect, setting a zero mousemask may turn off the mouse pointer;
+    setting a nonzero mask may turn it on. Whether this happens is device-
+    dependent.
+
+    Here are the mouse event type masks:
+
+    NNaammee                       DDeessccrriippttiioonn
+
+    BUTTON1_PRESSED            mouse button 1 down
+
+    BUTTON1_RELEASED           mouse button 1 up
+
+    BUTTON1_CLICKED            mouse button 1 clicked
+
+    BUTTON1_DOUBLE_CLICKED     mouse button 1 double clicked
+
+    BUTTON1_TRIPLE_CLICKED     mouse button 1 triple clicked
+
+    BUTTON2_PRESSED            mouse button 2 down
+
+    BUTTON2_RELEASED           mouse button 2 up
+
+    BUTTON2_CLICKED            mouse button 2 clicked
+
+    BUTTON2_DOUBLE_CLICKED     mouse button 2 double clicked
+
+    BUTTON2_TRIPLE_CLICKED     mouse button 2 triple clicked
+
+    BUTTON3_PRESSED            mouse button 3 down
+
+    BUTTON3_RELEASED           mouse button 3 up
+
+    BUTTON3_CLICKED            mouse button 3 clicked
+
+    BUTTON3_DOUBLE_CLICKED     mouse button 3 double clicked
+
+    BUTTON3_TRIPLE_CLICKED     mouse button 3 triple clicked
+
+    BUTTON4_PRESSED            mouse button 4 down
+
+    BUTTON4_RELEASED           mouse button 4 up
+
+    BUTTON4_CLICKED            mouse button 4 clicked
+
+    BUTTON4_DOUBLE_CLICKED     mouse button 4 double clicked
+
+    BUTTON4_TRIPLE_CLICKED     mouse button 4 triple clicked
+
+    BUTTON_SHIFT               shift was down during button state change
+
+    BUTTON_CTRL                control was down during button state change
+
+    BUTTON_ALT                 alt was down during button state change
+
+    ALL_MOUSE_EVENTS           report all button state changes
+
+    REPORT_MOUSE_POSITION      report mouse movement
+
+    Once a class of mouse events have been made visible in a window, calling
+    the _ww_gg_ee_tt_cc_hh(3) function on that window may return KEY_MOUSE as an indicator
+    that a mouse event has been queued. To read the event data and pop the
+    event off the queue, call _gg_ee_tt_mm_oo_uu_ss_ee(3). This function will return OK if a
+    mouse event is actually visible in the given window, ERR otherwise. When
+    _gg_ee_tt_mm_oo_uu_ss_ee(3) returns OK, the data deposited as y and x in the event
+    structure coordinates will be screen-relative character-cell coordinates.
+    The returned state mask will have exactly one bit set to indicate the
+    event type.
+
+    The _uu_nn_gg_ee_tt_mm_oo_uu_ss_ee(3) function behaves analogously to _uu_nn_gg_ee_tt_cc_hh(3). It pushes a
+    KEY_MOUSE event onto the input queue, and associates with that event the
+    given state data and screen-relative character-cell coordinates.
+
+    The wweenncclloossee() function tests whether a given pair of screen-relative
+    character-cell coordinates is enclosed by a given window, returning TRUE
+    if it is and FALSE otherwise. It is useful for determining what subset of
+    the screen windows enclose the location of a mouse event.
+
+    The mmoouusseeiinntteerrvvaall() function sets the maximum time (in thousands of a
+    second) that can elapse between press and release events in order for them
+    to be recognized as a click. This function returns the previous interval
+    value. The default is one fifth of a second.
+
+    Note that mouse events will be ignored when input is in cooked mode, and
+    will cause an error beep when cooked mode is being simulated in a window
+    by a function such as _gg_ee_tt_ss_tt_rr(3) that expects a linefeed for input-loop
+    termination.
+
+  RREETTUURRNN VVAALLUUEE
+
+    All routines return the integer ERR upon failure or OK upon successful
+    completion.
+
+  PPOORRTTAABBIILLIITTYY
+
+    These calls were designed for nnccuurrsseess and are not found in SVr4 curses,
+    4.4BSD curses, or any other previous version of curses.
+
+    The feature macro NCURSES_MOUSE_VERSION is provided so the preprocessor
+    can be used to test whether these features are present (its value is 1).
+    NOTE: THIS INTERFACE IS EXPERIMENTAL AND IS SUBJECT TO CHANGE WITHOUT
+    NOTICE! If the interface is changed, the value of NCURSES_MOUSE_VERSION
+    will be incremented.
+
+     These functions are not provided under the Subsystem for UNIX-based Applications.
+    NCURSES_MOUSE_VERSION is set to 0. This reference page is provided for
+    information value only.
+
+    The order of the MMEEVVEENNTT structure members is not guaranteed. Additional
+    fields may be added to the structure in the future.
+
+    Under nnccuurrsseess these calls are implemented using either xxtteerrmm(1)'s built-in
+    mouse-tracking API or Alessandro Rubini's gpm server. If you are using
+    something other than xxtteerrmm(1) there is no gpm daemon running on your
+    machine, mouse events will not be visible to nnccuurrsseess (and the
+    _ww_mm_oo_uu_ss_ee_mm_aa_ss_kk(3) function will always return 0).
+
+    The zz member in the event structure is not presently used. It is intended
+    for use with touchscreens (which may be pressure-sensitive) or with 3D-
+    mice/trackballs/power gloves.
+
+  BBUUGGSS
+
+    Mouse events under xxtteerrmm(1) will not in fact be ignored during cooked
+    mode, if they have been enabled by wwmmoouusseemmaasskk(). Instead, the xterm mouse
+    report sequence will appear in the string read.
+
+    Mouse events under xterm will not be detected correctly in a window with
+    its keypad bit off.
+
+  SSEEEE AALLSSOO
+
+    _c_u_r_s_e_s(3)
+

@@ -1,0 +1,235 @@
+
+
+swremove(1M)                                         swremove(1M)
+
+SSyynnooppssiiss
+       /usr/sbin/swremove [-d | -r] [-p] [-v] [-C session_file]
+            [-f software_file] [-S session_file] [-t target_file]
+            [-x option=value] [-X option_file]
+            [software_selections] [@ target_selections]
+
+DDeessccrriippttiioonn
+       swremove removes the specified  software  selections  from
+       the   specified   target  selections  (for  example,  root
+       filesystems). When removing installed  software,  swremove
+       also  unconfigures the software before it is removed.  The
+       software is not unconfigured when removed from  an  alter-
+       nate  root  directory  since  it was not configured during
+       installation.  When removing available software (that  is,
+       within a depot), swremove also does not perform the uncon-
+       figuration task.  Selecting a bundle for removal does  not
+       always remove all filesets in that bundle. If a particular
+       fileset is required by another bundle, that fileset is not
+       removed.
+
+   RReemmoovviinngg ppaattcchheess oorr ppaattcchh rroollllbbaacckk ffiilleess
+       To  remove patch software, rollback files corresponding to
+       the patch must be available  for  rollback.   If  rollback
+       files do not exist, you must remove the base software mod-
+       ified by  the  patch.  Removing  the  base  software  also
+       removes the patches associated with that software.
+
+       To  commit  (make permanent) a patch, use the patch_commit
+       default option of to remove  the  files  saved  for  patch
+       rollback, or use the patch_save_files default option of to
+       not save them initially.
+
+   CCoonnttrrooll ssccrriippttss
+       When removing installed software, swremove  executes  sev-
+       eral  vendor-supplied  scripts  (if they exist) during the
+       removal of the software selections.
+
+       The following scripts are supported: Executed  during  the
+       analysis of each target selection.  It checks to make sure
+       the removal can be attempted.  If this  check  fails,  the
+       software  product  will  not be removed.  Executed immedi-
+       ately before the software  files  are  removed.   Executed
+       immediately  after  the  software files are removed.  Exe-
+       cuted during the unconfiguration of each target selection.
+       It  unconfigures  the host for the software (and the soft-
+       ware for the host).   preremove  and  postremove  are  not
+       intended  for  unconfiguration tasks.  They are to be used
+       for simple file management needs, such as restoring  files
+       moved  during  install.   unconfigure  allows  swremove to
+       unconfigure the hosts on which it has been running, before
+       removing the software specified.
+
+   OOppttiioonnss
+       swremove supports the following options: Saves the current
+
+                                                                1
+
+swremove(1M)                                         swremove(1M)
+
+       options and operands to session_file.   You  can  enter  a
+       relative  or absolute path with the filename.  The default
+       directory for session files is  $HOME/.sw/sessions/.   You
+       can recall a session file with the -S session_file option.
+       You can save session information with the -C  session_file
+       option.   In  addition,  swremove  automatically creates a
+       session file of the most recent session information called
+       $HOME/.sw/sessions/swremove.last.   Operates  on  a  depot
+       rather than installed software.  Reads the list  of  soft-
+       ware  selections  from  software_file,  instead  of (or in
+       addition to) the command line  operands  (given  by  soft-
+       ware_selections).   Previews  a remove task by running the
+       session through the analysis phase only.  Operates  on  an
+       alternate root rather than /.  unconfigure scripts are not
+       run when removing software from an alternate  root  direc-
+       tory.   Runs swremove with options and operands saved from
+       a previous session to session_file.  You can save  session
+       information  to  a  file  with the -C session_file option.
+       Reads the list  of  target  selections  from  target_file,
+       instead  of  (or in addition to) the command line operands
+       (given by target_selections).  Turns on verbose output  to
+       stdout.  (The  command  log  file  is not affected by this
+       option.) By default, verbose output is enabled for all the
+       SM  commands.  Sets the default option to value, and over-
+       rides the default  value  (or  a  value  in  an  alternate
+       option_file  specified  with  the -X option).  Multiple -x
+       options can be specified.  Reads the default  options  and
+       behaviors  from  option_file.   These  values override the
+       default values.  swremove supports  the  following  format
+       for  each  software  selection:  bundle[.product[.subprod-
+       uct][.fileset]][,version]      product[.subproduct][.file-
+       set][,version]  The  version component has the format: [,r
+       op revision][,a  op  arch][,v  op  vendor]  [,c  op  cate-
+       gory][,l=location][,fr op revision] [,fa op arch] Refer to
+       the manual page for more details  of  specifying  software
+       selections.   swremove  supports  the following format for
+       each target  selection:  [host][:][/directory]  The  :  is
+       required if both a host and directory are specified.
+
+   DDeeffaauulltt ooppttiioonnss
+       In  addition to the standard options, several SM behaviors
+       and policy options can be  changed  by  modifying  default
+       values    listed    in    the    master   defaults   file,
+       /usr/lib/sw/sys.defaults.  Refer to the  manual  page  for
+       information about each of these default options and how to
+       modify them.
+
+       The following options are supported by swremove:
+       agent_auto_exit                 logfile
+       agent_timeout_minutes           loglevel
+       auto_kernel_build               log_msgid
+       autoreboot                      mount_all_filesystems
+       autoselect_dependents           remove_empty_depot
+
+                                                                2
+
+swremove(1M)                                         swremove(1M)
+
+       autoselect_reference_bundles    rpc_binding_info
+       controller_source               rpc_timeout
+       distribution_target_directory   select_local
+       enforce_dependencies            software
+       enforce_scripts                 software_view
+       force_single_target             targets
+       installed_software_catalog      verbose
+       logdetail                       write_remote_files
+
+   SSeessssiioonn ffiilleess
+       Each invocation of swremove defines a removal session. The
+       invocation  options,  source  information, software selec-
+       tions, and target selections  before  the  actual  removal
+       task  starts.   This  lets you re-execute swremove even if
+       the session ends before the removal is complete.  Refer to
+       the manual page for further details.
+
+   SSooffttwwaarree aanndd ttaarrggeett lliissttss
+       swremove supports software and target selection from sepa-
+       rate input files.
+
+       You can specify software and target selection  lists  with
+       the  -f  and -t options. Software and targets specified in
+       these files are selected for operation instead of  (or  in
+       addition to) files listed on the command line.
+
+   EEnnvviirroonnmmeenntt vvaarriiaabblleess
+       Refer  to  the  manual page for details of the environment
+       variables that affect swremove and the control scripts.
+
+   SSiiggnnaallss
+       swremove catches the SIGQUIT and SIGINT signals.  If these
+       signals  are  received, swremove writes a message, sends a
+       Remote Procedure Call (RPC) to the agents to wrap up,  and
+       then exits.
+
+       Each  agent  will complete the removal task (if the execu-
+       tion phase has already started) before it wraps  up.  This
+       avoids leaving software in a corrupt state.
+
+FFiilleess
+       Contains  the user-specific default values for some or all
+       SM options. If this file does  not  exist,  SM  looks  for
+       user-specific  defaults  in  $HOME/.sw/defaults.  Contains
+       session files automatically saved by the SM  commands,  or
+       explicitly saved by the user.  Contains the master list of
+       current SM options with their  default  values.   Contains
+       all  of the configurable and non-configurable data for SM.
+       This directory is also the default location of log  files.
+       Contains  the  active  system-wide default values for some
+       (or all) SM  options.   The  Installed  Products  Database
+       (IPD):  a  catalog  of all products installed on a system.
+       The default location of a target software depot.
+
+                                                                3
+
+swremove(1M)                                         swremove(1M)
+
+EExxiitt ccooddeess
+       An interactive swremove session always returns 0.  A  non-
+       interactive  session returns: the software selections were
+       successfully removed the remove operation  failed  on  all
+       target selections the remove operation failed on some tar-
+       get selections
+
+DDiiaaggnnoossttiiccss
+       swremove writes to stdout, stderr,  and  to  specific  log
+       files.
+
+   SSttaannddaarrdd oouuttppuutt
+       swremove writes messages for significant events to stdout.
+       These include: a begin and end session message  selection,
+       analysis,  and  execution  task  messages  for each target
+       selection
+
+   SSttaannddaarrdd eerrrroorr
+       swremove writes messages for all WARNING and ERROR  condi-
+       tions to stderr.
+
+   LLoogg ffiilleess
+       Both interactive and non-interactive swremove sessions log
+       summary events at the host where the command was  invoked.
+       They  log  detailed events to the log file associated with
+       each target selection.
+
+       The two log files are: A non-interactive swremove  session
+       logs    all    stdout   and   stderr   messages   to   the
+       /var/adm/sw/swremove.log.  Similar messages are logged  by
+       an  interactive session.  The user can specify a different
+       log file by modifying the logfile default option.  A  pro-
+       cess  performs  the actual remove operation at each target
+       selection.  When removing installed software, swagent logs
+       messages to var/adm/sw/swagent.log beneath the root direc-
+       tory (for example, /  or  an  alternate  root  directory).
+       When  removing  available  software  (that  is,  within  a
+       depot), swagent logs messages to swagent.log  beneath  the
+       depot directory (for example, /var/spool/sw).
+
+RReeffeerreenncceess
+NNoottiicceess
+   AAuutthhoorr
+       swremove was developed by the Hewlett-Packard Company.
+
+EExxaammpplleess
+       To  preview  the  removal  of  the  C  and Pascal products
+       installed at the local host, enter: swremove -p cc  pascal
+       To  remove  the  C and Pascal products from several remote
+       hosts, enter: swremove cc  pascal  @  sysA  sysB  sysC  To
+       remove  a  particular version of VisionFS, enter: swremove
+       VisionFS,l/opt/VisionFS To remove the entire contents of a
+       local depot, enter: swremove -d \* @ /var/spool/sw
+
+                                                                4
+

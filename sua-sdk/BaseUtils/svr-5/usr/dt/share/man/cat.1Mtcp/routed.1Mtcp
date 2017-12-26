@@ -1,0 +1,432 @@
+
+
+routed(1Mtcp)                                       routed(1Mtcp)
+
+SSyynnooppssiiss
+       in.routed  [-sqdghmAt] [-T tracefile] [-F net[/mask][,met-
+       ric]] [-P parameter[=value]...]
+
+DDeessccrriippttiioonn
+       routed is a daemon invoked at boot time to manage the net-
+       work  routing  tables.  It uses Routing Information Proto-
+       col, RIPv1 (RFC 1058),  RIPv2  (RFC  1723),  and  Internet
+       Router  Discovery Protocol (RFC 1256) to maintain the ker-
+       nel routing table.  The RIPv1 protocol  is  based  on  the
+       reference 4.3BSD daemon.
+
+       routed listens on the UDP socket of the route service (see
+       for Routing Information Protocol packets, and  also  sends
+       and receives multicast Router Discovery ICMP messages.  If
+       the host is a router, routed periodically supplies  copies
+       of  its routing tables to any directly connected hosts and
+       networks.  It also advertises or solicits  default  routes
+       using Router Discovery ICMP messages.
+
+       When  routed  starts (or when a network interface is later
+       turned on), it finds out which of  the  system's  directly
+       connected interfaces are marked up.  routed then adds nec-
+       essary routes for the interfaces  to  the  kernel  routing
+       table.   Soon after it first starts, and provided there is
+       at least one interface on which RIP has not been disabled,
+       routed deletes all pre-existing non-static routes from the
+       kernel routing table.  Static routes in the kernel routing
+       table  are preserved and included in RIP responses if they
+       have a valid RIP metric (see
+
+       If more than one interface is present  (not  counting  the
+       loopback interface), routed checks if the host should for-
+       ward packets between the connected networks.  After trans-
+       mitting  a RIP request and Router Discovery advertisements
+       or solicitations over a new  interface,  routed  enters  a
+       loop,  listening  for RIP request and response packets and
+       Router Discovery packets from other hosts.
+
+       When a request packet is  received,  routed  formulates  a
+       reply  based on the information maintained in its internal
+       tables.  The response packet generated contains a list  of
+       known routes, each marked with a hop count metric (a count
+       of 16 or greater is considered infinite).  Advertised met-
+       rics  reflect the metric associated with an interface (see
+       so setting the metric on an interface is an effective  way
+       to steer traffic.
+
+       Responses do not contain routes that define a first hop on
+       the requesting network. This partly  implements  a  split-
+       horizon.    Requests  from  query  programs  such  as  are
+       answered with the complete table.
+
+       The routing table maintained by routed includes space  for
+
+                                                                1
+
+routed(1Mtcp)                                       routed(1Mtcp)
+
+       several gateways for each destination to speed recovery if
+       a router fails.  Received RIP response packets are used to
+       update  the  routing tables provided they come from one of
+       the several currently recognized gateways or  they  adver-
+       tise  a  better  metric  than at least one of the existing
+       gateways.
+
+       When an update is applied, routed records  the  change  in
+       its own tables and updates the kernel routing table if the
+       best route to the destination changes.  The change in  the
+       kernel  routing  table  is  reflected in the next batch of
+       response packets sent.  If the next response is not sched-
+       uled  for  a  while,  routed sends a flash update response
+       containing only recently changed routes.
+
+       In addition to processing incoming  packets,  routed  also
+       periodically  checks  the  routing  table  entries.  If an
+       entry has not been updated for 3 minutes, the entry's met-
+       ric is set to infinity and marked for deletion.  Deletions
+       are delayed until the route has been  advertised  with  an
+       infinite  metric  to insure the invalidation is propagated
+       throughout the local internet.  This is a form  of  poison
+       reverse .
+
+       Routes  in the kernel table that are added or changed as a
+       result of ICMP Redirect messages are deleted after a while
+       to minimize black-holes .  When a TCP connection suffers a
+       timeout, the kernel tells routed, which deletes all  redi-
+       rected  routes  through the gateway involved, advances the
+       age of all RIP routes through  the  gateway  to  allow  an
+       alternate  to be chosen, and advances the age of any rele-
+       vant Router Discovery Protocol default routes.
+
+       Hosts acting as internetwork routers  gratuitously  supply
+       their routing tables every 30 seconds to all directly con-
+       nected hosts and networks.  routed sends RIP responses  to
+       the  broadcast address on networks that support broadcast-
+       ing, to the destination address on  point-to-point  links,
+       and  to  the  router's  own address on other networks.  If
+       RIPv2 is enabled, routed sends multicast packets on inter-
+       faces that support multicasting.
+
+       If no response is received on a remote interface, if there
+       are errors while sending responses, or if there  are  more
+       errors  than  input  or output (see then the cable or some
+       other part of the interface is assumed to be  disconnected
+       or broken, and routes are adjusted appropriately.
+
+   IInntteerrnneett RRoouutteerr DDiissccoovveerryy
+       The  Internet  Router  Discovery Protocol is handled simi-
+       larly to RIP.  When the daemon is supplying RIP routes, it
+       also  listens for Router Discovery Solicitations and sends
+       Advertisements.  When it is quiet and  only  listening  to
+       other  RIP routers, it sends Solicitations and listens for
+
+                                                                2
+
+routed(1Mtcp)                                       routed(1Mtcp)
+
+       Advertisements.  If it receives a good  Advertisement,  it
+       stops  listening for broadcast or multicast RIP responses.
+       It tracks several advertising routers  to  speed  recovery
+       when  the currently chosen router dies.  If all discovered
+       routers  disappear,  routed  resumes  listening   to   RIP
+       responses.
+
+       While  using  Router  Discovery  (which happens by default
+       when the system has  a  single  network  interface  and  a
+       Router  Discovery  Advertisement  is received), there is a
+       single default route and a variable number  of  redirected
+       host routes in the kernel table.
+
+       The Router Discovery standard requires that advertisements
+       have a default lifetime of 30 minutes.  That means  should
+       something happen, a client can be without a good route for
+       up to 30 minutes.  It is a good idea to reduce the default
+       to  45  seconds  by specifying -P rdisc_interval=45 on the
+       command line or rdisc_interval=45 in  the  /etc/inet/gate-
+       ways file (see
+
+       On  a  host  with  more  than  one  network interface, the
+       default route will be via  only  one  of  the  interfaces.
+       Thus,  multi-homed  hosts  running  with  -q might need to
+       specify no_rdisc (described in
+
+       See the description of pm_rdisc in for details of  how  to
+       support  legacy systems that do not handle RIPv2 or Router
+       Discovery.
+
+       By default, Router Discovery advertisements and  solicita-
+       tions  are  not  sent  over  point-to-point links (such as
+       PPP).  routed uses the netmask associated  with  point-to-
+       point  links  (such  as  SLIP  and PPP links which set the
+       IFF_POINTOPOINT flag) to infer the  netmask  used  by  the
+       remote system when RIPv1 is used.
+
+   OOppttiioonnss
+       routed  understands the following options: Force routed to
+       supply routing information.  This is the default if multi-
+       ple  network interfaces are present on which RIP or Router
+       Discovery have not been disabled, and if the kernel param-
+       eters  ipforwarding  and ipsendredirects have the value 1.
+       Do not supply routing information (the opposite of the  -s
+       option).   This  is the default when only one interface is
+       present.  Do not run in the background.   This  option  is
+       meant  for  interactive use.  Used on internetwork routers
+       to offer a route to  the  default  destination.   This  is
+       equivalent to setting net[/mask][,metric] to ``0/0,1'' and
+       is present mostly for historical reasons.  It  is  prefer-
+       able  to  specify  -P  pm_rdisc  on  the  command  line or
+       pm_rdisc in the /etc/inet/gateways file.  This will use  a
+       larger metric, reducing the spread of the potentially dan-
+       gerous default route.
+
+                                                                3
+
+routed(1Mtcp)                                       routed(1Mtcp)
+
+       This option is typically used on a gateway to  the  Inter-
+       net,  or  on  a gateway that uses another routing protocol
+       whose routes are not  reported  to  other  local  routers.
+       This  feature  is dangerous because it uses a metric of 1.
+       It may accidentally wreak  havoc  by  creating  a  routing
+       loop.   Do  not  advertise  host or point-to-point routes,
+       provided there is a network route going  the  same  direc-
+       tion.   This  provides a limited kind of aggregation which
+       may be useful on gateways to  ethernets  that  have  other
+       gateway  machines connected with point-to-point links such
+       as SLIP.  Advertise a host or point-to-point route to  its
+       primary  interface.   It is useful on multi-homed machines
+       such as NFS servers.   This  option  should  not  be  used
+       except  when  the  cost of the host routes it generates is
+       justified by the popularity of the server.  It  is  effec-
+       tive  only  when the machine is supplying routing informa-
+       tion, because there is more than one  interface.   The  -m
+       option  overrides  the  -q option to the limited extent of
+       advertising the host route.  Do not ignore RIPv2 authenti-
+       cation if we do not care about RIPv2 authentication.  This
+       option is required for conformance with  RFC  1723.   How-
+       ever,  it makes no sense and breaks using RIP as a discov-
+       ery protocol  to  ignore  all  RIPv2  packets  that  carry
+       authentication  when  this  machine  does  not  care about
+       authentication.  Increase the debugging level to at  least
+       1  and  causes debugging information to be appended to the
+       trace file.  Note that because of security concerns, it is
+       wisest  to  not run routed routinely with tracing directed
+       to a file.  Increase the  debugging  level,  which  causes
+       more information to be logged on the standard output or to
+       the tracefile specified with the -T option.  The debugging
+       level  can  be increased or decreased by using to send the
+       SIGUSR1 or SIGUSR2 signals to the routed process or  using
+       the rtquery command.
+
+       The  debug levels are: no tracing trace actions only trace
+       actions and packets trace actions and history  of  packets
+       and  contents  after change trace all actions, packets and
+       contents Minimize routes in transmissions  via  interfaces
+       with  addresses  that  match the first mask (0-32) bits in
+       the IP address specified by net, and synthesizes a default
+       route  to  this  machine  with  the specified metric.  The
+       default value for mask is 32.
+
+       The intention is to reduce RIP traffic on slow,  point-to-
+       point  links such as PPP links by replacing many large UDP
+       packets of RIP information with  a  single,  small  packet
+       containing  a  fake default route.  If metric is absent, a
+       value of 14 is assumed to limit the  spread  of  the  fake
+       default route.  This is a dangerous feature that when used
+       carelessly can cause routing loops.  Note also  that  more
+       than  one interface can match the specified network number
+       and mask.  See also the  description  of  the  -g  option.
+       Equivalent to specifying the parameter(s) on a line in the
+
+                                                                4
+
+routed(1Mtcp)                                       routed(1Mtcp)
+
+       /etc/inet/gateways file. See for more details.
+
+       Any other argument supplied on the command line is  inter-
+       preted as the name of a trace file in which the actions of
+       routed should be logged.  It is preferable to use  the  -T
+       option to specify the name of a trace file.
+
+   PPaassssiivvee,, eexxtteerrnnaall,, aanndd aaccttiivvee ggaatteewwaayyss
+       routed  supports  the  notion of distant passive or active
+       gateways.  When routed  is  started,  it  reads  the  file
+       /etc/inet/gateways  to  find out which local and non-local
+       (distant) gateways are defined as passive, and  to  obtain
+       other configuration parameters.  Gateways should be marked
+       passive if they  are  not  expected  to  exchange  routing
+       information,  or they are distant gateways which cannot be
+       located using information from a routing  socket.   Routes
+       through  passive  gateways  are  installed in the kernel's
+       routing tables once upon startup and are not  included  in
+       transmitted RIP responses.
+
+       Gateways  marked  extern  (external) are also passive, but
+       are not placed in the kernel routing table  nor  are  they
+       included  in  routing  updates.   The function of external
+       entries is to indicate that another routing  process  will
+       install  such  a  route  if  necessary, and that alternate
+       routes to that destination  should  not  be  installed  by
+       routed.   Such entries are only required when both routers
+       may learn of routes to the same destination.
+
+       Gateways marked active should be willing to  exchange  RIP
+       packets.
+
+       Distant  active  gateways  are treated like network inter-
+       faces.  RIP responses are sent to the distant active gate-
+       way.   If  no responses are received, the associated route
+       is deleted from the kernel table and RIP responses  adver-
+       tised  via  other  interfaces.   If  the  distant  gateway
+       resumes sending RIP responses,  the  associated  route  is
+       restored.   Such  gateways can be useful on media, such as
+       some ATM networks, that do not support broadcasts or  mul-
+       ticasts  but  otherwise act like classic shared media like
+       Ethernets.  You can list all RIP routers reachable  on  an
+       ATM  network  by  defining  a  series of host lines in the
+       /etc/inet/gateways file.
+
+   FFoorrmmaatt ooff tthhee //eettcc//iinneett//ggaatteewwaayyss ffiillee
+       The /etc/inet/gateways file is comprised of  a  series  of
+       lines.  Each  line  must  define a route to a network or a
+       host, or one of the parameters described in
+
+       A route to a network is defined using a line with the fol-
+       lowing format: net Nname[/mask] gateway Gname metric value
+       passive|extern|active A route to a host is defined using a
+       line  with  the following format: host Hname gateway Gname
+
+                                                                5
+
+routed(1Mtcp)                                       routed(1Mtcp)
+
+       metric value passive|extern|active Nname or Hname  is  the
+       name of the destination network or host.  It may be a sym-
+       bolic network name or an Internet address specified in dot
+       notation  (see  (If  it  is a name, then it must either be
+       defined in /etc/networks or /etc/hosts , or must have been
+       started before routed.)
+
+       mask is an optional number between 1 and 32 indicating the
+       length of the netmask associated with Nname.   (Note  that
+       host Hname is equivalent to net Nname/32.)
+
+       Gname  is  the name or address of the gateway to which RIP
+       responses should be forwarded.
+
+       value is the hop count to the destination host or network.
+
+       One of the keywords passive, active or extern must be pre-
+       sent to indicate whether the gateway should be treated  as
+       passive  or active (as described in or whether the gateway
+       is external to the scope of the RIP protocol.
+
+   PPaarraammeetteerrss
+       Lines in /etc/inet/gateways that do not start with net  or
+       host  must consist of one or more of the following parame-
+       ter settings, separated by  commas  or  blanks:  Specifies
+       that  Router Discovery packets should be broadcast instead
+       of multicast.  Has an identical effect to net[/mask][,met-
+       ric]  with  the network and mask coming from the specified
+       interface.  Indicates that the  other  parameters  on  the
+       line  apply  to  the  interface name ifname .  Specifies a
+       RIPv2 MD5 password.  The KeyID must be  unique.   If  pre-
+       sent,   start   and  stop  are  timestamps  in  the  form:
+       year/month/day@hour:minute They specify when the  password
+       is valid.  The valid password with the most future is used
+       on output packets, unless all passwords have  expired,  in
+       which  case  the  password  that  expired most recently is
+       used, or unless no passwords are valid yet, in which  case
+       no  password  is  output.   Incoming packets can carry any
+       password that is valid, will be valid within 24 hours,  or
+       that was valid within 24 hours.
+
+       To  protect  the  secrets, this parameter setting is valid
+       only in the /etc/inet/gateways file  and  only  when  that
+       file  is readable only by UID 0.  Turns off aggregation of
+       subnets in RIPv1 and RIPv2 responses.  Disables the Inter-
+       net  Router Discovery Protocol.  Disables the transmission
+       of Router Discovery Advertisements Disables all  RIP  pro-
+       cessing  on the specified interface.  If no interfaces are
+       allowed to process RIP packets, routed acts  purely  as  a
+       router discovery daemon.
+
+       Note that using rdisc_adv or the -s option to turn off RIP
+       without explicitly turning on router discovery  advertise-
+       ments  causes  routed  to act as a client router discovery
+
+                                                                6
+
+routed(1Mtcp)                                       routed(1Mtcp)
+
+       daemon  without  advertising.    Causes   RIPv1   received
+       responses  to be ignored.  Causes RIPv2 received responses
+       to be ignored.  Disables the transmission of  Router  Dis-
+       covery  Solicitations.   Turns off aggregation of networks
+       into supernets in RIPv2 responses.  Marks the interface to
+       not  be  advertised  in updates sent via other interfaces,
+       and turns off all RIP and  router  discovery  through  the
+       interface.  Specifies a RIPv2 cleartext password that will
+       be included on all RIPv2 responses sent,  and  checked  on
+       all RIPv2 responses received.  Any blanks, tab characters,
+       commas, or #, |, or NULL characters in the  password  must
+       be  escaped  with  a  backslash  (\).   The  common escape
+       sequences \n, \r, \t, \b, and \xxx have their usual  mean-
+       ings.  The KeyID must be unique but is ignored for cleart-
+       ext passwords.  If present, start and stop are  timestamps
+       in  the form: year/month/day@hour:minute They specify when
+       the password is valid.  The valid password with  the  most
+       future  is  used  on  output packets, unless all passwords
+       have expired, in which case the password that expired most
+       recently is used, or unless no passwords are valid yet, in
+       which case no password is output.   Incoming  packets  can
+       carry  any password that is valid, will be valid within 24
+       hours, or that was valid  within  24  hours.   Similar  to
+       fake_default  .   When RIPv2 routes are multicast, so that
+       RIPv1 listeners cannot receive them, this feature causes a
+       RIPv1  default  route  to be broadcast to RIPv1 listeners.
+       Unless modified with fake_default, the  default  route  is
+       broadcast  with  a  metric  of  14.  This serves as a poor
+       man's router discovery protocol.   Specifies  that  Router
+       Discovery Advertisements should be sent, even on point-to-
+       point links, which by default only listen to  Router  Dis-
+       covery  messages  Sets  the preference in Router Discovery
+       Advertisements to the integer N.  Sets the nominal  inter-
+       val  with which Router Discovery Advertisements are trans-
+       mitted to N seconds and their lifetime to 3*N.  Causes RIP
+       to  allow ICMP Redirect messages when the system is acting
+       as a router and forwarding packets.  Otherwise, ICMP Redi-
+       rect  messages  are  are  overridden.   Equivalent to both
+       no_ripv1_in and  ripv2_out  being  specified.   Turns  off
+       RIPv1  output and causes RIPv2 advertisements to be multi-
+       cast  when  possible.   Specifies  that  Router  Discovery
+       solicitations  should  be  sent,  even  on  point-to-point
+       links, which by default only listen  to  Router  Discovery
+       messages.   Advertises  a  route to network Nname with the
+       optionally specified mask and metric (default 1).  This is
+       useful for filling holes in CIDR allocations.  This param-
+       eter must appear by itself on a line.   Do  not  use  this
+       feature  unless  necessary.  It can cause routing loops if
+       used incorrectly.  Causes RIP packets from that router and
+       other  routers named in other trust_gateway keywords to be
+       accepted, and packets from other routers  to  be  ignored.
+       If  set  to 1, routed will log illegal routes contained in
+       RIP advertisements, such as those to  loopback  interfaces
+       (127.*).   By  default  (set  to  0),  routed  will ignore
+
+                                                                7
+
+routed(1Mtcp)                                       routed(1Mtcp)
+
+       illegal routes.
+
+FFiilleess
+       defines distant gateways
+
+RReeffeerreenncceess
+       RFC 1058, RFC 1256, RFC 1321, RFC 1723
+
+NNoottiicceess
+       routed does not always detect unidirectional  failures  in
+       network  interfaces  (for  example,  when  the output side
+       fails).
+
+                                                                8
+

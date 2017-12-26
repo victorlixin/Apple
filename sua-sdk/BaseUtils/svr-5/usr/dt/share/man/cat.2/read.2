@@ -1,0 +1,223 @@
+
+
+read(2)                                                   read(2)
+
+SSyynnooppssiiss
+       #include <unistd.h>
+
+       ssize_t read(int fildes, void *buf, size_t nbyte);
+
+       #include <sys/types.h> #include <sys/uio.h>
+
+       ssize_t  readv(int  fildes,  const  struct iovec *iov, int
+       iovcnt);
+
+DDeessccrriippttiioonn
+       read attempts to read nbyte bytes from the file associated
+       with  fildes  into the buffer pointed to by buf.  If nbyte
+       is 0, read returns 0 and has no other results.  fildes  is
+       a file descriptor obtained from a or system call.
+
+       On  devices capable of seeking, the read starts at a posi-
+       tion in the file given by the file pointer associated with
+       fildes.   On  return from read, the file pointer is incre-
+       mented by the number of bytes actually read.
+
+       Devices that are incapable of seeking always read from the
+       current  position.  The value of a file pointer associated
+       with such a file is undefined.
+
+       readv performs the same action as  read,  but  places  the
+       input  data  into the iovcnt buffers specified by the mem-
+       bers  of  the  iov  array:  iov[0],   iov[1],   .   .   .,
+       iov[iovcnt-1].
+
+       For readv, the iovec structure contains the following mem-
+       bers: void *iov_base; size_t    iov_len;
+
+       Each iovec entry specifies the base address and length  of
+       an  area  in  memory  where  data should be placed.  readv
+       always fills one buffer completely  before  proceeding  to
+       the next.
+
+       On  success,  read  and  readv  return the number of bytes
+       actually read and placed in the buffer; this number may be
+       less  than nbyte if the file is associated with a communi-
+       cation line (see and or if the number of bytes left in the
+       file  is  less  than  nbyte, or if the file is a pipe or a
+       special file.  A value of 0 is returned  when  an  end-of-
+       file has been reached.
+
+       read reads data previously written to a file.  If any por-
+       tion of an ordinary file prior to the end of file has  not
+       been  written, read returns the number of bytes read as 0.
+       For example, the lseek routine allows the file pointer  to
+       be  set  beyond  the end of existing data in the file.  If
+       additional data is written at this point, later  reads  in
+       the gap between the previous end of data and newly written
+       data return bytes with a value of 0 until data is  written
+
+                                                                1
+
+read(2)                                                   read(2)
+
+       into the gap.
+
+       A  read  or  readv from a STREAMS (see file can operate in
+       three different modes: byte-stream  mode,  message-nondis-
+       card mode, and message-discard mode.  The default is byte-
+       stream mode.  This  can  be  changed  using  the  I_SRDOPT
+       request and can be tested with the I_GRDOPT
+       request.   In  byte-stream  mode,  read  and readv usually
+       retrieve data from the stream until  they  have  retrieved
+       nbyte  bytes,  or  until  there  is  no  more  data  to be
+       retrieved.   Byte-stream  mode  usually  ignores   message
+       boundaries.
+
+       In   STREAMS   message-nondiscard  mode,  read  and  readv
+       retrieve data until they have read nbyte bytes,  or  until
+       they  reach a message boundary.  If read or readv does not
+       retrieve all the data in a message, the remaining data  is
+       replaced  on  the  stream and can be retrieved by the next
+       read or readv call.  Message-discard mode  also  retrieves
+       data  until  it has retrieved nbyte bytes, or it reaches a
+       message boundary.  However, unread  data  remaining  in  a
+       message  after the read or readv returns is discarded, and
+       is not available for a later read, readv, or getmsg (see
+
+       When attempting to read from a regular file with mandatory
+       file/record  locking  set  (see  and there is a write lock
+       owned by another process on the segment of the file to  be
+       read:  If  O_NDELAY  or O_NONBLOCK is set, read returns -1
+       and sets errno to EAGAIN.  If O_NDELAY and O_NONBLOCK  are
+       clear,  read  sleeps  until  the  blocking  record lock is
+       removed.
+
+       When attempting to read from an empty pipe (or  FIFO):  If
+       no  process  has the pipe open for writing, read returns 0
+       to indicate end-of-file.  If some  process  has  the  pipe
+       open  for writing and O_NDELAY is set, read returns 0.  If
+       some process has the pipe open for writing and  O_NONBLOCK
+       is  set,  read  returns  -1  and sets errno to EAGAIN.  If
+       O_NDELAY and O_NONBLOCK are clear, read blocks until  data
+       is  written  to the pipe or the pipe is closed by all pro-
+       cesses that had opened the pipe for writing.
+
+       When attempting to read a file associated with a  terminal
+       that  has no data currently available: If O_NDELAY is set,
+       read returns 0.  If O_NONBLOCK is set, read returns -1 and
+       sets  errno  to  EAGAIN.   If  O_NDELAY and O_NONBLOCK are
+       clear, read blocks until data becomes available.
+
+       When attempting to read a file associated  with  a  stream
+       that  is  not a pipe or FIFO, or terminal, and that has no
+       data currently available: If  O_NDELAY  or  O_NONBLOCK  is
+       set,  read returns -1 and sets errno to EAGAIN.  If O_NDE-
+       LAY and O_NONBLOCK  are  clear,  read  blocks  until  data
+       becomes available.
+
+                                                                2
+
+read(2)                                                   read(2)
+
+       When  reading  from  a STREAMS file, handling of zero-byte
+       messages is determined by the current read  mode  setting.
+       In  byte-stream  mode, read accepts data until it has read
+       nbyte bytes, or until there is no more data  to  read,  or
+       until a zero-byte message block is encountered.  read then
+       returns the number of bytes read, and places the zero-byte
+       message  back  on  the  stream to be retrieved by the next
+       read or getmsg (see In the two other  modes,  a  zero-byte
+       message  returns  a  value of 0 and the message is removed
+       from the stream.  When a zero-byte message is read as  the
+       first  message  on  a  stream,  a  value  of 0 is returned
+       regardless of the read mode.
+
+       A read or readv from a STREAMS file returns  the  data  in
+       the  message  at  the front of the stream head read queue,
+       regardless of the priority band of the message.
+
+       Normally, a read from a STREAMS file can only process mes-
+       sages with data and without control information.  The read
+       fails if  a  message  containing  control  information  is
+       encountered  at  the stream head.  This default action can
+       be changed by placing the stream  in  either  control-data
+       mode or control-discard mode with the I_SRDOPT In control-
+       data mode, control messages are converted to data messages
+       by  read.   In  control-discard mode, control messages are
+       discarded by read, but any data associated with  the  con-
+       trol messages is returned to the user.
+
+   RReettuurrnn vvaalluueess
+       On  success,  read and readv return a non-negative integer
+       indicating the number of bytes actually read.  On failure,
+       read  and  readv  return  -1 and set errno to identify the
+       error.
+
+       A read from a STREAMS file also fails if an error  message
+       is  received  at  the stream head.  In this case, errno is
+       set to the value returned in  the  error  message.   If  a
+       hangup  occurs on the stream being read, read continues to
+       operate normally until  the  stream  head  read  queue  is
+       empty.  Thereafter, it returns 0.
+
+   EErrrroorrss
+       In  the  following conditions, read and readv fail and set
+       errno to: fildes is open to a dynamic device and read per-
+       mission is denied.  Mandatory file/record locking was set,
+       O_NDELAY or O_NONBLOCK was set, and there was  a  blocking
+       record lock.  Total amount of system memory available when
+       reading via raw I/O is temporarily insufficient.  No  data
+       is  waiting  to  be  read  on a file associated with a tty
+       device and O_NONBLOCK was set.  No message is  waiting  to
+       be  read  on  a stream and O_NDELAY or O_NONBLOCK was set.
+       fildes is not a valid file descriptor  open  for  reading.
+       Message  waiting to be read on a stream is not a data mes-
+       sage.  The read was going to  go  to  sleep  and  cause  a
+
+                                                                3
+
+read(2)                                                   read(2)
+
+       deadlock  to  occur.   buf  points  outside  the allocated
+       address space.  A signal was caught  during  the  read  or
+       readv system call.  Attempted to read from a stream linked
+       to a multiplexor.  A physical I/O error has  occurred,  or
+       the  process  is  in  a  background  process  group and is
+       attempting to read  from  its  controlling  terminal,  and
+       either  the  process  is  ignoring or blocking the SIGTTIN
+       signal or the process group of the  process  is  orphaned.
+       fildes is open to a device that is in the process of clos-
+       ing.  The system record lock table was full, so  the  read
+       or  readv  could not go to sleep until the blocking record
+       lock was removed.  fildes is on a remote machine  and  the
+       link  to  that machine is no longer active.  The file is a
+       regular file, nbyte is greater than 0, the starting  posi-
+       tion  is  before the end-of-file and the starting position
+       is greater than or equal to the offset maximum established
+       in the open file descriptor associated with fildes.  There
+       is no data transfer.
+
+       In addition, readv may return one of the following errors:
+       iov  points  outside  the allocated address space.  iovcnt
+       was less than or equal to 0 or greater than 16.   The  sum
+       of the iov_len values in the iov array overflowed a 32-bit
+       integer.
+
+RReeffeerreenncceess
+NNoottiicceess
+       read updates the time of last access (see of the file.
+
+       If fildes refers to a socket, read is equivalent  to  with
+       no flags set.
+
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Open file descriptors are a process resource and available
+       to any sibling thread; if used  concurrently,  actions  by
+       one thread can interfere with those of a sibling.
+
+       While  one thread is blocked, siblings might still be exe-
+       cuting.
+
+                                                                4
+

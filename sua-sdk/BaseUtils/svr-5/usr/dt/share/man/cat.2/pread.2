@@ -1,0 +1,103 @@
+
+
+pread(2)                                                 pread(2)
+
+SSyynnooppssiiss
+       #include <unistd.h>
+
+       ssize_t pread(int fd, void *buf, size_t nbytes, off_t off-
+       set);
+
+       ssize_t pread64(int fd, void *buf, size_t nbytes,  off64_t
+       offset);
+
+DDeessccrriippttiioonn
+       The  pread  system  call does an atomic position-and-read,
+       eliminating the necessity of  using  a  locking  mechanism
+       when  both operations are desired and file descriptors are
+       shared.  pread is analogous to read  but  takes  a  fourth
+       argument, offset.  The read is done as if an lseek to off-
+       set (from the beginning of  the  file)  were  done  first.
+       Note that (though the semantics are analogous) an lseek is
+       not actually performed; the file pointer is  not  affected
+       by pread.  The read of nbytes then starts at the specified
+       offset.
+
+       The atomicity of pread enables processes or  threads  that
+       share  file  descriptors  to  read from a shared file at a
+       particular offset without using a locking  mechanism  that
+       would  be necessary to achieve the same result in separate
+       lseek and read system calls.  Atomicity is required as the
+       file  pointer  is  shared  and  one  thread might move the
+       pointer using lseek after  another  process  completes  an
+       lseek but prior to the read.
+
+RReettuurrnn vvaalluueess
+       Upon  successful  completion,  pread returns the number of
+       bytes actually read and placed in buf.  A value  of  0  is
+       returned  when an end-of-file has been reached.  Otherwise
+       a -1 and an error is returned.
+
+EErrrroorrss
+       In the following conditions, pread fails  and  sets  errno
+       to:  The  file is a regular file, nbyte is greater than 0,
+       the starting position is before the  end-of-file  and  the
+       starting  position  is greater than or equal to the offset
+       maximum established in the open file descriptor associated
+       with fd.  There is no data transfer.
+
+       In  the  following  conditions, pread and pread64 fail and
+       set errno to: fd is open to a dynamic device and read per-
+       mission is denied.  Mandatory file/record locking was set,
+       O_NDELAY or O_NONBLOCK was set, and there was  a  blocking
+       record lock.  Total amount of system memory available when
+       reading via raw I/O is temporarily insufficient.  No  data
+       is  waiting  to  be  read  on a file associated with a tty
+       device and O_NONBLOCK was set.  No message is  waiting  to
+       be  read  on  a stream and O_NDELAY or O_NONBLOCK was set.
+       fd is not  a  valid  file  descriptor  open  for  reading.
+
+                                                                1
+
+pread(2)                                                 pread(2)
+
+       Message  waiting to be read on a stream is not a data mes-
+       sage.  The pread was going to go  to  sleep  and  cause  a
+       deadlock  to  occur.   buf  points  outside  the allocated
+       address space.  A signal was caught during the pread  sys-
+       tem  call.   Attempted  to  read from a stream linked to a
+       multiplexor.  The resulting file pointer  would  be  nega-
+       tive.   fd is a remote file descriptor accessed using NFS,
+       the Network File System, and the  resulting  file  pointer
+       would  be negative.  A physical I/O error has occurred, or
+       the process is  in  a  background  process  group  and  is
+       attempting  to  read  from  its  controlling terminal, and
+       either the process is ignoring  or  blocking  the  SIGTTIN
+       signal  or  the  process group of the process is orphaned.
+       fd is open to a device that is in the process of  closing.
+       The  system record lock table was full, so the pread could
+       not go  to  sleep  until  the  blocking  record  lock  was
+       removed.   fd  is on a remote machine and the link to that
+       machine is no longer active.  fd is associated with a pipe
+       or  fifo.   The  device  for  fstype does not support seek
+       operations.
+
+RReeffeerreenncceess
+NNoottiicceess
+       pread updates the time of last access (see of the file.
+
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Open file descriptors are a process resource and available
+       to  any  sibling  thread; if used concurrently, actions by
+       one thread can interfere with those of a sibling.
+
+       While one thread is blocked, siblings might still be  exe-
+       cuting.
+
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       pread64  supports  large files, but is otherwise identical
+       to pread.  For details on programming for large file capa-
+       ble applications, see on intro(2).
+
+                                                                2
+

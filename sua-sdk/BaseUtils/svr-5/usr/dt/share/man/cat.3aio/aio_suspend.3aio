@@ -1,0 +1,90 @@
+
+
+aio_suspend(3aio)                               aio_suspend(3aio)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <aio.h>
+
+       int  aio_suspend(const  struct  aiocb  *list[],  int nent,
+            const struct timespec *timeout);
+
+       int aio_suspend64(const struct aiocb64 *list[], int  nent,
+            const struct timespec *timeout);
+
+DDeessccrriippttiioonn
+       aio_suspend suspends the calling thread until at least one
+       of the asynchronous I/O operations referenced by the  list
+       argument  has  completed,  until  a  signal interrupts the
+       function, or, if timeout  is  not  NULL,  until  the  time
+       interval  specified  by timeout has passed.  If any of the
+       aiocb structures in the list correspond to completed asyn-
+       chronous  I/O  operations  (i.e., the error status for the
+       operation is not equal to EINPROGRESS) at the time of  the
+       call,  the function returns without suspending the calling
+       process.  None of the aiocb structures  in  the  list  may
+       have the AIO_RAW flag set.
+
+       The  list argument is an array of pointers to asynchronous
+       I/O control blocks.  The nent argument indicates the  num-
+       ber  of  elements  in  the  array.   Each  aiocb structure
+       pointed to is  used  in  initiating  an  asynchronous  I/O
+       request  via  aio_read,  aio_write,  or  lio_listio.  This
+       array may contain NULL pointers  which  are  ignored.   If
+       this  array  contains  pointers that refer to aiocb struc-
+       tures which have not been used in submitting  asynchronous
+       I/O, the effect is undefined.
+
+       If  the  time interval indicated in the timespec structure
+       pointed to by timeout passes before any of the I/O  opera-
+       tions   referenced  by  list  are  completed,  aio_suspend
+       returns with an error.
+
+   RReettuurrnn vvaalluueess
+       If the aio_suspend or aio_suspend64 functions return after
+       one  or  more  asynchronous I/O operations have completed,
+       the functions return zero.  Otherwise, they return a value
+       of -1 and set errno to indicate the error.
+
+       The  application  determines  which  asynchronous I/O com-
+       pleted by scanning the associated error and return status,
+       using   aio_error   and  aio_return  (or  aio_error64  and
+       aio_return64), respectively.
+
+   EErrrroorrss
+       If any of the following conditions occur, the  aio_suspend
+       and aio_suspend64 functions return -1 and set errno to the
+       corresponding value: No asynchronous I/O indicated in  the
+
+                                                                1
+
+aio_suspend(3aio)                               aio_suspend(3aio)
+
+       list  referenced  by  list  completed in the time interval
+       indicated by timeout.  A signal interrupted  the  aio_sus-
+       pend  or  aio_suspend64  function.   Note that, since each
+       asynchronous I/O operation may possibly provoke  a  signal
+       when  it completes, this error return may be caused by the
+       completion of one (or more) of the  I/O  operations  being
+       awaited.  There were no internal kernal aio control blocks
+       available to service the request  (number  of  kernel  aio
+       control blocks is tunable via the NUMAIO kernel parameter;
+       see One or more of the asynchronous I/O operations  refer-
+       enced by the list argument had the AIO_RAW flag set.
+
+RReeffeerreenncceess
+NNoottiicceess
+       In general, users should not mix notification via callback
+       (for example, by requesting callback in  the  aiocb)  with
+       the  use  of  aio_suspend  or  aio_suspend64.  If they are
+       mixed, the aio_suspend and aio_suspend64 calls will always
+       return an error with errno set to EINTR.
+
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       aio_suspend64 supports large files, but is otherwise iden-
+       tical to aio_suspend.   For  details  on  programming  for
+       large file capable applications, see on intro(2).
+
+                                                                2
+

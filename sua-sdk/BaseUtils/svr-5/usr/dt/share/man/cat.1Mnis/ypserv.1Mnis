@@ -1,0 +1,118 @@
+
+
+ypserv(1Mnis)                                       ypserv(1Mnis)
+
+SSyynnooppssiiss
+       /usr/lib/netsvc/yp/ypserv
+
+       /usr/lib/netsvc/yp/ypbind [-ypset | -ypsetme]
+
+DDeessccrriippttiioonn
+       The  Network  Information  System  (NIS)  provides  a dis-
+       tributed database service consisting of databases and pro-
+       cesses.
+
+   OOppttiioonnss
+       The following options are available for the ypbind command
+       only: Allow any user to call By default, no one  can  call
+       Only  allow  root on local machines to call By default, no
+       one can call
+
+   FFiilleess
+       If it exists when ypserv starts up, log  information  will
+       be  written  to this file when error conditions arise.  If
+       it exists when ypbind starts up, log information  will  be
+       written to this file when error conditions arise.
+
+UUssaaggee
+       The  NIS databases are files in a directory tree rooted at
+       /var/yp.  These files are described in The  NIS  processes
+       are  /usr/lib/netsvc/yp/ypserv,  the  NIS  database lookup
+       server, and  /usr/lib/netsvc/yp/ypbind,  the  NIS  binder.
+       The  programmatic  interface  to  NIS  is described in NIS
+       administrative tools are described in and Tools to see the
+       contents  of  NIS  maps  are described in and NIS database
+       generation and maintenance tools are described in and
+
+       Both ypserv and  ypbind  are  daemon  processes  typically
+       activated at system startup time.  ypserv runs only on NIS
+       server machines with a complete NIS database.  ypbind runs
+       on  all  machines using NIS services, both NIS servers and
+       clients.
+
+       The ypserv daemon's primary function is to look up  infor-
+       mation  in  its local database of NIS maps.  Communication
+       to and from ypserv is by means of RPC calls.  Lookup func-
+       tions  are  described  in  and  are supplied as C-callable
+       functions in the NIS library.  There are four lookup func-
+       tions,  all  of  which  are  performed  on a specified map
+       within some NIS domain: Match,  Get_first,  Get_next,  and
+       Get_all.  The Match operation takes a key, and returns the
+       associated value.  The  Get_first  operation  returns  the
+       first  key-value  pair  from  the map, and Get_next can be
+       used to enumerate the remainder.  Get_all ships the entire
+       map  to  the  requester  as  the  response to a single RPC
+       request.
+
+       Two other functions  supply  information  about  the  map,
+       rather    than    map   entries:   Get_order_number,   and
+
+                                                                1
+
+ypserv(1Mnis)                                       ypserv(1Mnis)
+
+       Get_master_name.  In fact, both order  number  and  master
+       name  exist  in the map as key-value pairs, but the server
+       will not return either through  the  normal  lookup  func-
+       tions.   If you examine the map with however, they will be
+       visible.
+
+       The function of ypbind is  to  remember  information  that
+       lets  client  processes  on a single node communicate with
+       some ypserv process.  ypbind must  run  on  every  machine
+       which  has  NIS client processes; ypserv may or may not be
+       running on the same node, but must be running somewhere on
+       the network.
+
+       The  information  ypbind remembers is called a ``binding''
+       -- the association of a domain name with an NIS server.
+
+       The process of binding is driven by client requests.  As a
+       request for an unbound domain comes in, the ypbind process
+       steps through the ypservers list (last entry first) trying
+       to  find  a  ypserv  process  that serves maps within that
+       domain.  There must be a ypserv process on at least one of
+       the  hosts  in the ypservers file.  Once a domain is bound
+       by a particular ypbind, that  same  binding  is  given  to
+       every  client  process on the node.  The ypbind process on
+       the local node or a remote node may  be  queried  for  the
+       binding of a particular domain by using the command.
+
+       If  ypbind  is unable to speak to the ypserv process it is
+       bound to, it marks the domain as unbound, tells the client
+       process  that the domain is unbound, and tries to bind the
+       domain once  again.   Requests  received  for  an  unbound
+       domain  will wait until the domain requested is bound.  In
+       general, a bound domain is marked as unbound when the node
+       running  ypserv  crashes  or  gets  overloaded.  In such a
+       case, ypbind will try to bind to another NIS server listed
+       in /var/yp/binding/domainname/ypservers.
+
+       ypbind also accepts requests to set its binding for a par-
+       ticular domain.  The request is usually generated  by  the
+       NIS   subsystem  itself.   is  a  command  to  access  the
+       Set_domain facility.  Note that the Set  Domain  procedure
+       only  accepts  requests  from  processes  with appropriate
+       privileges, and the -ypset or  -ypsetme  flags  must  have
+       been set for ypbind.
+
+       Note that both ypbind and ypserv support multiple domains.
+       The ypserv process determines the  domains  it  serves  by
+       looking  for directories of the same name in the directory
+       /var/yp.  Additionally, the ypbind  process  can  maintain
+       bindings to several domains and their servers.
+
+RReeffeerreenncceess
+
+                                                                2
+

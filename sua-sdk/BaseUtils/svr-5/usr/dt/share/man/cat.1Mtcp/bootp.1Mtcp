@@ -1,0 +1,142 @@
+
+
+bootp(1Mtcp)                                         bootp(1Mtcp)
+
+SSyynnooppssiiss
+       bootp [-d] [-a interface_name] [-c number_of_tries] device
+       [hostname]
+
+DDeessccrriippttiioonn
+       The bootp command gives client hosts the ability to obtain
+       network  configuration information from a central Internet
+       Bootstrap Protocol (BOOTP) server (see
+
+FFiilleess
+       database file read by bootpd
+
+UUssaaggee
+       bootp can be run at system installation time, or in  cases
+       where the characteristics of the network change (for exam-
+       ple, when a new domain  name  server  is  added)  and  the
+       client's  configuration  files  must be updated to reflect
+       the changes to the network.
+
+       bootp can be run by a privileged user only.
+
+       When invoked, bootp broadcasts a BOOTP request  containing
+       the  hardware  address of the Ethernet interface specified
+       by its device name (such as /dev/net0).  By  default,  the
+       broadcast  is  made  over the first network interface that
+       the kernel finds that  supports  broadcasting  unless  the
+       name  of  a different interface, interface_name, is speci-
+       fied using the -a option.
+
+       The bootpd daemon on the  BOOTP  server  responds  to  the
+       request.   bootp  interprets the response and prints shell
+       variables on the standard output which correspond  to  the
+       attribute values contained in the response.  If a randomly
+       varied time-out period expires without a  response,  bootp
+       resends  the  request  and  increases the time-out period.
+       The request is retried until number_of_tries  (default  5)
+       is reached.
+
+       To  avoid  the  possibility of exhausting the space in the
+       64-byte vend area of the request/response packet, the host
+       name  and  domain name attributes are obtained via reverse
+       DNS lookup.  The local file and the file are not consulted
+       for  this operation; any DNS servers specified in the vend
+       area are consulted instead.
+
+       The BOOTP attributes that  are  currently  used,  together
+       with  the  shell variables output by bootp, are summarized
+       in the following tables:
+       -------------------------------------------------------------
+       RFC 951 field nameBOOTP    serverBOOTP client shell variable
+                         attribute name
+       -------------------------------------------------------------
+       file              bf             INET_BOOT_FILE_NAME
+
+                                                                1
+
+bootp(1Mtcp)                                         bootp(1Mtcp)
+
+       yiaddr            ip             INET_YOUR_IP_ADDRESS
+       siaddr            sa             INET_SERVER_IP_ADDRESS
+       vend              -              see following table
+
+       --------------------------------------------------------------
+       RFC   1533   vendorBOOTP    serverBOOTP client shell variable
+       extension field    attribute name
+       --------------------------------------------------------------
+       Ethernet Frame TypeT36            INET_ETHER_ENCAPSULATION
+       NIS Domain Name    T40            INET_NIS_DOMAIN_NAME
+       Domain Name        dn             INET_DOMAIN_NAME
+       Domain Name Server ds             INET_DNS_SERVER[instance]
+       Router             gw             INET_ROUTER[instance]
+       Host Name          hn             INET_HOSTNAME
+       Subnet Mask        sm             INET_SUBNET_MASK
+       Time Offset        to             INET_TIME_OFFSET
+       Time Server        ts             INET_TIME_SERVER[instance]
+       Note that, in cases where  reverse  DNS  lookup  is  used,
+       bootp outputs the INET_HOSTNAME and INET_DOMAIN_NAME vari-
+       ables.
+
+       The attribute names shown in these tables are  implemented
+       as  parameter  declarations in the BOOTP server configura-
+       tion file /etc/inet/bootptab (see
+
+   OOppttiioonnss
+       bootp takes the following options: Specify the name of the
+       Ethernet  interface,  such as net1, which is to be used to
+       communicate with the BOOTP server.
+
+       The Ethernet interface specified by interface_name is tem-
+       porarily  configured  with  an  IP  address of zero.  This
+       allows bootp to receive  a  response  if  the  current  IP
+       address of the interface does not match that configured on
+       the BOOTP server for the hardware address of  device.   To
+       avoid  networking  errors, do not invoke bootp with the -a
+       option from a multiuser system when the  interface  speci-
+       fied by interface_name is in use.  Specifies the number of
+       unanswered BOOTP requests to send before giving  up.   The
+       default  value  is  5.   Do not use DNS to obtain the host
+       name and the domain name.
+
+EExxiitt ccooddeess
+       On success, bootp returns zero.
+
+       On a timeout,  it  returns  254  and  prints  the  message
+       INET_BOOTP_TIMEDOUT=yes to the standard error output.
+
+RReeffeerreenncceess
+       RFC 951, RFC 1533
+
+EExxaammpplleess
+       A  sample  client  host  entry in /etc/inet/bootptab might
+       look           like           this:            ..default:\
+
+                                                                2
+
+bootp(1Mtcp)                                         bootp(1Mtcp)
+
+                          :ds=128.212.64.29          128.212.64.5
+       128.212.64.2:\                         :ts=128.212.64.29:\
+                          :gw=128.212.64.29:\
+                          :sm=255.255.255.0:\
+                          :vm=auto:to=auto:
+       mcfeely:ht=1:ha=0080298356B4:ip=128.212.64.146:tc=default:
+
+       The  ht  (hardware address type) and ha (hardware address)
+       attributes are used by the  BOOTP  server  to  locate  the
+       proper  entry  in  its configuration file.  Note that this
+       client host forces the BOOTP server to choose  an  address
+       by always setting the ciaddr field in the request to zero.
+       The value of the bootp argument hostname is placed in  the
+       request vend area ``Host Name'' field so that a server may
+       choose to respond based on this hostname if  a  lookup  by
+       hardware   address   fails.    The   Class  Identifier  of
+       ``UnixWare'' is also provided in the request  to  identify
+       the client as a UnixWare system.
+
+                                                                3
+

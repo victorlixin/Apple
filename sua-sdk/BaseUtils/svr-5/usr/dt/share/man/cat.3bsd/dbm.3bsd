@@ -1,0 +1,107 @@
+
+
+dbm(3bsd)                                               dbm(3bsd)
+
+SSyynnooppssiiss
+       /usr/ucb/cc [flag ... ] file ...  #include <dbm.h>
+
+       typedef struct {
+           char *dptr;
+           int dsize; } datum;
+
+       dbminit(const char *file);
+
+       dbmclose(void);
+
+       datum fetch(datum key);
+
+       store(datum key, datum content);
+
+       delete(datum key);
+
+       datum firstkey(void);
+
+       datum nextkey(datum key);
+
+DDeessccrriippttiioonn
+       These  routines are provided for compatibility with appli-
+       cations originally written for BSD systems;  new or ported
+       applications  should  use the equivalent System V routines
+       instead.  See and
+
+RReeffeerreenncceess
+       These functions maintain key/content pairs in a data base.
+       The  functions  will  handle very large (a billion blocks)
+       databases and will access a keyed item in one or two  file
+       system  accesses.   The  functions  are  obtained with the
+       loader option -ldbm.
+
+       keys and contents are described by the datum  typedef.   A
+       datum  specifies  a  string  of  dsize bytes pointed to by
+       dptr.  Arbitrary binary data,  as  well  as  normal  ASCII
+       strings,  are  allowed.   The  data  base is stored in two
+       files.  One file is a directory containing a bit  map  and
+       has .dir as its suffix.  The second file contains all data
+       and has .pag as its suffix.
+
+       Before a database can be accessed, it must  be  opened  by
+       dbminit.  At the time of this call, the files file.dir and
+       file.pag must exist.  An empty database is created by cre-
+       ating zero-length .dir and .pag files.
+
+       A  database  may  be closed by calling dbmclose.  You must
+       close a database before opening a new one.
+
+       Once open, the data stored under  a  key  is  accessed  by
+       fetch and data is placed under a key by store.  A key (and
+       its associated contents) is deleted by delete.   A  linear
+       pass  through  all  keys  in a database may be made, in an
+
+                     BSD System Compatibility                   1
+
+dbm(3bsd)                                               dbm(3bsd)
+
+       (apparently) random order, by use of firstkey and nextkey.
+       firstkey  will return the first key in the database.  With
+       any key nextkey will return the next key in the  database.
+       This  code  will  traverse  the  data  base:  for  (key  =
+       firstkey; key.dptr != NULL; key = nextkey(key))
+
+RReettuurrnn vvaalluueess
+       All functions that return an int indicate errors with neg-
+       ative values.  A zero return indicates no error.  Routines
+       that return a datum indicate errors with a NULL (0)  dptr.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The  dbm  library has been superseded by and is now imple-
+       mented using ndbm.
+
+       The .pag file will contain holes so that its apparent size
+       is about four times its actual content.  Older versions of
+       the  operating system may  create  real  file  blocks  for
+       these holes when touched.  These files cannot be copied by
+       normal means (that is, using or  without  filling  in  the
+       holes.
+
+       dptr  pointers  returned  by  these subroutines point into
+       static storage that is changed by subsequent calls.
+
+       The sum of the sizes of a key/content pair must not exceed
+       the  internal block size (currently 1024 bytes).  Moreover
+       all key/content pairs that hash together  must  fit  on  a
+       single  block.   store  will  return an error in the event
+       that a disk block fills with inseparable data.
+
+       delete does not physically reclaim file space, although it
+       does make it available for reuse.
+
+       The  order  of  keys  presented  by  firstkey  and nextkey
+       depends on a hashing function, not on  anything  interest-
+       ing.
+
+       There  are  no  interlocks and no reliable cache flushing;
+       thus concurrent updating and reading is risky.
+
+                     BSD System Compatibility                   2
+

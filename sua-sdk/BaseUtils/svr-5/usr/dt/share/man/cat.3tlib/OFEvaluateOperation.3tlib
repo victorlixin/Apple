@@ -1,0 +1,107 @@
+
+
+OFEvaluateOperation(3tlib)             OFEvaluateOperation(3tlib)
+
+SSyynnooppssiiss
+       OFEvaluateOperation handleId object [ bmipResponseVar ]
+
+DDeessccrriippttiioonn
+       This  routine  performs  the  operation  named by the BMIP
+       request keyed list on the object identified by object.  It
+       will return a keyed list which represents a BMIP response.
+       This should be forwarded to  the  client  with  the  OFRe-
+       turnBmipResponse function call.
+
+       This routine can be called repeatedly during the same BMIP
+       request, and multiple bmipResponse lists  may  be  accumu-
+       lated.  This  is  the  case when multiple objects are for-
+       warded in  the  bmipRequest(objectInstance)  key,  or  the
+       bmipRequest(scope)  key  guides  a  transformation  on the
+       named object instance into many object identifiers.
+
+       If the user wants to perform atomic synchronization with a
+       request  (either all or nothing), they should store up all
+       the responses and only return them if no errors are  found
+       (and if errors are found, implement some procedure to undo
+       those that succeeded and then return and empty  response).
+       If  atomic synchronization is used, then the bmipResponse-
+       Var argument can never be present but empty, as each addi-
+       tional call to OFEvaluateOperation will clobber the previ-
+       ous BMIP response.
+
+   AArrgguummeennttss
+       handle that was passed to the request processor that needs
+       to be passed back to the admin services library when oper-
+       ating on class.  name of the object instance  being  oper-
+       ated  on  by  the  operation.   variable  where  the  BMIP
+       response should be stored, rather than being  returned  by
+       OFEvaluateOperation.  If  this  argument  is empty (rather
+       than not present) then the BMIP response will be invisibly
+       associated  (to the OSA writer) with the handleId and used
+       by OFReturnBmipResponse when appropriate.
+
+DDiiaaggnnoossttiiccss
+       The execution of the operation was halted  because  of  an
+       error in running the operation's execution procedure.  The
+       handleId named does not corrispond to an existing class in
+       the  Server  APIs  internal  lookup  table.   One  of  the
+       attributes given in the BMIP request did not have a  value
+       associated  with  in  on a request to perform an operation
+       other  than  get  or  replace-with-default.   The   action
+       requested  by the BMIP request represented by the handleId
+       is not listed in the CDT of the BMIP request's class.  The
+       attribute  list  (or  some portion of it) contained in the
+       BMIP request represented by the handleId is not  parseable
+       by the Server API.  One of the attributes contained in the
+       BMIP request represented by the handleId is not listed  in
+       the request's class's CDT.  The operation contained in the
+       BMIP request represented by the handleId is not listed  in
+
+                                                                1
+
+OFEvaluateOperation(3tlib)             OFEvaluateOperation(3tlib)
+
+       the  CDT  as  being  able  to  be  performed on one of the
+       attributes  listed  in  the  BMIP  request.   One  of  the
+       attributes  listed  in the BMIP request represented by the
+       handleId is a group attribute and it has  been  associated
+       with  a  value.   Or, one of the values associated with an
+       attribute is unparseable or  a  set  of  values  is  being
+       assigned to a single value-typed attribute.
+
+EExxaammpplleess
+       proc RequestProcessor {osaDataString handleId bmipRequest}
+       {
+
+               set object [keylget bmipRequest objectInstance]
+
+               OFEvaluateOperation $handleId $object bmipResponse
+               OFReturnBmipResponse  $handleId bmipResponse FALSE
+       }
+
+               <or>
+
+       proc RequestProcessor {osaDataString handleId bmipRequest}
+       {
+
+               set object [keylget bmipRequest objectInstance]
+
+               OFEvaluateOperation $handleId $object {}
+               OFReturnBmipResponse $handleId {} FALSE }
+
+               <or>
+
+       proc RequestProcessor {osaDataString handleId bmipRequest}
+       {
+
+               set object [keylget bmipRequest objectInstance]
+
+               set  bmipResponse  [OFEvaluateOperation  $handleId
+       $object]
+               OFReturnBmipResponse  $handleId bmipResponse FALSE
+       }
+
+RReeffeerreenncceess
+
+                                                                2
+

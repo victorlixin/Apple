@@ -1,0 +1,109 @@
+
+
+semaphore(3synch)                               semaphore(3synch)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <synch.h>
+
+       int sema_init(sema_t *sema, int sema_count, int type, void
+       *arg);
+
+       int sema_wait(sema_t *sema);
+
+       int sema_trywait(sema_t *sema);
+
+       int sema_post(sema_t *sema);
+
+       int sema_destroy(sema_t *sema);
+
+DDeessccrriippttiioonn
+       Conceptually, a semaphore is a count  of  free  resources.
+       Semaphores  are  typically  used  to  coordinate access to
+       resources.   The  semaphore  count  is  initialized   with
+       sema_init  to  the number of free resources.  Threads then
+       atomically  increment  the  count  with   sema_post   when
+       resources  are  added  and  atomically decrement the count
+       with sema_wait  when  resources  are  removed.   When  the
+       semaphore  count  becomes  zero,  indicating  that no more
+       resources are present, threads  trying  to  decrement  the
+       semaphore   with  sema_wait(3synch)  will  block  until  a
+       resource becomes available.
+
+       If there is only one resource to  protect  (that  is,  the
+       semaphore  count  will never be greater than one), a mutex
+       lock will provide better performance than a semaphore.
+
+   PPaarraammeetteerrss
+       pointer to semaphore to initialize,  post,  wait  for,  or
+       destroy  number  of  resources  to  be  protected  by  the
+       semaphore USYNC_THREAD or USYNC_PROCESS NULL (reserved for
+       future use)
+
+       Note that semaphores protect data only when the convention
+       of calling sema_wait and sema_post(3synch)  is  faithfully
+       followed before and after any access of the data.
+
+   sseemmaa__iinniitt((33ssyynncchh))
+       sema_init  initializes  the semaphore sema of type type to
+       protect sema_count resources.
+
+   sseemmaa__wwaaiitt((33ssyynncchh))
+       sema_wait acquires the semaphore pointed to by sema.
+
+       If the semaphore is available (that is, if  the  semaphore
+       value  is  greater  than  zero),  sema_wait decrements the
+       semaphore value and returns to the caller.
+
+                                                                1
+
+semaphore(3synch)                               semaphore(3synch)
+
+       If the semaphore is unavailable (that  is,  the  semaphore
+       value is zero or less), sema_wait decrements the semaphore
+       value and suspends execution of the calling  thread  until
+       the semaphore becomes available to the caller.
+
+       If  a  thread  waiting  on a semaphore is interrupted by a
+       signal, the signal handler will run, but then  the  thread
+       will   resume  waiting  for  the  semaphore.   Thus,  when
+       sema_wait returns without an error, it  will  always  have
+       acquired the semaphore.
+
+   sseemmaa__ttrryywwaaiitt((33ssyynncchh))
+       sema_trywait   makes  a  single  attempt  to  acquire  the
+       semaphore pointed to by sema.  If the semaphore is  avail-
+       able,  sema_trywait  decrements  the  semaphore  value and
+       returns to the caller.
+
+       If sema_trywait cannot immediately acquire the  semaphore,
+       it  returns  EBUSY  to  the  caller, it does not block the
+       caller  to  wait  for  the  semaphore  or  decrement   the
+       semaphore value.
+
+   sseemmaa__ppoosstt((33ssyynncchh))
+       sema_post increments the count of the semaphore pointed to
+       by sema, and if the new count value is less than or  equal
+       to  zero,  makes  the next thread waiting at the semaphore
+       runnable.
+
+       If more than one  thread  is  waiting,  release  from  the
+       blocked  group  is  scheduling  policy-specific  for bound
+       threads, and may be dependent on scheduling parameters for
+       multiplexed threads.
+
+   sseemmaa__ddeessttrrooyy((33ssyynncchh))
+       sema_destroy  destroys  the  semaphore pointed to by sema.
+       This includes invalidating sema and freeing any associated
+       dynamically allocated resources.
+
+WWaarrnniinnggss
+       Operations  on  semaphores  initialized with sema_init are
+       not recursive; a thread can block itself if it attempts to
+       reacquire a semaphore that it has already acquired.
+
+RReeffeerreenncceess
+
+                                                                2
+

@@ -1,0 +1,130 @@
+
+
+mouse(7)                                                 mouse(7)
+
+DDeessccrriippttiioonn
+       The  mouse  device  driver supports several types of mouse
+       devices: Logitech bus mouse that  attaches  to  a  plug-in
+       card  and is designed to be used in an eight-bit card slot
+       Logitech serial type mouse  that  plugs  directly  into  a
+       serial  port connector PS/2 compatible mouse that connects
+       to a PS/2 auxiliary port Microsoft bus mouse that attaches
+       to  a plug-in card and is designed to be used in an eight-
+       bit card slot  Microsoft  serial  type  mouse  that  plugs
+       directly into a serial port connector Mouse Systems Corpo-
+       ration (MSC) compatible serial mouse  that  plugs  into  a
+       serial port.
+
+       The  driver  will support multiple mouse applications run-
+       ning in virtual terminal screens, both under  the   System
+       and MS-DOS via SimulTask, VP/ix, Merge, or another similar
+       product.
+
+       Support for mouse administration is also provided.  See
+
+       The following ioctl commands are  supported:  Used  exclu-
+       sively by /usr/lib/mousemgr to receive open and close com-
+       mands from /dev/mouse driver.  Used exclusively by  mouse-
+       admin.   Returns  16-byte character array indicating which
+       mouse devices are currently open; 1  is  open,  0  is  not
+       open.   The  array  is  in the linear order established by
+       /usr/bin/mouseadmin in building the display and device map
+       pairs.   Used  exclusively by mouseadmin to configure dis-
+       play and mouse pairs.  The mse_cfg data structure is  used
+       to  pass  display  and  device  mapping and map pair count
+       information to the driver: struct mse_cfg {
+              struct mousemap *mapping;
+              unsigned    count; } struct mousemap {
+              dev_t    disp_dev;
+              dev_t    mse_dev; }
+              int      type; Read mouse position and status data.
+       The following data structure is used to return mouse posi-
+       tion information to a user application:
+       struct mouseinfo {
+              unsigned char status;
+              char          xmotion:
+              char          ymotion; }
+
+       MOUSEIOCREAD will set  errno  to  EFAULT  for  failure  to
+       return  a valid mouseinfo structure.  The status byte con-
+       tains the button state information according to  the  fol-
+       lowing  format:  0  Mv  Lc  Mc Rc L M R where: is 1 if the
+       mouse has moved since last MOUSEIOCREAD is 1 if Left  but-
+       ton has changed state since last MOUSEIOCREAD is 1 if Mid-
+       dle button has changed state since last MOUSEIOCREAD is  1
+       if  Right button has changed state since last MOUSEIOCREAD
+       current state of Left  button  (1  ==  depressed)  current
+       state of Middle button current state of Right button
+
+                                                                1
+
+mouse(7)                                                 mouse(7)
+
+       The  Mv  bit  is  required because the total x and y delta
+       since the last MOUSEIOCREAD ioctl could be 0 yet the mouse
+       may have been moved.  The Lc, Mc, and Rc bits are required
+       for a similar reason; if a  button  had  been  pushed  and
+       released  since  the  last MOUSEIOCREAD ioctl, the current
+       state bit would be unchanged  but  the  application  would
+       want to know the button had been pushed.
+
+       The xmotion and ymotion fields are signed quantities rela-
+       tive to the previous position in the range  -127  to  127.
+       Deltas  that  would overflow a signed char have been trun-
+       cated.  Used to send commands and receive  responses  from
+       the  PS/2  compatible mouse devices.  Failed MOUSE320 com-
+       mands will return ENXIO as the errno value.  The following
+       data structure is used to pass commands, status, and posi-
+       tion information between the driver and  a  user  applica-
+       tion: struct cmd_320 {
+              int      cmd;
+              int      arg1;
+              int      arg2;
+              int      arg3; }
+
+       Valid commands for the PS/2 compatible devices are as fol-
+       lows: Reset mouse.  Resend last data.  Set default status.
+       Disable  mouse.  Enable mouse.  Set prompt mode.  Set echo
+       mode.  Reset echo mode.  Set stream mode.  Set  resolution
+       (counts  per  millimeter).   Valid arg1 values are as fol-
+       lows: 00 = 1 count/mm.  01 = 2 count/mm.  02 = 4 count/mm.
+       03  = 8 count/mm.  Set 2:1 scaling.  Set 1:1 scaling.  Set
+       sampling rate (reports per second).  Valid arg1 values are
+       as follows: 0A = 10 reports/sec.  14 = 20 reports/sec.  28
+       =  40  reports/sec.   3C  =  60  reports/sec.   50  =   80
+       reports/sec.  64 = 100 reports/sec.  C8 = 200 reports/sec.
+       read device type returns a zero (0) for the PS/2  compati-
+       ble   mouse.    Read   mouse   report  returns  three-byte
+       mouse/button position where bytes two and three are  9-bit
+       2's  complement  relative  motions  with the 9th bit (sign
+       bit) coming from byte 1.   b0  -  left  button      (1  ==
+       depressed)  b1  -  right  button  b2  - middle button b3 -
+       always 1 b4 - X data sign    (1 == negative) b5 -  Y  data
+       sign  b6  -  X  data  overflow b7 - Y data overflow X axis
+       position data Y axis position data Status request  returns
+       three-byte  report  with  the following format: b0 - right
+       button    (1 == depressed) b1 - middle button  b2  -  left
+       button  b3  -  always 0 b4 - scaling 1:1 = 0, 2:1 = 1 b5 -
+       disabled(0)/enabled(1) b6 - stream(0)/prompt(1) mode b7  -
+       always  0  b0 - 6  current resolution b7 - always 0 b0 - 7
+       current sampling rate Specifies the timing window for  the
+       emulation  of the middle mouse button on a 2 button mouse.
+       The range is from 10ms to 100ms.  If the user presses  the
+       left  mouse  button and the right mouse button within this
+       timing window, a middle button event is generated.
+
+                                                                2
+
+mouse(7)                                                 mouse(7)
+
+FFiilleess
+       /dev/mouse /usr/lib/mousemgr /usr/include/sys/mouse.h
+
+RReeffeerreenncceess
+NNoottiicceess
+       The mouse also supports queue  mode  for  accessing  mouse
+       input,  both motion and button events; see for more infor-
+       mation on the KDQUEMODE ioctl.
+
+                                                                3
+

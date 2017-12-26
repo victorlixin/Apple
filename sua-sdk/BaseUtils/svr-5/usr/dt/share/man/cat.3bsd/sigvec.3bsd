@@ -1,0 +1,272 @@
+
+
+sigvec(3bsd)                                         sigvec(3bsd)
+
+SSyynnooppssiiss
+       /usr/ucb/cc [flag . . . ] file . . .
+
+       #include <signal.h>
+
+       int  sigvec(int  sig,  struct  sigvec  *vec, struct sigvec
+       *ovec);
+
+DDeessccrriippttiioonn
+       The system defines a set of signals that may be  delivered
+       to a process.  Signal delivery resembles the occurrence of
+       a hardware interrupt: the signal is blocked  from  further
+       occurrence,  the  current  process context is saved, and a
+       new one is built.  A process  may  specify  a  handler  to
+       which  a  signal is delivered, or specify that a signal is
+       to be blocked or ignored.  A process may also specify that
+       a  default action is to be taken by the system when a sig-
+       nal occurs.  Normally, signal handlers execute on the cur-
+       rent stack of the process.  This may be changed, on a per-
+       handler basis, so that signals are taken on a special sig-
+       nal stack.
+
+       All  signals have the same priority.  Signal routines exe-
+       cute with the signal that caused their  invocation  to  be
+       blocked, but other signals may yet occur.  A global signal
+       mask defines the set of  signals  currently  blocked  from
+       delivery  to  a process.  The signal mask for a process is
+       initialized from that of its parent (normally 0).  It  may
+       be  changed  with a or call, or when a signal is delivered
+       to the process.
+
+       A process may also specify a set of  flags  for  a  signal
+       that affect the delivery of that signal.
+
+       When  a  signal condition arises for a process, the signal
+       is added to a set of signals pending for the process.   If
+       the signal is not currently blocked by the process then it
+       is delivered to the process.  When a signal is  delivered,
+       the  current  state  of the process is saved, a new signal
+       mask is calculated (as described below),  and  the  signal
+       handler  is  invoked.  The call to the handler is arranged
+       so that if the signal handling  routine  returns  normally
+       the  process  will  resume  execution  in the context from
+       before the signal's delivery.  If the  process  wishes  to
+       resume  in  a  different  context, then it must arrange to
+       restore the previous context itself.
+
+       When a signal is delivered to a process a new signal  mask
+       is  installed for the duration of the process' signal han-
+       dler (or until a sigblock or  sigsetmask  call  is  made).
+       This  mask  is  formed  by taking the current signal mask,
+       adding the signal to be delivered, and ORing in the signal
+       mask associated with the handler to be invoked.
+
+                     BSD System Compatibility                   1
+
+sigvec(3bsd)                                         sigvec(3bsd)
+
+       The  action  to  be  taken when the signal is delivered is
+       specified by a sigvec structure, which includes  the  fol-
+       lowing  members:  void     (*sv_handler)();      /* signal
+       handler */ int     sv_mask;              /* signal mask to
+       apply  */  int      sv_flags;              /*  see  signal
+       options */
+
+       #define SV_ONSTACK    /* take signal on  signal  stack  */
+       #define  SV_INTERRUPT   /* do not restart system on signal
+       return  */  #define  SV_RESETHAND   /*  reset  handler  to
+       SIG_DFL when signal taken */
+
+       If the SV_ONSTACK bit is set in the flags for that signal,
+       the system will deliver the signal to the process  on  the
+       signal  stack  specified  with  rather than delivering the
+       signal on the current stack.
+
+       If vec is not a NULL pointer, sigvec assigns  the  handler
+       specified  by  sv_handler,  the mask specified by sv_mask,
+       and the flags specified by sv_flags to the specified  sig-
+       nal.  If vec is a NULL pointer, sigvec does not change the
+       handler, mask, or flags for the specified signal.
+
+       The mask specified in vec is not allowed to block SIGKILL,
+       SIGSTOP, or SIGCONT.  The system enforces this restriction
+       silently.
+
+       If ovec is not a NULL  pointer,  the  handler,  mask,  and
+       flags  in  effect for the signal before the call to sigvec
+       are returned to the user.  A call to  sigvec  with  vec  a
+       NULL  pointer  and  ovec not a NULL pointer can be used to
+       determine the handling information currently in effect for
+       a signal without changing that information.
+
+       The  following  is  a list of all signals with names as in
+       the include file /usr/include/signal.h:
+
+       ---------------------------------
+       SIGHUP          hangup
+       SIGINT          interrupt
+       SIGQUIT     *   quit
+       SIGILL      *   illegal instruc-
+                       tion
+       SIGTRAP     *   trace trap
+       SIGABRT     *   abort (generated
+                       by routine)
+       SIGEMT      *   emulator trap
+       SIGFPE      *   arithmetic
+                       exception
+       SIGKILL         kill  (cannot be
+                       caught, blocked,
+                       or ignored)
+       SIGBUS      *   bus error
+
+                     BSD System Compatibility                   2
+
+sigvec(3bsd)                                         sigvec(3bsd)
+
+       SIGSEGV     *   segmentation
+                       violation
+       SIGSYS      *   bad argument  to
+                       system call
+       SIGPIPE         write  on a pipe
+                       or other  socket
+                       with  no  one to
+                       read it
+       SIGALRM         alarm clock
+       SIGTERM         software  termi-
+                       nation signal
+       SIGURG      +o   urgent condition
+                       present       on
+                       socket
+       SIGSTOP     |-   stop  (cannot be
+                       caught, blocked,
+                       or ignored)
+       SIGTSTP     |-   stop signal gen-
+                       erated from key-
+                       board
+       SIGCONT     +o   continue   after
+                       stop (cannot  be
+                       blocked)
+       SIGCHLD     +o   child status has
+                       changed
+       SIGTTIN     |-   background  read
+                       attempted   from
+                       control terminal
+       SIGTTOU     |-   background write
+                       attempted     to
+                       control terminal
+       SIGIO       +o   I/O is  possible
+                       on  a descriptor
+                       (see
+       SIGPWR      +o   power
+                       fail/restart
+       SIGXCPU         cpu  time  limit
+                       exceeded (see
+       SIGXFSZ         file size  limit
+                       exceeded (see
+       SIGVTALRM       virtual     time
+                       alarm (see
+       SIGPROF         profiling  timer
+                       alarm (see
+       SIGWINCH    +o   window   changed
+                       (see
+       SIGUSR1         user-defined
+                       signal 1
+       SIGUSR2         user-defined
+                       signal 2
+
+       The starred signals in the list above cause a  core  image
+       if not caught or ignored.
+
+                     BSD System Compatibility                   3
+
+sigvec(3bsd)                                         sigvec(3bsd)
+
+       Once  a  signal handler is installed, it remains installed
+       until another sigvec call is made, or an  execve  (see  is
+       performed, unless the SV_RESETHAND bit is set in the flags
+       for that signal.  In that case, the value of  the  handler
+       for the caught signal will be set to SIG_DFL before enter-
+       ing the signal-catching function,  unless  the  signal  is
+       SIGILL, SIGPWR, or SIGTRAP.  Also, if this bit is set, the
+       bit for that signal in the signal mask will  not  be  set;
+       unless  the signal mask associated with that signal blocks
+       that signal, further occurrences of that signal  will  not
+       be  blocked.   The  SV_RESETHAND  flag is not available in
+       4.2BSD, hence it should not be used if  backward  compati-
+       bility is needed.
+
+       The  default action for a signal may be reinstated by set-
+       ting the signal's handler to SIG_DFL; this default is ter-
+       mination  except  for signals marked with +o or |-.  Signals
+       marked with +o are discarded if the action is SIG_DFL; sig-
+       nals marked with |- cause the process to stop.  If the pro-
+       cess is terminated, a core image will be made in the  cur-
+       rent  working  directory  of  the receiving process if the
+       signal is one for which an asterisk appears in  the  above
+       list (see
+
+       If  the  handler for that signal is SIG_IGN, the signal is
+       subsequently ignored, and pending instances of the  signal
+       are discarded.
+
+       If a caught signal occurs during certain system calls, the
+       call is normally restarted.  The call  can  be  forced  to
+       terminate  prematurely  with an EINTR error return by set-
+       ting the SV_INTERRUPT bit in the flags  for  that  signal.
+       The SV_INTERRUPT flag is not available in 4.2BSD, hence it
+       should not be used if backward  compatibility  is  needed.
+       The affected system calls are or on a slow device (such as
+       a terminal or pipe or other socket, but not  a  file)  and
+       during a
+
+       After  a  or  the  child  inherits all signals, the signal
+       mask, the signal  stack,  and  the  restart/interrupt  and
+       reset-signal-handler flags.
+
+       The  execve call (see resets all caught signals to default
+       action and resets all signals to be  caught  on  the  user
+       stack.   Ignored  signals  remain ignored; the signal mask
+       remains the same; signals that interrupt system calls con-
+       tinue to do so.
+
+       The  accuracy  of addr is machine dependent.  For example,
+       certain machines may supply an address that is on the same
+       page  as  the address that caused the fault.  If an appro-
+       priate  addr  cannot  be  computed  it  will  be  set   to
+       SIG_NOADDR.
+
+                     BSD System Compatibility                   4
+
+sigvec(3bsd)                                         sigvec(3bsd)
+
+RReettuurrnn vvaalluueess
+       A  0 value indicates that the call succeeded.  A -1 return
+       value indicates that an error occurred and errno is set to
+       indicate the reason.
+
+EErrrroorrss
+       sigvec  will  fail  and  no  new  signal  handler  will be
+       installed if one of the following occurs:  Either  vec  or
+       ovec  is  not  a NULL pointer and points to memory that is
+       not a valid part of the process address space.  Sig is not
+       a valid signal number, or, SIGKILL, or SIGSTOP.
+
+RReeffeerreenncceess
+NNoottiicceess
+       SIGPOLL  is  a  synonym for SIGIO.  A SIGIO will be issued
+       when a file descriptor corresponding  to  a  STREAMS  (see
+       file  has  a  ``selectable''  event  pending.  Unless that
+       descriptor has been put into asynchronous mode (see a pro-
+       cess  must  specifically  request that this signal be sent
+       using the I_SETSIG ioctl call (see Otherwise, the  process
+       will never receive SIGPOLL.
+
+       The  handler  routine  can  be declared: void handler(sig,
+       code, scp, addr) int sig, code;  struct  sigcontext  *scp;
+       char *addr;
+
+       Here sig is the signal number; code is a parameter of cer-
+       tain signals that provides additional  detail;  scp  is  a
+       pointer to the sigcontext structure (defined in signal.h),
+       used to restore the context from before  the  signal;  and
+       addr is additional address information.
+
+       The signals SIGKILL and SIGSTOP cannot be ignored.
+
+                     BSD System Compatibility                   5
+

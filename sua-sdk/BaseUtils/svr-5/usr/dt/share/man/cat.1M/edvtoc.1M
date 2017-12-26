@@ -1,0 +1,107 @@
+
+
+edvtoc(1M)                                             edvtoc(1M)
+
+SSyynnooppssiiss
+       edvtoc -f vtoc-file raw-device
+       edvtoc -p raw-device
+       edvtoc -s "stamp" raw-device
+
+DDeessccrriippttiioonn
+       The  first  form  of the edvtoc command allows you to edit
+       the contents of the Volume Table Of Contents (VTOC).   The
+       second  form lets you update the disk parameters stored in
+       your VTOC so that they reflect the ones currently  in  use
+       on your system.
+
+   OOppttiioonnss
+       Specifies the path location of the updated (condensed for-
+       mat) VTOC file to be written to disk.  The format  of  the
+       file  is  slice number, slice tag value, slice flag value,
+       slice start sector, slice size (in sectors).   A  copy  of
+       this file can be obtained for modification by using the -f
+       option of the command.  Specifies that the disk parameters
+       stored  in  the  VTOC  on  the  specified  disk  should be
+       updated.  These parameters include the number of heads and
+       the  numbers of sectors per track that are defined for the
+       specified disk device.   Specifies  the  stamp  value  (an
+       array  of  12  characters)  to write to the on-disk PDINFO
+       (Physical Disk Information).   The  notation  for  default
+       stamp  is  a  string  of 12 blank characters.  This option
+       should only be used  to  resolve  stamp  collisions.   The
+       default  value  should be used to minimize the probability
+       of a stamp collision.  raw-device is the character special
+       device  for the disk drive to be accessed.  It must be the
+       slice 0 device to represent the entire device  (for  exam-
+       ple, /dev/rdsk/c0b0t0d0s0).
+
+FFiilleess
+UUssaaggee
+       The  required  procedure for editing the VTOC includes the
+       following steps: Ensure that the disk (other than the root
+       disk) is not open.  Run with the -f option.  Edit the file
+       created by prtvtoc to reflect the needed  changes  to  the
+       VTOC.   Run edvtoc on the edited file.  For the root disk,
+       reboot the system, so the disk driver  can  read  the  new
+       VTOC.  The  changes  to the VTOC on the root disk will not
+       take place until you perform the reboot.
+
+       edvtoc  provides  three  functions:   reading/interpreting
+       vtoc-file  limited validity checking of the new VTOC writ-
+       ing the VTOC to the disk if the user requests it
+
+       When editing the VTOC, the following entries are the valid
+       slice tags and slice permission flags: /* Slice tags */
+
+       #define   V_BOOT      0x01 /*   Boot   slice   */  #define
+       V_ROOT      0x02 /*    Root    filesystem    */    #define
+       V_SWAP      0x03 /*    Swap    filesystem    */    #define
+
+                                                                1
+
+edvtoc(1M)                                             edvtoc(1M)
+
+       V_USR       0x04 /*    User    filesystem    */    #define
+       V_BACKUP    0x05 /*      full      disk     */     #define
+       V_ALTS      0x06 /*  alternate  sector  space  */  #define
+       V_OTHER          0x07 /*   non-unix   space   */   #define
+       V_ALTTRK    0x08 /*  alternate  track  space  */   #define
+       V_STAND          0x09 /*    Stand    slice    */   #define
+       V_VAR       0x0a /*     Var     slice      */      #define
+       V_HOME      0x0b /*      Home     slice     */     #define
+       V_DUMP      0x0c /*     dump     slice     */      #define
+       V_ALTSCTR   0x0d /*   Alternate  sector/track  */  #define
+       V_MANAGED1  0x0e /*  Volume  management  public  slice  */
+       #define  V_MANAGED2   0x0f /*  Volume  management  private
+       slice */
+
+       /* Slice permission flags */
+
+       #define V_UNMNT          0x01 /* Unmountable partition  */
+       #define  V_RONLY          0x10 /*  Read  only  */  #define
+       V_VALID          0x200     /* Partition is valid to use */
+       The  start  and  size value are in absolute sector numbers
+       where the first  sector  on  the  drive  is  0  (which  is
+       reserved  for  the  partition table).  Slices should start
+       and end on a cylinder boundary  if  possible.   The  head,
+       cylinder and sectors/track information provided by prtvtoc
+       -p assists in the calculations.  Slices should not overlap
+       (slice 0 is the exception, it describes the entire  parti-
+       tion).
+
+       The -p option causes edvtoc to update the disk  parameters
+       recorded on the specified disk device with the disk param-
+       eters that were detected when  the  disk  was  recognized.
+       Normally, these parameters match but, either by moving the
+       disk to a different controller or by changing the size  of
+       a logical disk, the parameters recorded on the disk may be
+       incorrect.  If you are trying to  mount  filesystems  that
+       are on an existing disk and you can not because the system
+       believes that the disk parameters are no  longer  compati-
+       ble, you may use this option to change the disk parameters
+       so that the filesystems are mountable.
+
+RReeffeerreenncceess
+
+                                                                2
+

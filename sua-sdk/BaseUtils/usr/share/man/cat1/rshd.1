@@ -1,0 +1,166 @@
+rshd(1)                                                         rshd(1)
+
+  rrsshhdd
+
+  NNAAMMEE
+
+    rshd - remote shell server
+
+  SSYYNNOOPPSSIISS
+
+    rshd [[-alnL]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The rrsshhdd(1) server is the server for the _rr_cc_mm_dd(3) routine and,
+    consequently, for the rrsshh(1) program. The server provides remote execution
+    facilities with authentication based on privileged port numbers from
+    trusted hosts.
+
+    The following options are supported by rrsshhdd(1):
+
+    --aa
+        Ask host name for verification.
+
+    --ll
+        Prevent any authentication based on the user's ..rrhhoossttss file.
+
+    --nn
+        Disable keep-alive messages.
+
+    --LL
+        Log successful accesses very verbosely.
+
+    The rrsshhdd(1) server listens for service requests at the port indicated in
+    the "cmd" service specification. When a service request is received, the
+    following protocol is initiated:
+
+   1.     The server checks the client's source port. If the port is not in
+          the range 512-1023, the server ends the connection.
+   2.     The server reads characters from the socket up to a null ('\0')
+          byte. The resultant string is interpreted as an ASCII number, base
+          10.
+   3.     If the number received in step 2 is non-zero, it is interpreted as
+          the port number of a secondary stream to be used for the stderr. A
+          second connection is then created to the specified port on the
+          client computer. The source port of this second connection is also
+          in the range 512-1023.
+   4.     The server checks the client's source address and requests the
+          corresponding host name (see _gg_ee_tt_hh_oo_ss_tt_bb_yy_aa_dd_dd_rr(2)). If the host name
+          cannot be determined, the dot-notation representation of the host
+          address is used. If the host name is in the same domain as the
+          server (according to the last two components of the domain name), or
+          if the --aa option is given, the addresses for the host name are
+          requested, verifying that the name and address correspond. If
+          address verification fails, the connection is ended with the
+          message, "Host address mismatch."
+   5.     A null terminated user name of at most 128 characters is retrieved
+          on the initial socket. This user name is interpreted as the user
+          identity on the client computer.
+   6.     A null terminated user name of at most 128 characters is retrieved
+          on the initial socket. This user name is interpreted as a user
+          identity to use on the server computer.
+   7.     A null terminated command to be passed to a shell is retrieved on
+          the initial socket. The length of the command is limited by the
+          upper bound on the size of the system's argument list.
+   8.     The rrsshhdd(1) utility then validates the user using _ii_rr_uu_ss_ee_rr_oo_kk(3), which
+          uses the file //eettcc//hhoossttss..eeqquuiivv and the ..rrhhoossttss file found in the
+          user's home directory. If the daemon is not running as the SYSTEM
+          user, the password of the user account used to run the daemon must
+          have been previously stored using the rreeggppwwdd(1) utility. The --
+          ll option prevents _rr_uu_ss_ee_rr_oo_kk(3) from doing any validation based on the
+          user's ..rrhhoossttss file, unless the user is the superuser. If the
+          _ii_rr_uu_ss_ee_rr_oo_kk(3) function reports that the address might have been
+          spoofed, the connection is refused.
+          Connection is also refused if the file //eettcc//nnoollooggiinn exists.
+          A null byte is returned on the initial socket and the command line
+          is passed to the normal login shell of the user. The shell inherits
+          the network connections established by rrsshhdd(1).
+
+    Transport-level keep-alive messages are enabled unless the --nn option is
+    present. The use of keep-alive messages allows sessions to be timed out if
+    the client crashes or becomes unreachable.
+
+    The --LL option causes all successful accesses to be logged to ssyyssllooggdd(1) as
+    messages.
+
+  IInntteerriixx aauutthheennttiiccaattiioonn
+
+    On traditional systems, a user can run rrsshh(1) from a system identified in
+    the user's ..rrhhoossttss file without providing a password. This is because on a
+    traditional system, the rrsshhdd(1) program is run as the superuser, and can
+    take any login identity. On Interix, this is not possible. Instead, the
+    user must run the rreeggppwwdd(1) utility on th host to store the user's
+    password before running rrsshh.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    Except for the last diagnostic message listed in this section, all
+    diagnostic messages are returned on the initial socket, after which any
+    network connections are closed. An error is indicated by a leading byte
+    with a value of 1 (0 is returned in step 10 above upon successful
+    completion of all the steps prior to the execution of the login shell).
+
+    LLooccuusseerr ttoooo lloonngg..
+        The name of the user on the client computer is longer than 128
+        characters.
+
+    RRuusseerr ttoooo lloonngg..
+        The name of the user on the remote computer is longer than 128
+        characters.
+
+    CCoommmmaanndd ttoooo lloonngg..
+        The command line passed exceeds the size of the argument list (as
+        configured into the system).
+
+    RReemmoottee ddiirreeccttoorryy..
+        The cchhddiirr(1) command to the home directory failed.
+
+    PPeerrmmiissssiioonn ddeenniieedd..
+        The authentication procedure described above failed or there is no
+        password file entry for the specified user.
+
+    CCaann''tt mmaakkee ppiippee..
+        The pipe needed for the stderr, was not created.
+
+    CCaann''tt ffoorrkk;; ttrryy aaggaaiinn..
+        A _ff_oo_rr_kk(2) by the server failed.
+
+    <<sshheellllnnaammee>>:: ......
+        The user's login shell could not be started. This message is returned
+        on the connection associated with the stderr, and is not preceded by a
+        flag byte.
+
+  FFIILLEESS
+
+    The rrsshh(1) and rrsshhdd(1) programs make use of the following files, if they
+    exist:
+
+    //eettcc//hhoossttss..eeqquuiivv
+        On the target system, this file contains the names of systems and
+        users allowed to login. See rrllooggiinndd(1) for more information.
+
+    $$HHOOMMEE//..rrhhoossttss
+        On the target system, this file can contain the names of systems (and
+        user names) allowed to login.
+
+  BBUUGGSS
+
+    The authentication procedure used here assumes the integrity of each
+    client computer and the connecting medium. This is insecure, but is useful
+    in an "open" environment.
+
+    A facility to allow all data exchanges to be encrypted should be present.
+
+    A more extensible protocol (such as Telnet) should be used.
+
+  SSEEEE AALLSSOO
+
+    _n_o_l_o_g_i_n(4)
+
+    _r_s_h(1)
+
+    _r_c_m_d(3)
+
+    _i_r_u_s_e_r_o_k(3)
+

@@ -1,0 +1,345 @@
+
+
+mapchan(4)                                             mapchan(4)
+
+SSyynnooppssiiss
+       /etc/default/mapchan
+       /usr/lib/mapchan
+
+DDeessccrriippttiioonn
+       A  mapfile (mapchan file) configures the mapping of infor-
+       mation  input  and   output   of   UnixWare.   The   file,
+       /etc/default/mapchan, specifies the device and the mapfile
+       that is associated with it. The mapfiles supplied with the
+       system are located in /usr/lib/mapchan.
+
+       There  are  two  types  of  mapfile: version 1.0 for 8-bit
+       character sets and version 2.0  for  multi-byte  character
+       sets.
+
+VVeerrssiioonn 11..00 mmaappffiillee ffoorrmmaatt
+       A  mapfile is divided into five main sections: input, out-
+       put, dead, compose and control.
+
+   IInnppuutt
+       This contains the mapping from the input peripheral  char-
+       acter  set to the internal character set. A character com-
+       ing from the input device is mapped to an output  sequence
+       character according to this mapping.
+
+       The  internal character set is defined by the right column
+       of the input map, and the first column of the output  map.
+
+       Any  character value not given is assumed to map directly.
+       Only the differences are shown in  the  mapfile.  See  The
+       left  column  must  be unique. More than one occurrence of
+       any entry is considered invalid and produces an error. The
+       right column characters can appear more than once. This is
+       a many to one mapping. Nulls can be produced with  compose
+       sequences or as part of an output string.
+
+   DDeeaadd
+       Certain  keys  are designated as dead keys in the mapfile.
+       Dead key sequences are two keystrokes that produce a  sin-
+       gle  mapped  value  that is passed to the kernel. The dead
+       key is usually a diacritical character, while  the  second
+       key  is usually the letter being modified. For example, if
+       # is the dead key, the sequence # r could be mapped to the
+       ASCII value 0xE9, and displayed as (r).
+
+   CCoommppoossee
+       One  key  is designated as the compose key in the mapfile.
+       Compose key sequences are  composed  of  three  keystrokes
+       that  produce  a single mapped value that is passed to the
+       kernel. The compose key is usually a seldom used character
+       or  a  -letter  combination. The second key is usually the
+       letter being modified. The third key may be another  char-
+       acter  being  combined,  or  a  diacritical character. For
+       example, if @ is the compose key, the sequence @ c O could
+
+                                                                1
+
+mapchan(4)                                             mapchan(4)
+
+       be mapped to the ASCII value 0xA9, and displayed as (C).
+
+       Note that characters are always put through the input map,
+       even when they are part of the dead or compose  sequences.
+       The  internal  value is then looked up in the dead/compose
+       section. This value may also be mapped to the output. This
+       should be kept in mind when preparing mapfiles.
+
+   OOuuttppuutt
+       This  section contains the mapping from the internal char-
+       acter set to the output peripheral character set.  This is
+       a single-byte to multi-byte mapping whereas the input map-
+       ping is single-byte to single-byte.
+
+   CCoonnttrrooll
+       The control sections (which must be the last in the  file)
+       contain  the  specifications  of character sequences which
+       should be passed through, to or from the  terminal  device
+       without going through the normal mapchan processing. These
+       specifications consist of two parts: a fixed  sequence  of
+       one  or  more defined characters indicating the start of a
+       no-map sequence, followed by a  number  of  characters  of
+       which the actual values are unspecified.
+
+       To  illustrate  this,  consider  a cursor-control sequence
+       which should be passed directly to  the  terminal  without
+       being mapped. Such a sequence would typically begin with a
+       fixed escape sequence instructing the terminal  to  inter-
+       pret  the  following  two characters as a cursor position;
+       the values of the following two characters  are  variable,
+       and  depend on the cursor position requested.  Such a con-
+       trol sequence would be specified as: \E= 2       #  Cursor
+       control:  escape = <x> <y> There are two subsections under
+       the control section: the input section, which is  used  to
+       filter  data  sent  from the terminal to UnixWare, and the
+       output section, which is used to  filter  data  sent  from
+       UnixWare  to  the terminal. The two fields in each control
+       sequence are separated by white space, that is  the  space
+       or tab characters.
+
+       The  entries  in the left column of the input section must
+       be different from those already  entered  in  the  general
+       input section and likewise for the output section.
+
+       In the control section if any of the following three char-
+       acters -- white space (space or tab  characters),  or  the
+       hash  character(  #)  -- are required in the specification
+       itself, they should be entered using  one  of  alternative
+       means  of  entering  characters, as follows: The character
+       produced by the terminal  on  pressing  the   and  x  keys
+       together.   The   character, octal 033.  Where c is one of
+       b, f, l, n, r or t, produces  backspace,  formfeed,  line-
+       feed,  newline, carriage return or tab characters, respec-
+       tively.  Since the NULL character can not be  represented,
+
+                                                                2
+
+mapchan(4)                                             mapchan(4)
+
+       this  sequence is stored as the character with octal value
+       0200, which behaves as a NULL on most  terminals.   Speci-
+       fies  the octal value of the character directly.  Followed
+       by any other character is interpreted as  that  character.
+       This  can be used to enter space, tab, or hash characters.
+
+   EExxaammppllee ooff aa vveerrssiioonn 11..00 mmaappffiillee
+       #  #sharp/pound/cross-hatched  is  the  comment  character
+       #however,  a  quoted  #  ('#')  is 0x23, not a comment.  #
+       #beep, input, output, dead, compose and control #are  spe-
+       cial keywords and should appear as shown.  # # version 1.0
+       (optional - if not present ver 1.0 will be assumed.)
+
+       beep #sound bell when a dead/compose sequence  not  speci-
+       fied      #in a mapfile is entered at the terminal.
+
+       input
+
+       '@' 0xe0  # a grave '[' 0xe2  # a circumflex ']' 0xea  # e
+       circumflex
+
+       dead 0x90 #circumflex dead key
+       'E' 0xca  # E circumflex  'I'  0xce  #  I  circumflex  'O'
+       0xd4  # O circumflex
+
+       dead  0x93  'A'  0xc0  #  A  grave 'E' 0xc8  # E grave 'I'
+       0xcc  # I grave
+
+       compose  0x14   #  Ctrl-T  is  the  compose  key  's'  '|'
+       '$'    #  dollar  sign  'A'  'A'  '@'    # at sign '(' '('
+       '['    # open square bracket
+
+       output 0xa8 '"'  # diaresis  (approximation)  0xa9  'c'  #
+       copyright  sign (approximation) 0xaa 'a'  # feminine ordi-
+       nal indicator (approximation)
+
+       control   # The control must be last
+
+       input \E[ 1     # Standard ANSI key codes
+
+       output \E[ 1     # Standard ANSI escape sequences
+
+VVeerrssiioonn 22..00 mmaappffiillee ffoorrmmaatt
+       This mapchan file  format supports UTF-8 and other  multi-
+       byte  character  sets.  The mapfile is divided into 3 main
+       sections: input, output and control. You  can  identify  a
+       version  2.0  mapfile  by the following comment before the
+       input section: # version 2.0 - must be present for version
+       2.0 mapfiles
+
+   IInnppuutt
+       This  contains the mapping from the input peripheral char-
+       acter set to the internal character  set.  A  sequence  of
+       characters coming from the input device is translated into
+
+                                                                3
+
+mapchan(4)                                             mapchan(4)
+
+       the corresponding output sequence according to  this  map-
+       ping.  Any  character  value  (single-byte)  not  given is
+       assumed to map directly, that is, have the same  character
+       as  the  input. Only the differences are shown in the map-
+       file, see
+
+       The sequences (two or more bytes) that are not  given  are
+       considered  invalid.   For example, consider the following
+       section of a mapfile: input a : l b : m n c d : o c e :p q
+       a  and  b  are single-byte input sequences that are trans-
+       lated to l and mn respectively. cd and ce are multibyte (2
+       byte) input sequences mapped to o and pq respectively.
+
+       If  d  is entered, then since d is not mapped and there is
+       also no sequence starting with d, d is passed to the  ker-
+       nel.   If  c is entered even though c is not mapped, it is
+       part of another sequence, so the kernel will wait for  the
+       next  input  byte.  If it is d or e, the sequence is valid
+       otherwise it will be considered an error.
+
+       The input sequence is specified in the left column and the
+       output  is  specified in the right column. The columns are
+       separated by a delimiter colon (:). This is a many to  one
+       mapping.  This  means the left column must be unique. More
+       than one occurrence of any entry is considered invalid and
+       produces  an  error.  The right column sequence can appear
+       more than once. Nulls can be produced.
+
+   OOuuttppuutt
+       This section contains the mapping from the internal  char-
+       acter set to the output peripheral character set. The syn-
+       tax for this section is the same as the input section.  In
+       this  section,  any  single-byte  value or a byte sequence
+       that is not given is mapped directly.
+
+   CCoonnttrrooll
+       The control sections (which must be the last in the  file)
+       contain  specifications  of  the character sequences which
+       should be passed through, to or from the  terminal  device
+       without  going  through  the normal mapchan processing. In
+       order to allow for character sequences sent to control the
+       terminal (move the cursor, and so on) rather than to print
+       characters  on  the  screen,  mapchan  allows   characters
+       sequences  to  be specified as special sequences which are
+       not passed through the normal mapping procedure. There are
+       two  subsections under the control section: the input sec-
+       tion, which is used to filter data sent from the  terminal
+       to UnixWare, and the output section, which is used to fil-
+       ter data sent from UnixWare to the terminal. Each line  in
+       these sections specifies the no-map sequence followed by a
+       delimiter colon followed by the actual number of  unmapped
+       characters to follow.
+
+       The  entries  in the left column of the input section must
+
+                                                                4
+
+mapchan(4)                                             mapchan(4)
+
+       be different from those already  entered  in  the  general
+       input section and likewise for the output section.
+
+   EExxaammppllee ooff aa vveerrssiioonn 22..00 mmaappffiillee
+       #  #sharp/pound/cross-hatched  is  the  comment  character
+       #however, a quoted # ('#') is 0x23, not a comment # #beep,
+       input, output and control #are special keywords and should
+       appear as shown.  # #version 2.0 -  must  be  present  for
+       version 2.0 mapfiles
+
+       beep  #sound  bell  when  unmapped  multi-byte sequence is
+       entered on
+            #terminal
+
+       input 0xA8 : 0xC5 0xA1  0xA9  :  0xC2  0xA9  0x14  0x14  :
+       0x14         #  Ctrl-T  twice gives Ctrl-T 0x82 'U' : 0xC3
+       0x99 0x81 'e' : 0xC3 0xA9 0x14 '`' '`' : 0x60      # grave
+       0x14 'c' '|' : 0xC2 0x82  # cent sign
+
+       output  0xfc  :  0x7d  0xdf  :  0x7e 0xb0 : 0x80         #
+       Cyrillic Capital Letter A 0xb1 :  0x81         #  Cyrillic
+       Capital  Letter  BE  0xa5 : 'y'          # yen sign 0xa6 :
+       '|'          # broken bar 0xbc :  '/'          #  fraction
+       one-quarter 0xbd : '/'          # fraction one-half 0x9B :
+       0x9B 0x9B     # CSI handling for ANSI
+
+       control   # The control must be last input ^A : 1  # Func-
+       tion keys:control-A followed by @ through O
+
+       output  \E  :  2    #  Cusor control: escape <x> <y> \E[ :
+       1   # Standard ANSI key codes \E[ :  1   #  Standard  ANSI
+       escape sequences
+
+GGeenneerraall ssyynnttaaxx
+       There  is  a  common syntax in the version 1.0 mapfile and
+       version 2.0 mapfile.
+
+       Version 1.0  and version 2.0 mapfile  formats  are  trans-
+       lated into single-byte values.
+
+       All  of  the  single letters above the control sections of
+       version 1.0 and version 2.0 mapfiles must  be  in  one  of
+       these formats:
+
+       56   #  decimal  045  #  octal  0xfa #  hexadecimal 'b'  #
+       quoted char '\076'    # quoted  octal  '\x4a'    #  quoted
+       hex
+
+       Note  that  if a one-byte character is mapped to something
+       then that character cannot be the start of a 2 -- or  more
+       byte input sequence. In general, if an n-byte sequence has
+       a mapping specified for it then that  sequence  cannot  be
+
+                                                                5
+
+mapchan(4)                                             mapchan(4)
+
+       the start of an n+ input byte sequence.  input a : x   # a
+       is mapped to x a b : y # this is not allowed
+
+       b r : t y # br is mapped to ty b t : y u # bt is mapped to
+       yu - both are valid b r s : d # this is not allowed
+
+       Note  that  the  length of a  sequence cannot be more than
+       256 bytes. The maximum buffer size is restricted to  64KB.
+
+RReettuurrnn vvaalluueess
+       mapchan  performs  these  error checks when processing the
+       mapfile version 1.0: more than one compose key  characters
+       mapped  to  more  than one thing syntax errors in the byte
+       values missing input or output keywords  dead  or  compose
+       keys also occurring in the input section extra information
+       on a line starting an output control sequence with a char-
+       acter  that is already mapped mapchan performs these error
+       checks when processing the mapfile version 2.0: characters
+       mapped  to  more  than one thing syntax errors in the byte
+       values missing input or output keywords extra  information
+       on  a  line  starting  a  left column sequence with a sub-
+       sequence that is already mapped  If  characters  are  dis-
+       played  as the 7-bit value instead of the 8-bit value, use
+       stty -a to verify that -strip is set. See
+
+FFiilleess
+       /etc/default/mapchan
+       /usr/lib/mapchan/*
+       /bin/mapchan.conv.awk
+
+       mapchan automatically invokes mapchan.conv.awk to  convert
+       version  1.0 mapfiles into version 2.0 mapfiles. This file
+       is not for direct user use.
+
+NNoottiicceess
+       Not all terminals or printers can display all the  charac-
+       ters that can be represented using this utility.  Refer to
+       the device's hardware manual for information on the  capa-
+       bilities of the peripheral device.
+
+       It  is especially important to retain the 7-bit ASCII por-
+       tion of the character  set,  see  UnixWare  utilities  and
+       applications assume these values.
+
+RReeffeerreenncceess
+
+                                                                6
+

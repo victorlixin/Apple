@@ -1,0 +1,85 @@
+
+
+ypfiles(4nis)                                       ypfiles(4nis)
+
+DDeessccrriippttiioonn
+       The  Network Information Service (NIS) uses a distributed,
+       replicated database of dbm files contained in the  /var/yp
+       directory  hierarchy  on  each NIS server.  A dbm database
+       consists of two files, one has the filename extension .pag
+       and  the  other  has  the  filename  extension  .dir.  For
+       instance, the database named publickey is  implemented  by
+       the pair of files publickey.pag and publickey.dir.
+
+       A dbm database served by the NIS is called an NIS map.  An
+       NIS domain is a subdirectory of /var/yp containing  a  set
+       of  NIS  maps.  Any number of NIS domains can exist.  Each
+       domain may contain any number of maps.
+
+FFiilleess
+       /var/yp /var/yp/aliases /var/yp/Makefile
+
+UUssaaggee
+       No maps are required by the  NIS  lookup  service  itself,
+       although  they may be required for the normal operation of
+       other parts of the system.  There is no list of maps which
+       NIS  serves;  if  the  map exists in a given domain, and a
+       client asks about it, NIS will serve it.  For a map to  be
+       accessible  consistently, it must exist on all NIS servers
+       that  serve  the  domain.   To  provide  data  consistency
+       between  the replicated maps, an  entry to run ypxfr peri-
+       odically should be made in the privileged  user's  crontab
+       file  on each server.  For more information on this topic,
+       see
+
+       NIS maps contain two distinguished key-value  pairs.   The
+       first  is  the  key  YP_LAST_MODIFIED, having as a value a
+       ten-character ASCII order number.  The order number  indi-
+       cates  the  system time in seconds when the map was built.
+       The second key is YP_MASTER_NAME, with the name of the NIS
+       master  server as a value.  generates both key-value pairs
+       automatically.  A map that does not contain both key-value
+       pairs  can  be  served by NIS, but the ypserv process will
+       not be able to return values for ``Get order  number''  or
+       ``Get  master name'' requests.  See In addition, values of
+       these two keys are used by ypxfr when it transfers  a  map
+       from a master NIS server to a slave.  If ypxfr cannot fig-
+       ure out where to get the map, or if it is unable to deter-
+       mine  whether  the local copy is more recent than the copy
+       at the master, extra command line  switches  must  be  set
+       when it is run.
+
+       NIS maps must be generated and modified only at the master
+       server.  They are copied to  the  slaves  using  to  avoid
+       potential byte-ordering problems among NIS servers running
+       on machines with different architectures, and to  minimize
+       the  amount of disk space required for the dbm files.  The
+       NIS database can be initially set up for both masters  and
+       slaves by using
+
+                                                                1
+
+ypfiles(4nis)                                       ypfiles(4nis)
+
+       All  NIS maps have entries in /var/yp/aliases.  Each entry
+       includes the map name and a map nickname.   The  map  name
+       and  nickname  may be the same depending on the filesystem
+       limitation of the length of filenames.
+
+       After the server databases are set up, it is probable that
+       the  contents  of some maps will change.  In general, some
+       ASCII source version of the database exists on the master,
+       and it is changed with a standard text editor.  The update
+       is incorporated into the NIS map and  is  propagated  from
+       the master to the slaves by running /var/yp/Makefile.  See
+       All system-supplied maps have entries in /var/yp/Makefile;
+       if  an NIS map is added, edit this file to support the new
+       map.  The makefile uses to generate the  NIS  map  on  the
+       master,  and  to  propagate the changed map to the slaves.
+       yppush is a client of the map ypservers, which  lists  all
+       the NIS servers.  For more information on this topic, see
+
+RReeffeerreenncceess
+
+                                                                2
+

@@ -1,0 +1,134 @@
+memcntl(2)                                                   memcntl(2)
+
+  mmeemmccnnttll(())
+
+    memcntl - manage memory in mappings
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/mman.h>
+
+    int memcntl(void *addr, size_t len, int cmd,
+                void *arg, int attr, int mask)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _mm_ee_mm_cc_nn_tt_ll(2) call controls and manages a mapped address space in the
+    range [addr addr + len]. The attr argument selects the pages to be
+    affected; it contains a bit pattern of page attributes which are ORed
+    together.
+
+    PPaaggee mmaappppiinngg
+
+    SHARED         Page is mapped shared
+
+    PRIVATE        Page is mapped private
+
+    PPaaggee pprrootteeccttiioonn
+
+    PROT_READ      Page is readable
+
+    PROT_WRITE     Page is writeable
+
+    PROT_EXEC      Page is executable
+
+    PPrroocceessss ccrriitteerriiaa
+
+    PROC_DATA      Process data: write permission for privately-mapped
+                   segments
+
+    PROC_TEXT      Process text: read and execute permission for
+                   privately-mapped segments
+
+    The cmd argument specifies the actual operation. The arg argument may
+    modify the actual command, and is usually a bit pattern ORed together. The
+    file <<ssyyss//mmmmaann..hh>> defines these operations:
+
+    MC_LOCK
+        Lock the pages in the range that have the specified attributes.
+        Although different mappings may cause the same page to be locked more
+        than once, the locks do not nest within a particular mapping. One
+        unlock operation undoes all the locks held on a page by a process, but
+        locks held by aanother process are held in memory until the locking
+        process has released the lock. (If a locked page is removed or
+        deleted, that implicitly unlocks it.)
+        The value of arg must be 0.
+
+    MC_LOCKAS
+        Lock the pages in the address space that have the specified
+        attributes. In this case, the arg value controls whether the locked
+        pages are mapped in the current address space or ones that will be
+        mapped later, or both.
+
+    The addr value must be NULL and the len value must be 0.
+
+    Values that can be ORed into arg are:
+
+    MCL_CURRENT
+        Lock the current mappings
+
+    MCL_FUTURE
+        Lock all mappings added to the address space, so long as there is
+        sufficient memory
+
+    MC_UNLOCK
+        Unlock all of the pages in the range that have the specified
+        attributes. The value of arg must be 0.
+
+    MC_UNLOCKAS
+        Unlock any locks on the address space (MC_LOCKAS) and remove locks on
+        all pages in the address space that have the specified attributes.
+
+    The mask argument is reserved for future use and must be set to 0.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The mmeemmccnnttll(2) utility exits with status 0 for success, and -1 if an error
+    occurred.
+
+  EERRRROORRSS
+
+    The _mm_ee_mm_cc_nn_tt_ll(2) function can fail for the following reasons:
+
+    [EAGAIN]
+        Insufficient resources to lock some or all of the memory.
+
+    [EBUSY]
+        One of the pages is locked in memory and MS_INVALIDATE was the
+        command.
+
+    [EINVAL]
+        The addr is invalid. It must be a multiple of the page size. If the
+        command is MC_LOCKAS or MC_UNLOCKAS, the value of addr is not NULL, or
+        the value of len is not zero. It may also mean the value of arg was
+        not correct for the command given.
+
+    [EIO]
+        An I/O error occurred.
+
+    [ENOMEM]
+        The addresses in the range are not valid for the address space of the
+        process, or are for pages that aren't mapped.
+
+    [EPERM]
+        A locking command was specified and the effective user ID does not
+        have appropriate privileges.
+
+  SSEEEE AALLSSOO
+
+    _f_o_r_k(2)
+
+    _m_m_a_p(2)
+
+    _m_c_t_l(3)
+
+    _m_s_y_n_c(3)
+
+    _s_y_s_c_o_n_f(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The mmeemmccnnttll function is thread safe.
+
+    The mmeemmccnnttll function is not async-signal safe.
+

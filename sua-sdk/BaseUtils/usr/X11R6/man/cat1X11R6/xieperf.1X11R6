@@ -1,0 +1,743 @@
+xieperf(1X11R6)                                         xieperf(1X11R6)
+
+  xxiieeppeerrff
+
+  NNAAMMEE
+
+    xieperf - XIE server extension test and demo program
+
+  SSYYNNTTAAXX
+
+    xieperf [[-option......]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The xieperf program is based upon R5 _xx_11_11_pp_ee_rr_ff(1X11R6) , and while not
+    entirely comprehensive in its coverage of the XIE protocol (see BUGS,
+    below), it is intended to be useful in the evaluation of XIE
+    implementations in the areas of protocol adherence and performance. The
+    xieperf program includes tests which execute each of the protocol requests
+    and photoflo elements specified by revision 5.0 of the XIE protocol. In
+    addition, xieperf provides a set of tests which can be used to validate
+    the detection and transmission of XIE protocol request errors, such as
+    FloMatch, FloValue, and so forth. Finally, xieperf provides a customizable
+    demonstration program for XIE.
+
+    A test is made up of three components executed in sequence - an
+    initialization function, a test function, and an end function. The
+    initialization function is responsible for allocating and populating test
+    resources, such as photomaps and LUTs, and for creating a stored photoflo
+    which will be executed by the test function. The test function, in most
+    cases, simply executes the stored photoflo for a specified number of
+    repetitions. The end function, which is called following the test
+    function, is used primarily to destroy any non-cachable server resources
+    used by the test, and to free any memory which was dynamically allocated
+    by the client. Some tests, such as -modify1, -await, -abort, and -
+    redefine, perform additional steps within the test function inner loop, as
+    required by the element being tested, or in an attempt to make the test
+    more visually appealing.
+
+    Evaluating the performance of individual XIE elements is not as simple as
+    measuring Core X drawing times. The XIE protocol requires elements to be
+    embedded within photoflos in order to be exercised, and the minimum
+    possible photoflo size is two. This implies that it is impossible to
+    measure performance of a single element in isolation - the time it takes
+    to run the flo depends on what other elements exist in the flo.
+    Extrapolating performance of a single element (or technique) in a flo must
+    be done carefully, on a case-by-case basis, since in general measured
+    element performance depends on input image size, data type, and other
+    factors, all of which can be influenced by upstream flo elements. Note
+    further that the number and type of elements in a flo can be influenced by
+    the visuals available on the display, so even flo-flo comparisons on
+    machines with different visuals must be done with caution.
+
+    Many test labels contain an abbreviated pipeline description. For
+    instance. IP/IL/P/ED indicates ImportPhotomap, ImportLUT, Point, and
+    ExportDrawable. Pipelines ending in ED (ExportDrawable) often include
+    hidden elements such as BandExtract, ConvertToIndex, Dither, or Point to
+    match the flo output to the screen visual. Pipelines ending in EP
+    (ExportPhotomap) will result in a blank window.
+
+    xieperf is compatible with _xx_11_11_pp_ee_rr_ff_cc_oo_mm_pp(1X11R5), which is used to compare
+    the outputs of different xieperf and x11perf runs in a nice, tabular
+    format. In xieperf you will need to use the -labels option (see OPTIONS,
+    below), and provide the resulting labels file to x11perfcom to obtain
+    correct output. See the x11perfcom man pages for more details on this.
+
+  OOPPTTIIOONNSS
+
+    xieperf accepts the options listed below:
+
+    --ddiissppllaayy hhoosstt::ddppyy
+        Specifies which display to use.
+    --iimmaaggeess <path>
+        Normally, xieperf references image files located in the directory
+        "images", which xieperf assumes is located in your current directory.
+        If the "images" directory is not in your current directory, or the
+        file has been renamed, use this option to specify its location.
+    --ttiimmeeoouutt <s>
+        Some tests require the reception of an event such as FloNotify to
+        continue, and may cause xieperf to hang should these events not be
+        received. This option allows the user to specify a timeout value
+        which, if exceeded, will cause xieperf to give up waiting for an
+        event, and continue on with the next test in sequence. Should an event
+        timeout, a warning message will be printed to stderr. The default
+        timeout value is 60 seconds.
+
+    --ssyynncc
+        Runs the tests in synchronous mode.
+    --ssccrriipptt <file>
+        Using this option gives the user the ability to run a subset of the
+        available tests and control the number of times the tests are executed
+        on an individual basis. This is thought to be especially useful for
+        those running xieperf for demonstration purposes. Using this option
+        causes xieperf to read commands specified in a script file, or from
+        stdin if <file> is "-". Tests are specified by newline-terminated
+        input lines of the form "command [-reps n ] [ -repeat m ]". Characters
+        following and including "#" are treated as comments. See the -mkscript
+        option.
+    --rreeppeeaatt <n>
+        Repeats each test n times (by default each test is run 2 times). This
+        option may be used in script files also, in which case the script file
+        -repeat overrides the command line option.
+    --ttiimmee <s>
+        Specifies how long in seconds each test should be run (default 5
+        seconds).
+
+    --ddeepptthh <<ddeepptthh>>
+        Use a visual with <depth> planes per pixel (default is the default
+        visual).
+
+    --GGrraayySSccaallee
+        Use a GrayScale visual (default is the default visual).
+
+    --PPsseeuuddooCCoolloorr
+        Use a PseudoColor visual (default is the default visual).
+
+    --SSttaattiiccGGrraayy
+        Use a StaticGray visual (default is the default visual).
+
+    --SSttaattiiccCCoolloorr
+        Use a StaticColor visual (default is the default visual).
+
+    --TTrruueeCCoolloorr
+        Use a TrueColor visual (default is the default visual).
+
+    --DDiirreeccttCCoolloorr
+        Use a DirectColor visual (default is the default visual).
+
+    --WWMMSSaaffee
+        If xieperf must be run in a window manager environment, use this flag
+        to make xieperf aware of this. If specified, xieperf will create a
+        window, identical to the size of the root window, and all further
+        windows created by xieperf will be transient popup children of this
+        window. If this flag is omitted, xieperf will set the
+        override_redirect attribute of all windows to "True" and will also do
+        evil things such as calling XInstallColormap. Using this option will
+        cause the window manager to (hopefully) obey window geometry hints
+        specified by xieperf
+
+    --sshhoowwtteecchhss
+        Display a comprehensive list of techniques, by category, indicating
+        which of the techniques are supported by the XIE server.
+
+    --sshhoowwllaabbeellss
+        Print test label to screen prior to calling any of the test code. This
+        allows the user to know which test is executing in case the test hangs
+        for some reason.
+
+    --sshhoowweevveennttss
+        Be verbose when running event and error tests. Also, can be used to
+        catch and display information on any signals received during execution
+        of xieperf ttee tthhaatt tthhiiss ffllaagg iiss bbeesstt uusseedd iinn aa ddeebbuuggggiinngg ssiittuuaattiioonn,, oorr
+        ttoo vvaalliiddaattee that the error events received by xieperf are valid the
+        first time the tests are executed on a new platform.
+
+    --eevveennttss
+        Run tests which test for event generation.
+
+    --eerrrroorrss
+        Run tests which test for error event generation.
+
+    --llooCCaall
+        Skip test calibration. This may be used when running xieperf in
+        situations where execution timing is not important. Execution times
+        will not be reported by xieperf when this option is enabled. The inner
+        loop repeat count, additionally, is set to a value of 5 (but can be
+        overridden by the -reps option).
+
+    --aallll
+        Runs all tests. This may take a while, depending on the speed of your
+        machine, and its floating point capabilities. This option is ignored
+        if a script file is used.
+
+    --tteessttss
+        Generate a list of the available tests for the xieperf program. In
+        x11perf , this list is normally displayed in the usage statement. It
+        was yanked from the usage of xieperf because it was too lengthy.
+
+    --mmkkssccrriipptt
+        Generate a script file suitable for use with the script option. If -
+        repeat or -reps are also specified, they will be automatically placed
+        at the end of each command in the script. The script is generated to
+        stderr. See the -script command, above.
+    --ccaacchhee <n>
+        Most test flos utilize a photomap resource for a source. A photomap
+        cache of up to n entries is controlled by xieperf to avoid having to
+        constantly reload these images during test initialization. The default
+        cache size is 4. If a value less than the default is specified, the
+        cache size will be set to the default.
+
+    --llaabbeellss
+        Generates just the descriptive labels for each test specified. Use -
+        all or -range to specify which tests are included. See x11perfcom for
+        more details.
+
+    --DDIISS
+        Pretend we are running xieperf while connected to a DIS-only capable
+        implementation of XIE. This will cause xieperf to execute those tests
+        which only use protocol requests found in the DIS subset of XIE, and
+        bypass those which are not DIS compatible. If xieperf detects a DIS
+        server, it will do this automatically, and this option is ignored. Use
+        -all or -range to specify the initial range of tests.
+    --rraannggee <test1>[,<test2>]
+        Runs all the tests starting from the specified name test1 until the
+        name test2, including both the specified tests. Some tests, like the
+        event and error tests, also require the -errors or -events options to
+        specified. This option is ignored if a script it used.
+    --rreeppss <n>
+        Fix the inner loop repetitions to n. This indicates how many time the
+        photoflo will be executed each time the test is run. This option is
+        overridden on a per-test basis if specified in a script. Typically,
+        xieperf determines the ideal number of reps during each test's
+        calibration period.
+
+    --IImmppoorrttOObbssccuurreeddEEvveenntt tthhrroouugghh --EExxppoorrttAAvvaaiillaabbllee
+        Test generation of events. Requires -events flag.
+
+    --BBaaddVVaalluuee tthhrroouugghh --FFllooVVaalluueeEErrrroorr
+        Test generation of errors. Requires -errors flag. --CCoolloorrLLiisstt Create
+        and destroy ColorList resource test.
+
+    --LLUUTT
+        Create and destroy LUT resource test.
+
+    --PPhhoottoommaapp
+        Create and destroy Photomap resource test.
+
+    --RROOII
+        Create and destroy ROI resource test.
+
+    --PPhhoottoossppaaccee
+        Create and destroy Photospace test.
+
+    --PPhhoottoofflloo
+        Create and destroy Photoflo test.
+
+    --QQuueerryyPPhhoottoommaapp
+        Query Photomap resource test.
+
+    --QQuueerryyCCoolloorrLLiisstt
+        Query ColorList resource test.
+
+    --QQuueerryyTTeecchhnniiqquueessDDeeffaauulltt tthhrroouugghh --QQuueerryyTTeecchhnniiqquueessWWhhiitteeAAddjjuusstt
+        Query techniques as specified by test name.
+
+    --QQuueerryyPPhhoottoofflloo
+        Query photoflo test.
+
+    --PPuurrggeeCCoolloorrLLiisstt
+        PurgeColorList test.
+
+    --AAbboorrtt
+        This tests creates a photoflo which is started and blocks for data
+        provided by PutClientData(). Instead of sending the data, the test
+        uses XieAbort() to stop the photoflo, and then waits for PhotofloDone
+        event to be send by the server. If the test times out waiting for the
+        event, a error message is sent to stderr.
+
+    --AAwwaaiitt
+        This test creates a flo of the form ImportClientLUT -> ExportLUT, and
+        starts the flo executing. xieperf then forks, and the child process
+        streams the LUT data to the flo using PutClientData, while the parent
+        blocks in XieAwait. If the flo successfully finishes, XieAwait will
+        return and the flo state, after query, will indicate that it has
+        completed. If XieAwait does not complete naturally, or after return
+        from XieAwait the flo is still active, an error is reported to stderr.
+        Note, on a really slow machine, it is possible that XieAwait will
+        return before the flo has a chance to finish. In this case, use the -
+        timeout option to increase the timeout for this test.
+
+    --iimmppoorrttcclliieennttlluutt11
+        ImportClientLUT -> ExportLUT test.
+
+    --iimmppoorrttcclliieennttpphhoottoo11 tthhrroouugghh --iimmppoorrttcclliieennttpphhoottoo99
+        Flos of the form ImportClientPhoto -> ExportPhotomap using various
+        decode techniques, e.g. G32D, TIFF2, UncompressedTriple, and so forth.
+
+    --iimmppoorrttcclliieennttrrooii11
+        ImportClientROI with 10 rectangles.
+
+    --iimmppoorrttcclliieennttrrooii22
+        ImportClientROI with 100 rectangles.
+
+    --eennccooddeepphhoottoo11 tthhrroouugghh --eennccooddeepphhoottoo1144
+        Flos of the form ImportPhotomap -> ExportPhotomap using various encode
+        techniques, e.g. G32D, TIFF2, UncompressedTriple, and so forth.
+        Original encoding is shown in left window, image after encoding is
+        shown in right window.
+
+    --eennccooddeecclliieennttpphhoottoo11 tthhrroouugghh --eennccooddeecclliieennttpphhoottoo1111
+        Two flos, one of the form ImportPhotomap -> ExportClientPhoto, and the
+        other of the form ImportClientPhoto -> ExportPhotomap, where
+        ExportClientPhoto in the first flo uses various encode techniques,
+        e.g. G32D, TIFF2, UncompressedTriple, and so forth. The image before
+        encoding is displayed in the left window, while the right window shows
+        the image which was encoded in the first flo and read back in the
+        second flo.
+
+    --eexxppoorrttcclliieennttlluutt11
+        ExportClientLUT test. LUT is displayed in a histogram window.
+
+    --eexxppoorrttcclliieennttrrooii11
+        ExportClientROI test, 10 ROIs. The ROIs which are sent to the server
+        are represented by the filled rectangles. The ROIs which are received
+        back from the server by the client are drawn as white bordered non-
+        filled rectangles. The resulting output illustrates how the server
+        combined the rectangles sent to it.
+
+    --eexxppoorrttcclliieennttrrooii22
+        Same as exportclientroi1, except using 100 rectangles.
+
+    --eexxppoorrttcclliieenntthhiissttooggrraamm11 tthhrroouugghh --eexxppoorrttcclliieenntthhiissttooggrraamm44
+        ExportClientHistogram tests using various images. The histogram is
+        displayed in a window which overlaps the image.
+
+    --eexxppoorrttcclliieenntthhiissttooggrraammrrooii11 tthhrroouugghh --eexxppoorrttcclliieenntthhiissttooggrraammrrooii44
+        Same as the ExportClientHistogram test, but using a ROI to identify
+        the area of interest.
+
+    --eexxppoorrttcclliieenntthhiissttooggrraammccppllaannee11 tthhrroouugghh --eexxppoorrttcclliieenntthhiissttooggrraammccppllaannee44
+        Same as the ExportClientHistogram test, but using a Control Plane to
+        identify the area of interest.
+
+    --iimmppoorrttlluutt11
+        Test ImportLUT element, LUT size is 256.
+
+    --iimmppoorrttpphhoottoo11
+        ImportPhotomap -> ExportPhotomap, with source and destination equal.
+
+    --iimmppoorrttpphhoottoo22
+        ImportPhotomap -> ExportDrawable, window destination.
+
+    --iimmppoorrttrrooii11
+        ImportROI -> ExportROI, 10 rectangles, source and destination ROIs
+        equal.
+
+    --iimmppoorrttrrooii22
+        ImportROI -> ExportROI, 100 rectangles, source and destination ROIs
+        equal.
+
+    --iimmppoorrttddrraawwaabbllee11
+        ImportDrawable -> ExportDrawable, Source is pixmap, destination is
+        window.
+
+    --iimmppoorrttddrraawwaabbllee22
+        ImportDrawable -> ExportDrawable, Source and destination is window.
+
+    --iimmppoorrttddrraawwaabbllee33
+        ImportDrawable -> ExportDrawable, Destination window obscured by
+        source window.
+
+    --iimmppoorrttddrraawwaabbllee44
+        ImportDrawable -> ExportDrawable, Source window obscured by
+        destination window.
+
+    --iimmppoorrttddrraawwaabbllee55
+        ImportDrawablePlane -> ExportDrawablePlane, pixmap, source =
+        destination.
+
+    --iimmppoorrttddrraawwaabbllee66
+        ImportDrawablePlane -> ExportDrawablePlane, window, source =
+        destination.
+
+    --iimmppoorrttddrraawwaabbllee77
+        ImportDrawablePlane -> ExportDrawablePlane, window, source obscures
+        destination.
+
+    --iimmppoorrttddrraawwaabbllee88
+        ImportDrawablePlane -> ExportDrawablePlane, window, destination
+        obscures source.
+
+    --ccoonnssttrraaiinn11
+        Constrain HardClip technique test, drawable destination.
+
+    --ccoonnssttrraaiinn22
+        Constrain ClipScale technique test, drawable destination.
+
+    --ccoonnssttrraaiinnpphhoottoo11
+        Constrain HardClip technique test, photomap destination.
+
+    --ccoonnssttrraaiinnpphhoottoo22
+        Constrain ClipScale technique test, photomap destination.
+
+    --ccoonnvvoollvvee11
+        Boxcar 3x3 convolution test. Smoothing or lowpass filter.
+
+    --ccoonnvvoollvvee22
+        Boxcar 5x5 convolution test. Smoothing or lowpass filter.
+
+    --ccoonnvvoollvvee33
+        LaPlacian 3x3 convolution test. Edge or highpass filter.
+
+    --ccoonnvvoollvvee44
+        LaPlacian 5x5 convolution test. Edge or highpass filter.
+
+    --ccoonnvvoollvveerrooii11
+        LaPlacian 3x3 convolution test, with ROI.
+
+    --ccoonnvvoollvveerrooii22
+        LaPlacian 5x5 convolution test, with ROI.
+
+    --ccoonnvvoollvveeccppllaannee11
+        LaPlacian 3x3 convolution test, with Control Plane.
+
+    --ccoonnvvoollvveeccppllaannee22
+        LaPlacian 5x5 convolution test, with Control Plane.
+
+    --mmaatthh11 tthhrroouugghh --mmaatthhccppllaannee77
+        Various tests which exercise the Math element, some tests using ROIs
+        and control planes.
+
+    --aarriitthhmmeettiiccddyyaaddiicc11 tthhrroouugghh --aarriitthhmmeettiiccddyyaaddiicc55
+        Arithmetic element tests, using photomaps as the operands.
+
+    --aarriitthhmmeettiiccmmoonnaaddiicc11 tthhrroouugghh --aarriitthhmmeettiiccmmoonnaaddiicc99
+        Arithmetic element tests, photomap and constant operands.
+
+    --aarriitthhmmeettiiccddyyaaddiiccrrooii11 tthhrroouugghh --aarriitthhmmeettiiccddyyaaddiiccrrooii55
+        Arithmetic element tests, using photomaps as the operands, with ROIs.
+
+    --aarriitthhmmeettiiccmmoonnaaddiiccrrooii11 tthhrroouugghh --aarriitthhmmeettiiccmmoonnaaddiiccrrooii99
+        Arithmetic element tests, photomap and constant operands, with ROIs.
+
+    --aarriitthhmmeettiiccddyyaaddiiccccppllaannee11 tthhrroouugghh --aarriitthhmmeettiiccddyyaaddiiccccppllaannee55
+        Arithmetic element tests, using photomaps as the operands, with
+        Control Planes.
+
+    --aarriitthhmmeettiiccmmoonnaaddiiccccppllaannee11 tthhrroouugghh --aarriitthhmmeettiiccmmoonnaaddiiccccppllaannee99
+        Arithmetic element tests, photomap and constant operands, with Control
+        Planes.
+
+    --aarriitthhmmeettiiccffllooaattddyyaaddiicc11 tthhoouugghh --aarriitthhmmeettiiccffllooaattddyyaaddiicc55
+        Arithmetic element tests, using photomaps as the operands,
+        unconstrained.
+
+    --aarriitthhmmeettiiccffllooaattmmoonnaaddiicc11 tthhoouugghh --aarriitthhmmeettiiccffllooaattmmoonnaaddiicc99
+        Arithmetic element tests, photomap and constant operands,
+        unconstrained.
+
+    --aarriitthhmmeettiiccrrooiiffllooaattddyyaaddiicc11 ttoo --aarriitthhmmeettiiccrrooiiffllooaattddyyaaddiicc55
+        Arithmetic element tests, photomaps as the operands, ROIs,
+        unconstrained.
+
+    --aarriitthhmmeettiiccrrooiiffllooaattmmoonnaaddiicc11 ttoo --rriitthhmmeettiiccrrooiiffllooaattmmoonnaaddiicc99
+        Arithmetic element tests, photomap and constant operands, ROIs,
+        unconstrained.
+
+    --bbaanndd11
+        BandSelect element test. Image input is triple band. If visual of
+        xieperf window is a color visual, then three BandSelect elements are
+        used to extract the indivudual bands, they are combined once again
+        using BandCombine, and displayed using ConvertToIndex. If the visual
+        is not color, e.g. GrayScale or StaticGray, then the flo simply uses
+        one BandSelect element to extract a single band for display.
+
+    --bbaanndd22
+        BandCombine test. Input bands are made of of three separate single
+        band photomaps. These are combined using a BandCombine element, which
+        is followed by a BandExtract and ExportDrawable. CCIR 601-
+        1 coefficients.
+
+    --bbaanndd33
+        BandExtract test. Input is a triple band photomap. CCIR 601-
+        1 coefficients. Destination window colormap is gray ramp.
+
+    --bbaanndd44
+        BandExtract test. Input is a triple band photomap. CCIR 601-
+        1 coefficients. Destination window colormap is RGB_BEST_MAP standard
+        colormap.
+
+    --bbaanndd55
+        BandExtract test. Input is a triple band photomap. CCIR 601-
+        1 coefficients. Destination window colormap is RGB_DEFAULT_MAP
+        standard colormap.
+
+    --ccoommppaarreeddyyaaddiicc11 tthhrroouugghh --ccoommppaarreeddyyaaddiicc66
+        Test various Compare operators with dyadic photomap operands.
+
+    --ccoommppaarreemmoonnaaddiicc11 tthhrroouugghh --ccoommppaarreemmoonnaaddiicc66
+        Test various compare operators with photomap, constant operands.
+
+    --ccoommppaarreerrooiiddyyaaddiicc11 tthhrroouugghh --ccoommppaarreerrooiiddyyaaddiicc66
+        Test various Compare operators with dyadic photomap operands, using
+        ROIs.
+
+    --ccoommppaarreerrooiimmoonnaaddiicc11 tthhrroouugghh --ccoommppaarreerrooiimmoonnaaddiicc66
+        Test various compare operators with photomap, constant operands, using
+        ROIs.
+
+    --ccoommppaarreeccppllaanneeddyyaaddiicc11 tthhrroouugghh --ccoommppaarreeccppllaanneeddyyaaddiicc66
+        Test various Compare operators with dyadic photomap operands, Control
+        Planes.
+
+    --ccoommppaarreeccppllaanneemmoonnaaddiicc11 tthhrroouugghh --ccoommppaarreeccppllaanneemmoonnaaddiicc66
+        Test various compare operators with photomap, constant operands,
+        Control Planes.
+
+    --mmaattcchhhhiissttooggrraamm11 tthhrroouugghh --mmaattcchhhhiissttooggrraamm1188
+        MatchHistogram element tests, using various images and histogram
+        matching techniques.
+
+    --mmaattcchhhhiissttooggrraammrrooii11 tthhrroouugghh --mmaattcchhhhiissttooggrraammrrooii66
+        A selection of MatchHistogram element tests, with ROIs.
+
+    --mmaattcchhhhiissttooggrraammccppllaannee11 tthhrroouugghh --mmaattcchhhhiissttooggrraammccppllaannee66
+        A selection of MatchHistogram element tests, with Control Planes.
+
+    --uunnccoonnssttrraaiinn11
+        ImportPhotomap, Unconstrain, Constrain(ClipScale), ExportDrawable
+        test.
+
+    --ppaasstteeuupp11 tthhrroouugghh --ppaasstteeuupp22
+        PasteUp element tests.
+
+    --ggeeoommeettrryy11 tthhrroouugghh --ggeeoommeettrryy1144
+        Geometry element tests, including rotations, scales, and mirroring.
+        NearestNeighbor technique.
+
+    --ggeeoommeettrryy1155 tthhrroouugghh --ggeeoommeettrryy2288
+        Geometry element tests, including rotations, scales, and mirroring.
+        AntiAlias technique.
+
+    --ggeeoommeettrryy2299 tthhrroouugghh --ggeeoommeettrryy4422
+        Geometry element tests, including rotations, scales, and mirroring.
+        BilinearInterpolation technique.
+
+    --ggeeoommgg3311ddssccaallee11 tthhrroouugghh --ggeeoommeettrryyffaaxxrraaddiioo11
+        Tests to exercise the various FAX decoders and the Geometry element.
+
+    --ddiitthheerr11
+        Dither test, ErrorDiffusion dither technique, ExportDrawable.
+
+    --ddiitthheerr22
+        Dither test, ErrorDiffusion dither technique, ExportDrawablePlane.
+
+    --ddiitthheerr33
+        Dither test, Ordered(4) dither technique, ExportDrawable.
+
+    --ddiitthheerr44
+        Dither test, Ordered(4) dither technique, ExportDrawablePlane.
+
+    --ddiitthheerr55
+        Dither test, Ordered(8) dither technique, ExportDrawable.
+
+    --ddiitthheerr66
+        Dither test, Ordered(8) dither technique, ExportDrawablePlane.
+
+    --ddiitthheerr77
+        Dither test, Default dither technique, ExportDrawable.
+
+    --ddiitthheerr88
+        Dither test, Default dither technique, ExportDrawablePlane.
+
+    --llooggiiccaallmmoonnaaddiicc11 tthhrroouugghh --llooggiiccaallmmoonnaaddiicc1166
+        Logical element, photomap and a constant of 0 as operands, various
+        operators.
+
+    --llooggiiccaallddyyaaddiicc11 tthhrroouugghh --llooggiiccaallddyyaaddiicc1166
+        Logical element tests, dyadic photomaps as operands, various
+        operators.
+
+    --llooggiiccaallmmoonnaaddiiccrrooii11 tthhrroouugghh --llooggiiccaallmmoonnaaddiiccrrooii1166
+        Logical element, photomap and constant of 0 operands, various
+        operators, ROIs.
+
+    --llooggiiccaallddyyaaddiiccrrooii11 tthhrroouugghh --llooggiiccaallddyyaaddiiccrrooii1166
+        Logical element, dyadic photomaps as operands, various operators,
+        ROIs.
+
+    --llooggiiccaallmmoonnaaddiiccccppllaannee11 tthhrroouugghh --llooggiiccaallmmoonnaaddiiccccppllaannee1166
+        Logical element, photomap and constant of 0 operands, various
+        operators, Control Planes.
+
+    --llooggiiccaallddyyaaddiiccccppllaannee11 tthhrroouugghh --llooggiiccaallddyyaaddiiccccppllaannee1166
+        Logical element, dyadic photomaps as operands, various operators,
+        Control Planes.
+
+    --bblleenndd11
+        Blend element test. Monadic source, 0.1 source constant. Alpha
+        constant of 0.5.
+
+    --bblleenndd22
+        Blend element test. Dyadic sources. Alpha constant of 0.5.
+
+    --bblleennddrrooii11
+        Blend test. Monadic source, 0.1 source constant. Alpha constant of
+        0.5. ROIs.
+
+    --bblleennddrrooii22
+        Blend element test. Dyadic sources. Alpha constant of 0.5. Uses ROIs.
+
+    --bblleennddccppllaannee11
+        Blend test. Monadic source, 0.1 source constant. Alpha constant of
+        0.5. Control Plane.
+
+    --bblleennddccppllaannee22
+        Blend element test. Dyadic sources. Alpha constant of 0.5. Control
+        Plane.
+
+    --bblleennddaallpphhaa11
+        Blend test. Monadic source, 220 source constant. Alpha plane is a
+        photomap.
+
+    --bblleennddaallpphhaa22
+        Blend test. Dyadic sources. Alpha plane is a constant 220.
+
+    --bblleennddaallpphhaarrooii11
+        Blend test. Monadic source, 220 source constant. Alpha plane photomap.
+        ROIs.
+
+    --bblleennddaallpphhaarrooii22
+        Blend test. Dyadic sources. Alpha plane is a constant 220. ROIs.
+
+    --ttrriipplleeppooiinntt11 tthhrroouugghh --ttrriipplleeppooiinntt22
+        Illustrate use of point and Standard colormaps for rendering triple
+        band images.
+
+    --ffuunnnnyyeennccooddee11 tthhrroouugghh --ffuunnnnyyeennccooddee88
+        These tests are design to perform limited exercising of XIE's
+        capability of dealing with various encodings of flo source data. The
+        test init function obtains a photomap using ICP -> EP. A series of
+        independent permanent flo pairs, one of the form IP -> EP, and the
+        other of the basic form IP -> ED, are constructed. The encoding
+        parameters for the ExportPhotomap (EP) element in the first flo are
+        derived from test configuration. The number of flo pairs created is
+        also dependent upon test configuration. The tests can be configured so
+        that the test init function will constrain the input photomap to a
+        specified number of levels, on a per-band basis, so that word-sized
+        and quad-sized pixels are passed through the flos. Some tests below
+        take advantage of this. See tests.c for test configuration, and hints
+        on how to add similar tests.
+
+    --ppooiinntt11 tthhrroouugghh --ppooiinntt33
+        Simple Point element tests. Drawable destination. --ppooiinnttrrooii11 Simple
+        Point element test which uses ROIs. Drawable destination.
+
+    --ppooiinnttccppllaannee11
+        Simple Point element test which uses a Control Plane. Drawable
+        destination.
+
+    --ppooiinnttpphhoottoo11
+        Simple Point element test. Photomap destination.
+
+    --ppooiinnttrrooiipphhoottoo11
+        Simple Point element test which uses a ROIs. Photomap destination.
+
+    --ppooiinnttccppllaanneepphhoottoo11
+        Simple Point element test which uses a Control Plane. Photomap
+        destination.
+
+    --rreeddeeffiinnee
+        Two flographs are created which are the same in structure, expect for
+        the x and y offsets specified for the ExportDrawable flo elements. The
+        test init function creates a photoflo based upon one of the two
+        flographs. The inner loop of the test function uses
+        XieRedefinePhotoflo() to alternate between each of the flographs. Make
+        sure that your ineer loop reps are 2 or greater in order to exercise
+        this test fully (see -reps).
+
+    --mmooddiiffyy11
+        Test XieModifyPhotoflo() by adjust ROI offsets and size.
+
+    --mmooddiiffyy22
+        Test XieModifyPhotoflo() by changing the LUT input to a Point element.
+
+    --mmooddiiffyy33
+        Test XieModifyPhotoflo() by changing ExportDrawable x and y offsets.
+
+    --mmooddiiffyy44
+        This test creates a rather long flo of arithmetic elements, each which
+        does nothing more than add 1 to a small image. The test init function
+        scales the input photomap. The ExportDrawable x and y offset is
+        modified randomly during each iteration of the test function inner
+        loop.
+
+    --mmooddiiffyy55
+        This test creates a rather long flo of arithmetic elements, each which
+        does nothing more than add 1 to a large image. Each rep, the Geometry
+        and ExportDrawable elements at the end of the flo are modifed to crop
+        a small piece of the input into its appropriate place in the larger
+        image.
+
+    --rrggbb11 tthhrroouugghh --rrggbb1166
+        These tests all basically take an UncompressedTriple image as input,
+        send it to ConvertFromRGB which converts the image to some configured
+        colorspace, and then send the converted image on to ConvertToRGB prior
+        to display. The original image is displayed in the lefthand window,
+        and the image which has passed through the flo is shown in the
+        righthand window. The goal of these test is to show that
+        ConvertFromRGB -> ConvertToRGB is lossless.
+
+    --ccoonnvveerrttttooiinnddeexxppiixxeell
+        ConvertToIndex test, TripleBand BandByPixel.
+
+    --ccoonnvveerrttttooiinnddeexxppllaannee
+        ConvertToIndex test, TripleBand BandByPlane.
+
+    --ccoonnvveerrttffrroommiinnddeexx
+        The test init function uses a flo containing ConvertToIndex to display
+        an image in the left window. The test function uses this drawable as
+        input to a flo which does ConvertFromIndex -> ConvertToIndex and sends
+        the resulting image to the right window. The result should be
+        lossless.
+
+    --ccoommpplleexx
+        A somewhat large flo which uses control planes, LUTs, Point, PasteUp,
+        Logical, Constrain, Dither, Geometry, MatchHistogram, BandCombine, and
+        BandSelect elements. See the Postscript file "complex.ps" for a
+        rendition of the photoflo which is executed.
+
+  XX DDEEFFAAUULLTTSS
+
+    There are no X defaults used by this program.
+
+  SSEEEE AALLSSOO
+
+    _X(5X11R5)
+
+    _x_1_1_p_e_r_f(1X11R6)
+
+    _x_1_1_p_e_r_f_c_o_m_p(1X11R5)
+
+  BBUUGGSS
+
+    There should be a IMAGES environment variable to augment the -images
+    option.
+
+    Many tests only scratch the surface of possible test cases. Some of the
+    options available for certain flo elements are either inadequately tested,
+    or ignored altogether. There are insufficent tests for bitonal, large
+    pixel, or triple band tests.
+
+    Some of the test names are inconsistently cased, e.g. -Abort and -dither1.
+
+    Some tests are hopelessly slow when run against machines with slow FPUs.
+
+    Bitonal images are for the most part displayed using the ExportDrawable
+    flo element, however, ExportDrawablePlane would be a better choice.
+
+  AAUUTTHHOORR
+
+    Syd Logan, AGE Logic, Inc.
+

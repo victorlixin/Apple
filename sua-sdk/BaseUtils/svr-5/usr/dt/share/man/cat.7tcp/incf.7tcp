@@ -1,0 +1,67 @@
+
+
+incf(7tcp)                                             incf(7tcp)
+
+SSyynnooppssiiss
+       Programmer's  interface:  #include  <sys/types.h> #include
+       <netinet/in_cfg.h> #include <fcntl.h> #include <paths.h>
+
+       fd = open(_PATH_INCONFIG, flags);
+
+DDeessccrriippttiioonn
+       The INCF driver provides user-level access to kernel  con-
+       figuration variables used by the Internet drivers.
+
+       Access   to   the   INCF   driver   is   via  two  ioctls:
+       INCFG_RETRIEVE and INCFG_MODIFY.  These ioctls are  issued
+       as I_STR ioctls (see
+
+       Each ioctl operates on an in_config_t structure, which has
+       the following definition: #define   MAX_SYM   256
+
+       typedef   struct    in_config    {         char *ic_kname;
+       /*  symbol  name  in kernel */      char ic_name[MAX_SYM];
+       /* symbol name  */       caddr_t   ic_addr;             /*
+       kernel  address  */       u_long    ic_current;         /*
+       current/default    val    */         u_long    ic_minimum;
+       /*  minimum value */      u_long    ic_maximum;         /*
+       maximum value */ } in_config_t;
+
+       To retrieve current information about a  kernel  variable,
+       copy  the  name  of  the desired variable into the ic_name
+       field,  and  then  issue  an  INCFG_RETRIEVE  ioctl.   The
+       ic_current,  ic_minimum,  and  ic_maximum  fields  will be
+       filled in by the kernel.
+
+       To modify the value of a variable, copy the  name  of  the
+       desired  variable  into  the  ic_name  field,  assign  the
+       desired value  to  the  ic_current  field,  and  issue  an
+       INCFG_MODIFY  ioctl.   The kernel performs upper and lower
+       bounds checking on the specified value.  If the  value  is
+       acceptable, the kernel configuration will be updated.
+
+FFiilleess
+       defined as _PATH_INCF in <paths.h>
+
+DDiiaaggnnoossttiiccss
+       An  ioctl  operation may fail with the errno set to one of
+       the following: when a non-root user attempts to  modify  a
+       variable  when  the  specified variable cannot be found in
+       the kernel when the ioc_count of the argument is  not  the
+       size  of an in_config_t structure when the specified value
+       is below the minimum allowed by the kernel when the speci-
+       fied value is greater than the maximum allowed by the ker-
+       nel when another process has the configuration driver open
+
+RReeffeerreenncceess
+NNoottiicceess
+       This  mechanism  can  currently only be used to manipulate
+
+                                                                1
+
+incf(7tcp)                                             incf(7tcp)
+
+       32-bit quantities.
+
+                                                                2
+

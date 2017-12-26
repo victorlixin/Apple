@@ -1,0 +1,95 @@
+
+
+sigaltstack(2)                                     sigaltstack(2)
+
+SSyynnooppssiiss
+       #include <signal.h>
+
+       int sigaltstack(const stack_t *ss, stack_t *oss);
+
+DDeessccrriippttiioonn
+       sigaltstack allows users to define an alternate stack area
+       on which signals are to be processed.  If ss is  non-zero,
+       it specifies a pointer to, and the size of a stack area on
+       which to deliver signals, and tells the system if the pro-
+       cess  is  currently  executing on that stack.  When a sig-
+       nal's action indicates its handler should execute  on  the
+       alternate signal stack [specified with a call], the system
+       checks to see if the process  is  currently  executing  on
+       that  stack.  If the process is not currently executing on
+       the signal stack, the system  arranges  a  switch  to  the
+       alternate signal stack for the duration of the signal han-
+       dler's execution.
+
+       The structure sigaltstack includes the following  members.
+       char *ss_sp int   ss_size   int   ss_flags
+
+       If ss is not NULL, it points to a structure specifying the
+       alternate signal stack that will take effect  upon  return
+       from  sigaltstack.   The  ss_sp and ss_size fields specify
+       the new base and size of the stack, which is automatically
+       adjusted  for  direction  of  growth  and  alignment.  The
+       ss_flags field specifies the new stack state  and  may  be
+       set  to  the  following:  The  stack is to be disabled and
+       ss_sp and ss_size are ignored.  If SS_DISABLE is not  set,
+       the  stack  will  be  enabled.  SS_DISABLE is the only way
+       users can disable the alternate signal stack.
+
+       If oss is not NULL, it points to  a  structure  specifying
+       the alternate signal stack that was in effect prior to the
+       call to sigaltstack.  The ss_sp and ss_size fields specify
+       the base and size of that stack.  The ss_flags field spec-
+       ifies the stack's state, and  may  contain  the  following
+       values:  The  process is currently executing on the alter-
+       nate signal stack.  Attempts to modify the alternate  sig-
+       nal  stack while the process is executing on it will fail.
+       SS_ONSTACK cannot be modified  by  users.   The  alternate
+       signal stack is currently disabled.
+
+   RReettuurrnn vvaalluueess
+       On  success,  sigaltstack  returns 0.  On failure, sigalt-
+       stack returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, sigaltstack  fails  and  sets
+       errno  to:  Either  ss or oss points outside the process's
+       allocated address space.  ss is non-null and the  ss_flags
+       field  pointed  to by ss contains invalid flags.  The only
+       flag considered valid is SS_DISABLE.  An attempt was  made
+
+                                                                1
+
+sigaltstack(2)                                     sigaltstack(2)
+
+       to  modify  an  active  stack.   The size of the alternate
+       stack area is less than MINSIGSTKSZ.
+
+UUssaaggee
+       The value SIGSTKSZ is defined to be the  number  of  bytes
+       that would be used to cover the usual case when allocating
+       an alternate stack area.  The value MINSIGSTKSZ is defined
+       to  be  the  minimum  stack size for a signal handler.  In
+       computing an alternate stack size, a  program  should  add
+       that  amount  to  its  stack requirements to allow for the
+       operating system overhead.
+
+       The following code fragment is typically used to  allocate
+       an  alternate  stack.   if  ((sigstk.ss_sp  = (char *)mal-
+       loc(SIGSTKSZ)) == NULL)      /* error return */;
+
+       sigstk.ss_size  =  SIGSTKSZ;  sigstk.ss_flags  =   0;   if
+       (sigaltstack(&sigstk,   (stack_t   *)0)   <  0)       per-
+       ror("sigaltstack");
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       The Threads Library does not support alternate signal han-
+       dling stacks for threads.  See for further details.
+
+   CCoonnssiiddeerraattiioonnss ffoorr lliigghhttwweeiigghhtt pprroocceesssseess
+       Internally, an alternative signal stack can be defined per
+       LWP.
+
+                                                                2
+

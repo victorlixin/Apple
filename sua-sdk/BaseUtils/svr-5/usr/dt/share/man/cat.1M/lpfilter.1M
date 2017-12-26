@@ -1,0 +1,198 @@
+
+
+lpfilter(1M)                                         lpfilter(1M)
+
+SSyynnooppssiiss
+       lpfilter -f filter-name -F pathname
+       lpfilter -f filter-name -
+       lpfilter -f filter-name -i
+       lpfilter -f filter-name -x
+       lpfilter -f filter-name -l
+
+DDeessccrriippttiioonn
+       The  lpfilter  command is used to add, change, delete, and
+       list a filter used with the LP print service.  These  fil-
+       ters  are  used to convert the content type of a file to a
+       content type acceptable to a printer.  One of the  follow-
+       ing  options  must  be  used  with  the  lpfilter command:
+       -F pathname (or - for standard input) to add or  change  a
+       filter; -i to reset an original filter to its factory set-
+       ting; -x to delete a  filter;  or  -l  to  list  a  filter
+       description.
+
+       The argument all can be used instead of a filter-name with
+       any of these options.  When all is specified with  the  -F
+       or  - option, the requested change is made to all filters.
+       Using all with the -i option has the effect  of  restoring
+       to  their  original  settings all filters for which prede-
+       fined settings were initially available.   Using  the  all
+       argument  with  the -x option results in all filters being
+       deleted, and using it with the -l option produces  a  list
+       of all filters.
+
+   AAddddiinngg oorr cchhaannggiinngg aa ffiilltteerr
+       The  filter  named in the -f option is added to the filter
+       table.  If the filter already exists, its  description  is
+       changed to reflect the new information in the input.
+
+       The  filter  description is taken from the pathname if the
+       -F option is given, or from the standard input  if  the  -
+       option  is  given.  One of the two must be given to define
+       or change a filter.  If the filter named is one originally
+       delivered  with  the  LP print service, the -i option will
+       restore the original filter description.
+
+       When an existing filter  is  changed  with  the  -F  or  -
+       option,  items  that are not specified in the new informa-
+       tion are left as they were.  When a new  filter  is  added
+       with  this  command,  unspecified  items are given default
+       values.
+
+       Filters are used to convert the content of a request  into
+       a  data stream acceptable to a printer.  For a given print
+       request, the LP print service will know the following: the
+       type of content in the request the name of the printer the
+       type of the printer the types of content acceptable to the
+       printer  the modes of printing asked for by the originator
+       of the request.  It will use this information  to  find  a
+       filter  or  a  pipeline  of  filters that will convert the
+
+                                                                1
+
+lpfilter(1M)                                         lpfilter(1M)
+
+       content into a type acceptable to the printer.
+
+       Below is a list of items that provide input to  this  com-
+       mand, and a description of each item.  All lists are comma
+       or space separated.  Input types: content-type-list Output
+       types:  content-type-list Printer types: printer-type-list
+       Printers: printer-list Filter type:  filter-type  Command:
+       shell-command  Options: template-list This gives the types
+       of content that can  be  accepted  by  the  filter.   (The
+       default is any.)  This gives the types of content that the
+       filter can produce from any of the  input  content  types.
+       (The default is any.)  This gives the type of printers for
+       which the filter can be used.  The LP print  service  will
+       restrict the use of the filter to these types of printers.
+       (The default is any.)  This gives the names of the  print-
+       ers  for  which the filter can be used.  The LP print ser-
+       vice will restrict the use  of  the  filter  to  just  the
+       printers  named.   (The  default  is any.)  This marks the
+       filter as a slow filter or a fast  filter.   Slow  filters
+       are generally those that take a long time to convert their
+       input.  They are run unconnected to a printer, to keep the
+       printers  from  being tied up while the filter is running.
+       If a listed printer is on a remote system, the filter type
+       for  it must have the value slow.  Fast filters are gener-
+       ally those that convert their input quickly, or those that
+       must  be connected to the printer when run.  These will be
+       given to the interface program IP to run connected to  the
+       physical  printer.   This  specifies the program to run to
+       invoke the filter.  The full program pathname as  well  as
+       fixed options must be included in the shell-command; addi-
+       tional options are constructed, based on the  characteris-
+       tics  of  each  print request and on the Options field.  A
+       command must be given for each filter.
+
+       The command must accept a data stream  as  standard  input
+       and produce the converted data stream on its standard out-
+       put.  This allows filter pipelines to  be  constructed  to
+       convert  data  not  handled by a single filter.  This is a
+       comma-separated list of templates used  by  the  LP  print
+       service  to construct options to the filter from the char-
+       acteristics of each print  request  listed  in  the  table
+       later.
+
+       In  general,  each template is of the following form: key-
+       word-pattern=replacement The keyword names the  character-
+       istic that the template attempts to map into a filter spe-
+       cific option; each valid keyword is listed  in  the  table
+       below.   A pattern is one of the following: a literal pat-
+       tern of one of the forms listed in  the  table,  a  single
+       asterisk (*), or a regular expression.  If pattern matches
+       the value of the characteristic, the template fits and  is
+       used  to  generate a filter specific option.  The replace-
+       ment is what will be used as the option.  Regular  expres-
+       sions  are  the  same  as  those  found  in  the  ed or vi
+
+                                                                2
+
+lpfilter(1M)                                         lpfilter(1M)
+
+       commands.  This includes the \( . . . \) and \n  construc-
+       tions,  which  can be used to extract portions of the pat-
+       tern for copying into the replacement, and  the  &,  which
+       can  be  used to copy the entire pattern into the replace-
+       ment.
+
+       The replacement can also contain a *; it too, is  replaced
+       with the entire pattern, just like the & of
+       -------------------------------------------------------------
+       lp Option     Characteristic       keywordPossible patterns
+       -------------------------------------------------------------
+       -T            Content type (input) INPUT  content-type
+       N/A           Content type (output)OUTPUT content-type
+       N/A           Printer type         TERM   printer-type
+       -d            Printer name         PRINTERprinter-name
+       -f, -o cpi=   Character pitch      CPI    integer
+       -f, -o lpi=   Line pitch           LPI    integer
+       -f, -o length=Page length          LENGTH integer
+       -f, -o width= Page width           WIDTH  integer
+       -P            Pages to print       PAGES  page-list
+       -S            Character set        CHARSETcharacter-set-name
+                     Print wheel          CHARSETprint-wheel-name
+       -f            Form name            FORM   form-name
+       -y            Modes                MODES  mode
+       -n            Number of copies     COPIES integer
+       For example, the template MODES landscape = -l shows  that
+       if  a  print  request  is  submitted with the -y landscape
+       option, the filter  will  be  given  the  option  -l.   As
+       another example, the template TERM * = -T * shows that the
+       filter will  be  given  the  option  -T  printer-type  for
+       whichever  printer-type is associated with a print request
+       using the filter.
+
+       As  a  last   example,   consider   the   template   MODES
+       prwidth\=\(.*\) = -w\1 Suppose a user gives the command lp
+       -y prwidth=10 From the table above, the LP  print  service
+       determines  that  the -y option is handled by a MODES tem-
+       plate.  The MODES template here works because the  pattern
+       prwidth\=\(.*\)  matches the prwidth=10 given by the user.
+       The replacement -w\1 causes the LP print service to gener-
+       ate the filter option -w10.
+
+       If necessary, the LP print service will construct a filter
+       pipeline by concatenating several filters  to  handle  the
+       user's  file  and  all  the  print  options.   (See  for a
+       description of a pipeline.)  If  the  print  service  con-
+       structs  a  filter  pipeline,  the INPUT and OUTPUT values
+       used for each filter in the pipeline are the types of  the
+       input  and  output  for  that  filter,  not for the entire
+       pipeline.
+
+   DDeelleettiinngg aa ffiilltteerr
+       The -x option is used to delete the  filter  specified  in
+       filter-name from the LP filter table.
+
+                                                                3
+
+lpfilter(1M)                                         lpfilter(1M)
+
+   LLiissttiinngg aa ffiilltteerr ddeessccrriippttiioonn
+       The  -l option is used to list the description of the fil-
+       ter named in filter-name.  If the command  is  successful,
+       the  following  message  is sent to standard output: Input
+       types: content-type-list Output  types:  content-type-list
+       Printer  types:  printer-type-list  Printers: printer-list
+       Filter type: filter-type Command:  shell-command  Options:
+       template-list  If  the  command fails, an error message is
+       sent to standard error.
+
+FFiilleess
+       language-specific message file (see LANG on
+
+RReeffeerreenncceess
+
+                                                                4
+

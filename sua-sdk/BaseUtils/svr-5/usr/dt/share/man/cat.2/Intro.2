@@ -1,0 +1,1401 @@
+
+
+Intro(2)                                                 Intro(2)
+
+SSyynnooppssiiss
+       #include <errno.h> #include <limits.h> #include <priv.h>
+
+DDeessccrriippttiioonn
+       This  section  describes  all  of  the system calls.  This
+       introduction describes all error return  codes,  gives  an
+       overview of privileges, threads and lightweight processes,
+       and defines common terms.
+
+       The constants ARG_MAX, SYS_OPEN, and so on, are  implemen-
+       tation-specific constants defined in limits.h.  See
+
+   RReettuurrnn vvaalluueess
+       The  system  call manual pages describe system call return
+       values.  Most of  these  calls  have  one  or  more  error
+       returns.   An error condition is indicated by an otherwise
+       impossible return value.  This is almost always -1 or  the
+       NULL  pointer;  the  individual  descriptions  specify the
+       details.
+
+   EErrrroorrss
+       Besides returning to the caller  a  value  that  indicates
+       that  an  error  has occurred, a system call also sets the
+       external variable errno to a  value  that  identifies  the
+       reason  for the error.  errno is not cleared on successful
+       calls, so it should be tested only after an error has been
+       indicated.   Each system call description attempts to list
+       all possible error numbers.  The following is  a  complete
+       list  of  the  error numbers and their names as defined in
+       errno.h.  Typically this error  indicates  an  attempt  to
+       modify a file in some way forbidden by the privilege mech-
+       anism, or restricted to the owner of the file.  It is also
+       returned  when an attempt is made to open a device already
+       open by another process.  See the section and in the  sec-
+       tion  below.  A file name is specified and the file should
+       exist but doesn't, or one of the directories in a pathname
+       does  not exist.  No process can be found corresponding to
+       the process identifier specified.  An asynchronous  signal
+       (such as interrupt or quit), which the user has elected to
+       catch, occurred during a system service routine.  If  exe-
+       cution  is  resumed  after  processing the signal, it will
+       appear as if the interrupted routine  call  returned  this
+       error  condition.   Some  physical I/O error has occurred.
+       This error may in some cases occur on a call following the
+       one  to  which it actually applies.  I/O on a special file
+       refers to a subdevice which  does  not  exist,  or  exists
+       beyond  the  limit of the device.  It may also occur when,
+       for example, a tape drive is not on-line or no  disk  pack
+       is  loaded  on  a  drive.   An  argument  list longer than
+       ARG_MAX bytes is presented to a member of the exec  family
+       of  routines.   The  argument list limit is the sum of the
+       size of the argument list plus the size  of  the  environ-
+       ment's  exported  shell  variables.   A request is made to
+       execute a file which,  although  it  has  the  appropriate
+
+                                                                1
+
+Intro(2)                                                 Intro(2)
+
+       permissions,  does  not  start  with  a  valid format (see
+       Either a file descriptor refers to no open file, or a read
+       (respectively,  write)  request  is made to a file that is
+       open only for writing  (respectively,  reading).   A  wait
+       routine  was executed by a process that had no existing or
+       unwaited-for child processes.  For example, the fork  rou-
+       tine  failed because the system's process table is full or
+       the user is not allowed to create any more processes, or a
+       system  call failed because of insufficient memory or swap
+       space.  During execution of an exec, brk, or sbrk routine,
+       a  program  asks for more space than the system is able to
+       supply.  This is not a temporary  condition;  the  maximum
+       size  is  a system parameter.  The error may also occur if
+       the arrangement of text, data, and stack segments requires
+       too many segmentation registers, or if there is not enough
+       swap space during the fork routine.  If this error  occurs
+       on  a  resource associated with Remote File Sharing (RFS),
+       it indicates a memory depletion which  may  be  temporary,
+       dependent  on  system  activity  at  the time the call was
+       invoked.  An attempt was made to access a file  in  a  way
+       forbidden  by  the  access  control mechanism.  The access
+       control mechanism grants or denies a process permission to
+       access  an  object  based  on  a  comparison of the access
+       attributes of the calling process, the  access  attributes
+       of  the  object  being  accessed,  and  the type of access
+       requested.
+
+       The access control attributes of the process are its  real
+       and  effective  uids,  and  the privileges assigned to the
+       process  when  it  was  created.    The   access   control
+       attributes of the object are the permission mode bits, and
+       possibly the Access Control List (ACL).  assigned  to  the
+       object;   these  mechanisms  are  known  as  Discretionary
+       Access Control (DAC).  If Mandatory Access  Control  (MAC)
+       is  installed,  the  process  also has a MAC level used to
+       determine access on the basis of a comparison with the MAC
+       level of the object.
+
+       Failure  of  the process to meet the access control checks
+       causes denial of the requested access and  the  return  of
+       EACCES.   See  in  the section below for more information.
+       The system encountered a hardware fault in  attempting  to
+       use  an  argument of a routine.  For example, errno poten-
+       tially may be set to EFAULT any time a routine that  takes
+       a  pointer  argument  is passed an invalid address, if the
+       system can detect the  condition.   Because  systems  will
+       differ  in their ability to reliably detect a bad address,
+       on some implementations passing a bad address to a routine
+       will  result  in undefined behavior.  A non-block file was
+       mentioned where a block device was required (for  example,
+       in  a  call to the mount routine).  The device or resource
+       is currently unavailable.  An attempt was made to  do  one
+       of the following: mount a device that was already mounted;
+       unmount a device on which there is an  active  file  (open
+
+                                                                2
+
+Intro(2)                                                 Intro(2)
+
+       file, current directory, mounted-on file, active text seg-
+       ment); enable accounting when it is already  enabled;  or,
+       open  a  device  that  is  in  the process of closing.  An
+       existing file was mentioned in  an  inappropriate  context
+       (for example, call to the link routine).  A link to a file
+       on another device was attempted.  An attempt was  made  to
+       apply an inappropriate operation to a device (for example,
+       read a write-only device, open  a  device  not  yet  allo-
+       cated).   A  non-directory was specified where a directory
+       is required (for example, in a path prefix or as an  argu-
+       ment  to  the chdir routine).  An attempt was made to per-
+       form an operation not appropriate for a directory, such as
+       An invalid argument was specified (for example, unmounting
+       a non-mounted device or specifying an undefined signal  in
+       a  call  to  or  The  system  file table is full (that is,
+       SYS_OPEN files are open, and temporarily no more files can
+       be  opened).   The  number  of  open  file descriptors has
+       reached the current soft limit.   The  maximum  number  of
+       open file descriptors is a per-process resource determined
+       by the tuneable parameter SFNOLIM,  the  soft  or  current
+       limit,  specifying  the max number of open files.  HFNOLIM
+       is the hard limit or the maximum value  of  SFNOLIM.   The
+       defaults  for  these  tuneables  are 64 (SFNOLIM) and 2048
+       (HFNOLIM).  See and for information on getting and setting
+       these  values.  Also see A call was made to the ioctl rou-
+       tine specifying a file that is  not  a  special  character
+       device.   An  attempt was made to execute a pure-procedure
+       program that is  currently  open  for  writing.   Also  an
+       attempt  to open for writing or to remove a pure-procedure
+       program that is  being  executed.   The  size  of  a  file
+       exceeded  the maximum file size, FCHR_MAX (see getrlimit).
+       While writing an ordinary file  or  creating  a  directory
+       entry,  there is no free space left on the device.  In the
+       fcntl routine, the setting or removing of record locks  on
+       a  file  cannot  be accomplished because there are no more
+       record entries left on the system.  A call  to  the  lseek
+       routine was issued to a pipe.  An attempt to modify a file
+       or directory was made on a file system which  was  mounted
+       read-only.   An attempt to make more than the maximum num-
+       ber of links, LINK_MAX, to a file.  A write on a pipe  for
+       which  there  is no process to read the data.  This condi-
+       tion normally generates a signal; the error is returned if
+       the  signal is ignored.  The argument of a function in the
+       math package (3M) is out of the domain  of  the  function.
+       The  value  of  a function in the math package (3M) is not
+       representable within machine precision.   An  attempt  was
+       made to receive a message of a type that does not exist on
+       the specified message queue (see This error is returned to
+       processes  that  resume  execution due to the removal of a
+       message or semaphore identifier from the system (see and A
+       deadlock  situation  was detected and avoided.  This error
+       pertains to file and record locking.  There  are  no  more
+       locks  available.   The  system  lock table is full (see A
+       putmsg or getmsg system  call  was  attempted  on  a  file
+
+                                                                3
+
+Intro(2)                                                 Intro(2)
+
+       descriptor  that  is  not a STREAMS device.  The timer set
+       for a STREAMS ioctl call has expired.  The cause  of  this
+       error is device specific and could indicate either a hard-
+       ware or software failure, or perhaps a timeout value  that
+       is  too  short  for the specific operation.  The status of
+       the ioctl operation is indeterminate.   During  a  STREAMS
+       open,  either  no  STREAMS  queues or no STREAMS head data
+       structures were available.  This is a temporary condition;
+       one  may  recover  from  it  if  other  processes  release
+       resources.  This error is Remote File Sharing  (RFS)  spe-
+       cific.   It  occurs  when users try to advertise, unadver-
+       tise, mount, or unmount remote resources while the machine
+       has not done the proper startup to connect to the network.
+       This error occurs when users attempt to use a system  call
+       from  a  package which has not been installed.  This error
+       is RFS specific.  It occurs when users try to advertise  a
+       resource  which  is  not  on  the local machine, or try to
+       mount/unmount a device (or pathname) that is on  a  remote
+       machine.   This error is RFS specific.  It occurs when the
+       link (virtual circuit) connecting to a remote  machine  is
+       gone.   This  error is RFS specific.  It occurs when users
+       try to advertise a  resource  which  has  been  advertised
+       already,  or  try  to  stop  RFS while there are resources
+       still advertised, or try to force unmount a resource  when
+       it  is  still advertised.  This error is RFS specific.  It
+       occurs when an attempt is made to stop RFS while resources
+       are  still  mounted by remote machines, or when a resource
+       is readvertised with a client list that does not include a
+       remote  machine  that  currently has the resource mounted.
+       This error is RFS specific.  It occurs  when  the  current
+       process  is  waiting  for a message from a remote machine,
+       and  the  virtual  circuit  fails.   Some  protocol  error
+       occurred.  This error is device specific, but is generally
+       not related to a hardware failure.  This error is RFS spe-
+       cific.    It  occurs  when  users  try  to  access  remote
+       resources which are not directly accessible.   This  error
+       is  RFS specific.  A way for the server to tell the client
+       that a process has  transferred  back  from  mount  point.
+       During  a read, getmsg, or ioctl I_RECVFD system call to a
+       STREAMS device, something has come  to  the  head  of  the
+       queue  that can't be processed.  That something depends on
+       the system call: control  information  or  a  passed  file
+       descriptor passed file descriptor control or data informa-
+       tion The length of the path argument exceeds PATH_MAX,  or
+       the  length  of  a  path  component exceeds NAME_MAX while
+       _POSIX_NO_TRUNC is in  effect;  see  Given  log  name  not
+       unique.   Either  a file descriptor refers to no open file
+       or a read request was made to a file that is open only for
+       writing.   Trying  to exec an a.out that requires a static
+       shared library and the static shared library doesn't exist
+       or  the user doesn't have permission to use it.  Trying to
+       exec an a.out that requires a static shared library (to be
+       linked  in)  and  exec  could  not  load the static shared
+       library.  The static shared library is probably corrupted.
+
+                                                                4
+
+Intro(2)                                                 Intro(2)
+
+       Trying  to  exec  an  a.out  that requires a static shared
+       library (to be linked in) and there was erroneous data  in
+       the  .lib  section  of  the a.out.  The .lib section tells
+       exec what static shared libraries are needed.   The  a.out
+       is  probably  corrupted.   Trying  to  exec  an a.out that
+       requires more static shared libraries than is  allowed  on
+       the  current configuration of the system.  See your system
+       administration guide.  Attempting to exec a shared library
+       directly.  Illegal byte sequence.  Handle multiple charac-
+       ters as  a  single  character.   Interrupted  system  call
+       should  be  restarted.  Streams pipe error (not externally
+       visible).  A required address was omitted from  an  opera-
+       tion   on   a  transport  endpoint.   Destination  address
+       required.  A message sent  on  a  transport  provider  was
+       larger than the internal message buffer or some other net-
+       work limit.  A protocol was specified that does  not  sup-
+       port  the  semantics  of the socket type requested.  A bad
+       option or level was  specified  when  getting  or  setting
+       options for a protocol.  The protocol has not been config-
+       ured into the system or no implementation for  it  exists.
+       The  support  for  the socket type has not been configured
+       into the system or no implementation for it  exists.   For
+       example,  trying  to  accept  a  connection  on a datagram
+       transport endpoint.  The protocol family has not been con-
+       figured  into  the  system  or  no  implementation  for it
+       exists.  Used for  the  Internet  protocols.   An  address
+       incompatible  with  the requested protocol was used.  User
+       attempted to use an address already in use, and the proto-
+       col  does not allow this.  Results from an attempt to cre-
+       ate a transport endpoint with an address not on  the  cur-
+       rent  machine.   Operation  encountered  a  dead  network.
+       Operation was attempted to an  unreachable  network.   The
+       host  you  were connected to crashed and rebooted.  A con-
+       nection abort was caused internal to your host machine.  A
+       connection  was  forcibly closed by a peer.  This normally
+       results from a loss of the connection on the  remote  host
+       due to a timeout or a reboot.  An operation on a transport
+       endpoint or pipe was  not  performed  because  the  system
+       lacked  sufficient  buffer  space  or  because a queue was
+       full.  A connect request was made on an already  connected
+       transport  endpoint;  or, a sendto or sendmsg request on a
+       connected transport endpoint specified a destination  when
+       already  connected.  A request to send or receive data was
+       disallowed because the transport endpoint is not connected
+       and  (when  sending  a  datagram) no address was supplied.
+       When setting a map with the limit of  the  NEMAP  tuneable
+       was exceeded and no more maps were allowed to be set.  Or,
+       when getting a map with there is no map available for  the
+       device  specified.   A request to send data was disallowed
+       because the transport endpoint has already been shut down.
+       A  connect  or  send  request failed because the connected
+       party did not properly respond after  a  period  of  time.
+       (The timeout period is dependent on the communication pro-
+       tocol.)  No connection could be made  because  the  target
+
+                                                                5
+
+Intro(2)                                                 Intro(2)
+
+       machine  actively  refused  it.  This usually results from
+       trying to connect to a service that  is  inactive  on  the
+       remote   host.   A  transport  provider  operation  failed
+       because  the  destination  host  was  down.   A  transport
+       provider  operation  was attempted to an unreachable host.
+       An operation was attempted on a non-blocking  object  that
+       already  had  an operation in progress.  An operation that
+       takes a long time to complete  (such  as  a  connect)  was
+       attempted  on  a non-blocking object.  An attempt was made
+       to access a server, but access was denied because the user
+       was  not  authenticated  to the server (and the reason for
+       this was not a severed link).
+
+PPrriivviilleeggeess
+       All of the sensitive system operations that  require  spe-
+       cial  privileges  have been identified and specific privi-
+       leges defined for one or more of these services.   A  pro-
+       cess  may  perform  a sensitive service only if it has the
+       required privilege.
+
+       By default, the system runs with a privilege module  known
+       as  the  Super  User  Module (SUM).  This module gives the
+       privileged user ID, uid 0 in the delivered system, all  of
+       these privileges.  Thus the SUM retains compatibility with
+       traditional UNIX systems, wherein the root login is  given
+       unrestricted system access.
+
+       Individual  privileges  can  also be assigned to IDs other
+       than uid 0, so that these IDs can run privileged commands.
+       Privileges  and  IDs  are  managed using the and commands.
+       Privileges are assigned to trusted executable files  using
+       the command and the system call.
+
+       For a discussion of privileges see
+
+       Following  is the list of privileges defined in sys/privi-
+       lege.h: Required to change the attributes of a file  (that
+       is,  information  kept  in  the  file's inode) that is not
+       owned by the effective uid of the calling process.  See in
+       the  section  below.   Required to manipulate the security
+       audit mechanisms.  Overrides  specific  restrictions  that
+       are imposed solely for the confinement of covert channels.
+       Overrides Discretionary Access Control (DAC)  restrictions
+       but  only  for  operations that do not alter objects (that
+       is, read and execute permissions).   See  in  the  section
+       below.   Overrides  Discretionary  Access Control restric-
+       tions but only for operations that alter objects (that is,
+       write permission).  See in the section below.  Required to
+       set or get device security attributes to change the device
+       level  when it is in private state, and to access a device
+       when it is in private state.  This privilege is also  used
+       for  special  ioctl  for window management and to download
+       trusted software to a terminal driver.  Required for priv-
+       ileged  operations  on  a file system that have relatively
+
+                                                                6
+
+Intro(2)                                                 Intro(2)
+
+       low sensitivity, including the creation of links to direc-
+       tories,  setting  the effective root directory, and making
+       special files.  Overrides Mandatory Access  Control  (MAC)
+       restrictions  but  only for certain operations that do not
+       alter objects.   See  in  the  section  below.   Overrides
+       Mandatory  Access  Control  restrictions  that involve the
+       alteration of objects  or  other  MAC-related  attributes.
+       See  in the section below.  Mount or unmount a file system
+       or set and  get  the  ceiling  level  of  a  file  system.
+       Required for creation of multilevel directories.  Required
+       to change the security level of a process  (including  the
+       process's   own  level),  subject  to  some  restrictions.
+       Administrative privilege required to set  the  inheritable
+       and  fixed  privileges on files.  This privilege overrides
+       access and ownership restrictions.  Required in  order  to
+       set  the  real  and effective user and group IDs of a pro-
+       cess.  Required to perform several general  system  opera-
+       tions  that have only minor security implications.  Privi-
+       lege required for an otherwise unprivileged process to set
+       the  inheritable  and  fixed  privileges  on a file.  This
+       privilege does not override access or  ownership  restric-
+       tions.   Provides compatibility with device drivers devel-
+       oped by third party vendors.  It is used when a  sensitive
+       operation  needs  to  be  limited to a privileged process.
+       Required  by  processes  that  do  real-time   operations.
+       Allows  processes to upgrade (change the existing level to
+       a new dominating level) files.  Override file system range
+       restrictions.   Required  to  change the security level of
+       objects (for block or character special files that are  in
+       the  public  state  only),  subject  to some restrictions.
+       Required to write miscellaneous audit records to the audit
+       trail.   Required  to raise the priority of a time sharing
+       process or to set the  user  priority  limit  to  a  value
+       greater  than  0.   Required  to lock a process in memory.
+       Required to dump a core image of a process that is  either
+       privileged,  setuid,  or  setgid.   This  privilege is not
+       required to dump the core image of a process that does not
+       meet  the above conditions.  Required to perform selective
+       operations associated with loadable modules.  Required  to
+       bind  a  process,  an  LWP, or a set of LWPs to a specific
+       processor.  Represents all possible privileges.
+
+LLaarrggee FFiillee SSuuppppoorrtt
+       With Large File Support (LFS), file size and related sizes
+       are  no longer tied to the 32 bit limit formerly in effect
+       for C language data types.  Compiler extensions allow  for
+       a  C  application to conveniently manipulate files of such
+       size via 64 bit integers (called long long).
+
+       Prior to this release, the size of a file in  UnixWare was
+       limited  to only as much information as could be addressed
+       using a signed long integer.  On most implementations that
+       is  2  gigabytes  ([2  to  the  31]  -1).  Although LFS is
+       designed to allow the kernel to handle files containing up
+
+                                                                7
+
+Intro(2)                                                 Intro(2)
+
+       to ([2 to the 63] -1) bytes, the current implementation of
+       &uw; can handle only files that contain up to ([2  to  the
+       40] -1) bytes, or one terabyte of disk store.
+        A sparse file can exhibit length up to 2^63 bytes.  Large
+       file support  is  intended  for  specialized  applications
+       which  need to deal with more than 2GB of data in a single
+       file, and not for general purpose text files and  similar.
+
+   PPrreerreeqquuiissiitteess ffoorr pprrooggrraammmmiinngg wwiitthh llaarrggee ffiilleess
+       The file system on which the application is creating large
+       files must be a vxfs file system created with  the  large-
+       files  option.  See the description of the largefiles com-
+       mand option on also see Large file support can be added to
+       an existing vxfs file system using
+
+       In   addition,  the  file  size  limit  (the  RLIMIT_FSIZE
+       resource) must be set to RLIM_INFINITY (see
+
+       Note that if  your  application  does  not  support  large
+       files, it does not need any modifications to run correctly
+       on a large file aware  file  system.   If  it  happens  to
+       access  a  file  greater  than  2GB  in size, it will fail
+       gracefully, assuming normal error checking practices.
+
+   PPrrooggrraammmmiinngg ccoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       Large File Support provides a mechanism to  cause  certain
+       data  types,  data structures, and system calls (listed in
+       to switch from regular to large.  Applications can be made
+       to  handle  either  regular  or  large files in one of two
+       ways.
+
+       First, you can define the macro _FILE_OFFSET_BITS at  com-
+       pile  time by using the -D option to the cc command, (that
+       is, -D _FILE_OFFSET_BITS=num).  Here, num can be 32,  sig-
+       nifying  regular files, or 64, signifying large files.  If
+       you do not define _FILE_OFFSET_BITS at  compile  time,  no
+       mapping  occurs,  and thus it defaults to the mode that is
+       native on your system (currently 32 bits).   These  inter-
+       faces, on 64 bit systems, will have 64 bit sizes.
+
+       Refer to for details on the effects of defining _FILE_OFF-
+       SET_BITS to 32 in a native 64 bit  environment.   Explicit
+       32 bit versions of the data types are defined there.  They
+       are not documented elsewhere.
+
+       For example, -D _FILE_OFFSET_BITS=64 maps  existing  calls
+       that  need to know about file size to their 64 bit (large)
+       versions automatically, resulting in  more  portable  code
+       than explicit calls to the 64 bit versions.
+
+       Second,  explicit calls can be made to new 64 bit versions
+       of system calls, and library routines  that  use  the  new
+       data  types  and  data structures.  These are transitional
+       interfaces, however, and may not be  available  in  future
+
+                                                                8
+
+Intro(2)                                                 Intro(2)
+
+       releases.   If  you choose to use these new interfaces, we
+       recommend that you pre-define their corresponding  feature
+       test  macros  to  ensure that the associated functions are
+       declared.
+
+       Defining  the  macro  _LARGEFILE_SOURCE  to  be  1  before
+       including  any  header,  enables the functionality defined
+       for   _LFS_LARGEFILE.    Defining   the   macro    _LARGE-
+       FILE64_SOURCE  before  including  any  header, enables the
+       functionality defined  for  _LFS64_LARGEFILE,  LFS64_ASYN-
+       CHRONOUS_IO,  and  LFS64_STDIO.   These symbolic constants
+       are discussed on
+       Interfaces
+       -----------
+       -----------
+       -----------
+       -----------
+
+       -----------
+
+   DDaattaa ttyyppeess tthhaatt aarree mmaappppeedd ttoo 6644 bbiitt vveerrssiioonnss
+       A subset of the system-provided data types and  structures
+       are  mapped  to  64  bit versions and uses of the existing
+       data types are automatically switched to the 64  bit  ver-
+       sions  if  you have defined the _FILE_OFFSET_BITS macro to
+       be 64 at compile time.  This table lists those  data  type
+       names  and data structure names.  They are defined in sev-
+       eral existi|ng headers, and include|the following:
+         Header   | Existing  data  type | Data  type used when
+                  | names                | mapped
+                  |                      | using     _FILE_OFF-
+                  |                      | SET_BITS=64
+       -----------+----------------------+----------------------
+                  | struct aiocb         | struct aiocb64
+       -----------+----------------------+----------------------
+                  | struct dirent        | struct dirent64
+       -----------+----------------------+----------------------
+                  | off_t                | off64_t
+                  | struct flock         | struct flock64
+       -----------+----------------------+----------------------
+                  | blkcnt_t             | blkcnt64_t
+                  | ino_t                | ino64_t
+                  | off_t                | off64_t
+                  | struct stat          | struct stat64
+       -----------+----------------------+----------------------
+                  | off_t                | off64_t
+       -----------+----------------------+----------------------
+                  | blkcnt_t             | blkcnt64_t
+                  | fsblkcnt_t           | fsblkcnt64_t
+                  | ino_t                | ino64_t
+                  | off_t                | off64_t
+       -----------+----------------------+----------------------
+
+                                                                9
+
+Intro(2)                                                 Intro(2)
+
+                  |                      |
+                  | rlim_t               | rlim64_t
+                  | struct rlimit        | struct rlimit64
+       -----------+----------------------+----------------------
+                  | fsblkcnt_t           | fsblkcnt64_t
+                  | struct statvfs       | struct statvfs64
+       -----------+----------------------+----------------------
+                  | off_t                | off64_t
+                  | fpos_t               | fpos64_t
+
+   UUssiinngg llaarrggee ffiilleess wwiitthh ssyysstteemm uuttiilliittiieess
+       Many,  but  not  all,  common  system  utilities have been
+       updated to work with large files.  The most notable  omis-
+       sions  are  the  shells, which have not been updated to be
+       large file aware.  What this means is that while the util-
+       ities listed below are large file aware and can, for exam-
+       ple, create large files -- you cannot create  large  files
+       using  shell  redirection, even on a large-file-aware file
+       system.
+
+       The following set  of  system  utilities  have  been  made
+       large-file aware, and a notice stating that has been added
+       to|eac|h manual page.
+       --+---+---
+       --+---+---
+       --+---+---
+       --+---+---
+       --+---+---
+       --+---+---
+       --+---+---
+       --+---+---
+       --+---+---
+       --+---+---
+       --+---+---
+
+TThhrreeaaddss aanndd lliigghhttwweeiigghhtt pprroocceesssseess
+       Historically, the operating system has used the concept of
+       process  to  serve two roles: A process was the (schedula-
+       ble) executor of user programs with  a  single  thread  of
+       control.  A process was a requisitioner and user of system
+       resources (for example, address spaces, open files).
+
+       In the current version of the operating system: There  are
+       extensive facilities for the writing of multithreaded user
+       programs available via the Threads  Library  (see  Several
+       related  or  sibling threads (at least one) can be associ-
+       ated with a single process.  Each thread has common access
+       to  most of the resources of the process.  Each thread has
+       an independent path of computation.  The threads of a pro-
+       cess  can  communicate and coordinate with each other and,
+       if used wisely, can solve some problems  more  effectively
+       than  a  single threaded process.  If the underlying hard-
+       ware supports multiple processors, there can be more  than
+       one  thread running truly concurrently.  In support of the
+       Threads Library, the primary execution entity  managed  by
+
+                                                               10
+
+Intro(2)                                                 Intro(2)
+
+       the  operating  system  kernel  has become the lightweight
+       process (LWP).  A thread must be bound to  an  LWP  before
+       the  thread  can be executed.  In general, a given LWP can
+       be switched among more than one  thread.   The  notion  of
+       process  is  largely  retained  for the management of most
+       resources.  Some of the features that had been  maintained
+       per  process  are now maintained independently per thread.
+       These fall primarily in the areas of scheduling and signal
+       handling.   Some features that appear to be maintained per
+       thread  (for  example,  timers)  are  actually  maintained
+       internally  (by the kernel) per LWP.  The per-thread func-
+       tionality is achieved by wrapper functions in the  Threads
+       Library  for certain system calls.  Consequently, applica-
+       tions that attempt to use LWP features  directly  (without
+       the  Threads Library) will experience different semantics.
+       Direct use of LWPs should be avoided.   These  are  not  a
+       standard  interface  and  are  subject to change in future
+       releases of the operating system.  Use the threads  inter-
+       faces  instead.   An  application  that  does  not use the
+       Threads Library (and does not use LWP  features  directly)
+       will  run  in  a  process with a single thread of control.
+       System call semantics are compatible to those  in  earlier
+       releases of the operating system.
+
+       The  manual pages often use the term process as the execu-
+       tion entity.  For example: The system call failed  because
+       the calling process lacked the required privilege.  A more
+       complete description would  be:  The  system  call  failed
+       because  the calling thread was bound to an LWP whose con-
+       taining process lacked the required privilege.   Neverthe-
+       less,  for  convenience of language, the manual pages will
+       not dwell on  the hierarchy of execution entities.   Thus,
+       the  expression  calling process will continue to be used.
+       Threads will be mentioned only  if  technically  relevant.
+       Similarly,  LWPs  will  be mentioned only if there is some
+       significant difference between the behavior  of  a  thread
+       and  the  behavior  of the underlying LWP.  These distinc-
+       tions will usually be found in sections titled ``Consider-
+       ations  for Threads Programming'' and ``Considerations for
+       Lightweight Processes,'' respectively.
+
+       An overview of changes in system  call  usage  for  multi-
+       threaded applications is given in the following table.
+       ------------------------------------------------------
+       Category                       Considerations
+       ------------------------------------------------------
+
+                                                               11
+
+Intro(2)                                                 Intro(2)
+
+              Access to resources            Access   rights   (for
+                                             example, file  permis-
+                                             sions,  resource  lim-
+                                             its) are a property of
+                                             the containing process
+                                             and are shared by sib-
+                                             ling threads.
+
+              Accounting/Profiling           Statistics  are  gath-
+                                             ered  at  the  process
+                                             level   and  represent
+                                             the combined usage  of
+                                             all contained threads.
+
+              Address Space                  Related threads  share
+                                             (by   definition)  the
+                                             same  address   space;
+                                             modifications  to  the
+                                             address space  by  one
+                                             thread   can  be  per-
+                                             ceived   by    sibling
+                                             threads.
+
+              Blocked System Calls           While  one  thread  is
+                                             blocked,       sibling
+                                             threads might still be
+                                             executing.
+
+              Enhanced Security Attributes   Enhanced      Security
+                                             attributes  (for exam-
+                                             ple,   level,   privi-
+                                             leges)      are     an
+                                             attribute of the  con-
+                                             taining   process  and
+                                             are shared by  sibling
+                                             threads.
+
+              File Descriptors               Open  file descriptors
+                                             are a process resource
+                                             and  available  to any
+                                             sibling   thread;   if
+                                             used     concurrently,
+                                             actions by one  thread
+                                             can   interfere   with
+                                             those of a sibling.
+
+                                                               12
+
+Intro(2)                                                 Intro(2)
+
+              File System Control/Status     File system operations
+                                             (for  example,  creat-
+                                             ing/removing    files,
+                                             mounting/umounting
+                                             file   systems)    are
+                                             essentially  the  same
+                                             for  threads  program-
+                                             ming  as  for program-
+                                             ming with processes.
+
+              Identity                       Process identification
+                                             numbers  (for example,
+                                             process ID, group  ID)
+                                             are   defined  at  the
+                                             process level and  are
+                                             shared    by   sibling
+                                             threads.
+
+              IPC                            Access     to      IPC
+                                             resources    is   con-
+                                             trolled at the process
+                                             level;  resources made
+                                             available    by    one
+                                             thread  are  available
+                                             to siblings.
+
+              Signals                        Signal     disposition
+                                             (that              is,
+                                             default/ignore/catch)
+                                             is defined at the pro-
+                                             cess  level   and   is
+                                             shared    by   related
+                                             threads;      however,
+                                             caught   signals   are
+                                             delivered to only  one
+                                             thread  for  handling.
+                                             Signal masks are main-
+                                             tained   per   thread.
+                                             Alternate       signal
+                                             stacks are not part of
+                                             the  Threads   Library
+                                             but  are  supported by
+                                             LWPs.
+
+              Scheduling                     Scheduling  class  and
+                                             attributes  are  main-
+                                             tained per thread.
+
+                                                               13
+
+Intro(2)                                                 Intro(2)
+
+              System Control/Status          General system  opera-
+                                             tions   (for  example,
+                                             get/set time,  get/set
+                                             system   name)  remain
+                                             the same for  program-
+                                             ming  with  threads as
+                                             for  programming  with
+                                             processes.
+
+DDeeffiinniittiioonnss
+   AAcccceessss ppeerrmmiissssiioonnss
+       Access  checking  is  performed whenever a subject (a pro-
+       cess) tries to access an object (such as  a  file,  direc-
+       tory, or IPC resource).  Permission to access an object is
+       granted or denied on the basis of Mandatory Access Control
+       (MAC) levels (if installed), mode bits, and Access Control
+       Lists (ACLs).
+
+       MAC level checking is performed only if the Enhanced Secu-
+       rity  Utilities are installed and running, and only if the
+       file system on which the object to be accessed resides  is
+       of type sfs.
+
+       Mode bits and ACLs are collectively known as Discretionary
+       Access Control (DAC).  ACLs are supported on each filesys-
+       tem  object  on  Secure  File System (sfs) or Veritas File
+       System (vxfs) file system types, and on Inter-Process Com-
+       munication (IPC) objects.  See and
+
+       Access  checking is performed by the system in the follow-
+       ing order: If MAC is installed and running, MAC levels  on
+       the  calling  process  and  the  object are checked first.
+       Starting with the leftmost component of the  file's  path-
+       name, the kernel checks MAC levels based on a ``read-down,
+       write-equal'' access policy:  If  read  or  execute/search
+       access  is  requested  on a file, and the MAC level of the
+       calling process dominates (see definition below)  the  MAC
+       level of the file (or the process has the P_MACREAD privi-
+       lege in its working set),  access  is  granted;  otherwise
+       EACCES is returned.  If the file is a pipe, then the level
+       of the calling process must equal the level  of  the  pipe
+       (or  the process must have P_MACWRITE in its working set).
+       If write access is requested on a file, and the MAC  level
+       of  the  calling  process equals the MAC level of the file
+       (or the process has the P_MACWRITE privilege in its  work-
+       ing set), access is granted; otherwise EACCES is returned.
+
+       The MACREAD and MACWRITE privileges,  if  present  on  the
+       calling  process,  override  the MAC access checks.  Next,
+       DAC checks are performed on every component of  the  path-
+       name,  including  the  object  itself.   The standard file
+       access permission bits and ACL (if present) of each compo-
+       nent  are  checked  to determine if the process requesting
+       access to the object has the required  permissions  (read,
+
+                                                               14
+
+Intro(2)                                                 Intro(2)
+
+       write, and/or execute/search).  Each access mode requested
+       is checked separately using the  following  algorithm:  If
+       the  effective user ID of the process is equal to the user
+       ID of the owner of the file, and the requested access mode
+       bit  is  set  in the ``owner'' bits of the mode, access is
+       granted; otherwise  access  checking  continues.   If  the
+       effective  user ID of the process matches the user ID in a
+       ``user'' ACL entry, and the requested access mode  bit  is
+       set  in the ``group'' bits of the mode and in the matching
+       ACL entry, access is granted; otherwise, or if no  ACL  is
+       present,  access  checking  continues.   If  the effective
+       group ID (or any of the supplementary  group  IDs  of  the
+       process)  matches  the group ID specified in any ``group''
+       ACL entry (or the owning group of the file, if no  ACL  is
+       present),  and the requested access mode bit is set in the
+       ``group'' bits of the mode and in the matching  ACL  entry
+       (if  present), access is granted; otherwise, access check-
+       ing  continues.   If  the  above  checks  fail,  and   the
+       requested  access mode bit is set in the ``other'' bits of
+       the mode, access is granted; otherwise, access  is  denied
+       (EACCES  is  returned).  (Note that if a process's user ID
+       matches a ``user'' ACL entry and the group ID matches  one
+       or  more ``group'' entries, only the ``user'' ACL entry is
+       used to determine access.)
+
+       If DAC access checks fail to give the requested access  to
+       the calling process, the privileges of the calling process
+       are examined to determine if the calling process  has  the
+       privilege   required   to   grant   the  access  requested
+       (P_DACREAD  for  DAC  read  and   execute/search   access,
+       P_DACWRITE for DAC write access).
+
+   BBaacckkggrroouunndd pprroocceessss ggrroouupp
+       Any process group that is not the foreground process group
+       of a session that has established a connection with a con-
+       trolling terminal.
+
+   CCoonnttrroolllliinngg pprroocceessss
+       A  session  leader that established a connection to a con-
+       trolling terminal.
+
+   CCoonnttrroolllliinngg tteerrmmiinnaall
+       A terminal that is associated with a session.   Each  ses-
+       sion  may  have, at most, one controlling terminal associ-
+       ated with it and a controlling terminal may be  associated
+       with  only  one session.  Certain input sequences from the
+       controlling terminal cause signals to be sent  to  process
+       groups in the session associated with the controlling ter-
+       minal; see
+
+   DDiirreeccttoorryy
+       Directories organize  files  into  a  hierarchical  system
+       where  directories  are  the  nodes  in  the hierarchy.  A
+       directory is a file that catalogues  the  list  of  files,
+
+                                                               15
+
+Intro(2)                                                 Intro(2)
+
+       including directories (sub-directories), that are directly
+       beneath it in the hierarchy.  Entries in a directory  file
+       are  called  links.   A  link associates a file identifier
+       with a filename.  By convention, a directory  contains  at
+       least  two  links,  .  (dot)  and  .. (dot-dot).  The link
+       called dot refers to the directory  itself  while  dot-dot
+       refers to its parent directory.  The root directory, which
+       is the top-most node of the hierarchy, has itself  as  its
+       parent directory.  The pathname of the root directory is /
+       and the parent directory of the root directory is /.
+
+   DDoowwnnssttrreeaamm
+       In a stream, the direction from stream head to driver.
+
+   DDrriivveerr
+       In a stream, the driver  provides  the  interface  between
+       peripheral  hardware and the stream.  A driver can also be
+       a pseudo-driver, such as a multiplexor or log driver  (see
+       which is not associated with a hardware device.
+
+   EEffffeeccttiivvee uusseerr IIDD aanndd eeffffeeccttiivvee ggrroouupp IIDD
+       An  active  process has an effective user ID and an effec-
+       tive group ID that are used to determine file access  per-
+       missions (see below).  The effective user ID and effective
+       group ID are equal to the process's real user ID and  real
+       group  ID  respectively,  unless the process or one of its
+       ancestors evolved from a file that had the set-user-ID bit
+       or set-group ID bit set (see
+
+   FFiillee ddeessccrriippttoorr
+       A  file  descriptor is a small integer used to do I/O on a
+       file.  The value  of  a  file  descriptor  is  from  0  to
+       (NOFILES-1).  A process may have no more than NOFILES file
+       descriptors open simultaneously.  See A file descriptor is
+       returned  by system calls such as open, or pipe.  The file
+       descriptor is used as an argument by calls such  as  read,
+       write, ioctl, and close.
+
+   FFiillee nnaammee
+       Names  consisting  of 1 to NAME_MAX characters may be used
+       to name an ordinary file, special file or directory.
+
+       These characters may be selected from the set of all char-
+       acter  values excluding \0 (null) and the ASCII code for /
+       (slash).
+
+       Note that it is generally unwise to use *, ?, [, or  ]  as
+       part of file names because of the special meaning attached
+       to these characters by the shell (see Although  permitted,
+       the  use of unprintable characters in file names should be
+       avoided.
+
+       A file name is sometimes referred to as a pathname  compo-
+       nent.   The  interpretation  of  a  pathname  component is
+
+                                                               16
+
+Intro(2)                                                 Intro(2)
+
+       dependent on the values of  NAME_MAX  and  _POSIX_NO_TRUNC
+       associated with the path prefix of that component.  If any
+       pathname   component   is   longer   than   NAME_MAX   and
+       _POSIX_NO_TRUNC  is  in effect for the path prefix of that
+       component (see and it shall be considered an error  condi-
+       tion  in  that implementation.  Otherwise, the implementa-
+       tion shall use the first NAME_MAX bytes  of  the  pathname
+       component.
+
+   FFoorreeggrroouunndd pprroocceessss ggrroouupp
+       Each session that has established a connection with a con-
+       trolling terminal will distinguish one  process  group  of
+       the  session  as  the foreground process group of the con-
+       trolling terminal.  This group has certain privileges when
+       accessing  its  controlling  terminal  that  are denied to
+       background process groups.
+
+   LLWWPP
+       See
+
+   LLiigghhttwweeiigghhtt pprroocceessss
+       The schedulable execution entity that is  managed  by  the
+       kernel.   There  will  be at least one lightweight process
+       (LWP)  for  each  process,  possibly  many.   The  set  of
+       lightweight  processes  (called  related  LWPs  or sibling
+       LWPs) associated with a given  process  (sometimes  called
+       the  containing  process)  share  all  process  attributes
+       except scheduling context, signal mask,  alternate  signal
+       stack, and high resolution timers.
+
+   MMeessssaaggee
+       In  a  stream,  one or more blocks of data or information,
+       with associated STREAMS control structures.  Messages  can
+       be  of  several  defined types, which identify the message
+       contents.  Messages are the  only  means  of  transferring
+       data and communicating within a stream.
+
+   MMeessssaaggee qquueeuuee
+       In a stream, a linked list of messages awaiting processing
+       by a module or driver.
+
+   MMeessssaaggee qquueeuuee iiddeennttiiffiieerr
+       A message queue identifier (msqid) is  a  unique  positive
+       integer created by a msgget system call.  Each msqid has a
+       message queue and a data  structure  associated  with  it.
+       The data structure is referred to as msqid_ds and contains
+       the following members: struct  ipc_perm  msg_perm;  struct
+       msg *msg_first; struct  msg *msg_last; ushort  msg_cbytes;
+       ushort  msg_qnum; ushort  msg_qbytes;  pid_t    msg_lspid;
+       pid_t    msg_lrpid;  time_t  msg_stime; time_t  msg_rtime;
+       time_t  msg_ctime;
+
+       Here are  descriptions  of  the  fields  of  the  msqid_ds
+
+                                                               17
+
+Intro(2)                                                 Intro(2)
+
+       structure:  msg_perm  is an ipc_perm structure that speci-
+       fies the message operation permission (see  below).   This
+       structure  includes  the  following members: uid_t   cuid;
+       /* creator user id */ gid_t   cgid;   /* creator group  id
+       */  uid_t   uid;    /* user id */ gid_t   gid;    /* group
+       id */ mode_t  mode;   /* r/w permission  */  ushort   seq;
+       /*  slot  usage  sequence  #  */ key_t   key;    /* key */
+       *msg_first is a pointer to the first message on the queue.
+       *msg_last  is  a pointer to the last message on the queue.
+       msg_cbytes is the current number of bytes  on  the  queue.
+       msg_qnum is the number of messages currently on the queue.
+       msg_qbytes is the maximum number of bytes allowed  on  the
+       queue.   msg_lspid  is  the process ID of the last process
+       that performed a msgsnd operation.  msg_lrpid is the  pro-
+       cess ID of the last process that performed a msgrcv opera-
+       tion.  msg_stime is the time of the last msgsnd operation.
+       msg_rtime  is  the  time  of  the  last  msgrcv  operation
+       msg_ctime is the time of the last  msgctl  operation  that
+       changed a member of the above structure.
+
+   MMeessssaaggee ooppeerraattiioonn ppeerrmmiissssiioonnss
+       In the msgop and msgctl system call descriptions, the per-
+       mission required for an operation  is  given  as  {token},
+       where  token is the type of permission needed, interpreted
+       as follows: READ by user WRITE by user READ by group WRITE
+       by group READ by others WRITE by others
+
+       Read  and  write  permissions  on a msqid are granted to a
+       process if one or more of  the  following  are  true:  The
+       calling  process has the P_OWNER privilege.  The effective
+       user  ID  of  the   process   matches   msg_perm.cuid   or
+       msg_perm.uid  in  the data structure associated with msqid
+       and the appropriate bit of the ``user'' portion (0600)  of
+       msg_perm.mode  is set.  The effective group ID of the pro-
+       cess matches msg_perm.cgid or msg_perm.gid and the  appro-
+       priate bit of the ``group'' portion (060) of msg_perm.mode
+       is set.  The appropriate  bit  of  the  ``other''  portion
+       (006) of msg_perm.mode is set.
+
+       Otherwise, the corresponding permissions are denied.
+
+   MMoodduullee
+       A  module  is an entity containing processing routines for
+       input and output data.  It always exists in the middle  of
+       a  stream, between the stream's head and a driver.  A mod-
+       ule is the STREAMS counterpart to the commands in a  shell
+       pipeline except that a module contains a pair of functions
+       which  allow  independent  bidirectional  (downstream  and
+       upstream) data flow and processing.
+
+   MMuullttiipplleexxoorr
+       A  multiplexor  is a driver that allows streams associated
+       with several user processes to be connected  to  a  single
+       driver,  or  several  drivers  to be connected to a single
+
+                                                               18
+
+Intro(2)                                                 Intro(2)
+
+       user process.  STREAMS does not provide a  general  multi-
+       plexing  driver,  but does provide the facilities for con-
+       structing them and for connecting  multiplexed  configura-
+       tions of streams.
+
+   OOrrpphhaanneedd pprroocceessss ggrroouupp
+       A process group in which the parent of every member in the
+       group is either itself a member of the group, or is not  a
+       member of the process group's session.
+
+   PPaatthhnnaammee
+       A  pathname is a null-terminated character string starting
+       with an optional slash  (/),  followed  by  zero  or  more
+       directory  names separated by slashes, optionally followed
+       by a filename.
+
+       If a pathname begins with a slash, the path search  begins
+       at  the root directory.  Otherwise, the search begins from
+       the current working directory.
+
+       A slash by itself names the root directory.
+
+       Unless specifically stated otherwise, the null pathname is
+       treated as if it named a non-existent file.
+
+   PPrroocceessss IIDD
+       Each  process  in the system is uniquely identified during
+       its lifetime by a positive integer called a process ID.  A
+       process  ID may not be reused by the system until the pro-
+       cess lifetime, process group lifetime and session lifetime
+       ends  for  any process ID, process group ID and session ID
+       equal to that process ID.
+
+   PPaarreenntt pprroocceessss IIDD
+       A new process is created by  a  currently  active  process
+       (see  The parent process ID of a process is the process ID
+       of its creator.
+
+   PPrriivviilleeggee
+       Having appropriate privilege means having  the  capability
+       to  perform sensitive system operations (see or having the
+       ability to override system restrictions.
+
+   PPrroocceessss ggrroouupp
+       Each process in the system is a member of a process  group
+       that  is  identified  by  a process group ID.  Any process
+       that is not a process group leader may create a  new  pro-
+       cess group and become its leader.  Any process that is not
+       a process group leader may join an existing process  group
+       that shares the same session as the process.  A newly cre-
+       ated process joins the process group of its parent.
+
+   PPrroocceessss ggrroouupp lleeaaddeerr
+       A process group leader is a process whose  process  ID  is
+
+                                                               19
+
+Intro(2)                                                 Intro(2)
+
+       the same as its process group ID.
+
+   PPrroocceessss ggrroouupp IIDD
+       Each  active process is a member of a process group and is
+       identified by a positive integer called the process  group
+       ID.   This ID is the process ID of the group leader.  This
+       grouping permits the signaling of related processes (see
+
+   PPrroocceessss lliiffeettiimmee
+       A process lifetime begins when the process is  forked  and
+       ends  after  it  exits,  when  its  termination  has  been
+       acknowledged by its parent process.  See
+
+   PPrroocceessss ggrroouupp lliiffeettiimmee
+       A process group lifetime begins when the process group  is
+       created  by  its  process  group leader, and ends when the
+       lifetime of the last process in the group ends or when the
+       last process in the group leaves the group.
+
+   RReeaadd qquueeuuee
+       In  a stream, the message queue in a module or driver con-
+       taining messages moving upstream.
+
+   RReeaall uusseerr IIDD aanndd rreeaall ggrroouupp IIDD
+       Each user allowed on the system is identified by  a  posi-
+       tive integer (0 to UID_MAX) called a real user ID.
+
+       Each user is also a member of a group.  The group is iden-
+       tified by a positive integer called the real group ID.
+
+       An active process has a real user ID  and  real  group  ID
+       that  are  set  to  the  real  user  ID and real group ID,
+       respectively, of the user responsible for the creation  of
+       the process.
+
+   RRoooott ddiirreeccttoorryy aanndd ccuurrrreenntt wwoorrkkiinngg ddiirreeccttoorryy
+       Each  process  has  associated with it a concept of a root
+       directory and a current working directory for the  purpose
+       of  resolving  pathname searches.  The root directory of a
+       process need not be the root directory of  the  root  file
+       system.
+
+   SSaavveedd uusseerr IIDD aanndd ssaavveedd ggrroouupp IIDD
+       The saved user ID and saved group ID are the values of the
+       effective user ID and effective group ID prior to an  exec
+       of a file (see
+
+   SSeemmaapphhoorree iiddeennttiiffiieerr
+       A  semaphore identifier (semid) is a unique positive inte-
+       ger created by a semget system call.  Each semid has a set
+       of  semaphores  and  a  data structure associated with it.
+       The data structure is referred to as semid_ds and contains
+       the  following  members:  struct   ipc_perm  sem_perm;  /*
+       operation permission  struct  */  struct   sem  *sem_base;
+
+                                                               20
+
+Intro(2)                                                 Intro(2)
+
+       /*  ptr  to  first  semaphore in set */ ushort  sem_nsems;
+       /* number of sems in set */ time_t  sem_otime;          /*
+       last operation time */ time_t  sem_ctime;          /* last
+       change time */
+                                   /*  Times  measured  in   secs
+       since */
+                                   /*  00:00:00 GMT, Jan. 1, 1970
+       */
+
+       Here are descriptions of the fields of the semid_ds struc-
+       ture: sem_perm is an ipc_perm structure that specifies the
+       semaphore operation permission (see below).   This  struc-
+       ture  includes  the  following members: uid_t   uid;    /*
+       user id */ gid_t   gid;    /* group id  */  uid_t    cuid;
+       /*  creator user id */ gid_t   cgid;   /* creator group id
+       */ mode_t  mode;   /* r/a permission */ ushort  seq;    /*
+       slot  usage  sequence  number */ key_t   key;    /* key */
+       sem_nsems is equal to the number of semaphores in the set.
+       Each  semaphore  in the set is referenced by a nonnegative
+       integer referred to as  a  sem_num.   sem_num  values  run
+       sequentially  from  0  to  the value of sem_nsems minus 1.
+       sem_otime  is  the  time  of  the  last  semop  operation.
+       sem_ctime  is  the  time of the last semctl operation that
+       changed a member of the above structure.
+
+       A semaphore is a data structure called sem  that  contains
+       the  following  members:  ushort   semval;    /* semaphore
+       value */ pid_t   sempid;   /* pid  of  last  operation  */
+       ushort   semncnt;   /*  # awaiting semval > cval */ ushort
+       semzcnt;  /* # awaiting semval = 0 */
+
+       Here are descriptions of the fields of the sem  structure:
+       semval  is a non-negative integer that is the actual value
+       of the semaphore.  sempid is equal to the  process  ID  of
+       the  last  process that performed a semaphore operation on
+       this semaphore.  semncnt is a count of the number of  pro-
+       cesses   that   are   currently  suspended  awaiting  this
+       semaphore's semval to  become  greater  than  its  current
+       value.  semzcnt is a count of the number of processes that
+       are currently suspended awaiting this  semaphore's  semval
+       to become 0.
+
+   SSeemmaapphhoorree ooppeerraattiioonn ppeerrmmiissssiioonnss
+       In the semop and semctl system call descriptions, the per-
+       mission required for an operation  is  given  as  {token},
+       where  token  is the type of permission needed interpreted
+       as follows: READ by user ALTER by user READ by group ALTER
+       by group READ by others ALTER by others
+
+       Read  and  alter  permissions  on a semid are granted to a
+       process if one or more of  the  following  are  true:  The
+       calling  process has the P_OWNER privilege.  The effective
+       user  ID  of  the   process   matches   sem_perm.cuid   or
+       sem_perm.uid  in  the data structure associated with semid
+
+                                                               21
+
+Intro(2)                                                 Intro(2)
+
+       and the appropriate bit of the ``user'' portion (0600)  of
+       sem_perm.mode  is set.  The effective group ID of the pro-
+       cess matches sem_perm.cgid or sem_perm.gid and the  appro-
+       priate bit of the ``group'' portion (060) of sem_perm.mode
+       is set.  The appropriate bit of the ``other'' portion (06)
+       of sem_perm.mode is set.
+
+       Otherwise, the corresponding permissions are denied.
+
+   SSeessssiioonn
+       A  session  is a group of processes identified by a common
+       ID called a session ID, capable of establishing a  connec-
+       tion with a controlling terminal.  Any process that is not
+       a process group leader may create a new session  and  pro-
+       cess group, becoming the session leader of the session and
+       process group leader of the process group.  A  newly  cre-
+       ated process joins the session of its creator.
+
+   SSeessssiioonn IIDD
+       Each  session  in the system is uniquely identified during
+       its lifetime by a positive integer called  a  session  ID,
+       the process ID of its session leader.
+
+   SSeessssiioonn lleeaaddeerr
+       A session leader is a process whose session ID is the same
+       as its process and process group ID.
+
+   SSeessssiioonn lliiffeettiimmee
+       A session lifetime begins when the session is  created  by
+       its session leader, and ends when the lifetime of the last
+       process that is a member of the session ends, or when  the
+       last  process  that  is a member in the session leaves the
+       session.
+
+   SShhaarreedd mmeemmoorryy iiddeennttiiffiieerr
+       A shared memory identifier (shmid) is  a  unique  positive
+       integer created by a shmget system call.  Each shmid has a
+       segment of memory (referred to as a shared memory segment)
+       and a data structure associated with it.  (Note that these
+       shared memory segments must be explicitly removed  by  the
+       user  after  the  last reference to them is removed.)  The
+       data structure is referred to as shmid_ds and contains the
+       following members: struct ipc_perm  shm_perm;    /* opera-
+       tion permission struct */ int              shm_segsz;   /*
+       size of segment */ struct region    *shm_amp;    /* ptr to
+       region structure */ char             pad[4];       /*  for
+       swap compatibility */ pid_t            shm_lpid;    /* pid
+       of last operation */ pid_t            shm_cpid;    /* cre-
+       ator  pid  */  ushort            shm_nattch;  /* number of
+       current attaches */ ushort           shm_cnattch; /*  used
+       only  for shminfo */ time_t           shm_atime;   /* last
+       attach  time  */  time_t            shm_dtime;    /*  last
+       detach  time  */  time_t            shm_ctime;    /*  last
+       change time */
+
+                                                               22
+
+Intro(2)                                                 Intro(2)
+
+                                     /* Times  measured  in  secs
+       since */
+                                     /*  00:00:00  GMT,  Jan.  1,
+       1970 */
+
+       Here are descriptions of the fields of the shmid_ds struc-
+       ture: shm_perm is an ipc_perm structure that specifies the
+       shared memory  operation  permission  (see  below).   This
+       structure  includes  the  following members: uid_t   cuid;
+       /* creator user id */ gid_t   cgid;  /* creator  group  id
+       */ uid_t   uid;   /* user id */ gid_t   gid;   /* group id
+       */ mode_t  mode;  /* r/w permission */ ushort   seq;    /*
+       slot  usage  sequence  #  */  key_t    key;    /*  key  */
+       shm_segsz specifies the size of the shared memory  segment
+       in  bytes.  shm_cpid is the process ID of the process that
+       created the shared memory  identifier.   shm_lpid  is  the
+       process  ID  of  the  last  process that performed a shmop
+       operation.  shm_nattch is the  number  of  processes  that
+       currently  have  this  segment attached.  shm_atime is the
+       time of the last shmat operation  (see  shm_dtime  is  the
+       time  of  the  last  shmdt operation (see shm_ctime is the
+       time of the last shmctl operation that changed one of  the
+       members of the above structure.
+
+   SShhaarreedd mmeemmoorryy ooppeerraattiioonn ppeerrmmiissssiioonnss
+       In the shmop and shmctl system call descriptions, the per-
+       mission required for an operation  is  given  as  {token},
+       where  token  is the type of permission needed interpreted
+       as follows: READ by user WRITE by user READ by group WRITE
+       by group READ by others WRITE by others
+
+       Read  and  write  permissions  on a shmid are granted to a
+       process if one or more of  the  following  are  true:  The
+       calling  process has the P_OWNER privilege.  The effective
+       user  ID  of  the   process   matches   shm_perm.cuid   or
+       shm_perm.uid  in  the data structure associated with shmid
+       and the appropriate bit of the ``user'' portion (0600)  of
+       shm_perm.mode  is set.  The effective group ID of the pro-
+       cess matches shm_perm.cgid or shm_perm.gid and the  appro-
+       priate bit of the ``group'' portion (060) of shm_perm.mode
+       is set.  The appropriate bit of the ``other'' portion (06)
+       of shm_perm.mode is set.
+
+       Otherwise, the corresponding permissions are denied.
+
+   SSppeecciiaall pprroocceesssseess
+       The  process  with ID 0 and the process with ID 1 are spe-
+       cial processes referred to as proc0 and proc1;  see  proc0
+       is  the  process  scheduler.   proc1 is the initialization
+       process (init); proc1 is the ancestor of every other  pro-
+       cess  in  the  system  and  is used to control the process
+       structure.
+
+                                                               23
+
+Intro(2)                                                 Intro(2)
+
+   SSTTRREEAAMMSS
+       A set of kernel mechanisms that support the development of
+       network  services  and  data  communication  drivers.   It
+       defines interface  standards  for  character  input/output
+       within  the  kernel  and between the kernel and user level
+       processes.  The STREAMS mechanism is composed  of  utility
+       routines,  kernel facilities and a set of data structures.
+
+   SSttrreeaamm
+       A stream is a full-duplex  data  path  within  the  kernel
+       between  a  user process and driver routines.  The primary
+       components are a stream head, a driver and  zero  or  more
+       modules  between  the stream head and driver.  A stream is
+       analogous to a shell pipeline except that  data  flow  and
+       processing are bidirectional.
+
+   SSttrreeaamm hheeaadd
+       In a stream, the stream head is the end of the stream that
+       provides the interface between the stream and a user  pro-
+       cess.  The principal functions of the stream head are pro-
+       cessing STREAMS-related system calls, and passing data and
+       information between a user process and the stream.
+
+   SSuuppeerruusseerr aanndd pprriivviilleeggee
+       By  default, the system is runs with the Super User Module
+       (SUM) installed as the  privilege  module.   This  modules
+       privilege  policy  allows  a process to be recognized as a
+       superuser process  that  is  granted  all  the  privileges
+       listed  in  the section above, if its effective user ID is
+       0.  Such a process has unrestricted access to the  system.
+
+       In  addition,  because  the  system  supports the discrete
+       privileges defined in the section, a user  can  acquire  a
+       subset  of  the  recognized privileges through the Trusted
+       Facilities Management (TFM) database.
+
+       Privileges and IDs are managed  using  the  and  commands.
+       Privileges  are assigned to trusted executable files using
+       the command and the system call.
+
+       For a discussion of privileges see
+
+   TThhrreeaaddss
+       A sequential series of instructions that can be  logically
+       executed  concurrently  with other such sequences within a
+       single  process.   Also  called  thread-of-control.    The
+       Threads Library provides interfaces for the creation, man-
+       agement, and removal of threads.  On  some  architectures,
+       the  Threads  Library can use lightweight processes (LWPs)
+       to have different threads of a process executed simultane-
+       ously.
+
+   UUppssttrreeaamm
+       In a stream, the direction from driver to stream head.
+
+                                                               24
+
+Intro(2)                                                 Intro(2)
+
+   WWrriittee qquueeuuee
+       In  a stream, the message queue in a module or driver con-
+       taining messages moving downstream.
+
+RReeffeerreenncceess
+       Glossaries in administration and programming books.
+
+                                                               25
+

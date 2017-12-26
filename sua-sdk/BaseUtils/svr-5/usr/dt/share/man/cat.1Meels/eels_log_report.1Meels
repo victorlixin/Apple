@@ -1,0 +1,157 @@
+
+
+eels_log_report(1Meels)                   eels_log_report(1Meels)
+
+SSyynnooppssiiss
+       eels_log_report   [-b  begin_time]  [-c  config_file]  [-d
+       database_name]
+       [-e  end_time]  [-f  field_filters]  [-h  1   |   0]   [-l
+       field_list]
+       [-r  report_name]  [-t  database_table] [-s SQL_statement]
+       [-w where_clause]
+       [-x column_widths] [-y]
+
+DDeessccrriippttiioonn
+       Use eels_log_report to create a report by  extracting  and
+       formatting data from a specified database such as one cre-
+       ated by eels_log_report is a script that uses to query the
+       specified database.
+
+       Reports  can  be specified entirely on the command line or
+       you can specify the name of a pre-defined report contained
+       in /etc/eels/bin/report.rc.
+
+   OOppttiioonnss
+       Do  not print any rows if their date/time stamp is earlier
+       than begin_time. The format of before time   is:  DD-month
+       YYYY HH:MM:SS where month is Jan, Feb, Mar, and so on. You
+       can also use TODAY, YESTERDAY, TOMORROW in  place  of  the
+       DD-Month specification.  A report configuration and speci-
+       fication file to override some or  all  the  configuration
+       data in /etc/eels/bin/report.rc.  The contents of the file
+       must conform to valid perl syntax.  Specify  the  name  of
+       the  EELS database you want to generate a report from. The
+       default is defaultdb.  Do not  print  any  rows  if  their
+       date/time  stamp  is  later  than  end_time. The format of
+       end_time  is the same as that of  begin_time  for  the  -b
+       option.   A  list  of  the fields (or their abbreviations)
+       with filter parameters.  Each field name must be  followed
+       by  one  or  more  parameters  separated  by commas within
+       parentheses. If a parameter starts with the minus -  char-
+       acter  it  is an exclude parameter. The record is excluded
+       if the field contains the parameter.  Parameters  that  do
+       not  begin  with  - are include parameters.  The parameter
+       pattern must be in the field for  the  record  to  appear.
+       For  example, ESI(error,-syslog) means EventSpecificInfor-
+       mation must contain the string error but not the word sys-
+       log.
+
+       The  following  table  lists  the  abbreviations  for  the
+       columns of the Events table.
+       -------------------------------------------
+       Abbreviation   Column name
+       -------------------------------------------
+       UEID           UniqEventID
+       SN             SequenceNumber
+       PID            ProcessID
+       GID            GroupID
+
+                                                                1
+
+()                                                             ()
+
+       LWPID          LightWeightProcessID
+       LSS            LogSystemsSource
+       L              Length
+       VID            VersionID
+       TO             TimeOffset
+       TUINT          TimeUncertaintyINTerval
+       TUIND          TimeUncertaintyINDicator
+       TS             TimeSource
+       TZ             TimeZone
+       EN             EventNumber
+       ENS            EventNumberStr
+       O              Outcome
+       OHN            OriginatorHostName
+       OSN            OriginatorServiceName
+       OLA            OriginatorLocationAddress
+       OST            OriginatorServiceType
+       OAA            OriginatorAuthAuthority
+       OPN            OriginatorPrincipalName
+       OPID           OriginatorPrincipalID
+       IAA            InitiatorAuthAuthority
+       IDSN           InitiatorDomainSpecificName
+       IDSID          InitiatorDomainSpecificID
+       TLN            TargetLocationName
+       TLA            TargetLocationAddress
+       TST            TargetServiceType
+       TAA            TargetAuthAuthority
+       TPN            TargetPrincipalName
+       TPID           TargetPrincipalID
+       PTSD           PtrToSourceDomain
+       SSI            SourceSpecificInformation
+       ESI            EventSpecificInformation
+       Use this option to specify whether to print  a  header  at
+       the top of each page of the report. If you specify a value
+       of 1, the header is printed, 0, the header is not printed.
+       Specify  a  list of column names to include in the report.
+       The list takes the following form:  field_name1(alt_name),
+       field_name2(alt_name),  ...   To  use  an alternate column
+       name in the resulting report  enclose  it  in  parentheses
+       next  to  the column name it is to replace.  The name of a
+       report definition as specified in the  configuration  file
+       report.rc.   The name of the EELS database table to inter-
+       rogate.  The default is Events.  The SELECT  part  of  the
+       SQL  statement  used  to  extract  data from the specified
+       table.  The WHERE  part  of  the  SQL  statement  used  to
+       extract  data from the specified table. The syntax must be
+       compatible with the SELECT statement when  specified  with
+       the  -q  option.   A list of column names and their widths
+       (enclosed in parentheses) separated by spaces,  using  the
+       following  form: column_name1(size) column_name2(size) ...
+       Use this option to specify  whether  returned  dates  from
+       should  be  returned  as  date  strings or as milliseconds
+       since the EPOCH.  If you specify a value of 1,  dates  are
+       converted  to  strings,  0, the dates are returned as mil-
+       liseconds since the EPOCH.
+
+                                                                2
+
+()                                                             ()
+
+EExxaammpplleess
+       eels_log_report -l 'OHN(Host) TO OSN  ESI(Event  Info)'  \
+                   -f   'OHN(Apache)  ESI(-GET)'  -x  'OHN(16)  \
+                   TO(12)  ESI(32)  LSS(10)'  The  command  shown
+       above generates a report with four columns, each specified
+       by its abbreviation.  The column titles displayed  in  the
+       resulting  report will be: Host, TimeOffset OriginatorSer-
+       viceName, and Event Info.
+
+       The example also shows how to apply inclusive  and  exclu-
+       sive  filters.  The string Apache must appear in the field
+       OriginatorHostName and the string GET must not be found in
+       EventSpecificInformation.
+
+       The default report column width of 20 is changed to 16 for
+       OriginatorHostName  (OHN)  by   using   the   -x   option.
+       eels_log_report  -q  'select  TO,ESI,OSN from events' This
+       example demonstrates passing an SQL  select  statement  to
+       eels_db_query.   In order for abbreviation parsing to work
+       when specifying select statements the  field  abbreviation
+       must  follow  the  word  select or be followed by a comma.
+       eels_log_report -r audit -b YESTERDAY -e TODAY
+
+       eels_log_report -r  syslog  -b  'TODAY  08:30'  -e  'TODAY
+       12:00'
+
+       eels_log_report  -r  xdas  -b  'Jan 01, 1998' This example
+       shows  executions  of  the  sample  reports   defined   in
+       report.rc  executed  for  the time period of previous day,
+       8:30 a.m. today until 12:00 noon, and from  the  beginning
+       of 1998 to the present.
+
+RReeffeerreenncceess
+
+                                                                3
+

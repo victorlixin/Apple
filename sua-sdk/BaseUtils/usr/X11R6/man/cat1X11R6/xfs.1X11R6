@@ -1,0 +1,183 @@
+xfs(1X11R6)                                                 xfs(1X11R6)
+
+  XXFFSS
+
+  NNAAMMEE
+
+    xfs - X font server
+
+  SSYYNNOOPPSSIISS
+
+    xfs [[-config configuration_file]] [[-port tcp_port]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    Xfs is the X Window System font server. It supplies fonts to X Window
+    System display servers.
+
+  SSTTAARRTTIINNGG TTHHEE SSEERRVVEERR
+
+    The server is usually run by a system administrator, and started via boot
+    files like /etc/rc.local. Users may also wish to start private font
+    servers for specific sets of fonts.
+
+  OOPPTTIIOONNSS
+
+    --ccoonnffiigg ccoonnffiigguurraattiioonn__ffiillee
+        Specifies the configuration file the font server will use.
+
+    --llss lliisstteenn--ssoocckkeett
+        Specifies a file descriptor which is already set up to be used as the
+        listen socket. This option is only intended to be used by the font
+        server itself when automatically spawning another copy of itself to
+        handle additional connections.
+
+    --ppoorrtt ttccpp__ppoorrtt
+        Specifies the TCP port number on which the server will listen for
+        connections. The default port number is 7100.
+
+  SSIIGGNNAALLSS
+
+    SIGTERM
+        This causes the font server to exit cleanly.
+
+    SIGUSR1
+        This signal is used to cause the server to re-read its configuration
+        file.
+
+    SIGUSR2
+        This signal is used to cause the server to flush any cached data it
+        may have.
+
+    SIGHUP
+        This signal is used to cause the server to reset, closing all active
+        connections and re-reading the configuration file.
+
+  CCOONNFFIIGGUURRAATTIIOONN
+
+    The configuration language is a list of keyword and value pairs. Each
+    keyword is followed by an '=' and then the desired value.
+
+    Recognized keywords include:
+
+    catalogue (list of string)
+        Ordered list of font path element names. Use of the keyword
+        "catalogue" is very misleading at present, the current implementation
+        only supports a single catalogue ("all"), containing all of the
+        specified fonts.
+
+    alternate-servers (list of string)
+        List of alternate servers for this font server.
+
+    client-limit (cardinal)
+        Number of clients this font server will support before refusing
+        service. This is useful for tuning the load on each individual font
+        server.
+
+    clone-self (boolean)
+        Whether this font server should attempt to clone itself when it reachs
+        the client-limit.
+
+    default-point-size (cardinal)
+        The default pointsize (in decipoints) for fonts that don't specify.
+        The default is 120.
+
+    default-resolutions (list of resolutions)
+        Resolutions the server supports by default. This information may be
+        used as a hint for pre-rendering, and substituted for scaled fonts
+        which do not specify a resolution. A resolution is a comma-separated
+        pair of x and y resolutions in pixels per inch. Multiple resolutions
+        are separated by commas.
+
+    error-file (string)
+        Filename of the error file. All warnings and errors will be logged
+        here.
+
+    port (cardinal)
+        TCP port on which the server will listen for connections.
+
+    use-syslog (boolean)
+        Whether _ss_yy_ss_ll_oo_gg(3) (on supported systems) is to be used for errors.
+
+    deferglyphs (string)
+        Set the mode for delayed fetching and caching of glyphs. Value is
+        "none", meaning deferred glyphs is disabled, "all", meaning it is
+        enabled for all fonts, and "16", meaning it is enabled only for 16-
+        bits fonts.
+
+  EEXXAAMMPPLLEE
+
+    #
+    # sample font server configuration file
+    #
+
+    # allow a max of 10 clients to connect to this font server
+    client-limit = 10
+
+    # when a font server reaches its limit, start up a new one
+    clone-self = on
+
+    # alternate font servers for clients to use
+    alternate-servers = hansen:7101,hansen:7102
+
+    # where to look for fonts
+    # the first is a set of Speedo outlines, the second is a set of
+    # misc bitmaps and the last is a set of 100dpi bitmaps
+    #
+    catalogue = /usr/X11R6/lib/X11/fonts/speedo,
+            /usr/X11R6/lib/X11/fonts/misc,
+            /usr/X11R6/lib/X11/fonts/100dpi/
+
+    # in 12 points, decipoints
+    default-point-size = 120
+
+    # 100 x 100 and 75 x 75
+    default-resolutions = 100,100,75,75
+    use-syslog = off
+
+  FFOONNTT SSEERRVVEERR NNAAMMEESS
+
+    One of the following forms can be used to name a font server that accepts
+    TCP connections:
+
+        tcp/hostname:port
+        tcp/hostname:port/cataloguelist
+
+    The hostname specifies the name (or decimal numeric address) of the
+    machine on which the font server is running. The port is the decimal TCP
+    port on which the font server is listening for connections. The
+    cataloguelist specifies a list of catalogue names, with '+' as a
+    separator.
+
+    Examples: tcp/fs.x.org:7100, tcp/18.30.0.212:7101/all.
+
+    One of the following forms can be used to name a font server that accepts
+    DECnet connections:
+
+        decnet/nodename::font$objname
+        decnet/nodename::font$objname/cataloguelist
+
+    The nodename specifies the name (or decimal numeric address) of the
+    machine on which the font server is running. The objname is a normal,
+    case-insensitive DECnet object name. The cataloguelist specifies a list of
+    catalogue names, with '+' as a separator.
+
+    Examples: DECnet/SRVNOD::FONT$DEFAULT, decnet/44.70::font$special/symbols.
+
+  SSEEEE AALLSSOO
+
+    _X(5X11R5)
+
+    The X Font Service Protocol
+
+    Font server implementation overview
+
+  BBUUGGSS
+
+    Multiple catalogues should be supported.
+
+  AAUUTTHHOORRSS
+
+    Dave Lemke, Network Computing Devices, Inc
+    Keith Packard, Massachusetts Institute of Technology
+

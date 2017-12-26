@@ -1,0 +1,637 @@
+
+
+display(7)                                             display(7)
+
+SSyynnooppssiiss
+       #include    <sys/kd.h>    #include   <sys/vt.h>   #include
+       <sys/ws/ws.h>
+
+DDeessccrriippttiioonn
+       The system console (and user's terminal)  is  composed  of
+       two separate pieces: the keyboard.  and the display.  (See
+       for information about the  keyboard.)   Because  of  their
+       complexity,  and  because there are three possible display
+       interfaces  (monochrome,  color  graphics,  and   enhanced
+       graphics  adapters), they are discussed in separate manual
+       entries.
+
+       The display normally consists of 25 lines  of  80  columns
+       each;   40-column   lines   are   also  supported  by  the
+       color/graphics adapter, and 43 lines  of  80-columns  each
+       are  supported  by  the  enhanced  graphics adapter.  When
+       characters are written to the console or one of  its  vir-
+       tual  screens  (/dev/console  or  /dev/vtxx),  the  output
+       depends on the specific characters.  All characters  writ-
+       ten  to  /dev/console  are first processed by the terminal
+       interface (See For example, mapping new-line characters to
+       carriage  return  plus  new-line,  and  expanding  tabs to
+       spaces, will be done before the following processing: Dis-
+       plays x. x cannot be one of the other values in this list.
+       Generates a bell (audible tone,  no  modulation).   Places
+       the  cursor  at  column 1 of the current line.  Places the
+       cursor at the same column of the next line (scrolls if the
+       current  line  is  line 25).  Clears the screen and places
+       the cursor at line 1, column 1.  If the cursor is  not  at
+       column 1, it is moved to the left one position on the same
+       line.  If the cursor is at column 1 but not line 1, it  is
+       moved  to column 79 of the previous line.  Finally, if the
+       cursor is at column 1, line 1, it is not moved.
+
+       The display can be controlled by using specific  sequences
+       of  characters  that  are ANSI X3.64 escape sequences pre-
+       ceded by the ASCII character ESC.  The  escape  sequences,
+       which  work  on  either the monochrome, color graphics, or
+       enhanced graphics adapter, are the following:  Clears  the
+       screen and places the cursor at line 1, column 1.  Defines
+       the function key n with string.  The  string  delimiter  '
+       may  be  any  character  not in string.  Function keys are
+       numbered 0 through 11 (F1 = 0, F2 = 1, and so on.)  Insert
+       character--inserts  n  blanks  at the current cursor posi-
+       tion.  Horizontal Position Absolute--moves active position
+       to column Cursor up--moves the cursor up n lines (default:
+       n=1).  Horizontal Position Relative--moves active position
+       n  characters  to the right (default: n=1).  Cursor down--
+       moves the cursor down  n  lines  (default:  n=1).   Cursor
+       right--moves  the  cursor  right n columns (default: n=1).
+       Set Cursor Type--where n is 0 (underline cursor), 1(block-
+       cursor),  or  2(no cursor).  0 is the default value for n.
+       Cursor left--moves the cursor  left  n  columns  (default:
+
+                                                                1
+
+display(7)                                             display(7)
+
+       n=1).   Vertical  Position Absolute--moves active position
+       to line given by n.  Cursor next line--moves the cursor to
+       column  1  of the next line, then down n-1 lines (default:
+       n=1).  Vertical Position Relative--moves the active  posi-
+       tion  down n lines (default: n=1).  Cursor previous line--
+       moves the cursor to column 1 of the current line, then  up
+       n lines (default: n=1).  Cursor horizontal position--moves
+       the cursor to column n of the current line (default: n=1).
+       Position  cursor--moves  the  cursor to column m of line n
+       (default: n=1, m=1).  Position cursor--moves the cursor to
+       column  m  of  line n (default: n=1, m=1).  Erase window--
+       erases from the current cursor position to the end of  the
+       window  if  n=0,  from  the beginning of the window to the
+       current cursor position if n=1, and the entire  window  if
+       n=2  (default:  n=0).  Erase line--erases from the current
+       cursor position to the end of the line if  n=0,  from  the
+       beginning  of  the  line to the current cursor position if
+       n=1, and the entire line if n=2  (default:  n=0).   Insert
+       line--inserts  n  lines  at  the  current  cursor position
+       (default: n=1).  Delete line--deletes n lines starting  at
+       the  current cursor position (default: n=1).  Delete char-
+       acter--deletes n characters from a line  starting  at  the
+       current  cursor  position  (default:  n=1).   Scroll  up--
+       scrolls the characters in the current window up  n  lines.
+       The  bottom  n lines are cleared to blanks (default: n=1).
+       Scroll down--scrolls the characters in the current  window
+       down  n  lines.   The  top  n  lines are cleared to blanks
+       (default: n=1).  Erase character--erases n character posi-
+       tions  starting  at  the current cursor position (default:
+       n=1).  Cursor Backward Tabulation--moves  active  position
+       back n tab stops.  Locks the keyboard and ignores keyboard
+       input until unlocked.  Characters are  not  saved.   Sends
+       the  screen  to  the  host.  The current screen display is
+       sent to  the  application.   Unlocks  the  keyboard.   Re-
+       enables  keyboard input.  Character attributes--each Ps is
+       a value in the table below; multiple characters are  sepa-
+       rated by semicolons.  These parameters apply to successive
+       characters being displayed, in an additive way (for  exam-
+       ple,  both  bold  and underscoring can be selected).  Only
+       the parameters through 7 apply to the monochrome  adapter;
+       all  parameters apply to the color or graphics adapter and
+       the enhanced graphics adapter.  (Default: Ps=0).
+       ---------------------------------------------------
+       Ps   Meaning
+       ---------------------------------------------------
+       0    All attributes
+            off    (normal
+            display)
+            (white   fore-
+            ground    with
+            black    back-
+            ground)
+       1    Bold intensity
+
+                                                                2
+
+display(7)                                             display(7)
+
+       4    Underscore on
+            (white   fore-
+            ground    with
+            red background
+            on color)
+       5    Blink on
+       6    VGA  only:  if
+            blink  (5)  is
+            on, turn blink
+            off  and back-
+            ground   color
+            to  its  light
+            equivalent
+            (that      is,
+            brown to  yel-
+            low)
+       7    Reverse video
+       30   black            (gray)            foreground
+       31   red              (light red)       foreground
+       32   green            (light green)     foreground
+       33   brown            (yellow)          foreground
+       34   blue             (light blue)      foreground
+       35   magenta          (light magenta)   foreground
+       36   cyan             (light cyan)      foreground
+       37   white            (bright white)    foreground
+       40   black            (gray)            background
+       41   red              (light red)       background
+       42   green            (light green)     background
+       43   brown            (yellow)          background
+       44   blue             (light blue)      background
+       45   magenta          (light magenta)   background
+       46   cyan             (light cyan)      background
+       47   white            (bright white)    background
+
+       Note  that  for  character  attributes  30-37,  the  color
+       selected for foreground will depend on  whether  the  bold
+       intensity  attribute  (1)  is  currently  on.  If not, the
+       first color listed will result; otherwise the second color
+       listed will result.
+
+       Similarly,  for  character  attributes  40-47,  the  color
+       selected for background will depend on whether  the  blink
+       attribute  (5)  is  currently on and bright background (6)
+       has been turned on.  If blink is not turned on  or  bright
+       background  has  not been selected, the first listed color
+       will result.  Otherwise,  the  second  color  listed  will
+       result.  sets blank (non-display) selects the primary font
+       selects the first alternate font;  lets  ASCII  characters
+       less than 32 be displayed as ROM characters selects a sec-
+       ond alternate font; toggles high  bit  of  extended  ASCII
+       code before displaying as ROM characters enables underline
+       option;  white  foreground  with  white  underscore   (see
+       ``Notices''.    )    disables    underline   option   (see
+       ``Notices''.)
+
+                                                                3
+
+display(7)                                             display(7)
+
+       The following non-ANSI X3.64  escape  sequences  are  sup-
+       plied: Sets overscan color.  Sets bell parameters (where p
+       is the pitch in Hz and d is the duration in  milliseconds)
+       Sets  cursor  parameters (where s is the starting and e is
+       the ending scanlines  of  the  cursor).   Enables/disables
+       intensity of background color (where x is 0 for enable and
+       1 for disable).  Sets/clears blink versus bold  background
+       (where x is 0 for set and 1 for clear).  Sets normal fore-
+       ground color.  See GIO_ATTR for the valid  values  for  c.
+       Sets  normal background color.  See GIO_ATTR for the valid
+       values for c.  Displays graphic character n.  Sets reverse
+       foreground  color.   See GIO_ATTR for the valid values for
+       c.  Sets reverse background color.  See GIO_ATTR  for  the
+       valid  values  for c.  Sets graphic foreground color.  See
+       GIO_ATTR for the valid values for c.  Sets  graphic  back-
+       ground  color.   See  GIO_ATTR for the valid values for c.
+       Makes virtual terminal  number  n  active.   Saves  cursor
+       position.   Restores cursor position to saved value.  Dis-
+       ables the key-click feature (the  default).   Enables  the
+       key-click feature.  A tone is produced for each key press.
+
+   iiooccttll ccaallllss
+       The following ioctl calls may be used to change  the  dis-
+       play  used for the video monitor.  If the virtual terminal
+       has not been put  in  process  mode  (see  the  VT_SETMODE
+       ioctl),  setting  the display mode to a non-text mode will
+       turn off VT switching.  VT  switches  will  be  re-enabled
+       after the display mode has been reset to a text mode.
+
+       Note:   All the following ioctls are performed on either a
+       file descriptor to the virtual terminals or to the special
+       file  /dev/video.  ioctls to /dev/video are indicated with
+       an asterisk (*).  For the ioctls to  /dev/video  to  work,
+       the  controlling  tty  for the process must be the virtual
+       terminal on which the operation is to  be  performed.   If
+       the  tty  is not a virtual terminal, the return value will
+       be -1 and errno will be set to EINVAL.  This call  selects
+       the monochrome adapter as the output device for the system
+       console.  This call selects the color/graphics adapter  as
+       the  output  device  for  the  system  console.  This call
+       selects the enhanced graphics adapter as the output device
+       for  the  system  console.   This  call  selects the video
+       graphics array as the output device for  the  system  con-
+       sole.
+
+       The following ioctl call may be used to obtain more infor-
+       mation about the display adapter currently attached to the
+       video  monitor: This call returns the display adapter type
+       currently attached to the video monitor.  The return value
+       can be one of: MONO, CGA, or EGA.
+
+       The  following  ioctl  calls may be used to switch display
+       modes on the various video  adapters:  This  call  selects
+       40x25 (40 columns by 25 rows) black and white text display
+
+                                                                4
+
+display(7)                                             display(7)
+
+       mode.  It is valid only for CGA  and  EGA  devices.   This
+       call selects 40x25 (40 columns by 25 rows) color text dis-
+       play mode.  It is valid only  for  CGA  and  EGA  devices.
+       This  call selects 80x25 (80 columns by 25 rows) black and
+       white text display mode.  It is valid only for CGA and EGA
+       devices.   This call selects 80x25 (80 columns by 25 rows)
+       color text display mode.  It is valid only for CGA and EGA
+       devices.  This call selects 320x200 black and white graph-
+       ics display mode.  It  is  valid  only  for  CGA  and  EGA
+       devices.  This call selects 320x200 color graphics display
+       mode.  It is valid only for CGA  and  EGA  devices.   This
+       call  selects  640x200  black  and  white graphics display
+       mode.  It is valid only for CGA  and  EGA  devices.   This
+       call selects EGA support for 320x200 graphics display mode
+       (EGA mode D).  It is valid only  for  EGA  devices.   This
+       call selects EGA support for 640x200 graphics display mode
+       (EGA mode E).  It is valid only  for  EGA  devices.   This
+       call selects EGA support for 640x350 graphics display mode
+       (EGA mode F).  It is valid only  for  EGA  devices.   This
+       call selects EGA support for 640x350 graphics display mode
+       with extended memory (EGA mode F*).  It is valid only  for
+       EGA  devices.   This  call selects EGA support for 640x350
+       graphics display mode (EGA mode 10).  It is valid only for
+       EGA  devices.   This  call selects EGA support for 640x350
+       graphics display mode with extended memory (EGA mode  16).
+       It  is  valid only for EGA devices.  This call selects EGA
+       monochrome text display mode (EGA mode 7), which  emulates
+       support  provided  by the monochrome adapter.  It is valid
+       only for EGA devices.  This call  selects  enhanced  40x25
+       black  and  white text display mode.  It is valid only for
+       EGA devices.  This call selects enhanced 40x25 color  text
+       display  mode.   It  is  valid only for EGA devices.  This
+       call selects enhanced 80x25 black and white display  mode.
+       It  is  valid  only  for  EGA  devices.  This call selects
+       enhanced 80x25 color text display mode.  It is valid  only
+       for  EGA  devices.  This call selects enhanced 80x43 black
+       and white text display mode.  It is  valid  only  for  EGA
+       devices.  This call selects enhanced 80x43 color text dis-
+       play mode.  It is valid only for EGA devices.   This  call
+       reinitializes  the  monochrome  adapter.  It is valid only
+       for monochrome adapters.  This  call  selects  640x400  16
+       color  mode,  when  an  AT&T  Super-Vu video controller is
+       attached.
+
+       Switching to an invalid display mode for a display  device
+       will result in an error.
+
+       The  following  ioctls  may  be used to obtain information
+       about the current display modes:  This  call  returns  the
+       current  display mode setting for whatever display adapter
+       is being used.  Possible return values include: Black  and
+       white  40  columns.   CGA and EGA only.  Color 40 columns.
+       CGA and EGA only.  Black and white 80  columns.   CGA  and
+       EGA only.  Color 80 columns.  CGA and EGA only.  Black and
+
+                                                                5
+
+display(7)                                             display(7)
+
+       white graphics 320 by  200.   CGA  and  EGA  only.   Color
+       graphics  320  by 200.  CGA and EGA only.  Black and white
+       graphics 640 by 200 high-resolution.  CGA  and  EGA  only.
+       EGA-mono  80  by  25.  EGA only.  EGA mode D.  EGA mode E.
+       EGA mode F.  EGA mode 10.  EGA mode F with  extended  mem-
+       ory.   EGA  mode  16.   EGA  enhanced  black  and white 40
+       columns.  EGA enhanced color  40  columns.   EGA  enhanced
+       black  and  white  80  columns.   EGA  enhanced  color  80
+       columns.  EGA black and white 80 by 43.  EGA color  80  by
+       43.   monochrome adapter mode.  This call returns the cur-
+       rent display mode setting of the monochrome adapter.   See
+       CONS_GET  for  a list of return values.  If the monochrome
+       adapter is not installed, the call  will  fail  and  errno
+       will be set to 22 (EINVAL).  This call returns the current
+       display mode setting of the color/graphics  adapter.   See
+       CONS_GET for a list of return values.  If the color graph-
+       ics adapter is not installed, the call will fail and errno
+       will be set to 22 (EINVAL).  This call returns the current
+       display mode setting of  the  enhanced  graphics  adapter.
+       See CONS_GET for a list of return values.  If the enhanced
+       graphics adapter is not installed, the call will fail  and
+       errno will be set to 22 (EINVAL).
+
+       The  following  ioctl  calls  may be used to map the video
+       adapter's memory into the user's data  space.   This  call
+       maps  the  display  memory  of the adapter currently being
+       used into the user's  data  space.   This  call  maps  the
+       monochrome  adapter's  display memory into the user's data
+       space.  This call maps the color/graphics  adapter's  dis-
+       play  memory  into  the user's data space.  This call maps
+       the enhanced graphics adapter's display  memory  into  the
+       user's  data  space.   This  call  maps the video graphics
+       array's display memory into the user's data space.
+
+       You can use ioctl calls to input a byte from the  graphics
+       adapter  port  or to output a byte to the graphics adapter
+       port.  The argument to the ioctl uses the port_io_arg data
+       structure:            struct         port_io_arg         {
+                                            struct
+       port_io_struc_args[4];    };  The  previous  example shows
+       that the port_io_arg structure points to an array of  four
+       port_io_struc  data structures.  The port_io_struc has the
+       following     format:       struc     port_io_struc      {
+                          char   dir;    /*direction flag (in vs.
+       out)*/                                              ushort
+       port;                   /*port                   address*/
+                          char   data;  /*byte of data*/   }; You
+       can  specify one, two, three, or four of the port_io_struc
+       structures in the array for one ioctl call.  The value  of
+       dir  can  be  either  IN_ON_PORT  (to specify a byte being
+       input from the graphics adapter port) or  OUT_ON_PORT  (to
+       specify a byte being output to the graphics adapter port).
+       Port is an integer specifying  the  port  address  of  the
+       desired  graphics  adapter port.  Data is the byte of data
+
+                                                                6
+
+display(7)                                             display(7)
+
+       being input or output as specified by the  call.   If  you
+       are  not  using  any of the port_io_struc structures, load
+       the port with 0, and leave the unused  structures  at  the
+       end of the array.  Refer to your hardware manuals for port
+       addresses and functions for the various adapters.
+
+       The following ioctl calls may be used to input  or  output
+       bytes  on  the  graphics adapter port: This call inputs or
+       outputs a byte on the monochrome adapter  port  as  speci-
+       fied.    This  call  inputs  or  outputs  a  byte  on  the
+       color/graphics  adapter  port  as  specified.   This  call
+       inputs  or outputs a byte on the enhanced graphics adapter
+       port as specified.  This call inputs or outputs a byte  on
+       the  video  graphics  array port as specified.  To input a
+       byte on any of the graphics adapter ports, load  dir  with
+       IN_ON_PORT  and  load  port  with  the port address of the
+       graphics  adapter.   The  byte  input  from  the  graphics
+       adapter port will be returned in data.
+
+       To  output  a  byte,  load dir with OUT_ON_PORT, load port
+       with the port address of the graphics  adapter,  and  load
+       data  with  the  byte  you  want to output to the graphics
+       adapter port.
+
+       The  following  ioctls  may  be  used  with   either   the
+       monochrome, color graphics, or enhanced graphics adapters:
+       This call gets the current 8x8 font  in  use.   This  call
+       gets  the  current  8x14  font in use.  This call gets the
+       current 8x16 font  in  use.   This  call  returns  display
+       information  to  the  user.   The argument expected is the
+       buffer address of a structure  of  type  kd_disparam  into
+       which  display  information  is returned to the user.  The
+       kd_disparam  structure  is  defined  as  follows:   struct
+       kd_disparam  {    long type;       /*display type*/   char
+       *addr;      /*display    memory     address*/       ushort
+       ioaddr[MKDIOADDR];          /*valid I/O addresses*/ }
+
+       Possible values for the type field include: IBM monochrome
+       display adapter Hercules monochrome graphics  adapter  IBM
+       color  graphics  adapter IBM enhanced graphics adapter IBM
+       video graphics adapter Start sound  generation.   Turn  on
+       sound.   The  argument  is  the frequency desired.  A fre-
+       quency of 0 turns off the sound.  Get keyboard LED status.
+       The  argument  is a pointer to a character.  The character
+       will be filled with a boolean combination of the following
+       values:
+       LED_SCR    0x01   flag   bit   for
+                         scroll lock
+       LED_CAP    0x04   flag   bit   for
+                         caps lock
+       LED_NUM    0x02   flag bit for num
+                         lock
+
+                                                                7
+
+display(7)                                             display(7)
+
+       LED_KANA   0x08   flag   bit   for
+                         Japanese    key-
+                         board, for  KANA
+                         lock virtual LED
+       LED_ALCK   0x10   flag   bit   for
+                         lock virtual LED
+       Set keyboard LED status.   The  argument  is  a  character
+       whose  value  is  the  boolean  combination  of the values
+       listed under KDGETLED.  Generate a fixed length tone.  The
+       argument  is a 32 bit value, with the lower 16 bits set to
+       the frequency and the upper 16 bits set  to  the  duration
+       (in  milliseconds).  Get keyboard type.  The argument is a
+       pointer to  a  character  type.   The  character  will  be
+       returned with one of the following values: 84 key keyboard
+       101 key keyboard 101 key keyboard Add I/O port address  to
+       list  of  valid  video  adaptor addresses.  Argument is an
+       unsigned short type  that  should  contain  a  valid  port
+       address  for the installed video adaptor.  Delete I/O port
+       address from list of valid video adaptor  addresses.   The
+       argument  is  an unsigned short type that should contain a
+       valid  port  address  for  the  installed  video  adaptor.
+       Enable  in and out calls to video adaptor ports.  Does not
+       take an argument.  Disable in and out calls to video adap-
+       tor ports.  Does not take an argument.  Enable and disable
+       special queue mode.  Queue mode is used by  AT&T's  X-Win-
+       dows  software  to  establish a shared queue for access to
+       keyboard and mouse event information.  The argument  is  a
+       pointer  to  a structure kd_quemode.  If a NULL pointer is
+       sent as an argument, the queue will be closed and the mode
+       disabled.   The structure kd_quemode is as follows: struct
+       kd_quemode {         int    qsize;/* desired # of elements
+       in  queue */         int    signo;/* signal number to send
+       when   queue                       goes    non-empty    */
+               void   char   *qaddr;/*  user  virtual  address of
+       queue                   (set by driver) */         };  Set
+       screen  color border in EGA text mode.  The argument is of
+       type character.  Each bit position corresponds to a  color
+       selection.   From  bit  position 0  to bit position 6, the
+       color selections are respectively; blue, green, red,  sec-
+       ondary  blue, secondary green, and secondary red.  Setting
+       the bit position to a logic one will  select  the  desired
+       color  or  colors.  See the ``Notices'' section.  Set vir-
+       tual terminal in text or graphics mode.  The  argument  is
+       of  type  integer.  It should contain one of the following
+       values: Sets virtual terminal to text mode.  Sets  virtual
+       terminal  in  graphics  mode.   If  the  mode  is  set  to
+       KD_GRAPHICS and the Virtual Terminal  is  not  in  process
+       mode  (see  the  VT_SETMODE  ioctl),  no  virtual terminal
+       switches will be possible  until  the  mode  is  reset  to
+       KD_TEXT,  KD_TEXT0,  or KD_TEXT1. KD_TEXT and KD_TEXT0 are
+       synonymous.
+
+       Note,  the  user  is  responsible  for   programming   the
+       color/graphics   adaptor  registers  for  the  appropriate
+
+                                                                8
+
+display(7)                                             display(7)
+
+       graphical state.  Get current mode  of  virtual  terminal.
+       Returns   integer   argument  containing  either  KD_TEXT,
+       KD_TEXT1, or KD_GRAPHICS as defined in the KDSETMODE ioctl
+       description.    Maps  display  memory  into  user  process
+       address space.  The argument is  a  pointer  to  structure
+       type  kd_memloc.   The structure definition is as follows:
+       struct  kd_memloc   {           char   *vaddr;/*   virtual
+       address  to map to */         char   *physaddr;/* physical
+       address to map from */          long   length;/*  size  in
+       bytes   to   map  */          long   ioflg;/*  enable  i/o
+       addresses if set */         } Unmap  display  memory  from
+       user  process  address  space.   No  argument is required.
+       Controls whether new virtual terminals  are  automatically
+       focused when they are created. The argument is an unsigned
+       long.  If KDNOAUTOFOCUS is set to  0,   virtual  terminals
+       will  be focused when they are created. If the argument is
+       non-zero, virtual terminals will not be focused when  they
+       are  created.   See for information about the user utility
+       to set this behavior.  Informs the kernel that  a  process
+       is  about  to use or a similar function to map memory. The
+       driver is not responsible for  mapping  memory,  but  must
+       still  perform  any other operations required to initalize
+       the active channel in graphics mode.
+
+       The   argument   is   a   pointer   to   structure    type
+       con_mem_map_req.   The structure definition is as follows:
+       typedef struct con_mem_map_req {          size_t length;/*
+       requested  length  */          paddr_taddress;/*  Physical
+       address to map */         pid_t  proc_id;/* PID of calling
+       process  */          pid_t  proc_id;/* PID of calling pro-
+       cess */         } con_mem_map_req_t; length is the  length
+       of  the memory that the process would like to map. address
+       is the physical address at which it asks for  the  mapping
+       to start. The driver may overwrite these fields.  The pro-
+       cess must therefore read the  values  returned  (typically
+       for multiconsoles) in these fields.
+
+       proc_id  is the process identifier of the calling process.
+       This  call  returns  VDC  controller/display  information.
+       This call uses the user supplied 8x8 font.  This call uses
+       the user supplied 8x14 font.  This call uses the user sup-
+       plied  8x16  font.   Finds  an available virtual terminal.
+       The argument is a pointer to an  int.   The  int  will  be
+       filled  with  the number of the first available VT that no
+       other process has  open,  or  -1  if  none  is  available.
+       Determine  what  mode  the active virtual terminal is cur-
+       rently in, either VT_AUTO or VT_PROCESS.  The argument  to
+       the  ioctl  is the address of the following type of struc-
+       ture: struct vt_mode {         char   mode;/* VT  mode  */
+               char   waitv;/*  if  set,  hang on writes when not
+       active  */          short  relsig;/*  signal  to  use  for
+       release  request */         short  acqsig;/* signal to use
+       for display acquired */         short  frsig;/* signal  to
+       use to force VT switch */         }
+
+                                                                9
+
+display(7)                                             display(7)
+
+       #define VT_AUTO0x00/*    automatic    VT    switching   */
+       #define VT_PROCESS0x01/* process controls switching */ The
+       vt_mode structure will be filled in with the current value
+       for each field.  The VT_GETSTATE ioctl returns global vir-
+       tual  terminal  state  information.  It returns the active
+       virtual terminal in the v_active field, and the number  of
+       active  virtual  terminals  and  a  bit mask of the global
+       state in the v_state field, where bit x is the state of vt
+       x  (1  indicates  that the virtual terminal is open).  Set
+       the virtual terminal mode (Auto or Proced).  The  argument
+       is  a  pointer  to  a vt_mode structure, as defined above.
+       The VT_SENDSIG ioctl specifies a signal (in  v_signal)  to
+       be sent to a bit mask of virtual terminals (in v_state).
+
+       The  data structure used by the VT_GETSTATE and VT_SENDSIG
+       ioctls is: struct  vt_stat  {          ushort  v_active;/*
+       active  vt*/          ushort  v_signal;/*  signal  to send
+       (VT_SENDSIG) */          ushort  v_state;/*  vt  bit  mask
+       (VT_SENDSIG  and                            VT_GETSTATE)*/
+       }; It is defined in /usr/include/sys/vt.h.  Used  to  tell
+       the  virtual  terminal manager that the display has or has
+       not been released by the process.  A zero value  indicates
+       refusal  to  release  the  display.   A value of VT_ACKACQ
+       indicates an acquisition of a device.  EINVAL is  returned
+       if  a  non-zero  value  that  is not equal to VT_ACKACQ is
+       received  and  the  virtual  terminal  has  not  yet  been
+       acquired.    Otherwise,   the  virtual  terminal  will  be
+       released.  Makes the virtual terminal number specified  in
+       the  argument  the active VT.  The VT manager will cause a
+       switch to occur in the same way as if  a  hotkey  sequence
+       had  been  typed  at the keyboard.  If the specified VT is
+       not open or does not exist, the call will fail  and  errno
+       will  be  set to ENXIO.  This call tells the user what the
+       device is. The local  virtual  terminal  will  return  the
+       string  kd; multi-consoles will return the string MC; non-
+       terminal devices fail the ioctl with -1.  This  call  gets
+       the  screen  mapping  table  from  the  kernel.  This call
+       returns the current screen attribute.  The bits are inter-
+       preted  as  follows:  Determines underlining for black and
+       white monitors (1=on).  Selects the foreground color.  The
+       following  list indicates which colors are selected by the
+       given value: black red green brown blue magenta cyan white
+       Determines  bold intensity (1=on).  Selects the background
+       color.  For a list of colors and  their  values,  see  the
+       list under foreground colors.  Determines blinking (1=on).
+       This call returns a non-zero value if the current  display
+       is  a  color  display, otherwise, it returns a zero.  This
+       call puts the screen mapping table in the kernel.
+
+       The screen mapping table maps extended ASCII (8-bit) char-
+       acters  to  ROM  characters.  It is an array [256] of char
+       (typedef scrnmap_t) and is indexed by extended ASCII  val-
+       ues.   The  value of the elements of the array are the ROM
+       character to display.
+
+                                                               10
+
+display(7)                                             display(7)
+
+FFiilleess
+       /dev/console
+       /dev/vt00-n
+       /dev/video
+       /usr/include/sys/kd.h
+       /dev/tty
+       /usr/include/sys/ws/ws.h
+       /usr/include/sys/ws/vt.h
+
+RReeffeerreenncceess
+NNoottiicceess
+       Although it is possible to write character sequences  that
+       set  arbitrary  bits  on  the  screen  in any of the three
+       graphics modes, this mode of operation  is  not  currently
+       supported.
+
+       Monochrome  adaptors  support  underscore  option  as  the
+       default.  EGA and VGA adaptors  require  the  use  of  the
+       ESC[38m and ESC[39m escape sequences to enable and disable
+       the underscore option respectively.  After the  underscore
+       option  has  been enabled on a EGA or VGA adaptor by using
+       the ESC[38m sequence and until the  underline  option  has
+       been  disabled  by  using the ESC[39m sequence, characters
+       that have blue foreground attributes will be displayed  in
+       cyan  foreground  and characters that have blue background
+       attributes  will  be   displayed   in   white   background
+       attributes.
+
+       It  is  currently  not  possible  to access the 6845 start
+       address registers.  Thus, it is  impossible  to  determine
+       the beginning of the color monitor's screen memory.
+
+       The  alternate/background  color  bit (bit 4) of the color
+       select register does not appear to affect background  col-
+       ors in alphanumeric modes.
+
+       KDSBORDER  ioctl  calls will not work with AT&T's Super-Vu
+       enhanced color/graphics video adaptor.  It  will  however,
+       work  with the IBM EGA card and other EGA compatible video
+       adaptors.
+
+       The low-resolution graphics mode appears to be  80  across
+       by 100 down.
+
+                                                               11
+

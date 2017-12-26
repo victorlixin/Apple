@@ -1,0 +1,112 @@
+
+
+pty(7)                                                     pty(7)
+
+DDeessccrriippttiioonn
+       The  pseudo-terminal  subsystem  (pty)  supports a pair of
+       STREAMS-based devices called the  master  device  and  the
+       slave device.  The slave device provides processes with an
+       interface that is identical  to  the  terminal  interface.
+       However,  whereas  all  devices  that provide the terminal
+       interface have some kind of hardware device  behind  them,
+       the  slave  device  has  another  process  manipulating it
+       through the master half of the pseudo terminal.   Anything
+       written  on  the  master  device  is given to the slave as
+       input and anything written on the  slave  device  is  pre-
+       sented as input on the master side.
+
+       The  master  device,  called  ptm, is accessed through the
+       clone driver and is the controlling part  of  the  system.
+       The slave device, called pts, works with a line discipline
+       module such as a hardware emulation  module  such  as  and
+       optionally  with  an  ioctl  translation module such as to
+       provide a terminal interface  to  the  user  process.   An
+       optional  packetizing  module  called  is also provided to
+       support ``packet mode'' when it is pushed  on  the  master
+       side.
+
+       The  master  device  is  opened  via  the system call with
+       /dev/ptmx as the device to  be  opened.   The  clone  open
+       finds  the  next  available  minor  device  for that major
+       device; a master device is available only if  it  and  its
+       corresponding slave device are not already open.
+
+       When  the master device is opened, the corresponding slave
+       device is automatically locked out, and no user  may  open
+       that  device  until  it  is  unlocked.   A user may invoke
+       grantpt (3C to change the owner  and  permissions  of  the
+       slave  device  to that of the user who is running the pro-
+       cess.  Once the permissions have been changed, the  device
+       may  be  unlocked by the user.  Only the owner or a privi-
+       leged user can access the slave  device.   The  user  then
+       invokes unlockpt (3C to unlock the slave device.  The user
+       calls ptsname (3C to get the name of the slave device, and
+       then  invokes  the open system call with the name that was
+       returned by the function.
+
+       After both the master and slave devices have been  opened,
+       the user has two file descriptors that provide full-duplex
+       communication using two  streams.   The  two  streams  are
+       automatically  connected.   The user may then push modules
+       onto either side of the stream.  The user also  must  push
+       the  ptem  and  ldterm  modules onto the slave side to get
+       terminal semantics.
+
+       The master and slave devices pass all STREAMS messages  to
+       their   adjacent  queues.   Only  needs  some  processing.
+       Because the read queue of one side  is  connected  to  the
+       write  queue  of  the other, the FLUSHR flag is changed to
+
+                                                                1
+
+pty(7)                                                     pty(7)
+
+       FLUSHW and vice versa.
+
+       When the master device is closed, an message  is  sent  to
+       the  slave device, which renders the device unusable.  The
+       process on the  slave  side  gets  the  errno  ENXIO  when
+       attempting  to  write  on that stream, but it can read any
+       data remaining on the stream head read  queue.   When  all
+       the  data  have been read, read returns 0, indicating that
+       the stream can no longer be used.
+
+       On the last close of the slave device, a zero-length  mes-
+       sage  is  sent  to  the master side.  When the master side
+       application issues a read and  0  is  returned,  the  user
+       decides  whether  to  issue  a close, which dismantles the
+       pseudo-terminal, or not close the master  device  so  that
+       the  pseudo-tty  subsystem  will  be available for another
+       user to open the slave device.
+
+   iiooccttllss
+       The master device supports the  ISPTM  and  UNLKPT  ioctls
+       that  are used by the grantpt, unlockpt, and ptsname func-
+       tions.   The  ioctl  ISPTM  determines  whether  the  file
+       descriptor  is that of an open master device.  On success,
+       it returns the major/minor number (type dev_t) of the mas-
+       ter device, which can be used to determine the name of the
+       corresponding slave device.  On  failure  it  returns  -1.
+       The ioctl UNLKPT unlocks the master and slave devices.  It
+       returns 0 on success.  On failure, it returns -1 and  sets
+       errno  to EINVAL, indicating that the master device is not
+       open.
+
+       The format of these commands is: int ioctl  (int  fd,  int
+       command, int arg); where command is either ISPTM or UNLKPT
+       and arg is 0.
+
+       The master side application is responsible  for  detecting
+       an  interrupt  character  and  sending an interrupt signal
+       SIGINT to the process on the slave side.  This can be done
+       as  follows:  ioctl (fd, TIOCSIGNAL, SIGINT); where SIGINT
+       is defined in the header file signal.h header file.
+
+FFiilleess
+       pseudo-terminal  master   device   pseudo-terminal   slave
+       devices
+
+RReeffeerreenncceess
+
+                                                                2
+

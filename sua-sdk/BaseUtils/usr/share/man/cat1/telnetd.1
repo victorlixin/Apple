@@ -1,0 +1,351 @@
+telnetd(1)                                                   telnetd(1)
+
+  tteellnneettdd
+
+  NNAAMMEE
+
+    telnetd - Defense Advanced Research Projects (DARPA) Telnet protocol
+    server
+
+  SSYYNNOOPPSSIISS
+
+    /usr/sbin/in.telnetd [[-hilKknQqU]] [[-D debugmode]] [[-debug [[port]]]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The tteellnneettdd(1) command is a server that supports the Defense Advanced
+    Research Projects (DARPA) standard Telnet virtual terminal protocol. The
+    tteellnneettdd(1) command is normally invoked by the Internet server iinneettdd(1) for
+    requests to connect to the Telnet port (see the --ii option). On a system running
+	Subsystem for UNIX-based Applications, it can also be run as a service 
+	(see the sseerrvviiccee(1) utility). The --ddeebbuugg option can be used to 
+	start up tteellnneettdd(1) manually. If started up this way, port can be 
+	specified to run tteellnneettdd(1) on an alternate 
+	Transmission Control Protocol (TCP) port number.
+
+    The tteellnneettdd(1) command accepts the following options:
+
+    --DD debugmode
+        This option can be used for debugging purposes. This allows tteellnneettdd(1)
+        to print out debugging information to the connection, which enables
+        the user to see what tteellnneettdd(1) is doing. There are several possible
+        values for debugmode:
+
+        ooppttiioonnss
+            Prints information about the negotiation of TELNET options.
+
+        rreeppoorrtt
+            Prints the ooppttiioonnss(1) information, plus additional information
+            about processing that is taking place.
+
+        nneettddaattaa
+            Displays the data stream received by tteellnneettdd(1).
+
+        ppttyyddaattaa
+            Displays data written to the pty.
+
+        eexxeerrcciissee
+            Has not yet been implemented.
+
+    --ddeebbuugg
+        Enables debugging on each socket created by tteellnneettdd(1) (see SO_DEBUG
+        in _s_o_c_k_e_t(2)).
+
+    --hh
+        Disables the printing of host-specific information before login has
+        been completed.
+
+    --ii
+        Causes tteellnneettdd(1) to assume that stdin, stdout, and stderr have been
+        inherited from the parent. This allows tteellnneettdd(1) to be started from
+        iinneettdd(1).
+
+    --KK
+        Turns on kludge linemode (see also --kk). If the client responds with
+        WILL TIMING-MARK in response to a DO TIMING-MARK), tteellnneettdd(1) assumes
+        that the client supports kludge linemode. Unfortunately, many clients
+        that do not support kludge linemode pass the heuristic. The --KK option
+        is most useful if you are certain that all clients will support kludge
+        linemode.
+
+    --kk
+        If the --kk option is specified, and the remote client does not support
+        the LINEMODE option, tteellnneettdd(1) will operate in character-at-a-time
+        mode. (The server will only go into kludge linemode if the the remote
+        client requests it, by sending DONT SUPPRESS-GO-AHEAD and DONT ECHO.)
+        The --kk option is most useful when there are remote clients that do not
+        support kludge linemode, but pass the heuristic (if they respond with
+        WILL TIMING-MARK in response to a DO TIMING-MARK) for kludge linemode
+        support.
+        Most clients pass the heuristic even if they do not support kludge
+        linemode, so the --kk behavior is the default behavior for tteellnneettdd(1).
+        Without this option, certain telnet clients (such as those on Solaris
+        systems before 2.4) behave poorly.
+
+    --ll
+        Specifies line mode. Tries to force clients to use line-at-a-time
+        mode. If the LINEMODE option is not supported, it will go into kludge
+        linemode.
+
+    --nn
+        Disable TCP keep-alives. Normally tteellnneettdd(1) enables the TCP keep-
+        alive mechanism to probe connections that have been idle for some
+        period of time to determine whether the client is still there so that
+        idle connections from computers that have crashed or can no longer be
+        reached can be cleaned up.
+
+    --QQ
+        Sets really quiet mode. Really quiet mode suppresses the entire login
+        banner, unlike --qq, which only suppresses part of the banner.
+
+    --qq
+        Sets quiet mode. Quiet mode suppresses the banner describing default
+        login domains; tteellnneettdd(1) still prints the portion of the banner with
+        the operating system, version, computer name and terminal.
+
+    --UU
+        This option causes tteellnneettdd(1) to refuse connections from addresses
+        that cannot be mapped back into a symbolic name through the
+        _g_e_t_h_o_s_t_b_y_a_d_d_r(2) routine.
+
+    The tteellnneettdd(1) command operates by allocating a pseudo terminal device
+    (see _p_t_y(4)) for a client, then creating a login process that has the
+    subordinate (slave) side of the pseudo terminal as stdin, stdout and
+    stderr. The tteellnneettdd(1) command manipulates the master side of the pseudo
+    terminal, implementing the Telnet protocol and passing characters between
+    the remote client and the login process.
+
+    When a Telnet session is started, tteellnneettdd(1) sends Telnet options to the
+    client side, indicating a willingness to do the following Telnet options:
+
+    *     DO TERMINAL TYPE
+    *     DO TSPEED
+    *     DO XDISPLOC
+    *     DO NEW-ENVIRON
+    *     DO ENVIRON
+    *     WILL SUPPRESS GO AHEAD
+    *     DO NAWS
+    *     DO LFLOW
+    *     DO LINEMODE
+    *     WILL STATUS
+
+    The pseudo terminal allocated to the client is configured to operate in
+    cooked mode with XTABS and CRMOD enabled (see ttttyy(1)).
+
+    The tteellnneettdd(1) command has support for enabling the following Telnet
+    options locally:
+
+    WILL ECHO
+        When the LINEMODE option is enabled, a WILL ECHO or WONT ECHO is sent
+        to the client to indicate the current state of terminal echoing. When
+        terminal echo is not wanted, a WILL ECHO is sent to indicate that
+        tteellnneettdd(1) will take care of echoing any data that must be echoed to
+        the terminal, and then nothing is echoed. When terminal echo is
+        wanted, a WONT ECHO is sent to indicate that tteellnneettdd(1) will not be
+        doing any terminal echoing, so the client should do any terminal
+        echoing that is needed.
+
+    WILL BINARY
+        Indicates that the client is willing to send a eight bits of data,
+        rather than the normal seven bits of the Network Virtual Terminal.
+
+    WILL SGA
+        Indicates that it will not be sending IAC GA, go ahead, commands.
+
+    WILL STATUS
+        Indicates a willingness to send the client, upon request, the current
+        status of all Telnet options.
+
+    WILL TIMING-MARK
+        When a DO TIMING-MARK command is received, it is always responded to
+        with a WILL TIMING-MARK
+
+    WILL LOGOUT
+        When a DO LOGOUT is received, a WILL LOGOUT is sent in response, and
+        the Telnet session is shut down.
+
+    The tteellnneettdd(1) command has support for enabling the following Telnet
+    options remotely:
+
+    DO BINARY
+        Sent to indicate that tteellnneettdd(1) is willing to receive an eight-bit
+        data stream.
+
+    DO LFLOW
+        Requests that the client handle flow control characters remotely.
+
+    DO ECHO
+        This is not really supported, but is sent to identify a 4.2 Berkeley
+        Software Distribution (BSD) tteellnneett(1) client, which will improperly
+        respond with WILL ECHO. If a WILL ECHO is received, a DONT ECHO will
+        be sent in response.
+
+    DO TERMINAL-TYPE
+        Indicates a desire to be able to request the name of the type of
+        terminal that is attached to the client side of the connection.
+
+    DO SGA
+        Indicates that it does not need to receive IAC GA, the go ahead
+        command.
+
+    DO NAWS
+        Requests that the client inform the server when the window (display)
+        size changes.
+
+    DO TERMINAL-SPEED
+        Indicates a desire to be able to request information about the speed
+        of the serial line to which the client is attached.
+
+    DO XDISPLOC
+        Indicates a desire to be able to request the name of the X windows
+        display that is associated with the Telnet client.
+
+    DO NEW-ENVIRON
+        Indicates a desire to be able to request environment variable
+        information, as described in RFC 1572.
+
+    DO ENVIRON
+        Indicates a desire to be able to request environment variable
+        information, as described in RFC 1408.
+
+    DO LINEMODE
+        Only sent if tteellnneettdd(1) is compiled with support for linemode, and
+        requests that the client do line-by-line processing. This is enabled
+        in Subsystem for UNIX-based Applications (SUA).
+
+    DO TIMING-MARK
+        Only sent if tteellnneettdd(1) is compiled with support for both linemode and
+        kludge linemode, and the client responded with WONT LINEMODE. If the
+        client responds with WILL TM, it is assumed that the client supports
+        kludge linemode. Note that the --kk option can be used to disable this.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    The tteellnneettdd(1) program can exit with one of the following values:
+
+    0
+        The tteellnneettdd(1) command exited normally.
+
+    1
+        The tteellnneettdd(1) command exited due to a usage or socket error.
+
+    2
+        The tteellnneettdd(1) command exited due to a license problem.
+
+    For exit statuses 1 and 2, additional messages might be printed to
+    standard error.
+
+  NNOOTTEESS
+
+    Do not mount drives using NNEETT.EEXXEE(1) from a session controlled by this
+    daemon. See the sseerrvviiccee(1) reference page for more discussion.
+
+    The default domain presented in the login banner can be changed by setting
+    the Windows registry variable
+    HHKKEEYY__LLOOCCAALL__MMAACCHHIINNEE\\SSOOFFTTWWAARREE\\MMiiccrroossoofftt\\SSUUAA\\
+    LLooggiinnDDeeffaauullttDDoommaaiinn. Set the value of the LLooggiinnDDeeffaauullttDDoommaaiinn entry to the
+    name of the domain.
+
+    If the tteellnneettdd(1) is running on a Windows workgroup server without a
+    domain, set the value of LLooggiinnDDeeffaauullttDDoommaaiinn to an empty string. If you do
+    not do this, users will have to type +loginname to login to the server.
+
+    Caution
+
+    *     Incorrectly editing the registry may severely damage your system.
+          Before making changes to the registry, you should back up any valued
+          data on the computer.
+
+  SSTTAANNDDAARRDDSS
+
+    RFC-854
+        TELNET PROTOCOL SPECIFICATION
+
+    RFC-855
+        TELNET OPTION SPECIFICATIONS
+
+    RFC-856
+        TELNET BINARY TRANSMISSION
+
+    RFC-857
+        TELNET ECHO OPTION
+
+    RFC-858
+        TELNET SUPPRESS GO AHEAD OPTION
+
+    RFC-859
+        TELNET STATUS OPTION
+
+    RFC-860
+        TELNET TIMING MARK OPTION
+
+    RFC-861
+        TELNET EXTENDED OPTIONS - lIST OPTION
+
+    RFC-885
+        TELNET END OF RECORD OPTION
+
+    RFC-1073
+        Telnet Window Size Option
+
+    RFC-1079
+        Telnet Terminal Speed Option
+
+    RFC-1091
+        Telnet Terminal-Type Option
+
+    RFC-1096
+        Telnet X Display Location Option
+
+    RFC-1123
+        Requirements for Internet Hosts -- Application and Support
+
+    RFC-1184
+        Telnet Linemode Option
+
+    RFC-1372
+        Telnet Remote Flow Control Option
+
+    RFC-1416
+        Telnet Authentication Option
+
+    RFC-1411
+        Telnet Authentication: Kerberos Version 4
+
+    RFC-1412
+        Telnet Authentication: SPX
+
+    RFC-1571
+        Telnet Environment Option Interoperability Issues
+
+    RFC-1572
+        Telnet Environment Option
+
+  BBUUGGSS
+
+    Some Telnet commands are only partially implemented.
+
+    Because of bugs in the original Berkeley Software Distribution (BSD) 4.2
+    tteellnneett(1), tteellnneettdd(1) performs some dubious protocol exchanges to try to
+    discover whether the remote client is actually a 4.2 BSD tteellnneett(1).
+
+    Binary mode has no common interpretation except between similar operating
+    systems.
+
+    The terminal type name received from the remote client is converted to
+    lowercase.
+
+    The tteellnneettdd(1) command never sends TELNET IAC GA (go ahead) commands.
+
+  SSEEEE AALLSSOO
+
+    _l_o_g_i_n(1)
+
+    _r_l_o_g_i_n(1)
+
+    _r_l_o_g_i_n_d(1)
+
+    _s_e_r_v_i_c_e(1)
+
+    _t_e_l_n_e_t(1)
+

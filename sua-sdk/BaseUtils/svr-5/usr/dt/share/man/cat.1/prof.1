@@ -1,0 +1,141 @@
+
+
+prof(1)                                                   prof(1)
+
+SSyynnooppssiiss
+       prof  [-t  |  c  | a | n] [-o | x] [-g | l] [-z] [-h] [-s]
+       [-j] [-C]      [-m mdata] -V [prog]
+
+DDeessccrriippttiioonn
+       The prof command interprets a  profile  file  produced  by
+       running  an  executable  file that has either been instru-
+       mented for profiling or has been  linked  with  an  object
+       that  was  built  for  profiling.  The symbol table in the
+       object file (a.out by default) is read and correlated with
+       a  profile  file  (mon.out by default).  For each external
+       text symbol the percentage of time spent executing between
+       the  address of that symbol and the address of the next is
+       printed, together with the number of times  that  function
+       was  called  and  the  average  number of milliseconds per
+       call.
+
+       The mutually exclusive options -t, -c, -a, and  -n  deter-
+       mine  the  type  of  sorting  of the output lines: Sort by
+       decreasing percentage of total time  (default).   Sort  by
+       decreasing  number  of  calls.   Sort by increasing symbol
+       address.  Sort lexically by symbol name.
+
+       The mutually exclusive  options  -o  and  -x  specify  the
+       printing  of  the  address of each symbol monitored: Print
+       each symbol address (in octal) along with the symbol name.
+       Print  each symbol address (in hexadecimal) along with the
+       symbol name.
+
+       The mutually exclusive options -g and -l control the  type
+       of  symbols  to  be  reported.  The -l option must be used
+       with care; it applies the time spent in a static  function
+       to  the  preceding (in memory) global function, instead of
+       giving the static function a separate entry in the report.
+       If  all static functions are properly located (see example
+       below), this feature can be  very  useful.   If  not,  the
+       resulting report may be misleading.
+
+       Assume  that A and B are global functions and only A calls
+       static function S.  If S is located immediately after A in
+       the source code (that is, if S is properly located), then,
+       with the -l option, the amount of time spent in A can eas-
+       ily  be  determined,  including  the time spent in S.  If,
+       however, both A and B call S, then, if the  -l  option  is
+       used, the report will be misleading; the time spent during
+       B's call to S will be attributed to A, making it appear as
+       if more time had been spent in A than really had.  In this
+       case, function S  cannot  be  properly  located.   Include
+       static  (non-global)  functions.   Do  not  include static
+       (non-global) functions (default).
+
+       The following options may  be  used  in  any  combination:
+       Include  all symbols in the profile range, even if associ-
+       ated with zero number of calls and  zero  time.   Suppress
+
+                                                                1
+
+prof(1)                                                   prof(1)
+
+       the heading normally printed on the report.  (This is use-
+       ful if the report is to be processed  further.)   Print  a
+       summary  of  several  of  the  monitoring  parameters  and
+       statistics on the standard error output.  Use  file  mdata
+       instead  of mon.out as the input profile file.  Print prof
+       version information on the standard error  output.   Print
+       one  table  including  profiling  data  for  all  profiled
+       objects.  The default behavior is to print separate  list-
+       ings  for each object that was compiled with the -p option
+       of the cc command.  Print demangled C++ symbol names.
+
+       An object file creates a profile file if it has been  link
+       edited  with  the  -p option of cc.  This option to the cc
+       command  arranges  for  profiling  routines   defined   in
+       libprof.a  to be called at the beginning and end of execu-
+       tion.  It is the call at the end of execution that  causes
+       the  system  to write a profile file.  The number of calls
+       to a function is tallied if the -p option  was  used  when
+       the file containing the function was compiled.
+
+       The name of the file created by a profiled program is con-
+       trolled by the environment variable PROFDIR.   If  PROFDIR
+       is  not  set, mon.out is produced in the directory current
+       when   the   program   terminates.    If   PROFDIR=string,
+       string/pid.progname  is  produced, where progname consists
+       of argv[0] with any path prefix removed, and  pid  is  the
+       process  ID  of the program.  If PROFDIR is set, but null,
+       no profiling output are produced.
+
+       A single function may be split into subfunctions for  pro-
+       filing by means of the MARK macro [see
+
+FFiilleess
+       default profile file default namelist (object) file
+
+UUssaaggee
+       General.
+
+       The  times  reported in successive identical runs may show
+       variances because of varying cache-hit ratios that  result
+       from  sharing  the  cache with other processes.  Even if a
+       program seems to be the only one using the machine, hidden
+       background or asynchronous processes may blur the data.
+
+       In rare cases, the clock ticks initiating recording of the
+       program counter may ``beat''  with  loops  in  a  program,
+       grossly  distorting  measurements.  Call counts are always
+       recorded precisely, however.
+
+       Only programs that call or return from main() are  guaran-
+       teed to produce a profile file.
+
+       The  times for static functions are attributed to the pre-
+       ceding external text symbol if the -g option is not  used.
+
+                                                                2
+
+prof(1)                                                   prof(1)
+
+       However,  the  call  counts for the preceding function are
+       still correct; that is, the static  function  call  counts
+       are not added to the call counts of the external function.
+
+       If more than one of the options -t,  -c,  -a,  and  -n  is
+       specified,  the last option specified is used and the user
+       is warned.
+
+NNoottiicceess
+       Timing  information  is  not  available  for   multiplexed
+       threads  (threads that are not bound to a lightweight pro-
+       cess).  Profiling is possible on a bound thread (one  cre-
+       ated  with  the THR_BOUND flag), but note that the initial
+       thread in a process cannot be bound.
+
+RReeffeerreenncceess
+
+                                                                3
+

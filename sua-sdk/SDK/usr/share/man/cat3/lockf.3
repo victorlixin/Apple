@@ -1,0 +1,128 @@
+lockf(3)                                                       lockf(3)
+
+  lloocckkff(())
+
+  NNAAMMEE
+
+    lockf() - lock sections of file with advisory-mode locks
+
+  SSYYNNOOPPSSIISS
+
+    #include <unistd.h>
+
+    int lockf(int fd, int function, off_t size)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _ll_oo_cc_kk_ff(3) function can be used to lock sections of a file with
+    advisory-mode locks. If another process uses _ll_oo_cc_kk_ff(3) to lock an already-
+    locked section of the file, _ll_oo_cc_kk_ff(3) will return an error or block
+    (depending upon function).
+
+    The _ll_oo_cc_kk_ff(3) function takes three arguments:
+
+    fd
+        An open file descriptor. In order to establish a lock, the file must
+        have been opened with either write-only permission or read/write
+        permission (O_WRONLY or O_RDWR).
+
+    function
+        The action to be taken by _ll_oo_cc_kk_ff(3). The following values for function
+        are defined in <<uunniissttdd..hh>>:
+
+        F_LOCK
+            Lock a section for exclusive use. The calling process is blocked
+            until the section is available. (Blocking on a section is
+            interrupted by any signal.)
+
+        F_TEST
+            Test a section for locks by other processes.
+
+        F_TLOCK
+            Test and lock a section for exclusive use. The function fails if
+            the section is not available.
+
+        F_ULOCK
+            Unlock all or part of a locked sections. File locks are also
+            released the first time any file descriptor for the file is closed
+            by the calling process. If the middle part of a locked section is
+            unlocked, it leaves behind two separate locked sections.
+
+    size
+        The number of continguous bytes to be locked or unlocked. If size is
+        positive, size bytes will be locked (or unlocked) starting at the
+        current offset in the file; if size is negative, size bytes will be
+        locked (or unlocked) ending at the current offset in the file. If size
+        is 0, the _ll_oo_cc_kk_ff(3) function locks from the current offset to the
+        present or any future end-of-file.
+
+    Sections locked may overlap, contain, or be contained by another section
+    already locked by the same process. In this case, the sections are
+    combined into a single locked section.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    The _ll_oo_cc_kk_ff(3) function returns 0 on success. It returns -1 on failure and
+    sets errno; existing locks are not changed.
+
+  NNOOTTEESS
+
+    This implementation of the _ll_oo_cc_kk_ff(3) function is a wrapper around the
+    _ff_cc_nn_tt_ll(2) function, using F_SETLK, F_SETLKW, and F_GETLK.
+
+  EERRRROORRSS
+
+    The _ll_oo_cc_kk_ff(3) function can fail for the following reasons:
+
+    [EACCES] or [EAGAIN]
+        The function is F_TLOCK or F_TEST and the section is already locked by
+        another process.
+
+    [EAGAIN]
+        The function attempted to lock a file that is mapped with _mm_mm_aa_pp(2).
+
+    [EBADF]
+        The file descriptor is not a valid open file descriptor, or the call
+        is trying to lock the file (F_LOCK or F_TLOCK) and the file isn't open
+        for writing.
+
+    [EINTR]
+        A signal interrupted the execution of the function.
+
+    [EINVAL]
+        The function argument is not one of the ones defined here, or size
+        plus the current offset is less than zero or is greater than the
+        largest possible offset.
+
+    [EOPNOTSUPP]
+        This implementation does not support the locking of files of the type
+        indicated by the file descriptor.
+
+  SSEEEE AALLSSOO
+
+    _a_l_a_r_m(2)
+
+    _c_h_m_o_d(2)
+
+    _c_l_o_s_e(2)
+
+    _c_r_e_a_t(2)
+
+    _f_c_n_t_l(2)
+
+    _f_l_o_c_k(2)
+
+    _m_m_a_p(2)
+
+    _o_p_e_n(2)
+
+    _r_e_a_d(2)
+
+    _w_r_i_t_e(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The lloocckkff function is thread safe.
+
+    The lloocckkff function is not async-signal safe.
+

@@ -1,0 +1,173 @@
+
+
+secure_rpc(3rpc)                                 secure_rpc(3rpc)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <rpc/rpc.h>
+
+       int authdes_getucred(const struct authdes_cred *adc, uid_t
+       *uidp,      gid_t *gidp, short *gidlenp, gid_t *gidlist);
+
+       AUTH *authdes_seccreate(const char *name,  const  unsigned
+       int  window,       const  char  *timehost, const des_block
+       *ckey);
+
+       int getnetname(char name[MAXNETNAMELEN+1]);
+
+       int host2netname(char  name[MAXNETNAMELEN+1],  const  char
+       *host,      const char *domain);
+
+       int  key_decryptsession(const  char *remotename, des_block
+       *deskey);
+
+       int key_encryptsession(const char  *remotename,  des_block
+       *deskey);
+
+       int key_gendes(des_block *deskey);
+
+       int key_setsecret(const char *key);
+
+       int  netname2host(const  char *name, char *host, const int
+       hostlen);
+
+       int netname2user(const  char  *name,  uid_t  *uidp,  gid_t
+       *gidp,      int *gidlenp, gid_t gidlist[NGROUPS]);
+
+       int  user2netname(char  name[MAXNETNAMELEN+1], const uid_t
+       uid,      const char *domain);
+
+DDeessccrriippttiioonn
+       RPC library routines allow C programs  to  make  procedure
+       calls  on  other  machines across the network.  First, the
+       client calls a procedure to send  a  data  packet  to  the
+       server.   Upon  receipt  of the packet, the server calls a
+       dispatch routine to perform  the  requested  service,  and
+       then sends back a reply.
+
+       RPC  supports  various authentication flavors.  Among them
+       are: No authentication.  Traditional UnixWare system-style
+       authentication.  DES encryption-based authentication.  The
+       authdes_getucred and authdes_seccreate routines  implement
+       the  AUTH_DES authentication flavor.  The keyserver daemon
+       keyserv (see must be running for the AUTH_DES  authentica-
+       tion system to work.
+
+   RRoouuttiinneess
+       See  for  the  definition of the AUTH data structure.  int
+       authdes_getucred(const  struct  authdes_cred  *adc,  uid_t
+       *uidp,       gid_t *gidp, short *gidlenp, gid_t *gidlist);
+
+                                                                1
+
+secure_rpc(3rpc)                                 secure_rpc(3rpc)
+
+       authdes_getucred is one of two routines which interface to
+       the  RPC  secure  authentication system known as AUTH_DES.
+       The other is authdes_seccreate.  authdes_getucred is  used
+       on  the server side for converting an AUTH_DES credential,
+       which is operating system independent,  into  an  AUTH_SYS
+       credential.   This  routine returns 1 if it succeeds, 0 if
+       it fails.
+
+       *uidp is set to the user's numerical  ID  associated  with
+       adc.   *gidp  is  set  to the numerical ID of the group to
+       which the user belongs.  *gidlist contains  the  numerical
+       IDs  of  the  other  groups  to  which  the  user belongs.
+       *gidlenp is set to the number of valid group ID entries in
+       *gidlist (see the description of netname2user on this man-
+       ual page).  AUTH  *  authdes_seccreate(const  char  *name,
+       const  unsigned  int  window,       const  char *timehost,
+       const des_block *ckey); authdes_seccreate, the  second  of
+       two  AUTH_DES  authentication  routines,  is  used  on the
+       client side to return an authentication handle  that  will
+       enable  the  use of the secure authentication system.  The
+       first parameter name is the network name, or  ``netname'',
+       of  the  owner  of the server process.  This field usually
+       represents a hostname derived  from  the  utility  routine
+       host2netname,  but  could also represent a user name using
+       user2netname, described below.  The second field is window
+       on  the  validity  of the client credential, given in sec-
+       onds.  A small window is more secure than a large one, but
+       choosing too small of a window will increase the frequency
+       of resynchronizations because of clock drift.   The  third
+       parameter,  timehost, the host's name, is optional.  If it
+       is NULL, then the authentication system will  assume  that
+       the local clock is always in sync with the timehost clock,
+       and will not attempt resynchronizations.  If a timehost is
+       supplied,  however,  then the system will consult with the
+       remote  time   service   whenever   resynchronization   is
+       required.   This  parameter is usually the name of the RPC
+       server itself.  The final parameter ckey is also optional.
+       If  it is NULL, then the authentication system will gener-
+       ate a random DES key to be used for the encryption of cre-
+       dentials.   If  ckey  is  supplied,  then  it will be used
+       instead.  int getnetname(char name[MAXNETNAMELEN+1]); get-
+       netname  installs the unique, operating-system independent
+       netname of the caller  in  the  fixed-length  array  name.
+       Returns  1  if  it  succeeds,  and  0  if  it  fails.  int
+       host2netname(char name[MAXNETNAMELEN+1], const char *host,
+            const  char  *domain); Convert from a domain-specific
+       hostname host to an operating-system independent  netname.
+       Return  1  if  it succeeds, and 0 if it fails.  Inverse of
+       netname2host.  If domain is NULL,  host2netname  uses  the
+       default  domain  name of the machine.  If host is NULL, it
+       defaults to  that  machine  itself.   int  key_decryptses-
+       sion(const    char    *remotename,   des_block   *deskey);
+       key_decryptsession is an interface to the  keyserver  dae-
+       mon,  which is associated with RPC's secure authentication
+
+                                                                2
+
+secure_rpc(3rpc)                                 secure_rpc(3rpc)
+
+       system (AUTH_DES authentication).   User  programs  rarely
+       need  to  call it, or its associated routines key_encrypt-
+       session, key_gendes and key_setsecret.
+
+       key_decryptsession takes a server netname remotename and a
+       DES  key  deskey, and decrypts the key by using the public
+       key of the server and the secret key associated  with  the
+       effective  UID  of the calling process.  It is the inverse
+       of key_encryptsession.  int key_encryptsession(const  char
+       *remotename,  des_block  *deskey); key_encryptsession is a
+       keyserver interface routine.  It takes  a  server  netname
+       remotename and a DES key deskey, and encrypts it using the
+       public key of the server and  the  secret  key  associated
+       with  the effective UID of the calling process.  It is the
+       inverse of key_decryptsession.  This routine returns 0  if
+       it  succeeds,  -1  if  it fails.  int key_gendes(des_block
+       *deskey); key_gendes is a keyserver interface routine.  It
+       is  used  to  ask  the keyserver for a secure conversation
+       key.  Choosing one at "random" is usually not good enough,
+       because  the  common ways of choosing random numbers, such
+       as using the current time, are very easy  to  guess.   int
+       key_setsecret(const  char  *key);  key_setsecret is a key-
+       server interface routine.  It is used to set the  key  for
+       the  effective  UID  of the calling process.  this routine
+       returns 0 if it  succeeds,  -1  if  it  fails.   int  net-
+       name2host(const   char   *name,   char  *host,  const  int
+       hostlen); Convert  from  an  operating-system  independent
+       netname  name to a domain-specific hostname host.  hostlen
+       is the maximum size of host.  Returns 1  if  it  succeeds,
+       and  0  if  it  fails.  Inverse of host2netname.  int net-
+       name2user(const char *name, uid_t *uidp, gid_t *gidp,  int
+       *gidlenp,       gid_t  gidlist[NGROUPS]);  Convert from an
+       operating-system independent netname to a  domain-specific
+       user  ID.   Returns  1  if it succeeds, and 0 if it fails.
+       Inverse of user2netname.
+
+       *uidp is set to the user's numerical  ID  associated  with
+       name.   *gidp  is  set to the numerical ID of the group to
+       which the user belongs.  gidlist  contains  the  numerical
+       IDs  of  the  other  groups  to  which  the  user belongs.
+       *gidlenp is set to the number of valid group ID entries in
+       gidlist.    int  user2netname(char  name[MAXNETNAMELEN+1],
+       const uid_t uid,      const char *domain); Convert from  a
+       domain-specific  username  to an operating-system indepen-
+       dent netname.  Returns 1 if  it  succeeds,  and  0  if  it
+       fails.  Inverse of netname2user.
+
+RReeffeerreenncceess
+
+                                                                3
+

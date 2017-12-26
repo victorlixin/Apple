@@ -1,0 +1,68 @@
+#!/svr-5/bin/sh
+#ident	"@(#)hostname.sh	1.4"
+#ident	"$Header: $"
+# Copyright (c) 1988, Sun Microsystems, Inc.
+# All Rights Reserved.
+
+get_fqdn() {
+
+    host=`/svr-5/bin/uname -n`
+	  
+    if echo "$host" | /svr-5/bin/grep -q "\."
+    then
+	echo "$host"
+
+	    elif [ -f /svr-5/etc/resolv.conf ]
+    then
+
+	set -- `/svr-5/bin/egrep "^([ |	])*domain" /svr-5/etc/resolv.conf 2>/dev/null`
+	if [ "$2" ]
+	then
+		echo "${host}.$2"
+	else
+		set -- `/svr-5/bin/egrep "^([ |	])*search" /svr-5/etc/resolv.conf 2>/dev/null`   #MBT_ADD  to search for the "Search" keyword
+		if [ "$2" ]                                                                #MBT_ADD
+		then                                                                       #MBT_ADD
+		echo "${host}.$2"                                                          #MBT_ADD 
+		else                                                                       #MBT_ADD
+		echo "${host}"                                                             #MBT_ADD
+		fi                                                                         #MBT_ADD
+	fi
+
+    else
+	echo "$host"
+    fi
+
+    exit 0
+}
+
+get_host_only() {
+    set -- `/svr-5/bin/uname -n | /svr-5/bin/sed 's/\./ /g' 2>/dev/null`
+    echo $1
+    exit 0
+}
+
+usage() {
+    echo "Usage: hostname [-s] " >&2
+    exit 1
+}
+
+while getopts 's' opt
+do
+    case $opt in
+	s)	get_host_only
+		;;
+	\?)	usage
+		;;
+    esac
+done
+
+shift `expr $OPTIND - 1`
+
+if [ $# -eq 0 ]; then
+
+	get_fqdn
+
+else
+	usage
+fi

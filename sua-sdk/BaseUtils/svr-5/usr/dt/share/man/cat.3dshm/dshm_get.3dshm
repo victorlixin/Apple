@@ -1,0 +1,234 @@
+
+
+dshm_get(3dshm)                                   dshm_get(3dshm)
+
+SSyynnooppssiiss
+       #include <dshm.h>
+
+       int  dshm_get(key_t key, size_t buffer_size, unsigned long
+       buffer_count, const void* dshmaddr, size_t  map_size,  int
+       ipcflgs, int dshmflgs);
+
+DDeessccrriippttiioonn
+       dshm_get  creates  or  looks up a DSHM segment in a manner
+       similar to Key differences  between  dshm_get  and  shmget
+       are:  for dshm_get, the object size for the application is
+       specified by buffer_size * buffer_count rather than  by  a
+       single size parameter.  the map size is not implied by the
+       object size, and is given as a  separate  parameter.   The
+       map  address  region is specified at segment creation time
+       rather than at attach time  (because  all  processes  must
+       attach a DSHM segment at the same address).  Both dshmaddr
+       and map_size must be multiples of the  value  returned  by
+       dshm_alignment.   In  order  to create a DSHM segment, the
+       caller  must  have  P_PLOCK  privilege.   Physical   pages
+       assigned to DSHM objects are effectively locked.
+
+       If  DSHM_FORCE_UNMAP  is set in dshmflgs upon segment cre-
+       ation, the segment will operate  in  a  special  debugging
+       mode  where  all  mappings are aggressively destroyed when
+       their reference counts go to zero.  This mode  can  expose
+       application bugs where stale copies of buffer pointers are
+       used.
+
+       It is possible for a signal to terminate dshm_get  between
+       the  creation  of a segment by the kernel and its initial-
+       ization  by  the  library.   If  this  occurs,  subsequent
+       attempts  to  attach  the  segment  will  return  an error
+       (EBUSY), and the application must remove and recreate  the
+       segment.
+
+RReettuurrnn vvaalluueess
+       If successful, dshm_get returns a dshmid.
+
+       On failure, dshm_get returns -1 and sets errno to identify
+       the error.
+
+   EErrrroorrss
+       In the following conditions, dshm_get fails and sets errno
+       to: The segment cannot be locked in memory due to insuffi-
+       cient resources.  illegal flag(s) in dshmflgs The  segment
+       exists,  and  buffer_size is non-zero and not equal to the
+       buffer size of the segment.  The segment does  not  exist,
+       and  buffer_size  is  not  a  power  of 2.  buffer_size is
+       greater than DSHM_MAX_BUFFER_SIZE.   The  segment  exists,
+       and  buffer_count exceeds the application buffer count for
+       the segment.  The segment does not exist, and dshmaddr  is
+       not aligned as required.  The segment exists, and map_size
+       exceeds the map size for the segment.   The  segment  does
+
+                                                                1
+
+dshm_get(3dshm)                                   dshm_get(3dshm)
+
+       not  exist,  and  map  size  is  zero or is not aligned as
+       required.  Temporary  attach  of  newly  created  segments
+       failed  due  to  address space conflict.  DSHM is not sup-
+       ported.   Caller  lacks  appropriate  privileges  to  cre-
+       ate/lock  segment.   size  is less than the system-imposed
+       minimum or greater than  the  system-imposed  maximum.   A
+       dynamic shared memory identifier exists for key but opera-
+       tion permission (see as specified by the low-order 9  bits
+       of  ipcflgs would not be granted.  System is not operating
+       in PAE mode.  Large memory must be enabled  by  specifying
+       the  enable_4gb_mem boot parameter.  A dynamic shared mem-
+       ory   identifier   does   not   exist    for    key    and
+       (ipcflgs&IPC_CREAT)  is  false.   A  dynamic shared memory
+       identifier and associated dynamic  shared  memory  segment
+       are  to  be  created,  but the system-imposed limit on the
+       maximum number  of  shared  memory  segments  system-wide,
+       dynamic or otherwise, would be exceeded.  A dynamic shared
+       memory identifier and  associated  dynamic  shared  memory
+       segment are to be created but the amount of available mem-
+       ory is not sufficient to  fill  the  request.   A  dynamic
+       shared   memory   identifier  exists  for  key,  but  both
+       (ipcflgs&IPC_CREAT) and (ipcflgs&IPC_EXCL) are true.  dsh-
+       mid  is not a valid dynamically mapped shared memory iden-
+       tifier.  Operation permission is  denied  to  the  calling
+       process.   The  number of dynamically mapped shared memory
+       segments attached to the calling process would exceed  the
+       system-imposed limit.
+
+EExxaammppllee
+       The  following  is  an  example  code  fragment  for DSHM.
+       dshm_get requires P_PLOCK privilege.  Run as root or see
+
+       Before running the example, enable PAE mode by setting the
+       boot parameter enable_4gb_mem=y in /stand/boot.
+        *  Copyright  1997  The  Santa  Cruz  Operation, Inc. All
+       Rights Reserved.
+        */ /*
+        * program creates a dynamic shared memory segment
+        * maps each dshm buffer and reads data into it
+        */
+
+       #include <dshm.h> #include <fcntl.h>  #include  <signal.h>
+       #include    <errno.h>    #include    <stdio.h>    #include
+       <sys/types.h> #include  <sys/ipc.h>  #include  <sys/shm.h>
+       #include <sys/stat.h>
+
+       #define   GIG               0x40000000  #define  BSZ  4096
+       #define NBS 32
+
+       /*
+        * define to a real raw disk slice
+        * WARNING all data on the slice will be overwritten
+        * slice size must be >= BSZ * NBS bytes
+        */ #define SCRATCH_SLICE "/dev/rdsk/c0b0t0d0XX"
+
+                                                                2
+
+dshm_get(3dshm)                                   dshm_get(3dshm)
+
+       int       fd; int       dshmid, shmid; unsigned long   mp;
+       long           kalignment; dshm_handle_t   dh;
+
+       typedef struct {      void *bufp; } bufhdr_t;
+
+       bufhdr_t *bhp;
+
+       main() {      int i;
+
+            /*        * get shared mem for shared buffer pointers
+       to reside in       *       * Note  in  a  real  app,  this
+       would  be shared with other       * processes.        */
+            if    ((shmid    =    shmget(IPC_PRIVATE,    NBS    *
+       sizeof(bufhdr_t),     IPC_CREAT))==-1){               per-
+       ror("shmget");           exit(1);      }
+
+            /*       * attach shared  buffer  pointers         */
+            if   ((bhp  =  (bufhdr_t  *)shmat(shmid,  0,  0))  ==
+       (bufhdr_t *)-1){           perror("shmat");           shm-
+       ctl(shmid, IPC_RMID, NULL);
+                       exit(1);
+               }
+
+            for (i = 0; i < NBS; i++) {           /*            *
+       initialise  shared  buffer  pointer              */
+                 bhp[i].bufp = (void *)DSHM_NULL;      }
+
+            /*        * map size & map address must be a multiple
+       of       * the value returned  by  dshm_alignment.
+       */        kalignment = dshm_alignment();
+
+            if   ((dshmid   =  dshm_get(IPC_PRIVATE,  /*  key  */
+                               BSZ,        /*   buf    size    */
+                              NBS,        /*  num  of  buffers */
+                              (void*)GIG,    /*   map   addr   */
+                               kalignment,    /*   map   size  */
+                                  IPC_CREAT      |      IPC_PERM,
+                                DSHM_FORCE_UNMAP))   ==   -1   ){
+                 perror("dshmget");                 shmctl(shmid,
+       IPC_RMID, NULL);
+                       exit(1);
+               }
+
+            /*
+             * attach dshm segment
+                *  Note  map  address specified in dshm_get above
+             */      if ((dh = dshm_attach(dshmid,  0,  &mp))  ==
+       (dshm_handle_t)-1)      {                perror("dshmat");
+                 dshm_control(dshmid,      IPC_RMID,       NULL);
+                 shmctl(shmid,          IPC_RMID,          NULL);
+                 exit(1);      }
+
+            /*       * max mappings set by dshm_attach is       *
+       the  maximum  number of concurrent mappings       * by all
+
+                                                                3
+
+dshm_get(3dshm)                                   dshm_get(3dshm)
+
+       users without deadlocking        */       printf("%d:  max
+       mappings  %d\n",getpid(), mp);                 /* open the
+       raw  disk  file  */       if  ((fd  =  open(SCRATCH_SLICE,
+       O_RDWR))==-1){             perror("open");            shm-
+       ctl(shmid, IPC_RMID, NULL);           dshm_control(dshmid,
+       IPC_RMID, NULL);           exit(1);      }
+
+            /*         *  fill  device  with  known data       */
+            for (i = 0; i < NBS; i++) {           uchar_t k[BSZ];
+
+                 memset(k,i,sizeof(k));
+
+                 if   (write(fd,  k,  sizeof(k))  !=  sizeof(k)){
+                      perror("write");                       shm-
+       ctl(shmid,   IPC_RMID,   NULL);                  dshm_con-
+       trol(dshmid,  IPC_RMID,   NULL);                  exit(1);
+                 }      }
+
+            /*         * fill buffers with data       */      for
+       (i = 0;i < NBS; i++) {           /*
+                  * map buffer i            *  system  chooses  a
+       user  virtual  address  in  which             * to map the
+       buffer & returns the address thru            * the  buffer
+       pointer  pointer.               * on return bhp[i].bufp ==
+       address buffer  mapped  at.               */            if
+       (dshm_map(dh,  i,  (const  void  **)&bhp[i].bufp) == -1) {
+                      perror("dshm_map");
+                      dshm_control(dshmid,    IPC_RMID,    NULL);
+                      shmctl(shmid,       IPC_RMID,        NULL);
+                      exit(1);           }
+
+                 pread(fd,    bhp[i].bufp,   BSZ,   BSZ   *   i);
+                 /*             *  we're  done  with  the  buffer
+                      *     unmap     it.                    */
+                 if(dshm_unmap(dh, (void *)bhp[i].bufp) == -1)  {
+                      perror("dshm_unmap");
+                      dshm_control(dshmid,    IPC_RMID,    NULL);
+                      shmctl(shmid,        IPC_RMID,       NULL);
+                      exit(1);           }      }
+
+            dshm_detach(dh);      shmdt(bhp);
+
+            dshm_control(dshmid,   IPC_RMID,   NULL);        shm-
+       ctl(shmid, IPC_RMID, NULL);
+
+            close(fd);
+
+            exit(0); }
+
+RReeffeerreenncceess
+
+                                                                4
+

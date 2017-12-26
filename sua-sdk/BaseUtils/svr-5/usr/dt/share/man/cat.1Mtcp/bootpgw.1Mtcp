@@ -1,0 +1,105 @@
+
+
+bootpgw(1Mtcp)                                     bootpgw(1Mtcp)
+
+SSyynnooppssiiss
+       in.bootpgw [ -i ] [ -s ] [ -t timeout ] [ -D debug_level ]
+       [ -h hop_cnt ] [ -a gw_addr ] [ -w wait_tm ] server
+
+DDeessccrriippttiioonn
+       bootpgw implements a simple BOOTP  gateway  which  can  be
+       used  to forward requests and responses between clients on
+       one subnet and a BOOTP or DHCP  server  (that  is,  or  on
+       another  subnet.  While either bootpd or bootpgw will for-
+       ward BOOTREPLY packets, only bootpgw will forward  BOOTRE-
+       QUEST packets.
+
+       One host on each network segment is normally configured to
+       run bootpgw from inetd by including the following line  in
+       the  file  /etc/inetd.conf:  bootps  dgram/i udp wait root
+       /usr/sbin/in.bootpgw in.bootpgw server The  /i  option  to
+       the  socket type (sock_type) dgram is required in order to
+       identify the interface on which a packet was received  (by
+       activating the IP_RECVIFINDEX option on the socket).
+
+       This  mode  of  operation is referred to as inetd mode and
+       causes bootpgw to be started  only  when  a  boot  request
+       arrives.   If  it  does  not receive another packet within
+       fifteen minutes of the last one it received, it will  exit
+       to conserve system resources.  The -t option controls this
+       timeout (see ``Options'').
+
+       It is also possible to  run  bootpgw  in  standalone  mode
+       (without  inetd)  by  simply invoking it from a shell like
+       any other regular command. This is  not  very  useful  for
+       bootpgw  which  has  very little start up delay because it
+       does not read a configuration file.
+
+       bootpgw automatically detects whether it was invoked  from
+       inetd or from a shell and automatically selects the appro-
+       priate mode. The -s or -i option  may  be  used  to  force
+       standalone  or inetd mode, respectively (see ``Options'').
+
+   OOppttiioonnss
+       Specifies what address to fill in for the gateway address.
+       Since  more  than one address can be assigned to an inter-
+       face, bootpgw will forward packets to the  address  speci-
+       fied.   Sets  the  debug_level  variable that controls the
+       amount of debugging messages generated. For example, -D  1
+       will  set the debugging level to 1.  Recognized values are
+       0, 1, 2, and 3 or greater. Zero generates no messages  and
+       1 to 3 generate increasing amounts of messages. Specifying
+       an integer over 3 has the same result as specifying 3. For
+       compatibility  with  older versions of bootpgw, the option
+       -d (without an argument) will simply increment  the  debug
+       level by one.  Sets the maximum number of hops allowed for
+       requests; bootpgw increments the hop count of the  BOOTRE-
+       QUEST  packet.  The packet is dropped if the hop_cnt limit
+       is reached. The default hop_cnt is 4.  Force  inetd  mode.
+
+                                                                1
+
+bootpgw(1Mtcp)                                     bootpgw(1Mtcp)
+
+       This  option  is  obsolete,  but remains for compatibility
+       with older versions of bootpgw.   Force  standalone  mode.
+       This  option  is  obsolete,  but remains for compatibility
+       with older versions of  bootpgw.   Specifies  the  timeout
+       value  (in minutes) that a bootpgw process will wait for a
+       BOOTP packet before exiting. If no  packets  are  received
+       for timeout minutes, then the program will exit. A timeout
+       value of zero means ``run forever''.  In standalone  mode,
+       this option is forced to zero.  Sets the minimum number of
+       seconds a client must wait before bootpgw will forward its
+       BOOTREQUEST  packet.  The  default  wait_tm  value  is  3.
+       server specifies the name  of  a  BOOTP  server  to  which
+       bootpgw  will forward all BOOTREQUEST packets it receives.
+
+   OOppeerraattiioonn
+       bootpgw listens for any packets sent to  the  bootps  port
+       and forwards any BOOTREPLY packets.
+
+       When  bootpgw  is  started, it determines the address of a
+       BOOTP server whose name is  provided  as  a  command  line
+       parameter.  When bootpgw receives a BOOTREQUEST packet, it
+       sets the ``gateway address'' and ``hop count''  fields  in
+       the  packet and forwards the packet to the BOOTP server at
+       the address determined  earlier.  Requests  are  forwarded
+       only if they indicate that the client has been waiting for
+       at least three seconds.
+
+       During initialization, bootpgw  determines  the  UDP  port
+       numbers  to  be  used by calling getservbyname (see (which
+       normally uses /etc/services).  Two service names (and port
+       numbers)  are  used:  BOOTP  server  listening  port BOOTP
+       client destination port If  the  port  numbers  cannot  be
+       determined using getservbyname, then the values default to
+       bootps=67 and bootpc=68.
+
+FFiilleess
+       internet service numbers
+
+RReeffeerreenncceess
+
+                                                                2
+

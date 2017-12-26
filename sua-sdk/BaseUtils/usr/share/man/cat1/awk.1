@@ -1,0 +1,250 @@
+awk(1)                                                           awk(1)
+
+  aawwkk
+
+  NNAAMMEE
+
+    awk - pattern-directed scanning and processing language
+
+  SSYYNNOOPPSSIISS
+
+    awk [[-F fs]] [[-v var=value]] [['prog' || -f progfile]] [[file ...]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The aawwkk(1) utility scans each input file for lines that match any of a set
+    of patterns specified literally in prog or in one or more files specified
+    as --ff progfile. With each pattern there can be an associated action that
+    will be performed when a line of a file matches the pattern. Each line is
+    matched against the pattern portion of every pattern-action statement; the
+    associated action is performed for each matched pattern. The file name -
+    means the standard input. Any file of the form var=value is treated as an
+    assignment, not a file name, and is executed at the time it would have
+    been opened if it were a file name. The option --vv followed by var=value is
+    an assignment to be done before prog is executed; any number of --vv options
+    may be present. The --FF fs option defines the input field separator to be
+    the regular expression fs.
+
+    An input line is usually made up of fields separated by white space. (To
+    change this default, use the FS built-in variable or the --FF fs option.)
+    The fields are denoted $$11 $$22 ..., while $$00 refers to the entire line.
+
+    A pattern-action statement has the form:
+
+    pattern
+
+    A missing { means print the line; a missing pattern always matches.
+    Pattern-action statements are separated by newlines or semicolons.
+
+    An action is a sequence of statements. A statement can be one of the
+    following, listed in approximately lexical order:
+
+    ##
+        Begin comment; continues to end-of-line.
+
+    bbrreeaakk
+        Leave innermost enclosing ffoorr, ddoo, or wwhhiillee loop.
+
+    ccoonnttiinnuuee
+        Skip to next iteration of innermost enclosing ffoorr, ddoo, or wwhhiillee loop.
+    {{ [ statement ... ] }}
+    ddeelleettee array[ expression]
+        Delete an array element.
+    ddoo statementwwhhiillee(( expression)
+        Execute statement and repeat so long as expression is true.
+    eexxiitt [ expression ]
+        Move immediately to the END action; if in the END action, exit
+        immediately. Exit status is expression.
+
+    expression
+        Commonly var== expression
+    ffoorr (( expression1;; expression2 ;;expression3 )) statement
+        Conditional loop, executing statement so long as expression2 is true.
+        This is equivalent to expression1;; wwhhiillee ((expression2))
+        {{statement;;expression3 }}
+    ffoorr (( variinn array )statement
+        Loop iterating over array contents.
+    iiff (( expression)) statement1 [ else statement2 ]
+        Conditional statement: execute statement1 if expression is true;
+        otherwise, execute statement2
+
+    nneexxtt
+        Skip remaining patterns on this input line and start the next input
+        line.
+    pprriinntt [ expression-list ] [ >> expression ]
+        Print output.
+    pprriinnttff format [ ,, expression-list ] [ >expression ]
+        Print formatted output.
+    rreettuurrnn [ expression ]
+        Return from function.
+    wwhhiillee(( expression)) statement
+        Conditional loop: so long as expression is true, execute statement
+
+    Statements are terminated by semicolons, newlines or right braces. An
+    empty expression-list stands for $$00 . String constants are quoted " "; the
+    usual C escapes are recognized within strings. Expressions take on string
+    or numeric values as appropriate, and are built using the operators + - *
+    / % ^ (exponentiation), and concatenation (indicated by a blank). The
+    operators ! ++ -- += -= *= /= %= ^= > >= < <= == != ?: are also available
+    in expressions. Variables may be scalars, array elements (denoted x[i]) or
+    fields. Variables are initialized to the null string. Array subscripts may
+    be any string, not necessarily numeric; this allows for a form of
+    associative memory. Multiple subscripts such as [i,j,k] are permitted; the
+    constituents are concatenated, separated by the value of SSUUBBSSEEPP.
+
+    The pprriinntt statement prints its arguments separated by the current output
+    field separator and terminated by the output record separator. By default,
+    it prints to standard output. It prints to a file if >file or >>file is
+    present, or on a pipe if |cmd is present.
+
+    The file and cmd arguments can be literal names or parenthesized
+    expressions. Identical string values in different statements denote the
+    same open file. The pprriinnttff statement formats its expression list according
+    to the format similar to _pp_rr_ii_nn_tt_ff(3). The built-in function cclloossee(expr)
+    closes the file or pipe expr.
+
+    The mathematical functions eexxpp(), lloogg(), ssqqrrtt(), ssiinn(), ccooss(), and aattaann22()
+    are built in. Other built-in functions include:
+    lleennggtthh()
+        The length of its argument taken as a string, or of $$00 if no argument.
+    rraanndd()
+        Random number on (0,1).
+    ssrraanndd()
+        Sets seed for rraanndd() and returns the previous seed.
+    iinntt()
+        Truncates to an integer value.
+    ssuubbssttrr((s,, m,, n))
+        The n-character substring of s that begins at position m counted from
+        1.
+    iinnddeexx((s,, t))
+        The position in s where the string t occurs, or 0 if it does not.
+    mmaattcchh((s,, r))
+        The position in s where the regular expression r occurs, or 0 if it
+        does not. The variables RRSSTTAARRTT and RRLLEENNGGTTHH are set to the position and
+        length of the matched string.
+    sspplliitt((s,, a,, fs))
+        Splits the string s into array elements a[1], a[2], ..., a[n], and
+        returns n. The separation is done with the regular expression fs or
+        with the field separator FFSS if fs is not given.
+    ssuubb((r,, t,, s))
+        Substitutes t for the first occurrence of the regular expression r in
+        the string s. If s is not given, $$00 is used.
+    ggssuubb((r,, t,, s))
+        Same as ssuubb(), except that all occurrences of the regular expression
+        are replaced. ssuubb() and ggssuubb() return the number of replacements.
+    sspprriinnttff((fmt,, expr,, ......))
+        The string resulting from formatting eexxpprr... according to the
+        _pp_rr_ii_nn_tt_ff(3) function format fmt.
+    ssyysstteemm((cmd))
+        Executes cmd and returns its exit status.
+
+    The function ggeettlliinnee sets $$00 to the next input record from the current
+    input file; ggeettlliinnee << file sets $$00 to the next record from file. ggeettlliinnee xx
+    sets variable x instead. Finally, cmd || ggeettlliinnee pipes the output of cmd
+    into ggeettlliinnee; each call of ggeettlliinnee returns the next line of output from
+    cmd. In all cases, ggeettlliinnee returns 1 for a successful input, 0 for end of
+    file, and -1 for an error.
+
+    Patterns are arbitrary Boolean combinations (with !! |||| &&&&) of regular
+    expressions and relational expressions. Regular expressions are as in
+    POSIX.2 Extended Regular Expressions (ERE). Isolated regular expressions
+    in a pattern apply to the entire line. Regular expressions may also occur
+    in relational expressions, using the operators ~~ and !!~~ /rree/ is a constant
+    regular expression. Any string (constant or variable) may be used as a
+    regular expression, except in the position of an isolated regular
+    expression in a pattern.
+
+    A pattern may consist of two patterns separated by a comma. In this case,
+    the action is performed for all lines from an occurrence of the first
+    pattern though an occurrence of the second.
+
+    A relational expression is one of the following:
+
+    *     expression matchop regular-expression
+    *     expression relop expression
+    *     expression iinn array-name
+    *     ((expr,,expr,...)) iinn array-name
+
+    where a relop is any of the six relational operators in C, and a matchop
+    is either ~~ (matches) or !!~~ (does not match). A conditional is an
+    arithmetic expression, a relational expression, or a Boolean combination
+    of these.
+
+    The special patterns BBEEGGIINN and EENNDD may be used to capture control before
+    the first input line is read and after the last. BBEEGGIINN and EENNDD do not
+    combine with other patterns.
+
+    The following are variable names with special meanings:
+
+    VVaarriiaabbllee     MMeeaanniinngg
+
+    ARGC         argument count, assignable
+
+    ARGV         argument array, assignable; non-null members are taken as
+                 file names
+
+    ENVIRON      array of environment variables; subscripts are names.
+
+    FILENAME     the name of the current input file
+
+    FNR          ordinal number of the current record in the current file
+
+    FS           regular expression used to separate fields; also set by
+                 option --FF fs
+
+    NF           number of fields in the current record
+
+    NR           ordinal number of the current record
+
+    OFMT         output format for numbers (default "%.6g" )
+
+    OFS          output field separator (default blank)
+
+    ORS          output record separator (default newline)
+
+    RS           input record separator (default newline)
+
+    SUBSEP       separates multiple subscripts (default 034)
+
+    Functions may be defined (at the position of a pattern-action statement)
+    as follows:
+
+    function foo(a, b, c) { ...; return x }
+
+    Parameters are passed by value if scalar and by reference if array name.
+    Functions may be called recursively. Parameters are local to the function;
+    all other variables are global. Thus, local variables may be created by
+    providing excess parameters in the function definition.
+
+  EEXXAAMMPPLLEESS
+
+    Print lines longer than 72 characters:
+
+    length > 72
+
+    Print first two fields in opposite order:
+
+    { print $2, $1 }
+
+    Same, with input fields separated by comma and/or blanks and tabs:
+
+    BEGIN { FS = ",[ \t]*|[ \t]+" }
+          { print $2, $1 }
+
+    Add up first column, print sum and average:
+
+     { s += $1 }
+    END  { print "sum is", s, " average is", s/NR }
+
+  NNOOTTEESS
+
+    There are no explicit conversions between numbers and strings. To force an
+    expression to be treated as a number, add 0 to it. To force it to be
+    treated as a string, concatenate to it.
+
+  SSEEEE AALLSSOO
+
+    _s_e_d(1)
+
+    _p_e_r_l(1)
+

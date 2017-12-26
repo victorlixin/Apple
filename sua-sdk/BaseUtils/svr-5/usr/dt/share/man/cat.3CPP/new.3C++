@@ -1,0 +1,209 @@
+
+
+new(3C++)                                               new(3C++)
+
+SSyynnooppssiiss
+       #include <new>
+
+       namespace std {
+         class bad_alloc;
+         struct nothrow_t {};
+         extern const nothrow_t nothrow;
+         typedef void (*new_handler)();
+         new_handler  set_new_handler(new_handler new_p) throw();
+       }
+         void*       operator        new(std::size_t        size)
+       throw(std::bad_alloc);
+         void*     operator     new(std::size_t    size,    const
+       std::nothrow_t&) throw();
+         void  operator delete(void* ptr) throw();
+         void  operator delete(void* ptr, const  std::nothrow_t&)
+       throw();
+         void*       operator       new[](std::size_t       size)
+       throw(std::bad_alloc);
+         void*    operator    new[](std::size_t    size,    const
+       std::nothrow_t&) throw();
+         void  operator delete[](void* ptr) throw();
+         void      operator     delete[](void*     ptr,     const
+       std::nothrow_t&) throw();
+         void*  operator  new   (std::size_t  size,  void*   ptr)
+       throw();
+         void*   operator   new[](std::size_t  size,  void*  ptr)
+       throw();
+         void  operator delete  (void* ptr, void*) throw();
+         void  operator delete[](void* ptr, void*) throw();
+
+DDeessccrriippttiioonn
+       The header new defines several functions that  manage  the
+       allocation  of  dynamic  storage  in  a  program.  It also
+       defines  components  for  reporting   storage   management
+       errors.
+
+FFuunnccttiioonnss
+       Effects:  The  allocation function called by a new-expres-
+       sion to allocate size bytes of storage suitably aligned to
+       represent any object of that size.
+       Replaceable: A C++ program may define a function with this
+       function signature  that  displaces  the  default  version
+       defined by the C++ Standard library.
+       Required  behavior:  Return a pointer to dynamically allo-
+       cated storage, or else throw a bad_alloc exception.
+       Default behavior: Executes a loop: Within  the  loop,  the
+       function  first  attempts  to allocate the requested stor-
+       age.  In this implementation, this involves a call to  the
+       Standard C library function Returns a pointer to the allo-
+       cated storage if the attempt is successful.  Otherwise, if
+       the  last  argument to set_new_handler was a null pointer,
+       throw bad_alloc.  Otherwise, the function calls  the  cur-
+       rent  new_handler If the called function returns, the loop
+
+                                                                1
+
+new(3C++)                                               new(3C++)
+
+       repeats.  The loop terminates when an attempt to  allocate
+       the  requested  storage  is  successful  or  when a called
+       new_handler function does not return.  Effects:  Same   as
+       above,  except that it is called by a placement version of
+       a new-expression when a C++ program prefers a null pointer
+       result  as  an  error  indication,  instead of a bad_alloc
+       exception.
+       Replaceable: a C++ program may define a function with this
+       function  signature  that  displaces  the  default version
+       defined by the C++ Standard library.
+       Required behavior: Return a pointer to  dynamically  allo-
+       cated  storage,  or  else  return  a  null  pointer.  This
+       nothrow version of operator new returns a pointer obtained
+       as  if  acquired from the ordinary version.  This require-
+       ment is binding on a replacement version of this function.
+       Default  behavior:  Executes a loop:  Within the loop, the
+       function first attempts to allocate the requested storage.
+       Returns  a pointer to the allocated storage if the attempt
+       is  successful.   Otherwise,  if  the  last  argument   to
+       set_new_handler was a null pointer, return a null pointer.
+       Otherwise, the function calls the current new_handler.  If
+       the  called  function returns, the loop repeats.  The loop
+       terminates when an attempt to allocate the requested stor-
+       age  is  successful  or when a called new_handler function
+       does not return.  If the called new_handler function  ter-
+       minates  by  throwing  a bad_alloc exception, the function
+       returns a null pointer.
+       Example: T* p1 = new T;             // throws bad_alloc if
+       it  fails  T*  p2  = new(nothrow) T;    // returns 0 if it
+       fails Effects:  The  deallocation  function  called  by  a
+       delete-expression to render the value of ptr invalid.
+       Replaceable: A C++ program may define a function with this
+       function signature  that  displaces  the  default  version
+       defined by the C++ Standard library.
+       Required  behavior:  Accept a value of ptr that is null or
+       that was returned by an earlier call to the default opera-
+       tor  new(std::size_t)  or  operator  new(std::size_t,const
+       std::nothrow_t&).
+       Default behavior: For a null value  of  ptr,  do  nothing.
+       Any  other  value of ptr shall be a value returned earlier
+       by a call to the  default  operator  new,  which  was  not
+       invalidated   by   an   intervening   call   to   operator
+       delete(void*).  For such a non-null value of ptr, reclaims
+       storage allocated by the earlier call to the default oper-
+       ator new.  Notes: It is  unspecified under what conditions
+       part  or  all of such reclaimed  storage is allocated by a
+       subsequent call to operatornew or  any  of  calloc(3C)  or
+       realloc(3C).   Effects: The allocation function called  by
+       the array form of a new-expression to allocate size  bytes
+       of storage suitably aligned to represent any array  object
+       of that size or smaller.
+       Replaceable: A C++ program can define a function with this
+       function  signature  that  displaces  the  default version
+       defined by the C++ Standard library.
+
+                                                                2
+
+new(3C++)                                               new(3C++)
+
+       Required behavior: Same as for operator  new(std::size_t).
+       This   nothrow   version   of  operator  new[]  returns  a
+       pointer obtained as if acquired from the ordinary version.
+       This  requirement is binding on a replacement ver- sion of
+       this function.
+       Default behavior: Returns  operator  new(size).   Effects:
+       Same  as  above,  except  that it is called by a placement
+       version of a new-expression when a C++ program  prefers  a
+       null  pointer  result as an error indication, instead of a
+       bad_alloc exception.
+       Replaceable: A C++ program can define a function with this
+       function  signature  that  displaces  the  default version
+       defined by the C++ Standard library.
+       Required    behavior:     Same     as     for     operator
+       new(std::size_t,const std::nothrow_t&).
+       Default   behavior:  Returns  operator  new(size,nothrow).
+       Effects: The deallocation function  called  by  the  array
+       form  of  a  delete-expression  to render the value of ptr
+       invalid.
+       Replaceable: A C++ program can define a function with this
+       function  signature  that  displaces  the  default version
+       defined by the C++ Standard library.
+       Required behavior: Accept a value of ptr that is  null  or
+       that   was   returned  by  an  earlier  call  to  operator
+       new[](std::size_t)  or  operator   new[](std::size_t,const
+       std::nothrow_t&).
+       Default  behavior:  For a null value of ptr, does nothing.
+       Any other value of ptr shall be a value  returned  earlier
+       by  a call to the default operator new[](std::size_t)) For
+       such a non-null value of ptr, reclaims  storage  allocated
+       by the earlier call to  the default operator new[].  It is
+       unspecified under what conditions  part  or  all  of  such
+       reclaimed  storage  is  allocated  by a subsequent call to
+       operator new or any of calloc(3C)or realloc(3C).  Returns:
+       ptr.
+       Replaceable: No.
+       Notes: Intentionally performs no other action.
+       Example:  This can be useful for constructing an object at
+       a known address: char place[sizeof(Something)]; Something*
+       p = new (place) Something(); Returns: ptr.
+       Replaceable: No.
+       Notes:  Intentionally  performs no other action.  Effects:
+       Intentionally performs no action.
+       Replaceable: No.
+       Notes: Default function  called  for  a  placement  delete
+       expression.   Complements default placement new.  Effects:
+       Intentionally performs no action.
+       Replaceable: No.
+       Notes: Default  function  called  for  a  placement  array
+       delete  expression.   Complements default placement new[].
+       The type of a handler function to be  called  by  operator
+       new()  or  operator  new[]()  when  they  cannot satisfy a
+       request for additional storage.
+       Required behavior:A new_handler shall perform one  of  the
+
+                                                                3
+
+new(3C++)                                               new(3C++)
+
+       following:  make more storage available for allocation and
+       then return; throw an exception of  type  bad_alloc  or  a
+       class  derived  from  bad_alloc;  call  either  abort() or
+       exit(); Default  behavior:  The  implementation's  default
+       new_handler   throws   an  exception  of  type  bad_alloc.
+       Effects: Establishes the function designated by  new_p  as
+       the current new_handler.
+       Returns: The previous new_handler.
+
+   CCllaasssseess
+       namespace std {
+         class bad_alloc : public exception {
+         public:
+           bad_alloc() throw();
+           bad_alloc(const bad_alloc&) throw();
+           bad_alloc& operator=(const bad_alloc&) throw();
+           virtual ~bad_alloc() throw();
+           virtual const char* what() const throw();
+         };  }  The  class  bad_alloc defines the type of objects
+       thrown as exceptions by the  implementation  to  report  a
+       failure  to  allocate  storage.   Effects:  Constructs  an
+       object of class bad_alloc.  Effects: Copies an  object  of
+       class bad_alloc.  Returns: The string std::bad_alloc.
+
+RReeffeerreenncceess
+
+                                                                4
+

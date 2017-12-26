@@ -1,0 +1,164 @@
+makedepend(1X11R5)                                   makedepend(1X11R5)
+
+  mmaakkeeddeeppeenndd
+
+  NNAAMMEE
+
+    makedepend - create dependencies in makefiles
+
+  SSYYNNOOPPSSIISS
+
+    makedepend [[-Dname=def]] [[-Dname]] [[-Iincludedir]]
+               [[-a]] [[-fmakefile]] [[-oobjsuffix]]
+               [[-pobjprefix]] [[-sstring]] [[-wwidth]]
+               [[-- --otheroptions - -]]sourcefile ...
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The mmaakkeeddeeppeenndd(1X11R5) utility reads each sourcefile in sequence and
+    parses it like a C-preprocessor, processing all ##iinncclluuddee, ##ddeeffiinnee, ##uunnddeeff,
+    ##iiffddeeff, ##iiffnnddeeff, ##eennddiiff, ##iiff and ##eellssee directives so that it can determine
+    which ##iinncclluuddee,, directives would be used in a compilation. Any ##iinncclluuddee,,
+    directives can reference files having other ##iinncclluuddee directives, and
+    parsing will occur in these files as well.
+
+    Every file that a sourcefile includes, directly or indirectly,
+    mmaakkeeddeeppeenndd(1X11R5) calls a "dependency". These dependencies are written to
+    a mmaakkeeffiillee in such a way that mmaakkee(1) will know which object files must be
+    recompiled when a dependency has changed.
+
+    By default, mmaakkeeddeeppeenndd(1X11R5) places its output in mmaakkeeffiillee if such a
+    file exists. Otherwise, mmaakkeeddeeppeenndd(1X11R5) places the output in MMaakkeeffiillee.
+    An alternate makefile can be specified with the --ff option. The
+    mmaakkeeddeeppeenndd(1X11R5) utility first searches the makefile for the line:
+
+    # DO NOT DELETE THIS LINE -- make depend depends on it.
+
+    or one provided with the --ss option, as a delimiter for the dependency
+    output. If mmaakkeeddeeppeenndd(1X11R5) finds such a line, it will delete everything
+    following the line to the end of the makefile and put the output after
+    this line. If mmaakkeeddeeppeenndd(1X11R5) does not find such a line, the program
+    will append the string to the end of the makefile and place the output
+    after the string. For each sourcefile appearing on the command line,
+    mmaakkeeddeeppeenndd(1X11R5) puts lines in the makefile of the form:
+
+     sourcefile.o: dfile ...
+
+    In this line, "sourcefile.o" is the name from the command line with its
+    suffix replaced by ".o"; "dfile" is a dependency that was discovered in an
+    ##iinncclluuddee directive while parsing sourcefile or one of the files it
+    included.
+
+  EEXXAAMMPPLLEE
+
+    Normally, mmaakkeeddeeppeenndd(1X11R5) will be used in a makefile target so that
+    typing "make depend" will bring the dependencies up-to-date for the
+    makefile. For example,
+
+    SRCS = file1.c file2.c ...
+    CFLAGS = -O -DHACK -I../catdog -xyz
+    depend:
+            makedepend -- $(CFLAGS) -- $(SRCS)
+
+  OOPPTTIIOONNSS
+
+    The mmaakkeeddeeppeenndd(1X11R5) utility will ignore any option that it does not
+    understand so that you can use the same arguments that you would for
+    cccc(1).
+    --DDname==def
+    --DDname
+        Define. This places a definition for name in the mmaakkeeddeeppeenndd(1X11R5)
+        symbol table. Without ==def, the symbol becomes defined as "1".
+    --IIincludedir
+        Include directory. This option tells mmaakkeeddeeppeenndd(1X11R5) to prepend
+        includedir to its list of directories to search when it encounters a
+        ##iinncclluuddee directive. By default, mmaakkeeddeeppeenndd(1X11R5) only searches
+        $$IINNTTEERRIIXX__RROOOOTT//uussrr//iinncclluuddee.
+
+    --aa
+        Append the dependencies to the end of the file instead of replacing
+        them.
+    --ffmakefile
+        File name. This allows you to specify an alternate makefile in which
+        mmaakkeeddeeppeenndd(1X11R5) can place its output.
+    --ooobjsuffix
+        Object file suffix. Some systems can have object files with a suffix
+        other than ".o". This option allows you to specify another suffix,
+        such as ".b" with --oo..bb or ":obj" with --oo::oobbjj and so forth.
+    --ppobjprefix
+        Object file prefix. The prefix is prepended to the name of the object
+        file. This is usually used to designate a different directory for the
+        object file. The default is the empty string.
+    --ssstring
+        Starting string delimiter. This option permits you to specify a
+        different string for mmaakkeeddeeppeenndd(1X11R5) to look for in the makefile.
+    --wwwidth
+        Line width. Normally, mmaakkeeddeeppeenndd(1X11R5) ensures that every output
+        line that it writes is no wider than 78 characters for the sake of
+        readability. This option enables you to change this width.
+    ---- options----
+        If mmaakkeeddeeppeenndd(1X11R5) encounters a double hyphen (----) in the argument
+        list, then any unrecognized argument following it will be silently
+        ignored; a second double hyphen terminates this special treatment. In
+        this way, mmaakkeeddeeppeenndd(1X11R5) can be made to safely ignore esoteric
+        compiler arguments that might normally be found in a CFLAGS mmaakkee(1)
+        macro (see the EXAMPLE section). All options that mmaakkeeddeeppeenndd(1X11R5)
+        recognizes and which appear between the pair of double hyphens are
+        processed normally.
+
+  AALLGGOORRIITTHHMM
+
+    The approach used in this program enables it to run an order of magnitude
+    faster than any other "dependency generator" I have ever seen. Central to
+    this performance are two assumptions: that all files compiled by a single
+    makefile will be compiled with roughly the same --II and --DD options; and
+    that most files in a single directory will include mostly the same files.
+
+    Given these assumptions, mmaakkeeddeeppeenndd(1X11R5) expects to be called once for
+    each makefile, with all source files that are maintained by the makefile
+    appearing on the command line. It parses each source and include file
+    exactly once, maintaining an internal symbol table for each. Thus, the
+    first file on the command line will take an amount of time proportional to
+    the amount of time that a normal C preprocessor takes. On subsequent
+    files, however, if it encounters an include file that it has already
+    parsed, it does not parse it again.
+
+    For example, imagine you are compiling two files, ffiillee11..cc and ffiillee22..cc.
+    They each include the header file hheeaaddeerr..hh, and the file hheeaaddeerr..hh in turn
+    includes the files ddeeff11..hh and ddeeff22..hh. When you run the command
+
+    makedepend file1.c file2.c
+
+    mmaakkeeddeeppeenndd(1X11R5) will parse ffiillee11..cc and consequently, hheeaaddeerr..hh, and then
+    ddeeff11..hh and ddeeff22..hh.. It then decides that the dependencies for this file are
+
+    file1.o: header.h def1.h def2.h
+
+    But when the program parses ffiillee22..cc and discovers that it, too, includes
+    hheeaaddeerr..hh,, it does not parse the file, but simply adds hheeaaddeerr..hh,, ddeeff11..hh and
+    ddeeff22..hh to the list of dependencies for ffiillee22..oo
+
+  SSEEEE AALLSSOO
+
+    _c_c
+
+    _m_a_k_e
+
+  BBUUGGSS
+
+    If you do not have the source for ccpppp(1), the Berkeley C preprocessor,
+    mmaakkeeddeeppeenndd(1X11R5) will be compiled in such a way that all ##iiff directives
+    will evaluate to "false" regardless of their actual value. This can cause
+    the wrong ##iinncclluuddee directives to be evaluated. The mmaakkeeddeeppeenndd(1X11R5)
+    utility should simply have its own parser written for ##iiff expressions.
+
+    Imagine you are parsing two files, ffiillee11..cc and ffiillee22..cc. Each includes the
+    file ddeeff..hh. The list of files that ddeeff..hh includes might truly be different
+    when ddeeff..hh is included by ffiillee11..cc from when it is included by ffiillee22..cc But
+    once mmaakkeeddeeppeenndd(1X11R5) arrives at a list of dependencies for a file, it
+    cannot be changed.
+
+  AAUUTTHHOORR
+
+    Todd Brunhoff, Tektronix, Inc. and MIT Project Athena
+

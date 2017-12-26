@@ -1,0 +1,206 @@
+tty(4)                                                           tty(4)
+
+  ttttyy
+
+  NNAAMMEE
+
+    tty - general terminal interface
+
+  SSYYNNOOPPSSIISS
+
+    #include <sys/ioctl.h>
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    This section describes the interface to the terminal drivers in the
+    system.
+
+  TTeerrmmiinnaall ssppeecciiaall ffiilleess
+
+    Each terminal on the system usually has a terminal special device file
+    associated with it in the directory //ddeevv// (for example, //ddeevv//ttttyynn0022). When
+    a user logs into the system on one of these terminals, the system has
+    already opened the associated device and prepared the line for normal
+    interactive use. There is also a special case of a terminal file that
+    connects not to a hardware terminal port, but to another program on the
+    other side. These special terminal devices are called ptys and provide the
+    mechanism necessary to give users the same interface to the system when
+    logging in over a network (using tteellnneett(1) for example.) Even in these
+    cases the details of how the terminal file was opened and set up is
+    already handled by special software in the system. Thus, users do not
+    normally need to worry about the details of how these lines are opened or
+    used.
+
+    When an interactive user logs in, the system prepares the line to behave
+    in a certain way (called a line discipline the particular details of which
+    is described in ssttttyy(1) at the command level, and in tteerrmmiiooss(4) at the
+    programming level. A user may be concerned with changing settings
+    associated with his particular login terminal and should refer to the
+    preceding man pages for the common cases. The remainder of this man page
+    is concerned with describing details of using and controlling terminal
+    devices at a low level, such as that possibly required by a program
+    wishing to provide features similar to those provided by the system.
+
+  LLiinnee ddiisscciipplliinneess
+
+    A terminal file is used like any other file in the system in that it can
+    be opened, read, and written to using standard system calls. For each
+    existing terminal file, there is a software processing module called a
+    line discipline is associated with it. The line discipline essentially
+    glues the low level device driver code with the high level generic
+    interface routines (such as _rr_ee_aa_dd(2) and _ww_rr_ii_tt_ee(2)), and is responsible for
+    implementing the semantics associated with the device. When a terminal
+    file is first opened by a program, the default line discipline called the
+    termios line discipline is associated with the file. This is the primary
+    line discipline that is used in most cases and provides the semantics that
+    users normally associate with a terminal. When the termios line discipline
+    is in effect, the terminal file behaves and is operated according to the
+    rules described in tteerrmmiiooss(4). Please refer to that man page for a full
+    description of the terminal semantics. The operations described here
+    generally represent features common across all line disciplines however
+    some of these calls may not make sense in conjunction with a line
+    discipline other than termios, and some may not be supported by the
+    underlying hardware (or lack thereof, as in the case of ptys).
+
+  TTeerrmmiinnaall ffiillee ooppeerraattiioonnss
+
+    The majority of terminal settings can be handled through the tc family of
+    interfaces. TTeerrmmiiooss(4) defines them as function calls, not _ii_oo_cc_tt_ll(2)
+    requests. The following section lists the available _ii_oo_cc_tt_ll(2) requests. The
+    name of the request, a description of its purpose, and the typed argp
+    parameter (if any) are listed. For example, the first entry says
+
+    TIOCGWINSZ
+
+    and would be called on the terminal associated with file descriptor zero
+    by the following code fragment:
+
+    struct winsize ws;
+    ioctl(0, TIOCGWINSZ, &ws);
+
+  TTeerrmmiinnaall ffiillee rreeqquueesstt ddeessccrriippttiioonnss
+
+    TIOCSETD intldisc
+        Change to a new line discipline, indicated by ldisc. Line disciplines
+        are define in <<ssyyss//tteerrmmiiooss..hh>>; currently only TTYDISC (termios
+        interactive line discipline) is supported.
+    TIOCGETD intldisc
+        Get current line disciple in ldisc.
+    TIOCSBRK void
+        Set terminal hardware into BREAK condition.
+    TIOCCBRK void
+        Clear terminal hardware BREAK condition.
+    TIOCSDTR void
+        Assert data terminal ready (DTR).
+    TIOCCDTR void
+        Clear data terminal ready (DTR).
+    TIOCSRTS void
+        Assert request to send (RTS).
+    TIOCCRTS void
+        Clear request to send (RTS).
+    TIOCGPGRP int *tpgrp
+        Return current process group associated with the terminal in the
+        integer pointed to by tpgrp.
+    TIOCSPGRP int *tpgrp
+        Associate terminal with process group number in the integer pointed to
+        by tpgrp.
+    TIOCGETA struct termios *term
+        Place current value of termios state associated with device in the
+        structure pointed to by term.
+    TIOSGETA struct termios *term
+        Immediately set termios state associated with device, using data in
+        the structure pointed to by term.
+    TIOSGETAW struct termios *term
+        Wait for output to complete, then set termios state associated with
+        device, using data in the structure pointed to by term.
+    TIOSGETAF struct termios *term
+        Wait for output to complete, clear pending input, then set termios
+        state associated with device, using data in the structure pointed to
+        by term.
+    TIOSGETAR struct termios *term
+        Clear pending input, then set termios state associated with device,
+        using data in the structure pointed to by term.
+    TIOCOUTQ int *num
+        Place current number of bytes in the output queue in the integer
+        pointed to by num.
+    TIOCSTI char *cp
+        Simulate typed input. Pretend the terminal received the character
+        pointed to by cp.
+    TIOCSTOP void
+        Stop output on the terminal (like typing ^S at the keyboard).
+    TIOCSTART void
+        Start output on the terminal (like typing ^Q at the keyboard).
+    TIOCSCTTY void
+        Make the terminal the controlling terminal for the process (the
+        process should not currently have a controlling terminal).
+    TIOCDRAIN void
+        Wait until all output is drained.
+    TIOCEXCL void
+        Set exclusive use on the terminal; no further opens are permitted.
+    TIOCNXCL void
+        Clear exclusive use on the terminal.
+    TIOCFLUSH int *what
+        Clear input or output queue, depending on value of integer pointed to
+        by what. If the integer contains the FREAD bit defined in ssyyss//ffiillee..hh,
+        the input queue is cleared. If it contains the FWRITE bit, the output
+        queue is clear. If it is zero, both queues are cleared.
+    TIOCGWINSZ struct winsize *ws
+        Put the window size information associated with the terminal in the
+        wwiinnssiizzee structure pointed to by ws. The window size structure contains
+        the number of rows and columns (and pixels if appropriate) of the
+        devices attached to the terminal. It is set by user software and is
+        the means by which most full-screen oriented programs determine the
+        screen size. The wwiinnssiizzee structure is defined in <<ssyyss//iiooccttll..hh>>.
+    TIOCSWINSZ struct winsize *ws
+        Set the window size associated with the terminal to be the value in
+        the wwiinnssiizzee structure pointed to by ws (see above).
+    TIOCCONS int *on
+        Redirect kernel console output depending on the value of the integer
+        pointed to by on. If it is non-zero, redirect kernel console output to
+        this terminal; if it is zero, redirect kernel console output back to
+        the normal console.
+    TIOCMSET int *state
+        The integer pointed to by state contains bits that correspond to modem
+        states. this call sets the terminal modem state to that represented by
+        state. The defined variables and modem states are:
+        CM_DTR        Data Terminal Ready
+
+        TIOCM_RTS     Request To Send
+
+        TIOCM_CTS     Clear To Send
+
+        TIOCM_CAR     Carrier Detect
+
+        TIOCM_CD      Carrier Detect
+
+        TIOCM_RNG     Ring Indication
+
+        TIOCM_RI      Ring Indication
+
+        TIOCM_DSR     Data Set Ready
+    TIOCMGET int *state
+        Return current state of the terminal modem lines; see TIOCMSET for a
+        description of bits that can be set in state.
+    TIOCMBIS int *state
+        The bits in the integer pointed to by state represent modem state, but
+        they are OR-ed with the current state.
+    TIOCMBIC int *state
+        The bits in the integer pointed to by state represent modem state, but
+        each bit that is on in state is cleared in the terminal.
+
+  SSEEEE AALLSSOO
+
+    _s_t_t_y(1)
+
+    _f_c_n_t_l(2)
+
+    _i_o_c_t_l(2)
+
+    _t_c_g_e_t_a_t_t_r(2)
+
+    _t_c_s_e_t_a_t_t_r(2)
+
+    _p_t_y(4)
+
+    _t_e_r_m_i_o_s(4)
+

@@ -1,0 +1,203 @@
+
+
+ostream(3C++)                                       ostream(3C++)
+
+SSyynnooppssiiss
+       #include <iostream.h>
+
+       typedef  long  streamoff,  streampos;  class ios { public:
+            enum seek_dir { beg, cur, end };       enum open_mode
+       {  in,  out,  ate,  app,  trunc,  nocreate,  noreplace } ;
+            enum {  skipws=01,               left=02,   right=04,
+       internal=010,                dec=020,  oct=040,  hex=0100,
+                      showbase=0200,    showpoint=0400,    upper-
+       case=01000,  showpos=02000,              scientific=04000,
+       fixed=010000,             unitbuf=020000, stdio=040000  };
+            // and lots of other stuff, see ios(3C++) ...  } ;
+
+       class     ostream     :     public     ios    {    public:
+                 ostream(streambuf*);          ostream&  flush();
+            int  opfx();                     ostream&  put(char);
+            ostream&  seekp(streampos);
+            ostream&  seekp(streamoff,                 seek_dir);
+            streampos tellp();       ostream&  write(const  char*
+       ptr,  int  n);       ostream&  write(const  unsigned char*
+       ptr,  int  n);        ostream&  operator<<(const   char*);
+            ostream&  operator<<(char);          ostream&  opera-
+       tor<<(short);                   ostream&  operator<<(int);
+            ostream&  operator<<(long);          ostream&  opera-
+       tor<<(float);                ostream&  operator<<(double);
+            ostream&  operator<<(long                    double);
+            ostream&  operator<<(unsigned                  char);
+            ostream&  operator<<(unsigned                 short);
+            ostream&  operator<<(unsigned                   int);
+            ostream&  operator<<(unsigned                  long);
+            ostream&  operator<<(void*);         ostream&  opera-
+       tor<<(streambuf*);           ostream&  operator<<(ostream&
+       (*)(ostream&));      ostream&  operator<<(ios& (*)(ios&));
+       };
+
+       class    ostream_withassign    :    public    ostream    {
+                 ostream_withassign();           ostream&  opera-
+       tor=(ostream&);           ostream&  operator=(streambuf*);
+            ostream_withassign& operator=(ostream_withassign&);
+       };
+
+       extern  ostream_withassign cout; extern ostream_withassign
+       cerr; extern ostream_withassign clog;
+
+       ostream&  endl(ostream&)  ;   ostream&  ends(ostream&)   ;
+       ostream&  flush(ostream&)      ;      ios& dec(ios&)     ;
+       ios& hex(ios&) ; ios& oct(ios&) ;
+
+DDeessccrriippttiioonn
+       ostreams support insertion  (storing)  into  a  streambuf.
+       These  are commonly referred to as output operations.  The
+       ostream  member  functions  and  related   functions   are
+       described below.
+
+                                                                1
+
+ostream(3C++)                                       ostream(3C++)
+
+       In the following descriptions, assume:
+       -- outs is an ostream.
+       -- outswa is an ostream_withassign.
+       -- outsp is an ostream*.
+       -- c is a char.
+       -- ptr is a char* or unsigned char*.
+       -- sb is a streambuf*
+       -- i and n are ints.
+       -- pos is a streampos.
+       -- off is a streamoff.
+       -- dir is a seek_dir.
+       -- manip is a function with type ostream& (*)(ostream&).
+
+   CCoonnssttrruuccttoorrss aanndd aassssiiggnnmmeenntt::
+       Initializes  ios  state variables and associates buffer sb
+       with the ostream.  Does no initialization.  This allows  a
+       file  static  variable of this type (cout, for example) to
+       be used before it is constructed, provided it is  assigned
+       to  first.   Associates  sb  with  swa and initializes the
+       entire state of outswa.  Associates ins->rdbuf() with  swa
+       and initializes the entire state of outswa.
+
+   OOuuttppuutt pprreeffiixx ffuunnccttiioonn::
+       If outs's error state is nonzero, returns immediately.  If
+       outs.tie() is non-null, it is flushed.   Returns  non-zero
+       except when outs's error state is nonzero.
+
+   OOuuttppuutt ssuuffffiixx ffuunnccttiioonn::
+       Performs  ``suffix'' actions before returning from insert-
+       ers.  If ios::unitbuf is set, osfx() flushes the  ostream.
+       If ios::stdio is set, osfx() flushes stdout and stderr.
+
+       osfx()  is  called by all predefined inserters, and should
+       be called by user-defined inserters  as  well,  after  any
+       direct manipulation of the streambuf.  It is not called by
+       the binary output functions.
+
+   FFoorrmmaatttteedd oouuttppuutt ffuunnccttiioonnss ((iinnsseerrtteerrss))::
+       First calls outs.opfx() and if that returns 0, does  noth-
+       ing.   Otherwise  inserts  a sequence of characters repre-
+       senting x into outs.rdbuf().  Errors are indicated by set-
+       ting the error state of outs.  outs is always returned.
+
+       x  is  converted into a sequence of characters (its repre-
+       sentation) according to rules that depend on x's type  and
+       outs's format state flags and variables (see Inserters are
+       defined for the following types, with conversion rules  as
+       described  below:  The  representation  is the sequence of
+       characters up to (but not including) the terminating  null
+       of the string x points at.  If x is positive the represen-
+       tation contains a sequence of decimal, octal, or hexadeci-
+       mal  digits  with  no  leading  zeros according to whether
+       ios::dec, ios::oct, or ios::hex, respectively, is  set  in
+       ios's  format  flags.   If  none  of  those flags are set,
+
+                                                                2
+
+ostream(3C++)                                       ostream(3C++)
+
+       conversion defaults to decimal.  If x is zero, the  repre-
+       sentation  is  a  single zero character(0).  If x is nega-
+       tive, decimal conversion converts it to a minus  sign  (-)
+       followed   by  decimal  digits.   If  x  is  positive  and
+       ios::showpos is set, decimal conversion converts it  to  a
+       plus  sign (+) followed by decimal digits.  The other con-
+       versions treat all values as unsigned.   If  ios::showbase
+       is  set in ios's format flags, the hexadecimal representa-
+       tion contains 0x before the hexadecimal digits, or  0X  if
+       ios::uppercase is set.  If ios::showbase is set, the octal
+       representation contains a leading 0.   Pointers  are  con-
+       verted  to integral values and then converted to hexadeci-
+       mal numbers as if ios::showbase were set.   The  arguments
+       are converted according to the current values of outs.pre-
+       cision(), outs.width() and outs's format flags ios::scien-
+       tific,  ios::fixed,  and ios::uppercase.  (See The default
+       value for outs.precision() is 6.  If  neither  ios::scien-
+       tific  nor  ios::fixed  is set, either fixed or scientific
+       notation is chosen for the  representation,  depending  on
+       the value of x.  No special conversion is necessary.
+
+       After  the  representation  is determined, padding occurs.
+       If outs.width() is greater than 0 and  the  representation
+       contains  fewer  than outs.width() characters, then enough
+       outs.fill() characters are added to bring the total number
+       of  characters  to  ios.width().   If  ios::left is set in
+       ios's format flags, the sequence  is  left-adjusted,  that
+       is,  characters  are added after the characters determined
+       above.  If ios::right is set, the padding is added  before
+       the characters determined above.  If ios::internal is set,
+       the padding is added after any leading sign or base  indi-
+       cation and before the characters that represent the value.
+       ios.width() is reset to 0, but all other format  variables
+       are  unchanged.  The resulting sequence (padding plus rep-
+       resentation)   is   inserted   into   outs.rdbuf().     If
+       outs.opfx()  returns  non-zero, the sequence of characters
+       that  can  be  fetched   from   sb   are   inserted   into
+       outs.rdbuf().  Insertion stops when no more characters can
+       be fetched from sb.   No  padding  is  performed.   Always
+       returns outs.
+
+   UUnnffoorrmmaatttteedd oouuttppuutt ffuunnccttiioonnss::
+       Inserts  c into outs.rdbuf().  Sets the error state if the
+       insertion fails.  Inserts the n characters starting  at  s
+       into  outs.rdbuf().   These  characters  may include zeros
+       (i.e., s need not be a null terminated string).
+
+   OOtthheerr mmeemmbbeerr ffuunnccttiioonnss::
+       Storing characters into a streambuf does not always  cause
+       them  to  be consumed (e.g., written to the external file)
+       immediately.  flush() causes any characters that may  have
+       been stored but not yet consumed to be consumed by calling
+       outs.rdbuf()->sync.  Equivalent to manip(outs).  Syntacti-
+       cally   this   looks  like  an  insertion  operation,  but
+
+                                                                3
+
+ostream(3C++)                                       ostream(3C++)
+
+       semantically it does an arbitrary  operation  rather  than
+       converting  manip  to  a  sequence of characters as do the
+       insertion   operators.    Predefined   manipulators    are
+       described below.
+
+   PPoossiittiioonniinngg ffuunnccttiioonnss::
+       Repositions outs.rdbuf()'s put pointer.  See for a discus-
+       sion  of  positioning.   Repositions  outs.rdbuf()'s   put
+       pointer.   See  for a discussion of positioning.  The cur-
+       rent position of outs.rdbuf()'s put pointer.   See  for  a
+       discussion of positioning.
+
+   MMaanniippuullaattoorrss::
+       Ends a line by inserting a newline character and flushing.
+       Ends a string by inserting a null (0) character.   Flushes
+       outs.   Sets  the  conversion base format flag to 10.  See
+       Sets the conversion base format flag to 16.  See Sets  the
+       conversion base format flag to 8.  See
+
+RReeffeerreenncceess
+
+                                                                4
+

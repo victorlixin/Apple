@@ -1,0 +1,82 @@
+
+
+ioctl(2)                                                 ioctl(2)
+
+SSyynnooppssiiss
+       #include <unistd.h> #include <stropts.h>
+
+       int ioctl(int fildes, int request, ... /* arg */);
+
+DDeessccrriippttiioonn
+       ioctl  performs  a variety of control functions on devices
+       and STREAMS.  For non-STREAMS files,  the  functions  per-
+       formed by this call are device-specific control functions.
+       request and an optional third argument with  varying  type
+       are passed to the file designated by fildes and are inter-
+       preted by the device driver.  This  control  is  not  fre-
+       quently  used  on  non-STREAMS  devices,  where  the basic
+       input/output functions are usually performed  through  the
+       and system calls.
+
+       For STREAMS files, specific functions are performed by the
+       ioctl call as described in
+
+       fildes is an open file descriptor that refers to a device.
+       request  selects  the control function to be performed and
+       depends on the device being addressed.  arg  represents  a
+       third  argument  that  has  additional information that is
+       needed by this specific device to  perform  the  requested
+       function.   The data type of arg depends on the particular
+       control request, but it is either an int or a pointer to a
+       device-specific data structure.
+
+       In  addition  to  device-specific  and  STREAMS functions,
+       generic functions are provided by  more  than  one  device
+       driver, for example, the general terminal interface [see
+
+   RReettuurrnn vvaalluueess
+       On  success,  ioctl  returns  a  non-negative integer that
+       depends on the device control function.  On failure, ioctl
+       returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       In  the  following  conditions, ioctl fails and sets errno
+       to: The type of access requested on the file designated by
+       fildes  is  denied.   fildes  is  not  a  valid  open file
+       descriptor.  fildes is not associated  with  a  character-
+       special file that accepts control functions.  A signal was
+       caught during the ioctl system call.
+
+       ioctl also fails if the device driver  detects  an  error.
+       In  this  case,  the error is passed through ioctl without
+       change to the caller.  A particular driver might not  have
+       all  the  following  error cases.  In the following condi-
+       tions, requests to device drivers may fail and  set  errno
+       to:  request  requires a data transfer to or from a buffer
+       pointed to by arg, but some part of the buffer is  outside
+       the  process's  allocated  space.   request  or arg is not
+       valid for  this  device.   Some  physical  I/O  error  has
+
+                                                                1
+
+ioctl(2)                                                 ioctl(2)
+
+       occurred.   The  request and arg are valid for this device
+       driver, but the service requested cannot be  performed  on
+       this  particular subdevice.  fildes is on a remote machine
+       and the link to that machine is no longer active.
+
+       STREAMS errors are described in
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Open file descriptors are a process resource and available
+       to  any  sibling  thread; if used concurrently, actions by
+       one thread can interfere with those of a sibling.
+
+       While one thread is blocked, siblings might still be  exe-
+       cuting.
+
+                                                                2
+

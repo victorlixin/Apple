@@ -1,0 +1,76 @@
+
+
+sigwait(2)                                             sigwait(2)
+
+SSyynnooppssiiss
+       #include <signal.h>
+
+       int sigwait(sigset_t *set);
+
+DDeessccrriippttiioonn
+       This function atomically chooses and clears a pending sig-
+       nal from set and returns the number of the signal  chosen.
+       If  no  signal  in set is pending at the time of the call,
+       the calling function shall be suspended until one or  more
+       signals  become pending.  This suspension is indefinite in
+       extent.
+
+       The set of signals remains blocked after return.
+
+       An application should not mix use of sigwait and sigaction
+       for  a  given  signal  number  because  the results may be
+       unpredictable.
+
+   RReettuurrnn vvaalluueess
+       Upon successful completion,  sigwait  returns  the  signal
+       number  of  the  received  signal.   Otherwise, a negative
+       value is returned and errno is set to indicate the  error.
+
+   EErrrroorrss
+       If any of the following conditions occurs, sigwait returns
+       a negative value  and  sets  errno  to  the  corresponding
+       value:
+       set  contains  an invalid or unsupported signal number set
+       points to an illegal address.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       The sigwait system call allows a multithreaded application
+       to use a synchronous organization for signal handling.
+
+   UUssaaggee
+       The  semantics  of sigwait make it ideal for a thread that
+       will be dedicated to handling certain signal types  for  a
+       process.  The functionality that might have been placed in
+       a separate handler function  could  be  placed  after  the
+       return  from sigwait to be executed once a signal arrives.
+       Once handling is complete, the thread could  call  sigwait
+       again to block itself until arrival of the next signal.
+
+       To  be  sure  that  signals  are delivered to the intended
+       thread: All threads in the process (including  the  thread
+       that  will be using sigwait) should mask the relevant sig-
+       nal types.  Only the intended thread should  use  sigwait.
+       No thread should define a handler function.
+
+       See for further details.
+
+                                                                1
+
+sigwait(2)                                             sigwait(2)
+
+       Code to handle a signal type on return from sigwait is not
+       considered a handler in the containing  process'  disposi-
+       tion  for  that  signal type.  It is important that signal
+       types handled by a thread using be included in the  signal
+       mask  of every thread, otherwise, the default response for
+       the process will be triggered.  Even  the  thread  calling
+       sigwait  should  mask that signal type because a signal of
+       that type may arrive while the thread is between calls to
+
+       While one thread is blocked, siblings might still be  exe-
+       cuting.
+
+                                                                2
+

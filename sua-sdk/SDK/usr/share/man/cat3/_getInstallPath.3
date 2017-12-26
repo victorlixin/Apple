@@ -1,0 +1,102 @@
+_getInstallPath(3)                                   _getInstallPath(3)
+
+  __ggeettIInnssttaallllPPaatthh(())
+
+  NNAAMMEE
+
+    _getInstallPath(), _prefixInstallPath(), _getInstallPath_Win(),
+    _prefixInstallPath_Win() - find root of Subsystem for UNIX-based Applications install path
+
+  SSYYNNOOPPSSIISS
+
+    #include <interix/interix.h>
+
+    char * _getInstallPath(void)
+
+    char * _getInstallPath_Win(void)
+
+    char * _prefixInstallPath( const char *name, char *buf, int len )
+
+    char * _prefixInstallPath_Win( const char *name, char *buf, int len )
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    These functions retrieve the pathname for the directory where Subsystem for UNIX-based Applications was
+    installed. If you installed the Subsystem for UNIX-based Applications Commands and Utilities in the
+    default location (usually //ddeevv//ffss//CC//SSFFUU//), then the pathname is //ddeevv//ffss//CC//
+    SSFFUU//.
+
+    The ____gg_ee_tt_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh(3) call returns the pathname itself. It looks in the
+    registry for the value of the
+    HHKKEEYY__LLOOCCAALL__MMAACCHHIINNEE\\SSOOFFTTWWAARREE\\MMiiccrroossoofftt\\SSUUAA\\IInnssttaallllRRoooott entry
+    and stores the value in a static buffer. It returns a pointer to that
+    buffer. The pathname always ends in /.
+
+    Caution
+
+    *     Incorrectly editing the registry may severely damage your system.
+          Before making changes to the registry, you should back up any valued
+          data on the computer.
+
+    The ____gg_ee_tt_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh____WW_ii_nn(3) call does the same, but the pathname is
+    returned in the Windows format. The Windows pathname is retrieved from the
+    HHKKEEYY__LLOOCCAALL__MMAACCHHIINNEE\\SSOOFFTTWWAARREE\\MMiiccrroossoofftt\\
+    SSUUAA\\IInnssttaallllRRoooott__WWiinn registry entry.
+
+    The ____pp_rr_ee_ff_ii_xx_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh(3) call prefixes the installed-root directory onto
+    another path (specified by name) and returns a pointer to the concatenated
+    name. If buf is NULL, then the concatenated name is stored in a static
+    buffer; if buf is non-NULL, the concatenated name is stored there. If you
+    specify buf, you must also specify a non-zero value for len, the number of
+    bytes that buf will hold.
+
+    The ____pp_rr_ee_ff_ii_xx_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh____WW_ii_nn(3) call performs the transformation as
+    ____pp_rr_ee_ff_ii_xx_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh(3), but the pathname is in the Windows format.
+
+    The ____gg_ee_tt_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh(3) and ____pp_rr_ee_ff_ii_xx_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh(3) calls are legacies,
+    predating the single-rooted file system on Subsystem for UNIX-based Applications.
+
+  RREETTUURRNN CCOODDEESS
+
+    The ____gg_ee_tt_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh(3) and ____gg_ee_tt_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh____WW_ii_nn(3) functions return a
+    pointer to a static buffer, or NULL on failure. They can fail for one of
+    these reasons:
+    *     Insufficient memory,
+    *     a component of the installed path exceeds {NAME_MAX},
+    *     or if the entire installed path is longer than {PATH_MAX}.
+
+    The ____pp_rr_ee_ff_ii_xx_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh(3) and ____pp_rr_ee_ff_ii_xx_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh____WW_ii_nn(3) functions return a
+    pointer to the concatenated path. They can return NULL for one of the
+    following errors:
+    *     ____gg_ee_tt_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh(3) (or ____gg_ee_tt_II_nn_ss_tt_aa_ll_ll_PP_aa_tt_hh____WW_ii_nn(3)) failed
+    *     len was not specified and buf was not NULL;
+    *     the concatenated pathname was longer than len.
+
+  EEXXAAMMPPLLEE
+
+    Many traditional programs define paths as static strings. For example:
+
+    #define PAGER "/bin/more"
+    ...
+    printf("Using %s as the pager\n", PAGER);
+
+    A trivial conversion which ignores the possibility of failure is:
+
+    #ifndef __Subsystem for UNIX-based Applications
+    # define PAGER "/bin/more"
+    #else
+    # define PAGER _prefixInstallPath("/bin/more",NULL,0)
+    #endif /* __Subsystem for UNIX-based Applications */
+    ...
+    printf("Using %s as the pager\n", PAGER);
+
+  SSEEEE AALLSSOO
+
+    _c_o_n_f_s_t_r(3)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    None of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

@@ -1,0 +1,146 @@
+
+
+rpc_svc_create(3rpc)                         rpc_svc_create(3rpc)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <rpc/rpc.h>
+
+       int  svc_create(       const void (*dispatch)(const struct
+       svc_req *, const SVCXPRT *),       const  u_long  prognum,
+       const u_long versnum, const char *nettype);
+
+       void svc_destroy(SVCXPRT *xprt);
+
+       SVCXPRT  *svc_dg_create(const  int fd, const u_int sendsz,
+            const u_int recvsz);
+
+       SVCXPRT *svc_fd_create(const int fd, const  u_int  sendsz,
+            const u_int recvsz);
+
+       SVCXPRT *svc_raw_create(void);
+
+       SVCXPRT *svc_tli_create(const int fd, const struct netcon-
+       fig *netconf,      const struct  t_bind  *bindaddr,  const
+       u_int sendsz,      const u_int recvsz);
+
+       SVCXPRT  *svc_tp_create(      const void (*dispatch)(const
+       struct svc_req *,  const  SVCXPRT  *),       const  u_long
+       prognum, const u_long versnum,      const struct netconfig
+       *netconf);
+
+       SVCXPRT *svc_vc_create(const int fd, const  u_int  sendsz,
+            const u_int recvsz);
+
+DDeessccrriippttiioonn
+       These  routines are part of the RPC library which allows C
+       language programs  to  make  procedure  calls  on  servers
+       across the network.  These routines deal with the creation
+       of service handles.   Once  the  handle  is  created,  the
+       server can be invoked by calling svc_run.
+
+   RRoouuttiinneess
+       See for the definition of the SVCXPRT data structure.  int
+       svc_create(       const  void   (*dispatch)(const   struct
+       svc_req  *,  const  SVCXPRT *),      const u_long prognum,
+       const u_long versnum,      const char *nettype);  svc_cre-
+       ate  creates server handles for all the transports belong-
+       ing to the class nettype.
+
+       nettype defines a class of transports which  can  be  used
+       for a particular application.  The transports are tried in
+       left to right order in NETPATH variable or in top to  down
+       order in the netconfig database.
+
+       If  nettype  is  NULL, it defaults to netpath.  svc_create
+       registers itself with the rpcbind service (see dispatch is
+       called when there is a remote procedure call for the given
+       prognum and versnum; this requires calling svc_run (see If
+       it  succeeds,  svc_create  returns  the  number  of server
+
+                                                                1
+
+rpc_svc_create(3rpc)                         rpc_svc_create(3rpc)
+
+       handles it created, otherwise it returns 0 and  the  error
+       message  is  logged.   void  svc_destroy(SVCXPRT *xprt); A
+       function macro that destroys  the  RPC  service  transport
+       handle xprt.  Destruction usually involves deallocation of
+       private data structures, including xprt  itself.   Use  of
+       xprt is undefined after calling this routine.
+
+       SVCXPRT  * svc_dg_create(const int fd, const u_int sendsz,
+       const u_int recvsz); This routine creates a connectionless
+       RPC  service  handle,  and  returns a pointer to it.  This
+       routine returns NULL if it fails, and an error message  is
+       logged.   sendsz and recvsz are parameters used to specify
+       the size of the buffers.  If they are 0, suitable defaults
+       are  chosen.   The  file  descriptor fd should be open and
+       bound.
+
+       Note: since connectionless-based  RPC  messages  can  only
+       hold limited amount of encoded data, this transport cannot
+       be used for procedures that take large arguments or return
+       huge results.  SVCXPRT * svc_fd_create(const int fd, const
+       u_int sendsz, const u_int recvsz); This routine creates  a
+       service  on  top  of  any  open  and bound descriptor, and
+       returns the handle to it.  Typically, this descriptor is a
+       connected file descriptor for a connection-oriented trans-
+       port.  sendsz and recvsz indicate sizes for the  send  and
+       receive  buffers.   If they are 0, a reasonable default is
+       chosen.  This routine returns NULL, if it  fails,  and  an
+       error  message is logged.  SVCXPRT * svc_raw_create(void);
+       This routine creates a toy RPC service transport, to which
+       it  returns  a  pointer.  The transport is really a buffer
+       within the process's address space, so  the  corresponding
+       RPC  client  should  live  in the same address space; (see
+       This routine allows simulation of RPC and  acquisition  of
+       RPC overheads (such as round trip times), without any ker-
+       nel interference.  This routine returns NULL if it  fails,
+       and  an  error  message is logged.  SVCXPRT * svc_tli_cre-
+       ate(const  int  fd,  const  struct   netconfig   *netconf,
+            const  struct  t_bind  *bindaddr, const u_int sendsz,
+            const u_int recvsz);  This  routine  creates  an  RPC
+       server  handle,  and  returns  a pointer to it.  fd is the
+       file descriptor on which the service is listening.  If  fd
+       is  RPC_ANYFD, it opens a file descriptor on the transport
+       specified by netconf.  If the file descriptor is  unbound,
+       it  is  bound  to  the  address  specified by bindaddr, if
+       bindaddr is non-null, otherwise it is bound to  a  default
+       address  chosen  by  the transport.  In the case where the
+       default address is chosen, the number of outstanding  con-
+       nect  requests  is set to 8 for connection-oriented trans-
+       ports.  The user may specify the  size  of  the  send  and
+       receive  buffers  with  the  parameters sendsz and recvsz;
+       values  of  0  choose  suitable  defaults.   This  routine
+       returns  NULL if it fails, and an error message is logged.
+       SVCXPRT * svc_tp_create(      const void (*dispatch)(const
+       struct  svc_req  *,  const  SVCXPRT  *),      const u_long
+
+                                                                2
+
+rpc_svc_create(3rpc)                         rpc_svc_create(3rpc)
+
+       prognum, const u_long versnum,      const struct netconfig
+       *netconf);  svc_tp_create  creates a server handle for the
+       network specified by netconf, and  registers  itself  with
+       the  rpcbind  service.  dispatch is called when there is a
+       remote procedure call for the given prognum  and  versnum;
+       this  requires calling svc_run.  svc_tp_create returns the
+       service  handle  if  it  succeeds,  otherwise  a  NULL  is
+       returned,  and  an  error  message  is  logged.  SVCXPRT *
+       svc_vc_create(const int  fd,  const  u_int  sendsz,  const
+       u_int  recvsz); This routine creates a connection-oriented
+       RPC service and returns a pointer  to  it.   This  routine
+       returns  NULL if it fails, and an error message is logged.
+       The users may specify the size of  the  send  and  receive
+       buffers with the parameters sendsz and recvsz; values of 0
+       choose suitable defaults.  The file descriptor  fd  should
+       be open and bound.
+
+FFiilleess
+       /usr/lib/locale/locale/LC_MESSAGES/uxnsl
+
+RReeffeerreenncceess
+
+                                                                3
+

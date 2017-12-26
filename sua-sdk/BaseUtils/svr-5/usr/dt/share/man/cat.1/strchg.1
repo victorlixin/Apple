@@ -1,0 +1,115 @@
+
+
+strchg(1)                                               strchg(1)
+
+SSyynnooppssiiss
+       strchg -h module1[,module2 ...]
+
+       strchg -p [-a | -u module]
+
+       strchg -f file
+
+       strconf [-t | -m module]
+
+DDeessccrriippttiioonn
+       These  commands  are used to alter or query the configura-
+       tion of the stream associated  with  the  user's  standard
+       input.   The  strchg command pushes modules on and/or pops
+       modules off the stream.  The strconf command  queries  the
+       configuration  of  the  stream.  Only a privileged user or
+       owner of a STREAMS device may alter the  configuration  of
+       that stream.
+
+       With  the  -h option, strchg pushes modules onto a stream;
+       it takes as arguments the names of one  or  more  pushable
+       streams  modules.  These modules are pushed in order; that
+       is, module1 is pushed first, module2 is pushed second, and
+       so on.
+
+       The  -p  option  pops modules off the stream.  With the -p
+       option alone, strchg pops  the  topmost  module  from  the
+       stream.  With the -p and -a options, all the modules above
+       the topmost driver are popped.  When the -p option is fol-
+       lowed by -u module, then all modules above but not includ-
+       ing module are popped off  the  stream.   The  -a  and  -u
+       options are mutually exclusive.
+
+       With  the -f option, the user can specify a file that con-
+       tains a list of modules representing the desired  configu-
+       ration  of  the stream.  Each module name must appear on a
+       separate line where the first name represents the  topmost
+       module and the last name represents the module that should
+       be closest to the driver.  The strchg command will  deter-
+       mine  the  current configuration of the stream and pop and
+       push the necessary modules in order to  end  up  with  the
+       desired configuration.
+
+       The -h, -f and -p options are mutually exclusive.
+
+       Invoked  without  any  arguments, strconf prints a list of
+       all the modules in the  stream  as  well  as  the  topmost
+       driver.   The list is printed with one name per line where
+       the first name printed is the topmost module on the stream
+       (if  one  exists) and the last item printed is the name of
+       the driver.  With the -t option, only the  topmost  module
+       (if  one  exists) is printed.  The -m option determines if
+       the named module is present on a stream.  If it  is,  str-
+       conf  prints  the  message  yes and returns zero.  If not,
+       strconf prints the  message  no  and  returns  a  non-zero
+
+                                                                1
+
+strchg(1)                                               strchg(1)
+
+       value.  The -t and -m options are mutually exclusive.
+
+DDiiaaggnnoossttiiccss
+       strchg  returns  zero on success.  It prints an error mes-
+       sage and returns non-zero status for various error  condi-
+       tions,  including  usage  error, bad module name, too many
+       modules to push, failure of an ioctl  on  the  stream,  or
+       failure to open file from the -f option.
+
+       strconf  returns zero on success (for the -m or -t option,
+       ``success'' means the named or topmost module is present).
+       It  returns a non-zero status if invoked with the -m or -t
+       option and the module is not present.  It prints an  error
+       message and returns non-zero status for various error con-
+       ditions, including usage error or failure of an  ioctl  on
+       the stream.
+
+RReeffeerreenncceess
+NNoottiicceess
+       If the user is neither the owner of the stream nor a priv-
+       ileged user, the strchg command will fail.   If  the  user
+       does  not have read permissions on the stream and is not a
+       privileged user, the strconf command will fail.
+
+       If modules are pushed in the wrong order, one could end up
+       with  a  stream  that  does not function as expected.  For
+       terminals, if the line discipline module is not pushed  in
+       the correct place, one could have a terminal that does not
+       respond to any commands.
+
+EExxaammpplleess
+       The following command pushes  the  module  ldterm  on  the
+       stream  associated  with the user's standard input: strchg
+       -h ldterm The following command pops  the  topmost  module
+       from  the  stream  associated with /dev/term/24.  The user
+       must be the owner of this device  or  a  privileged  user.
+       strchg -p < /dev/term/24 If the file fileconf contains the
+       following: compat ldterm ptem then the command  strchg  -f
+       fileconf  will  configure the user's standard input stream
+       so that the module ptem is pushed over  the  driver,  fol-
+       lowed by ldterm and compat closest to the stream head.
+
+       The  strconf  command  with no arguments lists the modules
+       and topmost driver on the stream; for a  stream  that  has
+       only  the  module ldterm pushed above the ports driver, it
+       would produce the following output: ldterm ports The  fol-
+       lowing  command asks if ldterm is on the stream strconf -m
+       ldterm and produces the following output  while  returning
+       an exit status of 0: yes
+
+                                                                2
+

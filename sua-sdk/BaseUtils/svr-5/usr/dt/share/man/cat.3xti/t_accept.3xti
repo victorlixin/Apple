@@ -1,0 +1,154 @@
+
+
+t_accept(3xti)                                     t_accept(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       int t_accept(int fd, int resfd, struct t_call *call)
+
+DDeessccrriippttiioonn
+       This  function  is  one  of  the  TLI/XTI routines used to
+       establish a transport connection.  It  is  invoked  by  an
+       active  transport  user,  following a call to t_listen, to
+       accept a connection request from the  transport  interface
+       and  provide  the information needed to complete a virtual
+       connection.
+
+       It may also be used to pass a connection to  another  end-
+       point.
+
+       This  function  is  a service of connection-mode transport
+       providers and is supported only if the  provider  returned
+       service  type T_COTS or T_COTS_ORD on t_open or t_getinfo.
+
+       A transport user may accept a  connection  on  either  the
+       same or local transport endpoint or on an endpoint differ-
+       ent than the one on which the connect indication  arrived.
+       Before the connection can be accepted on the same endpoint
+       (resfd==fd), the user must have responded to any  previous
+       connect   indications   received  on  that  endpoint  (via
+       t_accept or t_snddis).  Otherwise, t_accept will fail  and
+       set t_errno to T_INDOUT.
+
+       If   a   different   transport   endpoint   is   specified
+       (fd!=resfd), then the user may or may not choose  to  bind
+       the  endpoint  before t_accept is issued.  If the endpoint
+       is not bound, then the transport provider  will  automati-
+       cally  bind  it  to  the  same protocol address that fd is
+       bound to.  If the user chooses to bind to a local address,
+       then  qlen must be zero for that protocol address, and the
+       state of the  endpoint  must  be  T_IDLE.   t_accept  will
+       change  the address of resfd to be the same as that of fd.
+       For portability, the first alternative is recommended.
+
+   PPaarraammeetteerrss
+       the file descriptor for the local transport endpoint where
+       the  connect  request  arrived.   file  descriptor for the
+       local transport endpoint on which the connection is to  be
+       established.   points to the t_call structure used to com-
+       plete the connection.
+
+   SSttrruuccttuurree ddeeffiinniittiioonnss
+       The  t_call  structure  contains  the  following  members:
+       struct  netbuf  addr;      /* address            */ struct
+       netbuf opt;      /* options             */  struct  netbuf
+       udata;      /*   user   data            */  int  sequence;
+       /* sequence number    */ netbuf is described in In t_call,
+       addr  is  the  address  of  the  caller, opt indicates any
+
+                                                                1
+
+t_accept(3xti)                                     t_accept(3xti)
+
+       protocol-specific options associated with the  connection,
+       udata  points  to  any  user  data  to  be returned to the
+       caller, and sequence is the  value  returned  by  t_listen
+       that  uniquely  associates  the response with a previously
+       received connect indication.
+
+       The values of parameters specified by opt and  the  syntax
+       of those values are protocol specific.  The udata argument
+       enables the called transport user to send user data to the
+       caller  and  the  amount  of user data must not exceed the
+       limits supported by the transport provider as returned  in
+       the connect field of the info argument of t_open or t_get-
+       info.  If the len field of udata is 0,  no  data  will  be
+       sent to the caller.
+
+   SSttaattee ttrraannssiittiioonnss
+       T_INCON  on entry.  T_INCON, T_IDLE or T_DATAXFER on exit.
+       T_IDLE, T_UNBND on entry.
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+UUssaaggee
+       When  t_accept fails with a client timeout, this may be an
+       indication that the client connection needs to be extended
+       or  that  the server delay (between t_listen and t_accept)
+       should be reduced.
+
+       A server application may retry t_accept unless a TOUTSTATE
+       or TSYSERR error is received.
+
+       If  the  user  does  not specify protocol-specific options
+       (the len field of opt is 0), it is assumed that  the  con-
+       nection  should  accepted  unconditionally.  Options other
+       than  the  defaults  may  be  selected  by  the  transport
+       provider  to  ensure  that the connection is accepted suc-
+       cessfully.
+
+RReettuurrnn vvaalluueess
+       Upon successful completion, a  value  of  0  is  returned.
+       Otherwise, a value of -1 is returned and t_errno is set to
+       indicate the error.
+
+   EErrrroorrss
+       On failure, t_errno may be set to one  of  the  following:
+       The  specified  file descriptor does not refer to a trans-
+       port endpoint, or the user is invalidly accepting  a  con-
+       nection  on  the same transport endpoint on which the con-
+       nect indication arrived.  The function was issued  in  the
+       wrong sequence on the transport endpoint referenced by fd,
+       or the transport endpoint referred to by resfd is  not  in
+       the  T_IDLE  state.   The user does not have permission to
+       accept a connection on the responding  transport  endpoint
+
+                                                                2
+
+t_accept(3xti)                                     t_accept(3xti)
+
+       or  use the specified options.  The specified options were
+       in an incorrect format or contained  invalid  information.
+       The  amount  of  user  data  specified  was not within the
+       bounds supported by the transport provider as returned  in
+       the connect field of the info argument of t_open or t_get-
+       info.  An invalid  sequence  number  was  specified.   The
+       specified  protocol  address was in an incorrect format or
+       contained illegal information.  An asynchronous event  has
+       occurred  on  the  transport endpoint referenced by fd and
+       requires immediate attention.  t_accept will fail and  set
+       t_errno  to  TLOOK  when  fd  is not the same as resfd and
+       there are indications (for example, a connect  or  discon-
+       nect) waiting to be received on that endpoint.  This func-
+       tion  is  not  supported  by  the   underlying   transport
+       provider.  A system error has occurred during execution of
+       this function.  The function was called with fd  equal  to
+       resfd  but there are outstanding connection indications on
+       the endpoint.  The other connection  indications  must  be
+       handled either by rejecting them via t_snddis or accepting
+       them via t_accept.  The file descriptors fd and  resfd  do
+       not  refer  to  the same transport provider.  The endpoint
+       referenced by resfd where resfd!=fd was bound to a  proto-
+       col  address  with  a qlen greater than 0.  This transport
+       provider requires that both fd and resfd be bound  to  the
+       same  address.   A communication problem has been detected
+       with the transport provider and there is no other value of
+       t_errno to describe the error condition.
+
+RReeffeerreenncceess
+
+                                                                3
+

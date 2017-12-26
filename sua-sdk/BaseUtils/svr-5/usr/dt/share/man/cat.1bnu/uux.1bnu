@@ -1,0 +1,147 @@
+
+
+uux(1bnu)                                               uux(1bnu)
+
+SSyynnooppssiiss
+       uux [options] command
+
+DDeessccrriippttiioonn
+       The  uux  command  gathers zero or more files from various
+       systems, executes a command on a named  system,  and  then
+       sends standard output to a file on another named system.
+
+   OOppttiioonnss
+       The  following  options  are  interpreted  by uux: Use the
+       standard input to uux as the standard  input  to  command.
+       Replace  the initiating user ID with user name.  Notifica-
+       tion will be returned to user name.  If the exit status is
+       non-zero, return whatever standard input was provided.  Do
+       not copy local files to the spool directory  for  transfer
+       to  the remote machine (default).  Force the copy of local
+       files to the spool directory for transfer.  Defines a ser-
+       vice  grade.   It  can  be  a  single letter, number, or a
+       string of alphanumeric characters.  The command determines
+       whether  it  is appropriate to use the single letter, num-
+       ber, or string of alphanumeric  characters  as  a  service
+       grade.   The  output of uuglist will be a list of the ser-
+       vice grades available or a message that says to use a sin-
+       gle  letter  or  number as a grade of service.  Output the
+       job ID string on the standard output.  This job  identifi-
+       cation  can  be used by to obtain the job status or termi-
+       nate the job.  Do not  notify  the  user  if  the  command
+       fails.   The  same as the - option.  Do not start the file
+       transfer, just queue the job.  Report the  status  of  the
+       transfer  in  file.  Produce debugging output on the stan-
+       dard output.  debug_level is a number between 0 and 9;  as
+       it  increases to 9, more detailed debugging information is
+       given.  Send notification of success to the user.
+
+FFiilleess
+       spool directories remote execution permissions other  pro-
+       grams  other  data  and programs language-specific message
+       file (see LANG on
+
+UUssaaggee
+       uux processes supplementary code set characters  according
+       to  the locale specified in the LC_CTYPE environment vari-
+       able (see LANG on
+
+       For security reasons, most installations historically lim-
+       ited  the  list of commands that were executable on behalf
+       of an incoming  request  from  uux,  permitting  only  the
+       receipt of mail (see
+
+       An  authentication  mechanism has been built into uux that
+       works  with  a  key  management  system  to   authenticate
+       requesting  users  and  machines  in a reliable way.  This
+       feature works in conjunction with the command and  the  ID
+       mapping  feature.   It  allows  a  remote  request  to  be
+
+                                                                1
+
+uux(1bnu)                                               uux(1bnu)
+
+       executed reliably under a local identity.   Remote  execu-
+       tion  permissions are defined in /etc/uucp/Config (see and
+       /etc/uucp/Permissions (see
+
+       command is made up of one or more arguments and looks like
+       a  shell  command  line, except that the command and file-
+       names may be prefixed with system_name!.   If  system_name
+       is null then the local system is assummed.
+
+       File  names  may  be  one of: A full pathname.  A pathname
+       preceded by ~user, where user is a login on the named sys-
+       tem  and  is replaced by the login directory of user user.
+       Anything else is prefixed by the pathname of  the  current
+       directory.    For   example,   the   command:  uux  "!diff
+       sys1!/home/dan/file1         sys2!/a4/dan/file2          >
+       !~/dan/file.diff"  gets the file1 and file2 files from the
+       sys1 and sys2 machines, executes the command  on  the  two
+       files  and  puts the output in file.diff in the local PUB-
+       DIR/dan/ directory.  PUBDIR is a public directory  defined
+       in    the    uucp   source.    By   default,   PUBDIR   is
+       /var/spool/uucppublic.
+
+       Any special shell characters such as <, >, ; or |,  should
+       be  quoted  either  by  quoting  the entire command, or by
+       quoting the special characters as individual arguments.
+
+       uux attempts to get all appropriate files  to  the  system
+       where  they  will be processed.  For files that are output
+       files, the filename must  be  escaped  using  parentheses.
+       For   example,   the   command:   uux   "sysa!cut   -f   1
+       sysb!/usr/file > sysc!/usr/file" gets /usr/file from  sys-
+       tem  sysb  and  sends  it to system sysa, executes on that
+       file, and sends the output to system sysc.
+
+       uux will notify you if the requested command on the remote
+       system  was disallowed.  The response comes by remote mail
+       from the remote machine.  This notification can be  turned
+       off with the -n option.
+
+       Note that any commands that a user will be allowed to exe-
+       cute via uux need to be added to the /etc/uucp/Permissions
+       file, along with the actual pathname of the command.  If a
+       pathname is not specified, the default path (/usr/bin)  is
+       searched.   If  a  command  has a symbolic link to another
+       command, the link will not be followed  by  uux,  and  the
+       user  will  get back an error message stating that they do
+       not have permission to execute the command.
+
+WWaarrnniinnggss
+       Only the first command of a shell pipeline may have a sys-
+       tem_name!  prefix.  All other commands are executed on the
+       system of the first command.
+
+       The use of the shell metacharacter * will probably not  do
+
+                                                                2
+
+uux(1bnu)                                               uux(1bnu)
+
+       what you want it to do.
+
+       The shell tokens << and >> are not implemented.
+
+       The execution of commands on remote systems takes place in
+       an execution directory known  to  the  UUCP  system.   All
+       files  required  for  the  execution will be put into this
+       directory unless they already reside on that machine.  The
+       filename  (without the path or any machine reference) must
+       therefore be unique within the uux request.  The following
+       command  will  not work: uux "sysa!diff sysb!/home/dan/xyz
+       sysc!/home/dan/xyz  >  !xyz.diff"  but  the  command   uux
+       "sysa!diff    sysa!/home/dan/xyz    sysc!/home/dan/xyz   >
+       !xyz.diff" will work (if diff is a permitted command).
+
+       Protected files and files that are in  protected  directo-
+       ries  that  are owned by the requester can be sent in com-
+       mands using uux.  However, if the requester is  root,  and
+       the directory is not searchable by other, the request will
+       fail.
+
+RReeffeerreenncceess
+
+                                                                3
+

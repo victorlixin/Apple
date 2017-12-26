@@ -1,0 +1,337 @@
+ci(1)                                                             ci(1)
+
+  ccii
+
+  NNAAMMEE
+
+    ci - check in Revision Control System (RCS) revisions
+
+  SSYYNNOOPPSSIISS
+
+    ci [[ options ]] file  ...
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ccii(1) command stores new revisions into Revision Control System 
+	(RCS) files. Each path name matching an RCS suffix is taken to be an RCS file.
+	All others are assumed to be working files containing new revisions. The
+	ccii(1) command deposits the contents of each working file into the
+	corresponding RCS file. If a working file only is provided, ccii(1) attempts
+	to find the corresponding RCS file in an RCS subdirectory and then in the
+	directory of the working file. (For more details, see FILE NAMING.)
+
+  OOPPTTIIOONNSS
+
+    (A detailed discussion of the way ccii(1)behaves follows OPTIONS.)
+    --dddate
+        Use date for the check-in date and time. The date is specified in free
+        format, as explained in ccoo(1). This is useful for specifying a false
+        check-in date, and when using the --kk option if no date is available.
+        If date is empty, the time the working file was last modified is used.
+    --ff[rev]
+        Force a deposit; the new revision is deposited even if it is not
+        different from the preceding one.
+    --II[rev]
+        Run in interactive mode.The user is prompted and questioned even if
+        the standard input is not a terminal.
+    --kk[rev]
+        Search the working file for keyword values to determine its revision
+        number, creation date, state, and author (see ccoo(1)); assign these
+        values to the deposited revision rather than computing them locally.
+        It also generates a default login message noting the login of the
+        caller and the actual check-in date. This option is useful for
+        software distribution. A revision that is sent to several sites should
+        be checked in with the --kk option at these sites to preserve the
+        original number, date, author, and state. The extracted keyword values
+        and the default log message can be overridden with the options --dd, --mm,
+        --ss, --ww, and any option that carries a revision number.
+    --ll[rev]
+        Similar to --rr, except that it performs an additional ccoo --ll for the
+        deposited revision. The deposited revision is immediately checked out
+        again and locked. This is useful if you want to save a revision, but
+        also want to continue editing it after checking it in.
+    --MM[rev]
+        Set the modification time on any new working file to be the date of
+        the retrieved revision. For example, ccii --dd --MM --uuf does not alter f's
+        modification time, even if f's contents change due to keyword
+        substitution. Use this option with care; it can confuse mmaakkee(1).
+    --mmmsg
+        Use the string msg as the log message for all revisions checked in.
+    --nnname
+        Assign the symbolic name name to the number of the checked-in
+        revision. ccii(1) prints an error message if name is already assigned to
+        another number.
+    --NNname
+        This is the same as --nn, except that it overrides a previous assignment
+        of name.
+    --qq[rev]
+        Quiet mode; do not print diagnostic output. A revision that is not
+        different from the preceding one is not deposited unless --ff is given.
+    --rr[rev]
+        Check in a revision, release the corresponding lock, and remove the
+        working file. This is the default.
+        The --rr option has an unusual meaning in ccii(1). In other RCS commands,
+        --rr merely specifies a revision number. In ccii(1), however, it also
+        releases a lock and removes the working file. See --uu for information
+        about how --rr interacts with other options.
+    --ssstate
+        Set the state of the checked-in revision to the identifier state. The
+        default state is Exp.
+    --ttfile
+        Write descriptive text from the contents of the named file into the
+        RCS file, deleting the existing text. The file may not begin with ..
+        (dot).
+    --tt--string
+        Write descriptive text from the string into the RCS file, deleting the
+        existing text.
+        The --tt option, in both its forms, has effect only during an initial
+        check in; otherwise, it is silently ignored. During the initial check
+        in, if --tt is not given, ccii(1) obtains the text from standard input,
+        terminated by end-of-file or by a line containing ..(dot) by itself.
+        The user is prompted for the text if interaction is possible. (See --
+        II.) For backward compatibility with older versions of RCS, a bare --
+        tt option is ignored.
+    --wwlogname
+        Use logname for the author field of the deposited revision. Useful if
+        you want to specify a different author name, and when using the --
+        kk option if no author is specified.
+    --uu[rev]
+        Like --ll, except that the deposited revision is not locked. Useful if
+        you want to read the working file immediately after you check it in.
+        The --ll, --rr, and --uu options are mutually exclusive and silently
+        override each other. For example, ccii --uu --rr is equivalent to ccii --
+        RR because --rr overrides --uu.
+    --VVn
+        Emulate RCS version nn. See ccoo(1) for details.
+    --xxsuffixes
+        Identify RCS files by the given suffixes. A nonempty suffix matches
+        any path name ending in the suffix. An empty suffix matches any path
+        name of the form RCS/ffiillee or ppaatthh/RCS/ffiillee. The --xx option can specify
+        a list of suffixes separated by // (slash). For example, --xx,,vv//
+        specifies two suffixes: ,,vv and the empty suffix. If two or more
+        suffixes are specified, they are tried in order when looking for an
+        RCS file. The first one that works is used for that file. If no RCS
+        file is found, but an RCS file can be created, the suffixes are tried
+        in order to determine the name of the new RCS file. The default for
+        suffixes is installation dependent; it is usually ,,vv// on systems that
+        permit commas in file names. For other hosts, the default is the empty
+        suffix.
+
+    For ccii(1) to work, the caller's login must be on the access list unless
+    the access list is empty, or the caller is the superuser or the owner of
+    the file. To append a new revision to an existing branch, the caller must
+    first lock the tip revision on that branch. Otherwise, the caller can only
+    create a new branch. This restriction is not enforced for the owner of the
+    file if nonstrict locking is used (see rrccss(1)). A lock held by someone
+    else may be broken with the rrccss(1) command.
+
+    The ccii(1) command checks to determine whether the revision to be deposited
+	differs from the preceding version (unless the --ff option is given). If the
+    revision does not differ, ccii(1) reverts to the preceding version instead
+    of creating a new revision. To revert, ccii(1) removes the working file and
+    any lock; this is modified by the options --ll and --uu. ccii --ll keeps any lock,
+    and ccii --uu removes any lock. Then, they both generate a new working file,
+    much as if ccoo --ll or ccoo --uu had been applied to the preceding revision. When
+    reverting, any --nn and --ss options apply to the preceding revision.
+
+    For each revision deposited, ccii(1) prompts for a log message. The log
+    message should summarize the change and must be terminated by end-of-file
+    or by a line containing .. (dot) by itself. If several files are checked
+    in, ccii(1) asks whether to reuse the previous log message. If the standard
+    input is not a terminal, ccii(1) suppresses the prompt and uses the same log
+    message for all files. (See --mm.)
+
+    If the RCS file does not exist, ccii(1) creates it and deposits the contents
+    of the working file as the initial revision (default number: 11..11). The
+    access list is initialized to empty. Instead of the log message, ccii(1)
+    requests descriptive text. (See --tt.)
+
+    The number rev of the deposited revision can be given by any of the
+    following options:
+
+    --ff
+    --II
+    --kk
+    --ll
+    --MM
+    --qq
+    --rr
+    --uu
+
+    rev may be symbolic, numeric, or mixed. If rev is $, ccii(1) determines the
+    revision number from keyword values in the working file.
+
+    If rev is a revision number, it must be higher than the latest one on the
+    branch to which rev belongs, or must start a new branch.
+
+    If rev is a branch rather than a revision number, the new revision is
+    appended to that branch. The level number is obtained by incrementing the
+    tip revision number of that branch. If rev indicates a nonexisting branch,
+    that branch is created with the initial revision numbered rev.11.
+
+    If rev is omitted, ccii(1) tries to derive the new revision number from the
+    caller's last lock. If the caller has locked the tip revision of a branch,
+    the new revision is appended to that branch. The new revision number is
+    obtained by incrementing the tip revision number. If the caller locked a
+    non-tip revision, a new branch is started at that revision by incrementing
+    the highest branch number at that revision. The default for the initial
+    branch and level numbers is 11.
+
+    If rev is omitted, and the caller has no lock but owns the file, and
+    locking is not set to strict, the revision is appended to the default
+    branch (normally the trunk; see the --bb option of rrccss(1)).
+
+    An exception is that, on the trunk, revisions can be appended to the end
+    but not inserted.
+
+  FFIILLEE NNAAMMIINNGG
+
+    Pairs of RCS files and working files may be specified in the three
+    following ways (also see the EXAMPLES section):
+
+   1.     Both the RCS file and the working file are given. The RCS path name
+          is of the form: path1/workfileX; and the working path name is of the
+          form: path2/workfile, where path1/ and path2/ are (possibly
+          different or empty) paths, workfile is a file name, and X is an RCS
+          suffix. If X is empty, path1/ must be RRCCSS// or must end in //RRCCSS//.
+   2.     Only the RCS file is given. In this case, the working file is
+          created in the current directory, and its name is derived from the
+          name of the RCS file by removing ppaatthh11/ and the suffix X.
+   3.     Only the working file is given. Then ccii(1) considers each RCS suffix
+          X in turn, looking for an RCS file of the form ppaatthh22/RCS/wwoorrkkffiilleeXX;
+          or, if the former is not found and X is nonempty, ppaatthh22/wwoorrkkffiilleeXX..
+
+    If the RCS file is specified without a path in 1) and 2), ccii(1) looks for
+    the RCS file, first in the directory ..//RRCCSS, and then in the current
+    directory.
+
+    The ccii(1) command reports an error if an attempt to open an RCS file fails
+	for an unusual reason, even if the RCS file's path name is just one of several
+    possibilities. For example, to suppress use of RCS commands in a directory
+    d, create a regular file named dd/RCS so that casual attempts to use RCS
+    commands in d fail because dd/RCS is not a directory.
+
+  EEXXAAMMPPLLEESS
+
+    Suppose ,,vv is an RCS suffix and the current directory contains a
+    subdirectory RRCCSS with an RCS file iioo..cc,,vv. Each of the following commands
+    checks a copy of iioo..cc into RRCCSS//iioo..cc,,vv as the latest revision, removing
+    iioo..cc:
+
+    $$ ci io.c
+    $$ ci RCS/io.c,v
+    $$ ci io.c,v
+    $$ ci io.c RCS/io.c,v
+    $$ ci io.c io.c,v
+    $$ ci RCS/io.c,v io.c
+    $$ ci io.c,v io.c
+
+    If, however, the empty suffix is an RCS suffix and the current directory
+    contains a subdirectory RRCCSS with an RCS file iioo..cc, each of the following
+    commands checks in a new revision:
+
+    $$ ci io.c
+    $$ ci RCS/io.c
+    $$ ci io.c RCS/io.c
+    $$ ci RCS/io.c io.c
+
+  FFIILLEE MMOODDEESS
+
+    An RCS file created by ccii(1) inherits read-and-execute permissions from
+    the working file. If the RCS file already exists, ccii(1) preserves its
+    read-and-execute permissions. The ccii(1) command always turns off all
+	write permissions of RCS files.
+
+  FFIILLEESS
+
+    Several temporary files can be created in the directory containing the
+    working file, and can also be created in the temporary directory (see
+    TMPDIR under ENVIRONMENT). A semaphore file or files are created in the
+    directory containing the RCS file. With a nonempty suffix, the semaphore
+    names begin with the first character of the suffix; therefore, do not
+    specify a suffix whose first character could be that of a working file
+    name. With an empty suffix, the semaphore names end with __, so working
+    filenames should not end in __
+
+    The ccii(1) command never changes an RCS or working file. Usually,
+	ccii(1) unlinks the file and creates a new one. Instead of breaking a
+	chain of one or more symbolic links to an RCS file, it unlinks the
+	destination file. As a result, ccii(1) breaks any hard or symbolic links
+	to any working file it changes, and hard links to RCS files are ineffective.
+	Symbolic links to RCS files, however, are preserved.
+
+    The effective user must be able to search and write the directory
+    containing the RCS file. Usually, the real user must be able to read the
+    RCS and working files, and search and write the directory containing the
+    working file. Some older hosts cannot switch easily between real and
+    effective users, however. On these older hosts, the effective user is used
+    for all accesses. The effective user is the same as the real user unless
+    your copies of ccii(1) and ccoo(1) have setuid privileges. As described in the
+    next section, these privileges provide extra security if the effective
+    user owns all RCS files and directories, and if only the effective user
+    can write RCS directories.
+
+    Users can control access to RCS files by setting the permissions of the
+    directory containing the files. Only users with write access to the
+    directory can use RCS commands to change its RCS files. For example, on
+    hosts that allow a user to belong to several groups, you can make a
+    group's RCS directories writable to that group only. Although this is
+    usually sufficient for informal projects, this approach allows any group
+    member to change the group's RCS files, or even remove them entirely. To
+    prevent these types of problems, more formal projects sometimes
+    distinguish between an RCS administrator, who can change the RCS files at
+    will, and other project members, who can check in new revisions but cannot
+    otherwise change the RCS files.
+
+  EENNVVIIRROONNMMEENNTT VVAARRIIAABBLLEESS
+
+    The ccii(1) command makes use of the following environment variables:
+
+    RCSINIT
+        A list of options prepended to the argument list, separated by spaces.
+        A backslash (\\)escapes spaces within an option. The RCSINIT options
+        are prepended to the argument lists of most RCS commands. Useful
+        RCSINIT options include --qq, --VV, and --xx.
+
+    TMPDIR
+        Name of the temporary directory. If not set, the environment variables
+        TMP and TEMP are inspected instead, and the first value found is
+        taken. If none of them is set, a host-dependent default is used, //ttmmpp
+        on SUA systems.
+
+  DDIIAAGGNNOOSSTTIICCSS
+
+    For each revision, ccii(1) prints the RCS file, the working file, and the
+    number of both the deposited and the preceding revision. The exit status
+    is zero only if all operations were successful.
+
+  IIDDEENNTTIIFFIICCAATTIIOONN
+
+    Author: Walter F. Tichy.
+    Revision Number: 1.17; Release Date: 1999/06/09.
+    Copyright © 1982, 1988, 1989 by Walter F. Tichy.
+    Copyright © 1990, 1991 by Paul Eggert.
+
+  SSEEEE AALLSSOO
+
+    _c_o(1)
+
+    _i_d_e_n_t(1)
+
+    _m_a_k_e(1)
+
+    _r_c_s(1)
+
+    _r_c_s_d_i_f_f(1)
+
+    _r_c_s_m_e_r_g_e(1)
+
+    _r_l_o_g(1)
+
+    _r_c_s_f_i_l_e(5)
+
+    _r_c_s_i_n_t_r_o(5)
+
+    Walter F. Tichy, RCS--A System for Version Control, Software--Practice &
+    Experience 1155, 7 (July 1985), 637-654.
+

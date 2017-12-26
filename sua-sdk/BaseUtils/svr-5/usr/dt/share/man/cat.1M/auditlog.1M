@@ -1,0 +1,214 @@
+
+
+auditlog(1M)                                         auditlog(1M)
+
+SSyynnooppssiiss
+       auditlog [-P path] [-p node] [-v high_water] [-x max_size]
+            [-s | -d | -A next_path [-a next_node] [-n pgm]
+            | -a next_node [-n pgm]]
+
+DDeessccrriippttiioonn
+       The auditlog shell level command allows the  administrator
+       with  the  appropriate  privileges  to  display and change
+       audit log file attributes.  The  privileges  required  are
+       audit and setplevel.
+
+       The log file attributes that may be displayed and modified
+       are the path to the event log file, a node  name  for  the
+       event  log  file, the value for the high water mark of the
+       audit buffer(s), the maximum size of the event  log  file,
+       the  action  taken  when  event log file is full, the next
+       event log to be used, a node name for the next  event  log
+       file  and  the program to be run when a log switch occurs.
+       Additionally, the  current  status  of  auditing  and  the
+       action  to  be  taken after an audit error occurs are dis-
+       played.  While auditing is enabled, execution of this com-
+       mand  will  result in an audit record being written to the
+       event log file via the auditdmp system call.  Without  any
+       options  or arguments, auditlog will display the following
+       information  (Note:  the  default  values  are   displayed
+       first):  Current  Status  of  Auditing:   OFF|  ON Current
+       Event Log:   /var/audit/MMDD###| [path]MMDD###[node]  Cur-
+       rent   Audit  Buffer  High  Water  Mark: ADT_BSIZE  bytes|
+       high_water bytes Current Maximum File Size  Setting: none|
+       max_size  blocks  Action  To  Be  Taken  Upon  Full  Event
+       Log: auditing disabled|system shutdown|log  switch  Action
+       To  Be Taken Upon Error:    auditing disabled|system shut-
+       down    Next    Event    Log    To    Be    Used:    none|
+       [next_path]MMDD###[next_node]  Program  to  Run When Event
+       Log Is Full:     none|  pgm  The  system  reverts  to  the
+       default  values  when auditing is stopped and subsequently
+       restarted.
+
+       The auditlog command has the  following  options:  The  -P
+       option  specifies  the  absolute  pathname  to the primary
+       event log.  If the path argument is not a full pathname to
+       an  existing directory or character special file, an error
+       message is printed (see ``Diagnostics'').  The  -P  option
+       cannot be specified while auditing is enabled.
+
+       If the argument to -P is a valid directory, the next invo-
+       cation of auditon will create a regular file in the direc-
+       tory path, with a name that includes the current month and
+       day, followed by a three digit sequence number (for  exam-
+       ple, 1225001).
+
+       The valid range of sequence numbers is 001 to 999, and the
+       default event log file to be  used  is  the  regular  file
+       /var/audit/MMDD###.  The -p option allows you to append an
+
+                                                                1
+
+auditlog(1M)                                         auditlog(1M)
+
+       additional seven characters to the system generated  event
+       log  file  name.   The -p option cannot be specified while
+       auditing is enabled, and it is ignored if the event log is
+       a character special file.  For example, the command audit-
+       log -p abcdefg
+
+       creates the audit log file /var/audit/MMDD###abcdefg.   If
+       the node is larger than seven characters or if it contains
+       a slash, an error message  is  displayed  (see  ``Diagnos-
+       tics'').   The  -v option specifies the high_water mark of
+       the audit buffer(s).  The default setting is equal to  the
+       audit  buffer  size (ADT_BSIZE).  The high_water mark must
+       be either zero (0) or a  positive  integer  less  than  or
+       equal to the size of the audit buffer (ADT_BSIZE).  If the
+       value is not valid, an error  message  is  displayed  (see
+       ``Diagnostics'').   The  high_water  mark can be set while
+       auditing is disabled  or  can  be  set  dynamically  while
+       auditing is enabled to vary the frequency at which records
+       are written to the audit log  file.   A  setting  of  zero
+       forces  all  audit  records  to be written directly to the
+       audit log file.  When used with the -w of  auditrpt,  this
+       allows  the administrator to monitor events as they occur.
+       The -x option specifies the maximum file size, in 512 byte
+       blocks,  for  all  event  logs that are regular files.  If
+       this option is used with event logs that are  not  regular
+       files,  auditlog  prints a warning message (see ``Diagnos-
+       tics'') and ignores the option.
+
+       max_size must be greater than or equal to the size of  the
+       audit buffer tunable parameter ADT_BSIZE.  If the value of
+       max_size is zero, the  size  of  the  event  log  file  is
+       bounded  by  the  amount  of  available  free space on the
+       filesystem.  The default value of none implies a  max_size
+       setting  of zero.  The -s option specifies that the system
+       will be shut down when the event log is  full.   An  event
+       log file is considered full when either a regular file log
+       reaches max_size, if specified, or the filesystem that the
+       log  resides  in runs out of space, or a character special
+       file log (for example, tape) cannot hold  any  more  data.
+       If  this  action  is chosen and the event log file becomes
+       full, the system will be shut down  immediately.   The  -d
+       option  specifies  that auditing will be disabled when the
+       event log becomes full.  An event log file  is  considered
+       full  when  either a regular file log reaches max_size, if
+       specified, or the filesystem that the log resides in  runs
+       out  of  space, or a character special file log (for exam-
+       ple, tape) cannot hold any more data.  The -A option indi-
+       cates  that  a  log  switch is to occur when the event log
+       file becomes full and specifies the absolute  pathname  to
+       the  alternate event log.  An event log file is considered
+       full when either a regular file log reaches  max_size,  if
+       specified,  or the filesystem that the log resides in runs
+       out of space, or a character special file log  (for  exam-
+       ple,  tape)  cannot  hold any more data.  If the next_path
+
+                                                                2
+
+auditlog(1M)                                         auditlog(1M)
+
+       argument is not a full pathname to an  existing  directory
+       or  character  special device, an error message is printed
+       (see ``Diagnostics'').
+
+       When the log full condition is met,  and  next_path  is  a
+       valid  directory,  the alternate log file is created rela-
+       tive to next_path.  The filename  format  is  the  current
+       month  and  day, followed by a three digit sequence number
+       (for example, 1231002).   The  -a  option  allows  you  to
+       append an additional seven characters to the system gener-
+       ated alternate event log file name.  For example, the com-
+       mand auditlog -a abcdefg
+
+       will  create the file /var/audit/MMDD###abcdefg when a log
+       switch occurs.
+
+       If the next_node is larger than seven characters or if  it
+       contains  a  slash,  an  error  message  is displayed (see
+       ``Diagnostics'').  If the alternate log file is a  charac-
+       ter  special  file, this option is ignored.  The -n option
+       specifies either a shell file or binary  executable  (pgm)
+       that  will be run when a log switch occurs.  The -n option
+       may be used only if an alternate log  is  specified.   The
+       program  will be invoked by init.  If the Mandatory Access
+       Control (MAC) feature is installed the program  should  be
+       at the SYS_PRIVATE level.
+
+FFiilleess
+       /etc/default/audit    /etc/conf/mtune.d/audit    /etc/mas-
+       ter.d/audit /var/audit/MMDD###
+
+DDiiaaggnnoossttiiccss
+       If successful, the auditlog command exits with a value  of
+       zero.   If there are errors, it exits with one of the fol-
+       lowing values and prints the corresponding error  message:
+       usage: auditlog . . .
+
+       Invalid command syntax.  invalid max_size value specified
+       Audit  Log  File Size Must be >=# (512 byte)blocks invalid
+       high water mark specified
+       Audit Buffer High Water Mark Must Be  >=  0  or  <=current
+       buffer  size  in  bytes  bytes  cannot open/access path or
+       device path/device name
+
+       An invalid argument has been supplied to one of the -P, -A
+       or -n options.  pathname component too long event log node
+       must be < 8 characters event log node may  not  contain  a
+       slash full pathname not specified program is not a regular
+       file program is not an executable file system service  not
+       installed
+
+       The audit package is not installed.  Permission denied
+
+       Failure  because  of  insufficient  privilege.  auditbuf()
+
+                                                                3
+
+auditlog(1M)                                         auditlog(1M)
+
+       failed ABUFGET, errno= error
+
+       A failure  occurred  while  retrieving  the  audit  buffer
+       attributes.  auditbuf() failed ABUFSET, errno= error
+
+       A   failure   occurred  while  setting  the  audit  buffer
+       attributes.  auditlog() failed ALOGGET, errno= error
+
+       A  failure  occurred  while  retrieving  the   audit   log
+       attributes.  auditlog() failed ALOGSET, errno= error
+
+       A failure occurred while setting the audit log attributes.
+       auditctl() failed ASTATUS, errno= error
+
+       A failure occurred while retrieving the  auditing  status.
+       unable  to allocate space argvtostr() failed function name
+       failed, errno = error
+
+       Failure  occurred  while  accessing   level   information.
+       "-option" option not allowed while auditing is enabled
+
+       The  following  warning  or  informational messages may be
+       printed: This warning message is printed if you attempt to
+       use  the -x option and the log file is a character special
+       file.  The system is unable to open the file that contains
+       information  about  the  default  behavior of the auditing
+       subsystem.  The value of  the  default  parameter  in  the
+       /etc/default/audit file did not pass validation tests.
+
+RReeffeerreenncceess
+
+                                                                4
+

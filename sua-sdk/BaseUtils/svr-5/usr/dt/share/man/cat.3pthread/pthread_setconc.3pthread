@@ -1,0 +1,91 @@
+
+
+pthread_setconcurrency(3pthread) pthread_setconcurrency(3pthread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <pthread.h>
+
+       int     pthread_setconcurrency(int     new_level);     int
+       pthread_getconcurrency(void);
+
+DDeessccrriippttiioonn
+       The Threads Library ensures that a  sufficient  number  of
+       threads  are  active  so  that the process can continue to
+       make progress.  While this conserves system resources,  it
+       might not produce the most effective level of concurrency.
+
+       pthread_setconcurrency tells  the  threads  implementation
+       the desired level, or degree, of concurrency.  That is, it
+       requests the number of lightweight processes  (LWPs)  that
+       the user would like available to execute multiplexed (that
+       is, PTHREAD_SCOPE_PROCESS) threads in the  process.   This
+       value  is  used to affect the number of LWPs available for
+       running multiplexed threads.
+
+       pthread_getconcurrency returns the level,  or  degree,  of
+       concurrency,  requested  from  the  most recent successful
+       pthread_setconcurrency call (or zero, if there has been no
+       call.
+
+       The  new_level  parameter specifies the requested level of
+       concurrency.  new_level must be  a  non-negative  integer.
+       pthread_setconcurrency   interprets   it  as  follows:  If
+       new_level  is  zero,  pthread_setconcurrency  causes   the
+       implementation  to  maintain  the concurrency level at its
+       discretion.  If new_level is greater than the current num-
+       ber  of  LWPs,  in this implementation, pthread_setconcur-
+       rency will create LWPs until the number  of  LWPs  in  the
+       pool  equals  new_level, unless new_level exceeds a system
+       limit.  In that case, LWPs will be created only up to  the
+       system limit.  However, if new_level exceeds the number of
+       threads in the process, pthread_setconcurrency will create
+       new  LWPs  so that the number of LWPs equals the number of
+       threads in the process.  If new_level  is  less  than  the
+       current  number of LWPs, pthread_setconcurrency will allow
+       LWPs to terminate themselves as the result of  aging.   If
+       new_level   is  equal  to  the  current  number  of  LWPs,
+       pthread_setconcurrency sets the new level of  concurrency,
+       but does not create or terminate any LWPs.
+
+       When the number of LWPs becomes greater than the number of
+       threads in the process, the concurrency level might  auto-
+       matically  decay over time to be equal to or less than the
+       number of threads in the process.  This process is  called
+       aging.   If  an  LWP  is  inactive for a certain length of
+       time, it will terminate itself if: the number of  LWPs  is
+       greater than the requested concurrency level or the number
+
+                                                                1
+
+pthread_setconcurrency(3pthread) pthread_setconcurrency(3pthread)
+
+       of LWPs is greater than the number of threads in the  pro-
+       cess
+
+RReettuurrnn vvaalluueess
+       pthread_setconcurrency  returns  zero  on  success  and an
+       error number for failure, as described below.
+
+       pthread_getconcurrency  always  returns  the   concurrency
+       level set by a previous successful call to pthread_setcon-
+       currency.   If  pthread_setconcurrency  has   never   been
+       called, pthread_getconcurrency returns zero.
+
+DDiiaaggnnoossttiiccss
+       pthread_setconcurrency returns the following values if the
+       corresponding conditions are detected: new_level is  nega-
+       tive.
+
+SSttaannddaarrddss ccoommpplliiaannccee
+       The  Single UNIX Specification, Version 2; The Open Group.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The creation or termination of  LWPs  is  not  synchronous
+       with  the  call  to  pthread_setconcurrency.  If new_level
+       causes a system limit to be exceeded no error is returned.
+
+                                                                2
+

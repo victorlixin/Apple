@@ -1,0 +1,354 @@
+
+
+mrouted(1Mtcp)                                     mrouted(1Mtcp)
+
+SSyynnooppssiiss
+       in.mrouted  [ -p ] [ -c config_file ] [ -d [ debug_level ]
+       ]
+
+DDeessccrriippttiioonn
+       mrouted implements the Distance-Vector  Multicast  Routing
+       Protocol  (DVMRP) which was developed from an earlier ver-
+       sion specified in RFC 1075.  mrouted maintains topological
+       knowledge  using a distance-vector routing protocol (simi-
+       lar to that of RIP described in RFC 1058), upon  which  it
+       implements  a  multicast  forwarding  algorithm  known  as
+       Reverse Path Broadcasting.
+
+       mrouted forwards a multicast  datagram  along  a  shortest
+       (reverse)  path  tree.  The root of the tree is the subnet
+       where the datagram originated.  The tree  is  a  broadcast
+       tree  which  has  been ``pruned back'' so that it does not
+       extend beyond those subnetworks that contain members (lis-
+       teners)  of  the  destination  multicast  group.  The tree
+       includes all subnets reachable by  a  cooperating  set  of
+       mrouted  routers.   A  multicast datagram will not be for-
+       warded along branches of the tree  which  do  not  contain
+       listeners  of  the  multicast  group.  The IP time-to-live
+       (TTL) of a multicast datagram can be  used  to  limit  its
+       range  and  prevent  it from being forwarded to the entire
+       tree.
+
+       To support multicasting between subnets that are separated
+       by unicast routers that do not understand IP multicasting,
+       mrouted supports tunnels.  A tunnel is a virtual point-to-
+       point  link between a pair of mrouted routers located any-
+       where in an internet.  mrouted encapsulates  IP  multicast
+       packets  for  transmission  through  tunnels, so that they
+       look like normal unicast datagrams to intermediate routers
+       and  subnets.   The  encapsulation  is added on entering a
+       tunnel, and removed on leaving a tunnel.
+
+       By default, multicast packets are encapsulated  using  the
+       IP-in-IP  protocol (IP protocol number 4).  Older versions
+       of mrouted use IP  source  routing,  which  creates  heavy
+       loading  on some types of router.  This version of mrouted
+       does not support tunnels that use IP source routing.
+
+       The tunnel mechanism allows mrouted to establish a virtual
+       internet, for the purpose of multicasting only.  This vir-
+       tual internet is independent of the physical internet, and
+       can  span multiple Autonomous Systems.  This capability is
+       intended only for experimental support of internet  multi-
+       casting,  pending widespread support for multicast routing
+       by regular unicast routers.
+
+       mrouted handles multicast routing only; a  unicast  router
+       such  as  routed  or  gated  can  run  on the same host as
+       mrouted.
+
+                                                                1
+
+mrouted(1Mtcp)                                     mrouted(1Mtcp)
+
+       If tunnels are defined, mrouted does not  need  access  to
+       more  than  one physical subnet in order to perform multi-
+       cast forwarding.
+
+       On invocation, mrouted writes its process ID to  the  file
+       /etc/inet/mrouted.pid.
+
+   OOppttiioonnss
+       mrouted  understands the following options: Specify a con-
+       figuration file other  than  /etc/inet/mrouted.conf  which
+       mrouted  reads by default.  Specifies the debugging level:
+       No debugging; detach mrouted  from  the  terminal.   Print
+       warning and error messages to the system log.  This is the
+       default behavior for  mrouted.   Print  all  messages  are
+       printed  to  stderr  as well as the system log.  Print all
+       level 1 messages,  and  also  all  significant  events  to
+       stderr  and  the  system  log;  default debugging level if
+       debug_level is not specified.  Print all  level  1  and  2
+       messages,  and  also all packet arrivals and departures to
+       stderr and the system log.   If  the  debugging  level  is
+       greater  than  0, mrouted remains attached to the invoking
+       terminal and can receive signals from the terminal.  Start
+       mrouted  in non-pruning mode. By default, mrouted performs
+       pruning.
+
+   CCoonnffiigguurriinngg mmrroouutteedd
+       mrouted will automatically forward multicast datagrams  on
+       all  network interfaces (excluding the loopback interface)
+       that have a multicast capability and which are  configured
+       to  use  this.   (Multicasting is turned on by setting the
+       IFF_MULTICAST flag in the SIOCSIFNAME ioctl that  is  sent
+       to  the  network interface driver when it is initialized.)
+       Without any entries in  its  default  configuration  file,
+       /etc/inet/mrouted.conf,  mrouted  can  find other mrouteds
+       running on other systems that it can reach  directly  over
+       the network interfaces.
+
+       The following configuration statements may be specified in
+       the configuration file: Set  the  time  that  a  multicast
+       route  will  be cached before it times out if inactive. It
+       is suggested that the cache lifetime be configured in  the
+       range  from  300  seconds  (5 minutes) to 86400 seconds (1
+       day).  The default value is 300 seconds.  Assign a name to
+       a boundary.  A boundary is a administrative border for the
+       specified scoped address.  Associate a non-default metric,
+       m,  or  threshold,  t,  with  the physical local interface
+       identified by  local-addr  (an  IP  address  or  interface
+       name).   If  specified, disable disables multicast routing
+       on the interface.
+
+       If attached to multiple multiple IP subnets, describe each
+       subnet using altnet.
+
+       If  one  boundary  or  more is specified, mrouted will not
+
+                                                                2
+
+mrouted(1Mtcp)                                     mrouted(1Mtcp)
+
+       forward packets belonging to this address  on  the  scoped
+       interface.
+
+       All  phyint  statements must come before any tunnel state-
+       ments  in  the  configuration  file.   Configure   whether
+       mrouted  should  perform  pruning.  By default, pruning is
+       enabled (on).  Establish a tunnel link between  the  local
+       IP  address  local-addr  and the remote IP address remote-
+       addr.  remote-addr may be replaced by a hostname  if,  and
+       only  if,  it  has a single IP address associated with it.
+       Additionally, a non-default metric, m,  or  threshold,  t,
+       can be associated with a tunnel.
+
+       If  one  boundary  or  more is specified, mrouted will not
+       forward packets belonging to this address  on  the  scoped
+       interface.
+
+       The  tunnel must be configured on the routers at both ends
+       before it can be used.   The  file  format  is  free-form;
+       whitespace (including newlines) is not significant.
+
+       The  metric associated with a physical interface or a tun-
+       nel influences the  choice  of  route  taken.   Its  value
+       defines  the  cost of sending a datagram via a route.  The
+       default metric  1  is  normally  satisfactory.   A  metric
+       greater  than  1  is  unnecessary for a tunnel that is the
+       only route to other subnets and tunnels.  Keep metrics  as
+       small  as possible; mrouted cannot route along paths where
+       the metrics sum to a value greater than 31.
+
+       The threshold is the minimum IP time-to-live  (TTL)  value
+       that  a  multicast  datagram must have in order to be for-
+       warded to an interface or tunnel.  Every multicast  router
+       decrements  the  TTL  in  a  multicast  datagram by 1. The
+       default threshold value is 1.  The threshold can  be  used
+       to  limit  the scope of multicast datagrams, and to ensure
+       that lost datagrams disappear.  You should only specify  a
+       threshold to prevent local multicast datagrams from cross-
+       ing a link.  For example, if the networks at two sites are
+       connected  by  a  tunnel  with a threshold of 8, multicast
+       datagrams that are specific to a site need a TTL of  7  to
+       avoid crossing the tunnel.  All mrouteds should define the
+       same metric and threshold for a subnet or tunnel to  which
+       they  are connected.  This avoids problems such as connec-
+       tions that only work in one direction.
+
+       In general, all mrouteds connected to a particular  subnet
+       or  tunnel  should  use  the same metric and threshold for
+       that subnet or tunnel.
+
+       Even though mrouted is exchanging routes correctly, multi-
+       cast  datagrams may fail to traverse a tunnel for the fol-
+       lowing reasons: Applications are using  too  small  a  TTL
+       value  for the tunnel.  A router in the path that includes
+
+                                                                3
+
+mrouted(1Mtcp)                                     mrouted(1Mtcp)
+
+       the tunnel is selectively  discarding  some  IP  datagrams
+       such  as IGMP packets or IP-over-IP encapsulated multicast
+       packets.  The two ends of tunnel disagree on the method to
+       be used for sending multicast packets (IP-over-IP encapsu-
+       lation or IP source routing).  mrouted will fail if  fewer
+       than  two  virtual  interfaces  are  configured. A virtual
+       interface, or vif, is either a physical interface that  is
+       capable of multicasting or a tunnel.
+
+       mrouted  will  log a warning if all its virtual interfaces
+       are tunnels.  Eliminate this multicast router and  config-
+       ure a direct tunnel instead.
+
+   SSiiggnnaallss
+       mrouted  responds  as  follows  to  these signals: Restart
+       mrouted and re-read the configuration file.   Exit  grace-
+       fully  and  notify termination to all neighboring routers.
+       Dump the internal routing tables to /var/tmp/mrouted.dump.
+       This  can  be  used to see if mrouted is exchanging routes
+       correctly.    Dump   the   internal   cache   tables    to
+       /var/tmp/mrouted.cache.   This  can  be  used  to  see  if
+       mrouted is forwarding datagrams correctly.  If the  debug-
+       ging  level  is  greater than 0, dump the internal routing
+       tables to stderr.  A signal may be sent to  mrouted  using
+       the  following command in the or shells: kill -signal `cat
+       /etc/inet/mrouted.pid`
+
+FFiilleess
+       default mrouted configuration file contains the process ID
+       of  mrouted  dump  file  for mrouted's internal cache dump
+       file for mrouted's internal routing tables
+
+RReeffeerreenncceess
+       DVMRP and other multicast routing algorithms are described
+       in Multicast Routing in Internetworks and Extended LANs by
+       S Deering, in the Proceedings of the ACM SIGCOMM '88  Con-
+       ference.
+
+NNoottiicceess
+       Interoperation  with older versions of mrouted that use IP
+       source routing to implement tunnels is not supported.
+
+       mrouted suffers from the scaling problems of any distance-
+       vector  routing protocol, and does not yet support hierar-
+       chical multicast routing  or  inter-operation  with  other
+       multicast routing protocols.
+
+   AAuutthhoorrss
+       Steve Deering, Ajit Thyagarajan, Bill Fenner
+
+EExxaammpplleess
+       An example /etc/inet/mrouted.conf configuration file for a
+       multicast  router  in  the  Electrical  Engineering   (EE)
+       department  of  a  large university: # Name the boundaries
+
+                                                                4
+
+mrouted(1Mtcp)                                     mrouted(1Mtcp)
+
+       for    convenience     #     name LOCAL     239.255.0.0/16
+       name EE   239.254.0.0/16 # # Do not forward datagrams from
+       EE multicast groups on the # le1  interface  that  is  the
+       gateway  to  the  Computer Science # department.  # phyint
+       le1 boundary EE # # Define the interface for the classroom
+       network  which  has # four different length subnets on it.
+       This example entry # uses the IP address rather  than  the
+       name  of the interface.  # phyint 172.16.12.38 boundary EE
+            altnet  172.16.15.0/26       altnet   172.16.128.0/26
+            altnet  172.16.48.0/24  # # Disable multicasting over
+       an ATM interface # phyint  atm0  disable  #  #  Define  an
+       internal   tunnel   to   another   EE  subnet.   #  tunnel
+       192.168.5.4 192.168.55.101 metric 1 threshold 1 # # Define
+       the tunnel to the outside world but do not forward # LOCAL
+       or EE multicast datagrams  over  this  tunnel.   #  tunnel
+       192.168.5.4  10.11.12.13 metric 1 threshold 32      bound-
+       ary LOCAL boundary EE An example of  a  virtual  interface
+       table: Virtual Interface Table
+
+       Vif  Local-Address                 Metric    Thresh    Flags
+       -----------------------------------------------------------------------
+       0    36.2.0.8     subnet:     36.2       1    1    querier
+                       groups:       224.0.2.1
+       224.0.0.4                   pkts  in:     3456
+       pkts out:   2322323
+
+       1    36.11.0.1   subnet:      36.11      1    1    querier
+                        groups:       224.0.2.1
+       224.0.1.0                           224.0.0.4
+       pkts in:    345               pkts out:   3456
+
+       2    36.2.0.8     tunnel:     36.8.0.110 1    1
+       peers:      36.8.0.110                boundaries:  239.0.1
+                           239.1.2                     pkts   in:
+       34545433               pkts out:   234342
+
+       3    36.2.0.8    tunnel:     36.8.0.77  1    1 This  shows
+       four  virtual interfaces; two to subnets, vif 0 and vif 1,
+       and two to tunnels, vif 2 and vif 3.   Other  observations
+       about  this configuration are: The vif 0 and vif 1 subnets
+       have groups present; tunnels never have any groups.  vif 0
+       and  vif  1 are configured on interfaces connected to dif-
+       ferent subnets; 36.2 and 36.11.  vif 0, vif 2, and  vif  3
+       are  configured  over  the  same  network  interface.  The
+       querier flags show that this mrouted sends periodic  group
+       membership  queries  on  the vif 0 and vif 1 subnets.  The
+       vif 2 tunnel is in operation to the peer  36.8.0.110.  The
+       boundaries  show that the scoped addresses for this inter-
+       face are 239.0.1 and 239.1.2.  The vif 3 tunnel is not  in
+       use  as  no  peer  is displyed.  An example of a multicast
+       routing table: Multicast Routing Table
+
+       Origin-Subnet  From-Gateway   Metric    Tmr  In-Vif    Out-
+       Vifs
+
+                                                                5
+
+mrouted(1Mtcp)                                     mrouted(1Mtcp)
+
+       ----------------------------------------------------------------
+       36.2                1    45   0    1*         2         3*
+       36.8      36.8.0.77 4    15   2    0*  1*  3*   36.11
+                     1    20   1    0* 2  3* Origin-Subnet is the
+       subnet from which  a  multicast  datagram  can  originate.
+       Associated  with  this  subnet  are: The IP address of the
+       previous hop gateway; this  is  blank  if  the  subnet  is
+       directly-connected.   The  metric  of the path back to the
+       origin.  The time in seconds  since  an  update  was  last
+       received  for this subnet.  The incoming virtual interface
+       for multicasts from the origin.  A list of  outgoing  vir-
+       tual  interface  numbers.  An asterisk (*) appended to the
+       vif number denotes that the outgoing virtual interface  is
+       connected  to  a  leaf of the broadcast tree rooted at the
+       origin.  mrouted will only forward  a  multicast  datagram
+       received  from  the origin on this outgoing virtual inter-
+       face if members of the  destination  group  exist  on  the
+       leaf.   mrouted  also  maintains a copy of the kernel for-
+       warding cache table which appears similar to  the  follow-
+       ing: Multicast Routing Cache Table (147 entries)
+
+       Origin         Mcast-group    CTmr Age  Ptmr IVif Forwvifs
+       ------------------------------------------------------------------------
+        13.2.116/22   224.2.127.255  3m   2m   -    0    1
+       >13.2.116.19 >13.2.116.196
+        138.96.48/21  224.2.127.255  5m   2m   -    0    1
+       >138.96.48.108
+        128.9.160/20  224.2.127.255  3m   2m   -    0    1
+       >128.9.160.45
+        198.106.194/24     224.2.135.190  9m   28s  9m   0P
+       >198.106.194.22  The  fields  have the following meanings:
+       The address and mask of the origin of multicast datagrams.
+       Entries  preceded by > indicate each source on the subnet.
+       The destination multicast group. Together with the Origin,
+       this  uniquely  identifies an entry.  Time remaining until
+       the entry will be deleted from the cache.  Time since  the
+       cache  entry  was  first  created.  If traffic is flowing,
+       cache entries are refreshed and routing entries  can  grow
+       very  old.   Time  remaining until the upstream prune will
+       timeout. A dash (-) means no prune was sent upstream.  The
+       incoming  vif for multicast packets from the origin.  Each
+       multicast  router  also  records  the  number  of   prunes
+       received  from neighboring routers for a particular origin
+       and group. If there are no members of a multicast group on
+       any  downward  link  of  the  multicast tree for a subnet,
+       mrouted sends a prune message to the  upstream  router  --
+       this is indicated by a P after the vif number.  The inter-
+       faces along which mrouted forwards datagrams belonging  to
+       the  source  group. A p indicates that mrouted is not for-
+       warding datagrams on that interface. A b on  an  interface
+       indicates  that it is a boundary; mrouted will not forward
+       datagrams to the scoped address on that interface.
+
+                                                                6
+

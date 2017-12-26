@@ -1,0 +1,191 @@
+
+
+smux_api(3snmp)                                   smux_api(3snmp)
+
+SSyynnooppssiiss
+       #include <netmgt/snmp.h>
+
+       int smux_close(int reason);
+
+       int smux_init(int debug);
+
+       int  smux_register(OID  subtree,  int priority, int opera-
+       tion);
+
+       int    smux_response(struct     type_SNMP_GetResponse__PDU
+       *event);
+
+       int smux_simple_open(OID identity, char *description, char
+       *commname,
+           int commlen);
+
+       int smux_trap(int generic, int specific,
+           struct type_SNMP_VarBindList *bindings);
+
+       int smux_wait(struct type_SMUX__PDUs **event, int secs);
+
+       #include <netmgt/snmp.h> #include <netmgt/objects.h>
+
+       int readobjects(char *file);
+
+DDeessccrriippttiioonn
+       smux_close is invoked by an  SMUX  peer  (user-daemon)  to
+       terminate  its SMUX association with the local SNMP agent.
+       This routine packages an SMUX__PDUs_close PDU, encodes  it
+       in ASN.1 format, dispatches the PDU to the agent, and then
+       closes the TCP end-point.
+
+       The argument passed to this routine is one of the  follow-
+       ing:  goingDown,  packetFormat, unsupportedVersion, proto-
+       colError, internalError or authenticationFailure. On fail-
+       ure,  smux_errno  is  set to one of the following: conges-
+       tion, invalidOperation, or youLoseBig.
+
+       smux_init is invoked by an SMUX peer (user-daemon) to ini-
+       tiate  a  TCP  connection with the local SNMP agent.  This
+       routine opens an end-point for the client and sends out  a
+       connect request to TCP port 199. Turn on debugging by set-
+       ting the debug argument to a non-zero value.
+
+       After establishing an SMUX association with the local SNMP
+       agent,  an SMUX peer invokes smux_register to export a MIB
+       subtree   to   the   agent.   This   routine   builds   an
+       SMUX__PDUs_registerRequest  PDU,  encodes  it in ASN.1 and
+       sends the PDU to the agent. The subtree to be exported  is
+       passed  as  the  subtree  argument.  The optional priority
+       argument specifies the registration priority  to  be  used
+       for  performing  the  specified operation. snmpd uses this
+       priority value to determine which  SMUX  peer  to  consult
+
+                                                                1
+
+smux_api(3snmp)                                   smux_api(3snmp)
+
+       when  more than one peer registers the same subtree. Legal
+       values are 0 to (2^31)-1, with a  lower  number  having  a
+       higher  priority.  A  priority of -1 requests the agent to
+       use the highest available  priority  (refer  to  for  more
+       information  about  priority).  The third argument, opera-
+       tion, specifies one of the following: delete, readOnly, or
+       readWrite.  If  smux_register  fails, smux_errno is set to
+       either parameterMissing, invalidOperation, or  congestion.
+       Only in the case of congestion is the TCP end-point closed
+       and the SMUX association  terminated.
+
+       smux_response is invoked by an SMUX peer (user-daemon)  to
+       send  a response to the get, get-next or set requests from
+       the local SNMP agent. The argument supplied to  this  rou-
+       tine is an SMUX get-response PDU.
+
+       smux_simple_open  is  called by an SMUX peer (user-daemon)
+       to initiate an SMUX association with the local SNMP agent.
+       This  routine  packages and sends an SMUX__PDUs_simple PDU
+       over the TCP connection initiated by smux_init. If  a  TCP
+       connection  is not present, smux_simple_open tries to ini-
+       tiate one.  smux_simple_open  takes  four  arguments.  The
+       first  is  the  identity  of  the  SMUX peer (refer to for
+       details on acquiring an identity for the peer). The second
+       argument,  description,  is  a  text  string  containing a
+       description of the peer. The commname  and  commlen  argu-
+       ments contain the password and its length, respectively.
+
+       An  SMUX  peer  (user-daemon)  invokes smux_trap to send a
+       trap to the agent. This routine builds an  SMUX__PDUs_trap
+       PDU  encoded  in   ASN.1  format  and then sends it to the
+       agent. smux_trap takes three arguments: two integers  cor-
+       responding to the generic and specific trap to be sent and
+       a list of VarBinds (variables and  the  values  associated
+       with them).
+
+       smux_wait  is invoked by an SMUX peer (user-daemon) await-
+       ing either a request or a response from  the  SNMP  agent.
+       This  routine fetches the SMUX PDU and decodes it into the
+       library's internal format. If the event it receives is  an
+       MUX__PDUs_close  PDU,  it  closes  the  TCP  end-point and
+       returns a zero value. It returns a non-zero value on fail-
+       ure.   If  the  error  is  fatal, the smux_errno is set to
+       youLoseBig, and the TCP end-point is closed.
+
+       The MOSY program compiles the list of objects  managed  by
+       the  SMUX  peer.  The peer invokes readobjects to read the
+       file containing this compiled list. readobjects creates  a
+       tree  structure containing the objects; the peer registers
+       this tree with an SNMP agent, and traverses the tree when-
+       ever it receives requests from the agent.
+
+       The file of objects can be generated by using MOSY to com-
+       pile the OBJECT-TYPE MACRO definitions of  the  MIB.  This
+
+                                                                2
+
+smux_api(3snmp)                                   smux_api(3snmp)
+
+       file  should  include  the  definitions for all the parent
+       objects up to the iso. Otherwise, it is  not  possible  to
+       resolve the object-identifiers correctly.
+
+       The  format  of  the  lines in the file is as shown below.
+       Each token is separated  by  white  space,  though  double
+       quotes may be used to prevent separation. Anything follow-
+       ing a "--" on a line is  taken  as  a  comment  and  hence
+       ignored.    <name>    <relation-to-parent>    <value-type>
+       <access>   <status> The fields ``value-type'', ``access'',
+       and  ``status''  are  optional  for  objects which are not
+       inside the tree registered by the SMUX peer.
+
+       All the above functions returns ``OK'' (0) on success, and
+       ``NOTOK'' (-1) on failure.
+
+FFiilleess
+       configuration file for SNMP SMUX peers
+
+EExxaammpplleess
+       -- object definitions compiled from RFC1155-SMI
+
+       internet           iso.3.6.1 directory          internet.1
+       mgmt                internet.2  experimental        inter-
+       net.3     private                internet.4    enterprises
+       private.1
+
+       -- object definitions compiled from BSDUNIX-MIB
+
+       unix               enterprises.4 agents             unix.1
+       fourBSD-isode        agents.2   peers               unix.3
+       unixd              peers.1
+
+       -- object definitions compiled from UNIX-MIB
+
+       print              unix.6 users              unix.7
+
+       printQTable         print.1          Aggregate        not-
+       accessible    mandatory  printQEntry         printQTable.1
+       Aggregate        not-accessible    mandatory    printQName
+       printQEntry.1   DisplayString   read-only        mandatory
+       printQStatus       printQEntry.2  INTEGER        read-only
+       mandatory  printQDisplay      printQEntry.3  DisplayString
+       read-only       mandatory printQEntries      printQEntry.4
+       INTEGER          read-only         mandatory  printQAction
+       printQEntry.5   INTEGER         read-write       mandatory
+       printJTable          print.2          Aggregate       not-
+       accessible   mandatory  printJEntry          printJTable.1
+       Aggregate         not-accessible    mandatory   printJRank
+       printJEntry.1   INTEGER         read-only        mandatory
+       printJName         printJEntry.2  DisplayString  read-only
+       mandatory printJOwner        printJEntry.3   DisplayString
+       read-only       mandatory printJDescription  printJEntry.4
+       DisplayString    read-only         mandatory    printJSize
+
+                                                                3
+
+smux_api(3snmp)                                   smux_api(3snmp)
+
+       printJEntry.5   INTEGER         read-only        mandatory
+       printJAction        printJEntry.6   INTEGER          read-
+       write      mandatory
+
+       -- and so on ...
+
+RReeffeerreenncceess
+
+                                                                4
+

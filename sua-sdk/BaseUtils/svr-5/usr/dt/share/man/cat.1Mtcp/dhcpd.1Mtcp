@@ -1,0 +1,114 @@
+
+
+dhcpd(1Mtcp)                                         dhcpd(1Mtcp)
+
+SSyynnooppssiiss
+       in.dhcpd   [  -t  timeout  ]  [  -D  debug_level  ]  [  -b
+       bootpd_port ]
+
+DDeessccrriippttiioonn
+       dhcpd implements a  Dynamic  Host  Configuration  Protocol
+       (DHCP)  server as defined in RFC 1534, RFC 1542, RFC 2131,
+       and RFC 2132.
+
+       If there is no IP address specified for a DHCP  client  in
+       the  DHCP  configuration  file,  dhcpd requests an address
+       from the Address Allocation Server (assd) which  allocates
+       an  address  from  a pool of addresses consistent with the
+       client's subnet. The Address  Allocation  Server  provides
+       the  same  service  to  other daemons which need to assign
+       temporary addresses.
+
+       dhcpd can be configured to run from inetd by including the
+       following line in the file /etc/inetd.conf: bootps dgram/i
+       udp wait root /usr/sbin/in.dhcpd  in.dhcpd  This  mode  of
+       operation is referred to as inetd mode and causes dhcpd to
+       be started only when a DHCP request arrives.  If  it  does
+       not  receive  another packet within fifteen minutes of the
+       last one it received, it  will  exit  to  conserve  system
+       resources.  The  -t  option  controls  this  timeout  (see
+       ``Options'').
+
+       When running dhcpd and bootpd on the same host, dhcpd for-
+       wards  BOOTP  packets  to  the  port specified with the -b
+       option. bootpd must be run in "slave mode"  (with  the  -S
+       option).  In  this  mode,  bootpd  listens on an alternate
+       port.  The  port  bootps-alt  is  defined  to  be  950  in
+       /etc/services, but it can be anything less than 1024.
+
+       To  run  dhcpd and bootpd on the same host from inetd, use
+       the following  two  lines  in  the  file  /etc/inetd.conf:
+       bootps  dgram/i  udp wait root /usr/sbin/in.dhcpd in.dhcpd
+       -b   bootps-alt   bootps-alt   dgram   udp    wait    root
+       /usr/sbin/in.bootpd in.bootpd -S dhcpd can also uses BOOTP
+       gateways (see to forward DHCP packets to DHCP  clients  on
+       another subnet.
+
+       It is also possible to run dhcpd in standalone mode (with-
+       out inetd) by simply invoking it from  a  shell  like  any
+       other regular command. dhcpd automatically detects whether
+       it was invoked from inetd or from a  shell  and  automati-
+       cally selects the appropriate mode.
+
+       To  run  dhcpd  and  bootpd on the same host in standalone
+       mode, use the following two  commands:  /usr/sbin/in.dhcpd
+       -b  port  /usr/sbin/in.bootpd -S -P port where port is the
+       alternate port where bootpd is listening for BOOTP packets
+       forwarded by dhcpd.
+
+                                                                1
+
+dhcpd(1Mtcp)                                         dhcpd(1Mtcp)
+
+   OOppttiioonnss
+       Alternate port assigned to bootpd to listen for packets if
+       both bootpd and dhcpd are running on the same host. bootpd
+       must  be running in slave mode (-S).  Sets the debug_level
+       variable that controls the amount  of  debugging  messages
+       generated.  For example, -D 1 will set the debugging level
+       to 1.  Recognized values are 0, 1, 2, and  3  or  greater.
+       Zero  generates no messages and 1 to 3 generate increasing
+       amounts of messages. Specifying an integer greater than  3
+       has  the  same result as specifying 3. If dhcpd is running
+       in standalone mode and you specify 3 or greater,  messages
+       will  be  directed  to  standard error (not to syslog) and
+       dhcpd does not go  into  the  background.   Specifies  the
+       timeout  value (in minutes) that a dhcpd process will wait
+       for a packet before exiting.  If no packets  are  received
+       for timeout minutes, then the program will exit. A timeout
+       value of zero means ``run forever''.  In standalone  mode,
+       this  option  is forced to zero.  dhcpd loads its database
+       of known subnets, clients, classes and DHCP  options  from
+       the default configuration file, /etc/inet/dhcpd.conf.  The
+       DHCP Configuration Manager does not support  an  alternate
+       configuration  database  nor  does it support an alternate
+       location for this file.
+
+   OOppeerraattiioonn
+       When dhcpd  starts,  it  reads  a  configuration  database
+       (/etc/inet/dhcpd.conf)   that   contains   known  subnets,
+       clients, classes and DHCP options, along with DHCP  server
+       parameters.  It  also records the modification time of the
+       configuration database. dhcpd then listens for any packets
+       sent to the bootps port.
+
+       When  dhcpd  receives a packet, it checks the modification
+       time of the configuration file and reloads the database if
+       necessary. It then constructs the set of parameters corre-
+       sponding to the client from the  DHCP  configuration  file
+       and responds to the client.
+
+       During  initialization, dhcpd determines the UDP port num-
+       bers to be used by calling getservbyname (see  which  nor-
+       mally  reads  /etc/services.   Two service names (and port
+       numbers) are used: DHCP/BOOTP server listening port
+        DHCP/BOOTP client destination port If  the  port  numbers
+       cannot  be determined using getservbyname, then the values
+       default to bootps=67 and bootpc=68.
+
+RReeffeerreenncceess
+SSttaannddaarrddss ccoommpplliiaannccee
+       RFC 1534, RFC 1542, RFC 2131, RFC 2132
+
+                                                                2
+

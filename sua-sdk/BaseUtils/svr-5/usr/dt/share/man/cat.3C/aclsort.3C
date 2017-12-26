@@ -1,0 +1,76 @@
+
+
+aclsort(3C)                                           aclsort(3C)
+
+SSyynnooppssiiss
+       #include <sys/types.h> #include <acl.h>
+
+       int   aclsort(int   nentries,  int  calclass,  struct  acl
+       *aclbufp);
+
+DDeessccrriippttiioonn
+       The  aclsort  routine  sorts  Access  Control  List  (ACL)
+       entries  into  the correct order to be accepted by the acl
+       system call.
+
+       aclbufp points to a buffer containing  ACL  entries;  cal-
+       class,  if  non-zero, indicates that the CLASS_OBJ permis-
+       sions should be recalculated; and nentries  specifies  the
+       number of ACL entries in the buffer.
+
+       aclsort  sorts  the contents of the ACL buffer as follows:
+       Entries will be in order USER_OBJ, USER, GROUP_OBJ, GROUP,
+       CLASS_OBJ,      OTHER_OBJ,     DEF_USER_OBJ,     DEF_USER,
+       DEF_GROUP_OBJ,     DEF_GROUP,      DEF_CLASS_OBJ,      and
+       DEF_OTHER_OBJ.  Entries of type USER, GROUP, DEF_USER, and
+       DEF_GROUP will be sorted in increasing order by id.
+
+       The aclsort call will succeed if all of the following  are
+       true:  There  is  exactly one entry each of type USER_OBJ,
+       GROUP_OBJ, CLASS_OBJ, and OTHER_OBJ.  There is at most one
+       entry    each   of   type   DEF_USER_OBJ,   DEF_GROUP_OBJ,
+       DEF_CLASS_OBJ, and DEF_OTHER_OBJ.  Entries of  type  USER,
+       GROUP,  DEF_USER,  or  DEF_GROUP may not contain duplicate
+       entries.  A duplicate entry is one of the same  type  con-
+       taining  the same numeric id.  If the calclass argument is
+       zero and there are no entries of type USER and no  entries
+       of  type  GROUP,  the  permissions  of  the  GROUP_OBJ and
+       CLASS_OBJ entries must be  the  same.   If  there  are  no
+       entries of type DEF_USER and no entries of type DEF_GROUP,
+       and  the  DEF_GROUP_OBJ  entry  is  specified,  then   the
+       DEF_CLASS_OBJ  entry  must also be specified, and the per-
+       missions of the DEF_GROUP_OBJ  and  DEF_CLASS_OBJ  entries
+       must be the same.
+
+   RReettuurrnn vvaalluueess
+       Upon  successful  completion,  the  return value is 0.  If
+       there are duplicate entries, the return value is the posi-
+       tion  of the first duplicate entry.  If there is more than
+       one  entry  of  type   USER_OBJ,   GROUP_OBJ,   CLASS_OBJ,
+       OTHER_OBJ,  DEF_USER_OBJ,  DEF_GROUP_OBJ, DEF_CLASS_OBJ or
+       DEF_OTHER_OBJ, they are treated as duplicate entries,  and
+       the  return  value  is the position of the first duplicate
+       entry.  For all other errors, the return value is -1.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The buffer is sorted by type and id  before  checking  for
+       any failures.  Therefore the buffer is always sorted, even
+
+                                                                1
+
+aclsort(3C)                                           aclsort(3C)
+
+       if there is a failure.  The position of a duplicate  entry
+       returned  on  failure is not the byte offset of the dupli-
+       cate entry from its base, rather it refers  to  the  entry
+       number  of  the  duplicate entry within the sorted buffer.
+       Checks will be performed in order of entry type.  If there
+       are  multiple  failures,  the failure returned will be the
+       first encountered, for example, if the ACL buffer contains
+       a  duplicate  USER entry and does not contain an OTHER_OBJ
+       entry, the return value will be the first  duplicate  USER
+       entry.
+
+                                                                2
+

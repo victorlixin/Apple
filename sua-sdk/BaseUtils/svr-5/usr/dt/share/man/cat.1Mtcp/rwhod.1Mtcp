@@ -1,0 +1,87 @@
+
+
+rwhod(1Mtcp)                                         rwhod(1Mtcp)
+
+SSyynnooppssiiss
+       in.rwhod
+
+DDeessccrriippttiioonn
+       The  rwhod  command  is  the  server  which  maintains the
+       database used by the and programs.  Its operation is pred-
+       icated  on the ability to broadcast messages on a network.
+
+       rwhod operates as both a producer and consumer  of  status
+       information.  As a producer of information it periodically
+       queries the state of the system and constructs status mes-
+       sages  which are broadcast on a network.  As a consumer of
+       information, it listens for other  rwhod  servers'  status
+       messages,  validating  them, then recording them in a col-
+       lection of files located in the directory /var/spool/rwho.
+
+       The  rwho  server  transmits  and receives messages at the
+       port indicated in the rwho service specification; see  The
+       messages    sent   and   received   are   of   the   form:
+       struct    outmp {      char out_line[8];   /* tty name  */
+            char out_name[8];   /*        user        id       */
+            long out_time; /* time on */ };
+
+       struct    whod  {       char wd_vers;        char wd_type;
+            char wd_fill[2];                    int  wd_sendtime;
+            int  wd_recvtime;               char wd_hostname[32];
+            int  wd_loadav[3];                  int  wd_boottime;
+            struct    whoent {           struct    outmp we_utmp;
+                 int  we_idle;      } wd_we[1024 / sizeof (struct
+       whoent)]; }; All fields  are  converted  to  network  byte
+       order  prior  to  transmission.   The load averages are as
+       calculated by the program,  and  represent  load  averages
+       over  the  5,  10,  and  15  minute  intervals  prior to a
+       server's transmission.  The host  name  included  is  that
+       returned  by  The array at the end of the message contains
+       information about the  users  logged  in  to  the  sending
+       machine.   This  information  includes the contents of the
+       and a value indicating the time since a character was last
+       received on the terminal line.
+
+       Messages  received by the rwho server are discarded unless
+       they originated at a rwho server's port.  In addition,  if
+       the host's name, as specified in the message, contains any
+       unprintable ASCII characters, the  message  is  discarded.
+       Valid messages received by rwhod are placed in files named
+       whod.hostname in  the  directory  /var/spool/rwho.   These
+       files  contain only the most recent message, in the format
+       described above.
+
+       Status messages are generated approximately once every  60
+       seconds.   rwhod  performs an on /stand/unix every 10 min-
+       utes to guard against the possibility that  this  file  is
+       not the system image currently operating.
+
+                                                                1
+
+rwhod(1Mtcp)                                         rwhod(1Mtcp)
+
+   FFiilleess
+UUssaaggee
+       This service takes up progressively more network bandwidth
+       as the number of hosts on the local  net  increases.   For
+       large networks, the cost becomes prohibitive.
+
+       No updates will be sent through ignored network interfaces
+       specified in /etc/inet/if.ignore.
+
+WWaarrnniinnggss
+       For rwhod to work properly, the directory  /var/spool/rwho
+       must  be  created  by the system administrator.  Given the
+       adverse effect rwho can have on system and network perfor-
+       mance,  the  system  administrator must decide whether the
+       benefits of the rwho feature  are  worth  the  performance
+       cost.
+
+RReeffeerreenncceess
+NNoottiicceess
+       Ideally, rwhod would relay status information between net-
+       works.  People often  interpret  the  server  dying  as  a
+       machine going down.
+
+                                                                2
+

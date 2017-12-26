@@ -1,0 +1,82 @@
+
+
+dladdr(3C)                                             dladdr(3C)
+
+SSyynnooppssiiss
+       #include <dlfcn.h>
+
+       int dladdr(void *address, Dl_info *dlip);
+
+DDeessccrriippttiioonn
+       dladdr  allows  a  process to obtain information about the
+       symbol that most closely defines a given address.   dladdr
+       first  determines whether the specified address is located
+       within one of the mapped  objects  (executable  or  shared
+       objects)  that  make  up  the  process' address space.  An
+       address is deemed to fall within a mapped object  when  it
+       is between the base address at which the object was mapped
+       and the highest virtual address mapped  for  that  object,
+       inclusive.   If  a  mapped  object fits this criteria, its
+       dynamic symbol table is searched  to  locate  the  nearest
+       symbol  to  the  specified address.  The nearest symbol is
+       the one whose value is equal to, or closest  to  but  less
+       than, the specified address.
+
+       dlip  is  a pointer to a Dl_info structure.  The structure
+       must be allocated by the user.  The structure members  are
+       set by dladdr if the specified address falls within one of
+       the mapped objects.  The  Dl_info  structure  contains  at
+       least      the      following      members:          const
+       char     *dli_fname;      void      *dli_fbase;      const
+       char     *dli_sname;                 void      *dli_saddr;
+            size_t    dli_size;               int       dli_bind;
+            int       dli_type;
+
+       Descriptions  of  these  members  appear below: Contains a
+       pointer to the filename of the  mapped  object  containing
+       address.   Contains  the base address of the mapped object
+       containing address.  Contains a pointer to the name of the
+       nearest  symbol  to  the  specified  address.  This symbol
+       either has the same address, or is the nearest symbol with
+       a lower address.  Contains the actual address of the near-
+       est symbol.  Contains the size of the  nearest  symbol  as
+       defined in the dynamic symbol table.  Contains the binding
+       attribute of the nearest symbol as defined in the  dynamic
+       symbol  table.   The  values are those used for a symbol's
+       binding in the ELF symbol table [see <elf.h> and  in  Con-
+       tains  the type attribute of the nearest symbol as defined
+       in the dynamic symbol table.  The values  are  those  used
+       for  a  symbol's type in the ELF symbol table [see <elf.h>
+       and in
+
+   RReettuurrnn vvaalluueess
+       If the specified address does not fall within one  of  the
+       mapped objects, 0 is returned; the contents of the Dl_info
+       structure are unspecified.  Otherwise, a non-zero value is
+       returned and the associated Dl_info elements are set.
+
+                                                                1
+
+dladdr(3C)                                             dladdr(3C)
+
+RReeffeerreenncceess
+NNoottiicceess
+       If no symbol is found within the object containing address
+       whose  value  is  less  than  or  equal  to  address,  the
+       dli_sname,  dli_saddr  and  dli_size members are set to 0;
+       the dli_bind member is set to STB_LOCAL, and the  dli_type
+       member is set to STT_NOTYPE.
+
+       For  the  a.out, the symbol table created by ld for use by
+       the dynamic linker might contain only a subset of the sym-
+       bols  defined in the a.out [see This could cause dladdr to
+       return information for a symbol that is actually unrelated
+       to the specified address.
+
+       The addresses and the strings pointed to by the members of
+       the Dl_info structure refer  to  locations  within  mapped
+       objects.   These  may  become  invalid  if the objects are
+       unmapped from the address space [see
+
+                                                                2
+

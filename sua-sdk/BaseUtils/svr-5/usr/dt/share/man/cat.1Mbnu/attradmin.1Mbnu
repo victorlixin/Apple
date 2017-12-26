@@ -1,0 +1,124 @@
+
+
+attradmin(1Mbnu)                                 attradmin(1Mbnu)
+
+SSyynnooppssiiss
+       attradmin [-A attr_name [-l local_attr]]
+       attradmin -A attr_name -a -r remote_attr -l local_attr
+       attradmin -A attr_name -d [-r remote_attr] -l local_attr
+       attradmin -A attr_name -I attr_descr
+       attradmin -A attr_name [-Dcf]
+
+DDeessccrriippttiioonn
+       The  attradmin  command allows an administrator to display
+       and update attribute mapping database entries.   Attribute
+       mapping  databases  are  used  by to map remote attributes
+       into local ones.
+
+   OOppttiioonnss
+       The options to  attradmin  have  the  following  meanings:
+       Specify  the  name  of  the  attribute.  Specify the local
+       value of the attribute into  which  the  remote  attribute
+       value  maps.   Add  an entry to a map.  The attribute name
+       and the local and remote attribute values must  be  speci-
+       fied.   Specify  the  value of the attribute on the remote
+       machine.  Delete entries from a map.   The  attribute  map
+       filename  and the local attribute value must be specified.
+       Use of the remote attribute value is  optional.   If  only
+       the  local  attribute value is specified, all entries map-
+       ping to that local attribute value are  deleted.   If  the
+       remote  attribute value is also specified, only a particu-
+       lar map entry is deleted.  Install a new attribute map.  A
+       remote  attribute  value format descriptor attr_descr must
+       be specified for the new attribute.  The format descriptor
+       is  a  string that describes the format of remote_attr; it
+       includes field numbers, the letter M to indicate the field
+       is  mandatory,  and field separators.  Delete an attribute
+       map file.  The attribute map filename must  be  specified.
+       Check  consistency of a map file.  The attribute map file-
+       name must be specified.  Fix an inconsistent attribute map
+       file.  The attribute map filename must be specified.
+
+FFiilleess
+       map file for attribute attr_name log file
+
+UUssaaggee
+       All  update  operations  are logged (whether successful or
+       not) in the file /var/adm/log/idmap.log.
+
+       When no options are specified, attradmin lists  the  names
+       of all installed attribute map files on the system.  If an
+       attribute map filename is specified, attradmin  lists  all
+       entries in the map file.  If an attribute map filename and
+       a local attribute value are specified, attradmin lists all
+       file  entries  that  map  to the specified local attribute
+       value.
+
+       Transparent mapping may be achieved  by  using  a  regular
+       expression  including  the  metacharacters  *,  [ and ] in
+
+                                                                1
+
+attradmin(1Mbnu)                                 attradmin(1Mbnu)
+
+       remote_attr, and a field specifier in local_attr.  A field
+       specifier  % followed by a field number can be entered for
+       local_attr to indicate that the value of local_attr is the
+       same  as  the value in the specified field of remote_attr.
+       If %i is entered for local_attr, attempts  by  attrmap  to
+       map remote_attr will fail.
+
+       When  attrmap  searches for a remote_attr, it sequentially
+       scans the attribute map file.  Therefore, the ordering  of
+       remote attributes in this file is critical.
+
+       Remote attributes are sorted on the highest numbered field
+       first.  Entries with explicit values in this field  appear
+       first  in the file.  Entries which include regular expres-
+       sions in this field are sorted from the most  specific  to
+       the  least specific based on the position of the metachar-
+       acters in the pattern.  The more to the left the metachar-
+       acter is in the pattern, the less specific the pattern is.
+       For example,  s*  is  less  specific  than  sf*.   Regular
+       expressions containing square brackets are considered more
+       specific than expressions  with  asterisks  and  therefore
+       come first in the file.
+
+       If  two  or  more  entries have patterns which are equally
+       specific, the specificity of the next lower numbered field
+       is  examined.   Fields are examined from highest to lowest
+       until the remote attributes can be differentiated.
+
+EExxaammpplleess
+       The following command installs a new  attribute  map  that
+       maps  GIDs:  attradmin  -A  GID  -I  M2:M1  In  any format
+       descriptor, the field numbers indicate the order  of  sig-
+       nificance of the fields, where higher numbered fields con-
+       tain entities of greater significance to the network.   In
+       the  format descriptor M2:M1, the first field contains the
+       remote machine name.  M1 contains the value of the  remote
+       attribute.   When a machine name is specified, it precedes
+       the attribute value, and the fields  are  separated  by  a
+       colon.
+
+       The  following  command  line  adds  an  entry  to the GID
+       database that maps any user on the  remote  machine  macha
+       into  the  local  system  with the same GID.  %1 indicates
+       that the value of local_attr is the same as the  value  in
+       the  remote_attr  field  that  has  1 as its field number:
+       attradmin -A GID -a -r "macha:*" -l %1 The following  com-
+       mand  line adds an entry to the GID database that maps all
+       GIDs from 100 to 119 on macha to GID 1 on the  local  sys-
+       tem:  attradmin  -A  GID -a -r "macha:1[01][0-9]" -l 1 The
+       attradmin command will ensure that  the  second  entry  is
+       found  first in the map file, no matter which of the above
+       two entries was actually added first.
+
+                                                                2
+
+attradmin(1Mbnu)                                 attradmin(1Mbnu)
+
+RReeffeerreenncceess
+
+                                                                3
+

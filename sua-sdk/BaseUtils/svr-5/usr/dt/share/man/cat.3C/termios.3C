@@ -1,0 +1,272 @@
+
+
+termios(3C)                                           termios(3C)
+
+SSyynnooppssiiss
+       #include <termios.h>
+
+       int tcgetattr(int fildes, struct termios *termios_p);
+
+       int tcsetattr(int fildes, int optional_actions,      const
+       struct termios *termios_p);
+
+       int tcsendbreak(int fildes, int duration);
+
+       int tcdrain(int fildes);
+
+       int tcflush(int fildes, int queue_selector);
+
+       int tcflow(int fildes, int action);
+
+       speed_t cfgetospeed(const struct termios *termios_p);
+
+       int cfsetospeed(struct termios *termios_p, speed_t speed);
+
+       speed_t cfgetispeed(const struct termios *termios_p);
+
+       int cfsetispeed(struct termios *termios_p, speed_t speed);
+
+       #include <sys/types.h> #include <termios.h>
+
+       pid_t tcgetpgrp(int fildes);
+
+       int tcsetpgrp(int fildes, pid_t pgid);
+
+       pid_t tcgetsid(int fildes);
+
+DDeessccrriippttiioonn
+       These functions describe a general terminal interface  for
+       controlling  asynchronous  communications  ports.   A more
+       detailed overview of the terminal interface can  be  found
+       in  interface  to  that  provides  the same functionality.
+       However, the function interface described here is the pre-
+       ferred user interface.
+
+       Many  of  the  functions  described  here have a termios_p
+       argument that is a pointer to a termios  structure.   This
+       structure   contains   the   following  members:  tcflag_t
+       c_iflag;        /*  input  modes  */  tcflag_t    c_oflag;
+       /*  output  modes */ tcflag_t   c_cflag;        /* control
+       modes */ tcflag_t   c_lflag;        /* local modes */ cc_t
+       c_cc[NCCS];     /* control chars */
+
+       These structure members are described in detail in
+
+   GGeett aanndd sseett tteerrmmiinnaall aattttrriibbuutteess
+       The tcgetattr function gets the parameters associated with
+       the object referred by  fildes  and  stores  them  in  the
+       termios structure referenced by termios_p.  This
+
+                                                                1
+
+termios(3C)                                           termios(3C)
+
+       function  may  be  invoked from a background process; how-
+       ever, the terminal attributes may be subsequently  changed
+       by a foreground process.
+
+       The tcsetattr function sets the parameters associated with
+       the terminal (unless support is required from the underly-
+       ing  hardware  that  is  not  available)  from the termios
+       structure  referenced  by   termios_p   as   follows:   If
+       optional_actions  is  TCSANOW,  the  change occurs immedi-
+       ately.   If  optional_actions  is  TCSADRAIN,  the  change
+       occurs  after all output written to fildes has been trans-
+       mitted.  This function should be used when changing param-
+       eters   that   affect   output.   If  optional_actions  is
+       TCSAFLUSH, the change occurs after all output  written  to
+       the  object  referred  by fildes has been transmitted, and
+       all input that has been received but not read is discarded
+       before the change is made.
+
+       The  symbolic constants for the values of optional_actions
+       are defined in termios.h.
+
+   LLiinnee ccoonnttrrooll
+       If the terminal is using asynchronous serial  data  trans-
+       mission, the tcsendbreak function causes transmission of a
+       continuous stream of zero-valued bits for a specific dura-
+       tion.   If  duration  is  zero,  it causes transmission of
+       zero-valued bits for at least 0.25 seconds, and  not  more
+       than  0.5 seconds.  If duration is not zero, it behaves in
+       a way similar to tcdrain.
+
+       If the terminal is  not  using  asynchronous  serial  data
+       transmission,  the tcsendbreak function sends data to gen-
+       erate a break condition  or  returns  without  taking  any
+       action.
+
+       The tcdrain function waits until all output written to the
+       object referred to by fildes has been transmitted.
+
+       The tcflush function discards data written to  the  object
+       referred  to  by  fildes  but  not  transmitted,  or  data
+       received  but  not  read,  depending  on  the   value   of
+       queue_selector:  If queue_selector is TCIFLUSH, it flushes
+       data  received  but  not  read.   If   queue_selector   is
+       TCOFLUSH, it flushes data written but not transmitted.  If
+       queue_selector is TCIOFLUSH, it flushes both data received
+       but not read, and data written but not transmitted.
+
+       The  tcflow function suspends transmission or reception of
+       data on the object referred to by fildes, depending on the
+       value  of action: If action is TCOOFF, it suspends output.
+       If action is TCOON,  it  restarts  suspended  output.   If
+       action  if  TCIOFF, the system transmits a STOP character,
+       which causes the terminal device to stop transmitting data
+       to the system.  If action is TCION, the system transmits a
+
+                                                                2
+
+termios(3C)                                           termios(3C)
+
+       START character, which causes the terminal device to start
+       transmitting data to the system.
+
+   GGeett aanndd sseett bbaauudd rraattee
+       The  baud  rate  functions  get  and set the values of the
+       input and output baud rates in the termios structure.  The
+       effects  on  the  terminal  device  described below do not
+       become effective until the tcsetattr function is  success-
+       fully called.
+
+       The  input and output baud rates are stored in the termios
+       structure.  The values shown in the table  are  supported.
+       The names in this table are defined in termios.h.
+       ----------------------------------------------
+       Name   Description       Name     Description
+       ----------------------------------------------
+       _BB_00         Hang up       _BB_66_00_00        600 baud
+       _BB_55_00        50 baud       _BB_11_22_00_00      1200 baud
+       _BB_77_55        75 baud       _BB_11_88_00_00      1800 baud
+       _BB_11_11_00      110 baud       _BB_22_44_00_00      2400 baud
+       _BB_11_33_44    134.5 baud       _BB_44_88_00_00      4800 baud
+       _BB_11_55_00      150 baud       _BB_99_66_00_00      9600 baud
+       _BB_22_00_00      200 baud       _BB_11_99_22_00_00    19200 baud
+       _BB_33_00_00      300 baud       _BB_33_88_44_00_00    38400 baud
+
+       cfgetospeed  gets  the  output  baud  rate  stored  in the
+       termios structure pointed to by termios_p.
+
+       cfsetospeed sets  the  output  baud  rate  stored  in  the
+       termios  structure  pointed to by termios_p to speed.  The
+       zero baud rate, B0, is used to terminate  the  connection.
+       If  B0 is specified, the modem control lines are no longer
+       asserted.  Normally, this disconnects the line.
+
+       cfgetispeed returns the input  baud  rate  stored  in  the
+       termios structure pointed to by termios_p.
+
+       cfsetispeed sets the input baud rate stored in the termios
+       structure pointed to by termios_p to speed.  If the  input
+       baud rate is set to zero, the input baud rate is specified
+       by the value of the output baud  rate.   Both  cfsetispeed
+       and  cfsetospeed  return a value of zero if successful and
+       -1 to indicate an error.  Attempts to set unsupported baud
+       rates  are  ignored.   This refers both to changes to baud
+       rates not supported by the hardware, and to  changes  set-
+       ting  the  input and output baud rates to different values
+       if the hardware does not support this.
+
+       For speeds higher than 38400 baud, use the functions and
+
+   GGeett aanndd sseett tteerrmmiinnaall ffoorreeggrroouunndd pprroocceessss ggrroouupp IIDD
+       tcsetpgrp sets the foreground process group ID of the ter-
+       minal  specified  by  fildes to pgid.  The file associated
+       with fildes  must  be  the  controlling  terminal  of  the
+
+                                                                3
+
+termios(3C)                                           termios(3C)
+
+       calling  process and the controlling terminal must be cur-
+       rently associated with the session of the calling process.
+       pgid  must  match  a  process group ID of a process in the
+       same session as the calling process.
+
+       tcgetpgrp returns the foreground process group ID  of  the
+       terminal specified by fildes.  tcgetpgrp is allowed from a
+       process that is a member of a  background  process  group;
+       however,  the information may be subsequently changed by a
+       process that is a member of a foreground process group.
+
+       If there is no foreground process group, tcgetpgrp returns
+       a  value  greater  than  1 that does not match the process
+       group ID of any existing process group.
+
+   GGeett tteerrmmiinnaall sseessssiioonn IIDD
+       tcgetsid returns the session ID of the terminal  specified
+       by fildes.
+
+   RReettuurrnn vvaalluueess
+       On  success, tcgetpgrp returns the process group ID of the
+       foreground process group  associated  with  the  specified
+       terminal.  On failure, tcgetpgrp returns -1 and sets errno
+       to identify the error.
+
+       On success, tcgetsid returns  the  session  ID  associated
+       with the specified terminal.  On failure, tcgetsid returns
+       -1 and sets errno to identify the error.
+
+       On success, cfgetispeed returns the input baud  rate  from
+       the termios structure.
+
+       On  success, cfgetospeed returns the output baud rate from
+       the termios structure.
+
+       On success, all other functions  return  0.   On  failure,
+       they return -1 and set errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, all of the functions fail and
+       set errno to: The fildes argument  is  not  a  valid  file
+       descriptor.  The file associated with fildes is not a ter-
+       minal.  tcsetattr also fails if the following is true: The
+       optional_actions  argument  is  not  a proper value, or an
+       attempt was made to change an attribute represented in the
+       termios  structure  to  an unsupported value.  tcsendbreak
+       also fails if the following is true: The device  does  not
+       support the tcsendbreak function.
+
+       tcdrain  also  fails  if  one  or more of the following is
+       true: A signal  interrupted  the  tcdrain  function.   The
+       device does not support the tcdrain function.
+
+       tcflush  also  fails  if the following is true: The device
+
+                                                                4
+
+termios(3C)                                           termios(3C)
+
+       does not support the tcflush function or the  queue_selec-
+       tor  argument is not a proper value.  tcflow also fails if
+       the following is true: The device  does  not  support  the
+       tcflow  function  or  the  action argument is not a proper
+       value.  tcgetpgrp also fails if the following is true: the
+       calling  process  does not have a controlling terminal, or
+       fildes does not refer to the controlling terminal.  A sig-
+       nal  interrupted  the  tcgetpgrp function.  tcsetpgrp also
+       fails if the following is true: pgid is not a  valid  pro-
+       cess  group  ID.  the calling process does not have a con-
+       trolling terminal, or fildes does not refer  to  the  con-
+       trolling  terminal,  or  the  controlling  terminal  is no
+       longer associated with the session of the calling process.
+       pgid  does not match the process group of an existing pro-
+       cess in the same session as the calling process.  tcgetsid
+       also  fails if the following is true: fildes is a terminal
+       that is not allocated to a session.  the  calling  process
+       does  not  have a controlling terminal, or fildes does not
+       refer to the controlling terminal.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Open file descriptors are a process resource and available
+       to  any  sibling  thread; if used concurrently, actions by
+       one thread can interfere with those of a sibling.
+
+       While one thread is blocked, siblings might still be  exe-
+       cuting.
+
+                                                                5
+

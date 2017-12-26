@@ -1,0 +1,133 @@
+
+
+SaAutoRefresh(3tlib)                         SaAutoRefresh(3tlib)
+
+SSyynnooppssiiss
+       SaAutoRefresh  refreshCB  [menu]  [shortStr] [shortHelpCB]
+       [intervalCB] SaAutoRefreshOn [cbs] SaAutoRefreshOff  [cbs]
+       SaAutoRefreshPause  [cbs] SaAutoRefreshResume [[cbs] SaAu-
+       toRefreshGetState SaAutoRefreshGetInterval  SaAutoRefresh-
+       SetInterval  interval  SaAutoRefreshLoad  client SaAutoRe-
+       freshStore client SaAutoRefreshCalled [cbs] SaAutoRefresh-
+       IntervalCB min max
+
+DDeessccrriippttiioonn
+       SaAutoRefresh provides a complete interface for manual and
+       automatic refresh services.   It  includes  standard  menu
+       items  for  a  user interface for performing a refresh and
+       enabling automatic refresh calls based on a  user  config-
+       urable  interval.  The Store and Load interface allow user
+       configurable settings to persist across  multiple  invoca-
+       tions of the application.  initializes the refresh package
+       by registering the application refresh callback along with
+       optional arguments for defining the standard pulldown menu
+       options, point help description, point help  callback  and
+       an application specific interval configuration callback.
+
+       Optional arguments in TCL are positional: in order to pro-
+       vide a particular argument, all arguments to the left MUST
+       be provided as well.  This must be called before any other
+       auto refresh procedures.  starts the auto refresh service.
+       Behavior is based on the currently configured interval and
+       whether or not auto refresh is "paused".  When  a  refresh
+       event is due, the application callback (refreshCB) will be
+       called.  The auto refresh  service  it  typically  enabled
+       implicitly through the menu option. The application itself
+       is not aware of this state change.  stops the auto refresh
+       service.  Any  pending  refresh  events will be cancelled.
+       The auto refresh service is typically disabled  implicitly
+       through  the  menu  option.  The application itself is not
+       aware of this state change.  pauses the auto refresh  ser-
+       vice.  This  may  be  called  regardless  of  whether auto
+       refresh enabled or not. The  application  may  effectively
+       block  refresh  events without disturbing the on/off state
+       of the auto refresh service.   resumes  the  auto  refresh
+       service.  This  may  be  called regardless of whether auto
+       refresh enabled or not. The  application  may  effectively
+       unblock refresh events without disturbing the on/off state
+       of the auto refresh service.  returns a boolean (1  =  on)
+       indicating the state of the auto refresh service.  returns
+       the currently configured auto refresh interval. The inter-
+       val  value  is  in  seconds.   configures the auto refresh
+       interval. The interval value is  in  seconds.   loads  and
+       configures  auto refresh parameters retained from the most
+       recent SaAutoRefreshStore.  This includes the auto refresh
+       state  (on  or  off)  and the interval (in seconds).  This
+       should be called soon after  the  call  to  SaAutoRefresh.
+       SaAutoRefreshLoad  uses  stores  the  currently configured
+       auto refresh parameters: auto refresh state  (on  or  off)
+
+                                                                1
+
+SaAutoRefresh(3tlib)                         SaAutoRefresh(3tlib)
+
+       and  the  interval (in seconds).  This is typically called
+       from the exit routine of the application, just before ter-
+       minating  and after the user's final opportunity to modify
+       these  parameters.   SaAutoRefreshStore  uses  returns   a
+       boolean  indicating  whether  or  not  this  callback  was
+       invoked from the auto refresh service versus explicitly by
+       the  application.  This is useful if the application calls
+       its refresh callback (refreshCB) internally and  needs  to
+       distinguish  this  case  from  an  automatic refresh call.
+       built-in callback that presents a user interface for  con-
+       figuring the auto refresh interval. Interval configuration
+       is optional. If interval  configuration  is  desired,  the
+       application must supply a callback to SaAutoRefresh. SaAu-
+       toRefreshIntervalCB is available as a  default.   Applica-
+       tions  may  supply their own callback if a customized user
+       interface is necessary. The default interface  presents  a
+       scale widget bounded by min and max values supplied by the
+       application.
+
+       When passed as an  argument  to  SaAutoRefresh,  SaAutoRe-
+       freshIntervalCB  must  appear in a list along with min and
+       max values (in seconds): {SaAutoRefreshIntervalCB min max}
+
+   AArrgguummeennttss
+       application   callback  that  implements  refresh  events.
+       RefreshCB must accept a  callback  structure  (cbs):  proc
+       RefreshCB {cbs} &VTcl; widget string for the pulldown menu
+       where the refresh options will appear.  The  menu  options
+       are:  Auto  Refresh  ->  on            off            ----
+                 Interval Refresh  Now  Note  the  Interval  menu
+       option only appears if the application supplies the inter-
+       valCB to SaAutoRefresh.
+
+       If menu must be provided as a positional parameter but  an
+       actual  menu is not used, it may be null: {}.  string rep-
+       resenting the application's  name  for  the  object  being
+       refreshed, (such as "Data", "Print Jobs", "Statistics" and
+       so  on).   callback  that  deals  with  point  help.  This
+       defaults   to  SaShortHelpCB.   Provides  point  help  for
+       refresh menu  options.   callback  that  presents  a  user
+       interface  for  configuring  the  auto  refresh  interval.
+       Applications may specify the built-in  callback  SaAutoRe-
+       freshIntervalCB (see above).  If this argument is omitted,
+       interval configuration will not  appear  on  the  pulldown
+       menu.   string  that  uniquely identifies application used
+       for storing/loading refresh parameters in a  common  file.
+       Must conform to the rules for Stanza section names.  argu-
+       ments specifying interval  values  in  seconds.   callback
+       structure. This is a standard argument passed by &VTcl; to
+       all callback procedures.  Those  auto  refresh  procedures
+       showing  cbs  as  optional  will  work either as callbacks
+       (with a cbs) or as directly called procedures  (without  a
+       cbs).
+
+                                                                2
+
+SaAutoRefresh(3tlib)                         SaAutoRefresh(3tlib)
+
+DDiiaaggnnoossttiiccss
+       The  Load  and  Store procedures may throw errors from the
+       underlying SaScreenPolicy interfaces and should be handled
+       withErrorCatch.
+
+RReeffeerreenncceess
+NNoottiicceess
+       All  application callbacks are auto locked. See &VTcl; and
+       -autoLock.
+
+                                                                3
+

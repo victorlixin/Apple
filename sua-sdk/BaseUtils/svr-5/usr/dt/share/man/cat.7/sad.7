@@ -1,0 +1,149 @@
+
+
+sad(7)                                                     sad(7)
+
+SSyynnooppssiiss
+       #include   <sys/types.h>  #include  <sys/conf.h>  #include
+       <sys/sad.h> #include <sys/stropts.h>
+
+       int ioctl (int fildes, int command, . . . /* arg */);
+
+DDeessccrriippttiioonn
+       The STREAMS Administrative Driver  provides  an  interface
+       for  applications  to perform administrative operations on
+       STREAMS modules and drivers.  The  interface  is  provided
+       through  commands.   Privileged  operations may access the
+       sad driver via  /dev/sad/admin.   Unprivileged  operations
+       may access the sad driver via /dev/sad/user.
+
+       fildes  is  an open file descriptor that refers to the sad
+       driver.  command determines the  control  function  to  be
+       performed  as  described below.  arg represents additional
+       information that is needed by this command.  The  type  of
+       arg depends upon the command, but it is generally an inte-
+       ger or a pointer to a command-specific data structure.
+
+   CCoommmmaannddss
+       The autopush facility (see allows a list of modules to  be
+       automatically  pushed  on  a stream when a driver is first
+       opened.  Autopush is controlled by the following commands:
+       Allows  the administrator to configure the autopush infor-
+       mation for the given device.  arg  points  to  a  strapush
+       structure   containing   the   following   members:   uint
+       sap_cmd;  long     sap_major;   long     sap_minor;   long
+       sap_lastminor; long   sap_npush; uint   sap_list[MAXAPUSH]
+       [FMNAMESZ + 1];  char    sap_modname[FMNAMESZ  +  1];  The
+       sap_cmd  member  indicates the type of configuration to be
+       performed.  It may take one of the following values:  Con-
+       figure  one  minor  device (channel if DDI 8) of a driver.
+       Configure a range of minor  devices  (or  channels)  of  a
+       driver.   Configure  all  minor devices (or channels) of a
+       driver.  Configure any minor device (or channel)  that  is
+       returned  by  cloning  the  minor device (or by performing
+       open redirection on the clone channel  if  DDI  8).   Undo
+       configuration information for a driver.
+
+       The  sap_major  member  is  the major device number of the
+       device to be configured.  If sap_major is set to  -1,  the
+       sap_modname  (module  name)  member is used to specify the
+       device that  is  to  be  configured.   This  specification
+       method  is  mandatory  for  DDI 8 modules but it will also
+       work with previous versions of the DDI.
+
+       When used with the SAP_RANGE  command,  the  sap_lastminor
+       member  determines  the  upper limit of the range of minor
+       devices (or channels),  from  sap_minor  to  sap_lastminor
+       inclusively, which are to be configured.
+
+       When  the  SAP_CLONE  command  is  used  with modules that
+
+                                                                1
+
+sad(7)                                                     sad(7)
+
+       conform to versions of the DDI prior to DDI  8,  sap_minor
+       represents  the  minor number that is used to open a clone
+       device.  When the SAP_CLONE command is used  with  modules
+       that  conform  to  DDI  8,  sap_minor represents the clone
+       channel that is used to open a device.
+
+       sap_minor  and  sap_lastminor  have  no  meaning  for  the
+       SAP_ALL  command.  The sap_npush member indicates the num-
+       ber of modules to be automatically pushed when the  device
+       is  opened.   It  must  be less than or equal to MAXAPUSH,
+       defined in sad.h.  It must also be less than or  equal  to
+       NSTRPUSH, the maximum number of modules that can be pushed
+       on a stream, defined in the kernel master file.
+
+       The member sap_list is an array  of  module  names  to  be
+       pushed in the order in which they appear in the list.
+
+       When  using  the  SAP_CLEAR  command,  set only sap_major,
+       sap_minor, and possibly sap_modname (if sap_major  is  set
+       to  -1).  This will undo the configuration information for
+       any of the other commands.  If a previous entry  was  con-
+       figured  as  SAP_ALL,  sap_minor should be set to 0.  If a
+       previous entry  was  configured  as  SAP_RANGE,  sap_minor
+       should be set to the lowest minor device (or channel) num-
+       ber in the range configured.
+
+       On failure, errno is  set  to  the  following  value:  arg
+       points  outside  the  allocated  address space.  The major
+       device number (or module name) is invalid, the  number  of
+       modules  is  invalid,  or  the  list  of  module  names is
+       invalid.  The major device number (or  module  name)  does
+       not  represent a STREAMS driver.  The major-minor (or mod-
+       ule name and channel) device pair is  already  configured.
+       The  command is SAP_RANGE and sap_lastminor is not greater
+       than sap_minor, or the command is SAP_CLEAR and  sap_minor
+       is not equal to the first minor in the range.  The command
+       is SAP_CLEAR and the device is not  configured  for  auto-
+       push.  An internal autopush data structure cannot be allo-
+       cated.  Allows any user to query the sad driver to get the
+       autopush  configuration  information  for  a given device.
+       arg points to a strapush structure  as  described  in  the
+       previous command.
+
+       For  pre-DDI  8  modules,  set the sap_major and sap_minor
+       members of the strapush structure to the major  and  minor
+       device  numbers,  respectively,  of the device.  For DDI 8
+       modules, set sap_major to -1, sap_modname  to  the  module
+       name,  and  sap_minor to the channel number of the device.
+       On return, the strapush structure will be filled  in  with
+       the  entire  information  used  to  configure  the device.
+       Unused entries in the module list will be zero-filled.
+
+       On failure, errno is set to one of the  following  values:
+       arg points outside the allocated address space.  The major
+
+                                                                2
+
+sad(7)                                                     sad(7)
+
+       device number (or module  name)  is  invalid.   The  major
+       device  (or  channel)  number does not represent a STREAMS
+       driver.   The  device  is  not  configured  for  autopush.
+       Allows  any  user to validate a list of modules (for exam-
+       ple, to see if they are installed on the system).  arg  is
+       a  pointer to a str_list structure with the following mem-
+       bers:  int                  sl_nmods;   struct   str_mlist
+       *sl_modlist;  The  str_mlist  structure  has the following
+       member: char    l_name[FMNAMESZ+1]; sl_nmods indicates the
+       number of entries that the user has allocated in the array
+       and sl_modlist points to the array of module  names.   The
+       return value is 0 if the list is valid, 1 if the list con-
+       tains an invalid module name, or -1 on failure.  On  fail-
+       ure,  errno  is  set  to  one of the following values: arg
+       points outside the allocated address space.  The  sl_nmods
+       member  of the str_list structure is less than or equal to
+       0.
+
+RReettuurrnn vvaalluueess
+       Unless specified otherwise above, the  return  value  from
+       ioctl is 0 upon success and -1 upon failure with errno set
+       as indicated.
+
+RReeffeerreenncceess
+
+                                                                3
+

@@ -1,0 +1,170 @@
+execle_asuser(2)                                       execle_asuser(2)
+
+  eexxeecc__aassuusseerr
+
+  NNAAMMEE
+
+    execl_asuser(), execlp_asuser(), execle_asuser(), execv_asuser(),
+    execve_asuser(), execvp_asuser() - execute a file as another user
+
+  SSYYNNOOPPSSIISS
+
+    #include <interix/security.h>
+    extern char **environ;
+
+    int execl_asuser (const struct usersec userdata, const char *path,
+                     const char *arg ...)
+    int execlp_asuser (const struct usersec userdata, const char *file,
+                      const char *arg ...)
+    int execle_asuser (const struct usersec userdata, const char *path,
+                      const char *arg ... char *const envp[])
+    int execv_asuser (const struct usersec userdata, const char *path,
+                     char *const argv[])
+    int execve_asuser (const struct usersec userdata, const char *path,
+                      char *const argv[], char *const envp[])
+    int execvp_asuser (const struct usersec userdata, const char *file,
+                      char *const argv[])
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The eexxeecc__aassuusseerr(2) family of functions replaces the current process image
+    with a new process image, run as the user specified in the structure
+    userdata. These functions do a similar job to the calls sseettuuiidd()/eexxeecc() on
+    a BSD or SVR4 system. However, they do not behave identically, so do not
+    rely heavily on this analogy.
+
+    You should use these functions instead of sseettuuiidd() and eexxeecc() if you can
+    supply a user name and password when executing the file. This allows the
+    calling program to run with lower privileges because sseettuuiidd() can only be
+    called by programs running under the SYSTEM account or the local or domain
+    Administrator account. Also, a program executed using the eexxeecc__aassuusseerr()
+    functions can access network resources if run using a domain account; this
+    is not possible when sseettuuiidd() is used to establish the privilege level of
+    the program.
+
+    Except for the initial userdata argument, the arguments to the
+    eexxeecc__aassuusseerr(2) functions are identical to the corresponding _ee_xx_ee_cc(2)
+    functions; see that reference page for more details.
+
+    The first argument is a user security structure, ssttrruucctt uusseerrsseecc, which is
+    defined in <<iinntteerriixx//sseeccuurriittyy..hh>>:
+
+    struct usersec {
+        char * user;
+        char * domain;
+        char * password;
+        int logontype; Defaults to 0
+        int logonprovider; Defaults to 0
+    };
+
+    The new process image maintains the following attributes and resources:
+    CCaalllliinngg PPrroocceessss AAttttrriibbuuttee              BBeehhaavviioorr
+
+    Open file descriptors                  Remain open, unless close-on-exec
+                                           flag FD_CLOEXEC is set
+
+    Directory streams                      Closed
+
+    Signals set to default action          Set to default action
+
+    Signals set to be ignored              Set to be ignored
+
+    Signals set to be caught               Set to default action
+
+    Real user ID                           Determined by usersec
+
+    Real group ID                          Determined by usersec
+
+    Supplementary group ID                 Determined by usersec
+
+    Effective user ID                      Determined by usersec
+
+    Effective group ID                     Determined by usersec
+
+    Process ID                             Inherited
+
+    Parent process ID                      Inherited
+
+    Process group ID                       Inherited
+
+    Session membership                     Inherited
+
+    Time left until alarm clock signal     Inherited
+
+    Current working directory              Inherited
+
+    Root directory                         Inherited
+
+    File mode creation mask                Inherited
+
+    Process signal mask                    Inherited
+
+    Pending signals                        Inherited
+
+    There can be a performance degradation if a process changes identity to a
+    user who does not have permission to be located in the current working
+    directory. The best solution is to _cc_hh_dd_ii_rr(2) after a call to
+    _ee_xx_ee_cc____aa_ss_uu_ss_ee_rr(2), to a directory known to be permitted for the new identity.
+
+    If these functions fail, the uids and gids for the remainder of the
+    process are unspecified. The uid and gid of the process may remain the
+    same as before this function was called or may be changed to that of the
+    user defined in the usersec structure.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    On success, the eexxeecc__aassuusseerr(2) functions don't return. If they fail, they
+    set errno and return -1.
+
+  EERRRROORRSS
+
+    The exec_asuser functions can set errno to any of the following values:
+
+    [E2BIG]
+        The argument list was too long.
+
+    [EACCES]
+        Search permission was denied for a directory in the path or the new
+        process image file wasn't executable.
+
+    [EINVAL]
+        The values for logontype or logonprovider were bad.
+
+    [ENAMETOOLONG]
+        Some component of path was greater than {NAME_MAX}, or the entire
+        pathname exceeded {PATH_MAX}.
+
+    [ENOENT]
+        One or more components of path doesn't exist, or the path or file
+        argument is an empty string.
+
+    [ENOEXEC]
+        For _ee_xx_ee_cc_ll____aa_ss_uu_ss_ee_rr(2), _ee_xx_ee_cc_vv____aa_ss_uu_ss_ee_rr(2), _ee_xx_ee_cc_ll_ee____aa_ss_uu_ss_ee_rr(2), and
+        _ee_xx_ee_cc_vv_ee____aa_ss_uu_ss_ee_rr(2), the new process image file has the appropriate
+        access permission, but is not in the proper format.
+
+    [ENOMEM]
+        Not enough memory to load the new process image.
+
+    [ENOTDIR]
+        Some component of the path prefix of path is not a directory.
+
+    [EPERM]
+        The user-domain-password combination is invalid.
+
+  SSEEEE AALLSSOO
+
+    _a_u_t_h_e_n_t_i_c_a_t_e_u_s_e_r(2)
+
+    _e_x_e_c(2)
+
+    _f_o_r_k(2)
+
+    _s_e_t_u_i_d(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    All of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

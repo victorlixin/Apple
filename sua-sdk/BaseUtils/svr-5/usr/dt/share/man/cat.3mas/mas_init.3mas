@@ -1,0 +1,155 @@
+
+
+mas_init(3mas)                                     mas_init(3mas)
+
+SSyynnooppssiiss
+       cc [options] file -lmas
+
+       #include  <fcntl.h>  #include  <mas.h> int mas_init(uint32
+       mode, char *mas_fn, uint32 nsegmnts,       char  **met_fn,
+       caddr_t *metaddr, uint32 *metsz,      uint32 *metoff, char
+       *mrt_fn, char *meta_fn,      char *str_fn);
+
+DDeessccrriippttiioonn
+       The function mas_init initializes  metric  access  support
+       (MAS)  for use by a provider so that metrics may be regis-
+       tered.
+
+       The first two arguments are the name  and  permissions  of
+       the  registration  file,  mas_fn and mode.  In the future,
+       mas_init may be expanded to include the ability to re-open
+       an  existing  metric  registration file and register addi-
+       tional metrics, but for now, the metric registration file,
+       mas_fn,  must  not  exist  prior to calling mas_init.  The
+       file mas_fn is not created until mas_put is called.
+
+       The next five arguments specify  metric  segment  informa-
+       tion.   A  metric  segment is a set of contiguous pages in
+       memory that contain metrics.  Most  provider  applications
+       will  want  to control the addresses of their metrics, and
+       hence will pre-allocate their own metric segments.   If  a
+       metric  segment is set correspond to a memory mapped file,
+       then the metrics can be updated (and accessed by  consumer
+       applications) in real time.  The following arguments allow
+       providers to identify  their  metric  segments.   nsegmnts
+       specifies  the number of metric segments to be registered.
+       met_fn points to a list  of  metric  segment  file  names.
+       metaddr  points  to  a  list of addresses where the metric
+       segments reside in the caller.  metsz points to a list  of
+       sizes  of the metric segments.  metoff points to a list of
+       offsets of the metric  segments  within  their  respective
+       files.
+
+       The  last  three  arguments  to mas_init are optional file
+       names for dynamic metric registration, the ability to  add
+       metrics  to  a  registration  file that is already in use.
+       Provider applications that do not need dynamic metric reg-
+       istration  should  request  static  metric registration by
+       setting these arguments to NULL,  which  places  the  data
+       areas  associated  with  these arguments within the metric
+       registration header file, mas_fn.   Provider  applications
+       using  static  metric registration should not register any
+       additional metrics after calling mas_put.
+
+       Dynamic registration is supported from the time the metric
+       registration  files  are created until the time the caller
+       exits.  Currently, only the addition  of  new  metrics  is
+       supported,  there  is  no provision for unregistering met-
+       rics, and there is no facility for notification of  active
+
+                                                                1
+
+mas_init(3mas)                                     mas_init(3mas)
+
+       consumer  applications  that  the registration information
+       has been updated.
+
+       Because consumer applications will  either  read  or  pri-
+       vately  memory  map the registration data, they will see a
+       static view of the registration file as of the time it was
+       opened  with mas_open, and they will not be able to deter-
+       mine the registration information has  changed.   However,
+       in the future, dynamic metric registration may be expanded
+       to notify consumer applications of updates to  the  metric
+       registration  information,  and to offer support of shared
+       memory mapping of the registration data  between  provider
+       and consumer applications.
+
+       To  allow  for this expansion, dynamic metric registration
+       requires separate file names for the  metric  registration
+       table, metadata, and strings table, since these data areas
+       increase in size as new  metrics  are  registered.   These
+       file  names  are specified in mrt_fn, meta_fn, and str_fn,
+       respectively.
+
+       For the present, dynamic registration will work with these
+       arguments  set  to  NULL,  and their associated data areas
+       residing in the MAS header file, but to guarantee applica-
+       tions  will  work  with  future releases of MAS, providers
+       must specify separate file name for these arguments.
+
+       Until  a  notification  facility  is  supported,  consumer
+       applications  interested  in gathering new metrics as they
+       become available must check to  see  if  the  registration
+       file  has changed since they last opened it with mas_open.
+       To obtain the updated registration  information,  consumer
+       applications  should  reopen  the  registration files with
+       mas_open.  Metric providers can assist consumers in deter-
+       mining  a change has occurred in the registration informa-
+       tion by registering and maintaining a metric that  is  set
+       to the time of the last call to mas_put.
+
+       For  simple  user  level provider applications that do not
+       need memory mapped access to update metrics, do  not  care
+       to  pre-allocate a metric segment, and do not need dynamic
+       metric  registration,  mas_init  internally  allocates   a
+       static  metric segment.  The internal segment is specified
+       by setting the metric segment  address,  size  and  offset
+       (metaddr,  metsz  and metoff) all to 0.  Only one internal
+       segment is allowed.  The location of  metrics  within  the
+       internal  segment are assigned during registration and are
+       returned   by   mas_register_met.    mas_init    allocates
+       MAS_MAX_METRICS  bytes  of  space  for the internal metric
+       segment, however only the portion of  the  metric  segment
+       that is actually in use is written to the MAS header file.
+       MAS_MAX_METRICS is currently set to 128K.  If a NULL  file
+       name  is specified for the internally allocated segment in
+       the met_fn list, the segment  is  placed  within  the  MAS
+
+                                                                2
+
+mas_init(3mas)                                     mas_init(3mas)
+
+       header file.  Otherwise it is written to the file named in
+       the met_fn list.  When using the internal metric  segment,
+       metrics  must be updated with the mas_write_mets call.  If
+       the internal segment is set to reside in  the  MAS  header
+       file,  mas_fn,  dynamic  metric registration should not be
+       used, and mas_put should not be called more than once.
+
+   RReettuurrnn vvaalluueess
+       On success, mas_init returns 0.
+
+       On failure mas_init returns -1 and sets mas_errno to iden-
+       tify the error.
+
+   EErrrroorrss
+       mas_init  was  called more than once.  mas_init was called
+       with a NULL mas_fn.  mas_init was called with nsegmnts set
+       to  0.   mas_init  was  called  with a non-zero address in
+       metaddr and a corresponding NULL metric  segment  filename
+       in met_fn.  mas_init was called with a non-zero address in
+       metaddr and a corresponding metric segment size  of  0  in
+       metsz.   mas_init  was  called  requesting  more  than one
+       internally allocated segment.  (More than one NULL address
+       was  found  in  the  metaddr list.)  The MAS file, mas_fn,
+       already exists.  The malloc library call failed.  The mal-
+       loc  library call failed.  The malloc library call failed.
+       The malloc library call failed.  The malloc  library  call
+       failed.   The  malloc  library  call  failed.   The malloc
+       library call failed.
+
+RReeffeerreenncceess
+
+                                                                3
+

@@ -1,0 +1,311 @@
+
+
+thread_trace(4)                                   thread_trace(4)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <thread.h> #include <synch.h>
+
+DDeessccrriippttiioonn
+       The  threads library provides a mechanism for tracing sig-
+       nificant library events.  Calls  to  all  threads  library
+       interfaces,  both  thread management and user synchroniza-
+       tion interfaces can be traced.   Significant  information,
+       such  as  arguments,  return  values, lock contention, and
+       duration of execution are recorded.
+
+       To avoid a performance penalty on the threads  library,  a
+       separate library, libthreadT.so, contains the tracing rou-
+       tines.  To obtain trace  data,  the  application  must  be
+       linked to libthreadT.so instead of libthread.so.
+
+       Trace data is collected for each LWP and stored in a sepa-
+       rate file, by default in the  current  working  directory.
+       The  files  are named: tr.xxxxxxx.yyy where xxxxxxx is the
+       seven least significant hexadecimal digits of the  process
+       ID associated with the LWP and yyy is the three least sig-
+       nificant hexadecimal digits of the LWP ID.
+
+   FFoorrmmaatt ooff tthhee ttrraaccee ddaattaa ffiilleess
+       Each line in the files is a trace record in the  following
+       format:
+       time1:time2:lwpid:pid:tid:event1:event2:which:a1:a2:a3:a4:a5
+       The  type and meaning of each field in the record is shown
+       in the following table:
+       -------------------------------------------------------------------------------------
+       Field    Type       Meaning
+       -------------------------------------------------------------------------------------
+       _t_i_m_e_1    _ll_oo_nn_gg       current time in seconds
+       _t_i_m_e_2    _ll_oo_nn_gg       current time in nanoseconds
+       -------------------------------------------------------------------------------------
+       _l_w_p_i_d    _ll_ww_pp_ii_dd____tt    LWP ID of calling thread
+       _p_i_d      _pp_ii_dd____tt      process ID of calling thread
+       _t_i_d      _tt_hh_rr_ee_aa_dd____tt   thread ID of calling thread
+       -------------------------------------------------------------------------------------
+       _e_v_e_n_t_1   _ss_hh_oo_rr_tt      general category of event (see next table)
+       _e_v_e_n_t_2   _ss_hh_oo_rr_tt      specific event (name of interface called, see next table)
+       _w_h_i_c_h    _ss_hh_oo_rr_tt      0 for a single record associated with this event,
+                           1 for the first of 2 records, or 2 for the second or two records
+       -------------------------------------------------------------------------------------
+       _a_1       _ll_oo_nn_gg       depends on event
+       _a_2       _ll_oo_nn_gg       depends on event
+       _a_3       _ll_oo_nn_gg       depends on event
+       _a_4       _ll_oo_nn_gg       depends on event
+       _a_5       _ll_oo_nn_gg       depends on event
+
+       The first two fields  record  the  time,  the  next  three
+       fields record information about the caller, the next three
+
+                                                                1
+
+thread_trace(4)                                   thread_trace(4)
+
+       fields identify the event, and the remaining fields record
+       specific  details  about  the event, such as the arguments
+       passed to the interface in question.
+
+   EEvveennttss aanndd eevveenntt ccaatteeggoorriieess
+       The table below shows the code numbers used in the  event1
+       and event2 fields of the trace record.
+       -------------------------------------------------------
+       Category       event1   Specific                event2
+       of Event       Code     Event                   Code
+       -------------------------------------------------------
+       thread           1      _tt_hh_rr____cc_rr_ee_aa_tt_ee                 1
+                               _tt_hh_rr____ee_xx_ii_tt                   2
+                               _tt_hh_rr____jj_oo_ii_nn                   3
+                               _tt_hh_rr____ss_ee_ll_ff                   4
+                               _tt_hh_rr____mm_ii_nn_ss_tt_aa_cc_kk               5
+                               _tt_hh_rr____cc_oo_nn_tt_ii_nn_uu_ee               6
+                               _tt_hh_rr____ss_uu_ss_pp_ee_nn_dd                7
+                               _tt_hh_rr____ss_ee_tt_cc_oo_nn_cc_uu_rr_rr_ee_nn_cc_yy         8
+                               _tt_hh_rr____gg_ee_tt_cc_oo_nn_cc_uu_rr_rr_ee_nn_cc_yy         9
+                               _tt_hh_rr____kk_ii_ll_ll                  10
+                               _tt_hh_rr____ss_ii_gg_ss_ee_tt_mm_aa_ss_kk            11
+                               _tt_hh_rr____ss_ee_tt_ss_cc_hh_ee_dd_uu_ll_ee_rr          12
+                               _tt_hh_rr____gg_ee_tt_ss_cc_hh_ee_dd_uu_ll_ee_rr          13
+                               _tt_hh_rr____ss_ee_tt_pp_rr_ii_oo               14
+                               _tt_hh_rr____gg_ee_tt_pp_rr_ii_oo               15
+                               _tt_hh_rr____yy_ii_ee_ll_dd                 16
+                               _tt_hh_rr____gg_ee_tt____rr_rr____ii_nn_tt_ee_rr_vv_aa_ll       17
+                               _tt_hh_rr____kk_ee_yy_cc_rr_ee_aa_tt_ee             18
+                               _tt_hh_rr____kk_ee_yy_dd_ee_ll_ee_tt_ee             19
+                               _tt_hh_rr____ss_ee_tt_ss_pp_ee_cc_ii_ff_ii_cc           20
+                               _tt_hh_rr____gg_ee_tt_ss_pp_ee_cc_ii_ff_ii_cc           21
+       -------------------------------------------------------
+       mutex            2      _mm_uu_tt_ee_xx____ii_nn_ii_tt                 1
+                               _mm_uu_tt_ee_xx____ll_oo_cc_kk                 2
+                               _mm_uu_tt_ee_xx____tt_rr_yy_ll_oo_cc_kk              3
+                               _mm_uu_tt_ee_xx____uu_nn_ll_oo_cc_kk               4
+                               _mm_uu_tt_ee_xx____dd_ee_ss_tt_rr_oo_yy              5
+       -------------------------------------------------------
+       cond             3      _cc_oo_nn_dd____ii_nn_ii_tt                  1
+                               _cc_oo_nn_dd____ss_ii_gg_nn_aa_ll                2
+                               _cc_oo_nn_dd____bb_rr_oo_aa_dd_cc_aa_ss_tt             3
+                               _cc_oo_nn_dd____ww_aa_ii_tt                  4
+                               _cc_oo_nn_dd____tt_ii_mm_ee_dd_ww_aa_ii_tt             5
+                               _cc_oo_nn_dd____dd_ee_ss_tt_rr_oo_yy               6
+       -------------------------------------------------------
+       sema             4      _ss_ee_mm_aa____ii_nn_ii_tt                  1
+                               _ss_ee_mm_aa____ww_aa_ii_tt                  2
+                               _ss_ee_mm_aa____tt_rr_yy_ww_aa_ii_tt               3
+                               _ss_ee_mm_aa____pp_oo_ss_tt                  4
+                               _ss_ee_mm_aa____dd_ee_ss_tt_rr_oo_yy               5
+       -------------------------------------------------------
+       rwlock           5      _rr_ww_ll_oo_cc_kk____ii_nn_ii_tt                1
+
+                                                                2
+
+thread_trace(4)                                   thread_trace(4)
+
+                               _rr_ww____rr_dd_ll_oo_cc_kk                  2
+                               _rr_ww____ww_rr_ll_oo_cc_kk                  3
+                               _rr_ww____uu_nn_ll_oo_cc_kk                  4
+                               _rr_ww____tt_rr_yy_rr_dd_ll_oo_cc_kk               5
+                               _rr_ww____tt_rr_yy_ww_rr_ll_oo_cc_kk               6
+                               _rr_ww_ll_oo_cc_kk____dd_ee_ss_tt_rr_oo_yy             7
+       -------------------------------------------------------
+       rmutex           6      _rr_mm_uu_tt_ee_xx____ii_nn_ii_tt                1
+                               _rr_mm_uu_tt_ee_xx____ll_oo_cc_kk                2
+                               _rr_mm_uu_tt_ee_xx____tt_rr_yy_ll_oo_cc_kk             3
+                               _rr_mm_uu_tt_ee_xx____uu_nn_ll_oo_cc_kk              4
+                               _rr_mm_uu_tt_ee_xx____dd_ee_ss_tt_rr_oo_yy             5
+       -------------------------------------------------------
+       barrier          7      _bb_aa_rr_rr_ii_ee_rr____ii_nn_ii_tt               1
+                               _bb_aa_rr_rr_ii_ee_rr____ww_aa_ii_tt               2
+                               _bb_aa_rr_rr_ii_ee_rr____dd_ee_ss_tt_rr_oo_yy            3
+       -------------------------------------------------------
+       barrier_spin     8      ____bb_aa_rr_rr_ii_ee_rr____ss_pp_ii_nn____ii_nn_ii_tt         1
+                               ____bb_aa_rr_rr_ii_ee_rr____ss_pp_ii_nn              2
+                               ____bb_aa_rr_rr_ii_ee_rr____ss_pp_ii_nn____dd_ee_ss_tt_rr_oo_yy      3
+       -------------------------------------------------------
+       spin             9      ____ss_pp_ii_nn____ii_nn_ii_tt                 1
+                               ____ss_pp_ii_nn____ll_oo_cc_kk                 2
+                               ____ss_pp_ii_nn____tt_rr_yy_ll_oo_cc_kk              3
+                               ____ss_pp_ii_nn____uu_nn_ll_oo_cc_kk               4
+                               ____ss_pp_ii_nn____dd_ee_ss_tt_rr_oo_yy              5
+
+   FFiieellddss aa11 -- aa55 ffoorr tthhrreeaadd eevveennttss
+       The  following  table  shows  what the values in fields a1
+       through a5 represent for each thread trace event.   If  no
+       value  is  shown  in the table, 0 is recorded in the trace
+       record.  Values starting with  arg  followed  by  a  digit
+       refer  to  the  arguments passed to the interface in ques-
+       tion.  If one of these arguments is preceded by a '*', the
+       value  placed  by  the indicated interface into the memory
+       location referred to by that argument is  recorded.   rval
+       indicates the return value from the interface.
+       ---------------------------------------------------------------------------------------
+       event2                which   a1      a2             a3                    a4     a5
+       ---------------------------------------------------------------------------------------
+       thr_create            1       arg1    arg2           arg3                  arg4   arg5
+       thr_create            2       rval    new_tid
+       thr_exit              0       arg1
+       thr_join              1       arg1
+       thr_join              2       *arg2   *arg3          rval
+       thr_self              0
+       thr_minstack          0
+       ---------------------------------------------------------------------------------------
+       thr_suspend           1       arg1
+       thr_suspend           2       rval
+       thr_continue          0       arg1    rval
+       ---------------------------------------------------------------------------------------
+       thr_getconcurrency    0       rval
+
+                                                                3
+
+thread_trace(4)                                   thread_trace(4)
+
+       thr_setconcurrency    0       arg1    rval
+       ---------------------------------------------------------------------------------------
+       thr_kill              0       arg1    arg2           rval
+       thr_sigsetmask        0       arg1    arg2           arg3                  rval
+       ---------------------------------------------------------------------------------------
+       thr_keycreate         0       arg1    arg2           rval
+       thr_keydelete         0       arg1    rval
+       thr_getspecific       0       arg1    *arg2          rval
+       thr_setspecific       0       arg1    arg2           rval
+       ---------------------------------------------------------------------------------------
+       thr_getprio           0       arg1    *arg2          rval
+       thr_setprio           0       arg1    arg2           rval
+       thr_getscheduler      0       arg1    *arg2.policy   *arg2.policy_params   rval
+       thr_setscheduler      0       arg1    arg2.policy    arg2.policy_params    rval
+       thr_get_rr_interval   0
+       thr_yield             0
+
+   FFiieellddss aa11 -- aa55 ffoorr ssyynncchhrroonniizzaattiioonn eevveennttss
+       The  following  table  shows  what the values in fields a1
+       through a5 represent for each synchronization trace event.
+       In addition to the symbols explained above, waiters? indi-
+       cates whether threads were waiting on the  synchronization
+       object  and block?  indicates if the calling thread had to
+       block during the event.  For semaphores and barriers,  the
+       synchronization object count is provided instead of block?
+       since this provides potentially more useful information.
+       ----------------------------------------------------------------------------------
+       Event                   which   a1       a2         a3           a4          a5
+       ----------------------------------------------------------------------------------
+       mutex_init              0       arg1     arg2       arg3         rval
+       mutex_lock              1       arg1
+       mutex_lock              2       rval     block?
+       mutex_trylock           0       arg1     rval
+       mutex_unlock            0       arg1     rval       waiters?
+       mutex_destroy           0       arg1     rval
+       ----------------------------------------------------------------------------------
+       cond_init               0       arg1     arg2       arg3         rval
+       cond_signal             0       arg1     rval       waiters?
+       cond_broadcast          0       arg1     rval       waiters?
+       cond_wait               1       arg1     arg2
+       cond_wait               2       rval
+       cond_timedwait          1       arg1     arg2       arg3.sec     arg3.nsec
+       cond_timedwait          2       rval
+       cond_destroy            0       arg1     rval
+       ----------------------------------------------------------------------------------
+       sema_init               0       arg1     arg2       arg3         arg4        rval
+       sema_wait               1       arg1     s_count
+       sema_wait               2       rval
+       sema_trywait            0       arg1     rval
+       sema_post               0       arg1     rval       s_count
+       sema_destroy            0       arg1     rval
+       ----------------------------------------------------------------------------------
+       rwlock_init             0       arg1     arg2       arg3         rval
+
+                                                                4
+
+thread_trace(4)                                   thread_trace(4)
+
+       rw_rdlock               1       arg1
+       rw_rdlock               2       rval     block?     rw_readers
+       rw_wrlock               1       arg1
+       rw_wrlock               2       rval     block?
+       rw_unlock               0       arg1     rval       waiters?
+       rw_tryrdlock            0       arg1     rval
+       rw_trywrlock            0       arg1     rval
+       rwlock_destroy          0       arg1     rval
+       ----------------------------------------------------------------------------------
+       rmutex_init             0       arg1     arg2       arg3         rval
+       rmutex_lock             1       arg1
+       rmutex_lock             2       rval     block?     rm_depth
+       rmutex_trylock          0       arg1     rval
+       rmutex_unlock           0       arg1     rval
+       rmutex_destroy          0       arg1     rval
+       ----------------------------------------------------------------------------------
+       barrier_init            0       arg1     arg2       arg3         arg4        rval
+       barrier_wait            1       arg1     b_count
+       barrier_wait            2       rval
+       barrier_destroy         0       arg1     rval
+       ----------------------------------------------------------------------------------
+       _barrier_spin_init      0       arg1     arg2       arg3         rval
+       _barrier_spin_wait      1       arg1     bs_count
+       _barrier_spin_wait      2       rval
+       _barrier_spin_destroy   0       arg1     rval
+       ----------------------------------------------------------------------------------
+       _spin_init              0       arg1     arg2       rval
+       _spin_lock              1       arg1
+       _spin_lock              2       block?
+       _spin_trylock           0       arg1     rval
+       _spin_unlock            0       arg1
+       _spin_destroy           0       arg1     rval
+
+FFiilleess
+       trace data files
+
+   EEnnvviirroonnmmeenntt vvaarriiaabblleess
+       The following environment variables can be set  to  change
+       default trace data collection.
+       -----------------------------------------------------------
+       Variable           Effect
+       -----------------------------------------------------------
+       THR_TRACE_EVENTS   control which events to trace
+       THR_TRACE_DIR      control directory to create trace files
+       THR_TRACE_BUF      disable buffering of trace
+
+       The  defaults  and  alternate values for these environment
+       variables are described below.  a colon-separated list  of
+       the categories of events to be traced.  The categories are
+       the strings listed in the first column of the table  above
+       under  "Events  and  Events  Categories."  For example, to
+       trace only mutex, condition variable and semaphore  opera-
+       tions,   the   value   of   THR_TRACE_EVENTS   should   be
+       mutex:cond:sema.   The  default,  if  THR_TRACE_EVENTS  is
+
+                                                                5
+
+thread_trace(4)                                   thread_trace(4)
+
+       NULL,  is  to  trace  all  events.  the full pathname to a
+       directory writable by the process where trace  data  files
+       should  be stored.  The default, if THR_TRACE_DIR is NULL,
+       is to create trace  data  files  in  the  current  working
+       directory.   any  non-NULL value.  Normally, trace data is
+       buffered and written to file only when the buffer is  full
+       or the process is exiting.  If THR_TRACE_BUF is set to any
+       non-NULL value, trace data will  be  flushed  immediately.
+       The  default, if THR_TRACE_BUF is NULL, is to buffer trace
+       data.
+
+RReeffeerreenncceess
+
+                                                                6
+

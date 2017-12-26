@@ -1,0 +1,133 @@
+/* Script for ld -r: link without relocation */
+OUTPUT_FORMAT(pe-i386)
+SEARCH_DIR("/opt/gcc.3.3/i586-pc-interix3/lib"); SEARCH_DIR("/opt/gcc.3.3/lib"); SEARCH_DIR("/usr/local/lib"); SEARCH_DIR("/usr/lib/"); SEARCH_DIR("/lib"); SEARCH_DIR("/usr/lib"); SEARCH_DIR("/usr/lib/x86");
+ENTRY(___PosixProcessStartup)
+/* if DYNAMIC_LINKING [ */
+/* Not sure yet */
+/* end DYNAMIC_LINKING ] */
+SECTIONS
+{
+  .text  :
+  {
+    *(.text)
+    *(.glue_7t)
+    *(.glue_7)
+    /* collect constructors only for final links */
+    /* ??? Why is .gcc_exc here?  */
+    *(.gcc_except_table)
+  }
+  /* The Cygwin32 library uses a section to avoid copying certain data
+     on fork.  This used to be named ".data".  The linker used
+     to include this between __data_start__ and __data_end__, but that
+     breaks building the cygwin32 dll.  Instead, we name the section
+     ".data_cygwin_nocopy" and explictly include it after __data_end__. */
+  .data  :
+  {
+    *(.data)
+    *(.data2)
+  }
+  .rdata  :
+  {
+    *(.rdata)
+    *(.eh_frame)
+    /* DYNAMIC_LINKING [ */
+    *(.hash)
+    *(.interp)
+    /* ] */
+    *(.rdata_runtime_pseudo_reloc)
+  }
+  .pdata  :
+  {
+    *(.pdata)
+  }
+/* if DYNAMIC_LINKING [ */
+  .got 0  :
+  {
+     *(.got.plt)
+     *(.got)
+  }
+/* end DYNAMIC_LINKING ] */
+/* .idata must precede bss so file and code offsets remain the same for .sos */
+/* (At least for now... using Ldr* routines may fix.) */
+  .idata  :
+  {
+    /* This cannot currently be handled with grouped sections.
+	See pe.em:sort_sections.  */
+  }
+  .bss  :
+  {
+/* DYNAMIC_LINKING */
+    *(.dynbss)
+/* end DYNAMIC_LINKING */
+    *(.bss)
+    *(COMMON)
+  }
+  .edata  :
+  {
+    *(.edata)
+  }
+  /DISCARD/ :
+  {
+    *(.debug$S)
+    *(.debug$T)
+    *(.debug$F)
+    *(.drectve)
+  }
+  .CRT  :
+  {
+  }
+  .endjunk  :
+  {
+    /* end is deprecated, don't use it */
+  }
+/* DYNAMIC_LINKING [  // XXX below, rela??? */
+  /* // ??? .dynamic 0  : { */
+  .dynamic 0  : {
+    *(.dynamic)
+  }
+  .dynsym 0   : {
+    *(.dynsym)
+  }
+  .dynstr 0   : {
+    *(.dynstr)
+  }
+  .gnu.version 0   : {
+    *(.gnu.version)
+  }
+  .gnu.version_d 0   : {
+    *(.gnu.version_d)
+  }
+  .gnu.version_r 0   : {
+    *(.gnu.version_r)
+  }
+  .rel.dyn 0   :
+  {
+    *(.rel.internal)
+    *(.rel.got)
+    *(.rel.plt)
+  }
+  .rela.dyn 0   :
+  {
+    *(.rela.*)
+  }
+  .init 0   : {
+    *(.init)
+  } =0
+/* end DYNAMIC_LINKING ] */
+  .rsrc  :
+  {
+    *(.rsrc)
+  }
+  .reloc  :
+  {
+    *(.reloc)
+  }
+  .stab   :
+  {
+    [ .stab ]
+  }
+  .stabstr   :
+  {
+    [ .stabstr ]
+  }
+}

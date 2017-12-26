@@ -1,0 +1,100 @@
+
+
+maildelivery(4)                                   maildelivery(4)
+
+DDeessccrriippttiioonn
+       The program allows you to have your inbound mail processed
+       according to a complex set of selection  criteria,  speci-
+       fied in the file
+
+       The  maildelivery file controls how local delivery is per-
+       formed. Each line of this file consists  of  five  fields,
+       space  or  comma separated. Because double-quotes are hon-
+       ored, these characters can be included in a  single  argu-
+       ment  by enclosing the entire argument in double-quotes. A
+       double-quote can be included by preceding it with a  back-
+       slash.  Lines  beginning with a hash sign (#) are ignored.
+       The format of each  line  in  the  maildelivery  file  is:
+       header   pattern   action   result   string  The name of a
+       header field that is to be searched for a pattern. This is
+       any field in the headers of the message that might be pre-
+       sent. The following special fields are also  defined:  The
+       out-of-band sender information.  The address that was used
+       to cause delivery to the recipient.  This matches only  if
+       the  message  has  not  been  delivered  yet.  This always
+       matches.  The sequence of characters to match in the spec-
+       ified  header  field.   Matching is not case-sensitive and
+       does not use regular expressions.  The action to  take  to
+       deliver  the message: This action always succeeds.  Append
+       (>) the message to the file named by string.  The  message
+       is appended to the mail folder in the maildrop format used
+       by your message transport system. If the  message  can  be
+       appended to the folder, this action succeeds. When writing
+       to the file, a Delivery-Date: date header  is  added  that
+       gives  the  date  and  time  message  was  appended to the
+       folder.  Identical to file.  Pipe (|) the message  as  the
+       standard  input  to the command named by string, using the
+       Bourne shell, to interpret the string. Prior to giving the
+       string  to the shell, the string is expanded with the fol-
+       lowing built-in variables: The out-of-band sender informa-
+       tion.   The address that was used to cause delivery to the
+       recipient.  The size of the message in bytes.  Either  the
+       Reply-To:  or From: field of the message.  The out-of-band
+       information specified.  Similar to pipe, but executes  the
+       command directly, after built-in variable expansion, with-
+       out assistance from the shell. This action can be used  to
+       avoid  quoting  special  characters which your shell might
+       interpret.  Indicates how the action should be  performed.
+       Perform the action. If the action succeeds, the message is
+       considered delivered.  Perform the action.  Regardless  of
+       the  outcome  of the action, the message is not considered
+       delivered.  Perform the action only if the message has not
+       been  delivered.  If the action succeeds, then the message
+       is considered delivered.  Perform the action only  if  the
+       message  has  not  been  delivered and the previous action
+       succeeded. If this action succeeds, the message is consid-
+       ered delivered.
+
+                                                                1
+
+maildelivery(4)                                   maildelivery(4)
+
+FFiilleess
+       The  file  controlling  local  delivery.   Rather than the
+       standard file.  The default maildrop.
+
+EExxaammpplleess
+       default       mh-workersxx      destroy      result      #
+       field   pattern   action  result  string  # lines starting
+       with '#' are ignored, as are blank lines  #  #  file  mail
+       with  mmdf2  in  the  "To:"  line  into  file mmdf2.log To
+       mmdf2       file     A   mmdf2.log #  Messages  from  mmdf
+       pipe  to  the  program  err-message-archive  From     mmdf
+       pipe     A   /bin/err-message-archive # Anything with  the
+       "Sender:"  address  "mh-workers"  #  file in mh.log if not
+       filed already Sender  mh-workers  file      ?    mh.log  #
+       "To:"  unix;  put  in file unix-news To      Unix        >
+       A   unix-news # If the address  is  "jpo=mmdf"  pipe  into
+       mmdf-redist addr    jpo=mmdf    |        A   mmdf-redist #
+       If the address is "jpo=ack" send an  acknowledgement  copy
+       back  addr     jpo=ack      |         R    /bin/resend  -r
+       (reply-to) # Anything from steve  destroy!  From     steve
+       destroy  A   - # Anything not matched yet put into mailbox
+       default -           >         ?    mailbox  #  Always  run
+       rcvtty *       -           |        R   /mh/lib/rcvtty The
+       file is always read completely so that several matches can
+       be made and several actions can be taken. The maildelivery
+       file must be owned either by the user or by root, and must
+       be  writable  only  by the owner. If the maildelivery file
+       cannot be found or does not perform an action that  deliv-
+       ers  the  message, the file /etc/mail/maildelivery is read
+       according to the same rules. This file must  be  owned  by
+       root  and must be writable only by root. If this file can-
+       not be found, or does not perform an action that  delivers
+       the  message,  standard delivery to the user's maildrop is
+       performed.
+
+RReeffeerreenncceess
+
+                                                                2
+

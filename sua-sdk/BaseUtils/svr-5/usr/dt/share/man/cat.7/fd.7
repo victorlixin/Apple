@@ -1,0 +1,193 @@
+
+
+fd(7)                                                       fd(7)
+
+DDeessccrriippttiioonn
+       The  floppy  disk  driver  provides  access to floppy disk
+       drives as both block and character devices.  Floppy  disks
+       must  be  formatted  before  their use (see Both 5.25- and
+       3.5-inch floppy disk formats are  supported.   The  driver
+       controls  up  to two floppy disk drives.  The minor device
+       number specifies the  drive  number,  the  format  of  the
+       floppy disk, and the partition number.
+
+UUssaaggee
+       Floppy  disk  device filenames (which correspond to a spe-
+       cific major and minor device) use  the  following  format:
+       /dev/{r}dsk/f{0,1}{5h,5d16,5d9,5d8,5d4,3e,3h,3m,3n,3d}{t,u}
+       r indicates a raw  (character)  interface  to  the  floppy
+       disk,  rdsk  selects  the  raw  device  interface, and dsk
+       selects the block device interface.  0 or  1  selects  the
+       drive  to  be  accessed:  f0  selects  floppy  drive 0, f1
+       selects drive 1.  The following list describes the  format
+       to  be  interacted  with:  5.25"  high density floppy disk
+       (1.2MB) 5.25" double density floppy disk, 16  sectors  per
+       track  (320KB) 5.25" double density floppy disk, 9 sectors
+       per track (360KB) 5.25" double density floppy disk, 8 sec-
+       tors per track (320KB) 5.25" double density floppy disk, 4
+       sectors per track (320KB) 3.5" extra high  density  floppy
+       disk  (2.88MB) 3.5" high density floppy disk (1.44MB) 3.5"
+       double density floppy disk  (720KB)  3.5"  medium  density
+       floppy  disk  (1.2MB)  3.5"  double  density  floppy  disk
+       (720KB) 3.5" high density floppy disk (1.72MB)
+
+       The 3m disk is also known as the Japanese medium  density.
+       It is double sided.  The 3c disk is used for Microsoft DMF
+       reading under Merge installations.  Not all of the  floppy
+       drivers will work in all machines.
+
+       Format  specification is mandatory when opening the device
+       for formatting.  However, when accessing a floppy disk for
+       other  operations  (read and write), the format specifica-
+       tion field can be omitted.  In this case, the floppy  disk
+       driver  automatically  determines  the  format  previously
+       established on the  floppy  disk  and  then  performs  the
+       requested    operation   (for   example,   cpio   -itv   <
+       /dev/rsdk/f1).
+
+       The last parameter, t or u, selects the  partition  to  be
+       accessed.   t represents the whole floppy disk, and u rep-
+       resents the whole floppy disk except track 0 of cylinder 0
+       and  applies only to the 5d8 type of floppy.  Without t or
+       u specified, the whole floppy disk except cylinder 0  will
+       be selected.
+
+       Besides the device file naming convention described above,
+       some of the formats have alias  names  that  correlate  to
+       previous releases.  The following table describes the for-
+       mats that have an alias:
+
+                                                                1
+
+fd(7)                                                       fd(7)
+
+       ---------------
+       Format   Alias
+       ---------------
+       5h       q15d
+       5d8      d8d
+       5d9      d9d
+
+       For example, the device file /dev/rdsk/f0q15dt is  equiva-
+       lent to /dev/rdsk/f05ht.
+
+   iiooccttll ccaallllss
+       The  following  are the calls specific to fd: This call is
+       used to get information about the current drive configura-
+       tion.   The argument to the ioctl is the address of one of
+       the following structures,  defined  in  sys/vtoc.h,  which
+       will  be  filled  in  by  the  ioctl:  struct disk_parms {
+             char    dp_type;/*  Disk   type   (see   below)   */
+             unchar  dp_heads;/*     Number     of    heads    */
+             ulong   dp_cyls;/*   Number    of    cylinders    */
+             unchar  dp_sectors;/*  Number  of  sectors/track  */
+             ushort  dp_secsiz;/*  Number  of   bytes/sector   */
+                     /*      for      this      partition:     */
+             ushort  dp_ptag;/*  Partition  tag  (not  used)   */
+             ushort  dp_pflag;/*  Partition  flag  (not  used) */
+             ushort  dp_pstartsec;/* Starting  sector  number  */
+             ushort  dp_pnumsec;/* Number of sectors */ }
+
+       /* Disk types */ #define       DPT_WINI1/* Winchester disk
+       */       #define       DPT_FLOPPY2/*       Floppy       */
+       #define       DPT_OTHER3/*   Other   type   of   disk   */
+       #define       DPT_NOTDISK0/* Not a disk device */ For  the
+       floppy  driver,  the  disk type will always be DPT_FLOPPY.
+       The unused fields in the  disk_parms  structure  are  only
+       applicable  to  hard  disks;  however,  returning the same
+       structure from both the hard disk driver  and  the  floppy
+       disk  driver allows programs to be written that can under-
+       stand either one.  To support disks with more  than  65535
+       cylinders,  the  definition of the dp_cyls member has been
+       changed from a ushort to a ulong in &geminiRELtm;.  Conse-
+       quently, legacy applications that use the V_GETPARMS ioctl
+       or the disk_parms structure will need to be recompiled  to
+       run  on &geminiREL; and later releases.  This call is used
+       to format tracks on a floppy disk.  The argument passed to
+       the  ioctl  is  the address of one of the following struc-
+       tures, defined  in  sys/vtoc.h,  containing  the  starting
+       track,  number  of  tracks,  and  interleave factor: union
+       io_arg {       struct  {                ushortstart_trk;/*
+       first  track  */               ushortnum_trks;/* number of
+       tracks to format  */                ushortintlv;/*  inter-
+       leave factor */       } ia_fmt; } Formatting starts at the
+       given track and continues so  that  the  given  number  of
+       tracks  are  formatted, using the given interleave factor.
+       The file descriptor must refer to the character (raw) spe-
+       cial  device for the desired drive, and the file must have
+
+                                                                2
+
+fd(7)                                                       fd(7)
+
+       been opened in exclusive mode (O_EXCL).
+
+FFiilleess
+DDiiaaggnnoossttiiccss
+       To minimize errors when using  floppy  disks,  the  driver
+       attempts  to assure that the floppy disk is installed when
+       needed, and that the operations requested have  been  com-
+       pleted  before the device close is completed.  In particu-
+       lar, the drive is checked for the  presence  of  a  floppy
+       disk  each  time  a  read  or write request is made to the
+       drive.  If this is not true (either the floppy disk is not
+       physically  present  or  the  door  is  open),  the driver
+       retries the request continually, at five-second intervals.
+       The  following message appears after each attempt, where n
+       is the drive number: FD(n):  floppy  disk  not  present  -
+       please  insert  The  INTR  and QUIT signals are honored in
+       this case, so that the process accessing the  floppy  disk
+       drive  in  question  receives  these  signals  (unless, of
+       course, the process itself is ignoring them).  In particu-
+       lar,  if  the  floppy  disk is removed prematurely, or not
+       inserted soon enough, no data is lost, provided  the  cor-
+       rect floppy disk is inserted in the drive when the message
+       to do so is displayed.
+
+       If the above message appears, do the following: Use to set
+       FD_DOOR_SENSE  to 0.  Unload the floppy driver by entering
+       modadmin -U fd (see Rebuild the floppy driver by  entering
+       idbuild  -M  fd  (see Reload the floppy driver by entering
+       modadmin -l fd.  Retry the floppy access.
+
+       The driver retries failed transfers up to ten  times.   If
+       the  request  still has not succeeded, the driver displays
+       an appropriate message.  Errors from the floppy disk  con-
+       troller,  other  than the above, are displayed as follows:
+       FD drv n, blk b: drive_error_message  FD  controller  con-
+       troller_error_message The first message occurs on an error
+       after a transfer has begun.  n  is  the  drive  where  the
+       error  occurred,  and  b is the block number that is being
+       read or written.  drive_error_message is one of  the  fol-
+       lowing:  The  floppy disk might not be formatted properly.
+       The accessed cylinder has been marked bad by  the  format-
+       ter.   The  drive  positioned itself at the wrong cylinder
+       when attempting to set up for the requested  transfer.   A
+       CRC  error  was  detected  when  attempting  to  read  the
+       requested block from the drive.  The accessed  sector  has
+       been  marked  bad by the formatter.  The floppy disk might
+       not be formatted properly.  A write  was  attempted  to  a
+       floppy disk that is currently write-protected.  The floppy
+       disk might not be formatted properly.   The  system  could
+       not  keep  up  with the requested transfer of data.  (This
+       error should not occur.)  The floppy  disk  might  not  be
+       formatted properly.  The driver is confused about the for-
+       mat of the floppy disk  that  has  been  inserted.   (This
+       error should not occur.)
+
+                                                                3
+
+fd(7)                                                       fd(7)
+
+       The second message occurs when there is a controller error
+       during the setup for, or  actual  transfer  of,  a  block.
+       controller_error_message is one of the following: The con-
+       troller failed to complete the requested command in a rea-
+       sonable  length  of time.  The controller failed to return
+       its status after  a  command  was  completed.   During  an
+       attempt to access the controller, a timeout occurred.
+
+RReeffeerreenncceess
+
+                                                                4
+

@@ -1,0 +1,130 @@
+
+
+auditfltr(1M)                                       auditfltr(1M)
+
+SSyynnooppssiiss
+       auditfltr [[-iN] [-oX]] | [-iX -oN]
+
+DDeessccrriippttiioonn
+       The  auditfltr  command is used to convert audit log files
+       from native machine format into XDR (External Data  Repre-
+       sentation) format and vice versa.  These conversions allow
+       you to transport audit  log  files  from  one  machine  to
+       another  for processing with auditrpt.  You do not need to
+       use auditfltr in all such instances.  If the two  machines
+       are the same architecture and are running the same version
+       of auditing, you may simply copy the log  files  from  the
+       source  machine  to  the  destination machine.  If the two
+       machines are of different architecture, or if they are not
+       running  the same version of auditing, you must use audit-
+       fltr as part of the copying procedure.
+
+       The following options are available: Specifies the type of
+       the  input  file.   The  input file is always standard in.
+       Only one log file at a time can be  processed.   Specifies
+       the  type  of  the output file.  The output file is always
+       standard out.  The output file should be  redirected,  for
+       example to a file or pipe, due to its data format.
+
+       The  values  for type may be N, for native machine format,
+       or X, for XDR format.  If an invalid  conversion  type  or
+       combination of conversion types is requested an error mes-
+       sage is displayed (see ``Diagnostics'').   If  no  options
+       are  specified  it  is assumed the input file is in native
+       machine format and the output file is in XDR  format.   If
+       the format of the input file does not match the type spec-
+       ified by the -i option or the assumed format an error mes-
+       sage is displayed (see ``Diagnostics'').
+
+       The  procedure for transferring an audit log file from one
+       machine to another has basically three steps.  First,  the
+       audit  log  is converted from native machine format to the
+       portable XDR format, using a command like  the  following:
+       cat    /var/audit/1125103    |   auditfltr   -iN   -oX   >
+       /var/tmp/1125103.xfer
+
+       Second, the file is transferred to another machine.   This
+       can  be done by transferring the file to magnetic media on
+       one with cpio or tcpio and then restoring it on the other.
+       Third, the file is converted back to machine format. If we
+       assume, to avoid confusion with the destination  machine's
+       own  audit  log files, that we have created a subdirectory
+       import under /var/audit, we might convert the file with  a
+       command  like  the  following: cat /var/tmp/1125103.xfer |
+       auditfltr -iX -oN >  /var/audit/import/1125103  Audit  log
+       files  are identified by their version number.  Conversion
+       of log files of a particular  version  generally  requires
+       the  presence  of a specific auditfltr executable for that
+       version.  The version number is  automatically  identified
+
+                                                                1
+
+auditfltr(1M)                                       auditfltr(1M)
+
+       by auditfltr, and the proper version-specific auditfltr is
+       automatically called.  If  the  required  version-specific
+       auditfltr  is  not  present or is not executable, an error
+       message is displayed (see ``Diagnostics'').  See for  more
+       about version numbers.
+
+FFiilleess
+       /var/audit/MMDD###
+
+DDiiaaggnnoossttiiccss
+       Upon  successful  completion,  the auditfltr command exits
+       with a value of zero (0).  If there are errors,  it  exits
+       with  one  of  the  following values and prints the corre-
+       sponding error message: usage: auditfltr [[-iN]  [-oX]]  |
+       [-iX -oN]
+
+       Invalid  command syntax.  conversion type type is not sup-
+       ported
+       usage: auditfltr [[-iN] [-oX]] | [-iX -oN]
+
+       The valid conversion types are X, for External Data Repre-
+       sentation or N, for native machine format.  invalid combi-
+       nation of conversion types
+       usage: auditfltr [[-iN] [-oX]] | [-iX -oN]  error  manipu-
+       lating file
+
+       File  manipulation  error  occurred during a write or read
+       operation.  could not obtain version number
+
+       Reading the version number from  the  input  file  failed.
+       unknown audit version number
+
+       The  version  number  of  the  input  log file is invalid.
+       Valid version numbers are: 1.0, 2.0, 3.0,  4.0.   bad  log
+       record type
+
+       Invalid  record  type  encountered  in the audit log file.
+       unable to allocate space input file is in invalid format
+
+       The format of the audit log used as input does  not  match
+       the  format  specified  by  the  -i option of the command.
+       Version specific auditfltr not found: version Version spe-
+       cific  auditfltr not executable: version XDR encryption of
+       an audit record field failed XDR decryption  of  an  audit
+       record field failed
+
+RReeffeerreenncceess
+NNoottiicceess
+       The  auditfltr  command  accepts  only  audit log files as
+       input. Note that each log file  must  be  processed  sepa-
+       rately.  Audit  files  cannot be concatenated together and
+       the resulting data stream presented to auditfltr; this may
+       yield  incorrect results or errors.  Except for lid.inter-
+       nal, all audit map files are in ASCII format  and  do  not
+
+                                                                2
+
+auditfltr(1M)                                       auditfltr(1M)
+
+       require  conversion.   The lid.internal binary file is not
+       portable.  If you have several machines and want to trans-
+       port audit files between machines for analysis, you should
+       ensure that all machines have  identical  security  levels
+       and level identifiers (LIDs).
+
+                                                                3
+

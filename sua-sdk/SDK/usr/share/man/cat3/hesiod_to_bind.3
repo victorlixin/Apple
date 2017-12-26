@@ -1,0 +1,93 @@
+hesiod_to_bind(3)                                     hesiod_to_bind(3)
+
+  hheessiioodd
+
+  NNAAMMEE
+
+    hesiod, hesiod_init, hesiod_resolve, hesiod_free_list, hesiod_to_bind,
+    hesiod_end - Hesiod name server interface library
+
+  SSYYNNOOPPSSIISS
+
+    #include <hesiod.h>
+
+    int hesiod_init(void **context)
+    char **hesiod_resolve(void *context, const char *name, const char *type)
+    void hesiod_free_list(void *context, char **list)
+    char *hesiod_to_bind(void *context, const char *name, const char *type)
+    void hesiod_end(void *context)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    This family of functions allows you to perform lookups of Hesiod
+    information, which is stored as text records in the Domain Name Service.
+    To perform lookups, you must first initialize a context, an opaque object
+    which stores information used internally by the library between calls.
+    hheessiioodd__iinniitt initializes a context, storing a pointer to the context in the
+    location pointed to by the context argument. hheessiioodd__eenndd frees the
+    resources used by a context.
+
+    The hheessiioodd__rreessoollvvee function is the primary interface to the library. If
+    successful, it returns a list of one or more strings giving the records
+    matching name and type. The last element of the list is followed by a NULL
+    pointer. It is the caller's responsibility to call hheessiioodd__ffrreeee__lliisstt to
+    free the resources used by the returned list.
+
+    The hheessiioodd__ttoo__bbiinndd function converts name and type into the DNS name used
+    by hheessiioodd__rreessoollvvee. It is the caller's responsibility to free the returned
+    string using free.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    If successful, hheessiioodd__iinniitt returns 0; otherwise it returns -1 and sets
+    errno to indicate the error. On failure, hheessiioodd__rreessoollvvee and hheessiioodd__ttoo__bbiinndd
+    return NULL and set the global variable errno to indicate the error.
+
+  EENNVVIIRROONNMMEENNTT
+
+    If the environment variable HES_DOMAIN is set, it will override the domain
+    in the Hesiod configuration file. If the environment variable
+    HESIOD_CONFIG is set, it specifies the location of the Hesiod
+    configuration file.
+
+  EERRRROORRSS
+
+    Hesiod calls may fail because of:
+
+    ECONNREFUSED
+        hheessiioodd__rreessoollvvee failed because no name server could be contacted to
+        answer the query.
+
+    EMSGSIZE
+        hheessiioodd__rreessoollvvee failed because the query or response was too big to fit
+        into the packet buffers.
+
+    ENOENT
+        hheessiioodd__rreessoollvvee failed because the name server had no text records
+        matching name and type, or hheessiioodd__ttoo__bbiinndd failed because the name
+        argument had a domain extension which could not be resolved with type
+        "rhs-extension" in the local Hesiod domain.
+
+  SSEEEE AALLSSOO
+
+    Hesiod - Project Athena Technical Plan -- Name Service'
+
+  AAUUTTHHOORR
+
+    Steve Dyer, IBM/Project Athena
+    Greg Hudson, MIT Team Athena
+    Copyright 1987, 1988, 1995, 1996 by the Massachusetts Institute of
+    Technology.
+
+  BBUUGGSS
+
+    The strings corresponding to the errno values set by the Hesiod functions
+    are not particularly indicative of what went wrong, especially for ENOEXEC
+    and ENOENT.
+
+  UUSSAAGGEE NNOOTTEESS
+
+    None of these functions are thread safe.
+
+    None of these functions are async-signal safe.
+

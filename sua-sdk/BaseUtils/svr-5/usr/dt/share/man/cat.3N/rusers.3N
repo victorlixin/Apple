@@ -1,0 +1,71 @@
+
+
+rusers(3N)                                             rusers(3N)
+
+SSyynnooppssiiss
+       cc     [options]     file    -lrpcsvc    -lnsl    #include
+       <rpcsvc/rusers.h>
+
+       int rusers(const char *host, struct utmpidlearr *up);
+
+DDeessccrriippttiioonn
+       rusers fills the utmpidlearr  structure  with  data  about
+       host, and returns 0 if successful.  The function will fail
+       if the underlying transport  does  not  support  broadcast
+       mode.
+
+UUssaaggee
+       The    following    data   structures   are   defined   in
+       rpcsvc/rusers.h: struct utmpidlearr {      struct utmpidle
+       **uia_arr;      int uia_cnt; };
+
+       struct    utmpidle    {        struct   ru_utmp   ui_utmp;
+            unsigned ui_idle; };
+
+       struct ru_utmp {      char ut_line[8];         /* tty name
+       */         char ut_name[8];         /*    user    id    */
+            char ut_host[16];        /* host name, if  remote  */
+            long ut_time;       /* time on */ };
+
+RReeffeerreenncceess
+EExxaammpplleess
+       The  use  of  rusers  is  shown  by the following example:
+       #include   <stdio.h>   #include   <sys/types.h>   #include
+       <rpcsvc/rusers.h>
+
+       main (int argc, char *argv[]) {
+           int i;
+           struct utmpidlearr utmp_array;
+
+           if (argc != 2) {
+               fprintf (stderr, "Usage: %s host\n", argv[0]);
+               exit (1);
+           }
+           utmp_array.uia_arr = NULL;
+
+           if (rusers (argv[1], &utmp_array) != 0)
+           {
+               fprintf (stderr, "%s: rusers failed\n", argv[0]);
+               exit (1);
+           }
+
+           for (i = 0; i < utmp_array.uia_cnt; i++)
+           {
+               printf ("Entry %d:\tidle time = %u minutes\n\t\t",
+       i, utmp_array.uia_arr[i]->ui_idle);      printf ("tty name
+       = %s\n\t\t", utmp_array.uia_arr[i]->ui_utmp.ut_line);
+               printf       ("user      id      =      %s\n\t\t",
+       utmp_array.uia_arr[i]->ui_utmp.ut_name);
+
+                                                                1
+
+rusers(3N)                                             rusers(3N)
+
+               printf     ("host      name      =      %s\n\t\t",
+       utmp_array.uia_arr[i]->ui_utmp.ut_host);
+               printf  ("time logged on = %s\n\n", ctime ((time_t
+       *) &utmp_array.uia_arr[i]->ui_utmp.ut_time));
+           } }
+
+                                                                2
+

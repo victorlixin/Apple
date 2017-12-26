@@ -1,0 +1,109 @@
+
+
+pthread_rwlock_init(3pthread)       pthread_rwlock_init(3pthread)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <pthread.h>
+
+       int      pthread_rwlock_init(pthread_rwlock_t     *rwlock,
+            const pthread_rwlockattr_t  *attr);
+
+       int pthread_rwlock_destroy(pthread_rwlock_t *rwlock);
+
+       pthread_rwlock_t *rwlock=PTHREAD_RWLOCK_INITIALIZER
+
+DDeessccrriippttiioonn
+       pthread_rwlock_init  initializes   the   read-write   lock
+       pointed  to  by  rwlock  with the attributes referenced by
+       attr and in the unlocked  state.   Once  initialized,  the
+       lock can be used any number of times without being re-ini-
+       tialized.
+
+       The rwlock parameter points to the reader-writer  lock  to
+       be initialized or destroyed.
+
+       The  attr parameter points to a read-write lock attributes
+       object that will be used to initialize rwlock.  If attr is
+       NULL, the default read-write lock attributes are used; the
+       effect is the same as passing the  address  of  a  default
+       read-write attributes object.
+
+       If  the  pthread_rwlock_init function fails, rwlock is not
+       initialized and its contents are undefined.
+
+       pthread_rwlock_destroy  destroys  the  read-write   object
+       pointed  to  by  rwlock and releases any resources used by
+       the lock.  This includes invalidating the lock and freeing
+       any   associated  dynamically  allocated  resources.   The
+       effect of subsequent use of the lock  is  undefined  until
+       the   lock   is   re-initialized   by   another   call  to
+       pthread_rwlock_init.    An   implementation   may    cause
+       pthread_rwlock_destroy  to  set  the  object referenced by
+       rwlock to an invalid  value.   Results  are  undefined  if
+       pthread_rwlock_destroy  is  called  when  any thread holds
+       rwlock.  Attempting to destroy an uninitialized read-write
+       lock  results  in  undefined  behavior.  A destroyed read-
+       write   lock   object   can   be   re-initialized    using
+       pthread_rwlock_init;  the results of otherwise referencing
+       the read-write lock object after it has been destroyed are
+       undefined.
+
+   SSttaattiicc rreeaaddeerr--WWrriitteerr iinniittiiaalliizzaattiioonn
+       In  cases  where  default  read-write  lock attributes are
+       appropriate, the macro PTHREAD_RWLOCK_INITIALIZER  can  be
+       used  to  initialize  read-write locks that are statically
+       allocated.  The effect is equivalent to  dynamic  initial-
+       ization   by  a  call  to  pthread_rwlock_init  with  attr
+
+                                                                1
+
+pthread_rwlock_init(3pthread)       pthread_rwlock_init(3pthread)
+
+       specified as NULL, except that no error  checks  are  per-
+       formed.
+
+RReettuurrnn vvaalluueess
+       pthread_rwlock_init and pthread_rwlock_destroy return zero
+       on success.  Otherwise, an error number is returned.
+
+   DDiiaaggnnoossttiiccss
+       The EBUSY and EINVAL error checks,  if  implemented,  will
+       act as if they were performed immediately at the beginning
+       of processing for the function and caused an error  return
+       prior to modifying the state of the read-write lock speci-
+       fied by rwlock.
+
+       pthread_rwlock_init returns the following value  and  does
+       not  change  the  contents  of rwlock if the corresponding
+       condition is detected: Invalid  attr  argument  specified.
+       Invalid rwlock argument specified.
+
+       pthread_rwlock_destroy returns the following values if the
+       corresponding conditions are detected: rwlock is locked or
+       another  thread  is  waiting to acquire rwlock.  The value
+       specified by rwlock is invalid.
+
+WWaarrnniinnggss
+       pthread_rwlock_init does not examine the  rwlock  argument
+       before  initializing it.  If pthread_rwlock_init is called
+       more than once for the same reader-writer  lock,  it  will
+       overwrite  its  state.  It is the user's responsibility to
+       ensure that pthread_rwlock_init is only  called  once  for
+       each reader-writer lock.
+
+       Most  operations  on read-write locks are not recursive--a
+       thread can deadlock if it attempts to  reacquire  a  read-
+       write lock that it already has acquired.
+
+       Results are undefined if a read-write lock is used without
+       first being initialized.
+
+SSttaannddaarrddss CCoommpplliiaannccee
+       The Single UNIX Specification, Version 2; The Open  Group.
+
+RReeffeerreenncceess
+
+                                                                2
+

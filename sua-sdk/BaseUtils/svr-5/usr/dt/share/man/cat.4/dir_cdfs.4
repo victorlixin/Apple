@@ -1,0 +1,92 @@
+
+
+dir_cdfs(4)                                           dir_cdfs(4)
+
+SSyynnooppssiiss
+       #include <sys/fs/iso9660.h> #include <sys/fs/cdfs_inode.h>
+
+DDeessccrriippttiioonn
+       In a cdfs file system, the contents of a file or directory
+       are  stored  in  contiguous  physical  sectors  called  an
+       extent.  The contents of a directory are stored in a  sin-
+       gle  extent.  The contents of a file may be stored in mul-
+       tiple non-adjacent extents.  More than one file can  share
+       the same extent.  The first sector of each extent may con-
+       tain an Extended Attribute  Record  (XAR)  that  describes
+       additional  attributes  of  the file or directory (such as
+       the User ID, Group ID, permissions).
+
+       Each directory in a cdfs filesystem contains two  or  more
+       Directory  Records.   These directory records identify the
+       file and subdirectories owned by the directory.  For  each
+       file  or  subdirectory  in the directory, there will exist
+       one Directory Record for each  extent  belonging  to  that
+       file/subdirectory.   Each  Directory Record is of variable
+       length and contains information such as: the name  of  the
+       file or subdirectory the location and size of its extent a
+       System Use Area
+
+       Note: For a multi-extent file, there will be one directory
+       record for each extent in the file.
+
+       Each  Directory  Record  has  a System Use Area (SUA) that
+       stores information about other operating system standards,
+       such as additional file-related information not defined by
+       the ISO-9660 specification.  The SUA can be used to  store
+       information  required  to  support  POSIX  standards.  For
+       example, the SUA can contain the device  file  major/minor
+       numbers,  which  are  defined  by the POSIX standard.  The
+       System Use Sharing Protocol (SUSP) defines how the  infor-
+       mation in the SUA is defined.
+
+       The  Directory  Record  data  structure  is defined in the
+       iso9660.h header file.  For each cdfs file  and  directory
+       currently  being  referenced,  an  in-core data structure,
+       struct cdfs_drec, is used to store the  relevant  portions
+       of  all of the Directory Records belonging to that file or
+       directory.  Each cdfs_drec also stores  other  information
+       relating  to  the  extent  and/or  Directory  Record.  The
+       cdfs_drec structure is defined in the cdfs_inode.h  header
+       file.
+
+       The  cdfs_drec structure is as follows: struct cdfs_drec {
+            struct cdfs_drec    *drec_NextDR;  /* Pointer to next
+       Dir   Rec  */       struct  cdfs_drec    *drec_PrevDR;  /*
+       Pointer to previous Dir Rec */      uint_t    drec_Loc; /*
+       Loc      of      media      DREC      (L-Sec     #)     */
+            uint_t    drec_Offset;   /* # bytes from L-sec  start
+       */        uint_t    drec_Len; /*  Len  of  media  Dir  Rec
+
+                              CD-ROM                            1
+
+dir_cdfs(4)                                           dir_cdfs(4)
+
+       (Bytes) */      uint_t    drec_XarLen;   /* Len  of  media
+       XAR (Log Blk) */      daddr_t   drec_ExtLoc;   /* Location
+       of Extent (L-Blk  #)  */       uint_t    drec_DataLen;  /*
+       Len        of        File        Sec        data        */
+            timestruc_t    drec_Date;     /* Recording  date  and
+       time */      uint_t    drec_Flags;    /* Flags - See below
+       */       uint_t    drec_UnitSz;   /*  File  Unit  Size  */
+            uint_t    drec_Interleave;    /*  Interleave Gap Size
+       */      uint_t    drec_VolSeqNum;     /*  Volume  Sequence
+       Number  */       uint_t    drec_FileIDLen;     /*  Len  of
+       File ID  String  */       uint_t    drec_FileIDOff;     /*
+       Dir      Rec      offset      of      File     ID     */
+            uint_t    drec_SysUseOff;     /* Dir  Rec  offset  of
+       Sys  Use  Area */      uint_t    drec_SysUseSz; /* Size of
+       Sys Use Area */ };
+
+RReeffeerreenncceess
+       cdfs-specific cdfs-specific
+
+       System Use Sharing Protocol  and  Rock  Ridge  Interchange
+       Protocol from Rock Ridge Technical Working Group, ISO 9660
+       Specification ISO 9660:1988(E), Working Paper for Informa-
+       tion  Processing:  Volume  and  File  Structure  of CD-ROM
+       Information
+        Interchange" in  Optical  Information  Systems  magazine,
+       January/February 1987
+
+                              CD-ROM                            2
+

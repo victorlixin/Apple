@@ -1,0 +1,145 @@
+
+
+sendv(2)                                                 sendv(2)
+
+SSyynnooppssiiss
+       #include   <unistd.h>   #include   <sys/types.h>  #include
+       <sys/uio.h> #include <sys/sendv.h>
+
+       off_t sendv(int fd, struct sendv_iovec *iov, int iovcnt);
+
+       off64_t sendv64(int fd,  struct  sendv_iovec64  *iov,  int
+       iovcnt);
+
+DDeessccrriippttiioonn
+       The  sendv  and sendv64 system calls write data (specified
+       by iov) to the open file descriptor fd  [fd  is  a  stream
+       obtained  from  an  or  system call].  iovcnt contains the
+       number of writes to perform.
+
+       The iov argument points to an array  of  structures;  each
+       structure  describes  one write operation.  For sendv, the
+       iov argument points to a sendv_iovec structure  that  con-
+       tains the following members:
+               off_t sendv_off;      /* starting offset */
+               off_t sendv_len;      /* length to send */
+               void    *sendv_base;    /* default source */
+               uint_t  sendv_flags;    /* SENDV_* flag bits */
+               int     sendv_fd;       /* source (not sendv_base)
+       when SENDV_FD */
+
+       For sendv64, the iov argument points  to  a  sendv_iovec64
+       structure that contains the following members:
+               off64_t sendv_off;      /* starting offset */
+               off64_t sendv_len;      /* length to send */
+               void    *sendv_base;    /* default source */
+               uint_t  sendv_flags;    /* SENDV_* flag bits */
+               int     sendv_fd;       /* source (not sendv_base)
+       when SENDV_FD */
+
+       The size of the regular file  specified  by  the  sendv_fd
+       structure  element  can  be  up to 2 gigabytes in size for
+       sendv, and up to 1 terabyte for sendv64.   Otherwise,  the
+       two calls are identical.
+
+       The  value  of sendv_flags specifies whether the source is
+       an open file  descriptor  or  a  buffer  in  user  memory.
+       sendv_flags   can  be  set  to:  If  SENDV_FD  is  set  in
+       sendv_flags, sendv and sendv64 attempt to write  sendv_len
+       bytes  starting  at offset sendv_off in the file specified
+       by sendv_fd to the stream associated with fd.
+
+       If SENDV_FD is not set, sendv and sendv64 attempt to write
+       sendv_len  bytes  from the buffer pointed to by sendv_base
+       to the stream associated with fd.
+
+       Both calls process sendv_iovec entries sequentially.
+
+                                                                1
+
+sendv(2)                                                 sendv(2)
+
+RReettuurrnn vvaalluueess
+       If all iovcnt entries have  been  processed  successfully,
+       the count of all bytes transferred is returned.  If O_NDE-
+       LAY or O_NONBLOCK are set on fd, and sendv can't write any
+       more  data to the stream without blocking, then it returns
+       the count of what has been written  so  far.   The  return
+       value of sendv must be checked to ensure that all data was
+       successfully written to fd.
+
+EErrrroorrss
+       If an error occurs and some data  has  been  written,  the
+       count  of  bytes transferred so far is returned, and errno
+       is not set.
+
+       If an error occurs and no data has  been  written,  -1  is
+       returned  and  errno  is set as shown below.  The call was
+       not successful due to a system resource  limitation.   Try
+       the  operation  again.   Mandatory file/record locking was
+       set, O_NDELAY or O_NONBLOCK  was  set,  and  there  was  a
+       blocking  record  lock.   An attempt is made to write to a
+       stream that cannot accept data with the O_NDELAY or O_NON-
+       BLOCK  flag set.  fd is not valid or not open for writing.
+       sendv_fd is not a valid file descriptor or is not open for
+       reading.   sendv  was  going  to go to sleep while reading
+       sendv_fd and cause a deadlock to occur.  iov or sendv_base
+       points  outside  the process's allocated address space.  A
+       signal was caught during the call.  fd is  not  a  stream.
+       iovcnt  is less than or equal to 0, or is greater than 16.
+       sendv_len is less than 0.  The sum of the sendv_len values
+       in  the iov array was greater than the largest valid inte-
+       ger value (overflow).  sendv_flags was set to  an  invalid
+       value.   sendv_fd  is  not  a  regular file.  sendv_off is
+       greater than the current size of the  file  referenced  by
+       sendv_fd.   An attempt is made to write to a stream linked
+       below a multiplexor.  The system  record  lock  table  was
+       full  and  there  was  a  blocking  record lock on reading
+       sendv_fd, so the call could not  go  to  sleep  until  the
+       blocking record lock was removed.  Enforced record locking
+       was enabled and LOCK_MAX regions are already locked in the
+       system.   sendv_fd  is on a remote machine and the link to
+       that machine is no longer active.  An attempt is  made  to
+       write   to  a  stream  with  insufficient  STREAMS  memory
+       resources available in the system.  sendv_fd is a  regular
+       file,  sendv_len  is greater than 0, the starting position
+       is before the end-of-file and  the  starting  position  is
+       greater than or equal to the offset maximum established in
+       the open file descriptor associated with sendv_fd.   There
+       is  no  data  transfer.   An attempt is made to write to a
+       stream with sendv_len outside the  specified  minimum  and
+       maximum write range, and the minimum value is non-zero.
+
+       A write to a STREAMS file can fail if an error message has
+       been received at the stream head.  In this case, errno  is
+       set to the value included in the error message.
+
+                                                                2
+
+sendv(2)                                                 sendv(2)
+
+RReeffeerreenncceess
+NNoottiicceess
+       Currently  sendv_fd must be a regular file, and fd must be
+       a stream.
+
+   CCoommppaattiibbiilliittyy
+       This call is not part of any industry standard, and may be
+       changed without notice in future releases.
+
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       The  sendv64  call supports files larger than 2 gigabytes,
+       but is otherwise identical to sendv.  For details on  pro-
+       gramming  for  large  file  capable  applications,  see on
+       intro(2).
+
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Open file descriptors are a process resource and available
+       to  any  sibling  thread; if used concurrently, actions by
+       one thread can interfere with those of a sibling.
+
+       While one thread is blocked, siblings might still be  exe-
+       cuting.
+
+                                                                3
+

@@ -1,0 +1,55 @@
+
+
+mprotect(2)                                           mprotect(2)
+
+SSyynnooppssiiss
+       #include <sys/types.h> #include <sys/mman.h>
+
+       int mprotect(void *addr, size_t len, int prot);
+
+DDeessccrriippttiioonn
+       mprotect  changes  the  access protections on the mappings
+       specified by the range [addr, addr + len) to be that spec-
+       ified  by  prot.  The access protections will apply to the
+       entire page or pages containing [addr, addr + len).   (The
+       notation  [start,  end) denotes the interval from start to
+       end, including start but excluding end.)
+
+       Legitimate values for prot are the same as those permitted
+       for  mmap  and  are defined in sys/mman.h as: PROT_READ /*
+       page can be read */ PROT_WRITE     /* page can be  written
+       */  PROT_EXEC /* page can be executed */ PROT_NONE /* page
+       can not be accessed */
+
+   RReettuurrnn vvaalluueess
+       On success, mprotect  returns  0.   On  failure,  mprotect
+       returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, mprotect fails and sets errno
+       to: prot specifies a protection that violates  the  access
+       permission  the  process  has  to  the  underlying  memory
+       object.  prot specifies PROT_WRITE over a MAP_PRIVATE map-
+       ping  and  there  are  insufficient  memory  resources  to
+       reserve for locking the private page.  addr is not a  mul-
+       tiple  of the page size as returned by sysconf.  The argu-
+       ment len has a value less than or equal to  0.   Addresses
+       in  the  range  [addr,  addr  +  len]  are invalid for the
+       address space of a process, or specify one or  more  pages
+       which are not mapped.
+
+       When  mprotect  fails  for  reasons other than EINVAL, the
+       protections on some of the pages in the range [addr,  addr
+       + len] may have been changed.  If the error occurs on some
+       page at addr2, then the protections of all whole pages  in
+       the range [addr, addr2] will have been modified.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Sibling  threads  share  (by  definition) the same address
+       space; modifications to the address space by  one  can  be
+       perceived by the others.
+
+                                                                1
+

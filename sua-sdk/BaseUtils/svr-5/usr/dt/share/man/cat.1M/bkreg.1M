@@ -1,0 +1,438 @@
+
+
+bkreg(1M)                                               bkreg(1M)
+
+SSyynnooppssiiss
+       bkreg -p period [-w cweek] [-t table]
+
+       bkreg  -a  tag  -o  orig  -c weeks:days| demand -d ddev -m
+       method|migration [-b moptions] [-t table] [-D depend]  [-P
+       prio]
+
+       bkreg  -e  tag  [-o  orig]  [-c  weeks:days|  demand]  [-m
+       method|migration] [-d ddev] [-t table] [-b  moptions]  [-D
+       depend] [-P prio]
+
+       bkreg -r tag [-t table]
+
+       bkreg  [-A|-O|-R]  [-hsv]  [-t  table]  [-c  weeks[:days]|
+       demand]
+
+       bkreg -C fields [-hv] [-t table] [-c weeks[:days]| demand]
+       [-f c]
+
+DDeessccrriippttiioonn
+       A  backup  register  is  a file containing descriptions of
+       backup operations to  be  performed  on  a   system.   The
+       default backup register is located in /etc/bkup/bkreg.tab.
+       Other backup registers may be created.
+
+       The bkreg command may be executed  only  by  a  privileged
+       user.
+
+       Each  entry  in  a backup register describes backup opera-
+       tions to be performed on a given disk object  (called  the
+       originating  object) for some set of days and weeks during
+       a rotation period.  There may be several register  entries
+       for an object, but only one entry may specify backup oper-
+       ations for an object on a specific day  and  week  of  the
+       rotation  period.   The  entry  describes  the object, the
+       backup method to be used to archive the  object,  and  the
+       destination volumes to be used to store the archive.  Each
+       entry has a unique tag that identifies it.  Tags must con-
+       form to file naming conventions.
+
+   RRoottaattiioonn ppeerriioodd
+       Backups  are  performed  in a rotation period specified in
+       weeks.  When the end of a rotation period  is  reached,  a
+       new  period  begins.   Rotation  periods begin on Sundays.
+       The default rotation period is one week.
+
+   OOrriiggiinnaattiinngg oobbjjeeccttss
+       An originating object is either a raw data partition or  a
+       file  system.   An  originating object is described by its
+       originating object name, its  device  name,  and  optional
+       volume labels.
+
+       Several   backup   operations  for  different  originating
+       objects  may  be   active   concurrently   by   specifying
+
+                                                                1
+
+bkreg(1M)                                               bkreg(1M)
+
+       priorities  and  dependencies.   During  a backup session,
+       higher priority backup  operations  are  attempted  before
+       lower  priority  backup operations.  All backup operations
+       of a given priority may proceed concurrently unless depen-
+       dencies  are  specified.   If one backup is declared to be
+       dependent on others, it will not be started until all  its
+       antecedents have completed successfully.
+
+   DDeessttiinnaattiioonn ddeevviicceess
+       Each backup archive is written to a set of storage volumes
+       inserted into a destination device.  A destination  device
+       can  have  destination  device group, a destination device
+       name, media characteristics, and volume  labels.   Default
+       characteristics  for  a medium (as specified in the device
+       table) may be overridden.
+
+   BBaacckkuupp mmeetthhooddss
+       An originating object is backed up to a destination device
+       archive  using a method.  The method determines the amount
+       of information backed up and the  representation  of  that
+       information.   Different  methods  may be used for a given
+       originating object on  different  days  of  the  rotation.
+       Each  method accepts a set of options that are specific to
+       the method.
+
+       Several default methods are provided with the Backup  ser-
+       vice.  Other methods may be added by a  system site.  (See
+       the -m method option below for details.)
+
+       A backup archive may be migrated to a  different  destina-
+       tion  by  specifying  migration as the backup method.  The
+       device name of the originating object for a migration must
+       have been the destination device for a previously success-
+       ful backup operation.  This form of backup  does  not  re-
+       archive the originating object.  It copies an archive from
+       one destination to another, updating the backup  service's
+       databases  so  that  restores  can still be done automati-
+       cally.
+
+   RReeggiisstteerr vvaalliiddaattiioonnss
+       There are items in a  single  backup  register  entry  and
+       items  across register entries that must be consistent for
+       the backup service to conduct a backup session  correctly.
+       Some  of  these  consistencies are checked at the time the
+       backup register is created  or  changed.   Others  can  be
+       checked  only  at  the time the backup register is used by
+       See for a complete list of validations.
+
+   MMooddeess
+       The bkreg command has two modes: changing the contents  of
+       a  backup register and displaying the contents of a backup
+       register.
+
+                                                                2
+
+bkreg(1M)                                               bkreg(1M)
+
+   CChhaannggiinngg ccoonntteennttss
+       changes the rotation period for a  backup  register.   The
+       default  rotation  period is one week.  adds an entry to a
+       backup register.  This option requires other options to be
+       specified.   These are listed under ``Options''.  edits an
+       existing entry in a backup register.  removes an  existing
+       entry from a backup register.
+
+   DDiissppllaayyiinngg ccoonntteennttss
+       produces  a customized display of the contents of a backup
+       register.  produces a summary display of the contents of a
+       backup register.
+
+   OOppttiioonnss
+       Adds  a new entry to the default backup register.  Options
+       required with -a are: tag, originating device, weeks:days,
+       destination  device, and method.  If other options are not
+       specified, the following defaults are  used:  the  default
+       backup  register is used, no method options are specified,
+       the priority is  0,  and  no  dependencies  exist  between
+       entries.   Each  backup  method supports a specific set of
+       options that modify its behavior.  moptions  is  specified
+       as a list of options that are blank-separated and
+       enclosed  in quotes.  The argument string provided here is
+       passed to the method exactly as entered, without modifica-
+       tion.   Suppresses  the  recording  of  the  backup in the
+       backup history log Specifies a custom exception list where
+       file  is  a  full pathname (incfile and ffile only) Mounts
+       the originating device in read-only mode  before  starting
+       the  backup  and remounts it with its original permissions
+       after completing the backup.  This option cannot  be  used
+       with  the core file systems (fimage, ffile, incfile only).
+       Permits an operator to override label checking on destina-
+       tion  devices.   (See  the  -o option to Specifies that no
+       table of contents is to be kept on line Creates a table of
+       contents  for the backup on additional media instead of in
+       the backup history log Validates the archive on the desti-
+       nation  device  as the backup operation is being performed
+       to make sure each block is readable and correct.  If  this
+       check  fails, the destination medium is considered unread-
+       able.  If automatic operator mode has been specified,  the
+       backup   operation   fails;  otherwise,  the  operator  is
+       prompted to replace  the  destination  medium.   Sets  the
+       week(s)  and  day(s) of the rotation period during which a
+       backup entry should be performed or for  which  a  display
+       should be generated.
+
+       weeks  is  a set of numbers including 1 and 52.  The value
+       of weeks cannot be greater than  the  value  of  -pperiod.
+       weeks  is  specified  as  a combination of lists or ranges
+       (either comma-separated or blank-separated and enclosed in
+       quotes).  An example set of weeks is ``1 3-10,13''
+
+       indicating the first week, each of the third through tenth
+
+                                                                3
+
+bkreg(1M)                                               bkreg(1M)
+
+       weeks, and the thirteenth week of the rotation period.
+
+       days is a set of numbers between 0 (Sunday) and 6  (Satur-
+       day).  In addition, days are specified as a combination of
+       lists or ranges (either comma-separated or blank-separated
+       and enclosed in quotes).
+
+       demand  indicates  that an entry is used only when explic-
+       itly requested by backup -c demand Specifies ddev  as  the
+       destination  device  for the backup operation.  ddev is of
+       the form: [dgroup][:[ddevice][:dchar][:dmname]]
+
+       where either dgroup or ddevice must be specified and dchar
+       and  dmname  are  optional.   (Both dgroup and ddev may be
+       specified together.)  Colons  delineate  field  boundaries
+       and must be included as indicated above.
+
+       dgroup is the device group for the destination device.  If
+       omitted, ddevice must be specified.
+
+       ddevice is the  device  name  of  a  specific  destination
+       device.   If  omitted,  dgroup  must  be specified and any
+       available device in dgroup may be used.
+
+       dchar describes media characteristics.  If specified, they
+       override  the  default  characteristics for the device and
+       group.  dchar is of the form: keyword=value where  keyword
+       is a valid device characteristic keyword (as it appears in
+       the device table.)  dchar entries may be separated by com-
+       mas  or blanks.  If separated by blanks, the entire string
+       of arguments to ddev must be enclosed in quotes.
+
+       dlabels is a list of volume names of the destination  vol-
+       umes.   The list of dlabels must be either comma-separated
+       or blank-separated.  If blank-separated, the  entire  ddev
+       argument must be surrounded by quotes.  Each dlabel corre-
+       sponds to a volumename specified on the  labelit  command.
+       If  dlabels is omitted, backup and restore do not validate
+       the volume labels on this entry.  Edits an existing entry.
+       If  any  of  the options -b, -c, -d, -m, -o, -D, or -P are
+       present, they replace the current settings for the  speci-
+       fied  entry in the register.  Overrides the default output
+       field separator.  c is the character that will  appear  as
+       the  field  separator  on the display output.  The default
+       output field separator is colon (:).   Suppresses  headers
+       when  generating  displays.  Performs the backup using the
+       specified method.   Default  methods  are  the  following:
+       (incremental)  creates an archive that contains only those
+       files and directories that have changed since  a  previous
+       full  file  or full image backup, or within a given number
+       of days.  creates an archive of all directories and  files
+       in  a  mounted  file  system.  The files are copied in the
+       hierarchical order reflected by the  directory  structure.
+       creates an archive of all information necessary to recover
+
+                                                                4
+
+bkreg(1M)                                               bkreg(1M)
+
+       the format of an entire disk.  Typically, the disk  format
+       is  restored,  followed  by  individual  file systems and,
+       finally, by the data partioning  information.   creates  a
+       byte-for-byte  copy  of  a  file system, starting with the
+       first block and ending with the last.  It differs from the
+       ffile  method  in  that  it  does not copy the file system
+       according to its directory structure.  It copies the  data
+       blocks  in  the  order  in  which they appear on the disk.
+       copies a data partition that contains objects  other  than
+       file  systems, such as databases.  It allows you to copy a
+       raw data partition, byte-for-byte, starting with the first
+       block of the data partition and ending with the last.
+
+       If  the method to be used is not a default method, it must
+       appear as the  executable  file  in  the  standard  method
+       directory  /etc/bkup/method.  migration indicates that the
+       value of orig (following the -o option) matches the  value
+       of  ddev during a prior backup operation.  The originating
+       object is not rearchived; it is simply copied to the loca-
+       tion  specified  by  ddev  (following the -d option).  The
+       backup history (if any) and tables of  contents  (if  any)
+       are  updated  to  reflect  the changed destination for the
+       original  archive.   Specifies  orig  as  the  originating
+       object for the backup operation.  orig is specified in the
+       following format:      oname:odevice[:olabel]
+
+       where oname is the name of  an  originating  object.   For
+       file  system  partitions,  it is the nodename on which the
+       file system is usually mounted, mount.   For  data  parti-
+       tions,  it is any valid path name.  This value is provided
+       to the backup method and validated by backup.  The default
+       data partition backup methods, fdp and fdisk, do not vali-
+       date this name.
+
+       odevice is the device name for the originating object.  In
+       all  cases,  it is a raw disk partition device name.  This
+       name   is   specified    in    the    following    format:
+       /dev/rdsk/c?b?t?d?s?.
+
+       olabel  is  the  volume  label for the originating object.
+       For file system partitions, it corresponds to the  volume-
+       name  displayed  by the labelit command.  A data partition
+       may have an associated volume name  that  appears  nowhere
+       except  on  the outside of the volume (where it is taped);
+       getvol may be used to have an operator validate the  name.
+
+       The  special  data partition /dev/rdsk/c?b?t?d?s0 names an
+       entire disk and is used when disk formatting  or  reparti-
+       tioning  is  done  to reference the disk's volume table of
+       contents (VTOC).  [See backup validates this special  full
+       disk  partition  with  the disk volume name specified when
+       the disk was partitioned.  If  the  disk  volume  name  is
+       omitted,  backup  does  not validate the volume labels for
+       this originating object.  Sets  the  rotation  period  (in
+
+                                                                5
+
+bkreg(1M)                                               bkreg(1M)
+
+       weeks)  for  the  backup  register to period.  The minimum
+       value is 1; the maximum value is 52.  By default the  cur-
+       rent week of the rotation is set to 1.  Removes the speci-
+       fied entries from the  register.   Suppresses  wrap-around
+       behavior  when generating displays.  Normal behavior is to
+       wrap long values within each field.  Uses table instead of
+       the default register, bkreg.tab.  Generates displays using
+       (vertical) columns instead  of  (horizontal)  rows.   This
+       allows more information to be displayed without encounter-
+       ing problems displaying long lines.  Overrides the default
+       behavior  by  setting  the  current  week  of the rotation
+       period to cweek.  cweek is an integer between  1  and  the
+       value  of  period.   The  default is 1.  Displays a report
+       describing all fields in the register.  The  display  pro-
+       duced  by this option is best suited as input to a filter,
+       since in horizontal mode it produces extremely long lines.
+       Generates  a display of the contents of a backup register,
+       limiting the display to the specified fields.  The  output
+       is a set of lines, one per register entry.  Each line con-
+       sists of the desired fields, separated by a field  separa-
+       tor  character.   fields  is a list of field names (either
+       comma-separated or blank-separated and enclosed in quotes)
+       for the fields desired.  The valid field names are period,
+       cweek, tag, oname, odevice, olabel, weeks,  days,  method,
+       moptions,  prio,  depend, dgroup, ddevice, dchar, and dla-
+       bel.  Specifies a set of backup operations  that  must  be
+       completed  successfully  before  this operation may begin.
+       depend is a list  of  tag(s)  (either  comma-separated  or
+       blank-separated   and   enclosed  in  quotes)  naming  the
+       antecedent backup operations.  Overrides the default  out-
+       put  field separator.  c is the character that will appear
+       as the field separator on the display output.  The default
+       output field separator is colon (":").  Displays a summary
+       of all originating objects with entries in  the  register.
+       Sets  a  priority  of prio for this backup operation.  The
+       default priority is 0; the highest priority is  100.   All
+       backup  operations with the same priority may run simulta-
+       neously, unless the priority is 0.  All backups with  pri-
+       ority  0  run  sequentially in an unspecified order.  Dis-
+       plays a summary of all destination devices with entries in
+       the register.
+
+DDiiaaggnnoossttiiccss
+       The  exit codes for bkreg are the following: The task com-
+       pleted successfully.  One or more parameters to bkreg  are
+       invalid.   An error has occurred, causing bkreg to fail to
+       complete all portions of its task.  Errors are reported on
+       standard  error  if  any  of the following occurs: The tag
+       specified in bkreg -e or bkreg -r does not  exist  in  the
+       backup  register.   The  tag specified in bkreg -a already
+       exists in the register.
+
+EExxaammpplleess
+       Example 1: bkreg -p 15 -w 3 establishes a 15-week rotation
+
+                                                                6
+
+bkreg(1M)                                               bkreg(1M)
+
+       period in the default backup register and sets the current
+       week to the 3rd week of the rotation period.
+
+       Example  2:  bkreg   -a   acct5   -t   wklybu.tab   \   -o
+       /usr:/dev/rdsk/c1d0s2:usr  -c "2 4-6 8 10:0,2,5" \ -m inc-
+       file      -b      -txE      \      -d      diskette:capac-
+       ity=1404:acctwkly1,acctwkly2,acctwkly3 adds an entry named
+       acct5  to  the  backup  register  named  wklybu.tab.    If
+       wklybu.tab  does  not  already  exist, it will be created.
+       The originating object to be backed up is  the  /usr  file
+       system  on  the  /dev/rdsk/c1d0s2 device which is known as
+       usr.  The backup will be performed each  Sunday,  Tuesday,
+       and  Friday  of  the second, fourth through sixth, eighth,
+       and tenth weeks of the rotation period using  the  incfile
+       (incremental  file)  method.   The  method options specify
+       that a table of contents will  be  created  on  additional
+       media  instead of in the backup history log, the exception
+       list is to be ignored, and an estimate of  the  number  of
+       volumes  for the archive is to be provided before perform-
+       ing the backup.  The backup  will  be  done  to  the  next
+       available diskette device using the three diskette volumes
+       acctwkly1, acctwkly2, and acctwkly3.  These volumes have a
+       capacity of 1404 blocks each.
+
+       Example   3:   bkreg  -e  services2  -t  wklybu.tab  \  -o
+       /back:/dev/rdsk/c1d0s8:back -m migration \  -c  demand  -d
+       ctape:/dev/rdsk/c4d0s3  changes the specifications for the
+       backup operation  named  services2  on  the  backup  table
+       wklybu.tab  so  that whenever the command backup -c demand
+       is executed, the backup that was performed to the destina-
+       tion  device  back:dev/rdsk/c1d0s2:back  will  be migrated
+       from that device (now serving as the  originating  device)
+       to a cartridge tape.
+
+       Example  4:  bkreg  -e  pubsfri  -P 10 -D develfri,market-
+       fri,acctfri changes the  priority  level  for  the  backup
+       operation named pubsfri to 10 and makes this backup opera-
+       tion dependent on the three  backup  operations  develfri,
+       marketfri,  and  acctfri.   The  pubsfri operation will be
+       done only after  all  backup  operations  with  priorities
+       greater than 10 have begun and after the develfri, market-
+       fri, and acctfri operations have been  completed  success-
+       fully.
+
+       Example  5:  bkreg -c 1-8:0-6 provides the default display
+       of the contents of the default backup  register,  for  all
+       weekdays  for  the first through eighth weeks of the rota-
+       tion period.  The information in the register will be dis-
+       played  in  the  following  format:  Rotation  Period = 10
+       Current Week = 4
+
+       Originating Device: / /dev/root
+
+       Tag       Weeks   Days   Method   Options   Pri   Dgroup -
+
+                                                                7
+
+bkreg(1M)                                               bkreg(1M)
+
+       -  - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       -    -    -    rootdai      1-8         1-6        incfile
+       diskette  rootsp     1-8      0      ffile    -bxt      20
+       ctape
+
+       Originating Device:  /usr /dev/rdsk/c1d0s2
+
+       Tag       Weeks   Days   Method   Options   Pri   Dgroup -
+       -  - - - - - - - - - - - - - - - - - - - - - - - - - - - -
+       -    -    -    usrdai       1-8         1-5        incfile
+       diskette  usrsp      1-8      0      ffile    -bxt      15
+       ctape
+
+FFiilleess
+       describes the backup policy established by the administra-
+       tor  lists  logical  groupings of devices as determined by
+       the administrator describes  specific  devices  and  their
+       attributes
+
+RReeffeerreenncceess
+
+                                                                8
+

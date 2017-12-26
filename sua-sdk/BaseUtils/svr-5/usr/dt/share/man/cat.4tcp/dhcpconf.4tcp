@@ -1,0 +1,252 @@
+
+
+dhcpd.conf(4tcp)                                 dhcpd.conf(4tcp)
+
+SSyynnooppssiiss
+       # Option definitions -- must be defined before being used
+
+       [option [option_code] {
+           comment value
+           name string
+           type integer|binary|string [array]
+           max_val value
+           min_val value } ...]
+
+       # Client definitions
+
+       [client opaque [client_identifier_object] {
+           comment value
+           ip_address value
+           # Option value assignments
+           [option value
+           ...]  } ...]
+
+       [client [hardware_type] [hardware_address] {
+           comment value
+           ip_address value
+           # Option value assignments
+           [option value
+           ...]  } ...]
+
+       # User class definitions
+
+       [user_class [user_class_string] {
+           comment value
+           # Option value assignments
+           [option value
+           ...]  } ...]
+
+       # Vendor class definitions
+
+       [vendor_class [vendor_class_string] {
+           comment value
+           # Vendor-specific option definition
+           [option [option_code] {
+               comment value
+               name string
+               type integer|binary|string [array]
+               max_val value
+               min_val value
+           }
+           ...]
+           # Option value assignments
+           [option value
+           ...]  } ...]
+
+       # Subnet definitions
+
+       [subnet [subnet_IP_address] {
+
+                                                                1
+
+dhcpd.conf(4tcp)                                 dhcpd.conf(4tcp)
+
+           comment value
+           mask value
+           pool name
+           lease_dflt seconds
+           lease_max seconds
+           t1 value
+           t2 value
+           # Option value assignments
+           [option value
+           ...]  } ...]
+
+       # Global option definitions
+
+       [global {
+           # Option value assignments
+           option value
+           ...  }]
+
+       # Server options
+
+       [server {
+           aas_server IP_address
+           aas_password password
+           address_probe [true|false]
+           option_overload [true|false]
+           lease_res seconds
+           lease_pad value }]
+
+DDeessccrriippttiioonn
+       The  default  configuration  file  for  the DHCP server is
+       /etc/inet/dhcpd.conf. It uses a text-based,  line-oriented
+       format, and contains one or more entries that contain set-
+       tings for various parameters.
+
+       Each line of the DHCP configuration file must be  no  more
+       than  1023  characters  in  length,  including the newline
+       character.  There is no facility for line continuation.
+
+       Spaces or tabs are required between lexical elements,  and
+       may be used at the beginning and end of lines arbitrarily.
+       Blank lines may appear anywhere.
+
+       Comments are denoted by a # preceded by a space or tab  or
+       the beginning of a line.  Everything from the # to the end
+       of the line is ignored.
+
+   DDaattaa ttyyppeess
+       All IP addresses can be specified as in ``dotted decimal''
+       notation or as a host name (which must be resolvable).
+
+       Integer  values  must  be  base  decimal. Depending on the
+       parameter, the value may be signed or  unsigned,  and  may
+       have  range  restrictions based on the size of the integer
+       or other constraints.
+
+                                                                2
+
+dhcpd.conf(4tcp)                                 dhcpd.conf(4tcp)
+
+       String values must be specified as a number of ASCII char-
+       acters which can include tabs or spaces.
+
+   DDeeffiinniittiioonn ttyyppeess
+       The  various  definition  types  shown in the ``Synopsis''
+       section have different sets  of  allowable  parameters  as
+       described  below.   This  entry  allows  you to define new
+       global option types.  Outside the scope  of  vendor  class
+       definitions,  an option type with a given code may only be
+       defined once in the file and it may not redefine an exist-
+       ing option.
+
+       You  can also define vendor-specific options within vendor
+       class definitions.  Such definitions may redefine existing
+       options.  (See the description of vendor_class.)
+
+       Allowed  keywords  are: Defines a comment.  Identifies the
+       option but it is not used by the DHCP  server.   Specifies
+       whether  the  option's value is integer, binary or string.
+       The array modifier indicates that the option's value is an
+       array.
+
+       For integer types, the min_val and max_val keywords can be
+       used to specify the minimum  and  maximum  values  of  the
+       option's value.
+
+       For string and binary types, the max_length and max_length
+       keywords can be used to specify the  minimum  and  maximum
+       length of the option's value.  For array types, these key-
+       words specify the minimum and maximum size of  the  array.
+       A  client  entry defines an individual client as described
+       in RFC 2131.
+
+       If the opaque keyword is defined,  the  client  identifier
+       object  is  treated as an opaque object and is stored as a
+       character string.
+
+       If opaque is not defined, a hardware type and  a  hardware
+       address  are  expected.   The  hardware  type is validated
+       against the server's list of valid hardware types.  If  it
+       does not match an existing hardware type, it will be added
+       to the list if its value is numeric.  If it does match  an
+       existing  type, the length of the hardware address will be
+       checked against the  expected  length  for  that  hardware
+       type.
+
+       Allowed  keywords  are:  Defines a comment.  Defines an IP
+       address for a particular client.  The address must not  be
+       included  in  any address pool.  The address will be allo-
+       cated with an infinite lease.  Option values for a  client
+       can be assigned within the scope of the client definition.
+       This entry defines options for a particular user class.
+
+       Allowed keywords are: Defines a  comment.   Option  values
+
+                                                                3
+
+dhcpd.conf(4tcp)                                 dhcpd.conf(4tcp)
+
+       for  a  user class can be assigned within the scope of the
+       user class definition.  This entry defines options  for  a
+       particular  vendor class.  The vendor-class string is spe-
+       cific to a given hardware vendor.
+
+       Allowed keywords are: Defines a comment.   Vendor-specific
+       options  can  be  defined  for  each  vendor class.  These
+       options can be defined for option  codes  1-254  and  take
+       precedence  over  the standard options within the scope of
+       the vendor class definition.
+
+       Option values for a vendor class can  be  assigned  within
+       the  scope  of  the  vendor  class definition.  This entry
+       defines options for a particular subnet.
+
+       Allowed keywords are: Defines a comment.  Defines the sub-
+       net  netmask.   Restricts the operation of the server to a
+       specified pool of addresses.  Defines  the  default  lease
+       period  in days for the subnet.  A value of infinite means
+       that there is no limit.  Defines the maximum lease  period
+       in  days  for  the subnet.  A value of infinite means that
+       there is no limit.  Defines  the  lease  renewal  time  in
+       units of 0.1%.  For example, a value of 500 indicates that
+       the lease should be renewed after 50%  of  its  lease  had
+       expired.   Defines  the  rebind  time  in  units  of 0.1%.
+       Option values for a subnet  can  be  assigned  within  the
+       scope  of  the  subnet  definition.   This  entry  defines
+       options for any address.  Only one  of  these  entries  is
+       allowed in the dhcpd.conf file.
+
+       Global  option  values  are  assigned  here.   This  entry
+       defines options that affect  the  operation  of  the  DHCP
+       server.    Only   one  server  entry  is  allowed  in  the
+       dhcpd.conf file.
+
+       Allowed keywords  are:  Defines  the  IP  address  of  the
+       Address  Allocation  Server (AAS).  Defines a password for
+       the AAS server.  A password must be  defined  if  the  AAS
+       server  is  on  a  remote machine.  Defines whether option
+       overloading is allowed. If its value is  non-zero,  it  is
+       allowed.  By  default it is not allowed.  Defines the ini-
+       tial lease reservation time in seconds.  The default value
+       is  180  seconds.   Defines the lease padding. This is the
+       amount of extra time the server allocates above the client
+       lease  time.  It is defined in units of 0.1% of the client
+       lease time.  The default value of 10 adds 1% to the client
+       lease  time for the server lease time.  Defines whether an
+       address that is about to be  allocated  should  be  tested
+       using ping.  By default, this is enabled.
+
+   OOppttiioonnss
+       Standard  options supported by the DHCP server are defined
+       in RFC 2132. Keywords for these options are defined in the
+       file  /etc/inet/dhcp.opts.   User-defined options are also
+
+                                                                4
+
+dhcpd.conf(4tcp)                                 dhcpd.conf(4tcp)
+
+       supported. These must be defined using  the  option  entry
+       type before they are referenced.
+
+FFiilleess
+       option  identifier  definitions default configuration file
+       for the DHCP server
+
+RReeffeerreenncceess
+       RFC 2131, RFC 2132
+
+                                                                5
+

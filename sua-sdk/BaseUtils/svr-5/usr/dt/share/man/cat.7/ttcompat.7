@@ -1,0 +1,326 @@
+
+
+ttcompat(7)                                           ttcompat(7)
+
+SSyynnooppssiiss
+       #include  <sys/stream.h> #include <sys/stropts.h> #include
+       <sys/ttold.h>
+
+       ioctl(fd, I_PUSH, "ttcompat");
+
+DDeessccrriippttiioonn
+       ttcompat is a STREAMS module  that  translates  the  ioctl
+       calls  supported  by the older Version 7 and 4BSD terminal
+       drivers into the  ioctl  calls  supported  by  the  termio
+       interface (see All other messages pass through this module
+       unchanged;  the  behavior  of  read  and  write  calls  is
+       unchanged,  as  is  the behavior of ioctl calls other than
+       the ones supported by ttcompat.
+
+       This module can be automatically pushed onto a stream with
+       the  mechanism  when  a terminal device is opened; it does
+       not have to be explicitly pushed onto a stream.  This mod-
+       ule  requires  that  the termios interface be supported by
+       the modules and the application can push the driver  down-
+       stream.   The TCGETS, TCSETS, and TCSETSF ioctl calls must
+       be supported; if any information set or fetched  by  those
+       ioctl  calls  is  not  supported by the modules and driver
+       downstream, some of the V7/4BSD functions may not be  sup-
+       ported.   For  example,  if  the CBAUD bits in the c_cflag
+       field are not supported, the  functions  provided  by  the
+       sg_ispeed  and  sg_ospeed  fields  of the sgttyb structure
+       (see below) will not be supported.  If the TCFLSH ioctl is
+       not  supported,  the  function  provided  by the TIOCFLUSH
+       ioctl will not be supported.  If the TCXONC ioctl  is  not
+       supported,  the  functions  provided  by  the TIOCSTOP and
+       TIOCSTART ioctl calls  will  not  be  supported.   If  the
+       TIOCMBIS  and  TIOCMBIC ioctl calls are not supported, the
+       functions provided by  the  TIOCSDTR  and  TIOCCDTR  ioctl
+       calls will not be supported.
+
+       The  basic ioctl calls use the sgttyb structure defined by
+       sys/ioctl.h:   struct   sgttyb   {         char sg_ispeed;
+            char sg_ospeed;                        char sg_erase;
+            char sg_kill;      int  sg_flags; };
+
+       The sg_ispeed and sg_ospeed fields describe the input  and
+       output speeds of the device, and reflect the values in the
+       c_cflag field of the termios structure.  The sg_erase  and
+       sg_kill fields of the argument structure specify the erase
+       and kill characters respectively, and reflect  the  values
+       in  the  VERASE and VKILL members of the c_cc field of the
+       termios structure.
+
+       The sg_flags field of the argument structure contains sev-
+       eral  flags  that  determine the system's treatment of the
+       terminal.  They are mapped into flags  in  fields  of  the
+       terminal state, represented by the termios structure.
+
+                                                                1
+
+ttcompat(7)                                           ttcompat(7)
+
+       Delay  type  0  is always mapped into the equivalent delay
+       type 0 in the c_oflag  field  of  the  termios  structure.
+       Other delay mappings are performed as follows:
+       -------------------------
+       sg_flags   c_oflag
+       -------------------------
+       BS1        BS1
+       FF1        VT1
+       CR1        CR2
+       CR2        CR3
+       CR3        Not supported
+       TAB1       TAB1
+       TAB2       TAB2
+       XTABS      TAB3
+       NL1        ONLRET|CR1
+       NL2        NL1
+
+       If  previous  TIOCLSET  or  TIOCLBIS  ioctl calls have not
+       selected LITOUT or PASS8 mode, and  if  RAW  mode  is  not
+       selected,  the  ISTRIP flag is set in the c_iflag field of
+       the termios structure, and the EVENP and ODDP  flags  con-
+       trol  the  parity  of  characters sent to the terminal and
+       accepted from the terminal: Parity is not to be  generated
+       on output or checked on input:
+
+       The  character  size is set to CS8 and the flag is cleared
+       in the c_cflag field of the termios structure.  Even  par-
+       ity  characters are to be generated on output and accepted
+       on input:
+
+       The flag is set in the c_iflag field of the termios struc-
+       ture, the character size is set to CS7 and the flag is set
+       in the c_cflag field of the termios structure.  Odd parity
+       characters  are  to be generated on output and accepted on
+       input:
+
+       The flag is set in the c_iflag field, the  character  size
+       is  set  to  CS7  and the and flags are set in the c_cflag
+       field of the termios structure.   Even  parity  characters
+       are  to  be  generated  on output and characters of either
+       parity are to be accepted on input:
+
+       The flag is cleared in the c_iflag  field,  the  character
+       size  is  set  to  CS7  and the flag is set in the c_cflag
+       field of the termios structure.  The RAW flag disables all
+       output  processing  (the  OPOST flag in the c_oflag field,
+       and the XCASE flag in the c_lflag field,  are  cleared  in
+       the  termios structure) and input processing (all flags in
+       the c_iflag field other than the IXOFF and IXANY flags are
+       cleared  in  the termios structure).  8 bits of data, with
+       no parity bit, are accepted on input and generated on out-
+       put;  the  character size is set to CS8 and the PARENB and
+       PARODD flags are cleared  in  the  c_cflag  field  of  the
+       termios structure.  The signal-generating and line-editing
+
+                                                                2
+
+ttcompat(7)                                           ttcompat(7)
+
+       control characters are disabled by clearing the  ISIG  and
+       ICANON  flags  in  the c_lflag field of the termios struc-
+       ture.
+
+       The CRMOD flag turns input
+
+       characters into newline characters, and output and  echoed
+       newline characters to be output as a
+
+       followed  by  a  linefeed.   The ICRNL flag in the c_iflag
+       field, and the OPOST and ONLCR flags in the c_oflag field,
+       are set in the termios structure.
+
+       The  LCASE flag maps upper-case letters in the ASCII char-
+       acter set to their lower-case equivalents  on  input  (the
+       IUCLC  flag  is set in the c_iflag field), and maps lower-
+       case letters in the ASCII character set  to  their  upper-
+       case  equivalents  on output (the OLCUC flag is set in the
+       c_oflag field).  Escape sequences are accepted  on  input,
+       and  generated  on output, to handle certain ASCII charac-
+       ters not supported by older terminals (the XCASE  flag  is
+       set in the c_lflag field).
+
+       Other  flags  are  directly mapped to flags in the termios
+       structure:
+       -------------------------------------------------
+       sg_flags   Flags in termios structure
+       -------------------------------------------------
+       CBREAK     Complement of ICANON in c_lflag field
+       ECHO       ECHO in c_lflag field
+       TANDEM     IXOFF in c_iflag field
+
+       Another structure associated with each terminal  specifies
+       characters  that are special in both the old Version 7 and
+       the newer 4BSD terminal interfaces.  The following  struc-
+       ture   is   defined   by   sys/ioctl.h:  struct  tchars  {
+               char                                    t_intrc;/*
+       interrupt                                               */
+               char                                    t_quitc;/*
+       quit                                                    */
+               char                                    t_startc;/*
+       start                       output                      */
+               char                                    t_stopc;/*
+       stop                       output                       */
+               char                                    t_eofc;/*
+       end-of-file                                             */
+               char                                    t_brkc;/*
+       input delimiter (like nl) */ };
+
+       Also  associated  with each terminal is a local flag word,
+       specifying flags supported by the new 4BSD terminal inter-
+       face.  Most of these flags are directly mapped to flags in
+       the termios structure:
+
+                                                                3
+
+ttcompat(7)                                           ttcompat(7)
+
+       -------------------------------------------
+       Local flags   Flags in termios structure
+       -------------------------------------------
+       LCRTBS        Not supported
+       LPRTERA       ECHOPRT in the c_lflag field
+       LCRTERA       ECHOE in the c_lflag field
+       LTILDE        Not supported
+       LTOSTOP       TOSTOP in the c_lflag field
+       LFLUSHO       FLUSHO in the c_lflag field
+       LNOHANG       CLOCAL in the c_cflag field
+       LCRTKIL       ECHOKE in the c_lflag field
+       LCTLECH       CTLECH in the c_lflag field
+       LPENDIN       PENDIN in the c_lflag field
+       LDECCTQ       Complement of IXANY  in  the
+                     c_iflag field
+       LNOFLSH       NOFLSH in the c_lflag field
+
+       Another  structure  associated  with  each terminal is the
+       ltchars structure which defines control characters for the
+       new  4BSD  terminal  interface.   Its structure is: struct
+       ltchars {
+           char  t_suspc;     /* stop process signal */
+           char  t_dsuspc;    /* delayed stop process signal */
+           char  t_rprntc;    /* reprint line */
+           char  t_flushc;    /* flush output (toggles) */
+           char  t_werasc;    /* word erase */
+           char  t_lnextc;    /* literal next character */ };
+
+       The characters are mapped to members of the c_cc field  of
+       the termios structure as follows:
+       ----------------------
+       ltchars    c_cc index
+       ----------------------
+       t_suspc    VSUSP
+       t_dsuspc   VDSUSP
+       t_rprntc   VREPRINT
+       t_flushc   VDISCARD
+       t_werasc   VWERASE
+       t_lnextc   VLNEXT
+
+   iiooccttll ccaallllss
+       ttcompat  responds to the following ioctl calls.  All oth-
+       ers are passed to the module below.   The  argument  is  a
+       pointer  to  an  sgttyb  structure.   The current terminal
+       state is fetched; the appropriate characters in the termi-
+       nal  state  are stored in that structure, as are the input
+       and output  speeds.   The  values  of  the  flags  in  the
+       sg_flags  field are derived from the flags in the terminal
+       state and stored in the structure.  Set  ``exclusive-use''
+       mode;  no  further opens (except by a privileged user) are
+       permitted until  the  file  has  been  closed.   Turn  off
+       ``exclusive-use''  mode.   The argument is a pointer to an
+       sgttyb structure.  The appropriate  characters  and  input
+       and  output  speeds in the terminal state are set from the
+
+                                                                4
+
+ttcompat(7)                                           ttcompat(7)
+
+       values in that structure, and the flags  in  the  terminal
+       state  are  set  to  match  the values of the flags in the
+       sg_flags field of that structure.  The  state  is  changed
+       with  a  TCSETSF  ioctl so that the interface delays until
+       output is quiescent, then throws away any  unread  charac-
+       ters,  before  changing  the  modes.   The  argument  is a
+       pointer to an sgttyb structure.   The  terminal  state  is
+       changed as TIOCSETP would change it, but a TCSETS ioctl is
+       used, so that the interface neither  delays  nor  discards
+       input.  The argument is ignored.  The HUPCL flag is set in
+       the c_cflag word of the terminal state.  The argument is a
+       pointer  to  an  int  variable.  If its value is zero, all
+       characters waiting in input or output queues are  flushed.
+       Otherwise,  the value of the int is treated as the logical
+       OR of the FREAD and FWRITE flags defined by sys/file.h; if
+       the  FREAD  bit  is  set,  all characters waiting in input
+       queues are flushed, and if the  FWRITE  bit  is  set,  all
+       characters  waiting  in  output  queues  are flushed.  The
+       argument is ignored.  The break bit is set for the device.
+       The argument is ignored.  The break bit is cleared for the
+       device.  The argument is ignored.  The Data Terminal Ready
+       bit  is set for the device.  The argument is ignored.  The
+       Data Terminal Ready bit is cleared for  the  device.   The
+       argument  is  ignored.   Output  is stopped as if the STOP
+       character had been typed.  The argument is ignored.   Out-
+       put is restarted as if the START character had been typed.
+       The argument is a pointer to a tchars structure.  The cur-
+       rent  terminal state is fetched, and the appropriate char-
+       acters in the terminal state are stored in that structure.
+       The argument is a pointer to a tchars structure.  The val-
+       ues of the appropriate characters in  the  terminal  state
+       are  set from the characters in that structure.  The argu-
+       ment is a pointer to an int.  The current  terminal  state
+       is  fetched, and the values of the local flags are derived
+       from the flags in the terminal state and stored in the int
+       pointed  to by the argument.  The argument is a pointer to
+       an int whose value is a mask containing flags to be set in
+       the  local  flags  word.   The  current  terminal state is
+       fetched, and the values of the  local  flags  are  derived
+       from  the flags in the terminal state; the specified flags
+       are set, and the flags in the terminal state  are  set  to
+       match the new value of the local flags word.  The argument
+       is a pointer to an int whose value is  a  mask  containing
+       flags  to be cleared in the local flags word.  The current
+       terminal state is fetched, and the  values  of  the  local
+       flags  are  derived  from the flags in the terminal state;
+       the specified flags are cleared, and the flags in the ter-
+       minal  state  are  set to match the new value of the local
+       flags word.  The argument is a pointer to an int  contain-
+       ing  a  new set of local flags.  The flags in the terminal
+       state are set to match the new value of  the  local  flags
+       word.   The argument is a pointer to an ltchars structure.
+       The values of the appropriate characters in  the  terminal
+       state  are  stored  in  that structure.  The argument is a
+
+                                                                5
+
+ttcompat(7)                                           ttcompat(7)
+
+       pointer to an ltchars structure.  The values of the appro-
+       priate  characters  in the terminal state are set from the
+       characters in that structure.  FIORDCHK returns the number
+       of  immediately  readable  characters.   The  argument  is
+       ignored.  FIONREAD returns the number of immediately read-
+       able  characters  in  the  int pointed to by the argument.
+       Calls the function emsetmap(tp,mp) if the function is con-
+       figured in the kernel.  Calls the function emgetmap(tp,mp)
+       if the function is configured in the  kernel.   Calls  the
+       function  emunmap(tp,mp)  if the function is configured in
+       the kernel.
+
+       The following ioctls are returned as  successful  for  the
+       sake  of  compatibility.   However, nothing significant is
+       done (that is, the state of the terminal is not changed in
+       any way).
+       TIOCSETD   LDOPEN
+       TIOCGETD   LDCLOSE
+       DIOCSETP   LDCHG
+       DIOCSETP   LDSETT
+       DIIOGETP   LDGETT
+
+RReeffeerreenncceess
+NNoottiicceess
+       TIOCBRK  and  TIOCCBRK  should  be  handled by the driver.
+       FIONREAD and FIORDCHK are handled in the stream head.
+
+                                                                6
+

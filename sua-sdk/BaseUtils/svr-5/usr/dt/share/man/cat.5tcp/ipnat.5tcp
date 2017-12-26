@@ -1,0 +1,184 @@
+
+
+ipnat(5tcp)                                           ipnat(5tcp)
+
+DDeessccrriippttiioonn
+       Rules  accepted  by must use the following formats: Set up
+       static (bidirectional) network address  translation  (NAT)
+       between an external IP address and an internal IP address.
+       The mask length mask1 should be equal to mask2.  If  mask1
+       is  less  than  mask2,  sufficient  addresses  will not be
+       available for mapping.  Map one host or network address to
+       another  in round-robin fashion.  If the mask length mask1
+       is less than mask2, sufficient addresses may not always be
+       available for mapping.  Map one host or network address to
+       another in round-robin fashion using the  specified  range
+       of  ports  to increase the number of addresses that can be
+       mapped.  Map one host or network  address  to  another  in
+       round-robin  fashion using ports in the range 1024 through
+       65535 to increase the number  of  addresses  that  can  be
+       mapped.
+
+       Set  up  static  IP  address  translation with each mapped
+       address having a block of number ports for  its  dedicated
+       use.   If  number is set to auto and the mask length mask1
+       is    less    than    mask2,    the    block    size    is
+       64512/(2^(mask2-mask1))  rounded down to the nearest inte-
+       ger.  Redirect packets bound for an IP address and port to
+       another  IP  address  and port.  The optional from keyword
+       allows packets to be selected by their source  address  as
+       well as by their destination port.
+
+       By  default,  redirection  is only performed for TCP.  The
+       protocols (proto) for which redirection can be enabled for
+       a   given  port  are:  any  supported  protocol  only  TCP
+       (default) only UDP only either TCP or UDP
+
+       An rdr rule is commonly used on a firewall to  force  con-
+       nection  through a proxy FTP server on the local host: rdr
+       en0 any port ftp -> 127.0.0.1 port  ftp  The  keyword  any
+       (equivalent to the address and mask 0.0.0.0/0) matches any
+       destination address. The address 127.0.0.1 is the loopback
+       address of the local host.  See for more information.  The
+       parameters have the following formats  and  meanings:  The
+       name  of  the  network interface (as displayed by on which
+       outgoing packets will have their source  address  changed.
+       Examples  are  en0  (for  Ethernet  II adapters), lo0 (for
+       loopback), and ppp0 (for PPP).  An IP address  in  dotted-
+       decimal  notation  (such  as 10.0.0.1).  A network address
+       mask specified by its length (number of leading 1's) or in
+       dotted-decimal notation.
+
+       A  netmask of all 1's (mask=32 or mask=255.255.255.255) is
+       valid and indicates a hostname.
+
+       A netmask of 31 1's (numbits=31  or  mask=255.255.255.254)
+       is  invalid  as  there  is no space for allocating host IP
+       addresses as well as  broadcast  addresses.   Synonym  for
+       ipaddr/mask.  mask  may  be  specified  in  dotted-decimal
+
+                                                                1
+
+ipnat(5tcp)                                           ipnat(5tcp)
+
+       notation but not by its length.  A TCP or UDP port identi-
+       fied by its number or name (see The protocol of packets to
+       which address translation will be applied:  TCP  only  UDP
+       only TCP or UDP
+
+       Packets  which  will  be rewritten can only be selected by
+       matching the original source address.
+
+       The address selected for replacing the original is  chosen
+       from an IP address/netmask pair.
+
+       When remapping TCP and UDP packets, it is also possible to
+       change the source port number.
+
+       Comment lines are indicated by a # as the first  character
+       on the line.
+
+   MMaattcchhiinngg aanndd ttrraannssllaattiioonn
+       For  basic  address  translation and packet redirection, a
+       packet's protocol and  destination  address  are  used  to
+       determine if the packet should be altered.
+
+       In  the case of redirections (rdr), it is also possible to
+       use the from keyword to select  packets  by  their  source
+       address as well as by destination port.  The packet match-
+       ing part of the rule is on the left-hand side of  the  ->.
+       The  address and port specification on the right-hand side
+       of the -> will be written into the packet providing it has
+       already successful matched the prior constraints.  The new
+       destination address is that specified in  the  rule.   The
+       special  destination address ``0/32'' causes ipnat to look
+       up the IP address of the named interface.  This should  be
+       used  with  PPP  interfaces  that  have their IP addresses
+       dynamically assigned. The command ipf -y must  be  run  if
+       the  connection is lost,  and a new address is assigned on
+       reconnection.
+
+       For map rules, the destination address  will  be  one  for
+       which  the  tuple combining the new source and destination
+       is known to be unique.  If the packet  is  either  TCP  or
+       UDP,  the destination and source ports are also taken into
+       consideration.  If the tuple already exists, the  IP  fil-
+       tering  subsystem  will  increment  the port number first,
+       within the available range specified with portmap.   If  a
+       unique  tuple  does  not exist, the source address will be
+       incremented within the  specified  netmask.  If  a  unique
+       tuple  cannot be determined, the packet is not translated.
+       The map-block is more limited in how  it  searches  for  a
+       new,  free and unique tuple. It determines algorithmically
+       the new source address and the range of  available  ports.
+       The  IP  address  is not changed and the port number never
+       exceeds its allotted range.
+
+                                                                2
+
+ipnat(5tcp)                                           ipnat(5tcp)
+
+   PPrrooxxiieess
+       The IP filter subsystem includes a simple FTP  proxy  that
+       allow  secondary channels to be opened without forcing the
+       packets through
+
+       True transparent proxying should be  performed  using  the
+       redirect  (rdr)  rules  to  direct ports to the local host
+       (127.0.0.1).  The proxy  program  should  then  perform  a
+       lookup  through  /dev/ipnat  to  determine the real source
+       address of the connection.
+
+FFiilleess
+       /dev/ipnat /etc/services /etc/hosts
+
+RReeffeerreenncceess
+EExxaammpplleess
+       Set up static bidirectional mapping between several inter-
+       nal and external host IP addresses: bimap ppp0 10.0.0.1/32
+       -> 209.1.2.1/32 bimap ppp0 10.0.0.12/32  ->  209.1.2.12/32
+       bimap  ppp0 10.0.0.42/32 -> 209.1.2.42/32 The next example
+       changes IP addresses used on an  internal  network  (10/8)
+       into  an  8-bit subnet (209.1.2/24) provided by an ISP via
+       the ppp0 interface: map ppp0 10.0.0.0/8 -> 209.1.2.0/24  A
+       problem  with  this  is that we are trying to squeeze over
+       16,000,000 IP addresses into  an  address  space  of  254.
+       Thus,  at most 254 local host addresses can be mapped at a
+       time.  To increase the scope, port remapping for  TCP  and
+       UDP  can  be  used;  map  ppp0  10.0.0.0/8 -> 209.1.2.0/24
+       portmap tcp/udp 1025:65000 This  falls  527,566  addresses
+       short of the space available in network 10. When combined,
+       these rules  would  be  specified  as  follows:  map  ppp0
+       10.0.0.0/8  -> 209.1.2.0/24 portmap tcp/udp 1025:65000 map
+       ppp0 10.0.0.0/8 -> 209.1.2.0/24 This  port  maps  all  TCP
+       segments  and  UDP  datagrams.   Other  protocols, such as
+       ICMP, only have their IP address changed.  If you want  to
+       guarantee  simultaneous  access  to  all  within the given
+       range, it may be more appropriate to use the keyword  auto
+       in  place  of a specified range of port numbers.  However,
+       in the above case, it would default to  one  port  per  IP
+       address  because  we  need  to  squeeze 24 bits of address
+       space into 8 bits.  An example of how this might  be  used
+       is:   map  ppp0  172.192.0.0/16  ->  209.1.2.0/24  portmap
+       tcp/udp auto This would give each  IP  address  252  ports
+       ((65536-1024)/256)  to  use.   The problem is that the map
+       directive  tells  the  NAT  mechanism  to  use  the   next
+       address/port  pair  that is available for an outgoing con-
+       nection.  This results in no easily discernible  relation-
+       ship  between external and internal address/port pairings.
+       This can be overcome to some extent using  map-block,  for
+       example:  map-block  ppp0  172.192.0.0/16  -> 209.1.2.0/24
+       ports auto This would give each IP address 252 ports dedi-
+       cated to its own use.  However, map-block will impose this
+       as a limit on the number of ports that  are  available  to
+       each internal address for connecting to the outside world;
+
+                                                                3
+
+ipnat(5tcp)                                           ipnat(5tcp)
+
+       map could allocate the extra 8 ports by  moving  onto  the
+       next IP address.
+
+                                                                4
+

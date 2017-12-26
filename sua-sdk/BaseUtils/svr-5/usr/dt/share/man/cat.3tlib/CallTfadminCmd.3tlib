@@ -1,0 +1,96 @@
+
+
+CallTfadminCmd(3tlib)                       CallTfadminCmd(3tlib)
+
+SSyynnooppssiiss
+       CallTfadminCmd  command  args errorId [errorStackVar [mes-
+       sageId [margs]]]
+
+DDeessccrriippttiioonn
+       CallTfadminCmd provides an interface to commands that  are
+       outside of the &VTcl; environment: they are ``outside'' in
+       that they do not throw errors using error stacks and  they
+       require  a fork/exec to run as separate processes.  CallT-
+       fadminCmd executes the specified command using the tfadmin
+       command  if the user is non-root otherwise, CallTfadminCmd
+       just executes the  specified  command,  and  presents  the
+       results to the calling application in ``standardized'' way
+       compatible with other admin services.   CallTfadminCmd  is
+       the  recommended  interface  for  applications that obtain
+       data and services from underlying
+        utilities, which require authorization to access.
+
+       CallTfadminCmd forks and execs the command (using  tfadmin
+       when  appropriate),  passing  it  optional  arguments, and
+       returns the command output. If an error occurs (See  Notes
+       below)  in  the  command,  CallTfadminCmd  creates a admin
+       error stack, pushes the localized errorId  text  which  is
+       parameterized  to  include  the  command error output, and
+       throws the error back to the application.  The application
+       may  now  proceed  with  ``standard'' error handling using
+       ErrorCatch, SaDisplayErrorStacks, etc.
+
+       The application can provide an  optional  messageId  (with
+       optional  args)  to  be  pushed  on the stack as well. The
+       application may have CallTfadminCmd place the error  stack
+       in a named variable without performing a throw.
+
+   AArrgguummeennttss
+       command  to  be executed. PATH will be used to locate com-
+       mand.  If necessary, supply a full path name.  Tcl list of
+       optional arguments to command. May be an empty list.  Mes-
+       sage ID that will be pushed on the errorStack in the event
+       of  an  error.  By convention, the Message ID includes the
+       command name and if already defined, should come from  the
+       sysadm.tlib  message  catalog, (SCO_UNIX1_CMD_ERR_command.
+       If the command does not already have such a message ID  in
+       the  public  catalog, the application must supply its own,
+       ideally retaining the convention ending with  the  command
+       name. The message text is typically a single parameterized
+       format specifier, "%s", which will be  replaced  with  the
+       stderr  output  generated  by  the  command.  Optional Tcl
+       variable name where  CallTfadminCmd  can  store  an  error
+       stack  instead  of throwing an error when encountered.  By
+       default, if the command generates an error, CallTfadminCmd
+       will  throw  an  error  stack requiring the application to
+       eventually perform an ErrorCatch.  Optional message to  be
+       pushed  on  to the error stack if the command generates an
+       error. This is an application specific message as  opposed
+
+                                                                1
+
+CallTfadminCmd(3tlib)                       CallTfadminCmd(3tlib)
+
+       to  that  contained in the error frame pushed on by CallT-
+       fadminCmd. The latter represents the generic command error
+       which  may  be too generic or specific to be meaningful in
+       the context of the  application.   optional  Tcl  list  of
+       arguments  to  the  messageId required if the message text
+       contains parameterized format specifiers.
+
+RReettuurrnn vvaalluueess
+       CallTfadminCmd returns the output of the command (anything
+       specifically  written  to stdout). Note, CallTfadminCmd is
+       not suitable for invoking interactive  commands  since  it
+       captures stdout in a pipe.
+
+RReeffeerreenncceess
+NNoottiicceess
+       CallTfadminCmd  considers  any I/O on stderr from the com-
+       mand to be an error and  will  therefore  throw  an  error
+       stack.   CallTfadminCmd does not pay attention to the exit
+       code  of  the  command.  Some  commands  use  a  different
+       approach,  such  as producing output on stderr even in the
+       successful case or they signal an error  not  through  I/O
+       but  a  nonzero exit code. Applications can deal with some
+       of these cases by providing an errorStackVar to  CallTfad-
+       minCmd  then accessing the desired information through the
+       error stack: exit code -> ErrorData(errorStackVar)  stderr
+       output  ->  ErrorText(errorStackVar)  Note,  these must be
+       applied to the stack frame pushed by the command, not  the
+       application  via the optional messageId to CallTfadminCmd.
+       In addition, the application must be sure that  the  error
+       stack is non-empty.
+
+                                                                2
+

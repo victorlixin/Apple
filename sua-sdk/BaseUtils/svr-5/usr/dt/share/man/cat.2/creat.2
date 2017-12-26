@@ -1,0 +1,105 @@
+
+
+creat(2)                                                 creat(2)
+
+SSyynnooppssiiss
+       #include   <sys/types.h>  #include  <sys/stat.h>  #include
+       <fcntl.h>
+
+       int creat(const char *path, mode_t mode);
+
+       int creat64(const char *path, mode_t mode);
+
+DDeessccrriippttiioonn
+       creat creates a new ordinary file or prepares  to  rewrite
+       an existing file named by the pathname pointed to by path.
+
+       If the file exists, the length is truncated to 0  and  the
+       mode and owner are unchanged.
+
+       If  the  file does not exist the file's owner ID is set to
+       the effective user ID of the process.  The group ID of the
+       file  is  set to the effective group ID of the process, or
+       if the S_ISGID bit is set in the parent directory then the
+       group  ID  of the file is inherited from the parent direc-
+       tory.
+
+       The mode bits and Access Control List (ACL)  of  the  file
+       are  based  on  the value of mode, modified as follows: If
+       the group ID of the new file does not match the  effective
+       group  ID  or  one  of  the  supplementary  group IDs, the
+       S_ISGID bit is cleared.  All bits set in the process  file
+       mode  creation mask are cleared (see The ``save text image
+       after execution bit'' of the mode is cleared (see for  the
+       values  of  mode) For each default ACL entry in the parent
+       directory's ACL a corresponding ACL entry  is  created  in
+       the new file's ACL.  (see
+
+       If creat succeeds, it returns a write-only file descriptor
+       and the file is open for writing, even if  the  mode  does
+       not permit writing.  The file pointer is set to the begin-
+       ning of the file.  The file descriptor is  set  to  remain
+       open  across exec system calls (see A new file may be cre-
+       ated with a mode that forbids writing.
+
+       The   call   creat(path,   mode)   is    equivalent    to:
+            open(path, O_WRONLY | O_CREAT | O_TRUNC, mode)
+
+       The   call   creat64(path,   mode)   is   equivalent   to:
+            open(path, O_WRONLY | O_CREAT |  O_TRUNC  |  O_LARGE-
+       FILE, mode)
+
+RReettuurrnn vvaalluueess
+       On  success, creat and creat64 return a non-negative inte-
+       ger, namely the lowest numbered  unused  file  descriptor.
+       On  failure,  creat  and  creat64  return -1, set errno to
+       identify the error, and no files are created or  modified.
+
+       In the following condition, creat fails and sets errno to:
+
+                                                                1
+
+creat(2)                                                 creat(2)
+
+       The named file is a regular file and the size of the  file
+       cannot  be  represented  correctly  in  an  object of type
+       off_t.
+
+       In the following conditions, creat and  creat64  fail  and
+       set  errno  to: Search permission is denied on a component
+       of the path prefix.  The file does  not  exist  and  write
+       permission  on  the  directory  in which the file is to be
+       created is denied.  The file exists and  write  permission
+       is denied.  The file exists, mandatory file/record locking
+       is set, and there are outstanding record locks on the file
+       (see  path  points  outside the allocated address space of
+       the process.  A signal was  caught  during  the  creat  or
+       creat64 system call.  The named file is an existing direc-
+       tory.  Too many symbolic links were encountered in  trans-
+       lating path.  The process has too many open files (see The
+       length of the path argument  exceeds  {PATH_MAX},  or  the
+       length  of  a  path  component  exceeds  {NAME_MAX}  while
+       _POSIX_NO_TRUNC is in effect.  A  component  of  the  path
+       prefix is not a directory.  A component of the path prefix
+       does not exist.  The pathname is  null.   The  named  file
+       resides  or  would reside on a read-only file system.  The
+       file is a pure procedure (shared text) file that is  being
+       executed.   The system file table is full.  path points to
+       a remote machine and the link to that machine is no longer
+       active.   Components  of  path require hopping to multiple
+       remote machines.  The file system is out of inodes.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Open file descriptors are a process resource and available
+       to  any  sibling  thread; if used concurrently, actions by
+       one thread can interfere with those of a sibling.
+
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       creat64 supports large files, but is  otherwise  identical
+       to creat.  For details on programming for large file capa-
+       ble applications, see in intro(2).
+
+                                                                2
+

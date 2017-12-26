@@ -1,0 +1,101 @@
+
+
+snmp_pdu(3snmp)                                   snmp_pdu(3snmp)
+
+SSyynnooppssiiss
+       #include <snmp/snmp.h>
+
+       short build_pdu(PDU *pdu_ptr);
+
+       void free_pdu(PDU *pdu_ptr);
+
+       PDU *make_pdu(short type, long request_id, long error_sta-
+       tus,
+           long   error_index,   OID   enterprise,    OctetString
+       *agent_addr,
+           long    generic_trap,    long    specific_trap,   long
+       time_ticks);
+
+       PDU *parse_pdu(AuthHeader *auth_ptr);
+
+DDeessccrriippttiioonn
+       build_pdu is called with the PDU  pointer  being  used  to
+       create  the  PDU. It traces down the structure of VarBinds
+       that has been added to it and builds the ASN.1  packet  in
+       the  packlet  pointer of the PDU pointer's data structure.
+       At this point, PDU processing is complete and  the  struc-
+       ture  is  ready to be passed on to the authentication lay-
+       ers. The pdu_ptr argument is a pointer to the  PDU  struc-
+       ture returned by make_pdu.
+
+       free_pdu frees all memory associated with a the PDU header
+       data structure,  including  the  actual  packlet  and  all
+       VarBind structures that were linked to the PDU.
+
+       make_pdu  is called to create the initial header block for
+       building the SNMP ASN.1 data structure, which upon comple-
+       tion  is  used  to build the actual SNMP packet.  make_pdu
+       returns a pointer to a malloc'ed data  structure  of  type
+       PDU: typedef struct _Pdu {
+        OctetString  *packlet;  /* compiled SNMP packet filled by
+       build_pdu */
+        short type;           /* PDU type */
+        union {
+            NormPdu normpdu;  /* holds values  for  non-TRAP_TYPE
+       PDUs */
+            TrapPdu  trappdu;  /* holds values for TRAP_TYPE PDUs
+       */
+        } u;
+        VarBind *var_bind_list; /*  pointer  to  linked  list  of
+       var_binds */
+        VarBind  *var_bind_end_ptr;  /*  pointer to end of linked
+       list */ }  Pdu;  The  type  is  one  of  GET_REQUEST_TYPE,
+       GET_NEXT_REQUEST_TYPE,                  GET_RESPONSE_TYPE,
+       SET_REQUEST_TYPE, or  TRAP_TYPE.  The  request_id  is  the
+       identification number assigned to the particular packet by
+       the application. Since the application is UDP based, retry
+       is  controlled  solely  by the network management applica-
+       tion. The error_status is set to other  than  0  only  for
+
+                                                                1
+
+snmp_pdu(3snmp)                                   snmp_pdu(3snmp)
+
+       GET_RESPONSE_TYPE,  indicating  that  this  response is in
+       reply to a bad request. The error_index is  used  only  by
+       GET_RESPONSE_TYPE  and  points to the VarBind entry in the
+       PDU that offends the agent.  The  enterprise  is  used  by
+       TRAP_TYPE PDUs and is an object identifier associated with
+       the entity generating the trap. The agent_addr is used  by
+       the TRAP_TYPE PDU and consists of an octet string contain-
+       ing the IP address of the entity generating the trap.  The
+       generic_trap  and  specific_trap are used by the TRAP_TYPE
+       PDU and consist of integers that indicate  which  type  of
+       trap  this PDU represents. The time_ticks is the TRAP_TYPE
+       emitting entity's  sense  of  time  since  the  agent  has
+       restarted.
+
+       This  routine  is called once for each packet to be gener-
+       ated. The PDU pointer is then  passed  repeatedly  to  the
+       routine  link_varbind  to  string  the  VarBinds  into the
+       packet.  build_pdu is then called  to  perform  the  ASN.1
+       encoding  of  the  PDU  and  place  the  result in the PDU
+       pointer's  packlet  field.  After  the  packlet  has  been
+       wrapped  in  an  authentication  envelope,  it is freed by
+       passing the pointer to free_pdu.
+
+       parse_pdu takes a  PDU  from  fully  populated  AuthHeader
+       structure  and  parses  the information into the library's
+       internal PDU  format,  including  all  VarBind  instances.
+       This  routine  is  usually  called with the authentication
+       header pointer returned by parse_authentication, which  is
+       the same state as the header pointer after build_authenti-
+       cation is called. The PDU pointer returned from this  call
+       is  the  same state as the PDU pointer on a building phase
+       after build_pdu has been called. If this routine fails, it
+       returns a NULL.
+
+RReeffeerreenncceess
+
+                                                                2
+

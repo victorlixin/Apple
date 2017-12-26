@@ -1,0 +1,113 @@
+syslogd(1)                                                   syslogd(1)
+
+  ssyyssllooggdd
+
+  NNAAMMEE
+
+    syslogd - log systems messages
+
+  SSYYNNOOPPSSIISS
+
+    syslogd [[-du]] [[-f config_file]] [[-m mark_interval]] [[-p log_socket]] [[-a path]]
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The ssyyssllooggdd(1) utility reads and logs messages to the system console, log
+    files, other computers, and users as specified by its configuration file.
+
+    The options are as follows:
+
+    --dd
+        Run in debug mode.
+
+    --ff
+        Specify the path name of an alternate configuration file; the default
+        is //eettcc//ssyysslloogg..ccoonnff.
+
+    --mm
+        Select the number of minutes between "mark" messages; the default is
+        20 minutes.
+
+    --uu
+        Select the historical ``insecure'' mode, in which syslogd will
+        accept input from the UDP port.  Some software wants this, but
+        you can be subjected to a variety of attacks over the network,
+        including attackers remotely filling logs.  You may wish to use
+        this option if you have not updated all utilites that use syslog(3).
+
+    --pp _l_o_g___s_o_c_k_e_t
+        Specify the pathname of an alternate log socket to be used
+        instead; the default is _/_d_e_v_/_l_o_g.
+
+    --aa _p_a_t_h
+        Specify a location where ssyyssllooggdd should place an additional log
+        socket.  Up to about 20 additional logging sockets can be speci-
+        fied.  The primary use for this is to place additional log sock-
+        ets in _/_d_e_v_/_l_o_g of various chroot filespaces.
+
+    The ssyyssllooggdd(1) utility reads its configuration file when it starts up and
+    when it receives a hangup signal. For information on the format of the
+    configuration file, see _s_y_s_l_o_g_._c_o_n_f(5).
+
+    ssyyssllooggdd opens an Internet domain socket as specified in /etc/services.
+    Normally ssyyssllooggdd will only use this socket to send messages outwards, but
+    in ``insecure'' mode it will also read messages from this socket.
+    syslogd also opens and reads messages from the special FIFO /dev/log.
+
+    ssyyssllooggdd opens the above described socket whether or not it is running in
+    secure mode.  If ssyyssllooggdd is running in secure mode, all incoming data on
+    this socket is discarded.  The socket is required for sending forwarded
+    messages. Opening this socket prevents another application from taking
+    this socket and spoofing ssyyssllooggdd.
+
+    The ssyyssllooggdd(1) utility creates the file //vvaarr//rruunn//ssyysslloogg..ppiidd, and stores
+    its process identifier (ID) there. This can be used to kill or reconfigure
+    ssyyssllooggdd(1).
+
+    The message sent to ssyyssllooggdd(1) should consist of a single line. The
+    message can contain a priority code, which should be a preceding decimal
+    number in angle brackets; for example, <<55>>. This priority code should map
+    into the priorities defined in the include file <<ssyyss//ssyysslloogg..hh>>.
+
+  UUSSAAGGEE NNOOTTEE
+
+    In this version of Interix, ssyyssllooggdd is not started automatically when the
+    Interix subsystem starts. The ssyyssllooggdd can expose a number of known
+    security vulnerabilities, including susceptibility to spoofed messages and
+    denial-of-service attacks when the -u option is specified. For example,
+    when receiving messages in UDP packets, which can be quite large, an
+    unauthenticated attacker can flood the service with messages, filling
+    the partition containing the log file. It is recommended to avoid using
+    the -u option whenever possible.
+
+    If you need to enable this service, remove the comment characters from the
+    following lines in //eettcc//iinniitt..dd//ssyysslloogg and then start the service with the
+    command //eettcc//iinniitt..dd//ssyysslloogg ssttaarrtt, or restart the computer.
+
+    #   ${SYSLOGD}
+    #   [ $? = 0 ] && echo "syslogd started"
+
+  FFIILLEESS
+
+    //eettcc//ssyysslloogg..ccoonnff
+        The configuration file.
+
+    //vvaarr//rruunn//ssyysslloogg..ppiidd
+        The process ID of current ssyyssllooggdd(1).
+    //vvaarr//aaddmm//lloogg//*
+        The log files. These are typically the files ccoonnssoollee, ddaaeemmoonn, ffttpp,
+        llpprr, mmaaiill, mmeessssaaggeess, nneewwss, sseeccuurree, and uuuuccpp. The ssyyssllooggdd(1) utility
+        will not create these files, however; it will only append to them.
+        When setting up ssyyssllooggdd(1), you should create empty files by these
+        names (usually with ttoouucchh(1)):
+        cd /var/adm/log
+        touch console daemon ftp lpr mail messages news secure uucp
+
+  SSEEEE AALLSSOO
+
+    _l_o_g_g_e_r(1)
+
+    _s_y_s_l_o_g(3)
+
+    _s_y_s_l_o_g_._c_o_n_f(5)
+

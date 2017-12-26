@@ -1,0 +1,155 @@
+
+
+getutx(3G)                                             getutx(3G)
+
+SSyynnooppssiiss
+       cc [flag . . . ] file . . . -lgen [library] . . .
+
+       #include <utmpx.h>
+
+       struct utmpx *getutxent (void);
+
+       struct utmpx *getutxid (const struct utmpx *id);
+
+       struct utmpx *getutxline (const struct utmpx *line);
+
+       struct utmpx *pututxline (const struct utmpx *utmpx);
+
+       void setutxent (void);
+
+       void endutxent (void);
+
+       int utmpxname (const char *file);
+
+       void getutmp (struct utmpx *utmpx, struct utmp *utmp);
+
+       void getutmpx (struct utmp *utmp, struct utmpx *utmpx);
+
+       void updwtmp (char *wfile, struct utmp *utmp);
+
+       void updwtmpx (char *wfilex, struct utmpx *utmpx);
+
+DDeessccrriippttiioonn
+       getutxent,   getutxid,  getutxline,  and  pututxline  each
+       return a pointer to a utmpx structure.  (See
+
+       getutxent reads in the next entry from a utmpx-like  file.
+       If  the  file  is  not  already  open, it opens it.  If it
+       reaches the end of the file, it fails.
+
+       getutxid searches forward from the current  point  in  the
+       utmpx file until it finds an entry with a ut_type matching
+       id->ut_type if the type specified is  RUN_LVL,  BOOT_TIME,
+       OLD_TIME,  or  NEW_TIME.   If  the type specified in id is
+       INIT_PROCESS, LOGIN_PROCESS,  USER_PROCESS,  or  DEAD_PRO-
+       CESS,  then  getutxid returns a pointer to the first entry
+       whose type is one of these  four  and  whose  ut_id  field
+       matches  id->ut_id.  If the end of file is reached without
+       a match, it fails.
+
+       getutxline searches forward from the current point in  the
+       utmpx  file until it finds an entry of the type LOGIN_PRO-
+       CESS or USER_PROCESS  which  also  has  a  ut_line  string
+       matching  the line->ut_line string.  If the end of file is
+       reached without a match, it fails.
+
+       pututxline writes out the supplied  utmpx  structure  into
+       the  utmpx  file.   It uses getutxid to search forward for
+       the proper place if it finds that it is not already at the
+
+                                                                1
+
+getutx(3G)                                             getutx(3G)
+
+       proper  place.   It  is expected that normally the user of
+       pututxline will have searched for the proper  entry  using
+       one  of  the  getutx routines.  If so, pututxline will not
+       search.  If pututxline does not find a matching  slot  for
+       the  new  entry, it will add a new entry to the end of the
+       file.  It returns a pointer to the utmpx structure.
+
+       setutxent resets the input stream to the beginning of  the
+       file.   This  should  be done before each search for a new
+       entry if it is desired that the entire file be examined.
+
+       endutxent closes the currently open file.
+
+       utmpxname allows the user to change the name of  the  file
+       examined,  from  /var/adm/utmpx  to any other file.  It is
+       most  often  expected  that  this  other  file   will   be
+       /var/adm/wtmpx.  If the file does not exist, this will not
+       be apparent until the first attempt to reference the  file
+       is  made.   utmpxname  does  not  open  the file.  It just
+       closes the old file if it is currently open and saves  the
+       new  file  name.   The  new  file name must end with the x
+       character to allow the name of the corresponding utmp file
+       to  be  easily obtainable (otherwise an error code of 0 is
+       returned).
+
+       getutmp copies the information stored in the fields of the
+       utmpx  structure  to  the corresponding fields of the utmp
+       structure.  If the information in any field of utmpx  does
+       not fit in the corresponding utmp field, the data is trun-
+       cated.
+
+       getutmpx copies the information stored in  the  fields  of
+       the  utmp  structure  to  the  corresponding fields of the
+       utmpx structure.
+
+       updwtmp checks the existence of  wfile  and  its  parallel
+       file,  whose  name is obtained by appending an x to wfile.
+       If only one of them exists, the second one is created  and
+       initialized  to  reflect  the  state of the existing file.
+       utmp is written  to  wfile  and  the  corresponding  utmpx
+       structure  is  written  to  the parallel file.  If neither
+       file exists nothing will happen.
+
+       updwtmpx checks the existence of wfilex and  its  parallel
+       file,  whose  name  is  obtained by truncating the final x
+       from wfilex.  If only one of them exists, the  second  one
+       is  created  and  initialized  to reflect the state of the
+       existing file.  utmpx is written to wfilex, and the corre-
+       sponding  utmp  structure is written to the parallel file.
+       If neither file exists nothing will happen.
+
+   FFiilleess
+       /var/adm/utmp, /var/adm/utmpx
+       /var/adm/wtmp, /var/adm/wtmpx
+
+                                                                2
+
+getutx(3G)                                             getutx(3G)
+
+   EErrrroorrss
+       A null pointer is returned upon failure to  read,  whether
+       for permissions or having reached the end of file, or upon
+       failure to write.
+
+RReeffeerreenncceess
+NNoottiicceess
+       The most current entry is saved  in  a  static  structure.
+       Multiple accesses require that it be copied before further
+       accesses are made.  On each call  to  either  getutxid  or
+       getutxline,  the  routine  examines  the  static structure
+       before performing more I/O.  If the contents of the static
+       structure match what it is searching for, it looks no fur-
+       ther.  For this reason, to use getutxline  to  search  for
+       multiple occurrences it would be necessary to zero out the
+       static after each success, or getutxline would just return
+       the  same  structure  over  and  over again.  There is one
+       exception to the rule about emptying the structure  before
+       further reads are done.  The implicit read done by pututx-
+       line (if it finds that it is not already  at  the  correct
+       place  in  the  file)  will  not  hurt the contents of the
+       static structure returned by the getutxent,
+       getutxid, or getutxline routines, if  the  user  has  just
+       modified  those  contents  and  passed the pointer back to
+       pututxline.
+
+       These routines use buffered standard I/O  for  input,  but
+       pututxline  uses  an unbuffered write to avoid race condi-
+       tions between processes trying to  modify  the  utmpx  and
+       wtmpx files.
+
+                                                                3
+

@@ -1,0 +1,120 @@
+
+
+poll(2)                                                   poll(2)
+
+SSyynnooppssiiss
+       #include <stropts.h> #include <poll.h>
+
+       int poll(struct pollfd *fds, nfds_t nfds, int timeout);
+
+DDeessccrriippttiioonn
+       poll  provides  users  with  a  mechanism for multiplexing
+       input/output over a set of file descriptors that reference
+       open  files.   poll identifies those files on which a user
+       can send or receive messages, or on which  certain  events
+       have occurred.
+
+       fds  specifies the file descriptors to be examined and the
+       events of interest for each  file  descriptor.   It  is  a
+       pointer  to  an  array with one element for each open file
+       descriptor of interest.  The array's elements  are  pollfd
+       structures,  which  contain  the  following  members:  int
+       fd;   /* file descriptor */  short  events;  /*  requested
+       events */ short revents; /* returned events */
+
+       fd  specifies  an  open  file  descriptor  and  events and
+       revents are bitmasks constructed by an OR of any  combina-
+       tion  of  the  following event flags: Data other than high
+       priority data may be read without blocking.  For  STREAMS,
+       this  flag  is  set even if the message is of zero length.
+       Normal data (priority band = 0) may be read without block-
+       ing.  For STREAMS, this flag is set even if the message is
+       of zero length.  Data from a non-zero priority band may be
+       read  without  blocking For STREAMS, this flag is set even
+       if the message is of zero length.  High priority data  may
+       be  received  without blocking.  For STREAMS, this flag is
+       set even if the message is of zero  length.   Normal  data
+       may  be  written  without  blocking.  The same as POLLOUT.
+       Priority data (priority band > 0) may  be  written.   This
+       event  only  examines  bands  that have been written to at
+       least once.  An  error  has  occurred  on  the  device  or
+       stream.   This  flag is only valid in the revents bitmask;
+       it is not used in the events field.  A hangup has occurred
+       on the stream.  This event and POLLOUT are mutually exclu-
+       sive; a stream can never  be  writable  if  a  hangup  has
+       occurred.   However,  this  event  and POLLIN, POLLRDNORM,
+       POLLRDBAND, or POLLPRI are not mutually  exclusive.   This
+       flag  is only valid in the revents bitmask; it is not used
+       in the events field.  The  specified  fd  value  does  not
+       belong  to  an  open file.  This flag is only valid in the
+       revents field; it is not used in the events field.
+
+       For each element of the array  pointed  to  by  fds,  poll
+       examines the given file descriptor for the event(s) speci-
+       fied in events.  The number  of  file  descriptors  to  be
+       examined is specified by nfds.
+
+       If  the  value fd is less than zero, events is ignored and
+       revents is set to 0 in that entry on return from poll .
+
+                                                                1
+
+poll(2)                                                   poll(2)
+
+       The results of the poll query are stored  in  the  revents
+       field  in  the  pollfd  structure.   Bits  are  set in the
+       revents bitmask to indicate which of the requested  events
+       are  true.   If  none are true, none of the specified bits
+       are set in revents when the poll call returns.  The  event
+       flags  POLLHUP,  POLLERR,  and  POLLNVAL are always set in
+       revents if the conditions they  indicate  are  true;  this
+       occurs even though these flags were not present in events.
+
+       If none  of  the  defined  events  have  occurred  on  any
+       selected file descriptor, poll waits at least timeout mil-
+       liseconds for an event to occur on  any  of  the  selected
+       file  descriptors.  On a computer where millisecond timing
+       accuracy is not available, timeout is rounded  up  to  the
+       nearest  legal  value  available  on  that system.  If the
+       value timeout is 0,  poll  returns  immediately.   If  the
+       value  of  timeout  is INFTIM (or -1), poll blocks until a
+       requested event occurs or until the call  is  interrupted.
+       poll is not affected by the O_NDELAY and O_NONBLOCK flags.
+
+       A file descriptor for a socket that is listening for  con-
+       nections will indicate that is ready for reading once con-
+       nections are available.  A file descriptor  for  a  socket
+       that is connecting asynchronously will indicate that it is
+       ready for writing once a connection has been  established.
+
+   RReettuurrnn vvaalluueess
+       On success, poll returns a non-negative value.  A positive
+       value indicates the total number of file descriptors  that
+       has been selected (that is, file descriptors for which the
+       revents field is non-zero).  A value of 0  indicates  that
+       the  call  timed  out  and  no  file descriptors have been
+       selected.
+
+       On failure, poll returns -1 and sets errno to identify the
+       error.
+
+   EErrrroorrss
+       In the following conditions, poll fails and sets errno to:
+       Allocation of internal data  structures  failed,  but  the
+       request may be attempted again.  Some argument points out-
+       side the allocated address space.   A  signal  was  caught
+       during the poll system call.  The argument nfds is greater
+       than the maximum number of open files allowed; see
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Open file descriptors are a process resource and available
+       to  any  sibling  thread; if used concurrently, actions by
+       one thread can interfere with those of a sibling.
+
+       While one thread is blocked, siblings might still be  exe-
+       cuting.
+
+                                                                2
+

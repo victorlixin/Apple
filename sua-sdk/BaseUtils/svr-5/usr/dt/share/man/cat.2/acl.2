@@ -1,0 +1,104 @@
+
+
+acl(2)                                                     acl(2)
+
+SSyynnooppssiiss
+       #include <sys/types.h> #include <acl.h>
+
+       int  acl(char  *pathp,  int  cmd, int nentries, struct acl
+       *aclbufp);
+
+DDeessccrriippttiioonn
+       The acl system call is used to  manipulate  ACLs  on  file
+       system  objects.   This call is valid only on sfs and vxfs
+       file system types.  points to a pathname  naming  a  file.
+       specifies  how many ACL entries are pointed to by aclbufp.
+       is a pointer to the first element of an  array  of  struct
+       acl.   This  type  is  defined  in  sys/acl.h  as follows:
+            struct acl  {             int      a_type;         /*
+       entry  type */           uid_t   a_id;          /* user or
+       group ID */           ushort  a_perm;        /* entry per-
+       missions */      };
+
+       The  values  for  a_type are: Permissions for the owner of
+       the object.  Permissions for  additional  users.   Permis-
+       sions for members of the owning group of the object.  Per-
+       missions for members of additional groups.   Maximum  per-
+       missions granted to the file group class.  Permissions for
+       other users.  Default permissions for  the  object  owner.
+       Default permissions for additional users.  Default permis-
+       sions for members of  the  owning  group  of  the  object.
+       Default  permissions  for  members  of  additional  groups
+       Default maximum permissions  granted  to  the  file  group
+       class.   Default permissions for other users.  The follow-
+       ing values for cmd are available:  nentries  ACL  entries,
+       specified in buffer aclbufp, are stored in the file's ACL.
+       Any existing ACL on the file is replaced by the  new  ACL.
+       This  value for cmd can only be executed by a process that
+       has an effective user ID equal to the owner of  the  file,
+       or  by a process with the P_OWNER privilege.  All directo-
+       ries in the pathname must be searchable.   Buffer  aclbufp
+       is filled with the file's ACL entries.  Discretionary read
+       access to the file is not required, but all directories in
+       the pathname must be searchable.  The number of entries in
+       the file's ACL is returned.  Discretionary read access  to
+       the file is not required, but all directories in the path-
+       name must be searchable.
+
+       For command ACL_SET, the acl call will succeed if  all  of
+       the following are true: There is exactly one entry each of
+       type USER_OBJ, GROUP_OBJ, CLASS_OBJ, and OTHER_OBJ.  There
+       is   at   most   one  entry  each  of  type  DEF_USER_OBJ,
+       DEF_GROUP_OBJ, DEF_CLASS_OBJ, and DEF_OTHER_OBJ.   Entries
+       of  type  USER, GROUP, DEF_USER, or DEF_GROUP may not con-
+       tain duplicate entries.  A duplicate entry is one  of  the
+       same  type containing the same numeric ID.  If an ACL con-
+       tains no entries of type  USER  and  no  entries  of  type
+       GROUP,  then  the  entries of type GROUP_OBJ and CLASS_OBJ
+       must have the same permissions.  If  an  ACL  contains  no
+
+                                                                1
+
+acl(2)                                                     acl(2)
+
+       entries of type DEF_USER and no entries of type DEF_GROUP,
+       and an entry of type DEF_GROUP_OBJ is specified,  then  an
+       entry of type DEF_CLASS_OBJ must also be specified and the
+       two entries must have the same permissions.
+
+   RReettuurrnn vvaalluueess
+       On success, acl returns the number of ACL entries for  cmd
+       ACL_CNT  and  ACL_GET, and 0 for cmd ACL_SET.  On failure,
+       acl returns -1 and sets errno to identify the error.
+
+   EErrrroorrss
+       In the following conditions, acl fails and sets errno  to:
+       The  caller  does  not  have  access to a component of the
+       pathname The caller does not have mandatory read access to
+       the  file  for  ACL_GET  and  ACL_CNT,  or mandatory write
+       access to the file  for  ACL_SET.   cmd  is  not  ACL_GET,
+       ACL_SET,  or ACL_CNT.  cmd is ACL_SET and nentries is less
+       than the number of mandatory ACL entries (4). aclmax.  cmd
+       is  ACL_SET  and the ACL specified in aclbufp is not valid
+       [see A disk  I/O  error  has  occurred  while  storing  or
+       retrieving the ACL.  cmd is ACL_SET and the effective user
+       ID of the caller does not match the owner of the file, and
+       the  caller does not have the P_OWNER privilege to perform
+       the operation.  A component of the path  does  not  exist.
+       cmd  is  ACL_GET  and  nentries is less than the number of
+       entries in the file's ACL.  cmd is ACL_SET  and  there  is
+       insufficient  space  to store the ACL.  cmd is ACL_SET and
+       nentries is greater than the tunable parameter aclmax.   A
+       component  of  the path specified by pathp is not a direc-
+       tory.  cmd is ACL_SET and an attempt  is  made  to  set  a
+       default ACL on a file type other than a directory.  cmd is
+       ACL_SET, the file specified by pathp  resides  on  a  file
+       system  that does not support ACLs, and additional entries
+       were specified in the ACL.  cmd is ACL_SET  and  the  file
+       specified  by  pathp  resides  on  a  file  system that is
+       mounted read-only.  aclbufp points to an illegal  address.
+
+RReeffeerreenncceess
+
+                                                                2
+

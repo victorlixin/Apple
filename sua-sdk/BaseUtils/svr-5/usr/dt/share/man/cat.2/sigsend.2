@@ -1,0 +1,115 @@
+
+
+sigsend(2)                                             sigsend(2)
+
+SSyynnooppssiiss
+       #include   <sys/types.h>   #include   <signal.h>  #include
+       <sys/procset.h>
+
+       int sigsend(idtype_t idtype, id_t id, int sig);
+
+       int sigsendset(const procset_t *psp, int sig);
+
+DDeessccrriippttiioonn
+       sigsend sends a signal to the process  or  group  of  pro-
+       cesses  specified by id and idtype.  The signal to be sent
+       is specified by sig and is either zero or one of the  val-
+       ues  listed  in  If  sig  is zero (the null signal), error
+       checking is performed but  no  signal  is  actually  sent.
+       This  value  can  be  used to check the validity of id and
+       idtype.
+
+       In order to send the signal to the target  process  (pid),
+       the sending process must have permission to do so, subject
+       to the  following  ownership  restrictions:  The  real  or
+       effective  user  ID  of the sending process must match the
+       real or saved [from exec(2)] user ID of the receiving pro-
+       cess,  unless  the  sending process has the P_OWNER privi-
+       lege, or sig is SIGCONT and the sending  process  has  the
+       same session ID as the receiving process.
+
+       If  idtype  is P_PID, sig is sent to the process with pro-
+       cess ID id.
+
+       If idtype is P_PGID, sig is sent to any process with  pro-
+       cess group ID id.
+
+       If  idtype  is P_SID, sig is sent to any process with ses-
+       sion ID id.
+
+       If idtype is P_UID, sig is sent to any process with effec-
+       tive user ID id.
+
+       If idtype is P_GID, sig is sent to any process with effec-
+       tive group ID id.
+
+       If idtype is P_CID, sig is sent to any process with sched-
+       uler class ID id [see
+
+       If idtype is P_ALL, sig is sent to all processes and id is
+       ignored.
+
+       If id is P_MYID, the value of id is taken from the calling
+       process.
+
+       The  process  with  a  process ID of 0 is always excluded.
+       The process with a process ID  of  1  is  excluded  unless
+       idtype is equal to P_PID.
+
+                                                                1
+
+sigsend(2)                                             sigsend(2)
+
+       sigsendset  provides  an  alternate  interface for sending
+       signals to sets of processes.  This function sends signals
+       to  the  set  of  processes  specified  by  psp.  psp is a
+       pointer to a  structure  of  type  procset_t,  defined  in
+       sys/procset.h,   which  includes  the  following  members:
+       idop_t         p_op;    idtype_t        p_lidtype;    id_t
+       p_lid; idtype_t     p_ridtype; id_t         p_rid;
+
+       p_lidtype  and  p_lid  specify  the  ID type and ID of one
+       (``left'') set of processes; p_ridtype and  p_rid  specify
+       the  ID  type  and  ID of a second (``right'') set of pro-
+       cesses.  ID types and IDs are specified just  as  for  the
+       idtype  and  id  arguments to sigsend.  p_op specifies the
+       operation to be performed on the two sets of processes  to
+       get  the  set of processes the system call is to apply to.
+       The valid values for p_op and the processes  they  specify
+       are:  set  difference:  processes  in  left set and not in
+       right set set intersection: processes  in  both  left  and
+       right  sets  set  union: processes in either left or right
+       set or both set exclusive-or: processes in left  or  right
+       set but not in both
+
+   RReettuurrnn vvaalluueess
+       On  success, sigsend and sigsendset return 0.  On failure,
+       sigsend and sigsendset return -1 and set errno to identify
+       the error.
+
+   EErrrroorrss
+       In  the  following conditions, sigsend and sigsendset fail
+       and set errno to:  sig  is  not  a  valid  signal  number.
+       idtype  is  not  a  valid  idtype  field.  sig is SIGKILL,
+       idtype is P_PID and id is 1 (proc1).  The calling  process
+       does not have the P_OWNER privilege, the real or effective
+       user ID of the sending process does not match the real  or
+       effective  user ID of the receiving process, and the call-
+       ing process is not  sending  SIGCONT  to  a  process  that
+       shares  the  same session.  No process can be found corre-
+       sponding to that specified by id and idtype.
+
+       In addition, sigsendset fails if: psp points  outside  the
+       process's allocated address space.
+
+RReeffeerreenncceess
+NNoottiicceess
+   CCoonnssiiddeerraattiioonnss ffoorr tthhrreeaaddss pprrooggrraammmmiinngg
+       Signals  can  be posted from one process to the designated
+       processes via the sigsend system call but not to  specific
+       threads  within those processes.  See for further details.
+       See and for details  of  intra-process  signaling  between
+       threads.
+
+                                                                2
+

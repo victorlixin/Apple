@@ -1,0 +1,141 @@
+
+
+inittab(4)                                             inittab(4)
+
+DDeessccrriippttiioonn
+       The  file  /etc/inittab  controls  process  dispatching by
+       init.  The processes most typically dispatched by init are
+       daemons.
+
+       The  inittab file is composed of entries that are position
+       dependent    and    have     the     following     format:
+       id:rstate:action:process
+
+       Each entry is delimited by a newline, however, a backslash
+       (\) preceding a newline indicates a  continuation  of  the
+       entry.   Up  to  512  characters  per entry are permitted.
+       Comments may be inserted in the process  field  using  the
+       convention  for  comments described in There are no limits
+       (other than maximum entry size) imposed on the  number  of
+       entries  in  the inittab file.  The entry fields are: This
+       is one to four characters used  to  uniquely  identify  an
+       entry.   This defines the run level in which this entry is
+       to be processed.  Run-levels effectively correspond  to  a
+       configuration  of  processes in the system.  That is, each
+       process spawned by init is assigned a  run  level  or  run
+       levels  in  which  it is allowed to exist.  The run levels
+       are represented by a number ranging from 0 through 6.   As
+       an  example,  if  the system is in run level 1, only those
+       entries having a 1 in  the  rstate  field  are  processed.
+       When init is requested to change run levels, all processes
+       that do not have an entry in the rstate field for the tar-
+       get  run  level  are  sent  the warning signal SIGTERM and
+       allowed a 5-second grace period before being forcibly ter-
+       minated  by the kill signal SIGKILL.  The rstate field can
+       define multiple run levels for a process by selecting more
+       than  one  run  level in any combination from 0 through 6.
+       If no run level is specified, then the process is  assumed
+       to  be  valid  at  all  run levels 0 through 6.  There are
+       three other values, a, b and c, which can  appear  in  the
+       rstate  field,  even  though they are not true run levels.
+       Entries which have these characters in  the  rstate  field
+       are  processed  only  when  an  init  or  telinit  process
+       requests them to be run (regardless  of  the  current  run
+       level  of the system).  See They differ from run levels in
+       that init can never enter run level a, b or  c.   Also,  a
+       request  for  the execution of any of these processes does
+       not change the current run level.  Furthermore, a  process
+       started  by  an  a, b or c command is not killed when init
+       changes levels.  They are killed only  if  their  line  in
+       inittab  is  marked off in the action field, their line is
+       deleted entirely from inittab, or init goes  into  single-
+       user  state.   Key  words  in  this field tell init how to
+       treat the process specified in  the  process  field.   The
+       actions  recognized by init are as follows: If the process
+       does not exist, then start the process; do  not  wait  for
+       its  termination (continue scanning the inittab file), and
+       when the process dies, restart the process.  If  the  pro-
+       cess  currently  exists,  do nothing and continue scanning
+
+                                                                1
+
+inittab(4)                                             inittab(4)
+
+       the inittab file.  When init enters  the  run  level  that
+       matches the entry's rstate, start the process and wait for
+       its termination.  All subsequent reads of the inittab file
+       while  init  is in the same run level cause init to ignore
+       this entry.  When init enters a run level that matches the
+       entry's  rstate,  start  the  process, do not wait for its
+       termination.  When it dies, do not  restart  the  process.
+       If  init  enters  a new run level and the process is still
+       running from a previous run level change, the  program  is
+       not  restarted.   The  entry  is to be processed the first
+       time init goes from single-user to multi-user state  after
+       the  system  is  booted.  (If initdefault is set to 2, the
+       process runs right after the boot.)  init starts the  pro-
+       cess, does not wait for its termination and, when it dies,
+       does not restart the process.  The entry  is  to  be  pro-
+       cessed the first time init goes from single-user to multi-
+       user state after the system is booted.  (If initdefault is
+       set  to  2,  the process runs right after the boot.)  init
+       starts the process, waits for its termination and, when it
+       dies,  does  not restart the process.  Execute the process
+       associated with this entry only when init receives a power
+       fail  signal,  SIGPWR  [see Execute the process associated
+       with this entry only when init receives a power fail  sig-
+       nal,  SIGPWR, and wait until it terminates before continu-
+       ing any processing of inittab.  If the process  associated
+       with  this  entry  is  currently running, send the warning
+       signal SIGTERM and wait 5 seconds before  forcibly  termi-
+       nating  the  process with the kill signal SIGKILL.  If the
+       process is nonexistent, ignore the entry.   This  instruc-
+       tion  is  really  a synonym for the respawn action.  It is
+       functionally identical to respawn but is given a different
+       keyword  in order to divorce its association with run lev-
+       els.  This instruction is used only with the  a,  b  or  c
+       values  described in the rstate field.  An entry with this
+       action is scanned only when  init  is  initially  invoked.
+       init uses this entry, if it exists, to determine which run
+       level to enter initially.  It  does  this  by  taking  the
+       highest  run level specified in the rstate field and using
+       that as its initial state.  If the rstate field is  empty,
+       this  is  interpreted as 0123456 and init therefore enters
+       run level 6.  This will cause the system to loop, that is,
+       it will go to firmware and reboot continuously.  Addition-
+       ally, if init does not find an initdefault entry in  init-
+       tab,  it  requests  an  initial run level from the user at
+       reboot time.  Entries with this action  are  scanned  only
+       when  init  is  initially  invoked.   Among  other things,
+       sysinit entries may be used to initialize devices on which
+       init  might  try  to  ask  the  run level question.  These
+       entries are executed and  waited  for  before  continuing.
+       This  is  a  command  to  be executed.  The entire process
+       field is prefixed with exec and passed to a forked  sh  as
+       sh  -c 'exec command'.  For this reason, any legal sh syn-
+       tax can appear in the process field.
+
+                                                                2
+
+inittab(4)                                             inittab(4)
+
+NNoottiicceess
+       The wsinit command is required to  initialize  the  system
+       console.   Do not remove this file, attempt to run it from
+       the command line, or remove  the  line  invoking  it  from
+       /etc/inittab or /etc/conf/init.d/kernel.
+
+       Application   code   should  not  attempt  to  modify  the
+       /etc/inittab file during a  run-level  change,  since  the
+       etc/init program ignores inittab changes then.  In partic-
+       ular, modifying the /etc/inittab file while the system  is
+       shutting  down  will result in minor root file system dam-
+       age.
+
+FFiilleess
+       /sbin/wsinit
+
+RReeffeerreenncceess
+
+                                                                3
+

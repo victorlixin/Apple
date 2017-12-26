@@ -1,0 +1,104 @@
+
+
+t_rcv(3xti)                                           t_rcv(3xti)
+
+SSyynnooppssiiss
+       cc [options] file -lnsl #include <xti.h>
+
+       int  t_rcv(int  fd,  char  *buf,  unsigned int nbytes, int
+       *flags);
+
+DDeessccrriippttiioonn
+       This function is a TLI/XTI connection-mode  data  transfer
+       routine  which retrieves normal or expedited data received
+       over a connection.  The messages  sent  to  the  transport
+       user may be 0-length.
+
+       By  default,  t_rcv  operates in synchronous mode and will
+       wait for data to arrive if none  is  currently  available.
+       However, if O_NONBLOCK is set (via t_open or fcntl), t_rcv
+       will execute in asynchronous mode and will fail if no data
+       is available.  (See TNODATA below.)
+
+       On  return  from the call, if T_MORE is set in flags, this
+       indicates that there is more data and the  current  trans-
+       port  service data unit (TSDU) or expedited transport ser-
+       vice data unit (ETSDU) must be received in multiple  t_rcv
+       calls.
+
+       Each t_rcv with the T_MORE flag set indicates that another
+       t_rcv must follow to get more data for the  current  TSDU.
+       The end of the TSDU is identified by the return of a t_rcv
+       call with the T_MORE flag not set.
+
+       If the transport provider does not support the concept  of
+       a  TSDU  as  indicated in the info argument on return from
+       t_open or t_getinfo, the T_MORE flag is not meaningful and
+       should be ignored.
+
+       On  return  from  the call, if T_EXPEDITED is set in flags
+       the data returned is expedited data.   If  the  number  of
+       bytes  of  expedited  data  exceeds nbytes, t_rcv will set
+       T_EXPEDITED and T_MORE on return from  the  initial  call.
+       Subsequent calls to retrieve the remaining ETSDU will have
+       T_EXPEDITED set on return.  The end of the ETSDU is  iden-
+       tified  by the return of a t_rcv call with the T_MORE flag
+       not set.
+
+       If expedited data arrives after part of a  TSDU  has  been
+       retrieved,  receipt  of  the remainder of the TSDU will be
+       suspended until the ETSDU has been processed.  Only  after
+       the  full  ETSDU  has been retrieved (T_MORE not set) will
+       the remainder of the TSDU be available to the user.
+
+   PPaarraammeetteerrss
+       the file descriptor for  the  transport  endpoint  through
+       which  data  will  arrive.   points  to the receive buffer
+       where user data will be placed.  specifies the size of the
+       receive buffer.  specifies optional flags on return.
+
+                                                                1
+
+t_rcv(3xti)                                           t_rcv(3xti)
+
+   SSttaattee ttrraannssiittiioonnss
+       On  entry,  T_DATAXFER or T_OUTREL; unchanged (successful)
+       on exit.
+
+FFiilleess
+       X/Open Transport Interface Library (shared object) Network
+       Services Library (shared object)
+
+UUssaaggee
+       t_rcv  is  applicable  only  for connection-mode transport
+       services.
+
+       In synchronous mode, t_look may alternatively be  used  to
+       notify  the  transport  user that normal or expedited data
+       has been received or that flow control  restrictions  have
+       been  lifted.  Additional functionality is provided by the
+       Event Management Interface.
+
+RReettuurrnn vvaalluueess
+       On successful completion,  t_rcv  returns  the  number  of
+       bytes  received.  On failure, it returns -1 and t_errno is
+       set to indicate the error.
+
+   EErrrroorrss
+       On failure, t_errno may be set to one  of  the  following:
+       The  specified  file descriptor does not refer to a trans-
+       port endpoint.  O_NONBLOCK was set, but no  data  is  cur-
+       rently  available  from  the transport provider.  An asyn-
+       chronous event has occurred on this transport endpoint and
+       requires  immediate  attention.  This function is not sup-
+       ported by the underlying  transport  provider.   A  system
+       error has occurred during execution of this function.  The
+       function was issued in the wrong sequence on the transport
+       endpoint  referenced  by  fd.  A communication problem has
+       been detected with the transport provider and there is  no
+       other value of t_errno to describe the error condition.
+
+RReeffeerreenncceess
+
+                                                                2
+

@@ -1,0 +1,451 @@
+
+
+cc(1)                                                       cc(1)
+
+SSyynnooppssiiss
+       cc [options] file . . .
+
+DDeessccrriippttiioonn
+       The  cc command is the interface to the C compilation sys-
+       tem.  The compilation system  consists  of  the  following
+       conceptual  phases:  preprocessing, compiling, optimizing,
+       basic block profiling, assembling, and  linking.   The  cc
+       command  examines  its  options and filename suffixes, and
+       then executes the proper phases with  appropriate  options
+       and arguments.
+
+       The cc command recognizes the following filename suffixes:
+       A file that contains unprocessed C source; all phases  are
+       applicable.   A  file that contains preprocessed C source;
+       all phases except for  preprocessing  are  applicable.   A
+       file  that  contains  assembly  language  source; only the
+       assembling and linking phases are applicable.  A file that
+       contains input applicable only to the linking phase.  This
+       category commonly  includes  object  files  (.o),  archive
+       libraries (.a), and shared object libraries (.so).
+
+       If  no options are present, the cc command sends all files
+       through those phases (as appropriate to their suffixes) as
+       are  necessary  to  combine them into a dynamically linked
+       executable with the name a.out in the  current  directory.
+       If an intermediate result is requested instead, it is sim-
+       ilarly placed in the current directory,  with  a  filename
+       derived  by  replacing  the  incoming suffix with a suffix
+       appropriate to the  resultant  file.   If  the  assembling
+       phase  occurs,  the cc command places the object file (.o)
+       in the current directory, but this file will be removed if
+       a  single source file is being compiled through to an exe-
+       cutable.  All other intermediate files  are  placed  in  a
+       temporary directory.  (The choice of directory can be con-
+       trolled with the environment variable TMPDIR.)
+
+       An exception to the filename suffix rule is that any  file
+       name,  regardless  of suffix, will be accepted with the -E
+       option.  This allows the C preprocessor to be invoked as a
+       standalone tool for use with non-C source files.
+
+       The  following options are applicable to all phases.  Uses
+       str as the name of the output file instead of the  default
+       name.   With no options this renames the a.out executable.
+       With -c this renames the generated .o object  file.   With
+       -S  this  renames the generated .s assembly file.  With -P
+       this renames the generated  .i  preprocessed  source  file
+       file.  The -o option has no effect in conjunction with the
+       -E option.  Controls the  inclusion  of  compilation  tool
+       identification information in the output.  If str is ``y''
+       (the default), then the information will  be  present;  if
+       str is ``n'', it will not.  Causes the cc command and each
+       invoked tool to print its  version  information,  one  per
+
+                                                                1
+
+cc(1)                                                       cc(1)
+
+       line, on the standard error output.  Hands the argument(s)
+       specified by the comma-separated list (in  order)  to  the
+       single  compilation  phase named by phase.  An argument in
+       list can include a comma by escaping it by a preceding  \.
+       If more than one conceptual phase is implemented by a sin-
+       gle tool, all the associated argument lists are passed  to
+       the tool.  The phase names are the following: preprocessor
+       compiler optimizer basic block profiler assembler linker
+
+       Relative to the regular options and  arguments  passed  to
+       the compilation phase, the location of the arguments spec-
+       ified by list is unspecified and may change.  Controls the
+       degree  of  conformance  to  the ANSI and ISO C standards.
+       The option argument str can be one of the following: Spec-
+       ifies  standards  conformance  except  that  some required
+       warnings are omitted and the name  space  is  expanded  to
+       include  names  that  are  not specified by the standards.
+       All C constructions behave as specified in the  standards.
+       All implemented language and library extensions beyond the
+       standards are also available.  This is the default.   Like
+       a,  except  that  the keywords inline and restrict are not
+       recognized as keywords.  Specifies strict  conformance  to
+       ISO/IEC  9899:1990  (C89).  As such, -Xc will cause inline
+       and restrict not to be taken as keywords (like  -Xb),  and
+       will  issue  one-time use warnings at the first occurrence
+       of pure syntactic extensions.  Examples of these are  com-
+       pound  literals, intermixed declarations and statements in
+       a block, and flexible array  structure  members.   Because
+       the name space of the language and headers is reduced from
+       that of -Xa, certain extensions (such as the asm  keyword)
+       and  some  commonly  expected header file declarations are
+       not available.   The  latter  may  be  helped  by  use  of
+       -D_POSIX_SOURCE  or  -D_XOPEN_SOURCE.  Specifies standards
+       conformance except where the semantics differ from ``clas-
+       sic''  C.   (See  Kernighan & Ritchie, First Edition.)  In
+       addition, warnings are issued  about  preprocessing  phase
+       semantic  changes  such  as new escape sequences (like \x)
+       and any trigraph replacements (like ??!).  Certain  poten-
+       tial  optimizations  available  in  the other -X modes are
+       also disabled.
+
+       In all -X modes,  the  compiling  phase  will  warn  about
+       expressions in which the modified promotion rules for nar-
+       rower unsigned values may cause an otherwise hidden behav-
+       ior  change.   Uses  the directory dir to find the item(s)
+       named by str.  The option argument str is one or  more  of
+       the  following:  Causes the phase (spelled the same as for
+       -W) to be found in the directory dir.  If  more  than  one
+       conceptual  phase is implemented by a single tool and dif-
+       fering directories are specified for  the  phases,  it  is
+       unspecified  which  directory is used.  Changes the direc-
+       tory searched last for preprocessing phase include  files.
+       Changes  the  linking phase default library search path to
+       be the colon-separated list of one  or  more  directories,
+
+                                                                2
+
+cc(1)                                                       cc(1)
+
+       dir.   (More  directories can be added to the front of the
+       path due to other  options.)   Changes  the  directory  in
+       which  to find the implementation's start-up object files.
+
+       In addition to the ability to  specify  the  directory  in
+       which  to  find  the various compilation phases, if the cc
+       command is invoked as prefixcc, then  each  tool  executed
+       will  be similarly prefixed, as will the filenames for the
+       start-up  object  files.   For  example,  if  the  command
+       ./abccc  is  invoked  with  -Ya,../xyz, then the assembler
+       would be expected to have the pathname ../xyz/abcas.
+
+       The following options are applicable only to  the  prepro-
+       cessing  phase.  During this phase, the macros _ _STDC_ _,
+       _ _USLC_ _ and _ _SCO_VERSION_ _ are always predefined.  _
+       _USLC_ _ always has a positive integer value (which signi-
+       fies that a USL C compilation system  is  being  used),  _
+       _STDC_VERSION_ _ has the value 199409L, and _ _STDC_ _ has
+       the value 1 only for -Xc, and the value  0  otherwise.   _
+       _SCO_VERSION_  _   has  a  constructed  long  int value of
+       VvvYYYYMML, where V is the major version of the  compiler,
+       vv  the  minor  version,  YYYY  the  year  of the compiler
+       release, and MM the month of the compiler release.  Causes
+       name  to  be  asserted  as a predicate associated with the
+       optional parenthesized tokens as if by  a  #assert  direc-
+       tive.  Causes all predefined macros (other than those that
+       begin with ``_ _'') to be undefined and all  preassertions
+       to be unasserted.
+
+       The  affected  predefined macros and preassertions are the
+       following:      #define i386 1       /* not present if -Xc
+       */       #define  unix  1        /*  not present if -Xc */
+            #assert    system(unix)         #assert     cpu(i386)
+            #assert   machine(i386)        #assert   model(ilp32)
+       Causes all comments other than on directive  lines  to  be
+       retained  in  the output of the preprocessor phase; other-
+       wise, they are removed.  Causes name to be  defined  as  a
+       macro  to be replaced by tokens, or by ``1'' if =tokens is
+       not present, as if by a #define directive.  Suppresses all
+       phases  but  preprocessing,  and  sends  the result to the
+       standard output.  The result will contain lines similar to
+       preprocessing  directives and can be used for a subsequent
+       compiling phase.  The name of the file being  preprocessed
+       may  have  any  suffix.  Causes the pathnames of all files
+       included to be printed, one  per  line,  on  the  standard
+       error  output.   Causes  dir  to  be searched for included
+       files whose names do not begin with / before searching the
+       usual   directories.   The  directories  for  multiple  -I
+       options are searched in the order  specified.   Suppresses
+       all  phases  but preprocessing, and places the result in a
+       .i-suffixed file.  Unlike -E, the result will  contain  no
+       directives.   Compiling this resultant .i file produces an
+       executable whose line numbers match the .i file instead of
+       the .c file.  Causes name to be undefined as a macro as if
+
+                                                                3
+
+cc(1)                                                       cc(1)
+
+       by a #undef directive, even if name is a predefined  macro
+       (including  those  that  begin with ``__'') or is also the
+       subject of a -D option.
+
+       The following options are applicable to all phases  except
+       the  preprocessing  phase.  All options affecting only the
+       linking phase are also handed to  the  command.   Controls
+       the linking phase library name search mechanism for subse-
+       quent -l options.  The option argument str can  be  either
+       dynamic (the initial setting) or static.  The order of the
+       -B, -L, and -l options is significant; see the -l  option.
+       Suppresses  the  linking  phase.  No produced object files
+       (.o) are removed.  Determines the mode of  the  executable
+       result  of  the  linking  phase.   If  str  is  ``y'' (the
+       default), a dynamically linked executable is  to  be  pro-
+       duced;  if  str  is  ``n'',  the result will be statically
+       linked.  Causes the linking  phase  to  produce  a  shared
+       object instead of an executable.  Causes the generation of
+       information that  facilitates  symbolic  debugging.   This
+       option  clashes  with -O but has higher precedence: debug-
+       ging information  is  generated  if  both  are  specified.
+       Causes  the  linking phase to omit inclusion of the crti.o
+       and crtn.o startup code  object  files  when  producing  a
+       shared object.  This is useful when you are supplying your
+       own _init  and  _fini  sections  for  the  shared  object.
+       Enables  certain  variations  in code generation, or opti-
+       mization, or linking, or a combination thereof.  For those
+       items  in the following list presented in groups of two or
+       more, the first item is the default choice,  and  at  most
+       one  of  each  such  group  will be effective.  The option
+       argument list is a comma-separated list of one or more  of
+       the  following  items: Changes code generation to be posi-
+       tion-independent.  Specifies whether the program will  use
+       the   multi-threading   facilities.    In  threaded  mode,
+       arranges for the  appropriate  preprocessor  flags  to  be
+       turned  on  and  for the threading library to be linked in
+       the correct order.  -lthread should not be  used.   Causes
+       the same effect as -Kthread, except that libthreadT (trac-
+       ing) is linked.  If -Kthread and -KthreadT  are  specified
+       on  the command line, -KthreadT will be used and a warning
+       will be issued.  -lthreadT should not be used.  Causes the
+       same  effect  as  -Kthread,  except that in addition POSIX
+       threads semantics are  enabled  at  runtime  for  the  and
+       calls.  -lpthread  is an acceptable synonym for -Kpthread.
+       Specifies that the compiler should allow the  character  $
+       to  be used in identifiers.  Since this usage is an exten-
+       sion to the ANSI/ISO C Standard, use of this  option  with
+       -Xc will result in a warning diagnostic on the first usage
+       of $ in an identifier.  This option  may  be  needed  when
+       porting  code  from other systems.  Causes code generation
+       specifically tuned to the selected  Intel  microprocessor.
+       blended (the default) balances the code generation choices
+       to work well on all these processors.   pentium_pro  opti-
+       mizes  for  all Intel Pentium Pro-based processors such as
+
+                                                                4
+
+cc(1)                                                       cc(1)
+
+       the Pentium II.  Used only in conjunction with  -O.   Con-
+       trols  whether  the generated floating point code strictly
+       conforms to the IEEE floating point and C standards.  ieee
+       specifies   strict   conformance.   no_ieee  permits  more
+       aggressive floating point optimization.  It  assumes  that
+       the  application  does not change rounding modes, does not
+       check for exception conditions, and does not produce  NaNs
+       or  infinities.   In  this mode, errno might not be set as
+       often and exceptions may not be raised.  Specifies whether
+       the compiler generates calls to inline or not. The default
+       is to inline, unless -Xc is specified, in which  case  the
+       default  is to not inline.  Specifies the stack frame lay-
+       out strategy the compiler is permitted to use.  frame uses
+       the  %ebp  register  as  a  dedicated stack frame pointer.
+       fixed_frame and no_frame represent  alternate  stack  lay-
+       outs:  both  permit %ebp to be allocated as a general pur-
+       pose register, which usually produces faster code, but  in
+       rare  instances  may cause debugging stack traces to fail.
+       Between the two, fixed_frame  saves  instructions  at  the
+       expense  of  stack space, while no_frame does the reverse.
+       fixed_frame is advantageous for the Intel Pentium Pro pro-
+       cessor architecture, and is the default when -Kpentium_pro
+       is specified.  Otherwise, no_frame is the  default.   This
+       option only applies when the -O option is specified; unop-
+       timized code always uses the frame pointer layout.  Speci-
+       fies  whether the compiler may perform argument passing in
+       registers, which produces faster code.  This is  done  for
+       certain types of calls within a translation unit, and only
+       when -O is specified.  A consequence  of  this  option  is
+       that  function  breakpointing  in  debugging, and argument
+       information in debugging stack traces, may be  unreliable.
+       -Kargs_in_regs  clashes with inlining but has lower prece-
+       dence; no argument passing in registers is  done  if  both
+       are  specified.  In hosted mode, the compiler assumes that
+       function names in the C standards are reserved and  behave
+       as  described  by the standard.  The compiler will be free
+       to inline such functions if requested.  If no_ieee is also
+       specified, the compiler assumes that math functions do not
+       have NaNs or infinities as arguments and  do  not  produce
+       NaNs or infinities.  Specifies whether the compiler should
+       perform function inlining.  Inlining may yield better exe-
+       cution  speed  at  the  expense  of extra code size.  Only
+       applies if the -O option is specified.
+
+       Similarly, the C99 inline function  specifier  will  cause
+       the  compiler  to  attempt  to replace invocations of such
+       functions with an inline substitution  only  when  the  -O
+       option  is specified.  Specifies whether the compiler per-
+       forms loop unrolling when optimization  is  enabled  (-O).
+       Loop  unrolling  may  yield  better execution speed at the
+       expense of extra code size.  Specifies whether plain char-
+       acter  types  are  considered  signed  or  unsigned.   The
+       default is signed.  The system uses certain heuristics  in
+       distinguishing  between  binaries  compiled for OpenServer
+
+                                                                5
+
+cc(1)                                                       cc(1)
+
+       using the  OpenServer  application  binary  interface  and
+       binaries  compiled  for  UnixWare  or  &gemini;  using the
+       binary interface specified by the  "System  V  Application
+       Binary  Interface  Intel386tm Processor Supplement." These
+       heuristics can fail in rare cases.  The udk option can  be
+       used   in  cases  when  the  heuristics  break  down.   It
+       instructs the link-editor to  add  a  special  mark  to  a
+       binary  object  to positively identify it as a binary com-
+       piled by the &gemini; compiler and intended to be able  to
+       run  on  &gemini;,  OpenServer and UnixWare.  no_udk indi-
+       cates that no special mark should be inserted.  When link-
+       ing on OpenServer and passing the -Wl,-fosr5 option to the
+       -Kno_udk option must be used.
+
+       Multiple -K options have the same effect as if  the  sepa-
+       rate list arguments were merged into one option.  Adds dir
+       to the linking phase list of directories  to  be  searched
+       for  subsequent  -l options.  The order of the -B, -L, and
+       -l options is significant; see the -l option.  Causes  the
+       linking phase to search the library libstr.so or libstr.a.
+       The order of the -B, -L, and -l options is significant:  A
+       -l option causes the linker to check first in the directo-
+       ries specified by preceding -L options (in order) and then
+       in  the  directories of the default library search path (-
+       -YP).  If -Bdynamic is set at the point of the -l  option,
+       each  directory  is  checked  first for libstr.so and then
+       libstr.a; otherwise,  only  libstr.a  is  checked.   Avoid
+       specifying  -lc; cc will ensure that libc is linked in the
+       proper order.  Linking libc in the wrong order  may  cause
+       incorrect execution behavior.  If you do specify -lc, make
+       sure there are no other dynamic libraries specified  after
+       it.   Do  not specify -lC; C++ links must be done with Use
+       -Kthread (or -KthreadT) instead of -lthread (or -lthreadT)
+       when linking with the threads library.  Using -lthread (or
+       -lthreadT) directly may cause incorrect  execution  behav-
+       ior.   Enables the optimization phase.  This phase clashes
+       with -g but has lower precedence: the  optimization  phase
+       is  disabled  if  both  are  specified.   This  phase also
+       clashes with -ql but has lower precedence:  the  optimiza-
+       tion  phase  is  disabled  if  both are specified.  Causes
+       extra code to be generated that counts the number of calls
+       to  each  routine.   If  the linking phase is enabled, the
+       default library search path  (-YP)  is  altered  to  check
+       directories that are intended to contain similarly instru-
+       mented libraries before the usual directories.   Moreover,
+       different  start-up  object files are used that arrange to
+       record (in the file mon.out) the time spent in  each  rou-
+       tine;  see  This  option  may  not  be  used together with
+       -Kthread, -KthreadT, or -Kpthread.  Causes extra code that
+       instruments the program to be generated.  If str is ``p'',
+       the behavior is the same as the  -p  option.   If  str  is
+       ``l'',  the  basic  block profiling phase is enabled which
+       generates extra code that counts the number of times  each
+       source  line  is  executed;  see  If  str is ``f'', a flow
+
+                                                                6
+
+cc(1)                                                       cc(1)
+
+       profile log is created; see The -O option clashes with -ql
+       but  has  lower  precedence: the optimization phase is not
+       enabled if both are specified.  Suppresses the  assembling
+       and linking phases, and produces an assembly file (.s-suf-
+       fixed file).  Causes the compiling phase to perform  extra
+       syntactic,  semantic,  and checks.  Causes the compiler to
+       suppress  warning  messages.   Controls  the  packing   of
+       ``full-size''  structure  members  in the compiling phase.
+       Bit field packing is not affected  by  this  option.   The
+       option  argument  str  is one of the following: Selects at
+       least one byte alignment for all structure members; or, in
+       other words, include no padding.  (This can also be speci-
+       fied as -Zp.)  Selects at least  two  byte  alignment  for
+       structure  members of at least two bytes in size.  Selects
+       two byte alignment for two byte  sized  structure  members
+       and  four  byte  alignment  for  larger structure members.
+       This is the default choice.
+
+       The cc command recognizes -e, -h, -R, -u, and -z as  link-
+       ing  phase  options  with arguments.  These, and all other
+       unrecognized option-like arguments are handed to
+
+       Finally, the cc command also recognizes the option -#.  If
+       one  -#  option is present, the cc command will print each
+       tool with its options  and  argument  just  before  it  is
+       invoked.   With  two -# options, the pathname of each tool
+       is also printed; with three, the invocations are  skipped.
+
+FFiilleess
+       default  name  of  resulting  executable last directory to
+       search for include files startup code object files runtime
+       support  archive preprocessor and compiler optimizer basic
+       block profiler assembler linker dynamic shared standard  C
+       library  archive  standard  C library subdirectory of each
+       LIBPATH entry in which to  check  for  profiled  libraries
+       usually    /usr/include   usually   /usr/ccs/lib   usually
+       /usr/ccs/bin   usually    /usr/ccs/lib:/usr/lib    usually
+       /var/tmp but can be overridden by the environment variable
+       TMPDIR.  language-specific message file [See LANG on  run-
+       time objects used to implement the -X option
+
+RReeffeerreenncceess
+       Kernighan,  B.  W.,  and Ritchie, D. M., The C Programming
+       Language, Second Edition, Prentice-Hall, 1988
+
+       American National Standard for Information Systems -  Pro-
+       gramming Language C, X3.159-1989
+
+       International Standard ISO/IEC 9899:1990, Programming Lan-
+       guages - C
+
+       International Standard ISO/IEC 9899:1999, Programming Lan-
+       guages - C
+
+                                                                7
+
+cc(1)                                                       cc(1)
+
+       International  Standard  ISO/IEC  9945-1:1990, Information
+       Technology - Portable Operating System Interface (POSIX) -
+       Part 1: System Application Program Interface (API) [C Lan-
+       guage]
+
+SSttaannddaarrddss ccoommpplliiaannccee
+       The C language conforms to the updated C  standard  (C99),
+       ISO/IEC 9899:1999, except for two major exceptions and two
+       minor ones. The main unimplemented  features  are  complex
+       arithmetic  and  variable  length arrays.  The former also
+       means that there is  no  <complex.h>  header.   The  minor
+       items  are the return value for when the destination array
+       is not long enough (the C99-conforming functions are  pro-
+       vided,  but  are  spelled _xsnprintf() and _xvsnprintf()),
+       and some header name space issues.  The latter means  that
+       many  of  the  new  names added by C99 to existing headers
+       will not be visible when using -Xc.
+
+CCoommppaattiibbiilliittyy
+       A compatibility libc is provided that allows  applications
+       compiled  using this compiler to run with earlier UnixWare
+       7 releases.  See The -Xb  option  removes  recognition  of
+       only  the  two  new  keywords restrict and inline. All the
+       other new keywords (for example, _Bool) will  continue  to
+       be recognised.
+
+NNoottiicceess
+       If  a  mode  choice option (such as -Q or -X) is specified
+       more than once, generally the last is used.
+
+       New code should use -Xa, -Khost and -v; old code is proba-
+       bly best handled with -Xt and -Kno_host.
+
+                                                                8
+

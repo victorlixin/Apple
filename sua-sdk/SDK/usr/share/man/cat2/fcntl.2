@@ -1,0 +1,262 @@
+fcntl(2)                                                       fcntl(2)
+
+  ffccnnttll(())
+
+  NNAAMMEE
+
+    fcntl() - file control
+
+  SSYYNNOOPPSSIISS
+
+    #include <fcntl.h>
+
+    int fcntl (int fd, int cmd, int arg)
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    The _ff_cc_nn_tt_ll(2) function provides for control over descriptors. The argument
+    fd is a descriptor to be operated on by cmd. Cmd is one of F_DUPFD,
+    F_GETFD, F_SETFD, F_GETFL, F_SETFL, or one of the commands for advisory
+    file locking, F_GETLK, F_SETLK, or F_SETLKW.
+
+    Values for cmd are:
+
+    F_DUPFD
+        Return a new descriptor as follows:
+        *     Lowest numbered available descriptor greater than or equal to
+              arg.
+        *     Same object references as the original descriptor.
+        *     New descriptor shares the same file offset if the object was a
+              file.
+        *     Same access mode (read, write or read/write).
+        *     Same file status flags (i.e., both file descriptors share the
+              same file status flags).
+        *     The close-on-exec flag associated with the new file descriptor
+              is set to remain open across _ee_xx_ee_cc_vv(2) system calls.
+
+    F_GETFD
+        Get the close-on-exec flag associated with the file descriptor fd. If
+        the low-order bit of the returned value is 0, the file will remain
+        open across _ee_xx_ee_cc(2), otherwise the file will be closed upon execution
+        of _ee_xx_ee_cc(2). Arg is ignored.
+
+    F_SETFD
+        Set the file descriptor flags of fd to the values set in arg (an iinntt).
+        If the FD_CLOEXEC flag is set to 1, the file descriptor is closed upon
+        execution of an _ee_xx_ee_cc(2)-family function. If the flag is 0, the
+        descriptor is not closed when an _ee_xx_ee_cc(2) function is executed.
+
+    F_GETFL
+        Get descriptor status flags, as described below. Arg is ignored. To
+        extract the file access modes from the return value, use the mask
+        O_ACCMODE (defined in <<ffccnnttll..hh>>). The access modes are the ones
+        defined for _oo_pp_ee_nn(2) (O_RDONLY, O_RDWR, and O_WRONLY).
+
+    F_SETFL
+        Set descriptor status flags to arg, which is an iinntt. Bits in arg that
+        correspond to access mode and the oflag values of _oo_pp_ee_nn(2) are ignored.
+
+    F_GETOWN
+        Get the process ID or process group currently receiving SIGIO and
+        SIGURG signals; process groups are returned as negative values, and
+        arg is ignored. This value is not supported for AF_UNIX sockets. If fd
+        identifies an AF_UNIX socket and cmd is set to F_GETOWN, then ffccnnttll(2)
+        returns immediately and sets the error code to [EINVAL].
+
+    F_SETOWN
+        Set the process or process group to receive SIGIO and SIGURG signals.
+        To specify a process group, supply arg as a negative ; if arg is
+        positive, it's taken as a process ID. This value is not supported for
+        AF_UNIX sockets. If fd identifies an AF_UNIX socket and cmd is set to
+        F_SETOWN, then ffccnnttll(2) returns immediately and sets the error code to
+        [EINVAL].
+
+    The flags for the F_GETFL and F_SETFL flags are as follows:
+
+    FAPPEND
+        Available for backward compatibility; equivalent to O_APPEND.
+
+    FASYNC
+        Available for backward compatibility; equivalent to O_ASYNC.
+
+    FNDELAY
+        Available for backward compatibility; equivalent to O_NONBLOCK.
+
+    FNONBLOCK
+        Available for backward compatibility; equivalent to O_NONBLOCK.
+
+    O_APPEND
+        Force each write to append at the end of file; corresponds to the
+        O_APPEND flag of _oo_pp_ee_nn(2).
+
+    O_ASYNC
+        Enable the SIGIO signal to be sent to the process group when I/O is
+        possible (for example, upon availablility of data to be read).
+
+    O_NONBLOCK
+        Non-blocking I/O; if no data is available to a rreeaadd(2) call, or if a
+        wwrriittee(2) operation would block, the read or write call returns -1 with
+        the error [EAGAIN].
+
+    Several commands are available for doing advisory file locking; they all
+    operate on the following structure:
+
+    struct flock {
+       short l_type;    /* lock type: read/write, etc.*/
+       short l_whence;  /* type of l_start */
+       off_t l_start;   /* starting offset */
+       off_t l_len;     /* len = 0 means until end of file */
+       pid_t l_pid;     /* lock owner */
+    };
+
+    The commands available for advisory record locking are as follows:
+
+    F_GETLK
+        Get the first lock that blocks the lock description pointed to by the
+        third argument, arg, taken as a pointer to a ssttrruucctt fflloocckk (see above).
+        The information retrieved overwrites the information passed to
+        _ff_cc_nn_tt_ll(2) in the fflloocckk structure. If no lock is found that would
+        prevent this lock from being created, the structure is left unchanged
+        by this function call except for the lock type which is set to
+        F_UNLCK.
+
+    F_SETLK
+        Set or clear a file segment lock according to the lock description
+        pointed to by the third argument, arg, taken as a pointer to a ssttrruucctt
+        fflloocckk (see above). F_SETLK is used to establish shared (or read) locks
+        (F_RDLCK) or exclusive (or write) locks, (F_WRLCK), as well as remove
+        either type of lock (F_UNLCK). If a shared or exclusive lock cannot be
+        set, _ff_cc_nn_tt_ll(2) returns immediately with [EACCES].
+
+    F_SETLKW
+        This command is the same as F_SETLK except that if a shared or
+        exclusive lock is blocked by other locks, the process waits until the
+        request can be satisfied. If a signal that is to be caught is received
+        while _ff_cc_nn_tt_ll(2) is waiting for a region, the _ff_cc_nn_tt_ll(2) will be
+        interrupted.
+
+    When a shared lock has been set on a segment of a file, other processes
+    can set shared locks on that segment or a portion of it. A shared lock
+    prevents any other process from setting an exclusive lock on any portion
+    of the protected area. A request for a shared lock fails if the file
+    descriptor was not opened with read access.
+
+    An exclusive lock prevents any other process from setting a shared lock or
+    an exclusive lock on any portion of the protected area. A request for an
+    exclusive lock fails if the file was not opened with write access.
+
+    The value of l_whence is SEEK_SET, SEEK_CUR, or SEEK_END to indicate that
+    the relative offset, l_start bytes, will be measured from the start of the
+    file, current position, or end of the file, respectively. The value of
+    l_len is the number of consecutive bytes to be locked. If l_len is
+    negative, the result is undefined. The l_pid field is only used with
+    F_GETLK to return the process ID of the process holding a blocking lock.
+    After a successful F_GETLK request, the value of l_whence is SEEK_SET.
+
+    Locks may start and extend beyond the current end of a file, but may not
+    start or extend before the beginning of the file. A lock is set to extend
+    to the largest possible value of the file offset for that file if l_len is
+    set to zero. If l_whence and l_start point to the beginning of the file,
+    and l_len is zero, the entire file is locked.
+
+    There is at most one type of lock set for each byte in the file. Before a
+    successful return from an F_SETLK or an F_SETLKW request when the calling
+    process has previously existing locks on bytes in the region specified by
+    the request, the previous lock type for each byte in the specified region
+    is replaced by the new lock type. As specified above under the
+    descriptions of shared locks and exclusive locks, an F_SETLK or an
+    F_SETLKW request fails or blocks respectively when another process has
+    existing locks on bytes in the specified region and the type of any of
+    those locks conflicts with the type specified in the request.
+
+    All locks associated with a file for a given process are removed when the
+    process terminates.
+
+  RREETTUURRNN VVAALLUUEESS
+
+    Upon successful completion, the value returned depends on cmd as follows:
+
+    F_DUPFD
+        A new file descriptor.
+
+    F_GETFD
+        Value of flag (only the low-order bit is defined).
+
+    F_GETFL
+        Value of flags.
+
+    F_GETOWN
+        Value of file descriptor owner.
+
+    other
+        A value other than -1.
+
+    Otherwise, a value of -1 is returned and errno is set to indicate the
+    error.
+
+  EERRRROORRSS
+
+    The _ff_cc_nn_tt_ll(2) function will fail if:
+
+    [EACCES]
+        The argument arg is F_SETLK, the type of lock (l_type) is a shared
+        lock (F_RDLCK) or exclusive lock (F_WRLCK), and the segment of a file
+        to be locked is already exclusive-locked by another process; or the
+        type is an exclusive lock and some portion of the segment of a file to
+        be locked is already shared-locked or exclusive-locked by another
+        process.
+
+    [EBADF]
+        Fd is not a valid open file descriptor.
+        The argument cmd is F_SETLK or F_SETLKW, the type of lock (l_type is a
+        shared lock (F_RDLCK), and fd is not a valid file descriptor open for
+        reading.
+        The argument cmd is F_SETLK or F_SETLKW, the type of lock (l_type) is
+        an exclusive lock (F_WRLCK), and fd is not a valid file descriptor
+        open for writing.
+
+    [EMFILE]
+        Cmd is F_DUPFD and the maximum allowed number of file descriptors are
+        currently open.
+
+    [EINTR]
+        The argument cmd is F_SETLKW, and the function was interrupted by a
+        signal.
+
+    [EINVAL]
+        The cmd argument is F_DUPFD and arg is negative or greater than the
+        maximum allowable number {OPEN_MAX}.
+        The cmd argument is F_GETOWN or F_SETOWN and fd identifies an AF_UNIX
+        socket.
+        The cmd argument is F_GETLK, F_SETLK, or F_SETLKW and the data to
+        which arg points is not valid, or fd refers to a file that does not
+        support locking.
+
+    [EMFILE]
+        The argument cmd is F_DUPFD and the maximum number of file descriptors
+        permitted for the process are already in use, or no file descriptors
+        greater than or equal to arg are available.
+
+    [ENOLCK]
+        The argument cmd is F_SETLK or F_SETLKW, and satisfying the lock or
+        unlock request would result in the number of locked regions in the
+        system exceeding a system-imposed limit. This error is not possible
+        under Subsystem for UNIX-based Applications because there is no system-imposed limit.
+
+    [ESRCH]
+        For a cmd of F_SETOWN, the process ID given as arg is not in use.
+
+  SSEEEE AALLSSOO
+
+    _c_l_o_s_e(2)
+
+    _e_x_e_c(2)
+
+    _o_p_e_n(2)
+
+  UUSSAAGGEE NNOOTTEESS
+
+    The ffccnnttll function is thread safe.
+
+    The ffccnnttll function is async-signal safe.
+

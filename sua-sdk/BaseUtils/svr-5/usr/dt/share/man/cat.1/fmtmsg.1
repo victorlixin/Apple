@@ -1,0 +1,173 @@
+
+
+fmtmsg(1)                                               fmtmsg(1)
+
+SSyynnooppssiiss
+       fmtmsg  [-c  class] [-u subclass] [-l label] [-s severity]
+       [-t tag]      [-a action]  text
+
+DDeessccrriippttiioonn
+       Based on  a  message's  classification  component,  fmtmsg
+       either  writes  a  formatted message to stderr or writes a
+       formatted message to the console.
+
+       A formatted message consists of up to five standard compo-
+       nents  as  defined below.  The classification and subclass
+       components are not displayed as part of the standard  mes-
+       sage,  but  rather  define  the  source of the message and
+       direct the display of the formatted  message.   The  valid
+       options  are:  Describes the source of the message.  Valid
+       keywords are: The source of  the  condition  is  hardware.
+       The  source  of  the condition is software.  The source of
+       the condition is firmware.  A list of keywords  (separated
+       by  commas)  that  further defines the message and directs
+       the display of the message.  Valid keywords are: The  con-
+       dition  originated in an application.  This keyword should
+       not be used in combination with either util or opsys.  The
+       condition  originated  in  a utility.  This keyword should
+       not be used in combination with either appl or opsys.  The
+       message originated in the kernel.  This keyword should not
+       be used in combination with  either  appl  or  util.   The
+       application will recover from the condition.  This keyword
+       should not be used in combination with nrecov.  The appli-
+       cation  will not recover from the condition.  This keyword
+       should not be used in combination with recov.   Print  the
+       message  to  the  standard error stream stderr.  Write the
+       message to the system console.  print,  console,  or  both
+       may be used.  Identifies the source of the message.  Indi-
+       cates the seriousness of the error.  The keywords and def-
+       initions  of  the  standard  levels  of  severity are: The
+       application has encountered a severe fault and is halting.
+       The application has detected a fault.  The application has
+       detected a condition that is out of the ordinary and might
+       be  a  problem.   The application is providing information
+       about a condition that is not in error.  The  string  con-
+       taining  an  identifier  for  the  message.  A text string
+       describing the first step in the error  recovery  process.
+       This  string  must  be  written  so that the entire action
+       argument is interpreted as a single argument.  fmtmsg pre-
+       cedes  each action string with the TO FIX: prefix.  A text
+       string describing the condition.  Must be written so  that
+       the  entire text argument is interpreted as a single argu-
+       ment.
+
+       The environment variables MSGVERB  and  SEV_LEVEL  control
+       the behavior of fmtmsg.  MSGVERB is set by the administra-
+       tor in the /etc/profile for the system.  Users  can  over-
+       ride  the  value of MSGVERB set by the system by resetting
+       MSGVERB in their own .profile files  or  by  changing  the
+
+                                                                1
+
+fmtmsg(1)                                               fmtmsg(1)
+
+       value  in  their  current shell session.  SEV_LEVEL can be
+       used in shell scripts.
+
+       MSGVERB tells fmtmsg which message  components  to  select
+       when  writing messages to stderr.  The value of MSGVERB is
+       a colon separated list of optional keywords.  MSGVERB  can
+       be  set  as  follows: MSGVERB=[keyword[: keyword[:. . .]]]
+       export MSGVERB
+
+       Valid keywords are: label,  severity,  text,  action,  and
+       tag.   If  MSGVERB  contains a keyword for a component and
+       the component's value is not the component's  null  value,
+       fmtmsg includes that component in the message when writing
+       the message to stderr.  If MSGVERB does not include a key-
+       word  for  a  message  component,  that  component  is not
+       included in the display of the message.  The keywords  may
+       appear  in  any  order.  If MSGVERB is not defined, if its
+       value is the null string, if its value is not of the  cor-
+       rect  format,  or  if  it contains keywords other than the
+       valid ones listed above, fmtmsg selects all components.
+
+       MSGVERB affects only which message components are selected
+       for  display.  All message components are included in con-
+       sole messages.
+
+       SEV_LEVEL defines severity  levels  and  associates  print
+       strings  with them for use by fmtmsg.  The standard sever-
+       ity levels shown below  cannot  be  modified.   Additional
+       severity levels can be defined, redefined, and removed.
+
+       (no severity is used) HALT ERROR WARNING INFO
+
+       SEV_LEVEL  is  set  as  follows:  SEV_LEVEL=[description[:
+       description[: . . . ]]] export SEV_LEVEL description is  a
+       comma-separated  list  containing  three  fields: descrip-
+       tion=severity_keyword,level, printstring
+
+       severity_keyword is a character string used as the keyword
+       with the -s severity option to fmtmsg.
+
+       level  is  a character string that evaluates to a positive
+       integer (other than 0, 1, 2, 3, or 4, which  are  reserved
+       for  the standard severity levels).  If the keyword sever-
+       ity_keyword is used, level is the severity value passed on
+       to
+
+       printstring  is the character string used by fmtmsg in the
+       standard message format whenever the severity value  level
+       is used.
+
+       If  SEV_LEVEL  is not defined, or if its value is null, no
+       severity levels other than the defaults are available.  If
+       a  description  in the colon separated list is not a comma
+       separated list containing three fields, or if  the  second
+
+                                                                2
+
+fmtmsg(1)                                               fmtmsg(1)
+
+       field  of  a  comma  separated list does not evaluate to a
+       positive integer, that description in the colon  separated
+       list is ignored.
+
+   EErrrroorrss
+       The  exit  codes  for  fmtmsg  are  the following: All the
+       requested functions were executed successfully.  The  com-
+       mand  contains  a  syntax  error, an invalid option, or an
+       invalid argument to an option.  The function executed with
+       partial  success, however the message was not displayed on
+       stderr.  The function executed with partial success,  how-
+       ever  the message was not displayed on the system console.
+       No requested functions were executed successfully.
+
+EExxaammpplleess
+   EExxaammppllee 11
+       The following example of fmtmsg produces a  complete  mes-
+       sage in the standard message format and displays it to the
+       standard error stream: fmtmsg -c soft -u  recov,print,appl
+       -l  UX:cat -s error \      -t UX:cat:001 -a "refer to man-
+       ual" "invalid syntax"  produces:  UX:cat:  ERROR:  invalid
+       syntax TO FIX: refer to manual   UX:cat:001
+
+   EExxaammppllee 22
+       When  the  environment variable MSGVERB is set as follows:
+       MSGVERB=severity:text:action and Example 1 is used, fmtmsg
+       produces: ERROR: invalid syntax TO FIX: refer to manual
+
+   EExxaammppllee 33
+       When the environment variable SEV_LEVEL is set as follows:
+       SEV_LEVEL=note,5,NOTE the following fmtmsg command: fmtmsg
+       -c  soft  -u  print  -l UX:cat -s note \      -a "refer to
+       manual" "invalid syntax" produces: UX:cat:  NOTE:  invalid
+       syntax TO FIX: refer to manual and displays the message on
+       stderr.
+
+NNoottiicceess
+       A slightly different standard error message format  and  a
+       new  developer interface, pfmt, is being introduced as the
+       replacement for fmtmsg.  A  similar  interface,  lfmt,  is
+       also being introduced for producing a standard format mes-
+       sage and forwarding messages to the console and/or to  the
+       system message logging and monitoring facilities.
+
+       fmtmsg  will  be  removed and replaced by pfmt in a future
+       release.
+
+RReeffeerreenncceess
+
+                                                                3
+

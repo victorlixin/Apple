@@ -1,0 +1,55 @@
+
+
+elf_cntl(3elf)                                     elf_cntl(3elf)
+
+SSyynnooppssiiss
+       cc [flag . . . ] file . . . -lelf [library] . . .
+
+       #include <libelf.h>
+
+       int elf_cntl(Elf *elf, Elf_Cmd cmd);
+
+DDeessccrriippttiioonn
+       elf_cntl instructs the library to modify its behavior with
+       respect to an ELF descriptor, elf.  As describes,  an  ELF
+       descriptor can have multiple activations, and multiple ELF
+       descriptors may share a single  file  descriptor.   Gener-
+       ally,  elf_cntl  commands apply to all activations of elf.
+       Moreover, if the ELF  descriptor  is  associated  with  an
+       archive  file,  descriptors for members within the archive
+       will also be affected as described below.   Unless  stated
+       otherwise, operations on archive members do not affect the
+       descriptor for the containing archive.
+
+       The cmd argument tells what actions to take and  may  have
+       the following values.  This value tells the library not to
+       use the file descriptor associated with  elf.   A  program
+       should  use  this  command  when  it has requested all the
+       information it cares to use and wishes to avoid the  over-
+       head  of reading the rest of the file.  The memory for all
+       completed operations remains valid, but later file  opera-
+       tions, such as the initial elf_getdata for a section, will
+       fail if the data is not in memory already.   This  command
+       is  similar  to ELF_C_FDDONE, except it forces the library
+       to read the rest of the file.  A program should  use  this
+       command when it must close the file descriptor but has not
+       yet  read  everything  it  needs  from  the  file.   After
+       elf_cntl completes the ELF_C_FDREAD command, future opera-
+       tions, such as elf_getdata, will use the memory version of
+       the file without needing to use the file descriptor.
+
+       If  elf_cntl succeeds, it returns zero.  Otherwise elf was
+       null or an error occurred, and the function returns -1.
+
+RReeffeerreenncceess
+NNoottiicceess
+       If the program wishes to use the ``raw''  operations  [see
+       elf_rawdata, which describes, and after disabling the file
+       descriptor with ELF_C_FDDONE or ELF_C_FDREAD, it must exe-
+       cute the raw operations explicitly beforehand.  Otherwise,
+       the raw file operations will  fail.   Calling  elf_rawfile
+       makes  the  entire image available, thus supporting subse-
+       quent elf_rawdata calls.
+
+                                                                1
+

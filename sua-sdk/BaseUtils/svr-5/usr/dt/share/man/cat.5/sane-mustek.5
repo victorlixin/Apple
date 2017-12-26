@@ -1,0 +1,156 @@
+
+
+sane-mustek(5)                                     sane-mustek(5)
+
+DDeessccrriippttiioonn
+       sane-mustek  implements  a  SANE (Scanner Access Now Easy)
+       backend that provides access to Mustek  flatbed  scanners.
+       The  following scanners are known to work: MFC-600S 1-pass
+       MFC-600CD  1-pass  MFS-6000CX  3-pass  MSF-6000SP   1-pass
+       MFS-8000SP   1-pass   MFC-800S  1-pass  MFS-1200SP  1-pass
+       MFS-1200SP 1-pass  MFS-1200SP  1-pass  MFS-12000CX  3-pass
+       SE-6000SP 1-pass SE-12000SP 1-pass
+
+       sane-mustek  expects  device  names  of  the form: special
+       where special is the path-name for the special device that
+       corresponds  to  a  SCSI  scanner.  For SCSI scanners, the
+       special device name must be a generic  SCSI  device  or  a
+       symbolic link to such a device.
+
+       mustek.conf  contains  a  list of options and device names
+       that correspond to Mustek scanners.  Empty lines and lines
+       starting with a hash (#) are ignored.
+
+       The three options supported are linedistance-fix, lineart-
+       fix, and strip-height. There are  two  types  of  options:
+       global and positional. Global options apply to all devices
+       managed by the backend whereas  positional  options  apply
+       just  to  the  most  recently mentioned device. This means
+       that the order in which the options appear  is  important.
+       linedistance-fix  is positional and works around a problem
+       that occurs with some SCSI  controllers.  If  color  scans
+       have  horizontal  stripes  and the colors are in black and
+       white, then it is likely that your controller suffers from
+       this  problem.  Turning  on  this option usually fixes the
+       problem.
+
+       lineart-fix is positional and works around a timing  prob-
+       lem that seems to exist with certain MFS-12000SP scanners.
+       The problem manifests itself in dropped lines  when  scan-
+       ning  in  Line Art mode. Turning on this option should fix
+       the problem but may slow down scanning.
+
+       strip-height is a global option that  limits  the  maximum
+       height  of  the strip scanned with a single SCSI read com-
+       mand. The height is specified in inches and may contain  a
+       fractional  part  (for  example,  1.5). Setting the strip-
+       height to a small value (one inch,  for  example)  reduces
+       the  likelihood  of encountering problems with SCSI driver
+       timeouts and timeouts with other devices on the same  SCSI
+       bus.  Unfortunately,  it also increases scan times.  Thus,
+       if the scanner is the only device on the SCSI  bus  it  is
+       connected  to and if it is known that the SCSI driver does
+       not suffer from premature timeouts, it is  recommended  to
+       increase the strip-height or remove the option completely,
+       which corresponds to an infinite strip height.
+
+       A sample configuration file is shown below: # limit  strip
+       height  of /dev/scanner to 1.5 inches: option strip-height
+
+                                                                1
+
+sane-mustek(5)                                     sane-mustek(5)
+
+       1.5
+
+       /dev/scanner    # first Mustek scanner
+
+       /dev/sge        # second Mustek  scanner  option  linedis-
+       tance-fix
+
+       The  SANE_CONFIG_DIR  environment  variable  specifies the
+       list of directories that  may  contain  the  configuration
+       file.  The  directories  are  separated by a colon (:). If
+       this variable  is  not  set,  the  configuration  file  is
+       searched  in two default directories: firstly, the current
+       working directory (.) and then  in  /usr/local/etc/sane.d.
+       If  the  value  of  the environment variable ends with the
+       directory separator character, then the  default  directo-
+       ries  are searched after the explicitly specified directo-
+       ries. For example, setting SANE_CONFIG_DIR to  ``/tmp/con-
+       fig:''  would  result  in  directories  tmp/config, ., and
+       /usr/local/etc/sane.d being searched (in this order).
+
+       SANE_DEBUG_MUSTEK environment variable controls the  debug
+       level  for  sane-mustek,  if the library was compiled with
+       debug  support  enabled.  For  example,  a  value  of  128
+       requests  all  debug  output to be printed. Smaller levels
+       reduce verbosity.
+
+FFiilleess
+       The backend configuration file  (see  the  description  of
+       SANE_CONFIG_DIR).   The  static  library implementing this
+       backend.  The shared  library  implementing  this  backend
+       (present on systems that support dynamic loading).
+
+NNoottiicceess
+       Mustek  SCSI  scanners are typically delivered with an ISA
+       SCSI adapter. Unfortunately, that adapter is not interrupt
+       driven.   It  is  (sometimes) possible to get the supplied
+       card to work, but without  the  interrupt  line,  scanning
+       will  load  the system, so that it becomes almost unusable
+       for other tasks.
+
+       If you already have a working SCSI controller in your sys-
+       tem,  you should consider that Mustek scanners do not sup-
+       port the SCSI-2 disconnect/reconnect  protocol  and  hence
+       tie  up  the  SCSI  bus  while a scan is in progress. This
+       means that no other SCSI device on the  same  bus  can  be
+       accessed while a scan is in progress.
+
+       Because  the  Mustek-supplied  adapter  is  not  interrupt
+       driven and because Mustek  scanners  do  not  support  the
+       SCSI-2 disconnect/reconnect protocol, it is recommended to
+       install a separate SCSI  controller  for  Mustek  scanners
+       (for example, ncr810 based cards).
+
+       For   Mustek   scanners,  it  is  typically  necessary  to
+
+                                                                2
+
+sane-mustek(5)                                     sane-mustek(5)
+
+       configure the low-level SCSI driver to disable synchronous
+       transfers, tagged command queuing, and target disconnects.
+
+       The ScanExpress models sometimes have  trouble  with  high
+       resolution color mode. If you encounter sporadic corrupted
+       images (parts duplicated or  shifted  horizontally),  kill
+       all  other applications before scanning and (if sufficient
+       memory available) disable swapping.
+
+       After a while of no activity, some scanners (not the  SANE
+       backend)  turn  off their CCFL lamps. This shutdown is not
+       always perfect with the result  that  the  lamp  sometimes
+       continues  to  glow dimly at one end. This does not appear
+       to be dangerous since as  soon  as  you  use  the  scanner
+       again,  the  lamp turns back on to the normal high bright-
+       ness. However, the first image scanned after such a  shut-
+       down  may have stripes and appear to be over-exposed. When
+       this happens, take another scan to get a good image.
+
+       Transparency adapter and automatic document feeder support
+       is lacking.
+
+       There  is  a  performance  problem  that makes scanning on
+       three-pass scanners slower than necessary. High resolution
+       with  ScanExpress  scanners  is  slow  as they have a very
+       small internal buffer.
+
+       Authors are  David  Mosberger,  Andreas  Czechanowski  and
+       Andreas Bolsch.
+
+RReeffeerreenncceess
+
+                                                                3
+

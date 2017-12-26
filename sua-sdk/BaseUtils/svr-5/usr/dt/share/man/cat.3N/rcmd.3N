@@ -1,0 +1,94 @@
+
+
+rcmd(3N)                                                 rcmd(3N)
+
+SSyynnooppssiiss
+       cc [options] file -lsocket -lnsl #include <netdb.h>
+
+       int rcmd(char **ahost, unsigned short inport, char *luser,
+       char *ruser,      char *cmd, int *fd2p);
+
+       int rresvport(int *port);
+
+       int ruserok(char *rhost, int super-user, char *ruser, char
+       *luser);
+
+DDeessccrriippttiioonn
+       rcmd  is  a routine used by a privileged user to execute a
+       command on a remote machine using an authentication scheme
+       based on reserved port numbers.
+
+       rresvport  is  a  routine  which returns a descriptor to a
+       socket with an address in the privileged port space.
+
+       ruserok is a  routine  used  by  servers  to  authenticate
+       clients requesting service with rcmd.
+
+       All  three  functions are present in the same file and are
+       used by the rshd server (among others).
+
+       rcmd looks up the host *ahost using gethostbyname (see  If
+       the host exists, *ahost is set to the standard name of the
+       host and a connection is established to a server  residing
+       at the well-known Internet port inport.
+
+       If  the  connection  succeeds,  a  socket  in the Internet
+       domain of type SOCK_STREAM is returned to the caller,  and
+       given  to  the  remote command as its standard input (file
+       descriptor 0) and standard output (file descriptor 1).  If
+       fd2p  is  non-zero, then an auxiliary channel to a control
+       process will be set up, and a descriptor for  it  will  be
+       placed in *fd2p.  The control process will return diagnos-
+       tic output from the command (file descriptor  2)  on  this
+       channel,  and  will  also  accept bytes on this channel as
+       signal numbers, to be forwarded to the  process  group  of
+       the  command.  If fd2p is 0, then the standard error (file
+       descriptor 2) of the remote command will be made the  same
+       as  its standard output and no provision is made for send-
+       ing arbitrary signals to the remote process, although  you
+       may  be  able  to  get  its attention by using out-of-band
+       data.
+
+       The protocol is described in detail in rshd (see
+
+       The rresvport routine is used to obtain a  socket  with  a
+       privileged  address  bound to it.  This socket is suitable
+       for use by rcmd and several  other  routines.   Privileged
+       Internet  ports  are those in the range 0 to 1023.  Only a
+       user with appropriate privileges is  allowed  to  bind  an
+
+                                                                1
+
+rcmd(3N)                                                 rcmd(3N)
+
+       address of this sort to a socket.
+
+       ruserok  takes  a remote host's name, two user names and a
+       flag indicating whether the local user's name is  that  of
+       the  privileged  user.   If the privileged user flag is 0,
+       the routine then checks  the  file  /etc/hosts.equiv.   If
+       this  check  fails,  then  the routine checks in the local
+       user's home directory to see if the request for service is
+       allowed.   If .rhosts is writeable by group or other, then
+       access is denied.
+
+FFiilleess
+RReettuurrnn vvaalluueess
+       rcmd returns a valid socket  descriptor  on  success.   It
+       returns -1 on error and prints a diagnostic message on the
+       standard error.
+
+       rresvport returns a valid, bound socket descriptor on suc-
+       cess.   It returns -1 on error with the global value errno
+       set according to the reason for failure.  The  error  code
+       EAGAIN is overloaded to mean that all network ports are in
+       use.
+
+       ruserok returns a 0 if the machine name is listed  in  the
+       /etc/hosts.equiv  file or if the host and remote user name
+       are found in the
+
+RReeffeerreenncceess
+
+                                                                2
+

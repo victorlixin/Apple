@@ -1,0 +1,580 @@
+
+
+ftp(3N)                                                   ftp(3N)
+
+SSyynnooppssiiss
+       cc ... -lftp #include <net/libftp.h>
+
+       #define   BINARY   1 #define ASCII    2
+
+       typedef struct {
+           long    size_bytes;         /* total bytes transferred
+       */
+           float   seconds;            /* time taken to  transfer
+       */
+           float   kbs;                /* kilobytes per second */
+       } SPEED;
+
+       typedef struct {
+           FILE    *filedes;           /* data file descriptor */
+           char    transf_type;        /* type of transfer - user
+       settable */
+           char    *ftp_msg;           /* error status  of  func-
+       tion or reply
+                                          string from server */
+           int      transf_calc;         /*  flag to turn on xfer
+       rate calc - user
+                                          settable */
+           SPEED   speed;              /* xfer  rate  information
+       */
+           int     sockfd;             /* CNTRL connection socket
+       id */
+           int     datasd;             /* DATA connection  socket
+       id */
+           int      reply;               /* return value of func-
+       tion or reply
+                                          code from server */
+           int     debug;              /* flag to turn on  debug-
+       ging - user
+                                          settable */
+           int      linger;             /* flag to turn on socket
+       linger opt -
+                                          user settable */
+           int     connected;          /* flag  to  indicate  the
+       existence of
+                                          a   control  connection
+       for the
+                                          session under  question
+       */
+           struct   servent *ftp_sp;    /* specific service entry
+       */ } FTPINFO; int    ftp_accnt(ftpinfo,  account)  FTPINFO
+       *ftpinfo;  const  char  *account; int ftp_appfile(ftpinfo,
+       rempath, localpath) FTPINFO *ftpinfo; const char *rempath;
+       const  char  *localpath;  int   ftp_ascii(ftpinfo) FTPINFO
+       *ftpinfo;  int    ftp_binary(ftpinfo)  FTPINFO   *ftpinfo;
+       int      ftp_bye(ftpinfo)    FTPINFO    *ftpinfo;    int
+       ftp_chdir(ftpinfo, rempath) FTPINFO *ftpinfo;  const  char
+       *rempath;   int   ftp_command(ftpinfo,   optinfo,  action)
+
+                                                                1
+
+ftp(3N)                                                   ftp(3N)
+
+       FTPINFO *ftpinfo; const char *optinfo; const char *action;
+       int    ftp_dataconn(ftpinfo,  file,  action, mode) FTPINFO
+       *ftpinfo; const char *file const char *action; const  char
+       *mode;  int    ftp_del(ftpinfo,  file)  FTPINFO  *ftpinfo;
+       const char *file; int   ftp_dir(ftpinfo,  rempath,  local-
+       path)  FTPINFO  *ftpinfo;  const char *rempath; const char
+       *localpath; int   ftp_ebcdic(ftpinfo)  FTPINFO   *ftpinfo;
+       int    ftp_getfile(ftpinfo,  rempath,  localpath)  FTPINFO
+       *ftpinfo; const  char  *rempath;  const  char  *localpath;
+       int   ftp_idle(ftpinfo, idle_time) FTPINFO *ftpinfo; const
+       char  *idle_time;  int     ftp_initconn(ftpinfo)   FTPINFO
+       *ftpinfo;  int   ftp_login(ftpinfo, remhost, user, passwd,
+       account) FTPINFO *ftpinfo; const char *remhost; const char
+       *user;  const  char  *passwd;  const  char *account; int
+       ftp_mkdir(ftpinfo, remdir) FTPINFO  *ftpinfo;  const  char
+       *remdir;   int     ftp_passwd(ftpinfo,  password)  FTPINFO
+       *ftpinfo;   const   char   *password;   int     ftp_prcon-
+       nect(ftpinfo,   remhost)   FTPINFO  *ftpinfo;  const  char
+       *remhost; int   ftp_putfile(ftpinfo,  rempath,  localpath)
+       FTPINFO  *ftpinfo; const char *rempath; const char *local-
+       path;  int    ftp_pwd(ftpinfo)  FTPINFO  *ftpinfo;   int
+       ftp_rmdir(ftpinfo,  remdir)  FTPINFO  *ftpinfo; const char
+       *remdir; int   ftp_setport(portnumber) in_port_t  portnum-
+       ber;  int    ftp_settype(ftpinfo,  type) FTPINFO *ftpinfo;
+       int  type;  int    ftp_site(ftpinfo,   site_cmd)   FTPINFO
+       *ftpinfo;  const  char *site_cmd; int   ftp_tenex(ftpinfo)
+       FTPINFO   *ftpinfo; int   ftp_user(ftpinfo, name)  FTPINFO
+       *ftpinfo; const char *name;
+
+DDeessccrriippttiioonn
+       Three  categories  of  routines make up the FTP API: setup
+       routines, control routines, and  data  transfer  routines.
+       In all the routines defined in this API, the ftpinfo argu-
+       ment is a ``value-result'' one,  in  that  the  result  is
+       returned  in  the argument to the routine itself, with the
+       exception that some of the  members  (marked  ``user  set-
+       table'')  of  the FTPINFO structure can be assigned values
+       before the routine is called.
+
+   SSeettuupp rroouuttiinneess
+       The setup routines establish the  initial  FTP  connection
+       with  the  remote host.  These routines include ftp_prcon-
+       nect and ftp_login.  If ftp_login is called, it is  unnec-
+       essary  to  call ftp_prconnect; ftp_login calls ftp_prcon-
+       nect before performing the additional steps needed to  log
+       in.
+
+       ftp_setport may be used to set the destination port number
+       of a remote FTP server  if  this  is  different  from  the
+       default port defined in /etc/services (see The destination
+       port number set by ftp_setport remains in effect  for  all
+       subsequent  calls  from  the  threads of the same process.
+       Setting the port number to 0  clears  any  previously  set
+       port  number;  subsequent connections will use the default
+
+                                                                2
+
+ftp(3N)                                                   ftp(3N)
+
+       value.
+
+       ftp_prconnect is usually the  first  routine  called  from
+       this API.  It establishes an FTP connection (control chan-
+       nel) with a remote host.  ftp_prconnect  takes  the  argu-
+       ments  ftpinfo  and  host,  where  host is the name of the
+       remote host to which the FTP connection is  to  be  estab-
+       lished.  The sockfd member of the FTPINFO structure stores
+       the value of the socket descriptor used  for  the  control
+       channel.   If  the  control channel is successfully estab-
+       lished, the connected member is set to 1 to  indicate  the
+       existence  of a control channel.  If the debug (see member
+       is set, a server specific entry is stored  in  the  ftp_sp
+       member.
+
+       Unlike  ftp_prconnect, ftp_login performs a complete login
+       to the remote host.   ftp_login  does  the  equivalent  of
+       calling  ftp_prconnect,  ftp_user, and ftp_passwd, in that
+       sequence, to login to the remote host through an FTP  con-
+       nection.    ftp_login   takes   the  following  arguments:
+       ftpinfo, remhost,  user,  password,  and  account,  where:
+       remhost  is  the remote host to connect to, user and pass-
+       word are the user's FTP login name and  password  used  to
+       login to the remote host, and account is the TELNET string
+       identifying the user's account.
+
+   CCoonnttrrooll rroouuttiinneess
+       The control routines provide many of the commonly used FTP
+       functions  which  can  be  performed  over the FTP control
+       channel  without  opening  an  FTP  data  channel.   These
+       include  setting  FTP  connection parameters, and changing
+       the working directory on the remote host.
+
+       ftp_command provides a common  set  of  functionality  for
+       communicating  with  the  remote  host.  Many of the other
+       control routines use  this  routine  to  accomplish  their
+       tasks.   The  control  routines are listed in alphabetical
+       order following ftp_command.
+
+       Execution of control routines depends on the existence  of
+       an  FTP  control  channel  such  as  that established with
+       ftp_prconnect or ftp_login.
+
+       ftp_command sends FTP  specific  information  to  the  FTP
+       server  on  the  remote  host.   The  routines  ftp_chdir,
+       ftp_user,  ftp_passwd,  ftp_accnt,  ftp_mkdir,  ftp_rmdir,
+       ftp_del,  ftp_pwd,  ftp_idle,  ftp_site,  and  ftp_bye are
+       implemented as macros which essentially call this  routine
+       to   send  their  respective  protocol  specific  informa-
+       tion/keywords to the remote server.   This  routine  takes
+       the  following  arguments:  ftpinfo,  optinfo,  and action
+       where optinfo is the argument that the  protocol  specific
+       command  takes and action is the protocol specific command
+       itself.  For example, ftp_pwd is implemented  as  a  macro
+
+                                                                3
+
+ftp(3N)                                                   ftp(3N)
+
+       via  ftp_command where, optinfo is NULL and action is PWD,
+       whereas for  ftp_del  (which  is  also  implemented  as  a
+       macro), optinfo is a filename and action is DELE.
+
+       ftp_accnt  sends  the  user's  account  information to the
+       remote host through an FTP connection.  This routine takes
+       the   following  arguments:  ftpinfo  and  account,  where
+       account is a TELNET string identifying the user's account.
+
+       ftp_appfile  appends  the  local file, localpath, onto the
+       remote file, rempath, if the remote  file  exists;  other-
+       wise, the local file is copied to rempath.
+
+       ftp_ascii sets the data transfer type to ASCII.  This rou-
+       tine takes the argument ftpinfo.   It  automatically  sets
+       the  transf_type member of the FTPINFO structure to ASCII.
+
+       ftp_binary sets the data transfer type  to  BINARY.   This
+       routine takes the argument ftpinfo.  It automatically sets
+       the transf_type member of the FTPINFO structure to BINARY.
+
+       ftp_bye  closes  the  FTP connection gracefully.  It takes
+       the argument ftpinfo.
+
+       ftp_chdir changes the directory on the remote host through
+       an FTP connection.  This routine takes the following argu-
+       ments: ftpinfo and rempath where rempath is  the  name  of
+       the remote directory.
+
+       ftp_del  deletes  a file on the remote host through an FTP
+       connection.  This routine takes the  following  arguments:
+       ftpinfo  and  file where file is the name of the file that
+       is to be deleted on the remote host.
+
+       ftp_ebcdic is used to set the  transfer  type  to  EBCDIC.
+       This routine takes the argument ftpinfo.  It automatically
+       sets the transf_type member of the  FTPINFO  structure  to
+       EBCDIC.
+
+       ftp_idle  sets  the idle time for the FTP connection.  The
+       local host closes the connection if activity on  the  con-
+       nection is idle for this duration.  This routine takes the
+       following  arguments:   ftpinfo   and   idle_time,   where
+       idle_time is the maximum idle time before disconnection.
+
+       ftp_mkdir  creates  a directory on the remote host through
+       an FTP connection.  This routine takes the following argu-
+       ments: ftpinfo and remdir, where remdir is the name of the
+       remote directory to be created.
+
+       ftp_passwd sends the user's password to  the  remote  host
+       through an FTP connection.  This routine takes the follow-
+       ing arguments: ftpinfo and password, where password is the
+       user's FTP password used to login to the remote host.
+
+                                                                4
+
+ftp(3N)                                                   ftp(3N)
+
+       ftp_pwd  gets  the current working directory on the remote
+       host through an FTP connection.  This  routine  takes  the
+       argument ftpinfo.
+
+       ftp_rmdir  removes  a directory on the remote host through
+       an FTP connection.  This routine takes the following argu-
+       ments:  ftpinfo and remdir where remdir is the name of the
+       directory that is to be removed.
+
+       ftp_settype sets the data transfer type for the  FTP  con-
+       nection.   This  routine  takes  the  following arguments:
+       ftpinfo and type, where type should be  one  of  ASCII  or
+       BINARY.   It  sets  the  transf_type member of the FTPINFO
+       structure to the type specified by type. If any other type
+       is specified, the msg member of FTPINFO is set to indicate
+       that a transfer type not understood by the API was set and
+       the call returns -1.
+
+       ftp_site  sends  a  SITE command to the remote FTP server.
+       This routine takes the following  arguments:  ftpinfo  and
+       site_cmd,  where  site_cmd  is  the argument passed to the
+       SITE command.
+
+       ftp_tenex is used to set the transfer type to TENEX.  This
+       routine takes the argument ftpinfo.  It automatically sets
+       the transf_type member of the FTPINFO structure to  TENEX.
+
+       ftp_user  sends the user's name to the remote host through
+       an FTP connection.  This routine takes the following argu-
+       ments:  ftpinfo  and  name,  where  name is the user's FTP
+       login name used to login to the remote host.
+
+   DDaattaa ttrraannssffeerr rroouuttiinneess
+       The data transfer routines include a routine for  initial-
+       izing a data channel on the FTP connection (ftp_initconn),
+       three  routines  that  perform  specific  data   transfers
+       (ftp_dir, ftp_getfile and ftp_putfile), and a routine that
+       provides transfer functionality common to the  three  spe-
+       cific transfer routines (ftp_dataconn).
+
+       Before the specific data transfer routines can be invoked,
+       a data channel must be established on the  FTP  connection
+       using  the  ftp_initconn routine.  It opens a data channel
+       socket (separate from the FTP control channel socket)  via
+       the  PASV  command  (if the FTP server supports this) con-
+       forming to RFC1579.  If PASV is not supported by  the  FTP
+       server,  then  a conventional open is performed, where the
+       client announces the port in use  via  the  PORT  command.
+       This  routine takes the argument ftpinfo.  The datasd mem-
+       ber of the FTPINFO  structure  stores  the  value  of  the
+       socket  descriptor  used for the data channel. Setting the
+       linger member to a non-zero  value  turns  on  the  socket
+       linger  option which in turn sets the socket linger inter-
+       val to 60 seconds.
+
+                                                                5
+
+ftp(3N)                                                   ftp(3N)
+
+       ftp_dir lists the directory on the remote host through  an
+       FTP  connection.   This  routine takes the following argu-
+       ments: ftpinfo, rempath, and localpath  where  rempath  is
+       the  name  of  the  remote  path  whose directory is to be
+       listed and localpath is the name of the  output  file.  If
+       localpath  is NULL then the output is displayed on stdout,
+       otherwise it is written into the file specified by  local-
+       path.
+
+       ftp_getfile  transfers  a  file  from a remote host to the
+       local host through an FTP connection.  This routine  takes
+       the  following arguments: ftpinfo, rempath, and localpath,
+       where rempath is the name of the remote file and localpath
+       is the name of the file on the local host. If localpath is
+       NULL, then a file with the same name as the remote file is
+       created  in  the  current local working directory.  If the
+       transf_calc member is nonzero in the FTPINFO  data  struc-
+       ture,  the  transfer  rate is calculated and placed in the
+       speed member.  If the transf_type member is not  set,  the
+       routine automatically sets it to type BINARY.
+
+       ftp_putfile  transfers  a  file from the local host to the
+       remote host through an FTP connection.  This routine takes
+       the  following arguments: ftpinfo, rempath, and localpath,
+       where rempath is the name of the remote file and localpath
+       is  the  name  of  the  local file.  If rempath is NULL, a
+       remote file with the same name as the local file  is  cre-
+       ated  in  the  current  remote  working directory.  If the
+       transf_calc member is nonzero in the FTPINFO  data  struc-
+       ture,  the  transfer  rate is calculated and placed in the
+       speed member.  If the transf_type member is not  set,  the
+       routine automatically sets it to type BINARY.
+
+       The ftp_dataconn routine is typically called by a specific
+       data transfer routine to provide some common data transfer
+       functionality.   The  routines  ftp_dir,  ftp_getfile, and
+       ftp_putfile  make  use  of  this  routine.   Specifically,
+       ftp_dataconn  associates  the  file descriptor of the spe-
+       cific routine with the data channel socket.   ftp_dataconn
+       also  provides  the  functionality which triggers the data
+       transfer, by signalling the remote host via the  FTP  con-
+       trol channel.  ftp_dataconn takes the following arguments:
+       ftpinfo, file, action, and mode, where file is the file or
+       path  to  be worked on at the remote server, action is the
+       protocol specific command sent to the remote  server,  and
+       mode  is  either  r or w depending on the direction of the
+       transfer. The filedes  member  in  the  FTPINFO  structure
+       holds  the  value  of the file descriptor for the specific
+       transfer routine.  In essence, this is either the destina-
+       tion  or  source  file descriptor depending on the type of
+       action performed.
+
+RReettuurrnn vvaalluueess
+       If successful, these routines return 1.  If  unsuccessful,
+
+                                                                6
+
+ftp(3N)                                                   ftp(3N)
+
+       these routines return -1 and set the ftp_msg member of the
+       FTPINFO structure to point  to  a  string  indicating  the
+       description  of the error.  The routines try to return the
+       actual reply code from the server in the reply member.  -1
+       is  returned in this member if and only if the client pro-
+       gram fails to talk to the server during any specific  part
+       of the message transfer.
+
+DDiiaaggnnoossttiiccss
+       If  the  debug member in the FTPINFO structure is nonzero,
+       the following information is printed on  stdout:  the  FTP
+       command  being  sent  from  the  client  to the server all
+       replies received by the  client  from  the  server  Socket
+       level  debugging  is  turned on using the setsockopt call.
+       The server specific entry is stored in the ftp_sp  member.
+       This  feature,  in  conjunction with the ftp_msg and reply
+       members, can also be used  to  obtain  valuable  debugging
+       information.
+
+RReeffeerreenncceess
+EExxaammpplleess
+       #include <net/libftp.h>
+
+       #define   NORMAL         0           #define   ABNORMAL  1
+       #define   ON        1    #define   OFF       0     #define
+       ALTPORT          190
+
+       main  (argc, argv)      int  argc;      char      *argv[];
+       {        FTPINFO   ftpinfo;          void         usage(),
+       check_n_close();              char              *progname;
+            char *host;            progname = (char  *)  argv[0];
+            if ( argc < 2 )           (void) usage(progname);
+
+            host    =    argv[1];         ftpinfo.debug   =   ON;
+            ftpinfo.transf_calc = ON;      ftpinfo.linger = OFF;
+
+            /*       * the remote FTP server  serves  on  a  non-
+       standard port       */      ftp_setport(ALTPORT);
+
+            /*         *  connect  to peer at remote host (on the
+       non-standard  port)         */       if  (ftp_prconnect  (
+       &ftpinfo,   host   )   <   0)  {            printf("error:
+       ftp_prconnect      failed.\n");                     (void)
+       check_n_close ( &ftpinfo, ABNORMAL );      }
+
+            /*        * send user name to the remote server
+       */       if  (ftp_user(  &ftpinfo,  "root"  )   <   0)   {
+                 printf("error:       ftp_user       failed.\n");
+                 (void) check_n_close  (  &ftpinfo,  ABNORMAL  );
+            }
+
+            /*         *  send user password to the remote server
+             */      if (ftp_passwd ( &ftpinfo, "hitme" ) < 0)  {
+                 printf("error:      ftp_passwd      failed.\n");
+
+                                                                7
+
+ftp(3N)                                                   ftp(3N)
+
+                 (void) check_n_close  (  &ftpinfo,  ABNORMAL  );
+            }                       /*        * set the idle time
+       for this connection       */      if (ftp_idle ( &ftpinfo,
+       "7200"   )   <   0)  {            printf("error:  ftp_idle
+       failed.\n");           (void)  check_n_close  (  &ftpinfo,
+       ABNORMAL  );      }            /*       * do a 'cd' on the
+       remote FTP server       */      if  (ftp_chdir(  &ftpinfo,
+       "/tmp"   )   <  0)  {            printf("error:  ftp_chdir
+       failed.\n");           (void)  check_n_close  (  &ftpinfo,
+       ABNORMAL );      }
+
+            /*        * do a 'pwd' on the remote FTP server
+       */        if   (ftp_pwd   (   &ftpinfo   )    <    0)    {
+                 printf("error:        ftp_pwd       failed.\n");
+                 (void) check_n_close  (  &ftpinfo,  ABNORMAL  );
+            }
+
+            /*         *  set  transfer  mode  to  ascii       */
+            if   (ftp_ascii    (    &ftpinfo    )    <    0)    {
+                 printf("error:       ftp_ascii      failed.\n");
+                 (void) check_n_close  (  &ftpinfo,  ABNORMAL  );
+            }
+
+            /*         *  set  transfer  mode  to binary       */
+            if   (ftp_binary   (    &ftpinfo    )    <    0)    {
+                 printf("error:      ftp_binary      failed.\n");
+                 (void) check_n_close  (  &ftpinfo,  ABNORMAL  );
+            }
+
+            /*         *  set transfer mode back to ascii - using
+       ftp_settype        */       if  (ftp_settype  (  &ftpinfo,
+       ASCII ) < 0) {           printf("error: ftp_settype failed
+       in  ascii  mode.\n");            (void)  check_n_close   (
+       &ftpinfo, ABNORMAL );      }
+
+            /*         * set transfer mode back to binary - using
+       ftp_settype        */       if  (ftp_settype  (  &ftpinfo,
+       BINARY  )  <  0)  {            printf("error:  ftp_settype
+       failed in binary mode.\n");           (void) check_n_close
+       ( &ftpinfo, ABNORMAL );      }
+
+            /*        * make a directory under /tmp on the server
+             */      if (ftp_mkdir ( &ftpinfo, "prem" )  <  0)  {
+                 printf("error:       ftp_mkdir      failed.\n");
+                 (void) check_n_close  (  &ftpinfo,  ABNORMAL  );
+            }                   /*       * change the mode of the
+       directory created  above         */       if  (ftp_site  (
+       &ftpinfo,     "chmod     775    prem"    )    <    0)    {
+                 printf("error:       ftp_site       failed.\n");
+                 (void)  check_n_close  (  &ftpinfo,  ABNORMAL );
+            }
+
+            /*       * remove the directory created  above
+       */       if  (ftp_rmdir  (  &ftpinfo,  "prem"  )  <  0)  {
+
+                                                                8
+
+ftp(3N)                                                   ftp(3N)
+
+                 printf("error:      ftp_rmdir       failed.\n");
+                 (void)  check_n_close  (  &ftpinfo,  ABNORMAL );
+            }
+
+            /*       * quit the FTP  session  decently         */
+            if     (ftp_bye(     &ftpinfo     )     <     0)    {
+                 printf("error:       ftp_bye        failed.\n");
+                 (void)  check_n_close  (  &ftpinfo,  ABNORMAL );
+            }
+
+            /*       * the next FTP server serves on the standard
+       port       */      ftp_setport(0);
+
+            /*       * use ftp_login to login into the remote FTP
+       server        */       if  (ftp_login  (  &ftpinfo,  host,
+       "root",  "hitme",  NULL  ) < 0) {           printf("error:
+       ftp_login failed.\n");            (void)  check_n_close  (
+       &ftpinfo, ABNORMAL );      }
+
+            /*         *  do  a 'put' to the remote host       */
+            if   (ftp_putfile    (    &ftpinfo,    "/tmp/passwd",
+       "/etc/passwd"  )  < 0) {           printf("error: ftp_put-
+       file   failed.\n");             (void)   check_n_close   (
+       &ftpinfo,     ABNORMAL     );          }         else    {
+                 printf("transfer          speed:           \n");
+                 printf("\t\tbytes    transferred    =    %ld\n",
+                           ftpinfo.speed.size_bytes);
+                 printf("\t\ttime taken        = %.2g seconds\n",
+                           ftpinfo.speed.sec-
+       onds);                                    printf("\t\trate
+       =                    %.2g                     Kbytes/s\n",
+                           ftpinfo.speed.kbs);      }
+
+            /*         *  set transfer mode back to ascii - using
+       ftp_settype        */       if  (ftp_settype  (  &ftpinfo,
+       ASCII ) < 0) {           printf("error: ftp_settype failed
+       in  ascii  mode.\n");            (void)  check_n_close   (
+       &ftpinfo, ABNORMAL );      }
+
+            /*         * do a 'get' from the remote host       */
+            if         (ftp_getfile          (          &ftpinfo,
+       "/tmp/passwd","/d1/tmp/passwd"            )<           0){
+                 printf("error:     ftp_getfile      failed.\n");
+                 (void)  check_n_close  (  &ftpinfo,  ABNORMAL );
+            }      else {           printf("transfer speed: \n");
+                 printf("\t\tbytes    transferred    =    %ld\n",
+                           ftpinfo.speed.size_bytes);
+                 printf("\t\ttime  taken       = %.2g seconds\n",
+                           ftpinfo.speed.sec-
+       onds);                                    printf("\t\trate
+       =                    %.2g                     Kbytes/s\n",
+                           ftpinfo.speed.kbs);      }
+
+            /*       * list /tmp on remote host to file /tmp/test
+
+                                                                9
+
+ftp(3N)                                                   ftp(3N)
+
+             */      if (ftp_dir ( &ftpinfo, "/tmp",  "/tmp/test"
+       )  <  0)  {            printf("error: ftp_dir failed.\n");
+                 (void) check_n_close  (  &ftpinfo,  ABNORMAL  );
+            }
+
+            /*         * list /tmp on remote host to stdout
+       */      if (ftp_dir ( &ftpinfo, "/tmp",  NULL  )  <  0)  {
+                 printf("error:  ftp_dir  failed to write to std-
+       out.\n");            (void)  check_n_close   (   &ftpinfo,
+       ABNORMAL );      }
+
+            /*         * delete the file on the remote host
+       */      if (ftp_del ( &ftpinfo, "/tmp/asciifile" ) < 0)  {
+                 printf("error:        ftp_del       failed.\n");
+                 (void) check_n_close  (  &ftpinfo,  ABNORMAL  );
+            }
+
+            /*         *  quit  the FTP session decently       */
+            if    (ftp_bye(     &ftpinfo     )     <     0)     {
+                 printf("error:        ftp_bye       failed.\n");
+                 (void) check_n_close  (  &ftpinfo,  ABNORMAL  );
+            }
+
+            /*       * we're done with our job...so exit the pro-
+       gram  gracefully         */       (void)  check_n_close  (
+       &ftpinfo, NORMAL );
+
+       }
+
+       void     usage(progname)          char     *progname;    {
+            printf("usage: %s <remhost>\n", progname);       exit
+       (1); }
+
+       void     check_n_close     (     ftpinfo,     status     )
+            FTPINFO   *ftpinfo;        int  status;   {        if
+       (ftpinfo  ->  sockfd  >=  0)            close  (ftpinfo ->
+       sockfd);           if      (status      ==       ABNORMAL)
+                 printf("error:   %s\n",   ftpinfo  ->  ftp_msg);
+            else            printf("success:  %s\n",  ftpinfo  ->
+       ftp_msg);
+
+            printf("final  reply  from  server: %d\n", ftpinfo ->
+       reply);      fflush ( stdout );      exit (status); }
+
+                                                               10
+

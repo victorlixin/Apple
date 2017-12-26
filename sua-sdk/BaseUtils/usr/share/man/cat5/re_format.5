@@ -1,0 +1,249 @@
+re_format(5)                                               re_format(5)
+
+  rree__ffoorrmmaatt
+
+  NNAAMMEE
+
+    re_format - POSIX 1003.2 regular expressions
+
+  DDEESSCCRRIIPPTTIIOONN
+
+    Regular expressions (REs), as defined in POSIX 1003.2, come in two forms:
+    basic REs (roughly those of eedd(1)) and extended (roughly those of
+    eeggrreepp(1)). POSIX 1003.2 leaves some aspects of RE syntax and semantics
+    open; `|.-' marks decisions on these aspects that might not be fully
+    portable to other 1003.2 implementations.
+
+  BBaassiicc rreegguullaarr eexxpprreessssiioonnss
+
+    A basic regular expression is one or more pieces concatenated. It matches
+    a match for the first, followed by a match for the second, and so on.
+
+    A ppiieeccee is an atom possibly followed by a single|.- `*' or bound. An atom
+    followed by `*' matches a sequence of 0 or more matches of the atom.
+
+    A bboouunndd is `\{' followed by an unsigned decimal integer, possibly followed
+    by `,' possibly followed by another unsigned decimal integer, always
+    followed by `\}'. The integers must lie between 0 and RE_DUP_MAX (255|.-
+    ) inclusive, and if there are two of them, the first cannot exceed the
+    second. An atom followed by a bound containing one integer i and no comma
+    matches a sequence of exactly i matches of the atom. An atom followed by a
+    bound containing one integer i and a comma matches a sequence of i or more
+    matches of the atom. An atom followed by a bound containing two integers i
+    and j matches a sequence of i through j (inclusive) matches of the atom.
+
+    An aattoomm is a regular expression enclosed in `\(\)' (matching a match for
+    the regular expression), a bracket expression (see later in this topic),
+    `.' (matching any single character), `^' (matching the null string at the
+    beginning of a line), `$' (matching the null string at the end of a line),
+    a `\' followed by one of the characters `^.[$*\' (matching that character
+    taken as an ordinary character), a `\' followed by any other character|.-
+    (matching that character taken as an ordinary character, as if the `\' had
+    not been present|.-), a back reference, or a single character with no
+    other significance (matching that character). It is illegal to end an RE
+    with `\'.
+
+    The character `^' is an ordinary character, except at the beginning of the
+    RE or|.- the beginning of a parenthesized subexpression; the character `$'
+    is an ordinary character except at the end of the RE or|.- the end of a
+    parenthesized subexpression; the character `*' is an ordinary character if
+    it appears at the beginning of the RE or the beginning of a parenthesized
+    subexpression (after a possible leading `^').
+
+    A bbaacckk rreeffeerreennccee is `\' followed by a non-zero decimal digit d. It matches
+    the same sequence of characters matched by the
+    dthparenthesizedsubexpression (numbering subexpressions by the positions
+    of their opening parentheses, left to right), such as, for instance
+    `\([bc]\)\1' matches `bb' or `cc' but not `bc'.
+
+  EExxtteennddeedd rreegguullaarr eexxpprreessssiioonnss
+
+    As the name suggests, extended regular expressions extend the capabilities
+    of basic regular expressions by adding several new constructs and by
+    eliminating back references.
+
+    The following new characters are defined for extended regular expressions:
+
+    + ? { } ( ) |
+
+    An atom is now is a regular expression enclosed in `()' instead of `\(\)',
+    an empty set of `()' (matching the null string)|.-, a bracket expression
+    (see later in this topic), `.' (matching any single character), `^'
+    (matching the null string at the beginning of a line), `$' (matching the
+    null string at the end of a line), a `\' followed by one of the characters
+    `^.[$()|*+?{\' (matching that character taken as an ordinary character), a
+    `\' followed by any other character|.- (matching that character taken as
+    an ordinary character, as if the `\' had not been present|.-), or a single
+    character with no other significance (matching that character). A `{'
+    followed by a character other than a digit is an ordinary character, not
+    the beginning of a bound|.-. You cannot end an RE with `\'.
+
+    An atom followed by `*' matches a sequence of 0 or more matches of the
+    atom. An atom followed by `+' matches a sequence of 1 or more matches of
+    the atom. An atom followed by `?' matches a sequence of 0 or 1 matches of
+    the atom.
+
+    The delimiter characters for a bound are `{' and `}' instead of `\{' and
+    `\}'.
+
+    The `|' character separates branches An extended regular expression
+    matches anything that matches one of the branches. For example,
+    `alpha|beta' matches either `alpha' or `beta'.
+
+    BBaassiicc ppaatttteerrnn     EExxtteennddeedd ppaatttteerrnn     MMaattcchheess
+
+    c                 c                    Matches the character c except as
+                                           below
+
+    \c                \c                   The character c
+
+    ^                 ^                    The beginning of a line
+
+    $                 $                    The end of a line
+
+    .                 .                    Any single character
+
+    [list]            [list]               Any one of the characters in list
+
+    [^list]           [^list]              Any one of the characters not in
+                                           list
+
+    ()                ()                   The null string
+
+    \(a\)             (a)                  Groups pattern a into a single
+                                           expression
+
+    a*                a*                   Zero or more occurrences of a
+
+                      a+                   One or more occurrences of a
+
+                      a?                   Zero or one occurrence of a
+
+    a\{n\}            a{n}                 N occurrences of a
+
+    a\{n,\}           a{n,}                N or more occurrences of a
+
+    a\{n,m\}          a{n,m}               Between n and m occurrences of a
+
+                      a|b                  Pattern a or pattern b
+
+    \d                                     Refers back to matched expression
+                                           d
+
+  BBrraacckkeett eexxpprreessssiioonnss
+
+    A bbrraacckkeett eexxpprreessssiioonn is a list of characters enclosed in brackets: []. It
+    normally matches any single character from the list (but see later in this
+    topic). If the list begins with `^', it matches any single character (but
+    see later in this topic) not from the rest of the list. If two characters
+    in the list are separated by `-', this is shorthand for the full range of
+    characters between those two (inclusive) in the collating sequence; for
+    example, `[0-9]' in ASCII matches any decimal digit. It is illegal|.- for
+    two ranges to share an endpoint; for example, `a-c-e'. Ranges are very
+    collating-sequence-dependent, and portable programs should avoid relying
+    on them.
+
+    To include a literal `]' in the list, make it the first character
+    (following a possible `^'). To include a literal `-', make it the first or
+    last character, or the second endpoint of a range. To use a literal `-' as
+    the first endpoint of a range, enclose it in `[.' and `.]' to make it a
+    collating element (see later in this topic). With the exception of these
+    and some combinations using `[' (see next paragraphs), all other special
+    characters, including `\', lose their special significance within a
+    bracket expression.
+
+    Within a bracket expression, a collating element (a character, a
+    multicharacter sequence that collates as if it were a single character, or
+    a collating-sequence name for either) enclosed in `[.' and `.]' stands for
+    the sequence of characters of that collating element. The sequence is a
+    single element of the bracket expression's list. A bracket expression
+    containing a multicharacter collating element can thus match more than one
+    character. For instance, if the collating sequence includes a `ch'
+    collating element, the RE `[[.ch.]]*c' matches the first five characters
+    of `chchcc'.
+
+    Within a bracket expression, a collating element enclosed in `[=' and `=]'
+    is an equivalence class, standing for the sequences of characters of all
+    collating elements equivalent to that one, including itself. (If there are
+    no other equivalent collating elements, the treatment is as if the
+    enclosing delimiters were `[.' and `.]'.) For example, if o and o.^ are
+    the members of an equivalence class, `[[=o=]]', `[[=o.^=]]', and `[oo.^]'
+    are all synonymous. An equivalence class cannot |.- be an endpoint of a
+    range.
+
+    Within a bracket expression, the name of a cchhaarraacctteerr ccllaassss enclosed in `[:
+    ' and `:]' stands for the list of all characters belonging to that class.
+    Standard character class names are:
+
+    alnum     digit     punct
+
+    alpha     graph     space
+
+    blank     lower     upper
+
+    cntrl     print     xdigit
+
+    These stand for the character classes defined in ccttyyppee(). A locale can
+    provide others. A character class cannot be used as an endpoint of a
+    range.
+
+    There are two special cases|.- of bracket expressions: the bracket
+    expressions `[[:<:]]' and `[[:>:]]' match the null string at the beginning
+    and end of a word respectively. A word is defined as a sequence of word
+    characters that is neither preceded nor followed by word characters. A
+    word character is an alnum character (as defined by ccttyyppee()) or an
+    underscore. This is an extension, compatible with but not specified by
+    POSIX 1003.2, and should be used with caution in software intended to be
+    portable to other systems.
+
+    In the event that an RE could match more than one substring of a given
+    string, the RE matches the one starting earliest in the string. If the RE
+    could match more than one substring starting at that point, it matches the
+    longest. Subexpressions also match the longest possible substrings,
+    subject to the constraint that the whole match be as long as possible,
+    with subexpressions starting earlier in the RE taking priority over ones
+    starting later. Note that higher-level subexpressions thus take priority
+    over their lower-level component subexpressions.
+
+    Match lengths are measured in characters, not collating elements. A null
+    string is considered longer than no match at all. For example, `bb*'
+    matches the three middle characters of `abbbc',
+    `(wee|week)(knights|nights)' matches all ten characters of `weeknights';
+    when `(.*).*' is matched against `abc', the parenthesized subexpression
+    matches all three characters; and when `(a*)*' is matched against `bc'
+    both the whole RE and the parenthesized subexpression match the null
+    string.
+
+    If case-independent matching is specified, the effect is much as if all
+    case distinctions had vanished from the alphabet. When an alphabetic that
+    exists in multiple cases appears as an ordinary character outside a
+    bracket expression, it is effectively transformed into a bracket
+    expression containing both cases; for example, `x' becomes `[xX]'. When it
+    appears inside a bracket expression, all case counterparts of it are added
+    to the bracket expression, so that, for example, `[x]' becomes `[xX]' and
+    `[^x]' becomes `[^xX]'.
+
+    No particular limit is imposed on the length of REs|.-. Programs intended
+    to be portable should not employ REs longer than 256 bytes because an
+    implementation can refuse to accept such REs and remain POSIX-compliant.
+
+  BBUUGGSS
+
+    The current 1003.2 spec says that `)' is an ordinary character in the
+    absence of an unmatched `('; this was an unintentional result of a wording
+    error, and change is likely. Avoid relying on it.
+
+    1003.2's specification of case-independent matching is vague. The "one
+    case implies all cases" definition given above is current consensus among
+    implementers as to the right interpretation.
+
+    The syntax for word boundaries is incredibly ugly.
+
+  SSEEEE AALLSSOO
+
+    ctype()
+
+    _r_e_g_e_x(3)
+
+    POSIX 1003.2, section 2.8 (Regular Expression Notation).
+

@@ -1,0 +1,118 @@
+
+
+aio_write(3aio)                                   aio_write(3aio)
+
+SSyynnooppssiiss
+       cc [options] -Kthread file
+
+       #include <aio.h>
+
+       int aio_write(struct aiocb *aiocbp);
+
+       int aio_write64(struct aiocb64 *aiocbp);
+
+DDeessccrriippttiioonn
+       aio_write   supports  an  asynchronous  write  capability.
+       aio_write allows you to write aio_nbytes to the file asso-
+       ciated  with  file  descriptor  aio_fildes from the buffer
+       pointed to by aio_buf.
+
+       aiocbp points to an aiocb structure which  contains  other
+       input parameters as well as completion status members.
+
+       If  you  do  not  wish  to  be notified of completion, you
+       should set aio_sigevent.sigev_notify to SIGEV_NONE in  the
+       asynchronous  I/O control block.  If you require notifica-
+       tion,  you  must  set  the  aio_sigevent.sigev_notify   to
+       SIGEV_CALLBACK,  aio_sigevent.sigev_func to the address of
+       the function to be called, and aio_sigevent.sigev_value to
+       the  argument  to be passed to the function.  You may also
+       want the aio_sigevent.sigev_value to be the address of the
+       asynchronous  I/O  control block that was used to initiate
+       the I/O request.  [See
+
+       If the control block pointed to by aiocbp  or  the  buffer
+       pointed  to by aio_buf becomes an invalid address prior to
+       asynchronous I/O completion, then the  behavior  is  unde-
+       fined.
+
+       The call to aio_write returns 0 when the write request has
+       been initiated or queued to the file  or  device.   If  an
+       error  condition  is  encountered during queuing, the call
+       returns -1 without having initiated or queued the request.
+
+   RReettuurrnn vvaalluueess
+       A  call  to  aio_write  or  aio_write64 returns 0 when the
+       write request has been initiated or queued to the file  or
+       device.  If an error condition is encountered during queu-
+       ing, the call  returns  -1  without  having  initiated  or
+       queued  the request.  When the call has completed success-
+       fully, aio_write and aio_write64 return 0 and  the  struc-
+       ture  member aio_errno is set to EINPROGRESS.  When a call
+       to aio_write or aio_write64 fails, After the write  opera-
+       tion  has  successfully completed, the aio_errno structure
+       member is set to 0.  The aio_return function can  be  used
+       to access the return value of the underlying write call.
+
+   EErrrroorrss
+       There  are two types of errors that are associated with an
+
+                                                                1
+
+aio_write(3aio)                                   aio_write(3aio)
+
+       asynchronous I/O request.  The  first  occurs  during  the
+       validity  checking  of  the  I/O  request submitted by the
+       aio_write or aio_write64 routines.  This error is returned
+       to  the  caller  of  aio_write  or aio_write64.  The other
+       occurs during the processing of the  actual  write  opera-
+       tion.  The write operation may fail for any of the reasons
+       that a normal write may fail.  If a call to  aio_write  or
+       aio_write64  successfully queues the I/O operation but the
+       operation is subsequently canceled or encounters an error,
+       the  aio_error function will return one of the values nor-
+       mally returned by the write system  call  or  one  of  the
+       errors  listed  below.  The time at which the error occurs
+       is implementation-dependent; for example, an invalid  file
+       descriptor  may  not be determined at the time of the call
+       to aio_write aio_write64  which  could  successfully  com-
+       plete.   However,  aio_error will return EBADF to indicate
+       the error.
+
+       The notification specified for a request will only be per-
+       formed if that request was successfully queued.
+
+       Under  the  following conditions, aio_write fails and sets
+       errno or the aio_errno structure member to: The file is  a
+       regular file, aiocbp->aio_nbytes is greater than 0 and the
+       starting offset in aiocbp->aio_offset is at or beyond  the
+       offset maximum in the open file descriptor associated with
+       aio_fildes.
+
+       Under the following conditions, aio_write and  aio_write64
+       fail  and  set errno or the aio_errno structure member to:
+       The requested asynchronous I/O operation  was  not  queued
+       because of system resource limitations.  The first request
+       to encounter a  resource  limitation  and  all  subsequent
+       requests  will be marked so that aio_error returns EAGAIN.
+       aiocbp or the aio_buf member points outside the  allocated
+       address  space.  The requested I/O was canceled before the
+       I/O completed due to aio_cancel.  On SVR4.2,  the  request
+       does  not  have  the  AIO_RAW  flag  bit set in aio_flags.
+       There were no internal kernal aio control blocks available
+       to  service  the  request  (number  of  kernel aio control
+       blocks is tunable via the NUMAIO kernel parameter; see
+
+RReeffeerreenncceess
+NNoottiicceess
+       When developing applications for both  SVR4.2  and  future
+       versions,  the  AIO_RAW flag should be set in aio_flags to
+       insure that performance is maintained.
+
+   CCoonnssiiddeerraattiioonnss ffoorr llaarrggee ffiillee ssuuppppoorrtt
+       aio_write64 supports large files, but is otherwise identi-
+       cal  to  aio_write.   For details on programming for large
+       file capable applications, see on intro(2).
+
+                                                                2
+
