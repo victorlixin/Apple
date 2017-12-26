@@ -1,0 +1,31 @@
+Index: twisted/internet/_sslverify.py
+===================================================================
+--- twisted/internet/_sslverify.py	(revision 45115)
++++ twisted/internet/_sslverify.py	(working copy)
+@@ -174,7 +174,9 @@
+         "rejected."
+     )
+ 
+-    if _usablePyOpenSSL(lib.__version__):
++    if hasattr(lib, "__SecureTransport__"):
++        pass
++    elif _usablePyOpenSSL(lib.__version__):
+         try:
+             from service_identity import VerificationError
+             from service_identity.pyopenssl import verify_hostname
+
+Index: twisted/protocols/tls.py
+===================================================================
+--- twisted/protocols/tls.py	(revision 45115)
++++ twisted/protocols/tls.py	(working copy)
+@@ -705,7 +705,9 @@
+         @rtype: L{OpenSSL.SSL.Connection}
+         """
+         context = self._oldStyleContextFactory.getContext()
+-        return Connection(context, None)
++        connection = Connection(context, None)
++        connection.set_app_data(protocol)
++        return connection
+ 
+ 
+     def serverConnectionForTLS(self, protocol):
